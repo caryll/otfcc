@@ -362,6 +362,309 @@ typedef struct {
   uint8_t * bSignature;
 } opentype_table_dsig;
 
+typedef struct {
+  uint16_t majorVersion;
+  uint16_t minorVersion;
+  int16_t  defaultVertOriginY;
+  uint16_t numVertOriginYMetrics;
+} opentype_table_vorg;
+
+typedef struct {
+  uint16_t glyphIndex;
+  int16_t  vertOriginY;
+} opentype_vert_origin_y_metrics;
+
+typedef struct {
+  uint16_t version;
+  uint32_t offsetToSVGDocIndex;
+  uint32_t reserved;
+} opentype_table_svg;
+
+typedef struct {
+  uint16_t startGlyphID;
+  uint16_t endGlyphID;
+  uint32_t svgDocOffset;
+  uint32_t svgDocLength;
+} opentype_svg_document_index_entry;
+
+typedef struct {
+  uint16_t numEntries;
+  opentype_svg_document_index_entry * entries;
+} opentype_svg_document_index;
+
+typedef struct {
+  int32_t Version;
+  uint16_t HorizAxis;
+  uint16_t VertAxis;
+} opentype_table_base;
+
+typedef struct {
+  uint16_t BaseTagList;
+  uint16_t BaseScriptList;
+} opentype_axis_table;
+
+typedef struct {
+  uint16_t BaseTagCount;
+  uint32_t * BaselineTag;
+} opentype_base_tag_list_table;
+
+typedef struct {
+  uint32_t BaseScriptTag;
+  uint16_t BaseScript;
+} opentype_base_script_record;
+
+typedef struct {
+  uint16_t BaseScriptCount;
+  opentype_base_script_record * BaseScriptRecord;
+} opentype_base_script_list_table;
+
+typedef struct {
+  uint32_t BaseLangSysTag;
+  uint16_t MinMax;
+} opentype_base_lang_sys_record;
+
+typedef struct {
+  uint16_t BaseValues;
+  uint16_t DefaultMinMax;
+  uint16_t BaseLangSysCount;
+  opentype_base_lang_sys_record * BaseLangSysRecord;
+} opentype_base_script_table;
+
+typedef struct {
+  uint16_t DefaultIndex;
+  uint16_t BaseCoordCount;
+  uint16_t BaseCoord;
+} opentype_base_values_table;
+
+typedef struct {
+  uint32_t FeatureTableTag;
+  uint16_t MinCoord;
+  uint16_t MaxCoord;
+} opentype_feat_min_max_record;
+
+typedef struct {
+  uint16_t MinCoord;
+  uint16_t MaxCoord;
+  uint16_t FeatMinMaxCount;
+  opentype_feat_min_max_record * FeatMinMaxRecord;
+} opentype_min_max_table;
+
+typedef struct {
+  uint16_t BaseCoordFormat;
+  int16_t  Coordinate;
+  uint16_t ReferenceGlyph;
+  uint16_t BaseCoordPoint;
+  uint16_t DeviceTable;
+} opentype_base_coord;
+
+typedef struct {
+  uint16_t version;
+  uint16_t numTables;
+} opentype_table_cmap;
+
+typedef struct {
+  uint16_t platformID;
+  uint16_t encodingID;
+  uint32_t offset;
+} opentype_encoding_record;
+
+typedef struct {
+  uint16_t format;
+  uint16_t length;
+  uint16_t language;
+  uint8_t  glyphIdArray[256];
+} opentype_subtable_format0;
+
+typedef struct {
+  uint16_t firstCode;
+  uint16_t entryCount;
+  int16_t  idDelta;
+  uint16_t idRangeOffset;
+} opentype_subheader;
+
+typedef struct {
+  uint16_t format;
+  uint16_t length;
+  uint16_t language;
+  uint16_t subHeaderKeys[256];
+  opentype_subheader * subHeaders;
+  uint16_t * glyphIndexArray;
+} opentype_subtable_format2;
+
+typedef struct {
+  uint16_t format;
+  uint16_t length;
+  uint16_t language;
+  uint16_t segCountX2;
+  uint16_t searchRange;
+  uint16_t entrySelector;
+  uint16_t rangeShift;
+  uint16_t * endCount;
+  uint16_t reservedPad;
+  uint16_t * startCount;
+  int16_t  idDelta;
+  uint16_t * idRangeOffset;
+  uint16_t * glyphIdArray;
+} opentype_subtable_format4;
+
+typedef struct {
+  uint16_t format;
+  uint16_t length;
+  uint16_t language;
+  uint16_t firstCode;
+  uint16_t entryCount;
+  uint16_t * glyphIdArray;
+} opentype_subtable_format6;
+
+typedef struct {
+  uint32_t startCharCode;
+  uint32_t endCharCode;
+  uint32_t startGlyphID;
+} opentype_groups;
+
+typedef struct {
+  uint16_t format;
+  uint16_t reserved;
+  uint32_t length;
+  uint32_t language;
+  uint8_t  is32[8192];
+  uint32_t nGroups;
+} opentype_subtable_format8;
+
+typedef struct {
+  uint16_t format;
+  uint16_t reserved;
+  uint32_t length;
+  uint32_t language;
+  uint32_t startCharCode;
+  uint32_t numChars;
+  uint16_t glyphs;
+} opentype_subtable_format10;
+
+typedef struct {
+  uint16_t format;
+  uint16_t reserved;
+  uint32_t length;
+  uint32_t language;
+  uint32_t nGroups;
+} opentype_subtable_format12;
+
+typedef struct {
+  uint16_t format;
+  uint16_t reserved;
+  uint32_t length;
+  uint32_t language;
+  uint32_t nGroups;
+} opentype_subtable_format13;
+
+typedef struct {
+  uint16_t format;
+  uint16_t length;
+  uint32_t numVarSelectorRecords;
+} opentype_subtable_format14;
+
+typedef struct {
+  uint32_t varSelector;
+  uint32_t defaultUVSOffset;
+  uint32_t nonDefaultUVSOffset;
+} opentype_num_var_selector_record;
+
+typedef struct {
+  uint32_t numUnicodeValueRanges;
+} opentype_default_uvs_table;
+
+typedef struct {
+  uint32_t startUnicodeValue;
+  uint8_t additionalCount;
+} opentype_num_unicode_value_ranges;
+
+typedef struct {
+  uint32_t numUVSMappings;
+} opentype_non_default_uvs_table;
+
+typedef struct {
+  uint32_t unicodeValue;
+  uint16_t glyphID;
+} opentype_num_uvs_mappings;
+
+typedef struct {
+  uint32_t JstfScriptTag;
+  uint16_t JstfScript;
+} opentype_jstf_script_record;
+
+typedef struct {
+  uint32_t Version;
+  uint16_t JstfScriptCount;
+  opentype_jstf_script_record * JstfScriptRecord;
+} opentype_table_jstf;
+
+typedef struct {
+  uint32_t JstfLangSysTag;
+  uint16_t JstfLangSys;
+} opentype_jstf_lang_sys_record;
+
+typedef struct {
+  uint16_t ExtenderGlyph;
+  uint16_t DefJstfLangSys;
+  uint16_t JstfLangSysCount;
+  opentype_jstf_lang_sys_record * JstfLangSysRecord;
+} opentype_jstf_script;
+
+typedef struct {
+  uint16_t GlyphCount;
+  uint16_t * ExtenderGlyph;
+} opentype_extender_glyph_table;
+
+typedef struct {
+  uint16_t JstfPriorityCnt;
+  uint16_t JstfPriority;
+} opentype_jstf_lang_sys_table;
+
+typedef struct {
+  uint16_t ShrinkageEnableGSUB;
+  uint16_t ShrinkageDisableGSUB;
+  uint16_t ShrinkageEnableGPOS;
+  uint16_t ShrinkageDisableGPOS;
+  uint16_t ShrinkageJstfMax;
+  uint16_t ExtensionEnableGSUB;
+  uint16_t ExtensionDisableGSUB;
+  uint16_t ExtensionEnableGPOS;
+  uint16_t ExtensionDisableGPOS;
+  uint16_t ExtensionJstfMax;
+} opentype_jstf_priority;
+
+typedef struct {
+  uint16_t LookupCount;
+  uint16_t * GSUBLookupIndex;
+} opentype_jstf_gsub_mod_list;
+
+typedef struct {
+  uint16_t LookupCount;
+  uint16_t * GPOSLookupIndex;
+} opentype_jstf_gpos_mod_list;
+
+typedef struct {
+  uint16_t LookupCount;
+  uint16_t Lookup;
+} opentype_jstf_max;
+
+/*
+typedef struct {
+  header;
+  name_index;
+  top_dict_index;
+  string_index;
+  global_subr_index;
+  encodings;
+  charsets;
+  fdselect;
+  charstring_index;
+  font_dict_index;
+  private_dict;
+  local_subr_index;
+} opentype_table_cff;
+*/
+
 int main (void)
 {
   return 0;
