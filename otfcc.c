@@ -52,200 +52,7 @@ typedef enum {
 /* Required Tables */
 
 typedef struct {
-  uint32_t table_version_number;
-  uint32_t fontRevison;
-  uint32_t checkSumAdjustment;
-  uint32_t magicNumber;
-  uint16_t flags;
-  uint16_t unitsPerEm;
-  int64_t  created;
-  int64_t  modified;
-  int16_t  xMin;
-  int16_t  yMin;
-  int16_t  xMax;
-  int16_t  yMax;
-  uint16_t macStyle;
-  uint16_t lowestRecPPEM;
-  int16_t  fontDirectoryHint;
-  int16_t  indexToLocFormat;
-  int16_t  glyphDataFormat;
-} opentype_table_head;
-
-typedef struct {
-  uint32_t table_version_number;
-  int16_t  Ascender;
-  int16_t  Descender;
-  int16_t  LineGap;
-  uint16_t advanceWithMax;
-  int16_t  minLeftSideBearing;
-  int16_t  minRightSideBearing;
-  int16_t  xMaxExtent;
-  int16_t  caretSlopeRise;
-  int16_t  caretSlopeRun;
-  int16_t  dummy0;
-  int16_t  dummy1;
-  int16_t  dummy2;
-  int16_t  dummy3;
-  int16_t  metricDataFormat;
-  uint16_t numberOfMetrics;
-} opentype_table_hhea;
-
-typedef struct {
-  uint16_t version;
-  int16_t  xAvgCharWidth;
-  uint16_t usWeightClass;
-  uint16_t usWidthClass;
-  uint16_t fsType;
-  int16_t  ySubscriptXSize;
-  int16_t  ySubscriptYSize;
-  int16_t  ySubscriptXOffset;
-  int16_t  ySubscriptYOffset;
-  int16_t  ySupscriptXSize;
-  int16_t  ySupscriptYSize;
-  int16_t  ySupscriptXOffset;
-  int16_t  ySupscriptYOffset;
-  int16_t  yStrikeoutSize;
-  int16_t  yStrikeoutPosition;
-  int16_t  sFamilyClass;
-  uint8_t  panose[10];
-  uint32_t ulUnicodeRange1;
-  uint32_t ulUnicodeRange2;
-  uint32_t ulUnicodeRange3;
-  uint32_t ulUnicodeRange4;
-  int8_t   achVendID[4];
-  uint16_t fsSelection;
-  uint16_t usFirstCharIndex;
-  uint16_t usLastCharIndex;
-  int16_t  sTypoAscender;
-  int16_t  sTypoDescender;
-  uint32_t ulCodePageRange1;
-  uint32_t ulCodePageRange2;
-  int16_t  sxHeight;
-  int16_t  sCapHeight;
-  uint16_t usDefaultCHar;
-  uint16_t usBreakChar;
-  uint16_t usMaxContext;
-  uint16_t usLowerOpticalPointSize;
-  uint16_t usUpperOpticalPointSize;
-} opentype_table_os2;
-
-typedef struct {
-  uint16_t advanceWidth;
-  int16_t  lsb;
-} opentype_horizontal_metric;
-
-typedef struct {
-  opentype_horizontal_matric * metrics;
-  int16_t * leftSideBearing;
-} opentypr_table_hmtx;
-
-typedef struct {
-  uint16_t advanceHeight;
-  int16_t  topSideBearing;
-} opentype_vertical_metric;
-
-typedef struct {
-  opentype_vertical_metric * metrics;
-} opentype_table_vmtx;
-
-typedef struct {
-  uint16_t platformID;
-  uint16_t encodingID;
-  uint16_t languageID;
-  uint16_t nameID;
-  uint16_t length;
-  uint16_t offset;
-} opentype_name_record;
-
-typedef struct {
-  uint16_t length;
-  uint16_t offset;
-} opentype_lang_tag_record;
-
-typedef struct {
-  uint16_t format;
-  uint16_t count;
-  uint16_t stringOffset;
-  opentype_name_record*nameRecord;
-  uint16_t langTagCount;
-  opentype_lang_tag_record*langTagRecord;
-} opentype_table_name;
-
-typedef struct {
-  uint32_t table_version_number;
-  uint16_t numGlyphs;
-  uint16_t maxPoints;
-  uint16_t maxContours;
-  uint16_t maxCompositePoints;
-  uint16_t maxCompositeContours;
-  uint16_t maxZones;
-  uint16_t maxTwilightPoints;
-  uint16_t maxStorage;
-  uint16_t maxFunctionDefs;
-  uint16_t maxInstructionDefs;
-  uint16_t maxStackElements;
-  uint16_t maxSizeOfInstructions;
-  uint16_t maxComponentElements;
-  uint16_t maxComponentDepth;
-} opentype_table_maxp;
-
-typedef struct {
-  uint16_t version;
-  uint16_t numGlyphs;
-  uint8_t * yPels;
-} opentype_table_ltsh;
-
-typedef struct {
-  uint32_t Version;
-  uint32_t FontNumber;
-  uint16_t Pitch;
-  uint16_t xHeight;
-  uint16_t Style;
-  uint16_t TypeFamily;
-  uint16_t CapHeight;
-  uint16_t SymbolSet;
-  uint8_t  Typeface[16];
-  uint8_t  CharacterComplement[8];
-  uint8_t  FileName[6];
-  uint8_t  StrokeWeight;
-  uint8_t  WidthType;
-  int8_t   SerifStyle;
-  int8_t   dummy0;
-} opentype_table_pclt;
-
-typedef struct {
-  uint16_t version;
-  uint16_t numBaseGlyphRecords;
-  uint32_t offsetBaseGlyphRecord;
-  uint32_t offsetLayerRecord;
-  uint16_t numLayerRecords;
-} opentype_table_colr;
-
-typedef struct {
-  uint16_t GID;
-  uint16_t firstLayerIndex;
-  uint16_t numLayers;
-} opentype_base_glyph_record;
-
-typedef struct {
-  uint16_t GID;
-  uint16_t paletteIndex;
-} opentype_layer_record;
-
-typedef struct {
-  uint32_t ulVersion;
-  uint16_t usNumSigs;
-  uint16_t usFlag;
-  uint32_t ulFormat;
-  uint32_t ulLength;
-  uint32_t ulOffset;
-  uint16_t usReserved1;
-  uint16_t usReserved2;
-  uint32_t cbSignature;
-  uint8_t * bSignature;
-} opentype_table_dsig;
-
-typedef struct {
+  // Character to glyph mapping
   uint16_t version;
   uint16_t numTables;
 } opentype_table_cmap;
@@ -374,6 +181,151 @@ typedef struct {
   uint32_t unicodeValue;
   uint16_t glyphID;
 } opentype_num_uvs_mappings;
+
+typedef struct {
+  // Font header
+  uint32_t table_version_number;
+  uint32_t fontRevison;
+  uint32_t checkSumAdjustment;
+  uint32_t magicNumber;
+  uint16_t flags;
+  uint16_t unitsPerEm;
+  int64_t  created;
+  int64_t  modified;
+  int16_t  xMin;
+  int16_t  yMin;
+  int16_t  xMax;
+  int16_t  yMax;
+  uint16_t macStyle;
+  uint16_t lowestRecPPEM;
+  int16_t  fontDirectoryHint;
+  int16_t  indexToLocFormat;
+  int16_t  glyphDataFormat;
+} opentype_table_head;
+
+typedef struct {
+  // Horizontal header
+  uint32_t table_version_number;
+  int16_t  Ascender;
+  int16_t  Descender;
+  int16_t  LineGap;
+  uint16_t advanceWithMax;
+  int16_t  minLeftSideBearing;
+  int16_t  minRightSideBearing;
+  int16_t  xMaxExtent;
+  int16_t  caretSlopeRise;
+  int16_t  caretSlopeRun;
+  int16_t  dummy[4];
+  int16_t  metricDataFormat;
+  uint16_t numberOfMetrics;
+} opentype_table_hhea;
+
+typedef struct {
+  // OS/2 and Windows specific metrics
+  uint16_t version;
+  int16_t  xAvgCharWidth;
+  uint16_t usWeightClass;
+  uint16_t usWidthClass;
+  uint16_t fsType;
+  int16_t  ySubscriptXSize;
+  int16_t  ySubscriptYSize;
+  int16_t  ySubscriptXOffset;
+  int16_t  ySubscriptYOffset;
+  int16_t  ySupscriptXSize;
+  int16_t  ySupscriptYSize;
+  int16_t  ySupscriptXOffset;
+  int16_t  ySupscriptYOffset;
+  int16_t  yStrikeoutSize;
+  int16_t  yStrikeoutPosition;
+  int16_t  sFamilyClass;
+  uint8_t  panose[10];
+  uint32_t ulUnicodeRange1;
+  uint32_t ulUnicodeRange2;
+  uint32_t ulUnicodeRange3;
+  uint32_t ulUnicodeRange4;
+  int8_t   achVendID[4];
+  uint16_t fsSelection;
+  uint16_t usFirstCharIndex;
+  uint16_t usLastCharIndex;
+  int16_t  sTypoAscender;
+  int16_t  sTypoDescender;
+  uint32_t ulCodePageRange1;
+  uint32_t ulCodePageRange2;
+  int16_t  sxHeight;
+  int16_t  sCapHeight;
+  uint16_t usDefaultCHar;
+  uint16_t usBreakChar;
+  uint16_t usMaxContext;
+  uint16_t usLowerOpticalPointSize;
+  uint16_t usUpperOpticalPointSize;
+} opentype_table_os2;
+
+typedef struct {
+  uint16_t advanceWidth;
+  int16_t  lsb;
+} opentype_horizontal_metric;
+
+typedef struct {
+  // Horizontal metrics
+  opentype_horizontal_matric * metrics;
+  int16_t * leftSideBearing;
+} opentypr_table_hmtx;
+
+typedef struct {
+  uint16_t platformID;
+  uint16_t encodingID;
+  uint16_t languageID;
+  uint16_t nameID;
+  uint16_t length;
+  uint16_t offset;
+} opentype_name_record;
+
+typedef struct {
+  uint16_t length;
+  uint16_t offset;
+} opentype_lang_tag_record;
+
+typedef struct {
+  uint16_t format;
+  uint16_t count;
+  uint16_t stringOffset;
+  opentype_name_record*nameRecord;
+  uint16_t langTagCount;
+  opentype_lang_tag_record*langTagRecord;
+} opentype_table_name;
+
+typedef struct {
+  // Maximum profile
+  uint32_t version;
+  uint16_t numGlyphs;
+
+  uint16_t maxPoints;
+  uint16_t maxContours;
+  uint16_t maxCompositePoints;
+  uint16_t maxCompositeContours;
+  uint16_t maxZones;
+  uint16_t maxTwilightPoints;
+  uint16_t maxStorage;
+  uint16_t maxFunctionDefs;
+  uint16_t maxInstructionDefs;
+  uint16_t maxStackElements;
+  uint16_t maxSizeOfInstructions;
+  uint16_t maxComponentElements;
+  uint16_t maxComponentDepth;
+} opentype_table_maxp;
+
+typedef struct {
+  // PostScript information
+  uint32_t version;
+  uint32_t italicAngle;
+  int16_t  underlinePosition;
+  int16_t  underlineThickness;
+  uint32_t isFixedPitch;
+  uint32_t minMemType42;
+  uint32_t maxMemType42;
+  uint32_t minMemType1;
+  uing32_t maxMemType1;
+} opentype_table_post;
 
 /* Tables Related to TrueType Outlines */
 
@@ -563,6 +515,90 @@ enum {
   GLYPH_MARK,
   GLYPH_COMPONENT
 };
+
+typedef struct {
+  uint16_t start;
+  uint16_t end;
+  uint16_t StartCoverageIndex;
+} coverage_range;
+
+typedef struct {
+  uint16_t format;
+  uint16_t count;
+  union {
+    uint16_t * f1;
+    coverage_range * f2;
+  }
+} opentype_coverage;
+
+typedef struct {
+  uint16_t count;
+  uint16_t index;
+} attach_point;
+
+typedef struct {
+  opentype_coverage coverage;
+  uint16_t count;
+  attach_point * PointIndex;
+} opentype_attach_list;
+
+typedef struct {
+  uint16_t format;
+  union {
+    int16_t f1;
+    uint16_t f2;
+  }
+} caret_value;
+
+typedef struct {
+  uint16_t count;
+  caret_value * CaretValue;
+} opentype_lig_glyph;
+
+typedef struct {
+  opentype_coverage coverage;
+  uint16_t count;
+  opentype_lig_glyph * lig_glyph;
+} opentype_ligature_caret_list;
+
+typedef struct {
+  uint32_t version;
+  opentype_attach_list attach_list;
+  opentype_ligature_caret_list ligature_caret_list;
+} opentype_table_gdef;
+
+typedef struct {
+  uint16_t ReqFeatureIndex;
+  uint16_t FeatureCount; 
+} opentype_lang_sys_record;
+
+typedef struct {
+  uint32_t ScriptTag;
+  uint16_t LangSysCount;
+  uint16_t DefaultLangSys;
+  opentype_lang_sys_record * data;
+} opentype_script_record;
+
+typedef struct {
+  uint16_t count;
+  opentype_script_record * data;
+} opentype_script_list;
+
+typedef struct {
+  uint32_t TAG;
+} opentype_feature_record;
+
+typedef struct {
+  uint16_t count;
+  opentype_feature_record * data;
+} opentype_feature_list;
+
+typedef struct {
+  uint16_t LookupType;
+  uint16_t LookupFlag;
+  uint16_t SubTableCount;
+  uint16_t MarkFilteringSet;
+} opentype_lookup_list;
 
 typedef struct {
   uint32_t JstfScriptTag;
@@ -768,6 +804,197 @@ typedef struct {
   uint16_t PartCount;
   opentype_glyph_part_record * PartRecords;
 } opentype_glyph_assembly;
+
+/* Other OpenType Tables */
+
+typedef struct {
+  // Digital signature
+  uint32_t version;
+  uint16_t usNumSigs;
+  uint16_t usFlag;
+  uint32_t ulFormat;
+  uint32_t ulLength;
+  uint32_t ulOffset;
+  uint16_t usReserved1;
+  uint16_t usReserved2;
+  uint32_t cbSignature;
+  uint8_t * bSignature;
+} opentype_table_dsig;
+
+typedef struct {
+  uint8_t pixelSize;
+  uint8_t maxWidth;
+  uint8_t * widths;
+} opentype_device_record;
+
+typedef struct {
+  // Horizontal device metrics
+  uint16_t version;
+  int16_t  numRecords;
+  int32_t  sizeDeviceRecord;
+  opentype_device_record * records;
+} opentype_table_hdmx;
+
+typedef struct {
+  uint16_t left;
+  uint16_t right;
+  int16_t  value;
+} kern_pair_value;
+
+typedef struct {
+  uint16_t version;
+  uint16_t length;
+  uint16_t coverage;
+  uint16_t nPairs;
+  uint16_t searchRange;
+  uint16_t entrySelector;
+  uint16_t rangeShift;
+  kern_pair_value * data;
+} kern_subtable_format0;
+
+typedef struct {
+  uint16_t first;
+  uint16_t nGlyphs;
+} kern_class;
+
+typedef struct {
+  uint16_t version;
+  uint16_t length;
+  uint16_t coverage;
+  uint16_t rowWidth;
+  kern_class * left;
+  kern_class * right;
+  kern_pair_value * data;
+} kern_subtable_format2;
+
+typedef struct {
+  // Kerning
+  uint16_t version;
+  uint16_t nTables;
+} opentype_table_kern;
+
+typedef struct {
+  // Linear threshold data
+  uint16_t version;
+  uint16_t numGlyphs;
+  uint8_t * yPels;
+} opentype_table_ltsh;
+
+typedef struct {
+  // PCL 5 data
+  uint32_t version;
+  uint32_t FontNumber;
+  uint16_t Pitch;
+  uint16_t xHeight;
+  uint16_t Style;
+  uint16_t TypeFamily;
+  uint16_t CapHeight;
+  uint16_t SymbolSet;
+  uint8_t  Typeface[16];
+  uint8_t  CharacterComplement[8];
+  uint8_t  FileName[6];
+  uint8_t  StrokeWeight;
+  uint8_t  WidthType;
+  int8_t   SerifStyle;
+  int8_t   dummy0;
+} opentype_table_pclt;
+
+typedef struct {
+  uint8_t bCharSet;
+  uint8_t xRatio;
+  uint8_t yStartRatio;
+  uint8_t yEndRatio;
+} vdmx_ratio;
+
+typedef struct {
+  uint16_t yPelHeight;
+  int16_t yMax;
+  int16_t yMin;
+} vdmx_record;
+
+typedef struct {
+  uint16_t recs;
+  uint8_t startsz;
+  uint8_t endsz;
+  vdmx_record * entry;
+} vdmx_group;
+
+typedef struct {
+  // Vertical device metrics
+  uint16_t version;
+  uint16_t numRecs;
+  uint16_t numRatios;
+  vdmx_ratio * ranges;
+  uint16_t * offsets;
+} opentype_table_vdmx;
+
+typedef struct {
+  // Vertical Metrics header
+  uint32_t version;
+  int16_t ascent;
+  int16_t descent;
+  int16_t lineGap;
+  int16_t advanceHeightMax;
+  int16_t minTop;
+  int16_t minBottom;
+  int16_t yMaxExtent;
+  int16_t caretSlopeRise;
+  int16_t caretSlopeRun;
+  int16_t caretOffset;
+  int16_t dummy[4];
+  int16_t metricDataFormat;
+  uint16_t numOf;
+} opentype_table_vhea;
+
+typedef struct {
+  uint16_t advanceHeight;
+  int16_t  topSideBearing;
+} opentype_vertical_metric;
+
+typedef struct {
+  // Vertical Metrics
+  opentype_vertical_metric * metrics;
+} opentype_table_vmtx;
+
+typedef struct {
+  // Color table
+  uint16_t version;
+  uint16_t numBaseGlyphRecords;
+  uint32_t offsetBaseGlyphRecord;
+  uint32_t offsetLayerRecord;
+  uint16_t numLayerRecords;
+} opentype_table_colr;
+
+typedef struct {
+  uint16_t GID;
+  uint16_t firstLayerIndex;
+  uint16_t numLayers;
+} opentype_base_glyph_record;
+
+typedef struct {
+  uint16_t GID;
+  uint16_t paletteIndex;
+} opentype_layer_record;
+
+typedef struct {
+  // Color palette table
+  uint16_t version;
+  uint16_t numPalettesEntries;
+  uint16_t numPalette;
+  uint16_t numColorRecords;
+  uint32_t offsetFirstColorRecord;
+  uint16_t * colorRecordIndices;
+  uint32_t * type;
+  uint16_t * label;
+  uint16_t * entry_label;
+} opentype_table_cpal;
+
+typedef struct {
+  uint8_t blue;
+  uint8_t green;
+  uint8_t red;
+  uint8_t alpha;
+} opentype_color_record;
 
 int main (void)
 {
