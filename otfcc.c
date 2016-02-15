@@ -1,30 +1,45 @@
 #include <stdio.h>
 #include <stdint.h>
 
-typedef struct {
-  uint32_t sfnt_version;
-  uint16_t numTables;
-  uint16_t searchRange;
-  uint16_t entrySelector;
-  uint16_t rangeShift;
-} opentype_offset_table;
+/*
+  OpenType specification：
+    https://www.microsoft.com/typography/otspec/
+  TrueType Reference Manual：
+    https://developer.apple.com/fonts/TrueType-Reference-Manual/
+*/
 
 typedef struct {
   uint32_t tag;
   uint32_t checkSum;
   uint32_t offset;
   uint32_t length;
-} opentype_table_record;
+} caryll_degest;
 
 typedef struct {
-  uint32_t TTCTag;
-  uint32_t version;
-  uint32_t numFonts;
-  uint32_t*OffsetTable;
-  uint32_t ulDsigTag;
-  uint32_t ulDsigLength;
-  uint32_t ulDsigOffset;
-} opentype_collection_header;
+  uint32_t sfnt_version;
+  uint16_t numTables;
+  uint16_t searchRange;
+  uint16_t entrySelector;
+  uint16_t rangeShift;
+  caryll_degest * blob;
+} caryll_offset;
+
+/*
+  'true': 
+    TrueType <- iOS/Mac OS X
+  'typ1':
+    PostScript with SFNT
+  'OTTO':
+    OpenType with PostScript
+  'ttcf':
+    OpenType Font Collection
+*/
+
+typedef struct {
+  uint32_t type;
+  uint32_t count;
+  caryll_offset * blob;
+} caryll_font;
 
 typedef enum {
   TABLE_REQUIRED,
@@ -184,7 +199,7 @@ typedef struct {
 
 typedef struct {
   // Font header
-  uint32_t table_version_number;
+  uint32_t version;
   uint32_t fontRevison;
   uint32_t checkSumAdjustment;
   uint32_t magicNumber;
@@ -205,17 +220,18 @@ typedef struct {
 
 typedef struct {
   // Horizontal header
-  uint32_t table_version_number;
-  int16_t  Ascender;
-  int16_t  Descender;
-  int16_t  LineGap;
+  uint32_t version;
+  int16_t  ascender;
+  int16_t  descender;
+  int16_t  lineGap;
   uint16_t advanceWithMax;
   int16_t  minLeftSideBearing;
   int16_t  minRightSideBearing;
   int16_t  xMaxExtent;
   int16_t  caretSlopeRise;
   int16_t  caretSlopeRun;
-  int16_t  dummy[4];
+  int16_t  caretOffset;
+  int16_t  reserved[4];
   int16_t  metricDataFormat;
   uint16_t numberOfMetrics;
 } opentype_table_hhea;
@@ -247,8 +263,11 @@ typedef struct {
   uint16_t fsSelection;
   uint16_t usFirstCharIndex;
   uint16_t usLastCharIndex;
+//
   int16_t  sTypoAscender;
   int16_t  sTypoDescender;
+  uint16_t usWinAscent;
+  uint16_t usWinDescent;
   uint32_t ulCodePageRange1;
   uint32_t ulCodePageRange2;
   int16_t  sxHeight;
@@ -566,6 +585,20 @@ typedef struct {
   opentype_attach_list attach_list;
   opentype_ligature_caret_list ligature_caret_list;
 } opentype_table_gdef;
+
+typedef struct {
+  uint32_t version;
+  opentype_script_list scriptList;
+  opentype_feature_list featureList;
+  opentype_lookup_list lookupList;
+} opentype_table_gsub;
+
+typedef struct {
+  uint32_t version;
+  opentype_script_list scriptList;
+  opentype_feature_list featureList;
+  opentype_lookup_list lookupList;
+} opentype_table_gsub;
 
 typedef struct {
   uint16_t ReqFeatureIndex;
