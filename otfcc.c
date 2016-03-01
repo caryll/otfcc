@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "parson.h"
+
 /*
   OpenType specification：
     https://www.microsoft.com/typography/otspec/
@@ -1232,6 +1234,97 @@ void caryll_font_close (caryll_font * font)
   free(font);
 }
 
+void caryll_json_dump (caryll_font * font)
+{
+  for (int packet_count = 0; packet_count < font->count; packet_count++)
+  {
+    JSON_Value *  root_value  = json_value_init_object();
+    JSON_Object * root_object = json_value_get_object(root_value);
+    char * json_string = NULL;
+
+    json_object_set_number(root_object, "sfnt_index", packet_count);
+    json_object_set_number(root_object, "sfnt_version", font->type);
+
+    for (int piece_count = 0; piece_count < font->packets[packet_count].numTables; piece_count++)
+    {
+      switch (font->packets[packet_count].pieces[piece_count].tag)
+      {
+        case 'head':
+          {
+            json_object_dotset_number(root_object, "table.head.version", 0);
+            json_object_dotset_number(root_object, "table.head.fontRevision", 0);
+            json_object_dotset_number(root_object, "table.head.checkSumAdjustment", 0);
+            json_object_dotset_number(root_object, "table.head.magicNumber", 0);
+            json_object_dotset_number(root_object, "table.head.flags", 0);
+            json_object_dotset_number(root_object, "table.head.unitsPerEm", 0);
+            json_object_dotset_number(root_object, "table.head.created", 0);
+            json_object_dotset_number(root_object, "table.head.modified", 0);
+            json_object_dotset_number(root_object, "table.head.xMin", 0);
+            json_object_dotset_number(root_object, "table.head.yMin", 0);
+            json_object_dotset_number(root_object, "table.head.xMax", 0);
+            json_object_dotset_number(root_object, "table.head.yMax", 0);
+            json_object_dotset_number(root_object, "table.head.macStyle", 0);
+            json_object_dotset_number(root_object, "table.head.lowestRecPPEM", 0);
+            json_object_dotset_number(root_object, "table.head.fontDirectionHint", 0);
+            json_object_dotset_number(root_object, "table.head.indexToLocFormat", 0);
+            json_object_dotset_number(root_object, "table.head.glyphDataFormat", 0);
+          }
+          break;
+        case 'hhea':
+          {
+            json_object_dotset_number(root_object, "table.hhea.version", 0);
+            json_object_dotset_number(root_object, "table.hhea.Ascender", 0);
+            json_object_dotset_number(root_object, "table.hhea.LineGap", 0);
+            json_object_dotset_number(root_object, "table.hhea.advanceWidthMax", 0);
+            json_object_dotset_number(root_object, "table.hhea.minLeftSideBearing", 0);
+            json_object_dotset_number(root_object, "table.hhea.minRightSideBearing", 0);
+            json_object_dotset_number(root_object, "table.hhea.xMaxExtent", 0);
+            json_object_dotset_number(root_object, "table.hhea.caretSlopeRise", 0);
+            json_object_dotset_number(root_object, "table.hhea.caretSlopeRun", 0);
+            json_object_dotset_number(root_object, "table.hhea.caretOffset", 0);
+            json_object_dotset_number(root_object, "table.hhea.metricDataFormat", 0);
+            json_object_dotset_number(root_object, "table.hhea.numberOfHMetrics", 0);
+          }
+          break;
+        case 'OS/2':
+          {
+            json_object_dotset_number(root_object, "table.OS/2.version", 0);
+            json_object_dotset_number(root_object, "table.OS/2.xAvgCharWidth", 0);
+            json_object_dotset_number(root_object, "table.OS/2.usWeightClass", 0);
+            json_object_dotset_number(root_object, "table.OS/2.usWidthClass", 0);
+            json_object_dotset_number(root_object, "table.OS/2.fsType", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySubscriptXSize", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySubscriptYSize", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySubscriptXOffset", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySubscriptYOffset", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySuperscriptXSize", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySuperscriptYSize", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySuperscriptXOffset", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ySuperscriptYOffset", 0);
+            json_object_dotset_number(root_object, "table.OS/2.yStrikeoutSize", 0);
+            json_object_dotset_number(root_object, "table.OS/2.yStrikeoutPosition", 0);
+            json_object_dotset_number(root_object, "table.OS/2.sFamilyClass", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ulUnicodeRange1", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ulUnicodeRange2", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ulUnicodeRange3", 0);
+            json_object_dotset_number(root_object, "table.OS/2.ulUnicodeRange4", 0);
+          }
+          break;
+        case 'hmdx':
+          {
+            json_object_dotset_number(root_object, "table.hmdx.version", 0);
+          }
+          break;
+      }
+    }
+
+    json_string = json_serialize_to_string_pretty(root_value);
+    printf("%s", json_string);
+    json_free_serialized_string(json_string);
+    json_value_free(root_value);
+  }
+}
+
 #ifdef CARYLL_TEST
 
 void test_ttc_simsun (void)
@@ -1264,6 +1357,9 @@ void test_ttc_simsun (void)
 
 int main (void)
 {
+  caryll_font * font = caryll_font_open("simsun.ttc");
+  caryll_json_dump(font);
+  caryll_font_close(font);
   return 0;
 }
 
