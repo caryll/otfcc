@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 
 /*
@@ -13,7 +15,8 @@ typedef struct {
   uint32_t checkSum;
   uint32_t offset;
   uint32_t length;
-} caryll_degest;
+  uint8_t * data;
+} caryll_piece;
 
 typedef struct {
   uint32_t sfnt_version;
@@ -21,8 +24,8 @@ typedef struct {
   uint16_t searchRange;
   uint16_t entrySelector;
   uint16_t rangeShift;
-  caryll_degest * blob;
-} caryll_offset;
+  caryll_piece * pieces;
+} caryll_packet;
 
 /*
   'true': 
@@ -38,7 +41,8 @@ typedef struct {
 typedef struct {
   uint32_t type;
   uint32_t count;
-  caryll_offset * blob;
+  uint32_t * offsets;
+  caryll_packet * packets;
 } caryll_font;
 
 typedef enum {
@@ -286,7 +290,7 @@ typedef struct {
 
 typedef struct {
   // Horizontal metrics
-  opentype_horizontal_matric * metrics;
+  opentype_horizontal_metric * metrics;
   int16_t * leftSideBearing;
 } opentypr_table_hmtx;
 
@@ -343,7 +347,7 @@ typedef struct {
   uint32_t minMemType42;
   uint32_t maxMemType42;
   uint32_t minMemType1;
-  uing32_t maxMemType1;
+  uint32_t maxMemType1;
 } opentype_table_post;
 
 /* Tables Related to TrueType Outlines */
@@ -547,7 +551,7 @@ typedef struct {
   union {
     uint16_t * f1;
     coverage_range * f2;
-  }
+  };
 } opentype_coverage;
 
 typedef struct {
@@ -566,7 +570,7 @@ typedef struct {
   union {
     int16_t f1;
     uint16_t f2;
-  }
+  };
 } caret_value;
 
 typedef struct {
@@ -587,22 +591,8 @@ typedef struct {
 } opentype_table_gdef;
 
 typedef struct {
-  uint32_t version;
-  opentype_script_list scriptList;
-  opentype_feature_list featureList;
-  opentype_lookup_list lookupList;
-} opentype_table_gsub;
-
-typedef struct {
-  uint32_t version;
-  opentype_script_list scriptList;
-  opentype_feature_list featureList;
-  opentype_lookup_list lookupList;
-} opentype_table_gsub;
-
-typedef struct {
   uint16_t ReqFeatureIndex;
-  uint16_t FeatureCount; 
+  uint16_t FeatureCount;
 } opentype_lang_sys_record;
 
 typedef struct {
@@ -632,6 +622,20 @@ typedef struct {
   uint16_t SubTableCount;
   uint16_t MarkFilteringSet;
 } opentype_lookup_list;
+
+typedef struct {
+  uint32_t version;
+  opentype_script_list scriptList;
+  opentype_feature_list featureList;
+  opentype_lookup_list lookupList;
+} opentype_table_gsub;
+
+typedef struct {
+  uint32_t version;
+  opentype_script_list scriptList;
+  opentype_feature_list featureList;
+  opentype_lookup_list lookupList;
+} opentype_table_gpos;
 
 typedef struct {
   uint32_t JstfScriptTag;
@@ -1028,6 +1032,235 @@ typedef struct {
   uint8_t red;
   uint8_t alpha;
 } opentype_color_record;
+
+static inline _Bool caryll_check_endian (void)
+{
+  union {
+    uint8_t  i1[2];
+    uint16_t i2;
+  } check_union = {1};
+
+  return (check_union.i1[0] == 1);
+}
+
+inline uint16_t caryll_endian_convert16 (uint16_t i)
+{
+  if (caryll_check_endian())
+  {
+    union {
+      uint8_t  i1[2];
+      uint16_t i2;
+    } src, des;
+
+    src.i2 = i;
+
+    des.i1[0] = src.i1[1];
+    des.i1[1] = src.i1[0];
+
+    return des.i2;
+  }
+  else
+  {
+    return i;
+  }
+}
+
+inline uint32_t caryll_endian_convert32 (uint32_t i)
+{
+  if (caryll_check_endian())
+  {
+    union {
+      uint8_t  i1[4];
+      uint32_t i4;
+    } src, des;
+
+    src.i4 = i;
+
+    des.i1[0] = src.i1[3];
+    des.i1[1] = src.i1[2];
+    des.i1[2] = src.i1[1];
+    des.i1[3] = src.i1[0];
+
+    return des.i4;
+  }
+  else
+  {
+    return i;
+  }
+}
+
+inline uint64_t caryll_endian_convert64 (uint64_t i)
+{
+  if (caryll_check_endian())
+  {
+    union {
+      uint8_t  i1[4];
+      uint64_t i8;
+    } src, des;
+
+    src.i8 = i;
+
+    des.i1[0] = src.i1[7];
+    des.i1[1] = src.i1[6];
+    des.i1[2] = src.i1[5];
+    des.i1[3] = src.i1[4];
+    des.i1[4] = src.i1[3];
+    des.i1[5] = src.i1[2];
+    des.i1[6] = src.i1[1];
+    des.i1[7] = src.i1[0];
+
+    return des.i8;
+  }
+  else
+  {
+    return i;
+  }
+}
+
+uint16_t caryll_get16u (FILE * file)
+{
+  uint16_t tmp;
+  fread(&tmp, 2, 1, file);
+  return caryll_endian_convert16(tmp);
+}
+
+uint32_t caryll_get32u (FILE * file)
+{
+  uint32_t tmp;
+  fread(&tmp, 4, 1, file);
+  return caryll_endian_convert32(tmp);
+}
+
+uint64_t caryll_get64u (FILE * file)
+{
+  uint64_t tmp;
+  fread(&tmp, 8, 1, file);
+  return caryll_endian_convert64(tmp);
+}
+
+void caryll_read_packets (caryll_font * font, FILE * file)
+{
+  for (int count = 0; count < font->count; count++)
+  {
+    (void) fseek(file, font->offsets[count], SEEK_SET);
+
+    font->packets[count].sfnt_version   = caryll_get32u(file);
+    font->packets[count].numTables      = caryll_get16u(file);
+    font->packets[count].searchRange    = caryll_get16u(file);
+    font->packets[count].entrySelector  = caryll_get16u(file);
+    font->packets[count].rangeShift     = caryll_get16u(file);
+    font->packets[count].pieces         = (caryll_piece *) malloc(sizeof(caryll_piece) * font->packets[count].numTables);
+
+    for (int i = 0; i < font->packets[count].numTables; i++)
+    {
+      font->packets[count].pieces[i].tag      = caryll_get32u(file);
+      font->packets[count].pieces[i].checkSum = caryll_get32u(file);
+      font->packets[count].pieces[i].offset   = caryll_get32u(file);
+      font->packets[count].pieces[i].length   = caryll_get32u(file);
+      font->packets[count].pieces[i].data     = (uint8_t *) malloc(sizeof(uint8_t) * font->packets[count].pieces[i].length);
+    }
+
+    for (int i = 0; i < font->packets[0].numTables; i++)
+    {
+      (void) fseek(file, font->packets[count].pieces[i].offset, SEEK_SET);
+      (void) fread(font->packets[count].pieces[i].data, font->packets[count].pieces[i].length, 1, file);
+    }
+  }
+}
+
+caryll_font * caryll_font_open (const char * path)
+{
+  caryll_font * font = (caryll_font *) malloc (sizeof(caryll_font) * 1);
+  FILE * file = fopen(path, "rb");
+
+  font->type = caryll_get32u(file);
+
+  switch (font->type)
+  {
+    case 'OTTO':
+    case 0x00010000:
+    case 'true':
+    case 'typ1':
+      font->count = 1;
+      font->offsets = (uint32_t *) malloc(sizeof(uint32_t) * font->count);
+      font->packets = (caryll_packet *) malloc(sizeof(caryll_packet) * font->count);
+      font->offsets[0] = 0;
+      caryll_read_packets(font, file);
+      break;
+
+    case 'ttcf':
+      (void) caryll_get32u(file);
+      font->count = caryll_get32u(file);
+      font->offsets = (uint32_t *) malloc(sizeof(uint32_t) * font->count);
+      font->packets = (caryll_packet *) malloc(sizeof(caryll_packet) * font->count);
+
+      for (int i = 0; i < font->count; i++)
+      {
+        font->offsets[i] = caryll_get32u(file);
+      }
+
+      caryll_read_packets(font, file);
+      break;
+
+    default:
+      font->count = 0;
+      font->offsets = NULL;
+      font->packets = NULL;
+      break;
+  }
+  
+  fclose(file);
+
+  return font;
+}
+
+void caryll_font_close (caryll_font * font)
+{
+  if (font->count > 0)
+  {
+    for (int count = 0; count < font->count; count++)
+    {
+      for (int i = 0; i < font->packets[count].numTables; i++)
+      {
+        free(font->packets[count].pieces[i].data);
+      }
+
+      free(font->packets[count].pieces);
+    }
+  }
+
+  free(font);
+}
+
+#ifdef CARYLL_TEST
+
+void test_ttc_simsun (void)
+{
+  caryll_font * font = caryll_font_open("simsun.ttc");
+
+  for (int packet_count = 0; packet_count < font->count; packet_count++)
+  {
+    printf("FONT INDEX: %d\n", packet_count);
+
+    for (int piece_count = 0; piece_count < font->packets[packet_count].numTables; piece_count++)
+    {
+      union {
+        uint32_t i4;
+        uint8_t  i1[4];
+      } tmp_tag;
+
+      tmp_tag.i4 = font->packets[packet_count].pieces[piece_count].tag;
+
+      printf("  TAG: '%c%c%c%c', OFFSET: %x\n",
+        tmp_tag.i1[3], tmp_tag.i1[2], tmp_tag.i1[1], tmp_tag.i1[0],
+        font->packets[packet_count].pieces[piece_count].offset);
+    }
+  }
+
+  caryll_font_close(font);
+}
+
+#endif
 
 int main (void)
 {
