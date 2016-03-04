@@ -73,273 +73,6 @@ typedef enum {
 /* Required Tables */
 
 typedef struct {
-  // Character to glyph mapping
-  uint16_t version;
-  uint16_t numTables;
-} opentype_table_cmap;
-
-typedef struct {
-  uint16_t platformID;
-  uint16_t encodingID;
-  uint32_t offset;
-} opentype_encoding_record;
-
-typedef struct {
-  uint16_t format;
-  uint16_t length;
-  uint16_t language;
-  uint8_t  glyphIdArray[256];
-} opentype_subtable_format0;
-
-typedef struct {
-  uint16_t firstCode;
-  uint16_t entryCount;
-  int16_t  idDelta;
-  uint16_t idRangeOffset;
-} opentype_subheader;
-
-typedef struct {
-  uint16_t format;
-  uint16_t length;
-  uint16_t language;
-  uint16_t subHeaderKeys[256];
-  opentype_subheader * subHeaders;
-  uint16_t * glyphIndexArray;
-} opentype_subtable_format2;
-
-typedef struct {
-  uint16_t format;
-  uint16_t length;
-  uint16_t language;
-  uint16_t segCountX2;
-  uint16_t searchRange;
-  uint16_t entrySelector;
-  uint16_t rangeShift;
-  uint16_t * endCount;
-  uint16_t reservedPad;
-  uint16_t * startCount;
-  int16_t  idDelta;
-  uint16_t * idRangeOffset;
-  uint16_t * glyphIdArray;
-} opentype_subtable_format4;
-
-typedef struct {
-  uint16_t format;
-  uint16_t length;
-  uint16_t language;
-  uint16_t firstCode;
-  uint16_t entryCount;
-  uint16_t * glyphIdArray;
-} opentype_subtable_format6;
-
-typedef struct {
-  uint32_t startCharCode;
-  uint32_t endCharCode;
-  uint32_t startGlyphID;
-} opentype_groups;
-
-typedef struct {
-  uint16_t format;
-  uint16_t reserved;
-  uint32_t length;
-  uint32_t language;
-  uint8_t  is32[8192];
-  uint32_t nGroups;
-} opentype_subtable_format8;
-
-typedef struct {
-  uint16_t format;
-  uint16_t reserved;
-  uint32_t length;
-  uint32_t language;
-  uint32_t startCharCode;
-  uint32_t numChars;
-  uint16_t glyphs;
-} opentype_subtable_format10;
-
-typedef struct {
-  uint16_t format;
-  uint16_t reserved;
-  uint32_t length;
-  uint32_t language;
-  uint32_t nGroups;
-} opentype_subtable_format12;
-
-typedef struct {
-  uint16_t format;
-  uint16_t reserved;
-  uint32_t length;
-  uint32_t language;
-  uint32_t nGroups;
-} opentype_subtable_format13;
-
-typedef struct {
-  uint16_t format;
-  uint16_t length;
-  uint32_t numVarSelectorRecords;
-} opentype_subtable_format14;
-
-typedef struct {
-  uint32_t varSelector;
-  uint32_t defaultUVSOffset;
-  uint32_t nonDefaultUVSOffset;
-} opentype_num_var_selector_record;
-
-typedef struct {
-  uint32_t numUnicodeValueRanges;
-} opentype_default_uvs_table;
-
-typedef struct {
-  uint32_t startUnicodeValue;
-  uint8_t additionalCount;
-} opentype_num_unicode_value_ranges;
-
-typedef struct {
-  uint32_t numUVSMappings;
-} opentype_non_default_uvs_table;
-
-typedef struct {
-  uint32_t unicodeValue;
-  uint16_t glyphID;
-} opentype_num_uvs_mappings;
-
-typedef struct {
-  // Font header
-  uint32_t version;
-  uint32_t fontRevison;
-  uint32_t checkSumAdjustment;
-  uint32_t magicNumber;
-  uint16_t flags;
-  uint16_t unitsPerEm;
-  int64_t  created;
-  int64_t  modified;
-  int16_t  xMin;
-  int16_t  yMin;
-  int16_t  xMax;
-  int16_t  yMax;
-  uint16_t macStyle;
-  uint16_t lowestRecPPEM;
-  int16_t  fontDirectoryHint;
-  int16_t  indexToLocFormat;
-  int16_t  glyphDataFormat;
-} opentype_table_head;
-
-typedef struct {
-  // Horizontal header
-  uint32_t version;
-  int16_t  ascender;
-  int16_t  descender;
-  int16_t  lineGap;
-  uint16_t advanceWithMax;
-  int16_t  minLeftSideBearing;
-  int16_t  minRightSideBearing;
-  int16_t  xMaxExtent;
-  int16_t  caretSlopeRise;
-  int16_t  caretSlopeRun;
-  int16_t  caretOffset;
-  int16_t  reserved[4];
-  int16_t  metricDataFormat;
-  uint16_t numberOfMetrics;
-} opentype_table_hhea;
-
-typedef struct {
-  // OS/2 and Windows specific metrics
-  uint16_t version;
-  int16_t  xAvgCharWidth;
-  uint16_t usWeightClass;
-  uint16_t usWidthClass;
-  uint16_t fsType;
-  int16_t  ySubscriptXSize;
-  int16_t  ySubscriptYSize;
-  int16_t  ySubscriptXOffset;
-  int16_t  ySubscriptYOffset;
-  int16_t  ySupscriptXSize;
-  int16_t  ySupscriptYSize;
-  int16_t  ySupscriptXOffset;
-  int16_t  ySupscriptYOffset;
-  int16_t  yStrikeoutSize;
-  int16_t  yStrikeoutPosition;
-  int16_t  sFamilyClass;
-  uint8_t  panose[10];
-  uint32_t ulUnicodeRange1;
-  uint32_t ulUnicodeRange2;
-  uint32_t ulUnicodeRange3;
-  uint32_t ulUnicodeRange4;
-  int8_t   achVendID[4];
-  uint16_t fsSelection;
-  uint16_t usFirstCharIndex;
-  uint16_t usLastCharIndex;
-//
-  int16_t  sTypoAscender;
-  int16_t  sTypoDescender;
-  uint16_t usWinAscent;
-  uint16_t usWinDescent;
-  uint32_t ulCodePageRange1;
-  uint32_t ulCodePageRange2;
-  int16_t  sxHeight;
-  int16_t  sCapHeight;
-  uint16_t usDefaultCHar;
-  uint16_t usBreakChar;
-  uint16_t usMaxContext;
-  uint16_t usLowerOpticalPointSize;
-  uint16_t usUpperOpticalPointSize;
-} opentype_table_os2;
-
-typedef struct {
-  uint16_t advanceWidth;
-  int16_t  lsb;
-} opentype_horizontal_metric;
-
-typedef struct {
-  // Horizontal metrics
-  opentype_horizontal_metric * metrics;
-  int16_t * leftSideBearing;
-} opentypr_table_hmtx;
-
-typedef struct {
-  uint16_t platformID;
-  uint16_t encodingID;
-  uint16_t languageID;
-  uint16_t nameID;
-  uint16_t length;
-  uint16_t offset;
-} opentype_name_record;
-
-typedef struct {
-  uint16_t length;
-  uint16_t offset;
-} opentype_lang_tag_record;
-
-typedef struct {
-  uint16_t format;
-  uint16_t count;
-  uint16_t stringOffset;
-  opentype_name_record*nameRecord;
-  uint16_t langTagCount;
-  opentype_lang_tag_record*langTagRecord;
-} opentype_table_name;
-
-typedef struct {
-  // Maximum profile
-  uint32_t version;
-  uint16_t numGlyphs;
-
-  uint16_t maxPoints;
-  uint16_t maxContours;
-  uint16_t maxCompositePoints;
-  uint16_t maxCompositeContours;
-  uint16_t maxZones;
-  uint16_t maxTwilightPoints;
-  uint16_t maxStorage;
-  uint16_t maxFunctionDefs;
-  uint16_t maxInstructionDefs;
-  uint16_t maxStackElements;
-  uint16_t maxSizeOfInstructions;
-  uint16_t maxComponentElements;
-  uint16_t maxComponentDepth;
-} opentype_table_maxp;
-
-typedef struct {
   // PostScript information
   uint32_t version;
   uint32_t italicAngle;
@@ -1286,6 +1019,10 @@ void caryll_json_dump (caryll_font * font)
             json_object_dotset_number(root_object, "table.hhea.numberOfHMetrics", 0);
           }
           break;
+        case 'hmtx':
+          {
+          }
+          break;
         case 'OS/2':
           {
             json_object_dotset_number(root_object, "table.OS/2.version", 0);
@@ -1310,10 +1047,57 @@ void caryll_json_dump (caryll_font * font)
             json_object_dotset_number(root_object, "table.OS/2.ulUnicodeRange4", 0);
           }
           break;
+        case 'maxp':
+          {
+            json_object_dotset_number(root_object, "table.maxp.version", 0);
+            json_object_dotset_number(root_object, "table.maxp.numGlyphs", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxPoints", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxContours", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxCompositePoints", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxCompositeContours", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxZones", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxTwilightPoints", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxStorage", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxFunctionDefs", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxInstructionDefs", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxStackElements", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxSizeOfInstructions", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxComponentElements", 0);
+            json_object_dotset_number(root_object, "table.maxp.maxComponentDepth", 0);
+          }
+          break;
         case 'hmdx':
           {
             json_object_dotset_number(root_object, "table.hmdx.version", 0);
           }
+          break;
+        // For AAT
+        case 'acnt':
+        case 'ankr':
+        case 'avar':
+        case 'bdat':
+        case 'bhed':
+        case 'bloc':
+        case 'bsln':
+        case 'cvar':
+        case 'fdsc':
+        case 'feat':
+        case 'fmtx':
+        case 'fond':
+        case 'fvar':
+        case 'gvar':
+        case 'just':
+        case 'kerx':
+        case 'lcar':
+        case 'ltag':
+        case 'meta':
+        case 'morx':
+        case 'mort':
+        case 'opbd':
+        case 'sbix':
+        case 'trak':
+        case 'xref':
+        case 'Zapf':
           break;
       }
     }
