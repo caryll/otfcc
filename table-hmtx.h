@@ -1,3 +1,6 @@
+#pragma once
+
+#include <stdint.h>
 
 typedef struct {
   uint16_t advanceWidth;
@@ -6,6 +9,6 @@ typedef struct {
 
 typedef struct {
   // Horizontal metrics
-  opentype_horizontal_metric * metrics;
+  horizontal_metric * metrics;
   int16_t * leftSideBearing;
 } table_hmtx;

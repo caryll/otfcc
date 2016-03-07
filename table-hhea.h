@@ -1,3 +1,6 @@
+#pragma once
+
+#include <stdint.h>
 
 typedef struct {
   // Horizontal header

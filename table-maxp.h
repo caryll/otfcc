@@ -1,9 +1,11 @@
+#pragma once
+
+#include <stdint.h>
 
 typedef struct {
   // Maximum profile
   uint32_t version;
   uint16_t numGlyphs;
-
   uint16_t maxPoints;
   uint16_t maxContours;
   uint16_t maxCompositePoints;
@@ -17,4 +19,4 @@ typedef struct {
   uint16_t maxSizeOfInstructions;
   uint16_t maxComponentElements;
   uint16_t maxComponentDepth;
-} opentype_table_maxp;
+} table_maxp;
