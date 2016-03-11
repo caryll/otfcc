@@ -39,7 +39,7 @@ void caryll_read_head (caryll_font * font, caryll_packet packet)
         head->lowestRecPPEM = caryll_blt16u(data + 46);
         head->fontDirectoryHint = caryll_blt16u(data + 48);
         head->indexToLocFormat = caryll_blt16u(data + 50);
-        head->glyphDataFormat = caryll_blt64u(data + 52);
+        head->glyphDataFormat = caryll_blt16u(data + 52);
         font->head = head;
       }
     }
@@ -141,13 +141,13 @@ void caryll_read_hmtx (caryll_font * font, caryll_packet packet)
           font->hmtx = NULL;
         else
         {
-          table_hmtx * hmtx = (table_hmtx *)malloc(sizeof(table_hmtx) * 1);
+          table_hmtx * hmtx = (table_hmtx *) malloc(sizeof(table_hmtx) * 1);
 
           uint32_t count_a = font->hhea->numberOfMetrics;
           uint32_t count_k = font->maxp->numGlyphs - font->hhea->numberOfMetrics;
 
-          hmtx->metrics = (horizontal_metric *)malloc(sizeof(horizontal_metric) * count_a);
-          hmtx->leftSideBearing = (int16_t *)malloc(sizeof(int16_t) * count_k);
+          hmtx->metrics = (horizontal_metric *) malloc(sizeof(horizontal_metric) * count_a);
+          hmtx->leftSideBearing = (int16_t *) malloc(sizeof(int16_t) * count_k);
 
           for (uint32_t ia = 0; ia < count_a; ia++)
           {
@@ -221,10 +221,85 @@ void caryll_read_hdmx (caryll_font * font, caryll_packet packet)
 
 void caryll_read_LTSH (caryll_font * font, caryll_packet packet)
 {
+  for (uint32_t i = 0; i < packet.numTables; i++) 
+  {
+    if (packet.pieces[i].tag == 'LTSH')
+    {
+      uint8_t * data = packet.pieces[i].data;
+      uint32_t length = packet.pieces[i].length;
+
+      table_LTSH * LTSH = (table_LTSH *) malloc(sizeof(table_LTSH) * 1);
+      LTSH->version = caryll_blt16u(data);
+      LTSH->numGlyphs = caryll_blt16u(data + 2);
+      LTSH->yPels = (uint8_t *) malloc(sizeof(uint8_t) * LTSH->numGlyphs);
+      memcpy(LTSH->yPels, data + 4, LTSH->numGlyphs);
+
+      font->LTSH = LTSH;
+    }
+  }
 }
 
-void caryll_read_PCLT (caryll_font * font, caryll_packet packet)
+void caryll_read_PCLT(caryll_font * font, caryll_packet packet)
 {
+  for (uint32_t i = 0; i < packet.numTables; i++)
+  {
+    if (packet.pieces[i].tag == 'PCLT')
+    {
+      uint8_t * data = packet.pieces[i].data;
+      uint32_t length = packet.pieces[i].length;
+
+      table_PCLT * PCLT = (table_PCLT *)malloc(sizeof(table_PCLT) * 1);
+      PCLT->version = caryll_blt32u(data);
+      PCLT->FontNumber = caryll_blt32u(data + 4);
+      PCLT->Pitch = caryll_blt16u(data + 8);
+      PCLT->xHeight = caryll_blt16u(data + 10);
+      PCLT->Style = caryll_blt16u(data + 12);
+      PCLT->TypeFamily = caryll_blt16u(data + 14);
+      PCLT->CapHeight = caryll_blt16u(data + 16);
+      PCLT->SymbolSet = caryll_blt16u(data + 18);
+      memcpy(PCLT->Typeface, data + 20, 16);
+      memcpy(PCLT->CharacterComplement, data + 36, 8);
+      memcpy(PCLT->FileName, data + 44, 6);
+      PCLT->StrokeWeight = *(data + 50);
+      PCLT->WidthType = *(data + 51);
+      PCLT->SerifStyle = *(data + 52);
+      PCLT->pad = 0;
+
+      font->PCLT = PCLT;
+    }
+  }
+}
+
+void caryll_read_vhea (caryll_font * font, caryll_packet packet)
+{
+  for (uint32_t i = 0; i < packet.numTables; i++)
+  {
+    if (packet.pieces[i].tag == 'vhea')
+    {
+      uint8_t * data = packet.pieces[i].data;
+      uint32_t length = packet.pieces[i].length;
+
+      table_vhea * vhea = (table_vhea *) malloc(sizeof(table_vhea) * 1);
+      vhea->version = caryll_blt32u(data);
+      vhea->ascent = caryll_blt16u(data + 4);
+      vhea->descent = caryll_blt16u(data + 6);
+      vhea->advanceHeightMax = caryll_blt16u(data + 8);
+      vhea->minTop = caryll_blt16u(data + 10);
+      vhea->minBottom = caryll_blt16u(data + 12);
+      vhea->yMaxExtent = caryll_blt16u(data + 14);
+      vhea->caretSlopeRise = caryll_blt16u(data + 16);
+      vhea->caretSlopeRun = caryll_blt16u(data + 18);
+      vhea->caretOffset = caryll_blt16u(data + 20);
+      vhea->dummy[0] = *(data + 22);
+      vhea->dummy[1] = *(data + 23);
+      vhea->dummy[2] = *(data + 24);
+      vhea->dummy[3] = *(data + 24);
+      vhea->metricDataFormat = caryll_blt16u(data + 26);
+      vhea->numOf = caryll_blt16u(data + 28);
+
+      font->vhea = vhea;
+    }
+  }
 }
 
 caryll_font * caryll_font_open (caryll_sfnt * sfnt, uint32_t index)
