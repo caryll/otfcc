@@ -4,9 +4,9 @@
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
 
-int main (void)
+int main (int argc, char *argv[])
 {
-  caryll_sfnt * sfnt = caryll_sfnt_open("SIMLI.TTF");
+  caryll_sfnt * sfnt = caryll_sfnt_open(argv[1]);
   caryll_font * font = caryll_font_open(sfnt, 0);
   printf("head.version      = %d\n", font->head->version);
   printf("head.uintsPerEm   = %d\n", font->head->unitsPerEm);
