@@ -16,25 +16,31 @@ endif
 build : 
 	@- mkdir $@
 
-OBJFILES = build/caryll-font.o build/caryll-io.o build/caryll-sfnt.o \
-	build/table-head.o build/table-hhea.o build/table-maxp.o \
+OBJOTFCCMAIN = build/caryll-font.o build/caryll-io.o build/caryll-sfnt.o
+OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-hmtx.o build/table-post.o build/table-hdmx.o \
-	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o
+	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
+	build/table-OS_2.o 
 EXTOBJS = build/parson.o
 
-$(OBJFILES) : build/%.o : %.c | build
-	$(CC) $(CFLAGS) -c $^ -o $@
+OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS)
+
+$(OBJTABLES) : build/%.o : %.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJOTFCCMAIN) : build/%.o : %.c $(OBJTABLES) | build
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXTOBJS) : build/%.o : extern/%.c | build
-	$(CC) $(CFLAGS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 	
 build/test-head.o : test-head.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-build/test-head$(SUFFIX) : build/test-head.o $(OBJFILES) $(EXTOBJS)
+build/test-head$(SUFFIX) : build/test-head.o $(OBJECTS)
 	$(LINK) $^ -o $@
 
-objects: $(OBJFILES) $(EXTOBJS) build/test-head$(SUFFIX)
+objects: build/test-head$(SUFFIX)
 
 debug:
 	make VERSION=debug

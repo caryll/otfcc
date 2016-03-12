@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "caryll-font.h"
 
-
 typedef struct {
 	// Maximum profile
 	uint32_t version;

@@ -23,6 +23,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		caryll_read_head(font, packet);
 		caryll_read_hhea(font, packet);
 		caryll_read_maxp(font, packet);
+		caryll_read_OS_2(font, packet);
 		caryll_read_hmtx(font, packet);
 		caryll_read_post(font, packet);
 		caryll_read_hdmx(font, packet);
@@ -35,6 +36,7 @@ void caryll_font_close(caryll_font *font) {
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);
 	if (font->maxp != NULL) free(font->maxp);
+	if (font->OS_2 != NULL) free(font->OS_2);
 	if (font->hmtx != NULL) {
 		if (font->hmtx->metrics != NULL) free(font->hmtx->metrics);
 		if (font->hmtx->leftSideBearing != NULL) free(font->hmtx->leftSideBearing);

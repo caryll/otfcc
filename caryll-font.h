@@ -7,6 +7,7 @@ typedef struct _caryll_font caryll_font;
 #include "table-maxp.h"
 #include "table-hmtx.h"
 #include "table-post.h"
+#include "table-OS_2.h"
 
 #include "table-hdmx.h"
 #include "table-LTSH.h"
@@ -18,6 +19,7 @@ struct _caryll_font {
 	table_head *head;
 	table_hhea *hhea;
 	table_maxp *maxp;
+	table_OS_2 *OS_2;
 	table_hmtx *hmtx;
 	table_post *post;
 	table_hdmx *hdmx;
