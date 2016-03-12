@@ -19,7 +19,7 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 			table_OS_2 *os_2 = (table_OS_2 *)malloc(sizeof(table_OS_2) * 1);
 			os_2->version = caryll_blt16u(data);
 			// version 1
-			if (os_2->version == 0 || (os_2->version >= 1 && length < 82)) {
+			if (os_2->version == 0 || (os_2->version >= 1 && length < 86)) {
 				printf("table 'OS/2' corrupted or deprecated.\n");
 				free(os_2);
 				font->OS_2 = NULL;
@@ -56,21 +56,21 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 				os_2->usWinAscent = caryll_blt16u(data + 74);
 				os_2->usWinDescent = caryll_blt16u(data + 76);
 				os_2->ulCodePageRange1 = caryll_blt32u(data + 78);
-				os_2->ulCodePageRange2 = caryll_blt32u(data + 80);
+				os_2->ulCodePageRange2 = caryll_blt32u(data + 82);
 			}
 			// version 2, 3, 4
-			if (os_2->version >= 2 && length < 92) {
+			if (os_2->version >= 2 && length < 96) {
 				printf("table 'OS/2' corrupted.\n");
 				free(os_2);
 				font->OS_2 = NULL;
 				return;
 			}
 			if (os_2->version >= 2) {
-				os_2->sxHeight = caryll_blt16u(data + 82);
-				os_2->sCapHeight = caryll_blt16u(data + 84);
-				os_2->usDefaultChar = caryll_blt16u(data + 86);
-				os_2->usBreakChar = caryll_blt16u(data + 88);
-				os_2->usMaxContext = caryll_blt16u(data + 90);
+				os_2->sxHeight = caryll_blt16u(data + 86);
+				os_2->sCapHeight = caryll_blt16u(data + 88);
+				os_2->usDefaultChar = caryll_blt16u(data + 90);
+				os_2->usBreakChar = caryll_blt16u(data + 92);
+				os_2->usMaxContext = caryll_blt16u(data + 94);
 			}
 			// version 5
 			if (os_2->version >= 5 && length < 100) {
@@ -80,8 +80,8 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 				return;
 			}
 			if (os_2->version >= 5) {
-				os_2->usLowerOpticalPointSize = caryll_blt16u(data + 92);
 				os_2->usLowerOpticalPointSize = caryll_blt16u(data + 96);
+				os_2->usLowerOpticalPointSize = caryll_blt16u(data + 98);
 			}
 			font->OS_2 = os_2;
 		}
