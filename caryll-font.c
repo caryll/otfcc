@@ -126,7 +126,6 @@ void caryll_read_hmtx(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'hmtx') {
 			uint8_t *data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
 
 			if (font->hhea == NULL)
 				font->hmtx = NULL;
@@ -162,7 +161,6 @@ void caryll_read_post(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'post') {
 			uint8_t *data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
 
 			table_post *post = (table_post *)malloc(sizeof(table_post) * 1);
 			post->version = caryll_blt32u(data);
@@ -183,7 +181,6 @@ void caryll_read_hdmx(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'hdmx') {
 			uint8_t *data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
 
 			table_hdmx *hdmx = (table_hdmx *)malloc(sizeof(table_hdmx) * 1);
 			hdmx->version = caryll_blt16u(data);
@@ -207,7 +204,6 @@ void caryll_read_LTSH(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'LTSH') {
 			uint8_t *data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
 
 			table_LTSH *LTSH = (table_LTSH *)malloc(sizeof(table_LTSH) * 1);
 			LTSH->version = caryll_blt16u(data);
@@ -224,7 +220,6 @@ void caryll_read_PCLT(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'PCLT') {
 			uint8_t *data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
 
 			table_PCLT *PCLT = (table_PCLT *)malloc(sizeof(table_PCLT) * 1);
 			PCLT->version = caryll_blt32u(data);
@@ -252,7 +247,6 @@ void caryll_read_vhea(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'vhea') {
 			uint8_t *data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
 
 			table_vhea *vhea = (table_vhea *)malloc(sizeof(table_vhea) * 1);
 			vhea->version = caryll_blt32u(data);

@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
-static _Bool caryll_check_endian(void) {
+static bool caryll_check_endian(void) {
 	union {
 		uint8_t i1[2];
 		uint16_t i2;
-	} check_union = {1};
+	} check_union = {.i2 = 1}; // if you don't have a new VC, upgrade it
 
 	return (check_union.i1[0] == 1);
 }

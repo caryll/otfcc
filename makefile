@@ -4,7 +4,7 @@ LINK = clang
 ifeq ($(VERSION), debug)
 CFLAGS = -g -Ddebug
 else
-CFLAGS = -O3
+CFLAGS = -O3 -Wall
 endif
 
 all : objects
