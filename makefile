@@ -25,7 +25,7 @@ EXTOBJS = build/parson.o
 
 OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS)
 
-$(OBJTABLES) : build/%.o : %.c | build
+$(OBJTABLES) : build/table-%.o : tables/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJOTFCCMAIN) : build/%.o : %.c $(OBJTABLES) | build

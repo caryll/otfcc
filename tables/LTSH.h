@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include "caryll-font.h"
+#include "../caryll-font.h"
 
 typedef struct {
 	uint16_t version;

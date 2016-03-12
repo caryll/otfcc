@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "caryll-sfnt.h"
-#include "caryll-font.h"
-#include "caryll-io.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-font.h"
+#include "../caryll-io.h"
 
 void caryll_read_hmtx(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {

@@ -2,18 +2,18 @@
 
 typedef struct _caryll_font caryll_font;
 
-#include "table-head.h"
-#include "table-hhea.h"
-#include "table-maxp.h"
-#include "table-hmtx.h"
-#include "table-post.h"
-#include "table-OS_2.h"
+#include "./tables/head.h"
+#include "./tables/hhea.h"
+#include "./tables/maxp.h"
+#include "./tables/hmtx.h"
+#include "./tables/post.h"
+#include "./tables/OS_2.h"
 
-#include "table-hdmx.h"
-#include "table-LTSH.h"
-#include "table-PCLT.h"
-#include "table-vhea.h"
-#include "table-vmtx.h"
+#include "./tables/hdmx.h"
+#include "./tables/LTSH.h"
+#include "./tables/PCLT.h"
+#include "./tables/vhea.h"
+#include "./tables/vmtx.h"
 
 struct _caryll_font {
 	table_head *head;
