@@ -23,6 +23,6 @@ build/test-head.o : test-head.c | build
 	$(CC) $(CCOPTIONS) -c $^ -o $@
 
 build/test-head$(SUFFIX) : build/test-head.o $(OBJFILES) $(EXTOBJS)
-	$(LINK) $^ -o $@
+	$(LINK) $(CCOPTIONS) $^ -o $@
 
 objects: $(OBJFILES) $(EXTOBJS) build/test-head$(SUFFIX)

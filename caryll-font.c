@@ -87,32 +87,35 @@ void caryll_read_maxp(caryll_font *font, caryll_packet packet) {
 				table_maxp *maxp = (table_maxp *)malloc(sizeof(table_maxp) * 1);
 				maxp->version = caryll_blt32u(data);
 				maxp->numGlyphs = caryll_blt16u(data + 4);
-				maxp->maxPoints =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 6) : 0;
-				maxp->maxContours =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 8) : 0;
-				maxp->maxCompositePoints =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 10) : 0;
-				maxp->maxCompositeContours =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 12) : 0;
-				maxp->maxZones =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 14) : 0;
-				maxp->maxTwilightPoints =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 16) : 0;
-				maxp->maxStorage =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 18) : 0;
-				maxp->maxFunctionDefs =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 20) : 0;
-				maxp->maxInstructionDefs =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 22) : 0;
-				maxp->maxStackElements =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 24) : 0;
-				maxp->maxSizeOfInstructions =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 26) : 0;
-				maxp->maxComponentElements =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 28) : 0;
-				maxp->maxComponentDepth =
-				    maxp->version == 0x00010000 ? caryll_blt16u(data + 30) : 0;
+				if (maxp->version == 0x00010000) { // TrueType Format 1
+					maxp->maxPoints = caryll_blt16u(data + 6);
+					maxp->maxContours = caryll_blt16u(data + 8);
+					maxp->maxCompositePoints = caryll_blt16u(data + 10);
+					maxp->maxCompositeContours = caryll_blt16u(data + 12);
+					maxp->maxZones = caryll_blt16u(data + 14);
+					maxp->maxTwilightPoints = caryll_blt16u(data + 16);
+					maxp->maxStorage = caryll_blt16u(data + 18);
+					maxp->maxFunctionDefs = caryll_blt16u(data + 20);
+					maxp->maxInstructionDefs = caryll_blt16u(data + 22);
+					maxp->maxStackElements = caryll_blt16u(data + 24);
+					maxp->maxSizeOfInstructions = caryll_blt16u(data + 26);
+					maxp->maxComponentElements = caryll_blt16u(data + 28);
+					maxp->maxComponentDepth = caryll_blt16u(data + 30);
+				} else { // CFF OTF Format 0.5
+					maxp->maxPoints = 0;
+					maxp->maxContours = 0;
+					maxp->maxCompositePoints = 0;
+					maxp->maxCompositeContours = 0;
+					maxp->maxZones = 0;
+					maxp->maxTwilightPoints = 0;
+					maxp->maxStorage = 0;
+					maxp->maxFunctionDefs = 0;
+					maxp->maxInstructionDefs = 0;
+					maxp->maxStackElements = 0;
+					maxp->maxSizeOfInstructions = 0;
+					maxp->maxComponentElements = 0;
+					maxp->maxComponentDepth = 0;
+				}
 				font->maxp = maxp;
 			}
 		}
@@ -131,28 +134,21 @@ void caryll_read_hmtx(caryll_font *font, caryll_packet packet) {
 				if (font->hhea->numberOfMetrics == 0)
 					font->hmtx = NULL;
 				else {
-					table_hmtx *hmtx =
-					    (table_hmtx *)malloc(sizeof(table_hmtx) * 1);
+					table_hmtx *hmtx = (table_hmtx *)malloc(sizeof(table_hmtx) * 1);
 
 					uint32_t count_a = font->hhea->numberOfMetrics;
-					uint32_t count_k =
-					    font->maxp->numGlyphs - font->hhea->numberOfMetrics;
+					uint32_t count_k = font->maxp->numGlyphs - font->hhea->numberOfMetrics;
 
-					hmtx->metrics = (horizontal_metric *)malloc(
-					    sizeof(horizontal_metric) * count_a);
-					hmtx->leftSideBearing =
-					    (int16_t *)malloc(sizeof(int16_t) * count_k);
+					hmtx->metrics = (horizontal_metric *)malloc(sizeof(horizontal_metric) * count_a);
+					hmtx->leftSideBearing = (int16_t *)malloc(sizeof(int16_t) * count_k);
 
 					for (uint32_t ia = 0; ia < count_a; ia++) {
-						hmtx->metrics[ia].advanceWidth =
-						    caryll_blt16u(data + ia * 4);
-						hmtx->metrics[ia].lsb =
-						    caryll_blt16u(data + ia * 4 + 2);
+						hmtx->metrics[ia].advanceWidth = caryll_blt16u(data + ia * 4);
+						hmtx->metrics[ia].lsb = caryll_blt16u(data + ia * 4 + 2);
 					}
 
 					for (uint32_t ik = 0; ik < count_k; ik++) {
-						hmtx->leftSideBearing[ik] =
-						    caryll_blt16u(data + count_a * 4 + ik * 2);
+						hmtx->leftSideBearing[ik] = caryll_blt16u(data + count_a * 4 + ik * 2);
 					}
 
 					font->hmtx = hmtx;
@@ -193,19 +189,13 @@ void caryll_read_hdmx(caryll_font *font, caryll_packet packet) {
 			hdmx->version = caryll_blt16u(data);
 			hdmx->numRecords = caryll_blt16u(data + 2);
 			hdmx->sizeDeviceRecord = caryll_blt32u(data + 4);
-			hdmx->records = (device_record *)malloc(sizeof(device_record) *
-			                                        hdmx->numRecords);
+			hdmx->records = (device_record *)malloc(sizeof(device_record) * hdmx->numRecords);
 
 			for (uint32_t i = 0; i < hdmx->numRecords; i++) {
-				hdmx->records[i].pixelSize =
-				    *(data + 8 + i * (2 + font->maxp->numGlyphs));
-				hdmx->records[i].maxWidth =
-				    *(data + 8 + i * (2 + font->maxp->numGlyphs) + 1);
-				hdmx->records[i].widths =
-				    (uint8_t *)malloc(sizeof(uint8_t) * font->maxp->numGlyphs);
-				memcpy(hdmx->records[i].widths,
-				       data + 8 + i * (2 + font->maxp->numGlyphs) + 2,
-				       font->maxp->numGlyphs);
+				hdmx->records[i].pixelSize = *(data + 8 + i * (2 + font->maxp->numGlyphs));
+				hdmx->records[i].maxWidth = *(data + 8 + i * (2 + font->maxp->numGlyphs) + 1);
+				hdmx->records[i].widths = (uint8_t *)malloc(sizeof(uint8_t) * font->maxp->numGlyphs);
+				memcpy(hdmx->records[i].widths, data + 8 + i * (2 + font->maxp->numGlyphs) + 2, font->maxp->numGlyphs);
 			}
 
 			font->hdmx = hdmx;
@@ -313,21 +303,15 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 }
 
 void caryll_font_close(caryll_font *font) {
-	if (font->head != NULL)
-		free(font->head);
-	if (font->hhea != NULL)
-		free(font->hhea);
-	if (font->maxp != NULL)
-		free(font->maxp);
+	if (font->head != NULL) free(font->head);
+	if (font->hhea != NULL) free(font->hhea);
+	if (font->maxp != NULL) free(font->maxp);
 	if (font->hmtx != NULL) {
-		if (font->hmtx->metrics != NULL)
-			free(font->hmtx->metrics);
-		if (font->hmtx->leftSideBearing != NULL)
-			free(font->hmtx->leftSideBearing);
+		if (font->hmtx->metrics != NULL) free(font->hmtx->metrics);
+		if (font->hmtx->leftSideBearing != NULL) free(font->hmtx->leftSideBearing);
 		free(font->hmtx);
 	}
-	if (font->post != NULL)
-		free(font->post);
+	if (font->post != NULL) free(font->post);
 	if (font->hdmx != NULL) {
 		if (font->hdmx->records != NULL) {
 			for (uint32_t i = 0; i < font->hdmx->numRecords; i++) {
@@ -339,6 +323,5 @@ void caryll_font_close(caryll_font *font) {
 		}
 		free(font->hdmx);
 	}
-	if (font != NULL)
-		free(font);
+	if (font != NULL) free(font);
 }
