@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include "caryll-font.h"
+
 
 typedef struct {
 	// Maximum profile
@@ -20,3 +22,5 @@ typedef struct {
 	uint16_t maxComponentElements;
 	uint16_t maxComponentDepth;
 } table_maxp;
+
+void caryll_read_maxp(caryll_font *font, caryll_packet packet);

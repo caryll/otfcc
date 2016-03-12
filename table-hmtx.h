@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "caryll-font.h"
 
 typedef struct {
 	uint16_t advanceWidth;
@@ -12,3 +13,5 @@ typedef struct {
 	horizontal_metric *metrics;
 	int16_t *leftSideBearing;
 } table_hmtx;
+
+void caryll_read_hmtx(caryll_font *font, caryll_packet packet);

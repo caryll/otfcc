@@ -1,5 +1,7 @@
 #pragma once
 
+typedef struct _caryll_font caryll_font;
+
 #include "table-head.h"
 #include "table-hhea.h"
 #include "table-maxp.h"
@@ -12,7 +14,7 @@
 #include "table-vhea.h"
 #include "table-vmtx.h"
 
-typedef struct {
+struct _caryll_font {
 	table_head *head;
 	table_hhea *hhea;
 	table_maxp *maxp;
@@ -23,7 +25,7 @@ typedef struct {
 	table_PCLT *PCLT;
 	table_vhea *vhea;
 	table_vmtx *vmtx;
-} caryll_font;
+};
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
 void caryll_font_close(caryll_font *font);

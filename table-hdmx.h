@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "caryll-font.h"
 
 typedef struct {
 	uint8_t pixelSize;
@@ -15,3 +16,5 @@ typedef struct {
 	int32_t sizeDeviceRecord;
 	device_record *records;
 } table_hdmx;
+
+void caryll_read_hdmx(caryll_font *font, caryll_packet packet);

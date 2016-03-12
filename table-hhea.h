@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "caryll-font.h"
 
 typedef struct {
 	// Horizontal header
@@ -19,3 +20,5 @@ typedef struct {
 	int16_t metricDataFormat;
 	uint16_t numberOfMetrics;
 } table_hhea;
+
+void caryll_read_hhea(caryll_font *font, caryll_packet packet);

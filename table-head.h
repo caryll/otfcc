@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "caryll-font.h"
 
 typedef struct {
 	// Font header
@@ -22,3 +23,5 @@ typedef struct {
 	int16_t indexToLocFormat;
 	int16_t glyphDataFormat;
 } table_head;
+
+void caryll_read_head(caryll_font *font, caryll_packet packet);

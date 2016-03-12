@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "caryll-font.h"
 
 typedef struct {
 	uint32_t version;
@@ -19,3 +20,5 @@ typedef struct {
 	uint8_t SerifStyle;
 	uint8_t pad;
 } table_PCLT;
+
+void caryll_read_PCLT(caryll_font *font, caryll_packet packet);
