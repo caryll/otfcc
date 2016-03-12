@@ -1,6 +1,12 @@
 CC = clang
 LINK = clang
-CCOPTIONS = -O3
+
+ifeq ($(VERSION), debug)
+CFLAGS = -g -Ddebug
+else
+CFLAGS = -O3
+endif
+
 all : objects
 
 ifdef SystemRoot # win32 + tdm-gcc
@@ -14,15 +20,20 @@ OBJFILES = build/caryll-font.o build/caryll-io.o build/caryll-sfnt.o
 EXTOBJS = build/parson.o
 
 $(OBJFILES) : build/%.o : %.c | build
-	$(CC) $(CCOPTIONS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(EXTOBJS) : build/%.o : extern/%.c | build
-	$(CC) $(CCOPTIONS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $^ -o $@
 	
 build/test-head.o : test-head.c | build
-	$(CC) $(CCOPTIONS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 build/test-head$(SUFFIX) : build/test-head.o $(OBJFILES) $(EXTOBJS)
-	$(LINK) $(CCOPTIONS) $^ -o $@
+	$(LINK) $^ -o $@
 
 objects: $(OBJFILES) $(EXTOBJS) build/test-head$(SUFFIX)
+
+debug:
+	make VERSION=debug
+release:
+	make VERSION=release

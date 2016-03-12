@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-static inline _Bool caryll_check_endian(void) {
+static _Bool caryll_check_endian(void) {
 	union {
 		uint8_t i1[2];
 		uint16_t i2;
@@ -11,7 +11,7 @@ static inline _Bool caryll_check_endian(void) {
 	return (check_union.i1[0] == 1);
 }
 
-inline uint16_t caryll_endian_convert16(uint16_t i) {
+uint16_t caryll_endian_convert16(uint16_t i) {
 	if (caryll_check_endian()) {
 		union {
 			uint8_t i1[2];
@@ -29,7 +29,7 @@ inline uint16_t caryll_endian_convert16(uint16_t i) {
 	}
 }
 
-inline uint32_t caryll_endian_convert32(uint32_t i) {
+uint32_t caryll_endian_convert32(uint32_t i) {
 	if (caryll_check_endian()) {
 		union {
 			uint8_t i1[4];
@@ -49,7 +49,7 @@ inline uint32_t caryll_endian_convert32(uint32_t i) {
 	}
 }
 
-inline uint64_t caryll_endian_convert64(uint64_t i) {
+uint64_t caryll_endian_convert64(uint64_t i) {
 	if (caryll_check_endian()) {
 		union {
 			uint8_t i1[8];
