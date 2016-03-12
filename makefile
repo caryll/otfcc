@@ -1,5 +1,5 @@
-CC = gcc
-LINK = gcc
+CC = clang
+LINK = clang
 CCOPTIONS = -O3
 all : objects
 

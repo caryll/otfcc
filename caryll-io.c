@@ -52,7 +52,7 @@ inline uint32_t caryll_endian_convert32(uint32_t i) {
 inline uint64_t caryll_endian_convert64(uint64_t i) {
 	if (caryll_check_endian()) {
 		union {
-			uint8_t i1[4];
+			uint8_t i1[8];
 			uint64_t i8;
 		} src, des;
 
