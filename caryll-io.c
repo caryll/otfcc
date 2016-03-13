@@ -120,3 +120,7 @@ uint64_t caryll_blt64u(uint8_t *src) {
 
 	return (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
 }
+
+float caryll_from_f2dot14(int16_t x){
+	return x / 16384.0;
+}

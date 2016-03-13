@@ -6,6 +6,14 @@
 #include "caryll-font.h"
 #include "caryll-io.h"
 
+void caryll_font_consolidate_read(caryll_font *font) {
+	// Merge hmtx table into glyf.
+	uint32_t count_a = font->hhea->numberOfMetrics;
+	for(uint16_t j = 0; j < font->glyf->numberGlyphs; j++){
+		font->glyf->glyphs[j].advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+	}
+}
+
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 	if (sfnt->count - 1 < index)
 		return NULL;
@@ -19,6 +27,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		font->hmtx = NULL;
 		font->post = NULL;
 		font->hdmx = NULL;
+		font->glyf = NULL;
 
 		caryll_read_head(font, packet);
 		caryll_read_hhea(font, packet);
@@ -27,12 +36,31 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		caryll_read_hmtx(font, packet);
 		caryll_read_post(font, packet);
 		caryll_read_hdmx(font, packet);
+		caryll_read_glyf(font, packet);
+
+		caryll_font_consolidate_read(font);
 
 		return font;
 	}
 }
 
 void caryll_font_close(caryll_font *font) {
+	if (font->glyf != NULL) {
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			glyf_glyph g = font->glyf->glyphs[j];
+			if (g.numberOfContours > 0) {
+				for (uint16_t k = 0; k < g.numberOfContours; k++) {
+					free(g.content.contours[k].points);
+				}
+				free(g.content.contours);
+			} else if (g.numberOfReferences > 0) {
+				free(g.content.references);
+			}
+			if (g.instructions != NULL) { free(g.instructions); }
+		}
+		free(font->glyf->glyphs);
+		free(font->glyf);
+	}
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);
 	if (font->maxp != NULL) free(font->maxp);
@@ -46,9 +74,7 @@ void caryll_font_close(caryll_font *font) {
 	if (font->hdmx != NULL) {
 		if (font->hdmx->records != NULL) {
 			for (uint32_t i = 0; i < font->hdmx->numRecords; i++) {
-				if (font->hdmx->records[i].widths != NULL)
-					;
-				free(font->hdmx->records[i].widths);
+				if (font->hdmx->records[i].widths != NULL) free(font->hdmx->records[i].widths);
 			}
 			free(font->hdmx->records);
 		}
