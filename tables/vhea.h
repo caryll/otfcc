@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_VHEA_H
+#define CARYLL_TABLES_VHEA_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -22,3 +23,5 @@ typedef struct {
 } table_vhea;
 
 void caryll_read_vhea(caryll_font *font, caryll_packet packet);
+
+#endif

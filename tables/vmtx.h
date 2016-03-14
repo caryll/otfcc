@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_VMTX_H
+#define CARYLL_TABLES_VMTX_H
 
 #include <stdint.h>
 
@@ -11,3 +12,5 @@ typedef struct {
 	vertical_metric *vmetrics;
 	uint16_t *topSideBearing;
 } table_vmtx;
+
+#endif

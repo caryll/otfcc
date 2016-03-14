@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_GLYF_H
+#define CARYLL_TABLES_GLYF_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -65,3 +66,5 @@ typedef struct {
 
 glyf_glyph emptyGlyph();
 void caryll_read_glyf(caryll_font *font, caryll_packet packet);
+
+#endif

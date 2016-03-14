@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_POST_H
+#define CARYLL_TABLES_POST_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -17,3 +18,5 @@ typedef struct {
 } table_post;
 
 void caryll_read_post(caryll_font *font, caryll_packet packet);
+
+#endif

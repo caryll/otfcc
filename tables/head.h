@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_HEAD_H
+#define CARYLL_TABLES_HEAD_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -25,3 +26,5 @@ typedef struct {
 } table_head;
 
 void caryll_read_head(caryll_font *font, caryll_packet packet);
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_MAXP_H
+#define CARYLL_TABLES_MAXP_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -23,3 +24,5 @@ typedef struct {
 } table_maxp;
 
 void caryll_read_maxp(caryll_font *font, caryll_packet packet);
+
+#endif

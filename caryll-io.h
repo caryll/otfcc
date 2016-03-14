@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CARYLL_IO_H
+#define CARYLL_IO_H
+
 
 #include <stdio.h>
 #include <stdint.h>
@@ -13,3 +15,5 @@ uint32_t caryll_get32u(FILE *file);
 uint64_t caryll_get64u(FILE *file);
 
 float caryll_from_f2dot14(int16_t x);
+
+#endif

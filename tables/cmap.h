@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_CMAP_H
+#define CARYLL_TABLES_CMAP_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -13,3 +14,5 @@ typedef struct {
 typedef cmap_entry *cmap_hash;
 
 void caryll_read_cmap(caryll_font *font, caryll_packet packet);
+
+#endif

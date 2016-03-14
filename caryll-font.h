@@ -1,4 +1,4 @@
-#pragma once
+#ifndef CARYLL_FONT_H
 
 #include "caryll-sfnt.h"
 
@@ -9,8 +9,7 @@
 	foreach (caryll_piece table, packet.pieces, packet.numTables)                                                      \
 		if (table.tag == name)
 
-#ifndef CARYLL_FONT_INCLUDED
-#define CARYLL_FONT_INCLUDED
+#define CARYLL_FONT_H
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_font;

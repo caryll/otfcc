@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CARYLL_TABLES_PCLT_H
+#define CARYLL_TABLES_PCLT_H
+
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -22,3 +24,5 @@ typedef struct {
 } table_PCLT;
 
 void caryll_read_PCLT(caryll_font *font, caryll_packet packet);
+
+#endif

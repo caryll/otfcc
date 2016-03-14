@@ -1,4 +1,6 @@
-#pragma once
+#ifndef CARYLL_SFNT_H
+#define CARYLL_SFNT_H
+
 
 #include <stdint.h>
 
@@ -28,3 +30,5 @@ typedef struct {
 
 caryll_sfnt *caryll_sfnt_open(const char *path);
 void caryll_sfnt_close(caryll_sfnt *font);
+
+#endif

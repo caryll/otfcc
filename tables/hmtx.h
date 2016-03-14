@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_HMTX_H
+#define CARYLL_TABLES_HMTX_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -15,3 +16,5 @@ typedef struct {
 } table_hmtx;
 
 void caryll_read_hmtx(caryll_font *font, caryll_packet packet);
+
+#endif

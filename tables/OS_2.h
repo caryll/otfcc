@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CARYLL_TABLES_OS_2_H
+#define CARYLL_TABLES_OS_2_H
 
 #include <stdint.h>
 #include "../caryll-font.h"
@@ -46,3 +47,5 @@ typedef struct {
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
 void caryll_read_OS_2(caryll_font *font, caryll_packet packet);
+
+#endif
