@@ -9,7 +9,7 @@
 void caryll_read_head(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'head') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 			uint32_t length = packet.pieces[i].length;
 
 			if (length < 54) {

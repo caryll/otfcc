@@ -9,7 +9,7 @@
 void caryll_read_maxp(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'maxp') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 			uint32_t length = packet.pieces[i].length;
 
 			if (length != 32 && length != 6) {

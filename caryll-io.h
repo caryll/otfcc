@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+typedef uint8_t *font_file_pointer;
+
 uint16_t caryll_blt16u(uint8_t *src);
 uint32_t caryll_blt32u(uint8_t *src);
 uint64_t caryll_blt64u(uint8_t *src);

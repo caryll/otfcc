@@ -9,7 +9,7 @@
 void caryll_read_post(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'post') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 
 			table_post *post = (table_post *)malloc(sizeof(table_post) * 1);
 			post->version = caryll_blt32u(data);

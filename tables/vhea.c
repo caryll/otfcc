@@ -9,7 +9,7 @@
 void caryll_read_vhea(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'vhea') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 
 			table_vhea *vhea = (table_vhea *)malloc(sizeof(table_vhea) * 1);
 			vhea->version = caryll_blt32u(data);

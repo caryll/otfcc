@@ -9,7 +9,7 @@
 void caryll_read_PCLT(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'PCLT') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 
 			table_PCLT *PCLT = (table_PCLT *)malloc(sizeof(table_PCLT) * 1);
 			PCLT->version = caryll_blt32u(data);

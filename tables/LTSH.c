@@ -9,7 +9,7 @@
 void caryll_read_LTSH(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'LTSH') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 
 			table_LTSH *LTSH = (table_LTSH *)malloc(sizeof(table_LTSH) * 1);
 			LTSH->version = caryll_blt16u(data);

@@ -7,7 +7,7 @@
 #include "../caryll-font.h"
 #include "../caryll-io.h"
 
-glyf_glyph caryll_read_simple_glyph(uint8_t *start, uint16_t numberOfContours) {
+glyf_glyph caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
 	glyf_glyph glyph;
 	glyph.numberOfContours = numberOfContours;
 	glyph.numberOfReferences = 0;
@@ -24,7 +24,7 @@ glyf_glyph caryll_read_simple_glyph(uint8_t *start, uint16_t numberOfContours) {
 	uint16_t instructionLength = caryll_blt16u(start + 2 * numberOfContours);
 	uint8_t *instructions = NULL;
 	if (instructionLength > 0) {
-		instructions = (uint8_t *)malloc(sizeof(uint8_t) * instructionLength);
+		instructions = (font_file_pointer )malloc(sizeof(uint8_t) * instructionLength);
 		memcpy(instructions, start + 2 * numberOfContours + 2, sizeof(uint8_t) * instructionLength);
 	}
 	glyph.instructionsLength = instructionLength;
@@ -33,8 +33,8 @@ glyf_glyph caryll_read_simple_glyph(uint8_t *start, uint16_t numberOfContours) {
 	// read points
 	uint16_t pointsInGlyph = lastPointIndex;
 	// There are repeating entries in the flags list, we will fill out the result
-	uint8_t *flags = (uint8_t *)malloc(sizeof(uint8_t) * pointsInGlyph);
-	uint8_t *flagStart = start + 2 * numberOfContours + 2 + instructionLength;
+	font_file_pointer flags = (uint8_t *)malloc(sizeof(uint8_t) * pointsInGlyph);
+	font_file_pointer flagStart = start + 2 * numberOfContours + 2 + instructionLength;
 	uint16_t flagsReadSofar = 0;
 	uint16_t flagBytesReadSofar = 0;
 
@@ -66,7 +66,7 @@ glyf_glyph caryll_read_simple_glyph(uint8_t *start, uint16_t numberOfContours) {
 	}
 
 	// read X coordinates
-	uint8_t *coordinatesStart = flagStart + flagBytesReadSofar;
+	font_file_pointer coordinatesStart = flagStart + flagBytesReadSofar;
 	uint8_t coordinatesOffset = 0;
 	uint16_t coordinatesRead = 0;
 	currentContour = 0;
@@ -133,7 +133,7 @@ glyf_glyph caryll_read_simple_glyph(uint8_t *start, uint16_t numberOfContours) {
 	return glyph;
 }
 
-glyf_glyph caryll_read_composite_glyph(uint8_t *start) {
+glyf_glyph caryll_read_composite_glyph(font_file_pointer start) {
 	glyf_glyph glyph;
 	glyph.numberOfContours = 0;
 	// pass 1, read references quantity
@@ -208,9 +208,9 @@ glyf_glyph caryll_read_composite_glyph(uint8_t *start) {
 	}
 	if (glyphHasInstruction) {
 		uint16_t instructionLength = caryll_blt16u(start + offset);
-		uint8_t *instructions = NULL;
+		font_file_pointer instructions = NULL;
 		if (instructionLength > 0) {
-			instructions = (uint8_t *)malloc(sizeof(uint8_t) * instructionLength);
+			instructions = (font_file_pointer )malloc(sizeof(uint8_t) * instructionLength);
 			memcpy(instructions, start + offset + 2, sizeof(uint8_t) * instructionLength);
 		}
 		glyph.instructionsLength = instructionLength;
@@ -223,8 +223,8 @@ glyf_glyph caryll_read_composite_glyph(uint8_t *start) {
 	return glyph;
 }
 
-glyf_glyph caryll_read_glyph(uint8_t *data, uint32_t offset) {
-	uint8_t *start = data + offset;
+glyf_glyph caryll_read_glyph(font_file_pointer data, uint32_t offset) {
+	font_file_pointer start = data + offset;
 	int16_t numberOfContours = caryll_blt16u(start);
 	if (numberOfContours > 0) {
 		return caryll_read_simple_glyph(start + 10, numberOfContours);
@@ -253,7 +253,7 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	// read loca
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'loca') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 			// uint32_t length = packet.pieces[i].length;
 			for (uint32_t j = 0; j < numGlyphs; j++) {
 				if (locaIsLong) {
@@ -266,7 +266,7 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	}
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'glyf') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 			uint32_t length = packet.pieces[i].length;
 			font->glyf = (table_glyf *)malloc(sizeof(table_glyf) * 1);
 			font->glyf->numberGlyphs = numGlyphs;

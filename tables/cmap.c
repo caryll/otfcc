@@ -18,13 +18,13 @@ void encode(cmap_hash *map, int c, uint16_t gid) {
 	}
 }
 
-void caryll_read_format_4(uint8_t *start, cmap_hash *map) {
+void caryll_read_format_4(font_file_pointer start, cmap_hash *map) {
 	uint16_t segmentsCount = caryll_blt16u(start + 6) / 2;
 	for (uint16_t j = 0; j < segmentsCount; j++) {
 		uint16_t endCode = caryll_blt16u(start + 14 + j * 2);
 		uint16_t startCode = caryll_blt16u(start + 14 + segmentsCount * 2 + 2 + j * 2);
 		int16_t idDelta = caryll_blt16u(start + 14 + segmentsCount * 4 + 2 + j * 2);
-		uint8_t *idRangeOffsetOffset = start + 14 + segmentsCount * 6 + 2 + j * 2;
+		font_file_pointer idRangeOffsetOffset = start + 14 + segmentsCount * 6 + 2 + j * 2;
 		uint16_t idRangeOffset = caryll_blt16u(idRangeOffsetOffset);
 		if (startCode < 0xFFFF) {
 			if (idRangeOffset == 0) {
@@ -43,7 +43,7 @@ void caryll_read_format_4(uint8_t *start, cmap_hash *map) {
 	}
 }
 
-void caryll_read_mapping_table(uint8_t *start, cmap_hash *map) {
+void caryll_read_mapping_table(font_file_pointer start, cmap_hash *map) {
 	uint16_t format = caryll_blt16u(start);
 	if (format == 4) { caryll_read_format_4(start, map); }
 }
@@ -56,7 +56,7 @@ int by_unicode(cmap_entry *a, cmap_entry *b) {
 void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
 	for (uint32_t i = 0; i < packet.numTables; i++) {
 		if (packet.pieces[i].tag == 'cmap') {
-			uint8_t *data = packet.pieces[i].data;
+			font_file_pointer data = packet.pieces[i].data;
 			// uint32_t length = packet.pieces[i].length;
 			cmap_hash *map = malloc(sizeof(cmap_hash));
 			*map = NULL;
