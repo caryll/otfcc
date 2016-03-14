@@ -14,17 +14,19 @@ int main(int argc, char *argv[]) {
 
 	int nChecks = 0;
 
-	assert_equal("head.version", font->head->version, 0x10000);
-	assert_equal("OS/2.version", font->OS_2->version, 0x0004);
-	assert_equal("OS/2.ulUnicodeRange2", font->OS_2->ulUnicodeRange2, 0x2adf3c10);
-
-	assert_equal("Glyph count", font->glyf->numberGlyphs, 15);
-	assert_equal("glyf[14] contour count", font->glyf->glyphs[14].numberOfContours, 2);
-	assert_equal("glyf[14] instr length", font->glyf->glyphs[14].instructionsLength, 281);
-	assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14].content.contours[0].pointsCount, (11 - 0 + 1));
-	assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14].content.contours[1].pointsCount, (56 - 12 + 1));
-
-	{ // CMAP
+	{ // Simple fields
+		assert_equal("head.version", font->head->version, 0x10000);
+		assert_equal("OS/2.version", font->OS_2->version, 0x0004);
+		assert_equal("OS/2.ulUnicodeRange2", font->OS_2->ulUnicodeRange2, 0x2adf3c10);
+	}
+	{ // glyf
+		assert_equal("Glyph count", font->glyf->numberGlyphs, 15);
+		assert_equal("glyf[14] contour count", font->glyf->glyphs[14].numberOfContours, 2);
+		assert_equal("glyf[14] instr length", font->glyf->glyphs[14].instructionsLength, 281);
+		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14].content.contours[0].pointsCount, (11 - 0 + 1));
+		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14].content.contours[1].pointsCount, (56 - 12 + 1));
+	}
+	{ // cmap (flatten)
 		cmap_entry *s;
 		int testindex = 0x888B;
 		HASH_FIND_INT(*(font->cmap), &testindex, s);
