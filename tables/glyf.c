@@ -281,9 +281,9 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
 		for (uint16_t j = 0; j < numGlyphs; j++) {
-			if (offsets[j] < offsets[j + 1]) {
+			if (offsets[j] < offsets[j + 1]) { // non-space glyph
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
-			} else {
+			} else { // space glyph
 				glyf->glyphs[j] = spaceGlyph();
 			}
 		}
