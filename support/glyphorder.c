@@ -27,9 +27,9 @@ void caryll_name_glyphs(caryll_font *font) {
 	*glyph_order = NULL;
 
 	uint16_t numGlyphs = font->glyf->numberGlyphs;
-	
+
 	try_name_glyph(glyph_order, 0, sdsnew(".notdef"));
-	
+
 	// pass 3: Map to Unicode
 	if (font->cmap != NULL) {
 		cmap_hash handle = *(font->cmap);
@@ -48,4 +48,15 @@ void caryll_name_glyphs(caryll_font *font) {
 	}
 
 	font->glyph_order = glyph_order;
+}
+void caryll_name_cmap_entries(caryll_font *font) {
+	if (font->glyph_order != NULL && font->cmap != NULL) {
+		cmap_hash handle = *(font->cmap);
+		cmap_hash s, _tmp;
+		HASH_ITER(hh, handle, s, _tmp) {
+			glyph_order_entry *so;
+			HASH_FIND_INT(*font->glyph_order, &s->gid, so);
+			if (so != NULL) { s->name = so->name; }
+		}
+	}
 }

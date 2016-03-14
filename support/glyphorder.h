@@ -14,5 +14,6 @@ typedef struct {
 typedef glyph_order_entry *glyph_order_hash;
 
 void caryll_name_glyphs(caryll_font *font);
+void caryll_name_cmap_entries(caryll_font *font);
 
 #endif

@@ -6,6 +6,10 @@
 #include "caryll-font.h"
 #include "caryll-io.h"
 
+// Unconsolidation: Remove redundent data and de-couple internal data
+// It does these things:
+//   1. Merge hmtx data into glyf
+//   2. Replace all glyph IDs into glyph names
 void caryll_font_unconsolidate(caryll_font *font) {
 	// Merge hmtx table into glyf.
 	uint32_t count_a = font->hhea->numberOfMetrics;
@@ -14,6 +18,7 @@ void caryll_font_unconsolidate(caryll_font *font) {
 	}
 	// Name glyphs
 	caryll_name_glyphs(font);
+	caryll_name_cmap_entries(font);
 }
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
@@ -70,6 +75,7 @@ void caryll_font_close(caryll_font *font) {
 		cmap_entry *s, *tmp;
 		HASH_ITER(hh, *(font->cmap), s, tmp) {
 			// delete and free all cmap entries
+			s->name = NULL;
 			HASH_DEL(*(font->cmap), s);
 			free(s);
 		}

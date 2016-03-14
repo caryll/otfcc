@@ -14,6 +14,7 @@ void encode(cmap_hash *map, int c, uint16_t gid) {
 		s = malloc(sizeof(cmap_entry));
 		s->gid = gid;
 		s->unicode = c;
+		s->name = NULL;
 		HASH_ADD_INT(*map, unicode, s);
 	}
 }
