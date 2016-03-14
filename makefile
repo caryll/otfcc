@@ -42,6 +42,16 @@ build/test-head$(SUFFIX) : build/test-head.o $(OBJECTS)
 
 objects: build/test-head$(SUFFIX)
 
+TESTFILES = build/test-payload-1$(SUFFIX)
+build/test-payload-1.o : tests/test-payload-1.c | build
+	$(CC) $(CFLAGS) -c $^ -o $@
+build/test-payload-1$(SUFFIX) : build/test-payload-1.o $(OBJECTS)
+	$(LINK) $^ -o $@
+
+test: $(TESTFILES)
+	@echo "====== Start Test ======"
+	@build/test-payload-1$(SUFFIX) tests/payload/test-out.ttf
+
 debug:
 	make VERSION=debug
 release:
