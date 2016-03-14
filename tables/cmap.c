@@ -56,18 +56,16 @@ int by_unicode(cmap_entry *a, cmap_entry *b) {
 void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
 	FOR_TABLE('cmap', table) {
 		font_file_pointer data = table.data;
+		// the map is a reference to a hash table
 		cmap_hash *map = malloc(sizeof(cmap_hash));
-		*map = NULL;
+		*map = NULL; // intialize to empty hashtable
 
 		// uint16_t version = caryll_blt16u(data);
 		uint16_t numTables = caryll_blt16u(data + 2);
-		bool foundUnicode = false;
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
 			uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
 			if (platform == 0 || (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
-				// we care about Unicode mappings only
-				foundUnicode = true;
 				uint32_t tableOffset = caryll_blt32u(data + 4 + 8 * j + 4);
 				caryll_read_mapping_table(data + tableOffset, map);
 			}
