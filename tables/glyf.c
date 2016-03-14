@@ -233,7 +233,7 @@ glyf_glyph caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	}
 }
 
-glyf_glyph emptyGlyph() {
+glyf_glyph spaceGlyph() {
 	glyf_glyph g;
 	g.numberOfContours = 0;
 	g.numberOfReferences = 0;
@@ -251,20 +251,21 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 
 	uint16_t locaIsLong = font->head->indexToLocFormat;
 	uint16_t numGlyphs = font->maxp->numGlyphs;
-	offsets = (uint32_t *)malloc(sizeof(uint32_t) * numGlyphs);
+	offsets = (uint32_t *)malloc(sizeof(uint32_t) * (numGlyphs + 1));
 	bool foundLoca = false;
 
 	// read loca
 	FOR_TABLE('loca', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		if (length < 2 * numGlyphs) goto LOCA_CORRUPTED;
-		for (uint32_t j = 0; j < numGlyphs; j++) {
+		if (length < 2 * numGlyphs + 2) goto LOCA_CORRUPTED;
+		for (uint32_t j = 0; j < numGlyphs + 1; j++) {
 			if (locaIsLong) {
 				offsets[j] = caryll_blt32u(data + j * 4);
 			} else {
-				offsets[j] = caryll_blt16u(data + j * 2);
+				offsets[j] = caryll_blt16u(data + j * 2) * 2;
 			}
+			if (j > 0 && offsets[j] < offsets[j - 1]) goto LOCA_CORRUPTED;
 		}
 		foundLoca = true;
 	}
@@ -274,14 +275,16 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	FOR_TABLE('glyf', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
+		if(length < offsets[numGlyphs]) goto GLYF_CORRUPTED;
+		
 		glyf = (table_glyf *)malloc(sizeof(table_glyf) * 1);
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
 		for (uint16_t j = 0; j < numGlyphs; j++) {
-			if (length - offsets[j] > 5) {
+			if (offsets[j] < offsets[j + 1]) {
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
 			} else {
-				glyf->glyphs[j] = emptyGlyph();
+				glyf->glyphs[j] = spaceGlyph();
 			}
 		}
 		font->glyf = glyf;
@@ -292,4 +295,7 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 LOCA_CORRUPTED:
 	printf("table 'loca' corrupted.\n");
 	if (offsets) free(offsets);
+GLYF_CORRUPTED:
+	printf("table 'glyf' corrupted.\n");
+	if (glyf) free(glyf);
 }

@@ -11,6 +11,7 @@
 
 #define DUMP_CMAP 0
 #define DUMP_GLYF 1
+#define DUMP_GLYF_POINTS 0
 
 int main(int argc, char *argv[]) {
 	caryll_sfnt *sfnt = caryll_sfnt_open(argv[1]);
@@ -31,7 +32,7 @@ int main(int argc, char *argv[]) {
 			if (g.numberOfContours > 0) {
 				for (uint16_t k = 0; k < g.numberOfContours; k++) {
 					printf("    CONTOUR %3d : %5d points\n", k, g.content.contours[k].pointsCount);
-					for (uint16_t m = 0; m < g.content.contours[k].pointsCount; m++) {
+					if(DUMP_GLYF_POINTS) for (uint16_t m = 0; m < g.content.contours[k].pointsCount; m++) {
 						printf("        %s (%5d, %5d)\n", g.content.contours[k].points[m].onCurve ? "ON " : "OFF",
 						       g.content.contours[k].points[m].x, g.content.contours[k].points[m].y);
 					}
