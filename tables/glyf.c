@@ -245,11 +245,11 @@ glyf_glyph emptyGlyph() {
 }
 
 void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
-	if (font->head == NULL || font->maxp == NULL) { return; }
+	if (font->head == NULL || font->maxp == NULL) return;
 	uint16_t locaIsLong = font->head->indexToLocFormat;
 	uint16_t numGlyphs = font->maxp->numGlyphs;
 	uint32_t *offsets = (uint32_t *)malloc(sizeof(uint32_t) * numGlyphs);
-
+	bool foundLoca = false;
 	// read loca
 	FOR_TABLE('loca', table) {
 		font_file_pointer data = table.data;
@@ -261,6 +261,11 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 				offsets[j] = caryll_blt16u(data + j * 2);
 			}
 		}
+		foundLoca = true;
+	}
+	if (!foundLoca) {
+		free(offsets);
+		return;
 	}
 	FOR_TABLE('glyf', table) {
 		font_file_pointer data = table.data;
