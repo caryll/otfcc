@@ -21,9 +21,10 @@ OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-hmtx.o build/table-post.o build/table-hdmx.o \
 	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
 	build/table-OS_2.o build/table-glyf.o build/table-cmap.o
-EXTOBJS = build/parson.o
+EXTOBJS = build/parson.o build/sds.o
+SUPPORTOBJS = build/glyphorder.o
 
-OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS)
+OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS) $(SUPPORTOBJS)
 
 $(OBJTABLES) : build/table-%.o : tables/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -32,6 +33,9 @@ $(OBJOTFCCMAIN) : build/%.o : %.c $(OBJTABLES) | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXTOBJS) : build/%.o : extern/%.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(SUPPORTOBJS) : build/%.o : support/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 build/test-head.o : test-head.c | build
@@ -43,9 +47,9 @@ build/test-head$(SUFFIX) : build/test-head.o $(OBJECTS)
 objects: build/test-head$(SUFFIX)
 
 TESTFILES = build/test-payload-1$(SUFFIX)
-build/test-payload-1.o : tests/test-payload-1.c | build
+build/%.o : tests/%.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
-build/test-payload-1$(SUFFIX) : build/test-payload-1.o $(OBJECTS)
+build/%$(SUFFIX) : build/%.o $(OBJECTS)
 	$(LINK) $^ -o $@
 
 test: $(TESTFILES)

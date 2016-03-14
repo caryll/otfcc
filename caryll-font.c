@@ -6,12 +6,14 @@
 #include "caryll-font.h"
 #include "caryll-io.h"
 
-void caryll_font_consolidate_read(caryll_font *font) {
+void caryll_font_unconsolidate(caryll_font *font) {
 	// Merge hmtx table into glyf.
 	uint32_t count_a = font->hhea->numberOfMetrics;
-	for(uint16_t j = 0; j < font->glyf->numberGlyphs; j++){
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		font->glyf->glyphs[j].advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 	}
+	// Name glyphs
+	caryll_name_glyphs(font);
 }
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
@@ -29,6 +31,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		font->hdmx = NULL;
 		font->glyf = NULL;
 		font->cmap = NULL;
+		font->glyph_order = NULL;
 
 		caryll_read_head(font, packet);
 		caryll_read_hhea(font, packet);
@@ -40,7 +43,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		caryll_read_glyf(font, packet);
 		caryll_read_cmap(font, packet);
 
-		caryll_font_consolidate_read(font);
+		caryll_font_unconsolidate(font);
 
 		return font;
 	}
@@ -63,7 +66,7 @@ void caryll_font_close(caryll_font *font) {
 		free(font->glyf->glyphs);
 		free(font->glyf);
 	}
-	if(font->cmap != NULL){
+	if (font->cmap != NULL) {
 		cmap_entry *s, *tmp;
 		HASH_ITER(hh, *(font->cmap), s, tmp) {
 			// delete and free all cmap entries
@@ -71,6 +74,16 @@ void caryll_font_close(caryll_font *font) {
 			free(s);
 		}
 		free(font->cmap);
+	}
+	if (font->glyph_order != NULL) {
+		glyph_order_entry *s, *tmp;
+		HASH_ITER(hh, *(font->glyph_order), s, tmp) {
+			// delete and free all cmap entries
+			sdsfree(s->name);
+			HASH_DEL(*(font->glyph_order), s);
+			free(s);
+		}
+		free(font->glyph_order);
 	}
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);

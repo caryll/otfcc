@@ -30,6 +30,8 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/glyf.h"
 #include "./tables/cmap.h"
 
+#include "./support/glyphorder.h"
+
 struct _caryll_font {
 	table_head *head;
 	table_hhea *hhea;
@@ -44,6 +46,8 @@ struct _caryll_font {
 	table_vmtx *vmtx;
 	table_glyf *glyf;
 	cmap_hash *cmap;
+	
+	glyph_order_hash *glyph_order;
 };
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);

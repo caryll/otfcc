@@ -8,7 +8,7 @@
 // We will support format 0, 4, 12 of CMAP only
 typedef struct {
 	int unicode;
-	uint16_t glyph;
+	uint16_t gid;
 	UT_hash_handle hh;
 } cmap_entry;
 typedef cmap_entry *cmap_hash;
