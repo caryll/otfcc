@@ -2,12 +2,12 @@
 
 #include "caryll-sfnt.h"
 
-#define foreach(item, array, size)                                                                                     \
-	for (int keep = 1, count = 0; keep && count != size; keep = !keep, count++)                                        \
-		for (item = (array)[count]; keep; keep = !keep)
 #define FOR_TABLE(name, table)                                                                                         \
-	foreach (caryll_piece table, packet.pieces, packet.numTables)                                                      \
-		if (table.tag == name)
+	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
+	     keep = !keep, count++)                                                                                        \
+		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
+			if (table.tag == (name))                                                                                   \
+				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
 #define CARYLL_FONT_H
 
