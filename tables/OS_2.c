@@ -7,23 +7,15 @@
 #include "../caryll-io.h"
 
 void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
+	table_OS_2 *os_2 = NULL;
 	FOR_TABLE('OS/2', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		if (length < 2) {
-			printf("table 'OS/2' corrupted.\n");
-			font->OS_2 = NULL;
-			return;
-		}
-		table_OS_2 *os_2 = (table_OS_2 *)malloc(sizeof(table_OS_2) * 1);
+		if (length < 2) goto OS_2_CORRUPTED;
+		os_2 = (table_OS_2 *)malloc(sizeof(table_OS_2) * 1);
 		os_2->version = caryll_blt16u(data);
 		// version 1
-		if (os_2->version == 0 || (os_2->version >= 1 && length < 86)) {
-			printf("table 'OS/2' corrupted or deprecated.\n");
-			free(os_2);
-			font->OS_2 = NULL;
-			return;
-		}
+		if (os_2->version == 0 || (os_2->version >= 1 && length < 86)) goto OS_2_CORRUPTED;
 		if (os_2->version >= 1) {
 			os_2->xAvgCharWidth = caryll_blt16u(data + 2);
 			os_2->usWeightClass = caryll_blt16u(data + 4);
@@ -58,12 +50,7 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 			os_2->ulCodePageRange2 = caryll_blt32u(data + 82);
 		}
 		// version 2, 3, 4
-		if (os_2->version >= 2 && length < 96) {
-			printf("table 'OS/2' corrupted.\n");
-			free(os_2);
-			font->OS_2 = NULL;
-			return;
-		}
+		if (os_2->version >= 2 && length < 96) goto OS_2_CORRUPTED;
 		if (os_2->version >= 2) {
 			os_2->sxHeight = caryll_blt16u(data + 86);
 			os_2->sCapHeight = caryll_blt16u(data + 88);
@@ -72,16 +59,18 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 			os_2->usMaxContext = caryll_blt16u(data + 94);
 		}
 		// version 5
-		if (os_2->version >= 5 && length < 100) {
-			printf("table 'OS/2' corrupted.\n");
-			free(os_2);
-			font->OS_2 = NULL;
-			return;
-		}
+		if (os_2->version >= 5 && length < 100) goto OS_2_CORRUPTED;
 		if (os_2->version >= 5) {
 			os_2->usLowerOpticalPointSize = caryll_blt16u(data + 96);
 			os_2->usLowerOpticalPointSize = caryll_blt16u(data + 98);
 		}
 		font->OS_2 = os_2;
 	}
+	return;
+
+OS_2_CORRUPTED:
+	printf("table 'OS/2' corrupted.\n");
+	if (os_2 != NULL) free(os_2);
+	font->OS_2 = NULL;
+	return;
 }

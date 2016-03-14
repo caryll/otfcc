@@ -246,14 +246,19 @@ glyf_glyph emptyGlyph() {
 
 void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	if (font->head == NULL || font->maxp == NULL) return;
+	uint32_t *offsets = NULL;
+	table_glyf *glyf = NULL;
+
 	uint16_t locaIsLong = font->head->indexToLocFormat;
 	uint16_t numGlyphs = font->maxp->numGlyphs;
-	uint32_t *offsets = (uint32_t *)malloc(sizeof(uint32_t) * numGlyphs);
+	offsets = (uint32_t *)malloc(sizeof(uint32_t) * numGlyphs);
 	bool foundLoca = false;
+
 	// read loca
 	FOR_TABLE('loca', table) {
 		font_file_pointer data = table.data;
-		// uint32_t length = table.length;
+		uint32_t length = table.length;
+		if (length < 2 * numGlyphs) goto LOCA_CORRUPTED;
 		for (uint32_t j = 0; j < numGlyphs; j++) {
 			if (locaIsLong) {
 				offsets[j] = caryll_blt32u(data + j * 4);
@@ -263,25 +268,28 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 		}
 		foundLoca = true;
 	}
-	if (!foundLoca) {
-		free(offsets);
-		return;
-	}
+	if (!foundLoca) goto LOCA_CORRUPTED;
+
+	// read glyf
 	FOR_TABLE('glyf', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		font->glyf = (table_glyf *)malloc(sizeof(table_glyf) * 1);
-		font->glyf->numberGlyphs = numGlyphs;
-		font->glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
+		glyf = (table_glyf *)malloc(sizeof(table_glyf) * 1);
+		glyf->numberGlyphs = numGlyphs;
+		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
 		for (uint16_t j = 0; j < numGlyphs; j++) {
 			if (length - offsets[j] > 5) {
-				font->glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
+				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
 			} else {
-				font->glyf->glyphs[j] = emptyGlyph();
+				glyf->glyphs[j] = emptyGlyph();
 			}
 		}
+		font->glyf = glyf;
 	}
-	// read glyf
-	printf("\n");
 	free(offsets);
+	return;
+
+LOCA_CORRUPTED:
+	printf("table 'loca' corrupted.\n");
+	if (offsets) free(offsets);
 }

@@ -70,14 +70,17 @@ int by_unicode(cmap_entry *a, cmap_entry *b) {
 
 // OTFCC will not support all `cmap` mappings.
 void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
+	// the map is a reference to a hash table
+	cmap_hash *map = NULL;
 	FOR_TABLE('cmap', table) {
 		font_file_pointer data = table.data;
-		// the map is a reference to a hash table
-		cmap_hash *map = malloc(sizeof(cmap_hash));
+		uint32_t length = table.length;
+		if(length < 4) goto CMAP_CORRUPTED;
+		
+		map = malloc(sizeof(cmap_hash));
 		*map = NULL; // intialize to empty hashtable
-
-		// uint16_t version = caryll_blt16u(data);
 		uint16_t numTables = caryll_blt16u(data + 2);
+		if(length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
 			uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
@@ -89,4 +92,9 @@ void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
 		HASH_SORT(*map, by_unicode);
 		font->cmap = map;
 	}
+	return;
+CMAP_CORRUPTED:
+	printf("table 'cmap' corrupted.\n");
+	if (map != NULL) free(map);
+	return;
 }
