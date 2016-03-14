@@ -37,6 +37,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		caryll_read_post(font, packet);
 		caryll_read_hdmx(font, packet);
 		caryll_read_glyf(font, packet);
+		caryll_read_cmap(font, packet);
 
 		caryll_font_consolidate_read(font);
 
@@ -60,6 +61,15 @@ void caryll_font_close(caryll_font *font) {
 		}
 		free(font->glyf->glyphs);
 		free(font->glyf);
+	}
+	if(font->cmap != NULL){
+		cmap_entry *s, *tmp;
+		HASH_ITER(hh, *(font->cmap), s, tmp) {
+			// delete and free all cmap entries
+			HASH_DEL(*(font->cmap), s);
+			free(s);
+		}
+		free(font->cmap);
 	}
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);

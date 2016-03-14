@@ -19,6 +19,7 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/vmtx.h"
 
 #include "./tables/glyf.h"
+#include "./tables/cmap.h"
 
 struct _caryll_font {
 	table_head *head;
@@ -33,6 +34,7 @@ struct _caryll_font {
 	table_vhea *vhea;
 	table_vmtx *vmtx;
 	table_glyf *glyf;
+	cmap_hash  *cmap;
 };
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
