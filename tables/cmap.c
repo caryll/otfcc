@@ -18,6 +18,18 @@ void encode(cmap_hash *map, int c, uint16_t gid) {
 	}
 }
 
+void caryll_read_format_12(font_file_pointer start, cmap_hash *map) {
+	uint32_t nGroups = caryll_blt32u(start + 12);
+	for (uint32_t j = 0; j < nGroups; j++) {
+		uint32_t startCode = caryll_blt32u(start + 16 + 12 * j);
+		uint32_t endCode = caryll_blt32u(start + 16 + 12 * j + 4);
+		uint32_t startGID = caryll_blt32u(start + 16 + 12 * j + 8);
+		for (uint32_t c = startCode; c <= endCode; c++) {
+			encode(map, c, (c - startCode) + startGID);
+		}
+	}
+}
+
 void caryll_read_format_4(font_file_pointer start, cmap_hash *map) {
 	uint16_t segmentsCount = caryll_blt16u(start + 6) / 2;
 	for (uint16_t j = 0; j < segmentsCount; j++) {
@@ -45,7 +57,11 @@ void caryll_read_format_4(font_file_pointer start, cmap_hash *map) {
 
 void caryll_read_mapping_table(font_file_pointer start, cmap_hash *map) {
 	uint16_t format = caryll_blt16u(start);
-	if (format == 4) { caryll_read_format_4(start, map); }
+	if (format == 4) {
+		caryll_read_format_4(start, map);
+	} else if (format == 12) {
+		caryll_read_format_12(start, map);
+	}
 }
 
 int by_unicode(cmap_entry *a, cmap_entry *b) {
