@@ -18,8 +18,10 @@ void encode(cmap_hash *map, int c, uint16_t gid) {
 	}
 }
 
-void caryll_read_format_12(font_file_pointer start, cmap_hash *map) {
+void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
+	if (lengthLimit < 16) return;
 	uint32_t nGroups = caryll_blt32u(start + 12);
+	if (lengthLimit < 16 + 12 * nGroups) return;
 	for (uint32_t j = 0; j < nGroups; j++) {
 		uint32_t startCode = caryll_blt32u(start + 16 + 12 * j);
 		uint32_t endCode = caryll_blt32u(start + 16 + 12 * j + 4);
@@ -30,14 +32,16 @@ void caryll_read_format_12(font_file_pointer start, cmap_hash *map) {
 	}
 }
 
-void caryll_read_format_4(font_file_pointer start, cmap_hash *map) {
+void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
+	if (lengthLimit < 14) return;
 	uint16_t segmentsCount = caryll_blt16u(start + 6) / 2;
+	if (lengthLimit < 16 + segmentsCount * 8) return;
 	for (uint16_t j = 0; j < segmentsCount; j++) {
 		uint16_t endCode = caryll_blt16u(start + 14 + j * 2);
 		uint16_t startCode = caryll_blt16u(start + 14 + segmentsCount * 2 + 2 + j * 2);
 		int16_t idDelta = caryll_blt16u(start + 14 + segmentsCount * 4 + 2 + j * 2);
-		font_file_pointer idRangeOffsetOffset = start + 14 + segmentsCount * 6 + 2 + j * 2;
-		uint16_t idRangeOffset = caryll_blt16u(idRangeOffsetOffset);
+		uint32_t idRangeOffsetOffset = 14 + segmentsCount * 6 + 2 + j * 2;
+		uint16_t idRangeOffset = caryll_blt16u(start + idRangeOffsetOffset);
 		if (startCode < 0xFFFF) {
 			if (idRangeOffset == 0) {
 				for (uint16_t c = startCode; c <= endCode; c++) {
@@ -46,8 +50,10 @@ void caryll_read_format_4(font_file_pointer start, cmap_hash *map) {
 				}
 			} else {
 				for (uint16_t c = startCode; c <= endCode; c++) {
-					uint16_t gid =
-					    (caryll_blt16u(idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset) + idDelta) & 0xFFFF;
+					uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
+					if (glyphOffset + 2 >= lengthLimit) continue; // ignore this encoding slot when o-o-r
+					
+					uint16_t gid = (caryll_blt16u(start + glyphOffset) + idDelta) & 0xFFFF;
 					if (c != 0xFFFF) { encode(map, c, gid); }
 				}
 			}
@@ -55,12 +61,12 @@ void caryll_read_format_4(font_file_pointer start, cmap_hash *map) {
 	}
 }
 
-void caryll_read_mapping_table(font_file_pointer start, cmap_hash *map) {
+void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	uint16_t format = caryll_blt16u(start);
 	if (format == 4) {
-		caryll_read_format_4(start, map);
+		caryll_read_format_4(start, lengthLimit, map);
 	} else if (format == 12) {
-		caryll_read_format_12(start, map);
+		caryll_read_format_12(start, lengthLimit, map);
 	}
 }
 
@@ -75,18 +81,18 @@ void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
 	FOR_TABLE('cmap', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		if(length < 4) goto CMAP_CORRUPTED;
-		
+		if (length < 4) goto CMAP_CORRUPTED;
+
 		map = malloc(sizeof(cmap_hash));
 		*map = NULL; // intialize to empty hashtable
 		uint16_t numTables = caryll_blt16u(data + 2);
-		if(length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
+		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
 			uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
 			if (platform == 0 || (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
 				uint32_t tableOffset = caryll_blt32u(data + 4 + 8 * j + 4);
-				caryll_read_mapping_table(data + tableOffset, map);
+				caryll_read_mapping_table(data + tableOffset, length - tableOffset, map);
 			}
 		};
 		HASH_SORT(*map, by_unicode);

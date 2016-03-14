@@ -10,7 +10,7 @@
 #define PATTERN_HEX (PATTERN_PROPERTY_NAME " = %#010x\n")
 
 #define DUMP_CMAP 0
-#define DUMP_GLYF 0
+#define DUMP_GLYF 1
 
 int main(int argc, char *argv[]) {
 	caryll_sfnt *sfnt = caryll_sfnt_open(argv[1]);
