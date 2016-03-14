@@ -19,12 +19,13 @@ int main(int argc, char *argv[]) {
 		assert_equal("OS/2.version", font->OS_2->version, 0x0004);
 		assert_equal("OS/2.ulUnicodeRange2", font->OS_2->ulUnicodeRange2, 0x2adf3c10);
 	}
+
 	{ // glyf
 		assert_equal("Glyph count", font->glyf->numberGlyphs, 15);
-		assert_equal("glyf[14] contour count", font->glyf->glyphs[14].numberOfContours, 2);
-		assert_equal("glyf[14] instr length", font->glyf->glyphs[14].instructionsLength, 281);
-		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14].content.contours[0].pointsCount, (11 - 0 + 1));
-		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14].content.contours[1].pointsCount, (56 - 12 + 1));
+		assert_equal("glyf[14] contour count", font->glyf->glyphs[14]->numberOfContours, 2);
+		assert_equal("glyf[14] instr length", font->glyf->glyphs[14]->instructionsLength, 281);
+		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14]->content.contours[0].pointsCount, (11 - 0 + 1));
+		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14]->content.contours[1].pointsCount, (56 - 12 + 1));
 	}
 
 	{ // Glyph order and naming
@@ -43,6 +44,10 @@ int main(int argc, char *argv[]) {
 		for (int index = 0; index < font->glyf->numberGlyphs; index++) {
 			HASH_FIND_INT(*(font->glyph_order), &index, s);
 			if (s == NULL) allGlyphNamed = false;
+			if (font->glyf->glyphs[index]->name == NULL) {
+				printf("%d\n", index);
+				allGlyphNamed = false;
+			}
 		}
 		assert_equal("All glyphs are named", allGlyphNamed, true);
 	}
@@ -53,14 +58,14 @@ int main(int argc, char *argv[]) {
 		HASH_FIND_INT(*(font->cmap), &testindex, s);
 		assert_exists("Found cmap entry for U+888B", s);
 		if (s != NULL) {
-			assert_equal("U+888B Mapping correct", s->gid, 13);
-			assert_equal("U+888B is named as uni888B", strcmp(s->name, "uni888B"), 0);
+			assert_equal("U+888B Mapping correct", s->glyph.gid, 13);
+			assert_equal("U+888B is named as uni888B", strcmp(s->glyph.name, "uni888B"), 0);
 		}
 
 		testindex = 0x9df9;
 		HASH_FIND_INT(*(font->cmap), &testindex, s);
 		assert_exists("Found cmap entry for U+9DF9", s);
-		if (s != NULL) assert_equal("U+9DF9 Mapping correct", s->gid, 9);
+		if (s != NULL) assert_equal("U+9DF9 Mapping correct", s->glyph.gid, 9);
 	}
 
 	caryll_font_close(font);

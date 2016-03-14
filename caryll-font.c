@@ -9,16 +9,18 @@
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:
 //   1. Merge hmtx data into glyf
-//   2. Replace all glyph IDs into glyph names
+//   2. Replace all glyph IDs into glyph names. Note all glyph references with same name whare one unique string
+//      entity stored in font->glyph_order. (Separate?)
 void caryll_font_unconsolidate(caryll_font *font) {
 	// Merge hmtx table into glyf.
 	uint32_t count_a = font->hhea->numberOfMetrics;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		font->glyf->glyphs[j].advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+		font->glyf->glyphs[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 	}
 	// Name glyphs
 	caryll_name_glyphs(font);
 	caryll_name_cmap_entries(font);
+	caryll_name_glyf(font);
 }
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
@@ -57,16 +59,21 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 void caryll_font_close(caryll_font *font) {
 	if (font->glyf != NULL) {
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			glyf_glyph g = font->glyf->glyphs[j];
-			if (g.numberOfContours > 0) {
-				for (uint16_t k = 0; k < g.numberOfContours; k++) {
-					free(g.content.contours[k].points);
+			glyf_glyph *g = font->glyf->glyphs[j];
+			if (g->numberOfContours > 0) {
+				for (uint16_t k = 0; k < g->numberOfContours; k++) {
+					free(g->content.contours[k].points);
 				}
-				free(g.content.contours);
-			} else if (g.numberOfReferences > 0) {
-				free(g.content.references);
+				free(g->content.contours);
+			} else if (g->numberOfReferences > 0) {
+				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
+					g->content.references[k].glyph.name = NULL;
+				}
+				free(g->content.references);
 			}
-			if (g.instructions != NULL) { free(g.instructions); }
+			if (g->instructions != NULL) { free(g->instructions); }
+			g->name = NULL;
+			free(g);
 		}
 		free(font->glyf->glyphs);
 		free(font->glyf);
@@ -75,7 +82,7 @@ void caryll_font_close(caryll_font *font) {
 		cmap_entry *s, *tmp;
 		HASH_ITER(hh, *(font->cmap), s, tmp) {
 			// delete and free all cmap entries
-			s->name = NULL;
+			s->glyph.name = NULL;
 			HASH_DEL(*(font->cmap), s);
 			free(s);
 		}

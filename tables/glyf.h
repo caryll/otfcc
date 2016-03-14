@@ -4,8 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../caryll-font.h"
+#include "../extern/sds.h"
+#include "../support/glyphorder.h"
 
-enum GlyphType {SIMPLE, COMPOSITE};
+enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
 	int16_t x;
@@ -15,11 +17,11 @@ typedef struct {
 
 typedef struct {
 	uint16_t pointsCount;
-	glyf_point * points;
+	glyf_point *points;
 } glyf_contour;
 
 typedef struct {
-	uint16_t index;
+	glyph_reference glyph;
 	// transformation term
 	float a;
 	float b;
@@ -34,6 +36,8 @@ typedef struct {
 typedef struct {
 	uint16_t numberOfContours;
 	uint16_t numberOfReferences;
+	sds name;
+
 	uint16_t instructionsLength;
 	uint8_t *instructions;
 	uint16_t advanceWidth;
@@ -45,7 +49,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t numberGlyphs;
-	glyf_glyph* glyphs;
+	glyf_glyph **glyphs;
 } table_glyf;
 
 #define GLYF_FLAG_ON_CURVE 1
@@ -64,7 +68,7 @@ typedef struct {
 #define WE_HAVE_A_TWO_BY_TWO (1 << 7)
 #define WE_HAVE_INSTRUCTIONS (1 << 8)
 
-glyf_glyph emptyGlyph();
+glyf_glyph *spaceGlyph();
 void caryll_read_glyf(caryll_font *font, caryll_packet packet);
 
 #endif

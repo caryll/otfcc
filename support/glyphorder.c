@@ -34,9 +34,9 @@ void caryll_name_glyphs(caryll_font *font) {
 	if (font->cmap != NULL) {
 		cmap_hash handle = *(font->cmap);
 		cmap_hash s, _tmp;
-		HASH_ITER(hh, handle, s, _tmp) if (s->gid > 0) {
+		HASH_ITER(hh, handle, s, _tmp) if (s->glyph.gid > 0) {
 			sds name = sdscatprintf(sdsempty(), "uni%04X", s->unicode);
-			int actuallyNamed = try_name_glyph(glyph_order, s->gid, name);
+			int actuallyNamed = try_name_glyph(glyph_order, s->glyph.gid, name);
 			if (!actuallyNamed) sdsfree(name);
 		}
 	}
@@ -49,14 +49,31 @@ void caryll_name_glyphs(caryll_font *font) {
 
 	font->glyph_order = glyph_order;
 }
+void lookup_name(caryll_font *font, uint16_t _gid, sds *field) {
+	glyph_order_entry *so;
+	int gid = _gid;
+	HASH_FIND_INT(*font->glyph_order, &gid, so);
+	if (so != NULL) {
+		*field = so->name;
+	}
+}
 void caryll_name_cmap_entries(caryll_font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
 		cmap_hash handle = *(font->cmap);
 		cmap_hash s, _tmp;
-		HASH_ITER(hh, handle, s, _tmp) {
-			glyph_order_entry *so;
-			HASH_FIND_INT(*font->glyph_order, &s->gid, so);
-			if (so != NULL) { s->name = so->name; }
+		HASH_ITER(hh, handle, s, _tmp) { lookup_name(font, s->glyph.gid, &s->glyph.name); }
+	}
+}
+void caryll_name_glyf(caryll_font *font) {
+	if (font->glyph_order != NULL && font->glyf != NULL) {
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			glyf_glyph *g = font->glyf->glyphs[j];
+			lookup_name(font, j, &g->name);
+			if (g->numberOfContours == 0 && g->numberOfReferences > 0) {
+				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
+					lookup_name(font, g->content.references[k].glyph.gid, &g->content.references[k].glyph.name);
+				}
+			}
 		}
 	}
 }

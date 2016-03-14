@@ -12,9 +12,9 @@ void encode(cmap_hash *map, int c, uint16_t gid) {
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
 		s = malloc(sizeof(cmap_entry));
-		s->gid = gid;
+		s->glyph.gid = gid;
+		s->glyph.name = NULL;
 		s->unicode = c;
-		s->name = NULL;
 		HASH_ADD_INT(*map, unicode, s);
 	}
 }
