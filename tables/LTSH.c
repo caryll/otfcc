@@ -7,17 +7,15 @@
 #include "../caryll-io.h"
 
 void caryll_read_LTSH(caryll_font *font, caryll_packet packet) {
-	for (uint32_t i = 0; i < packet.numTables; i++) {
-		if (packet.pieces[i].tag == 'LTSH') {
-			font_file_pointer data = packet.pieces[i].data;
+	FOR_TABLE('LTSH', table) {
+		font_file_pointer data = table.data;
 
-			table_LTSH *LTSH = (table_LTSH *)malloc(sizeof(table_LTSH) * 1);
-			LTSH->version = caryll_blt16u(data);
-			LTSH->numGlyphs = caryll_blt16u(data + 2);
-			LTSH->yPels = (uint8_t *)malloc(sizeof(uint8_t) * LTSH->numGlyphs);
-			memcpy(LTSH->yPels, data + 4, LTSH->numGlyphs);
+		table_LTSH *LTSH = (table_LTSH *)malloc(sizeof(table_LTSH) * 1);
+		LTSH->version = caryll_blt16u(data);
+		LTSH->numGlyphs = caryll_blt16u(data + 2);
+		LTSH->yPels = (uint8_t *)malloc(sizeof(uint8_t) * LTSH->numGlyphs);
+		memcpy(LTSH->yPels, data + 4, LTSH->numGlyphs);
 
-			font->LTSH = LTSH;
-		}
+		font->LTSH = LTSH;
 	}
 }

@@ -54,28 +54,25 @@ int by_unicode(cmap_entry *a, cmap_entry *b) {
 
 // OTFCC will not support all `cmap` mappings.
 void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
-	for (uint32_t i = 0; i < packet.numTables; i++) {
-		if (packet.pieces[i].tag == 'cmap') {
-			font_file_pointer data = packet.pieces[i].data;
-			// uint32_t length = packet.pieces[i].length;
-			cmap_hash *map = malloc(sizeof(cmap_hash));
-			*map = NULL;
+	FOR_TABLE('cmap', table) {
+		font_file_pointer data = table.data;
+		cmap_hash *map = malloc(sizeof(cmap_hash));
+		*map = NULL;
 
-			// uint16_t version = caryll_blt16u(data);
-			uint16_t numTables = caryll_blt16u(data + 2);
-			bool foundUnicode = false;
-			for (uint16_t j = 0; j < numTables; j++) {
-				uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
-				uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
-				if (platform == 0 || (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
-					// we care about Unicode mappings only
-					foundUnicode = true;
-					uint32_t tableOffset = caryll_blt32u(data + 4 + 8 * j + 4);
-					caryll_read_mapping_table(data + tableOffset, map);
-				}
-			};
-			HASH_SORT(*map, by_unicode);
-			font->cmap = map;
-		}
+		// uint16_t version = caryll_blt16u(data);
+		uint16_t numTables = caryll_blt16u(data + 2);
+		bool foundUnicode = false;
+		for (uint16_t j = 0; j < numTables; j++) {
+			uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
+			uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
+			if (platform == 0 || (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
+				// we care about Unicode mappings only
+				foundUnicode = true;
+				uint32_t tableOffset = caryll_blt32u(data + 4 + 8 * j + 4);
+				caryll_read_mapping_table(data + tableOffset, map);
+			}
+		};
+		HASH_SORT(*map, by_unicode);
+		font->cmap = map;
 	}
 }

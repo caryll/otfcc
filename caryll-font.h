@@ -2,6 +2,16 @@
 
 #include "caryll-sfnt.h"
 
+#define foreach(item, array, size)                                                                                     \
+	for (int keep = 1, count = 0; keep && count != size; keep = !keep, count++)                                        \
+		for (item = (array)[count]; keep; keep = !keep)
+#define FOR_TABLE(name, table)                                                                                         \
+	foreach (caryll_piece table, packet.pieces, packet.numTables)                                                      \
+		if (table.tag == name)
+
+#ifndef CARYLL_FONT_INCLUDED
+#define CARYLL_FONT_INCLUDED
+
 struct _caryll_font;
 typedef struct _caryll_font caryll_font;
 
@@ -34,8 +44,10 @@ struct _caryll_font {
 	table_vhea *vhea;
 	table_vmtx *vmtx;
 	table_glyf *glyf;
-	cmap_hash  *cmap;
+	cmap_hash *cmap;
 };
 
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
 void caryll_font_close(caryll_font *font);
+
+#endif

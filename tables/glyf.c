@@ -24,7 +24,7 @@ glyf_glyph caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfCo
 	uint16_t instructionLength = caryll_blt16u(start + 2 * numberOfContours);
 	uint8_t *instructions = NULL;
 	if (instructionLength > 0) {
-		instructions = (font_file_pointer )malloc(sizeof(uint8_t) * instructionLength);
+		instructions = (font_file_pointer)malloc(sizeof(uint8_t) * instructionLength);
 		memcpy(instructions, start + 2 * numberOfContours + 2, sizeof(uint8_t) * instructionLength);
 	}
 	glyph.instructionsLength = instructionLength;
@@ -210,7 +210,7 @@ glyf_glyph caryll_read_composite_glyph(font_file_pointer start) {
 		uint16_t instructionLength = caryll_blt16u(start + offset);
 		font_file_pointer instructions = NULL;
 		if (instructionLength > 0) {
-			instructions = (font_file_pointer )malloc(sizeof(uint8_t) * instructionLength);
+			instructions = (font_file_pointer)malloc(sizeof(uint8_t) * instructionLength);
 			memcpy(instructions, start + offset + 2, sizeof(uint8_t) * instructionLength);
 		}
 		glyph.instructionsLength = instructionLength;
@@ -251,32 +251,28 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	uint32_t *offsets = (uint32_t *)malloc(sizeof(uint32_t) * numGlyphs);
 
 	// read loca
-	for (uint32_t i = 0; i < packet.numTables; i++) {
-		if (packet.pieces[i].tag == 'loca') {
-			font_file_pointer data = packet.pieces[i].data;
-			// uint32_t length = packet.pieces[i].length;
-			for (uint32_t j = 0; j < numGlyphs; j++) {
-				if (locaIsLong) {
-					offsets[j] = caryll_blt32u(data + j * 4);
-				} else {
-					offsets[j] = caryll_blt16u(data + j * 2);
-				}
+	FOR_TABLE('loca', table) {
+		font_file_pointer data = table.data;
+		// uint32_t length = table.length;
+		for (uint32_t j = 0; j < numGlyphs; j++) {
+			if (locaIsLong) {
+				offsets[j] = caryll_blt32u(data + j * 4);
+			} else {
+				offsets[j] = caryll_blt16u(data + j * 2);
 			}
 		}
 	}
-	for (uint32_t i = 0; i < packet.numTables; i++) {
-		if (packet.pieces[i].tag == 'glyf') {
-			font_file_pointer data = packet.pieces[i].data;
-			uint32_t length = packet.pieces[i].length;
-			font->glyf = (table_glyf *)malloc(sizeof(table_glyf) * 1);
-			font->glyf->numberGlyphs = numGlyphs;
-			font->glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
-			for (uint16_t j = 0; j < numGlyphs; j++) {
-				if (length - offsets[j] > 5) {
-					font->glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
-				} else {
-					font->glyf->glyphs[j] = emptyGlyph();
-				}
+	FOR_TABLE('glyf', table) {
+		font_file_pointer data = table.data;
+		uint32_t length = table.length;
+		font->glyf = (table_glyf *)malloc(sizeof(table_glyf) * 1);
+		font->glyf->numberGlyphs = numGlyphs;
+		font->glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
+		for (uint16_t j = 0; j < numGlyphs; j++) {
+			if (length - offsets[j] > 5) {
+				font->glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
+			} else {
+				font->glyf->glyphs[j] = emptyGlyph();
 			}
 		}
 	}

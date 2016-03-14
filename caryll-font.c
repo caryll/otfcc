@@ -14,6 +14,14 @@ void caryll_font_consolidate_read(caryll_font *font) {
 	}
 }
 
+void caryll_read_table(caryll_font font, caryll_packet packet, uint32_t name, void (*handler)(caryll_piece piece)){
+	for (uint32_t i = 0; i < packet.numTables; i++) {
+		if (packet.pieces[i].tag == name) {
+			handler(packet.pieces[i]);
+		}
+	}
+}
+
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 	if (sfnt->count - 1 < index)
 		return NULL;
@@ -28,6 +36,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		font->post = NULL;
 		font->hdmx = NULL;
 		font->glyf = NULL;
+		font->cmap = NULL;
 
 		caryll_read_head(font, packet);
 		caryll_read_hhea(font, packet);
