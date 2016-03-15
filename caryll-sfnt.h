@@ -1,7 +1,6 @@
 #ifndef CARYLL_SFNT_H
 #define CARYLL_SFNT_H
 
-
 #include <stdint.h>
 
 typedef struct {

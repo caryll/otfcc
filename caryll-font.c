@@ -9,8 +9,9 @@
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:
 //   1. Merge hmtx data into glyf
-//   2. Replace all glyph IDs into glyph names. Note all glyph references with same name whare one unique string
-//      entity stored in font->glyph_order. (Separate?)
+//   2. Replace all glyph IDs into glyph names. Note all glyph references with
+//      same name whare one unique string entity stored in font->glyph_order.
+//      (Separate?)
 void caryll_font_unconsolidate(caryll_font *font) {
 	// Merge hmtx table into glyf.
 	uint32_t count_a = font->hhea->numberOfMetrics;

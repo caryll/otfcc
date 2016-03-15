@@ -53,7 +53,7 @@ void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, cmap_ha
 				for (uint16_t c = startCode; c <= endCode; c++) {
 					uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
 					if (glyphOffset + 2 >= lengthLimit) continue; // ignore this encoding slot when o-o-r
-					
+
 					uint16_t gid = (caryll_blt16u(start + glyphOffset) + idDelta) & 0xFFFF;
 					if (c != 0xFFFF) { encode(map, c, gid); }
 				}
@@ -106,13 +106,13 @@ CMAP_CORRUPTED:
 	return;
 }
 
-void caryll_delete_table_cmap(caryll_font *font){
+void caryll_delete_table_cmap(caryll_font *font) {
 	cmap_entry *s, *tmp;
-		HASH_ITER(hh, *(font->cmap), s, tmp) {
-			// delete and free all cmap entries
-			s->glyph.name = NULL;
-			HASH_DEL(*(font->cmap), s);
-			free(s);
-		}
-		free(font->cmap);
+	HASH_ITER(hh, *(font->cmap), s, tmp) {
+		// delete and free all cmap entries
+		s->glyph.name = NULL;
+		HASH_DEL(*(font->cmap), s);
+		free(s);
+	}
+	free(font->cmap);
 }

@@ -1,7 +1,6 @@
 #ifndef CARYLL_IO_H
 #define CARYLL_IO_H
 
-
 #include <stdio.h>
 #include <stdint.h>
 
