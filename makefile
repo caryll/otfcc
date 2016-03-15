@@ -21,8 +21,8 @@ OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-hmtx.o build/table-post.o build/table-hdmx.o \
 	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
 	build/table-OS_2.o build/table-glyf.o build/table-cmap.o
-EXTOBJS = build/parson.o build/sds.o
-SUPPORTOBJS = build/glyphorder.o
+EXTOBJS = build/extern-parson.o build/extern-sds.o
+SUPPORTOBJS = build/support-glyphorder.o build/support-aglfn.o
 
 OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS) $(SUPPORTOBJS)
 
@@ -32,10 +32,10 @@ $(OBJTABLES) : build/table-%.o : tables/%.c | build
 $(OBJOTFCCMAIN) : build/%.o : %.c $(OBJTABLES) | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(EXTOBJS) : build/%.o : extern/%.c | build
+$(EXTOBJS) : build/extern-%.o : extern/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(SUPPORTOBJS) : build/%.o : support/%.c | build
+$(SUPPORTOBJS) : build/support-%.o : support/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 	
 build/test-head.o : test-head.c | build

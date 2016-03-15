@@ -90,14 +90,7 @@ void caryll_font_close(caryll_font *font) {
 		free(font->cmap);
 	}
 	if (font->glyph_order != NULL) {
-		glyph_order_entry *s, *tmp;
-		HASH_ITER(hh, *(font->glyph_order), s, tmp) {
-			// delete and free all cmap entries
-			sdsfree(s->name);
-			HASH_DEL(*(font->glyph_order), s);
-			free(s);
-		}
-		free(font->glyph_order);
+		delete_glyph_order_map(font->glyph_order);
 	}
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);
