@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	caryll_font *font = caryll_font_open(sfnt, 0);
 
 	int nChecks = 0;
-
+	
 	{ // Simple fields
 		assert_equal("head.version", font->head->version, 0x10000);
 		assert_equal("OS/2.version", font->OS_2->version, 0x0004);
