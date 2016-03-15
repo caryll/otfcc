@@ -1,6 +1,7 @@
 #ifndef CARYLL_FONT_H
 
 #include "caryll-sfnt.h"
+#include "extern/uthash.h"
 
 #define FOR_TABLE(name, table)                                                                                         \
 	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
@@ -9,10 +10,14 @@
 			if (table.tag == (name))                                                                                   \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
+#define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
+
 #define CARYLL_FONT_H
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_font;
+
+#include "./support/glyphorder.h"
 
 #include "./tables/head.h"
 #include "./tables/hhea.h"
@@ -30,8 +35,6 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/glyf.h"
 #include "./tables/cmap.h"
 
-#include "./support/glyphorder.h"
-
 struct _caryll_font {
 	table_head *head;
 	table_hhea *hhea;
@@ -46,7 +49,7 @@ struct _caryll_font {
 	table_vmtx *vmtx;
 	table_glyf *glyf;
 	cmap_hash *cmap;
-	
+
 	glyph_order_hash *glyph_order;
 };
 

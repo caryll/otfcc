@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "caryll-io.h"
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
-#include "caryll-io.h"
 
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:

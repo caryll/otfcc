@@ -30,6 +30,17 @@ void lookup_name(glyph_order_hash *glyph_order, uint16_t _gid, sds *field) {
 	if (so != NULL) { *field = so->name; }
 }
 
+void delete_glyph_order_map(glyph_order_hash *map) {
+	glyph_order_entry *s, *tmp;
+	HASH_ITER(hh, *map, s, tmp) {
+		// delete and free all cmap entries
+		sdsfree(s->name);
+		HASH_DEL(*map, s);
+		free(s);
+	}
+	free(map);
+}
+
 void caryll_name_glyphs(caryll_font *font) {
 	glyph_order_hash *glyph_order = malloc(sizeof(glyph_order_hash));
 	*glyph_order = NULL;
@@ -37,19 +48,18 @@ void caryll_name_glyphs(caryll_font *font) {
 	glyph_order_hash *aglfn = malloc(sizeof(glyph_order_hash));
 	*aglfn = NULL;
 	setup_aglfn_glyph_names(aglfn);
-	
+
 	uint16_t numGlyphs = font->glyf->numberGlyphs;
 
 	// pass 1: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
-		glyph_order_entry *s, *_tmp;
-		HASH_ITER(hh, *font->post->post_name_map, s, _tmp) { try_name_glyph(glyph_order, s->gid, sdsdup(s->name)); }
+		glyph_order_entry *s;
+		foreach_hash(s, *font->post->post_name_map) { try_name_glyph(glyph_order, s->gid, sdsdup(s->name)); }
 	}
 	// pass 2: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
-		cmap_hash handle = *(font->cmap);
-		cmap_hash s, _tmp;
-		HASH_ITER(hh, handle, s, _tmp) if (s->glyph.gid > 0) {
+		cmap_entry *s;
+		foreach_hash(s, *font->cmap) if (s->glyph.gid > 0) {
 			sds name = NULL;
 			lookup_name(aglfn, s->unicode, &name);
 			if (name == NULL) {
@@ -75,9 +85,8 @@ void caryll_name_glyphs(caryll_font *font) {
 
 void caryll_name_cmap_entries(caryll_font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
-		cmap_hash handle = *(font->cmap);
-		cmap_hash s, _tmp;
-		HASH_ITER(hh, handle, s, _tmp) { lookup_name(font->glyph_order, s->glyph.gid, &s->glyph.name); }
+		cmap_entry *s;
+		foreach_hash(s, *font->cmap) { lookup_name(font->glyph_order, s->glyph.gid, &s->glyph.name); }
 	}
 }
 void caryll_name_glyf(caryll_font *font) {
@@ -92,15 +101,4 @@ void caryll_name_glyf(caryll_font *font) {
 			}
 		}
 	}
-}
-
-void delete_glyph_order_map(glyph_order_hash *map) {
-	glyph_order_entry *s, *tmp;
-	HASH_ITER(hh, *map, s, tmp) {
-		// delete and free all cmap entries
-		sdsfree(s->name);
-		HASH_DEL(*map, s);
-		free(s);
-	}
-	free(map);
 }

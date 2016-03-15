@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
 			}
 		}
 	if (DUMP_CMAP) {
-		cmap_hash item, tmp;
-		HASH_ITER(hh, *(font->cmap), item, tmp) { printf("[U+%04x -> %d]", item->unicode, item->glyph.gid); }
+		cmap_entry* item;
+		foreach_hash(item, *font->cmap) { printf("[U+%04x -> %d]", item->unicode, item->glyph.gid); }
 	}
 
 	caryll_font_close(font);
