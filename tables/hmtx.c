@@ -38,3 +38,9 @@ void caryll_read_hmtx(caryll_font *font, caryll_packet packet) {
 		}
 	}
 }
+
+void caryll_delete_table_hmtx(caryll_font *font){
+	if (font->hmtx->metrics != NULL) free(font->hmtx->metrics);
+		if (font->hmtx->leftSideBearing != NULL) free(font->hmtx->leftSideBearing);
+		free(font->hmtx);
+}

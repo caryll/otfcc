@@ -26,3 +26,13 @@ void caryll_read_hdmx(caryll_font *font, caryll_packet packet) {
 		font->hdmx = hdmx;
 	}
 }
+
+void caryll_delete_table_hdmx(caryll_font *font) {
+	if (font->hdmx->records != NULL) {
+		for (uint32_t i = 0; i < font->hdmx->numRecords; i++) {
+			if (font->hdmx->records[i].widths != NULL) free(font->hdmx->records[i].widths);
+		}
+		free(font->hdmx->records);
+	}
+	free(font->hdmx);
+}

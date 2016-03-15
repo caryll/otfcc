@@ -105,3 +105,14 @@ CMAP_CORRUPTED:
 	if (map != NULL) free(map);
 	return;
 }
+
+void caryll_delete_table_cmap(caryll_font *font){
+	cmap_entry *s, *tmp;
+		HASH_ITER(hh, *(font->cmap), s, tmp) {
+			// delete and free all cmap entries
+			s->glyph.name = NULL;
+			HASH_DEL(*(font->cmap), s);
+			free(s);
+		}
+		free(font->cmap);
+}

@@ -63,3 +63,8 @@ void caryll_read_post(caryll_font *font, caryll_packet packet) {
 		font->post = post;
 	}
 }
+
+void caryll_delete_table_post(caryll_font *font) {
+	if (font->post->post_name_map != NULL) { delete_glyph_order_map(font->post->post_name_map); }
+	free(font->post);
+}

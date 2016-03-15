@@ -301,3 +301,26 @@ GLYF_CORRUPTED:
 	printf("table 'glyf' corrupted.\n");
 	if (glyf) free(glyf);
 }
+
+void caryll_delete_table_glyf(caryll_font *font) {
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		glyf_glyph *g = font->glyf->glyphs[j];
+		if (g->numberOfContours > 0 && g->contours != NULL) {
+			for (uint16_t k = 0; k < g->numberOfContours; k++) {
+				free(g->contours[k].points);
+			}
+			free(g->contours);
+		}
+		if (g->numberOfReferences > 0 && g->references != NULL) {
+			for (uint16_t k = 0; k < g->numberOfReferences; k++) {
+				g->references[k].glyph.name = NULL;
+			}
+			free(g->references);
+		}
+		if (g->instructions != NULL) { free(g->instructions); }
+		g->name = NULL;
+		free(g);
+	}
+	free(font->glyf->glyphs);
+	free(font->glyf);
+}

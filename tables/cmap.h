@@ -15,5 +15,6 @@ typedef struct {
 typedef cmap_entry *cmap_hash;
 
 void caryll_read_cmap(caryll_font *font, caryll_packet packet);
+void caryll_delete_table_cmap(caryll_font *font);
 
 #endif

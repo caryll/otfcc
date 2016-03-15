@@ -20,5 +20,6 @@ typedef struct {
 } table_post;
 
 void caryll_read_post(caryll_font *font, caryll_packet packet);
+void caryll_delete_table_post(caryll_font *font);
 
 #endif

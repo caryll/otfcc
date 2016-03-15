@@ -57,69 +57,15 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 }
 
 void caryll_font_close(caryll_font *font) {
-	if (font->glyf != NULL) {
-		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			glyf_glyph *g = font->glyf->glyphs[j];
-			if (g->numberOfContours > 0 && g->contours != NULL) {
-				for (uint16_t k = 0; k < g->numberOfContours; k++) {
-					free(g->contours[k].points);
-				}
-				free(g->contours);
-			}
-			if (g->numberOfReferences > 0 && g->references != NULL) {
-				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-					g->references[k].glyph.name = NULL;
-				}
-				free(g->references);
-			}
-			if (g->instructions != NULL) { free(g->instructions); }
-			g->name = NULL;
-			free(g);
-		}
-		free(font->glyf->glyphs);
-		free(font->glyf);
-	}
-	if (font->cmap != NULL) {
-		cmap_entry *s, *tmp;
-		HASH_ITER(hh, *(font->cmap), s, tmp) {
-			// delete and free all cmap entries
-			s->glyph.name = NULL;
-			HASH_DEL(*(font->cmap), s);
-			free(s);
-		}
-		free(font->cmap);
-	}
-	if (font->glyph_order != NULL) {
-		delete_glyph_order_map(font->glyph_order);
-	}
+	if (font->glyf != NULL) caryll_delete_table_glyf(font);
+	if (font->cmap != NULL) caryll_delete_table_cmap(font);
+	if (font->glyph_order != NULL) { delete_glyph_order_map(font->glyph_order); }
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);
 	if (font->maxp != NULL) free(font->maxp);
 	if (font->OS_2 != NULL) free(font->OS_2);
-	if (font->hmtx != NULL) {
-		if (font->hmtx->metrics != NULL) free(font->hmtx->metrics);
-		if (font->hmtx->leftSideBearing != NULL) free(font->hmtx->leftSideBearing);
-		free(font->hmtx);
-	}
-	if (font->post != NULL) {
-		if (font->post->post_name_map != NULL) {
-			glyph_order_entry *s, *tmp;
-			HASH_ITER(hh, *(font->post->post_name_map), s, tmp) {
-				sdsfree(s->name);
-				HASH_DEL(*(font->post->post_name_map), s);
-				free(s);
-			}
-		}
-		free(font->post);
-	}
-	if (font->hdmx != NULL) {
-		if (font->hdmx->records != NULL) {
-			for (uint32_t i = 0; i < font->hdmx->numRecords; i++) {
-				if (font->hdmx->records[i].widths != NULL) free(font->hdmx->records[i].widths);
-			}
-			free(font->hdmx->records);
-		}
-		free(font->hdmx);
-	}
+	if (font->hmtx != NULL) caryll_delete_table_hmtx(font);
+	if (font->post != NULL) caryll_delete_table_post(font);
+	if (font->hdmx != NULL) caryll_delete_table_hdmx(font);
 	if (font != NULL) free(font);
 }

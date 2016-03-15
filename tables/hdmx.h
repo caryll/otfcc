@@ -19,5 +19,6 @@ typedef struct {
 } table_hdmx;
 
 void caryll_read_hdmx(caryll_font *font, caryll_packet packet);
+void caryll_delete_table_hdmx(caryll_font *font);
 
 #endif

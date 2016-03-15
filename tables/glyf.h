@@ -69,5 +69,6 @@ typedef struct {
 
 glyf_glyph *spaceGlyph();
 void caryll_read_glyf(caryll_font *font, caryll_packet packet);
+void caryll_delete_table_glyf(caryll_font *font);
 
 #endif
