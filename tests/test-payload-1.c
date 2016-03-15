@@ -26,6 +26,9 @@ int main(int argc, char *argv[]) {
 		assert_equal("glyf[14] instr length", font->glyf->glyphs[14]->instructionsLength, 281);
 		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14]->contours[0].pointsCount, (11 - 0 + 1));
 		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14]->contours[1].pointsCount, (56 - 12 + 1));
+		assert_equal("glyf[14] contour[0] point[0] x", font->glyf->glyphs[14]->contours[0].points[0].x, 28);
+		assert_equal("glyf[14] contour[0] point[0] y", font->glyf->glyphs[14]->contours[0].points[0].y, 63);
+		assert_equal("glyf[14] contour[0] point[0] on", font->glyf->glyphs[14]->contours[0].points[0].onCurve, true);
 	}
 
 	{ // Glyph order and naming

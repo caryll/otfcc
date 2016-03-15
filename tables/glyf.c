@@ -20,6 +20,14 @@ glyf_glyph *spaceGlyph() {
 	return g;
 }
 
+glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint16_t *cp) {
+	if (*cp >= contours[*cc].pointsCount) {
+		*cp = 0;
+		*cc += 1;
+	}
+	return &contours[*cc].points[(*cp)++];
+}
+
 glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
 	glyf_glyph *g = spaceGlyph();
 	g->numberOfContours = numberOfContours;
@@ -58,21 +66,13 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 		flags[flagsReadSofar] = flag;
 		flagBytesReadSofar += 1;
 		flagsReadSofar += 1;
-		if (currentContourPointIndex >= contours[currentContour].pointsCount) {
-			currentContourPointIndex = 0;
-			currentContour += 1;
-		}
-		contours[currentContour].points[currentContourPointIndex++].onCurve = (flag & GLYF_FLAG_ON_CURVE);
+		next_point(contours, &currentContour, &currentContourPointIndex)->onCurve = (flag & GLYF_FLAG_ON_CURVE);
 		if (flag & GLYF_FLAG_REPEAT) {
 			uint8_t repeat = flagStart[flagBytesReadSofar];
 			flagBytesReadSofar += 1;
 			for (uint8_t j = 0; j < repeat; j++) {
-				if (currentContourPointIndex >= contours[currentContour].pointsCount) {
-					currentContourPointIndex = 0;
-					currentContour += 1;
-				}
 				flags[flagsReadSofar + j] = flag;
-				contours[currentContour].points[currentContourPointIndex++].onCurve = (flag & GLYF_FLAG_ON_CURVE);
+				next_point(contours, &currentContour, &currentContourPointIndex)->onCurve = (flag & GLYF_FLAG_ON_CURVE);
 			}
 			flagsReadSofar += repeat;
 		}
@@ -98,11 +98,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 				coordinatesOffset += 2;
 			}
 		}
-		if (currentContourPointIndex >= contours[currentContour].pointsCount) {
-			currentContourPointIndex = 0;
-			currentContour += 1;
-		}
-		contours[currentContour].points[currentContourPointIndex++].x = x;
+		next_point(contours, &currentContour, &currentContourPointIndex)->x = x;
 		coordinatesRead += 1;
 	}
 	// read Y
@@ -123,11 +119,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 				coordinatesOffset += 2;
 			}
 		}
-		if (currentContourPointIndex >= contours[currentContour].pointsCount) {
-			currentContourPointIndex = 0;
-			currentContour += 1;
-		}
-		contours[currentContour].points[currentContourPointIndex++].y = y;
+		next_point(contours, &currentContour, &currentContourPointIndex)->y = y;
 		coordinatesRead += 1;
 	}
 	free(flags);
