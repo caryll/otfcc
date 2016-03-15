@@ -37,17 +37,15 @@ void caryll_name_glyphs(caryll_font *font) {
 	glyph_order_hash *aglfn = malloc(sizeof(glyph_order_hash));
 	*aglfn = NULL;
 	setup_aglfn_glyph_names(aglfn);
-
+	
 	uint16_t numGlyphs = font->glyf->numberGlyphs;
-
-	try_name_glyph(glyph_order, 0, sdsnew(".notdef"));
 
 	// pass 1: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
 		glyph_order_entry *s, *_tmp;
 		HASH_ITER(hh, *font->post->post_name_map, s, _tmp) { try_name_glyph(glyph_order, s->gid, sdsdup(s->name)); }
 	}
-	// pass 3: Map to Unicode
+	// pass 2: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
 		cmap_hash handle = *(font->cmap);
 		cmap_hash s, _tmp;
@@ -63,7 +61,7 @@ void caryll_name_glyphs(caryll_font *font) {
 			if (!actuallyNamed) sdsfree(name);
 		}
 	}
-	// pass 4: Map to GID
+	// pass 3: Map to GID
 	for (uint16_t j = 1; j < numGlyphs; j++) {
 		sds name = sdscatfmt(sdsempty(), "glyph%u", j);
 		int actuallyNamed = try_name_glyph(glyph_order, j, name);
