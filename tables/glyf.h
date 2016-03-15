@@ -34,17 +34,16 @@ typedef struct {
 } glyf_reference;
 
 typedef struct {
+	sds name;
 	uint16_t numberOfContours;
 	uint16_t numberOfReferences;
-	sds name;
-
 	uint16_t instructionsLength;
 	uint8_t *instructions;
 	uint16_t advanceWidth;
-	union {
-		glyf_contour *contours;
-		glyf_reference *references;
-	} content;
+	
+	// NOTE: SFNT does not support mixed glyphs, but we do.
+	glyf_contour *contours;
+	glyf_reference *references;
 } glyf_glyph;
 
 typedef struct {

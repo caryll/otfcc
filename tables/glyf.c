@@ -7,6 +7,19 @@
 #include "../caryll-font.h"
 #include "../caryll-io.h"
 
+glyf_glyph *spaceGlyph() {
+	glyf_glyph *g = malloc(sizeof(glyf_glyph));
+	g->numberOfContours = 0;
+	g->numberOfReferences = 0;
+	g->instructionsLength = 0;
+	g->instructions = NULL;
+	g->contours = NULL;
+	g->references = NULL;
+	g->advanceWidth = 0;
+	g->name = NULL;
+	return g;
+}
+
 glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
 	glyf_glyph *g = spaceGlyph();
 	g->numberOfContours = numberOfContours;
@@ -129,7 +142,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 			contours[j].points[k].y = cy;
 		}
 	}
-	g->content.contours = contours;
+	g->contours = contours;
 	return g;
 }
 
@@ -162,7 +175,7 @@ glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 
 	// pass 2, read references
 	g->numberOfReferences = numberOfReferences;
-	g->content.references = (glyf_reference *)malloc(sizeof(glyf_reference) * numberOfReferences);
+	g->references = (glyf_reference *)malloc(sizeof(glyf_reference) * numberOfReferences);
 	offset = 0;
 	for (uint16_t j = 0; j < numberOfReferences; j++) {
 		flags = caryll_blt16u(start + offset);
@@ -198,13 +211,13 @@ glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 			d = caryll_from_f2dot14(caryll_blt16u(start + offset + 2));
 			offset += 8;
 		}
-		g->content.references[j].glyph.gid = index;
-		g->content.references[j].a = a;
-		g->content.references[j].b = b;
-		g->content.references[j].c = c;
-		g->content.references[j].d = d;
-		g->content.references[j].x = x;
-		g->content.references[j].y = y;
+		g->references[j].glyph.gid = index;
+		g->references[j].a = a;
+		g->references[j].b = b;
+		g->references[j].c = c;
+		g->references[j].d = d;
+		g->references[j].x = x;
+		g->references[j].y = y;
 	}
 	if (glyphHasInstruction) {
 		uint16_t instructionLength = caryll_blt16u(start + offset);
@@ -231,18 +244,6 @@ glyf_glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	} else {
 		return caryll_read_composite_glyph(start + 10);
 	}
-}
-
-glyf_glyph *spaceGlyph() {
-	glyf_glyph *g = malloc(sizeof(glyf_glyph));
-	g->numberOfContours = 0;
-	g->numberOfReferences = 0;
-	g->instructionsLength = 0;
-	g->instructions = NULL;
-	g->content.contours = NULL;
-	g->advanceWidth = 0;
-	g->name = NULL;
-	return g;
 }
 
 void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
@@ -276,9 +277,9 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	FOR_TABLE('glyf', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		if(length < offsets[numGlyphs]) goto GLYF_CORRUPTED;
-		
-		glyf = (table_glyf *)malloc(sizeof(table_glyf*) * 1);
+		if (length < offsets[numGlyphs]) goto GLYF_CORRUPTED;
+
+		glyf = (table_glyf *)malloc(sizeof(table_glyf *) * 1);
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
 		for (uint16_t j = 0; j < numGlyphs; j++) {

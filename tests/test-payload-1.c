@@ -24,8 +24,8 @@ int main(int argc, char *argv[]) {
 		assert_equal("Glyph count", font->glyf->numberGlyphs, 15);
 		assert_equal("glyf[14] contour count", font->glyf->glyphs[14]->numberOfContours, 2);
 		assert_equal("glyf[14] instr length", font->glyf->glyphs[14]->instructionsLength, 281);
-		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14]->content.contours[0].pointsCount, (11 - 0 + 1));
-		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14]->content.contours[1].pointsCount, (56 - 12 + 1));
+		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14]->contours[0].pointsCount, (11 - 0 + 1));
+		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14]->contours[1].pointsCount, (56 - 12 + 1));
 	}
 
 	{ // Glyph order and naming

@@ -69,9 +69,9 @@ void caryll_name_glyf(caryll_font *font) {
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_glyph *g = font->glyf->glyphs[j];
 			lookup_name(font, j, &g->name);
-			if (g->numberOfContours == 0 && g->numberOfReferences > 0) {
+			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-					lookup_name(font, g->content.references[k].glyph.gid, &g->content.references[k].glyph.name);
+					lookup_name(font, g->references[k].glyph.gid, &g->references[k].glyph.name);
 				}
 			}
 		}

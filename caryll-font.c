@@ -60,16 +60,17 @@ void caryll_font_close(caryll_font *font) {
 	if (font->glyf != NULL) {
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_glyph *g = font->glyf->glyphs[j];
-			if (g->numberOfContours > 0) {
+			if (g->numberOfContours > 0 && g->contours != NULL) {
 				for (uint16_t k = 0; k < g->numberOfContours; k++) {
-					free(g->content.contours[k].points);
+					free(g->contours[k].points);
 				}
-				free(g->content.contours);
-			} else if (g->numberOfReferences > 0) {
+				free(g->contours);
+			}
+			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-					g->content.references[k].glyph.name = NULL;
+					g->references[k].glyph.name = NULL;
 				}
-				free(g->content.references);
+				free(g->references);
 			}
 			if (g->instructions != NULL) { free(g->instructions); }
 			g->name = NULL;
