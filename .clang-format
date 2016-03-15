@@ -6,3 +6,4 @@ AllowShortBlocksOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: true
 ColumnLimit: 120
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
