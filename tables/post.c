@@ -20,6 +20,40 @@ void caryll_read_post(caryll_font *font, caryll_packet packet) {
 		post->maxMemType42 = caryll_blt32u(data + 20);
 		post->minMemType1 = caryll_blt32u(data + 24);
 		post->maxMemType1 = caryll_blt32u(data + 28);
+		post->post_name_map = NULL;
+		// Foamt 2 additional glyph names
+		if(post->version == 0x20000) {
+			glyph_order_hash *map = malloc(sizeof(glyph_order_hash));
+			*map = NULL;
+			
+			sds pendingNames[0x10000];
+			memset(pendingNames, 0, sizeof(pendingNames));
+			uint16_t numberGlyphs = caryll_blt16u(data + 32);
+			uint32_t offset = 34 + 2 * numberGlyphs;
+			uint16_t pendingNameIndex = 0;
+			while(pendingNameIndex <= 0xFFFF && offset < table.length) {
+				uint8_t len = data[offset];
+				sds s;
+				if(len > 0) {
+					s = sdsnewlen(data + offset + 1, len);
+				} else {
+					s = sdsempty();
+				}
+				offset += len + 1;
+				pendingNames[pendingNameIndex] = s;
+				pendingNameIndex += 1;
+			}
+			for(uint16_t j = 0; j < numberGlyphs; j++){
+				uint16_t nameMap = caryll_blt16u(data + 34 + 2 * j);
+				if(nameMap > 258) {
+					try_name_glyph(map, j, sdsdup(pendingNames[nameMap - 258]));
+				}
+			}
+			for(uint32_t j = 0; j < pendingNameIndex; j++){
+				sdsfree(pendingNames[j]);
+			}
+			post->post_name_map = map;
+		}
 		font->post = post;
 	}
 }

@@ -108,7 +108,17 @@ void caryll_font_close(caryll_font *font) {
 		if (font->hmtx->leftSideBearing != NULL) free(font->hmtx->leftSideBearing);
 		free(font->hmtx);
 	}
-	if (font->post != NULL) free(font->post);
+	if (font->post != NULL) {
+		if (font->post->post_name_map != NULL) {
+			glyph_order_entry *s, *tmp;
+			HASH_ITER(hh, *(font->post->post_name_map), s, tmp) {
+				sdsfree(s->name);
+				HASH_DEL(*(font->post->post_name_map), s);
+				free(s);
+			}
+		}
+		free(font->post);
+	}
 	if (font->hdmx != NULL) {
 		if (font->hdmx->records != NULL) {
 			for (uint32_t i = 0; i < font->hdmx->numRecords; i++) {

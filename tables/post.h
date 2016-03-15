@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "../caryll-font.h"
+#include "../support/glyphorder.h"
 
 typedef struct {
 	// PostScript information
@@ -15,6 +16,7 @@ typedef struct {
 	uint32_t maxMemType42;
 	uint32_t minMemType1;
 	uint32_t maxMemType1;
+	glyph_order_hash *post_name_map;
 } table_post;
 
 void caryll_read_post(caryll_font *font, caryll_packet packet);

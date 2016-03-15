@@ -22,4 +22,6 @@ void caryll_name_glyphs(caryll_font *font);
 void caryll_name_cmap_entries(caryll_font *font);
 void caryll_name_glyf(caryll_font *font);
 
+int try_name_glyph(glyph_order_hash *glyph_order, uint16_t _id, sds name);
+
 #endif

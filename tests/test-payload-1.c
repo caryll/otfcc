@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 		testindex = 5;
 		HASH_FIND_INT(*(font->glyph_order), &testindex, s);
 		assert_exists("Glyph 5 has a name", s);
-		if (s != NULL) assert_equal("Glyph 5 is named as uni4E09", strcmp(s->name, "uni4E09"), 0);
+		if (s != NULL) assert_equal("Glyph 5 is named as NameMe.3", strcmp(s->name, "NameMe.3"), 0);
 
 		bool allGlyphNamed = true;
 		for (int index = 0; index < font->glyf->numberGlyphs; index++) {
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 		assert_exists("Found cmap entry for U+888B", s);
 		if (s != NULL) {
 			assert_equal("U+888B Mapping correct", s->glyph.gid, 13);
-			assert_equal("U+888B is named as uni888B", strcmp(s->glyph.name, "uni888B"), 0);
+			assert_equal("U+888B is named as NameMe.11", strcmp(s->glyph.name, "NameMe.11"), 0);
 		}
 
 		testindex = 0x9df9;

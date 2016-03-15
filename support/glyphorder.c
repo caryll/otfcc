@@ -30,6 +30,13 @@ void caryll_name_glyphs(caryll_font *font) {
 
 	try_name_glyph(glyph_order, 0, sdsnew(".notdef"));
 
+	// pass 2: Map to custom `post` names
+	if (font->post != NULL && font->post->post_name_map != NULL) {
+		glyph_order_entry *s, *_tmp;
+		HASH_ITER(hh, *font->post->post_name_map, s, _tmp){
+			try_name_glyph(glyph_order, s->gid, sdsdup(s->name));
+		}
+	}
 	// pass 3: Map to Unicode
 	if (font->cmap != NULL) {
 		cmap_hash handle = *(font->cmap);
@@ -53,9 +60,7 @@ void lookup_name(caryll_font *font, uint16_t _gid, sds *field) {
 	glyph_order_entry *so;
 	int gid = _gid;
 	HASH_FIND_INT(*font->glyph_order, &gid, so);
-	if (so != NULL) {
-		*field = so->name;
-	}
+	if (so != NULL) { *field = so->name; }
 }
 void caryll_name_cmap_entries(caryll_font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
