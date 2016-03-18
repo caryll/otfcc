@@ -45,9 +45,15 @@ void caryll_head_to_json(caryll_font *font, JSON_Object *root) {
 	json_object_dotset_number(root, "head.fontRevison", font->head->fontRevison);
 	json_object_dotset_number(root, "head.flags", font->head->flags);
 	json_object_dotset_number(root, "head.unitsPerEm", font->head->unitsPerEm);
-	json_object_dotset_string(root, "head.created", sdsfromlonglong(font->head->created));
-	json_object_dotset_string(root, "head.modified", sdsfromlonglong(font->head->modified));
+	json_object_dotset_number(root, "head.created", font->head->created);
+	json_object_dotset_number(root, "head.modified", font->head->modified);
+	json_object_dotset_number(root, "head.xMin", font->head->xMin);
+	json_object_dotset_number(root, "head.xMax", font->head->xMax);
+	json_object_dotset_number(root, "head.yMin", font->head->yMin);
+	json_object_dotset_number(root, "head.yMax", font->head->yMax);
 	json_object_dotset_number(root, "head.macStyle", font->head->macStyle);
 	json_object_dotset_number(root, "head.lowestRecPPEM", font->head->lowestRecPPEM);
 	json_object_dotset_number(root, "head.fontDirectoryHint", font->head->fontDirectoryHint);
+	json_object_dotset_number(root, "head.indexToLocFormat", font->head->indexToLocFormat);
+	json_object_dotset_number(root, "head.glyphDataFormat", font->head->glyphDataFormat);
 }
