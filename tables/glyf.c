@@ -51,7 +51,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 	g->instructionsLength = instructionLength;
 	g->instructions = instructions;
 
-	// read points
+	// read flags
 	uint16_t pointsInGlyph = lastPointIndex;
 	// There are repeating entries in the flags list, we will fill out the result
 	font_file_pointer flags = (uint8_t *)malloc(sizeof(uint8_t) * pointsInGlyph);
@@ -67,7 +67,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 		flagBytesReadSofar += 1;
 		flagsReadSofar += 1;
 		next_point(contours, &currentContour, &currentContourPointIndex)->onCurve = (flag & GLYF_FLAG_ON_CURVE);
-		if (flag & GLYF_FLAG_REPEAT) {
+		if (flag & GLYF_FLAG_REPEAT) { // repeating flag
 			uint8_t repeat = flagStart[flagBytesReadSofar];
 			flagBytesReadSofar += 1;
 			for (uint8_t j = 0; j < repeat; j++) {
@@ -101,7 +101,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 		next_point(contours, &currentContour, &currentContourPointIndex)->x = x;
 		coordinatesRead += 1;
 	}
-	// read Y
+	// read Y, identical to X
 	coordinatesRead = 0;
 	currentContour = 0;
 	currentContourPointIndex = 0;

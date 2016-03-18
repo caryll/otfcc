@@ -44,7 +44,13 @@ build/test-head.o : test-head.c | build
 build/test-head$(SUFFIX) : build/test-head.o $(OBJECTS)
 	$(LINK) $^ -o $@
 
-objects: build/test-head$(SUFFIX)
+build/otfccdump.o : otfccdump.c | build
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+build/otfccdump$(SUFFIX) : build/otfccdump.o $(OBJECTS)
+	$(LINK) $^ -o $@
+
+objects: build/test-head$(SUFFIX) build/otfccdump$(SUFFIX)
 
 TESTFILES = build/test-payload-1$(SUFFIX)
 build/%.o : tests/%.c | build

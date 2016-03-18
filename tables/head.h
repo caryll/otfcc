@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "../caryll-font.h"
+#include "../extern/parson.h"
 
 typedef struct {
 	// Font header
@@ -26,5 +27,6 @@ typedef struct {
 } table_head;
 
 void caryll_read_head(caryll_font *font, caryll_packet packet);
+void caryll_head_to_json(caryll_font *font, JSON_Object *root);
 
 #endif

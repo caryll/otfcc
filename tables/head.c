@@ -6,6 +6,8 @@
 #include "../caryll-font.h"
 #include "../caryll-io.h"
 
+#include "../extern/parson.h"
+
 void caryll_read_head(caryll_font *font, caryll_packet packet) {
 	FOR_TABLE('head', table) {
 		font_file_pointer data = table.data;
@@ -36,4 +38,16 @@ void caryll_read_head(caryll_font *font, caryll_packet packet) {
 			font->head = head;
 		}
 	}
+}
+
+void caryll_head_to_json(caryll_font *font, JSON_Object *root) {
+	json_object_dotset_number(root, "head.version", font->head->version);
+	json_object_dotset_number(root, "head.fontRevison", font->head->fontRevison);
+	json_object_dotset_number(root, "head.flags", font->head->flags);
+	json_object_dotset_number(root, "head.unitsPerEm", font->head->unitsPerEm);
+	json_object_dotset_string(root, "head.created", sdsfromlonglong(font->head->created));
+	json_object_dotset_string(root, "head.modified", sdsfromlonglong(font->head->modified));
+	json_object_dotset_number(root, "head.macStyle", font->head->macStyle);
+	json_object_dotset_number(root, "head.lowestRecPPEM", font->head->lowestRecPPEM);
+	json_object_dotset_number(root, "head.fontDirectoryHint", font->head->fontDirectoryHint);
 }
