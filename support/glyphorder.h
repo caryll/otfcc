@@ -9,7 +9,7 @@
 typedef struct {
 	uint16_t gid;
 	sds name;
-} glyph_reference;
+} glyph_handle;
 
 typedef struct {
 	int gid;

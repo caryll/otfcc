@@ -316,3 +316,66 @@ void caryll_delete_table_glyf(caryll_font *font) {
 	free(font->glyf->glyphs);
 	free(font->glyf);
 }
+
+JSON_Value *caryll_glyf_point_to_json(glyf_point p) {
+	JSON_Value *_point = json_value_init_object();
+	JSON_Object *point = json_value_get_object(_point);
+	json_object_set_number(point, "x", p.x);
+	json_object_set_number(point, "y", p.y);
+	json_object_set_number(point, "on", p.onCurve);
+	return _point;
+}
+
+void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
+	if (!font->glyf) return;
+	JSON_Value *_glyfArray = json_value_init_array();
+	JSON_Array *glyfArray = json_value_get_array(_glyfArray);
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		glyf_glyph *g = font->glyf->glyphs[j];
+		JSON_Value *_glyph = json_value_init_object();
+		JSON_Object *glyph = json_value_get_object(_glyph);
+		json_object_set_string(glyph, "name", g->name);
+		json_object_set_number(glyph, "advanceWidth", g->advanceWidth);
+		
+		// contours
+		{
+			JSON_Value *_contours = json_value_init_array();
+			JSON_Array *contours = json_value_get_array(_contours);
+			for(uint16_t k = 0; k < g->numberOfContours; k++) {
+				glyf_contour c = g->contours[k];
+				JSON_Value *_contour = json_value_init_array();
+				JSON_Array *contour = json_value_get_array(_contour);
+				for(uint16_t m = 0; m < c.pointsCount; m++){
+					json_array_append_value(contour, caryll_glyf_point_to_json(c.points[m]));
+				}
+				json_array_append_value(contours, _contour);
+			}
+			json_object_set_value(glyph, "contours", _contours);
+		}
+		// references
+		{
+			JSON_Value *_references = json_value_init_array();
+			JSON_Array *references = json_value_get_array(_references);
+			for(uint16_t k = 0; k < g->numberOfReferences; k++) {
+				glyf_reference r = g->references[k];
+				JSON_Value *_reference = json_value_init_object();
+				JSON_Object *reference = json_value_get_object(_reference);
+				json_object_set_string(reference, "name", r.glyph.name);
+				json_object_set_number(reference, "x", r.x);
+				json_object_set_number(reference, "y", r.y);
+				json_object_set_number(reference, "a", r.a);
+				json_object_set_number(reference, "b", r.b);
+				json_object_set_number(reference, "c", r.c);
+				json_object_set_number(reference, "d", r.d);
+				json_object_set_boolean(reference, "overlap", r.overlap);
+				json_object_set_boolean(reference, "useMyMetrics", r.useMyMetrics);
+				
+				json_array_append_value(references, _reference);
+			}
+			json_object_set_value(glyph, "references", _references);
+		}
+				
+		json_array_append_value(glyfArray, _glyph);
+	}
+	json_object_set_value(root_object, "glyf", _glyfArray);
+}

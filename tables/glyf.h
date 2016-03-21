@@ -7,6 +7,9 @@
 #include "../extern/sds.h"
 #include "../support/glyphorder.h"
 
+#include "../extern/parson.h"
+
+
 enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
@@ -21,7 +24,7 @@ typedef struct {
 } glyf_contour;
 
 typedef struct {
-	glyph_reference glyph;
+	glyph_handle glyph;
 	// transformation term
 	float a;
 	float b;
@@ -70,5 +73,6 @@ typedef struct {
 glyf_glyph *spaceGlyph();
 void caryll_read_glyf(caryll_font *font, caryll_packet packet);
 void caryll_delete_table_glyf(caryll_font *font);
+void caryll_glyf_to_json(caryll_font *font, JSON_Object *root);
 
 #endif

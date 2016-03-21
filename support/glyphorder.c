@@ -72,7 +72,7 @@ void caryll_name_glyphs(caryll_font *font) {
 		}
 	}
 	// pass 3: Map to GID
-	for (uint16_t j = 1; j < numGlyphs; j++) {
+	for (uint16_t j = 0; j < numGlyphs; j++) {
 		sds name = sdscatfmt(sdsempty(), "glyph%u", j);
 		int actuallyNamed = try_name_glyph(glyph_order, j, name);
 		if (!actuallyNamed) sdsfree(name);
