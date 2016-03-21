@@ -105,6 +105,7 @@ int main(int argc, char *argv[]) {
 
 	caryll_head_to_json(font, root_object);
 	caryll_glyf_to_json(font, root_object);
+	caryll_cmap_to_json(font, root_object);
 
 	char *serialized;
 	if(isatty(fileno(stdout))){

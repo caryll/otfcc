@@ -32,22 +32,23 @@ int main(int argc, char *argv[]) {
 			if (g->numberOfContours > 0) {
 				for (uint16_t k = 0; k < g->numberOfContours; k++) {
 					printf("    CONTOUR %3d : %5d points\n", k, g->contours[k].pointsCount);
-					if(DUMP_GLYF_POINTS) for (uint16_t m = 0; m < g->contours[k].pointsCount; m++) {
-						printf("        %s (%5d, %5d)\n", g->contours[k].points[m].onCurve ? "ON " : "OFF",
-						       g->contours[k].points[m].x, g->contours[k].points[m].y);
-					}
+					if (DUMP_GLYF_POINTS)
+						for (uint16_t m = 0; m < g->contours[k].pointsCount; m++) {
+							printf("        %s (%5d, %5d)\n", g->contours[k].points[m].onCurve ? "ON " : "OFF",
+							       g->contours[k].points[m].x, g->contours[k].points[m].y);
+						}
 				}
 			}
 			if (g->numberOfReferences > 0) {
 				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-					printf("    REF %-12s %5d %5d %5g %5g %5g %5g\n", g->references[k].glyph.name,
-					       g->references[k].x, g->references[k].y, g->references[k].a,
-					       g->references[k].b, g->references[k].c, g->references[k].d);
+					printf("    REF %-12s %5d %5d %5g %5g %5g %5g\n", g->references[k].glyph.name, g->references[k].x,
+					       g->references[k].y, g->references[k].a, g->references[k].b, g->references[k].c,
+					       g->references[k].d);
 				}
 			}
 		}
 	if (DUMP_CMAP) {
-		cmap_entry* item;
+		cmap_entry *item;
 		foreach_hash(item, *font->cmap) { printf("[U+%04x -> %d]", item->unicode, item->glyph.gid); }
 	}
 
