@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 #define BILLION 1000000000
 
@@ -105,11 +106,16 @@ int main(int argc, char *argv[]) {
 	caryll_head_to_json(font, root_object);
 	caryll_glyf_to_json(font, root_object);
 
-	char *serialized = json_serialize_to_string_pretty(root_value);
+	char *serialized;
+	if(isatty(fileno(stdout))){
+		serialized = json_serialize_to_string_pretty(root_value);
+	} else {
+		serialized = json_serialize_to_string(root_value);
+	}
 
 	push_stopwatch("Serialize to JSON", &begin);
 
-	puts(serialized);
+	fputs(serialized, stdout);
 
 	push_stopwatch("Write to file", &begin);
 
