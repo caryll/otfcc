@@ -6,6 +6,8 @@
 #include "../extern/uthash.h"
 #include "../extern/sds.h"
 
+#include "../extern/parson.h"
+
 typedef struct {
 	uint16_t gid;
 	sds name;
@@ -24,5 +26,8 @@ void caryll_name_glyf(caryll_font *font);
 
 int try_name_glyph(glyph_order_hash *glyph_order, uint16_t _id, sds name);
 void delete_glyph_order_map(glyph_order_hash *map);
+
+void caryll_glyphorder_to_json(caryll_font *font, JSON_Object *root);
+
 
 #endif
