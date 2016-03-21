@@ -81,11 +81,12 @@ void timespec_diff(struct timespec *start, struct timespec *stop, struct timespe
 	return;
 }
 
-void push_stopwatch(const char *reason, struct timespec startTime) {
+void push_stopwatch(const char *reason, struct timespec *sofar) {
 	struct timespec ends;
 	clock_gettime(CLOCK_REALTIME, &ends);
 	struct timespec diff;
-	timespec_diff(&startTime, &ends, &diff);
+	timespec_diff(sofar, &ends, &diff);
+	*sofar = ends;
 	fprintf(stderr, "%s: %g\n", reason, diff.tv_sec + diff.tv_nsec / (double)BILLION);
 }
 
@@ -96,7 +97,7 @@ int main(int argc, char *argv[]) {
 	caryll_sfnt *sfnt = caryll_sfnt_open(argv[1]);
 	caryll_font *font = caryll_font_open(sfnt, 0);
 
-	push_stopwatch("Parse SFNT", begin);
+	push_stopwatch("Parse SFNT", &begin);
 
 	JSON_Value *root_value = json_value_init_object();
 	JSON_Object *root_object = json_value_get_object(root_value);
@@ -106,11 +107,11 @@ int main(int argc, char *argv[]) {
 
 	char *serialized = json_serialize_to_string_pretty(root_value);
 
-	push_stopwatch("Serialize to JSON", begin);
+	push_stopwatch("Serialize to JSON", &begin);
 
 	puts(serialized);
 
-	push_stopwatch("Write to file", begin);
+	push_stopwatch("Write to file", &begin);
 
 	json_free_serialized_string(serialized);
 	json_value_free(root_value);
