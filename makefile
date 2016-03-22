@@ -38,19 +38,13 @@ $(EXTOBJS) : build/extern-%.o : extern/%.c | build
 $(SUPPORTOBJS) : build/support-%.o : support/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 	
-build/test-head.o : test-head.c | build
-	$(CC) $(CFLAGS) -c $^ -o $@
-
-build/test-head$(SUFFIX) : build/test-head.o $(OBJECTS)
-	$(LINK) $^ -o $@
-
 build/otfccdump.o : otfccdump.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 build/otfccdump$(SUFFIX) : build/otfccdump.o $(OBJECTS)
 	$(LINK) $^ -o $@
 
-objects: build/test-head$(SUFFIX) build/otfccdump$(SUFFIX)
+objects:build/otfccdump$(SUFFIX)
 
 TESTFILES = build/test-payload-1$(SUFFIX)
 build/%.o : tests/%.c | build

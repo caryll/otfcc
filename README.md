@@ -12,7 +12,8 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 Usage:
 
 ``` bash
-otfcc dump input.otf -o output.json
-otfcc build input.json -o output.otf
-otfcc patch input.otf -p patch.json -o output.otf
+otfccdump input.otf -o output.json
+otfccbuild input.json -o output.otf
+otfccpatch input.otf -p patch.json -o output.otf
 ```
+
