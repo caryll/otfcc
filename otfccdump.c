@@ -6,6 +6,7 @@
 #define BILLION 1000000000
 
 #ifdef _WIN32
+// Windows
 #include <windows.h>
 LARGE_INTEGER getFILETIMEoffset() {
 	SYSTEMTIME s;
@@ -26,7 +27,7 @@ LARGE_INTEGER getFILETIMEoffset() {
 	return (t);
 }
 
-int clock_gettime(clockid_t X, struct timespec *tv) {
+void time_now(struct timespec *tv) {
 	LARGE_INTEGER t;
 	FILETIME f;
 	double microseconds;
@@ -61,7 +62,32 @@ int clock_gettime(clockid_t X, struct timespec *tv) {
 	t.QuadPart = microseconds;
 	tv->tv_sec = t.QuadPart / 1000000;
 	tv->tv_nsec = t.QuadPart % 1000000 * 1000;
-	return (0);
+}
+#elif __MACH__
+// OSX
+#include <mach/mach_time.h>
+#define ORWL_NANO (+1.0E-9)
+#define ORWL_GIGA UINT64_C(1000000000)
+
+static double orwl_timebase = 0.0;
+static uint64_t orwl_timestart = 0;
+
+void time_now(struct timespec *tv) {
+	// be more careful in a multithreaded environement
+	if (!orwl_timestart) {
+		mach_timebase_info_data_t tb = {0};
+		mach_timebase_info(&tb);
+		orwl_timebase = tb.numer;
+		orwl_timebase /= tb.denom;
+		orwl_timestart = mach_absolute_time();
+	}
+	double diff = (mach_absolute_time() - orwl_timestart) * orwl_timebase;
+	tv->tv_sec = diff * ORWL_NANO;
+	tv->tv_nsec = diff - (tv->tv_sec * ORWL_GIGA);
+}
+#else
+void time_now(struct timespec *tv){
+	clock_gettime(CLOCK_REALTIME, tv);
 }
 #endif
 
@@ -84,7 +110,7 @@ void timespec_diff(struct timespec *start, struct timespec *stop, struct timespe
 
 void push_stopwatch(const char *reason, struct timespec *sofar) {
 	struct timespec ends;
-	clock_gettime(CLOCK_REALTIME, &ends);
+	time_now(&ends);
 	struct timespec diff;
 	timespec_diff(sofar, &ends, &diff);
 	*sofar = ends;
@@ -93,7 +119,7 @@ void push_stopwatch(const char *reason, struct timespec *sofar) {
 
 int main(int argc, char *argv[]) {
 	struct timespec begin;
-	clock_gettime(CLOCK_REALTIME, &begin);
+	time_now(&begin);
 
 	caryll_sfnt *sfnt = caryll_sfnt_open(argv[1]);
 	caryll_font *font = caryll_font_open(sfnt, 0);
@@ -109,7 +135,7 @@ int main(int argc, char *argv[]) {
 	caryll_glyphorder_to_json(font, root_object);
 
 	char *serialized;
-	if(isatty(fileno(stdout))){
+	if (isatty(fileno(stdout))) {
 		serialized = json_serialize_to_string_pretty(root_value);
 	} else {
 		serialized = json_serialize_to_string(root_value);
