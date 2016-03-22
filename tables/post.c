@@ -68,3 +68,17 @@ void caryll_delete_table_post(caryll_font *font) {
 	if (font->post->post_name_map != NULL) { delete_glyph_order_map(font->post->post_name_map); }
 	free(font->post);
 }
+
+
+void caryll_post_to_json(caryll_font *font, JSON_Object *root) {
+	if(!font->post) return;
+	json_object_dotset_number(root, "post.version", font->post->version);
+	json_object_dotset_number(root, "post.italicAngle", font->post->italicAngle);
+	json_object_dotset_number(root, "post.underlinePosition", font->post->underlinePosition);
+	json_object_dotset_number(root, "post.underlineThickness", font->post->underlineThickness);
+	json_object_dotset_number(root, "post.isFixedPitch", font->post->isFixedPitch);
+	json_object_dotset_number(root, "post.minMemType42", font->post->minMemType42);
+	json_object_dotset_number(root, "post.maxMemType42", font->post->maxMemType42);
+	json_object_dotset_number(root, "post.minMemType1", font->post->minMemType1);
+	json_object_dotset_number(root, "post.maxMemType1", font->post->maxMemType1);
+}

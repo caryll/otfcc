@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include "../caryll-font.h"
+#include "../extern/parson.h"
+
 
 typedef struct {
 	// OS/2 and Windows specific metrics
@@ -47,5 +49,6 @@ typedef struct {
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
 void caryll_read_OS_2(caryll_font *font, caryll_packet packet);
+void caryll_OS_2_to_json(caryll_font *font, JSON_Object *root);
 
 #endif

@@ -336,16 +336,16 @@ void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
 		JSON_Object *glyph = json_value_get_object(_glyph);
 		json_object_set_string(glyph, "name", g->name);
 		json_object_set_number(glyph, "advanceWidth", g->advanceWidth);
-		
+
 		// contours
 		{
 			JSON_Value *_contours = json_value_init_array();
 			JSON_Array *contours = json_value_get_array(_contours);
-			for(uint16_t k = 0; k < g->numberOfContours; k++) {
+			for (uint16_t k = 0; k < g->numberOfContours; k++) {
 				glyf_contour c = g->contours[k];
 				JSON_Value *_contour = json_value_init_array();
 				JSON_Array *contour = json_value_get_array(_contour);
-				for(uint16_t m = 0; m < c.pointsCount; m++){
+				for (uint16_t m = 0; m < c.pointsCount; m++) {
 					json_array_append_value(contour, caryll_glyf_point_to_json(c.points[m]));
 				}
 				json_array_append_value(contours, _contour);
@@ -356,7 +356,7 @@ void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
 		{
 			JSON_Value *_references = json_value_init_array();
 			JSON_Array *references = json_value_get_array(_references);
-			for(uint16_t k = 0; k < g->numberOfReferences; k++) {
+			for (uint16_t k = 0; k < g->numberOfReferences; k++) {
 				glyf_reference r = g->references[k];
 				JSON_Value *_reference = json_value_init_object();
 				JSON_Object *reference = json_value_get_object(_reference);
@@ -369,12 +369,12 @@ void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
 				json_object_set_number(reference, "d", r.d);
 				json_object_set_boolean(reference, "overlap", r.overlap);
 				json_object_set_boolean(reference, "useMyMetrics", r.useMyMetrics);
-				
+
 				json_array_append_value(references, _reference);
 			}
 			json_object_set_value(glyph, "references", _references);
 		}
-				
+
 		json_object_set_value(glyfObj, g->name, _glyph);
 	}
 	json_object_set_value(root_object, "glyf", _glyfObj);

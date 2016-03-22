@@ -51,3 +51,22 @@ void caryll_read_maxp(caryll_font *font, caryll_packet packet) {
 		}
 	}
 }
+
+void caryll_maxp_to_json(caryll_font *font, JSON_Object *root) {
+	if (!font->maxp) return;
+	json_object_dotset_number(root, "maxp.version", font->maxp->version);
+	json_object_dotset_number(root, "maxp.numGlyphs", font->maxp->numGlyphs);
+	json_object_dotset_number(root, "maxp.maxPoints", font->maxp->maxPoints);
+	json_object_dotset_number(root, "maxp.maxContours", font->maxp->maxContours);
+	json_object_dotset_number(root, "maxp.maxCompositePoints", font->maxp->maxCompositePoints);
+	json_object_dotset_number(root, "maxp.maxCompositeContours", font->maxp->maxCompositeContours);
+	json_object_dotset_number(root, "maxp.maxZones", font->maxp->maxZones);
+	json_object_dotset_number(root, "maxp.maxTwilightPoints", font->maxp->maxTwilightPoints);
+	json_object_dotset_number(root, "maxp.maxStorage", font->maxp->maxStorage);
+	json_object_dotset_number(root, "maxp.maxFunctionDefs", font->maxp->maxFunctionDefs);
+	json_object_dotset_number(root, "maxp.maxInstructionDefs", font->maxp->maxInstructionDefs);
+	json_object_dotset_number(root, "maxp.maxStackElements", font->maxp->maxStackElements);
+	json_object_dotset_number(root, "maxp.maxSizeOfInstructions", font->maxp->maxSizeOfInstructions);
+	json_object_dotset_number(root, "maxp.maxComponentElements", font->maxp->maxComponentElements);
+	json_object_dotset_number(root, "maxp.maxComponentDepth", font->maxp->maxComponentDepth);
+}

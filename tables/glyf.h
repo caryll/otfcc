@@ -9,7 +9,6 @@
 
 #include "../extern/parson.h"
 
-
 enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
@@ -43,7 +42,7 @@ typedef struct {
 	uint16_t instructionsLength;
 	uint8_t *instructions;
 	uint16_t advanceWidth;
-	
+
 	// NOTE: SFNT does not support mixed glyphs, but we do.
 	glyf_contour *contours;
 	glyf_reference *references;

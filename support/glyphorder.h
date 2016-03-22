@@ -29,5 +29,4 @@ void delete_glyph_order_map(glyph_order_hash *map);
 
 void caryll_glyphorder_to_json(caryll_font *font, JSON_Object *root);
 
-
 #endif

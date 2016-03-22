@@ -41,6 +41,7 @@ void caryll_read_head(caryll_font *font, caryll_packet packet) {
 }
 
 void caryll_head_to_json(caryll_font *font, JSON_Object *root) {
+	if (!font->head) return;
 	json_object_dotset_number(root, "head.version", font->head->version);
 	json_object_dotset_number(root, "head.fontRevison", font->head->fontRevison);
 	json_object_dotset_number(root, "head.flags", font->head->flags);

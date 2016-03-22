@@ -12,7 +12,7 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 2) goto OS_2_CORRUPTED;
-		os_2 = (table_OS_2 *)malloc(sizeof(table_OS_2) * 1);
+		os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));
 		os_2->version = caryll_blt16u(data);
 		// version 1
 		if (os_2->version == 0 || (os_2->version >= 1 && length < 86)) goto OS_2_CORRUPTED;
@@ -73,4 +73,57 @@ OS_2_CORRUPTED:
 	if (os_2 != NULL) free(os_2);
 	font->OS_2 = NULL;
 	return;
+}
+
+void caryll_OS_2_to_json(caryll_font *font, JSON_Object *root) {
+	if (!font->OS_2) return;
+	json_object_dotset_number(root, "OS_2.version", font->OS_2->version);
+	json_object_dotset_number(root, "OS_2.xAvgCharWidth", font->OS_2->xAvgCharWidth);
+	json_object_dotset_number(root, "OS_2.usWeightClass", font->OS_2->usWeightClass);
+	json_object_dotset_number(root, "OS_2.usWidthClass", font->OS_2->usWidthClass);
+	json_object_dotset_number(root, "OS_2.fsType", font->OS_2->fsType);
+	json_object_dotset_number(root, "OS_2.ySubscriptXSize", font->OS_2->ySubscriptXSize);
+	json_object_dotset_number(root, "OS_2.ySubscriptYSize", font->OS_2->ySubscriptYSize);
+	json_object_dotset_number(root, "OS_2.ySubscriptXOffset", font->OS_2->ySubscriptXOffset);
+	json_object_dotset_number(root, "OS_2.ySubscriptYOffset", font->OS_2->ySubscriptYOffset);
+	json_object_dotset_number(root, "OS_2.ySupscriptXSize", font->OS_2->ySupscriptXSize);
+	json_object_dotset_number(root, "OS_2.ySupscriptXOffset", font->OS_2->ySupscriptXOffset);
+	json_object_dotset_number(root, "OS_2.ySupscriptYOffset", font->OS_2->ySupscriptYOffset);
+	json_object_dotset_number(root, "OS_2.yStrikeoutSize", font->OS_2->yStrikeoutSize);
+	json_object_dotset_number(root, "OS_2.yStrikeoutPosition", font->OS_2->yStrikeoutPosition);
+	json_object_dotset_number(root, "OS_2.sFamilyClass", font->OS_2->sFamilyClass);
+
+	JSON_Value *_panose = json_value_init_array();
+	JSON_Array *panose = json_value_get_array(_panose);
+	for (uint8_t j = 0; j < 10; j++) {
+		json_array_append_number(panose, font->OS_2->panose[j]);
+	}
+	json_object_dotset_value(root, "OS_2.panose", _panose);
+
+	json_object_dotset_number(root, "OS_2.ulUnicodeRange1", font->OS_2->ulUnicodeRange1);
+	json_object_dotset_number(root, "OS_2.ulUnicodeRange2", font->OS_2->ulUnicodeRange2);
+	json_object_dotset_number(root, "OS_2.ulUnicodeRange3", font->OS_2->ulUnicodeRange3);
+	json_object_dotset_number(root, "OS_2.ulUnicodeRange4", font->OS_2->ulUnicodeRange4);
+
+	sds vendorid = sdsnewlen(font->OS_2->achVendID, 4);
+	json_object_dotset_string(root, "OS_2.achVendID", vendorid);
+	sdsfree(vendorid);
+
+	json_object_dotset_number(root, "OS_2.fsSelection", font->OS_2->fsSelection);
+	json_object_dotset_number(root, "OS_2.usFirstCharIndex", font->OS_2->usFirstCharIndex);
+	json_object_dotset_number(root, "OS_2.usLastCharIndex", font->OS_2->usLastCharIndex);
+	json_object_dotset_number(root, "OS_2.sTypoAscender", font->OS_2->sTypoAscender);
+	json_object_dotset_number(root, "OS_2.sTypoDescender", font->OS_2->sTypoDescender);
+	json_object_dotset_number(root, "OS_2.sTypoLineGap", font->OS_2->sTypoLineGap);
+	json_object_dotset_number(root, "OS_2.usWinAscent", font->OS_2->usWinAscent);
+	json_object_dotset_number(root, "OS_2.usWinDescent", font->OS_2->usWinDescent);
+	json_object_dotset_number(root, "OS_2.ulCodePageRange1", font->OS_2->ulCodePageRange1);
+	json_object_dotset_number(root, "OS_2.ulCodePageRange2", font->OS_2->ulCodePageRange2);
+	json_object_dotset_number(root, "OS_2.sxHeight", font->OS_2->sxHeight);
+	json_object_dotset_number(root, "OS_2.sCapHeight", font->OS_2->sCapHeight);
+	json_object_dotset_number(root, "OS_2.usDefaultChar", font->OS_2->usDefaultChar);
+	json_object_dotset_number(root, "OS_2.usBreakChar", font->OS_2->usBreakChar);
+	json_object_dotset_number(root, "OS_2.usMaxContext", font->OS_2->usMaxContext);
+	json_object_dotset_number(root, "OS_2.usLowerOpticalPointSize", font->OS_2->usLowerOpticalPointSize);
+	json_object_dotset_number(root, "OS_2.usUpperOpticalPointSize", font->OS_2->usUpperOpticalPointSize);
 }

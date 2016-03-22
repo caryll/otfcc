@@ -76,7 +76,7 @@ void time_now(struct timespec *tv) {
 	tv->tv_nsec = diff - (tv->tv_sec * ORWL_GIGA);
 }
 #else
-void time_now(struct timespec *tv){
+void time_now(struct timespec *tv) {
 	clock_gettime(CLOCK_REALTIME, tv);
 }
 #endif

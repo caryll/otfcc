@@ -37,3 +37,20 @@ void caryll_read_hhea(caryll_font *font, caryll_packet packet) {
 		}
 	}
 }
+
+void caryll_hhea_to_json(caryll_font *font, JSON_Object *root) {
+	if (!font->hhea) return;
+	json_object_dotset_number(root, "hhea.version", font->hhea->version);
+	json_object_dotset_number(root, "hhea.ascender", font->hhea->ascender);
+	json_object_dotset_number(root, "hhea.descender", font->hhea->descender);
+	json_object_dotset_number(root, "hhea.lineGap", font->hhea->lineGap);
+	json_object_dotset_number(root, "hhea.advanceWithMax", font->hhea->advanceWithMax);
+	json_object_dotset_number(root, "hhea.minLeftSideBearing", font->hhea->minLeftSideBearing);
+	json_object_dotset_number(root, "hhea.minRightSideBearing", font->hhea->minRightSideBearing);
+	json_object_dotset_number(root, "hhea.xMaxExtent", font->hhea->xMaxExtent);
+	json_object_dotset_number(root, "hhea.caretSlopeRise", font->hhea->caretSlopeRise);
+	json_object_dotset_number(root, "hhea.yMcaretSlopeRunax", font->hhea->caretSlopeRun);
+	json_object_dotset_number(root, "hhea.caretOffset", font->hhea->caretOffset);
+	json_object_dotset_number(root, "hhea.lowestmetricDataFormatRecPPEM", font->hhea->metricDataFormat);
+	json_object_dotset_number(root, "hhea.numberOfMetrics", font->hhea->numberOfMetrics);
+}

@@ -104,10 +104,10 @@ void caryll_name_glyf(caryll_font *font) {
 }
 
 void caryll_glyphorder_to_json(caryll_font *font, JSON_Object *root) {
-	if(!font->glyf) return;
+	if (!font->glyf) return;
 	JSON_Value *_order = json_value_init_array();
 	JSON_Array *order = json_value_get_array(_order);
-	for(uint16_t j = 0; j < font->glyf->numberGlyphs; j++){
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		json_array_append_string(order, font->glyf->glyphs[j]->name);
 	}
 	json_object_set_value(root, "glyph_order", _order);
