@@ -374,6 +374,15 @@ void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
 			}
 			json_object_set_value(glyph, "references", _references);
 		}
+		// instructions
+		{
+			JSON_Value *_instructions = json_value_init_array();
+			JSON_Array *instructions = json_value_get_array(_instructions);
+			for(uint16_t j = 0; j < g->instructionsLength; j++){
+				json_array_append_number(instructions, g->instructions[j]);
+			}
+			json_object_set_value(glyph, "instructions", _instructions);
+		}
 		
 		json_array_append_value(glyfObj, _glyph);
 	}
