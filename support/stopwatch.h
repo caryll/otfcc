@@ -1,3 +1,6 @@
+#ifndef CARYLL_SUPPORT_STOPWATCH_H
+#define CARYLL_SUPPORT_STOPWATCH_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -14,3 +17,5 @@
 #endif
 void time_now(struct timespec *tv);
 void push_stopwatch(const char *reason, struct timespec *sofar);
+
+#endif
