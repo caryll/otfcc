@@ -21,22 +21,21 @@ int main(int argc, char *argv[]) {
 	JSON_Value *root_value = json_value_init_object();
 	JSON_Object *root_object = json_value_get_object(root_value);
 	
-
 	caryll_head_to_json(font, root_object);
 	caryll_hhea_to_json(font, root_object);
 	caryll_maxp_to_json(font, root_object);
 	caryll_OS_2_to_json(font, root_object);
 	caryll_name_to_json(font, root_object);
 	caryll_post_to_json(font, root_object);
-	caryll_glyf_to_json(font, root_object);
-	caryll_cmap_to_json(font, root_object);
 	caryll_glyphorder_to_json(font, root_object);
-	
+	caryll_cmap_to_json(font, root_object);
+	caryll_glyf_to_json(font, root_object);
+
 	push_stopwatch("Convert to JSON", &begin);
 
 	char *serialized;
 	if (isatty(fileno(stdout))) {
-		serialized = json_serialize_to_string_pretty(root_value);
+	serialized = json_serialize_to_string_pretty(root_value);
 	} else {
 		serialized = json_serialize_to_string(root_value);
 	}

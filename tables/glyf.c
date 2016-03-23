@@ -328,8 +328,8 @@ JSON_Value *caryll_glyf_point_to_json(glyf_point p) {
 
 void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
 	if (!font->glyf) return;
-	JSON_Value *_glyfObj = json_value_init_object();
-	JSON_Object *glyfObj = json_value_get_object(_glyfObj);
+	JSON_Value *_glyfObj = json_value_init_array();
+	JSON_Array *glyfObj = json_value_get_array(_glyfObj);
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_glyph *g = font->glyf->glyphs[j];
 		JSON_Value *_glyph = json_value_init_object();
@@ -374,8 +374,8 @@ void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
 			}
 			json_object_set_value(glyph, "references", _references);
 		}
-
-		json_object_set_value(glyfObj, g->name, _glyph);
+		
+		json_array_append_value(glyfObj, _glyph);
 	}
 	json_object_set_value(root_object, "glyf", _glyfObj);
 }
