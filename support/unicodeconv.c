@@ -1,4 +1,6 @@
 #include "unicodeconv.h"
+
+// Brought from libXML2.
 sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 	uint16_t *in = (uint16_t *)inb;
 	uint16_t *inend;
@@ -12,8 +14,8 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 	uint32_t bytesNeeded = 0;
 	while (in < inend) {
 		c = *in++;
-		if ((c & 0xFC00) == 0xD800) { /* surrogates */
-			if (in >= inend) {        /* (in > inend) shouldn't happens */
+		if ((c & 0xFC00) == 0xD800) { // surrogates
+			if (in >= inend) {        // (in > inend) shouldn't happens
 				break;
 			}
 			d = *in++;
@@ -41,10 +43,8 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 
 	while (in < inend) {
 		c = *in++;
-		if ((c & 0xFC00) == 0xD800) { /* surrogates */
-			if (in >= inend) {        /* (in > inend) shouldn't happens */
-				break;
-			}
+		if ((c & 0xFC00) == 0xD800) {
+			if (in >= inend) { break; }
 			d = *in++;
 			if ((d & 0xFC00) == 0xDC00) {
 				c &= 0x03FF;
@@ -54,7 +54,6 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 			}
 		}
 
-		/* assertion: c is a single UTF-4 value */
 		if (c < 0x80) {
 			*out++ = c;
 			bits = -6;
@@ -87,7 +86,6 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 	if ((inlenb % 2) == 1) (inlenb)--;
 	inlen = inlenb / 2;
 	inend = in + inlen;
-	// pass 1: calculate bytes used for output
 	uint32_t bytesNeeded = 0;
 	while (in < inend) {
 		{
@@ -97,10 +95,8 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 			c = c | (uint32_t)*tmp;
 			in++;
 		}
-		if ((c & 0xFC00) == 0xD800) { /* surrogates */
-			if (in >= inend) {        /* (in > inend) shouldn't happens */
-				break;
-			}
+		if ((c & 0xFC00) == 0xD800) {
+			if (in >= inend) { break; }
 			{
 				tmp = (uint8_t *)in;
 				d = *tmp++;
@@ -138,10 +134,8 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 			c = c | (uint32_t)*tmp;
 			in++;
 		}
-		if ((c & 0xFC00) == 0xD800) { /* surrogates */
-			if (in >= inend) {        /* (in > inend) shouldn't happens */
-				break;
-			}
+		if ((c & 0xFC00) == 0xD800) {
+			if (in >= inend) { break; }
 			{
 				tmp = (uint8_t *)in;
 				d = *tmp++;
@@ -157,7 +151,6 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 			}
 		}
 
-		/* assertion: c is a single UTF-4 value */
 		if (c < 0x80) {
 			*out++ = c;
 			bits = -6;
