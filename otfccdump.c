@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
 	caryll_OS_2_to_json(font, root_object);
 	caryll_glyf_to_json(font, root_object);
 	caryll_cmap_to_json(font, root_object);
+	caryll_post_to_json(font, root_object);
 	caryll_glyphorder_to_json(font, root_object);
 	
 	push_stopwatch("Convert to JSON", &begin);
