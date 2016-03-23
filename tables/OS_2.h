@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "../caryll-font.h"
-#include "../extern/parson.h"
+#include "../extern/json-builder.h"
 
 
 typedef struct {
@@ -49,6 +49,6 @@ typedef struct {
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
 void caryll_read_OS_2(caryll_font *font, caryll_packet packet);
-void caryll_OS_2_to_json(caryll_font *font, JSON_Object *root);
+void caryll_OS_2_to_json(caryll_font *font, json_value *root);
 
 #endif

@@ -7,7 +7,7 @@
 #include "../extern/sds.h"
 #include "../support/glyphorder.h"
 
-#include "../extern/parson.h"
+#include "../extern/json-builder.h"
 
 enum GlyphType { SIMPLE, COMPOSITE };
 
@@ -72,6 +72,6 @@ typedef struct {
 glyf_glyph *spaceGlyph();
 void caryll_read_glyf(caryll_font *font, caryll_packet packet);
 void caryll_delete_table_glyf(caryll_font *font);
-void caryll_glyf_to_json(caryll_font *font, JSON_Object *root);
+void caryll_glyf_to_json(caryll_font *font, json_value *root);
 
 #endif

@@ -117,18 +117,15 @@ void caryll_delete_table_cmap(caryll_font *font) {
 	free(font->cmap);
 }
 
-void caryll_cmap_to_json(caryll_font *font, JSON_Object *root) {
+void caryll_cmap_to_json(caryll_font *font, json_value *root) {
 	if (!font->cmap) return;
-	JSON_Value *_cmapObj = json_value_init_array();
-	JSON_Array *cmapObj = json_value_get_array(_cmapObj);
+	json_value *cmap = json_object_new(HASH_COUNT(*font->cmap));
 
 	cmap_entry *item;
 	foreach_hash(item, *font->cmap) {
-		JSON_Value *_entry = json_value_init_object();
-		JSON_Object *entry = json_value_get_object(_entry);
-		json_object_set_number(entry, "unicode", item->unicode);
-		json_object_set_string(entry, "glyph", item->glyph.name);
-		json_array_append_value(cmapObj, _entry);
+		sds key = sdsfromlonglong(item->unicode);
+		json_object_push(cmap, key, json_string_new_length(sdslen(item->glyph.name), item->glyph.name));
+		sdsfree(key);
 	}
-	json_object_set_value(root, "cmap", _cmapObj);
+	json_object_push(root, "cmap", cmap);
 }

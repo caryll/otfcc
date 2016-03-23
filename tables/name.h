@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "../caryll-font.h"
-#include "../extern/parson.h"
+#include "../extern/json-builder.h"
 
 typedef struct {
 	uint16_t platformID;
@@ -22,6 +22,6 @@ typedef struct {
 
 void caryll_read_name(caryll_font *font, caryll_packet packet);
 void caryll_delete_table_name(caryll_font *font);
-void caryll_name_to_json(caryll_font *font, JSON_Object *root);
+void caryll_name_to_json(caryll_font *font, json_value *root);
 
 #endif

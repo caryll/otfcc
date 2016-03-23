@@ -70,15 +70,18 @@ void caryll_delete_table_post(caryll_font *font) {
 }
 
 
-void caryll_post_to_json(caryll_font *font, JSON_Object *root) {
+void caryll_post_to_json(caryll_font *font, json_value *root) {
 	if(!font->post) return;
-	json_object_dotset_number(root, "post.version", font->post->version);
-	json_object_dotset_number(root, "post.italicAngle", font->post->italicAngle);
-	json_object_dotset_number(root, "post.underlinePosition", font->post->underlinePosition);
-	json_object_dotset_number(root, "post.underlineThickness", font->post->underlineThickness);
-	json_object_dotset_number(root, "post.isFixedPitch", font->post->isFixedPitch);
-	json_object_dotset_number(root, "post.minMemType42", font->post->minMemType42);
-	json_object_dotset_number(root, "post.maxMemType42", font->post->maxMemType42);
-	json_object_dotset_number(root, "post.minMemType1", font->post->minMemType1);
-	json_object_dotset_number(root, "post.maxMemType1", font->post->maxMemType1);
+	json_value *post = json_object_new(10);
+	json_object_push(post, "version", json_integer_new(font->post->version));
+	json_object_push(post, "italicAngle", json_integer_new(font->post->italicAngle));
+	json_object_push(post, "underlinePosition", json_integer_new(font->post->underlinePosition));
+	json_object_push(post, "underlineThickness", json_integer_new(font->post->underlineThickness));
+	json_object_push(post, "isFixedPitch", json_integer_new(font->post->isFixedPitch));
+	json_object_push(post, "minMemType42", json_integer_new(font->post->minMemType42));
+	json_object_push(post, "maxMemType42", json_integer_new(font->post->maxMemType42));
+	json_object_push(post, "minMemType1", json_integer_new(font->post->minMemType1));
+	json_object_push(post, "maxMemType1", json_integer_new(font->post->maxMemType1));
+	json_object_push(root, "post", post);
 }
+

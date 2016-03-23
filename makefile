@@ -22,7 +22,7 @@ OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
 	build/table-OS_2.o build/table-glyf.o build/table-cmap.o \
 	build/table-name.o
-EXTOBJS = build/extern-parson.o build/extern-sds.o
+EXTOBJS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
 SUPPORTOBJS = build/support-glyphorder.o build/support-aglfn.o build/support-stopwatch.o build/support-unicodeconv.o
 
 OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS) $(SUPPORTOBJS)

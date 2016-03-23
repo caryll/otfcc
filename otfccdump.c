@@ -3,7 +3,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "extern/parson.h"
+#include "extern/json-builder.h"
 #include "support/stopwatch.h"
 
 #include "caryll-sfnt.h"
@@ -18,36 +18,34 @@ int main(int argc, char *argv[]) {
 
 	push_stopwatch("Parse SFNT", &begin);
 
-	JSON_Value *root_value = json_value_init_object();
-	JSON_Object *root_object = json_value_get_object(root_value);
+	json_value *root = json_object_new(12);
 	
-	caryll_head_to_json(font, root_object);
-	caryll_hhea_to_json(font, root_object);
-	caryll_maxp_to_json(font, root_object);
-	caryll_OS_2_to_json(font, root_object);
-	caryll_name_to_json(font, root_object);
-	caryll_post_to_json(font, root_object);
-	caryll_glyphorder_to_json(font, root_object);
-	caryll_cmap_to_json(font, root_object);
-	caryll_glyf_to_json(font, root_object);
-
+	caryll_head_to_json(font, root);
+	caryll_hhea_to_json(font, root);
+	caryll_post_to_json(font, root);
+	caryll_OS_2_to_json(font, root);
+	caryll_cmap_to_json(font, root);
+	caryll_name_to_json(font, root);
+	caryll_maxp_to_json(font, root);
+	caryll_glyphorder_to_json(font, root);
+	caryll_glyf_to_json(font, root);
+	
 	push_stopwatch("Convert to JSON", &begin);
 
-	char *serialized;
-	if (isatty(fileno(stdout))) {
-	serialized = json_serialize_to_string_pretty(root_value);
-	} else {
-		serialized = json_serialize_to_string(root_value);
-	}
+	json_serialize_opts options;
+	options.mode = json_serialize_mode_packed;
+	options.opts = 0;
+	options.indent_size = 4;
 
+	if (isatty(fileno(stdout))) { options.mode = json_serialize_mode_multiline; }
+
+	char *buf = malloc(json_measure_ex(root, options));
+	json_serialize_ex(buf, root, options);
 	push_stopwatch("Serialize to string", &begin);
-
-	fputs(serialized, stdout);
-
+	fputs(buf, stdout);
 	push_stopwatch("Write to file", &begin);
-
-	json_free_serialized_string(serialized);
-	json_value_free(root_value);
+	free(buf);
+	json_value_free(root);
 
 	caryll_font_close(font);
 	caryll_sfnt_close(sfnt);

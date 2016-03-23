@@ -317,74 +317,58 @@ void caryll_delete_table_glyf(caryll_font *font) {
 	free(font->glyf);
 }
 
-JSON_Value *caryll_glyf_point_to_json(glyf_point p) {
-	JSON_Value *_point = json_value_init_object();
-	JSON_Object *point = json_value_get_object(_point);
-	json_object_set_number(point, "x", p.x);
-	json_object_set_number(point, "y", p.y);
-	json_object_set_number(point, "on", p.onCurve);
-	return _point;
-}
-
-void caryll_glyf_to_json(caryll_font *font, JSON_Object *root_object) {
+void caryll_glyf_to_json(caryll_font *font, json_value *root) {
 	if (!font->glyf) return;
-	JSON_Value *_glyfObj = json_value_init_array();
-	JSON_Array *glyfObj = json_value_get_array(_glyfObj);
+	json_value *glyf = json_object_new(font->glyf->numberGlyphs);
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_glyph *g = font->glyf->glyphs[j];
-		JSON_Value *_glyph = json_value_init_object();
-		JSON_Object *glyph = json_value_get_object(_glyph);
-		json_object_set_string(glyph, "name", g->name);
-		json_object_set_number(glyph, "advanceWidth", g->advanceWidth);
-
+		json_value *glyph = json_object_new(4);
+		json_object_push(glyph, "name", json_string_new_length(sdslen(g->name), g->name));
+		json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
 		// contours
 		{
-			JSON_Value *_contours = json_value_init_array();
-			JSON_Array *contours = json_value_get_array(_contours);
+			json_value *contours = json_array_new(g->numberOfContours);
 			for (uint16_t k = 0; k < g->numberOfContours; k++) {
 				glyf_contour c = g->contours[k];
-				JSON_Value *_contour = json_value_init_array();
-				JSON_Array *contour = json_value_get_array(_contour);
+				json_value *contour = json_array_new(c.pointsCount);
 				for (uint16_t m = 0; m < c.pointsCount; m++) {
-					json_array_append_value(contour, caryll_glyf_point_to_json(c.points[m]));
+					json_value *point = json_object_new(3);
+					json_object_push(point, "x", json_double_new(c.points[m].x));
+					json_object_push(point, "y", json_double_new(c.points[m].y));
+					json_object_push(point, "on", json_boolean_new(c.points[m].onCurve));
+					json_array_push(contour, point);
 				}
-				json_array_append_value(contours, _contour);
+				json_array_push(contours, contour);
 			}
-			json_object_set_value(glyph, "contours", _contours);
+			json_object_push(glyph, "contours", contours);
 		}
 		// references
 		{
-			JSON_Value *_references = json_value_init_array();
-			JSON_Array *references = json_value_get_array(_references);
+			json_value *references = json_array_new(g->numberOfReferences);
 			for (uint16_t k = 0; k < g->numberOfReferences; k++) {
 				glyf_reference r = g->references[k];
-				JSON_Value *_reference = json_value_init_object();
-				JSON_Object *reference = json_value_get_object(_reference);
-				json_object_set_string(reference, "name", r.glyph.name);
-				json_object_set_number(reference, "x", r.x);
-				json_object_set_number(reference, "y", r.y);
-				json_object_set_number(reference, "a", r.a);
-				json_object_set_number(reference, "b", r.b);
-				json_object_set_number(reference, "c", r.c);
-				json_object_set_number(reference, "d", r.d);
-				json_object_set_boolean(reference, "overlap", r.overlap);
-				json_object_set_boolean(reference, "useMyMetrics", r.useMyMetrics);
-
-				json_array_append_value(references, _reference);
+				json_value *ref = json_object_new(9);
+				json_object_push(ref, "glyph", json_string_new_length(sdslen(r.glyph.name), r.glyph.name));
+				json_object_push(ref, "x", json_double_new(r.x));
+				json_object_push(ref, "y", json_double_new(r.y));
+				json_object_push(ref, "a", json_double_new(r.a));
+				json_object_push(ref, "b", json_double_new(r.b));
+				json_object_push(ref, "c", json_double_new(r.c));
+				json_object_push(ref, "d", json_double_new(r.d));
+				json_object_push(ref, "overlap", json_boolean_new(r.overlap));
+				json_object_push(ref, "useMyMetrics", json_boolean_new(r.useMyMetrics));
+				json_array_push(references, ref);
 			}
-			json_object_set_value(glyph, "references", _references);
 		}
 		// instructions
 		{
-			JSON_Value *_instructions = json_value_init_array();
-			JSON_Array *instructions = json_value_get_array(_instructions);
-			for(uint16_t j = 0; j < g->instructionsLength; j++){
-				json_array_append_number(instructions, g->instructions[j]);
+			json_value *instructions = json_array_new(g->instructionsLength);
+			for (uint16_t j = 0; j < g->instructionsLength; j++) {
+				json_array_push(instructions, json_integer_new(g->instructions[j]));
 			}
-			json_object_set_value(glyph, "instructions", _instructions);
+			json_object_push(glyph, "instructions", instructions);
 		}
-		
-		json_array_append_value(glyfObj, _glyph);
+		json_object_push(glyf, g->name, glyph);
 	}
-	json_object_set_value(root_object, "glyf", _glyfObj);
+	json_object_push(root, "glyf", glyf);
 }

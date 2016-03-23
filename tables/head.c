@@ -6,8 +6,6 @@
 #include "../caryll-font.h"
 #include "../caryll-io.h"
 
-#include "../extern/parson.h"
-
 void caryll_read_head(caryll_font *font, caryll_packet packet) {
 	FOR_TABLE('head', table) {
 		font_file_pointer data = table.data;
@@ -40,21 +38,24 @@ void caryll_read_head(caryll_font *font, caryll_packet packet) {
 	}
 }
 
-void caryll_head_to_json(caryll_font *font, JSON_Object *root) {
+void caryll_head_to_json(caryll_font *font, json_value *root) {
 	if (!font->head) return;
-	json_object_dotset_number(root, "head.version", font->head->version);
-	json_object_dotset_number(root, "head.fontRevison", font->head->fontRevison);
-	json_object_dotset_number(root, "head.flags", font->head->flags);
-	json_object_dotset_number(root, "head.unitsPerEm", font->head->unitsPerEm);
-	json_object_dotset_number(root, "head.created", font->head->created);
-	json_object_dotset_number(root, "head.modified", font->head->modified);
-	json_object_dotset_number(root, "head.xMin", font->head->xMin);
-	json_object_dotset_number(root, "head.xMax", font->head->xMax);
-	json_object_dotset_number(root, "head.yMin", font->head->yMin);
-	json_object_dotset_number(root, "head.yMax", font->head->yMax);
-	json_object_dotset_number(root, "head.macStyle", font->head->macStyle);
-	json_object_dotset_number(root, "head.lowestRecPPEM", font->head->lowestRecPPEM);
-	json_object_dotset_number(root, "head.fontDirectoryHint", font->head->fontDirectoryHint);
-	json_object_dotset_number(root, "head.indexToLocFormat", font->head->indexToLocFormat);
-	json_object_dotset_number(root, "head.glyphDataFormat", font->head->glyphDataFormat);
+	json_value *head = json_object_new(15);
+	json_object_push(head, "version", json_integer_new(font->head->version));
+	json_object_push(head, "fontRevison", json_integer_new(font->head->fontRevison));
+	json_object_push(head, "flags", json_integer_new(font->head->flags));
+	json_object_push(head, "unitsPerEm", json_integer_new(font->head->unitsPerEm));
+	json_object_push(head, "created", json_integer_new(font->head->created));
+	json_object_push(head, "modified", json_integer_new(font->head->modified));
+	json_object_push(head, "xMin", json_integer_new(font->head->xMin));
+	json_object_push(head, "xMax", json_integer_new(font->head->xMax));
+	json_object_push(head, "yMin", json_integer_new(font->head->yMin));
+	json_object_push(head, "yMax", json_integer_new(font->head->yMax));
+	json_object_push(head, "macStyle", json_integer_new(font->head->macStyle));
+	json_object_push(head, "lowestRecPPEM", json_integer_new(font->head->lowestRecPPEM));
+	json_object_push(head, "fontDirectoryHint", json_integer_new(font->head->fontDirectoryHint));
+	json_object_push(head, "indexToLocFormat", json_integer_new(font->head->indexToLocFormat));
+	json_object_push(head, "glyphDataFormat", json_integer_new(font->head->glyphDataFormat));
+	json_object_push(root, "head", head);
 }
+

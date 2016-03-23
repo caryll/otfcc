@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "../caryll-font.h"
 
-#include "../extern/parson.h"
+#include "../extern/json-builder.h"
 
 typedef struct {
 	// Horizontal header
@@ -25,6 +25,6 @@ typedef struct {
 } table_hhea;
 
 void caryll_read_hhea(caryll_font *font, caryll_packet packet);
-void caryll_hhea_to_json(caryll_font *font, JSON_Object *root);
+void caryll_hhea_to_json(caryll_font *font, json_value *root);
 
 #endif

@@ -5,7 +5,7 @@
 #include "../caryll-font.h"
 #include "../support/glyphorder.h"
 
-#include "../extern/parson.h"
+#include "../extern/json-builder.h"
 
 typedef struct {
 	// PostScript information
@@ -23,6 +23,6 @@ typedef struct {
 
 void caryll_read_post(caryll_font *font, caryll_packet packet);
 void caryll_delete_table_post(caryll_font *font);
-void caryll_post_to_json(caryll_font *font, JSON_Object *root);
+void caryll_post_to_json(caryll_font *font, json_value *root);
 
 #endif

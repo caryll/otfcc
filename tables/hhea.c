@@ -38,19 +38,22 @@ void caryll_read_hhea(caryll_font *font, caryll_packet packet) {
 	}
 }
 
-void caryll_hhea_to_json(caryll_font *font, JSON_Object *root) {
+void caryll_hhea_to_json(caryll_font *font, json_value *root) {
 	if (!font->hhea) return;
-	json_object_dotset_number(root, "hhea.version", font->hhea->version);
-	json_object_dotset_number(root, "hhea.ascender", font->hhea->ascender);
-	json_object_dotset_number(root, "hhea.descender", font->hhea->descender);
-	json_object_dotset_number(root, "hhea.lineGap", font->hhea->lineGap);
-	json_object_dotset_number(root, "hhea.advanceWithMax", font->hhea->advanceWithMax);
-	json_object_dotset_number(root, "hhea.minLeftSideBearing", font->hhea->minLeftSideBearing);
-	json_object_dotset_number(root, "hhea.minRightSideBearing", font->hhea->minRightSideBearing);
-	json_object_dotset_number(root, "hhea.xMaxExtent", font->hhea->xMaxExtent);
-	json_object_dotset_number(root, "hhea.caretSlopeRise", font->hhea->caretSlopeRise);
-	json_object_dotset_number(root, "hhea.yMcaretSlopeRunax", font->hhea->caretSlopeRun);
-	json_object_dotset_number(root, "hhea.caretOffset", font->hhea->caretOffset);
-	json_object_dotset_number(root, "hhea.lowestmetricDataFormatRecPPEM", font->hhea->metricDataFormat);
-	json_object_dotset_number(root, "hhea.numberOfMetrics", font->hhea->numberOfMetrics);
+	json_value *hhea = json_object_new(13);
+	json_object_push(hhea, "version", json_integer_new(font->hhea->version));
+	json_object_push(hhea, "ascender", json_integer_new(font->hhea->ascender));
+	json_object_push(hhea, "descender", json_integer_new(font->hhea->descender));
+	json_object_push(hhea, "lineGap", json_integer_new(font->hhea->lineGap));
+	json_object_push(hhea, "advanceWithMax", json_integer_new(font->hhea->advanceWithMax));
+	json_object_push(hhea, "minLeftSideBearing", json_integer_new(font->hhea->minLeftSideBearing));
+	json_object_push(hhea, "minRightSideBearing", json_integer_new(font->hhea->minRightSideBearing));
+	json_object_push(hhea, "xMaxExtent", json_integer_new(font->hhea->xMaxExtent));
+	json_object_push(hhea, "caretSlopeRise", json_integer_new(font->hhea->caretSlopeRise));
+	json_object_push(hhea, "yMcaretSlopeRunax", json_integer_new(font->hhea->caretSlopeRun));
+	json_object_push(hhea, "caretOffset", json_integer_new(font->hhea->caretOffset));
+	json_object_push(hhea, "lowestmetricDataFormatRecPPEM", json_integer_new(font->hhea->metricDataFormat));
+	json_object_push(hhea, "numberOfMetrics", json_integer_new(font->hhea->numberOfMetrics));
+	json_object_push(root, "hhea", hhea);
 }
+

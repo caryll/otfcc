@@ -66,20 +66,18 @@ void caryll_delete_table_name(caryll_font *font) {
 	free(font->name);
 }
 
-void caryll_name_to_json(caryll_font *font, JSON_Object *root){
-	if(!font->name) return;
-	JSON_Value *_name = json_value_init_array();
-	JSON_Array *name = json_value_get_array(_name);
-	for(uint16_t j = 0; j < font->name->count; j++){
+void caryll_name_to_json(caryll_font *font, json_value *root) {
+	if (!font->name) return;
+	json_value *name = json_array_new(font->name->count);
+	for (uint16_t j = 0; j < font->name->count; j++) {
 		name_record *r = font->name->records[j];
-		JSON_Value *_record = json_value_init_object();
-		JSON_Object *record = json_value_get_object(_record);
-		json_object_set_number(record, "platformID", r->platformID);
-		json_object_set_number(record, "encodingID", r->encodingID);
-		json_object_set_number(record, "languageID", r->languageID);
-		json_object_set_number(record, "nameID", r->nameID);
-		json_object_set_string(record, "nameString", r->nameString);
-		json_array_append_value(name, _record);
+		json_value *record = json_object_new(5);
+		json_object_push(record, "platformID", json_integer_new(r->platformID));
+		json_object_push(record, "encodingID", json_integer_new(r->encodingID));
+		json_object_push(record, "languageID", json_integer_new(r->languageID));
+		json_object_push(record, "nameID", json_integer_new(r->nameID));
+		json_object_push(record, "nameString", json_string_new_length(sdslen(r->nameString), r->nameString));
+		json_array_push(name, record);
 	}
-	json_object_set_value(root, "name", _name);
+	json_object_push(root, "name", name);
 }
