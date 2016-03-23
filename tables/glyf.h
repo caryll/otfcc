@@ -12,8 +12,8 @@
 enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
-	int16_t x;
-	int16_t y;
+	float x;
+	float y;
 	int8_t onCurve;
 } glyf_point;
 
@@ -29,8 +29,8 @@ typedef struct {
 	float b;
 	float c;
 	float d;
-	int16_t x;
-	int16_t y;
+	float x;
+	float y;
 	bool useMyMetrics;
 	bool overlap;
 } glyf_reference;
