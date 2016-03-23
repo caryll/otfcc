@@ -287,10 +287,10 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 	return;
 
 LOCA_CORRUPTED:
-	printf("table 'loca' corrupted.\n");
+	fprintf(stderr, "table 'loca' corrupted.\n");
 	if (offsets) free(offsets);
 GLYF_CORRUPTED:
-	printf("table 'glyf' corrupted.\n");
+	fprintf(stderr, "table 'glyf' corrupted.\n");
 	if (glyf) free(glyf);
 }
 

@@ -14,7 +14,7 @@ void caryll_read_head(caryll_font *font, caryll_packet packet) {
 		uint32_t length = table.length;
 
 		if (length < 54) {
-			printf("table 'head' corrupted.\n");
+			fprintf(stderr, "table 'head' corrupted.\n");
 			font->head = NULL;
 		} else {
 			table_head *head = (table_head *)malloc(sizeof(table_head) * 1);

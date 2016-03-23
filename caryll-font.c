@@ -18,6 +18,7 @@ void caryll_font_unconsolidate(caryll_font *font) {
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		font->glyf->glyphs[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 	}
+
 	// Name glyphs
 	caryll_name_glyphs(font);
 	caryll_name_cmap_entries(font);
@@ -36,6 +37,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		font->maxp = NULL;
 		font->hmtx = NULL;
 		font->post = NULL;
+		font->name = NULL;
 		font->hdmx = NULL;
 		font->glyf = NULL;
 		font->cmap = NULL;
@@ -50,6 +52,7 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		caryll_read_hdmx(font, packet);
 		caryll_read_glyf(font, packet);
 		caryll_read_cmap(font, packet);
+		caryll_read_name(font, packet);
 
 		caryll_font_unconsolidate(font);
 
@@ -65,6 +68,7 @@ void caryll_font_close(caryll_font *font) {
 	if (font->hhea != NULL) free(font->hhea);
 	if (font->maxp != NULL) free(font->maxp);
 	if (font->OS_2 != NULL) free(font->OS_2);
+	if (font->name != NULL) caryll_delete_table_name(font);
 	if (font->hmtx != NULL) caryll_delete_table_hmtx(font);
 	if (font->post != NULL) caryll_delete_table_post(font);
 	if (font->hdmx != NULL) caryll_delete_table_hdmx(font);

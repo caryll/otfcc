@@ -12,7 +12,7 @@ void caryll_read_hhea(caryll_font *font, caryll_packet packet) {
 		uint32_t length = table.length;
 
 		if (length < 36) {
-			printf("table 'hhea' corrupted.\n");
+			fprintf(stderr, "table 'hhea' corrupted.\n");
 			font->hhea = NULL;
 		} else {
 			table_hhea *hhea = (table_hhea *)malloc(sizeof(table_hhea) * 1);

@@ -12,7 +12,7 @@ void caryll_read_maxp(caryll_font *font, caryll_packet packet) {
 		uint32_t length = table.length;
 
 		if (length != 32 && length != 6) {
-			printf("table 'maxp' corrupted.\n");
+			fprintf(stderr, "table 'maxp' corrupted.\n");
 			font->maxp = NULL;
 		} else {
 			table_maxp *maxp = (table_maxp *)malloc(sizeof(table_maxp) * 1);

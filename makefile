@@ -20,9 +20,10 @@ OBJOTFCCMAIN = build/caryll-font.o build/caryll-io.o build/caryll-sfnt.o
 OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-hmtx.o build/table-post.o build/table-hdmx.o \
 	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
-	build/table-OS_2.o build/table-glyf.o build/table-cmap.o
+	build/table-OS_2.o build/table-glyf.o build/table-cmap.o \
+	build/table-name.o
 EXTOBJS = build/extern-parson.o build/extern-sds.o
-SUPPORTOBJS = build/support-glyphorder.o build/support-aglfn.o build/support-stopwatch.o
+SUPPORTOBJS = build/support-glyphorder.o build/support-aglfn.o build/support-stopwatch.o build/support-unicodeconv.o
 
 OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS) $(SUPPORTOBJS)
 

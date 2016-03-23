@@ -101,7 +101,7 @@ void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
 	}
 	return;
 CMAP_CORRUPTED:
-	printf("table 'cmap' corrupted.\n");
+	fprintf(stderr, "table 'cmap' corrupted.\n");
 	if (map != NULL) free(map);
 	return;
 }

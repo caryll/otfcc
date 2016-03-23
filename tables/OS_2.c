@@ -69,7 +69,7 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 	return;
 
 OS_2_CORRUPTED:
-	printf("table 'OS/2' corrupted.\n");
+	fprintf(stderr, "table 'OS/2' corrupted.\n");
 	if (os_2 != NULL) free(os_2);
 	font->OS_2 = NULL;
 	return;
