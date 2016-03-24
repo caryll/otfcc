@@ -274,7 +274,7 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 		glyf = (table_glyf *)malloc(sizeof(table_glyf *));
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
-	
+
 		for (uint16_t j = 0; j < numGlyphs; j++) {
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
@@ -306,7 +306,7 @@ void caryll_delete_glyf(table_glyf *table) {
 			if (g) {
 				if (g->numberOfContours > 0 && g->contours != NULL) {
 					for (uint16_t k = 0; k < g->numberOfContours; k++) {
-						free(g->contours[k].points);
+						if (g->contours[k].points) free(g->contours[k].points);
 					}
 					free(g->contours);
 				}
@@ -316,7 +316,7 @@ void caryll_delete_glyf(table_glyf *table) {
 					}
 					free(g->references);
 				}
-				if (g->instructions != NULL) { free(g->instructions); }
+				if (g->instructions) { free(g->instructions); }
 				g->name = NULL;
 				free(g);
 			}
