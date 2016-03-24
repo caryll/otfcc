@@ -15,15 +15,14 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/post.h"
 #include "./tables/OS_2.h"
 #include "./tables/name.h"
+#include "./tables/glyf.h"
+#include "./tables/cmap.h"
 
 #include "./tables/hdmx.h"
 #include "./tables/LTSH.h"
 #include "./tables/PCLT.h"
 #include "./tables/vhea.h"
 #include "./tables/vmtx.h"
-
-#include "./tables/glyf.h"
-#include "./tables/cmap.h"
 
 struct _caryll_font {
 	table_head *head;
