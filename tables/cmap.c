@@ -94,7 +94,7 @@ cmap_hash *caryll_read_cmap(caryll_packet packet) {
 
 	CMAP_CORRUPTED:
 		fprintf(stderr, "table 'cmap' corrupted.\n");
-		if (map != NULL) free(map);
+		if (map != NULL) { free(map), map = NULL; }
 	}
 	return NULL;
 }

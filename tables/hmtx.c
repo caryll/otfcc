@@ -1,17 +1,20 @@
 #include "hmtx.h"
 
 table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp *maxp) {
-	if (!hhea || !maxp || hhea->numberOfMetrics == 0) return NULL;
+	if (!hhea || !maxp || hhea->numberOfMetrics == 0 || maxp->numGlyphs < hhea->numberOfMetrics) return NULL;
 	FOR_TABLE('hmtx', table) {
 		font_file_pointer data = table.data;
+		uint32_t length = table.length;
 
-		table_hmtx *hmtx = (table_hmtx *)malloc(sizeof(table_hmtx) * 1);
+		table_hmtx *hmtx = NULL;
 
 		uint32_t count_a = hhea->numberOfMetrics;
 		uint32_t count_k = maxp->numGlyphs - hhea->numberOfMetrics;
+		if (length < count_a * 4 + count_k * 2) goto HMTX_CORRUPTED;
 
-		hmtx->metrics = (horizontal_metric *)malloc(sizeof(horizontal_metric) * count_a);
-		hmtx->leftSideBearing = (int16_t *)malloc(sizeof(int16_t) * count_k);
+		hmtx = malloc(sizeof(table_hmtx) * 1);
+		hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
+		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
 
 		for (uint32_t ia = 0; ia < count_a; ia++) {
 			hmtx->metrics[ia].advanceWidth = caryll_blt16u(data + ia * 4);
@@ -23,6 +26,9 @@ table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp 
 		}
 
 		return hmtx;
+	HMTX_CORRUPTED:
+		fprintf(stderr, "Table 'hmtx' corrupted.\n");
+		if (hmtx) { caryll_delete_hmtx(hmtx), hmtx = NULL; }
 	}
 	return NULL;
 }

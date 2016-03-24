@@ -41,7 +41,7 @@ table_name *caryll_read_name(caryll_packet packet) {
 		return name;
 	TABLE_NAME_CORRUPTED:
 		fprintf(stderr, "table 'name' corrupted.\n");
-		if (name) free(name);
+		if (name) { free(name), name = NULL; }
 	}
 	return NULL;
 }

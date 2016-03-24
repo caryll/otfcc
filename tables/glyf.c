@@ -240,6 +240,7 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 	uint16_t locaIsLong = head->indexToLocFormat;
 	uint16_t numGlyphs = maxp->numGlyphs;
 	offsets = (uint32_t *)malloc(sizeof(uint32_t) * (numGlyphs + 1));
+	if (!offsets) goto ABSENT;
 	bool foundLoca = false;
 
 	// read loca
@@ -256,8 +257,13 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 			if (j > 0 && offsets[j] < offsets[j - 1]) goto LOCA_CORRUPTED;
 		}
 		foundLoca = true;
+		break;
+	LOCA_CORRUPTED:
+		fprintf(stderr, "table 'loca' corrupted.\n");
+		if (offsets) { free(offsets), offsets = NULL; }
+		continue;
 	}
-	if (!foundLoca) goto LOCA_CORRUPTED;
+	if (!foundLoca) goto ABSENT;
 
 	// read glyf
 	FOR_TABLE('glyf', table) {
@@ -265,9 +271,10 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 		uint32_t length = table.length;
 		if (length < offsets[numGlyphs]) goto GLYF_CORRUPTED;
 
-		glyf = (table_glyf *)malloc(sizeof(table_glyf *) * 1);
+		glyf = (table_glyf *)malloc(sizeof(table_glyf *));
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
+	
 		for (uint16_t j = 0; j < numGlyphs; j++) {
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
@@ -275,38 +282,45 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 				glyf->glyphs[j] = spaceGlyph();
 			}
 		}
-		return glyf;
+		goto PRESENT;
+	GLYF_CORRUPTED:
+		fprintf(stderr, "table 'glyf' corrupted.\n");
+		if (glyf) { caryll_delete_glyf(glyf), glyf = NULL; }
 	}
-	free(offsets);
-	return NULL;
+	goto ABSENT;
 
-LOCA_CORRUPTED:
-	fprintf(stderr, "table 'loca' corrupted.\n");
-	if (offsets) free(offsets);
-GLYF_CORRUPTED:
-	fprintf(stderr, "table 'glyf' corrupted.\n");
-	if (glyf) free(glyf);
+PRESENT:
+	if (offsets) { free(offsets), offsets = NULL; }
+	return glyf;
+
+ABSENT:
+	if (offsets) { free(offsets), offsets = NULL; }
+	if (glyf) { free(glyf), glyf = NULL; }
 	return NULL;
 }
 
 void caryll_delete_glyf(table_glyf *table) {
-	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-		glyf_glyph *g = table->glyphs[j];
-		if (g->numberOfContours > 0 && g->contours != NULL) {
-			for (uint16_t k = 0; k < g->numberOfContours; k++) {
-				free(g->contours[k].points);
+	if (table->glyphs) {
+		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+			glyf_glyph *g = table->glyphs[j];
+			if (g) {
+				if (g->numberOfContours > 0 && g->contours != NULL) {
+					for (uint16_t k = 0; k < g->numberOfContours; k++) {
+						free(g->contours[k].points);
+					}
+					free(g->contours);
+				}
+				if (g->numberOfReferences > 0 && g->references != NULL) {
+					for (uint16_t k = 0; k < g->numberOfReferences; k++) {
+						g->references[k].glyph.name = NULL;
+					}
+					free(g->references);
+				}
+				if (g->instructions != NULL) { free(g->instructions); }
+				g->name = NULL;
+				free(g);
 			}
-			free(g->contours);
 		}
-		if (g->numberOfReferences > 0 && g->references != NULL) {
-			for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-				g->references[k].glyph.name = NULL;
-			}
-			free(g->references);
-		}
-		if (g->instructions != NULL) { free(g->instructions); }
-		g->name = NULL;
-		free(g);
 	}
 	free(table->glyphs);
 	free(table);
@@ -321,8 +335,8 @@ void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
 	json_object_push(root, "glyph_order", order);
 }
 
-json_value *coord_to_json(float z){
-	if(roundf(z) == z){
+json_value *coord_to_json(float z) {
+	if (roundf(z) == z) {
 		return json_integer_new(z);
 	} else {
 		return json_double_new(z);
@@ -382,6 +396,6 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root) {
 		json_object_push(glyf, g->name, glyph);
 	}
 	json_object_push(root, "glyf", glyf);
-	
+
 	caryll_glyphorder_to_json(table, root);
 }
