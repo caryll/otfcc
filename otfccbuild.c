@@ -28,8 +28,8 @@ int main(int argc, char *argv[]) {
 		free(buffer);
 		if (root) {
 			caryll_font *font = caryll_font_new();
-			caryll_glyphorder_from_json(font, root);
-			caryll_cmap_from_json(font, root);
+			font->glyph_order = caryll_glyphorder_from_json(root);
+			font->cmap = caryll_cmap_from_json(root);
 			json_value_free(root);
 
 			caryll_font_close(font);

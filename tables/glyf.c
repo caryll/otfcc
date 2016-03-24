@@ -1,11 +1,5 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
+#include "glyf.h"
+#include <math.h>
 
 glyf_glyph *spaceGlyph() {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
@@ -238,13 +232,13 @@ static glyf_glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	}
 }
 
-void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
-	if (font->head == NULL || font->maxp == NULL) return;
+table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp) {
+	if (head == NULL || maxp == NULL) return NULL;
 	uint32_t *offsets = NULL;
 	table_glyf *glyf = NULL;
 
-	uint16_t locaIsLong = font->head->indexToLocFormat;
-	uint16_t numGlyphs = font->maxp->numGlyphs;
+	uint16_t locaIsLong = head->indexToLocFormat;
+	uint16_t numGlyphs = maxp->numGlyphs;
 	offsets = (uint32_t *)malloc(sizeof(uint32_t) * (numGlyphs + 1));
 	bool foundLoca = false;
 
@@ -281,10 +275,10 @@ void caryll_read_glyf(caryll_font *font, caryll_packet packet) {
 				glyf->glyphs[j] = spaceGlyph();
 			}
 		}
-		font->glyf = glyf;
+		return glyf;
 	}
 	free(offsets);
-	return;
+	return NULL;
 
 LOCA_CORRUPTED:
 	fprintf(stderr, "table 'loca' corrupted.\n");
@@ -292,11 +286,12 @@ LOCA_CORRUPTED:
 GLYF_CORRUPTED:
 	fprintf(stderr, "table 'glyf' corrupted.\n");
 	if (glyf) free(glyf);
+	return NULL;
 }
 
-void caryll_delete_table_glyf(caryll_font *font) {
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		glyf_glyph *g = font->glyf->glyphs[j];
+void caryll_delete_glyf(table_glyf *table) {
+	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+		glyf_glyph *g = table->glyphs[j];
 		if (g->numberOfContours > 0 && g->contours != NULL) {
 			for (uint16_t k = 0; k < g->numberOfContours; k++) {
 				free(g->contours[k].points);
@@ -313,15 +308,31 @@ void caryll_delete_table_glyf(caryll_font *font) {
 		g->name = NULL;
 		free(g);
 	}
-	free(font->glyf->glyphs);
-	free(font->glyf);
+	free(table->glyphs);
+	free(table);
 }
 
-void caryll_glyf_to_json(caryll_font *font, json_value *root) {
-	if (!font->glyf) return;
-	json_value *glyf = json_object_new(font->glyf->numberGlyphs);
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		glyf_glyph *g = font->glyf->glyphs[j];
+void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
+	if (!table) return;
+	json_value *order = json_array_new(table->numberGlyphs);
+	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+		json_array_push(order, json_string_new_length(sdslen(table->glyphs[j]->name), table->glyphs[j]->name));
+	}
+	json_object_push(root, "glyph_order", order);
+}
+
+json_value *coord_to_json(float z){
+	if(roundf(z) == z){
+		return json_integer_new(z);
+	} else {
+		return json_double_new(z);
+	}
+}
+void caryll_glyf_to_json(table_glyf *table, json_value *root) {
+	if (!table) return;
+	json_value *glyf = json_object_new(table->numberGlyphs);
+	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+		glyf_glyph *g = table->glyphs[j];
 		json_value *glyph = json_object_new(4);
 		json_object_push(glyph, "name", json_string_new_length(sdslen(g->name), g->name));
 		json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
@@ -333,8 +344,8 @@ void caryll_glyf_to_json(caryll_font *font, json_value *root) {
 				json_value *contour = json_array_new(c.pointsCount);
 				for (uint16_t m = 0; m < c.pointsCount; m++) {
 					json_value *point = json_object_new(3);
-					json_object_push(point, "x", json_double_new(c.points[m].x));
-					json_object_push(point, "y", json_double_new(c.points[m].y));
+					json_object_push(point, "x", coord_to_json(c.points[m].x));
+					json_object_push(point, "y", coord_to_json(c.points[m].y));
 					json_object_push(point, "on", json_boolean_new(c.points[m].onCurve));
 					json_array_push(contour, point);
 				}
@@ -349,12 +360,12 @@ void caryll_glyf_to_json(caryll_font *font, json_value *root) {
 				glyf_reference r = g->references[k];
 				json_value *ref = json_object_new(9);
 				json_object_push(ref, "glyph", json_string_new_length(sdslen(r.glyph.name), r.glyph.name));
-				json_object_push(ref, "x", json_double_new(r.x));
-				json_object_push(ref, "y", json_double_new(r.y));
-				json_object_push(ref, "a", json_double_new(r.a));
-				json_object_push(ref, "b", json_double_new(r.b));
-				json_object_push(ref, "c", json_double_new(r.c));
-				json_object_push(ref, "d", json_double_new(r.d));
+				json_object_push(ref, "x", coord_to_json(r.x));
+				json_object_push(ref, "y", coord_to_json(r.y));
+				json_object_push(ref, "a", coord_to_json(r.a));
+				json_object_push(ref, "b", coord_to_json(r.b));
+				json_object_push(ref, "c", coord_to_json(r.c));
+				json_object_push(ref, "d", coord_to_json(r.d));
 				json_object_push(ref, "overlap", json_boolean_new(r.overlap));
 				json_object_push(ref, "useMyMetrics", json_boolean_new(r.useMyMetrics));
 				json_array_push(references, ref);
@@ -371,4 +382,6 @@ void caryll_glyf_to_json(caryll_font *font, json_value *root) {
 		json_object_push(glyf, g->name, glyph);
 	}
 	json_object_push(root, "glyf", glyf);
+	
+	caryll_glyphorder_to_json(table, root);
 }

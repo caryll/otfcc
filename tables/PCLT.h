@@ -1,9 +1,9 @@
 #ifndef CARYLL_TABLES_PCLT_H
 #define CARYLL_TABLES_PCLT_H
 
-
-#include <stdint.h>
-#include "../caryll-font.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
 typedef struct {
 	uint32_t version;
@@ -23,6 +23,6 @@ typedef struct {
 	uint8_t pad;
 } table_PCLT;
 
-void caryll_read_PCLT(caryll_font *font, caryll_packet packet);
+table_PCLT *caryll_read_PCLT(caryll_packet packet);
 
 #endif

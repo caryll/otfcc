@@ -1,8 +1,14 @@
 #ifndef CARYLL_SUPPORT_UTIL_H
 #define CARYLL_SUPPORT_UTIL_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 #include "../extern/uthash.h"
 #include "../extern/json.h"
+#include "../extern/json-builder.h"
 #include "../extern/sds.h"
 
 #ifdef _MSC_VER
@@ -33,5 +39,10 @@ static INLINE json_value *json_obj_get_type(json_value *obj, const char *key, js
 	if (v && v->type == type) return v;
 	return NULL;
 }
+
+typedef struct {
+	uint16_t gid;
+	sds name;
+} glyph_handle;
 
 #endif

@@ -1,13 +1,12 @@
 #ifndef CARYLL_TABLES_GLYF_H
 #define CARYLL_TABLES_GLYF_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include "../caryll-font.h"
-#include "../extern/sds.h"
-#include "../support/glyphorder.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
-#include "../extern/json-builder.h"
+#include "head.h"
+#include "maxp.h"
 
 enum GlyphType { SIMPLE, COMPOSITE };
 
@@ -70,8 +69,8 @@ typedef struct {
 #define WE_HAVE_INSTRUCTIONS (1 << 8)
 
 glyf_glyph *spaceGlyph();
-void caryll_read_glyf(caryll_font *font, caryll_packet packet);
-void caryll_delete_table_glyf(caryll_font *font);
-void caryll_glyf_to_json(caryll_font *font, json_value *root);
+table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
+void caryll_delete_glyf(table_glyf *table);
+void caryll_glyf_to_json(table_glyf *table, json_value *root);
 
 #endif

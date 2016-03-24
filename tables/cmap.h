@@ -1,12 +1,9 @@
 #ifndef CARYLL_TABLES_CMAP_H
 #define CARYLL_TABLES_CMAP_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
-#include "../extern/uthash.h"
-#include "../support/glyphorder.h"
-
-#include "../extern/json-builder.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
 // We will support format 0, 4, 12 of CMAP only
 typedef struct {
@@ -16,9 +13,9 @@ typedef struct {
 } cmap_entry;
 typedef cmap_entry *cmap_hash;
 
-void caryll_read_cmap(caryll_font *font, caryll_packet packet);
-void caryll_delete_table_cmap(caryll_font *font);
-void caryll_cmap_to_json(caryll_font *font, json_value *root);
-void caryll_cmap_from_json(caryll_font *font, json_value *root);
+cmap_hash *caryll_read_cmap(caryll_packet packet);
+void caryll_delete_cmap(cmap_hash *table);
+void caryll_cmap_to_json(cmap_hash *table, json_value *root);
+cmap_hash *caryll_cmap_from_json(json_value *root);
 
 #endif

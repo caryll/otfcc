@@ -1,10 +1,9 @@
 #ifndef CARYLL_TABLES_OS_2_H
 #define CARYLL_TABLES_OS_2_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
-#include "../extern/json-builder.h"
-
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
 typedef struct {
 	// OS/2 and Windows specific metrics
@@ -48,7 +47,7 @@ typedef struct {
 	uint16_t usLowerOpticalPointSize;
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
-void caryll_read_OS_2(caryll_font *font, caryll_packet packet);
-void caryll_OS_2_to_json(caryll_font *font, json_value *root);
+table_OS_2 *caryll_read_OS_2(caryll_packet packet);
+void caryll_OS_2_to_json(table_OS_2 *table, json_value *root);
 
 #endif

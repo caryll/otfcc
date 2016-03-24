@@ -1,19 +1,12 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "maxp.h"
 
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
-
-void caryll_read_maxp(caryll_font *font, caryll_packet packet) {
+table_maxp *caryll_read_maxp(caryll_packet packet) {
 	FOR_TABLE('maxp', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 
 		if (length != 32 && length != 6) {
 			fprintf(stderr, "table 'maxp' corrupted.\n");
-			font->maxp = NULL;
 		} else {
 			table_maxp *maxp = (table_maxp *)malloc(sizeof(table_maxp) * 1);
 			maxp->version = caryll_blt32u(data);
@@ -47,29 +40,30 @@ void caryll_read_maxp(caryll_font *font, caryll_packet packet) {
 				maxp->maxComponentElements = 0;
 				maxp->maxComponentDepth = 0;
 			}
-			font->maxp = maxp;
+			return maxp;
 		}
 	}
+	return NULL;
 }
 
-void caryll_maxp_to_json(caryll_font *font, json_value *root) {
-	if (!font->maxp) return;
+void caryll_maxp_to_json(table_maxp *table, json_value *root) {
+	if (!table) return;
 	json_value *maxp = json_object_new(15);
-	json_object_push(maxp, "version", json_integer_new(font->maxp->version));
-	json_object_push(maxp, "numGlyphs", json_integer_new(font->maxp->numGlyphs));
-	json_object_push(maxp, "maxPoints", json_integer_new(font->maxp->maxPoints));
-	json_object_push(maxp, "maxContours", json_integer_new(font->maxp->maxContours));
-	json_object_push(maxp, "maxCompositePoints", json_integer_new(font->maxp->maxCompositePoints));
-	json_object_push(maxp, "maxCompositeContours", json_integer_new(font->maxp->maxCompositeContours));
-	json_object_push(maxp, "maxZones", json_integer_new(font->maxp->maxZones));
-	json_object_push(maxp, "maxTwilightPoints", json_integer_new(font->maxp->maxTwilightPoints));
-	json_object_push(maxp, "maxStorage", json_integer_new(font->maxp->maxStorage));
-	json_object_push(maxp, "maxFunctionDefs", json_integer_new(font->maxp->maxFunctionDefs));
-	json_object_push(maxp, "maxInstructionDefs", json_integer_new(font->maxp->maxInstructionDefs));
-	json_object_push(maxp, "maxStackElements", json_integer_new(font->maxp->maxStackElements));
-	json_object_push(maxp, "maxSizeOfInstructions", json_integer_new(font->maxp->maxSizeOfInstructions));
-	json_object_push(maxp, "maxComponentElements", json_integer_new(font->maxp->maxComponentElements));
-	json_object_push(maxp, "maxComponentDepth", json_integer_new(font->maxp->maxComponentDepth));
+	json_object_push(maxp, "version", json_integer_new(table->version));
+	json_object_push(maxp, "numGlyphs", json_integer_new(table->numGlyphs));
+	json_object_push(maxp, "maxPoints", json_integer_new(table->maxPoints));
+	json_object_push(maxp, "maxContours", json_integer_new(table->maxContours));
+	json_object_push(maxp, "maxCompositePoints", json_integer_new(table->maxCompositePoints));
+	json_object_push(maxp, "maxCompositeContours", json_integer_new(table->maxCompositeContours));
+	json_object_push(maxp, "maxZones", json_integer_new(table->maxZones));
+	json_object_push(maxp, "maxTwilightPoints", json_integer_new(table->maxTwilightPoints));
+	json_object_push(maxp, "maxStorage", json_integer_new(table->maxStorage));
+	json_object_push(maxp, "maxFunctionDefs", json_integer_new(table->maxFunctionDefs));
+	json_object_push(maxp, "maxInstructionDefs", json_integer_new(table->maxInstructionDefs));
+	json_object_push(maxp, "maxStackElements", json_integer_new(table->maxStackElements));
+	json_object_push(maxp, "maxSizeOfInstructions", json_integer_new(table->maxSizeOfInstructions));
+	json_object_push(maxp, "maxComponentElements", json_integer_new(table->maxComponentElements));
+	json_object_push(maxp, "maxComponentDepth", json_integer_new(table->maxComponentDepth));
 
 	json_object_push(root, "maxp", maxp);
 }

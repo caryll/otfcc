@@ -1,10 +1,9 @@
 #ifndef CARYLL_TABLES_HHEA_H
 #define CARYLL_TABLES_HHEA_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
-
-#include "../extern/json-builder.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
 typedef struct {
 	// Horizontal header
@@ -24,7 +23,7 @@ typedef struct {
 	uint16_t numberOfMetrics;
 } table_hhea;
 
-void caryll_read_hhea(caryll_font *font, caryll_packet packet);
-void caryll_hhea_to_json(caryll_font *font, json_value *root);
+table_hhea *caryll_read_hhea(caryll_packet packet);
+void caryll_hhea_to_json(table_hhea *table, json_value *root);
 
 #endif

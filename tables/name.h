@@ -1,9 +1,9 @@
 #ifndef CARYLL_TABLES_NAME_H
 #define CARYLL_TABLES_NAME_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
-#include "../extern/json-builder.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
 typedef struct {
 	uint16_t platformID;
@@ -20,8 +20,8 @@ typedef struct {
 	name_record **records;
 } table_name;
 
-void caryll_read_name(caryll_font *font, caryll_packet packet);
-void caryll_delete_table_name(caryll_font *font);
-void caryll_name_to_json(caryll_font *font, json_value *root);
+table_name *caryll_read_name(caryll_packet packet);
+void caryll_delete_name(table_name *table);
+void caryll_name_to_json(table_name *table, json_value *root);
 
 #endif

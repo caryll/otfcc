@@ -25,6 +25,7 @@ OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 EXTOBJS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
 SUPPORTOBJS = build/support-glyphorder.o build/support-aglfn.o \
               build/support-stopwatch.o build/support-unicodeconv.o 
+TARGETS = build/otfccdump$(SUFFIX) build/otfccbuild$(SUFFIX)
 
 OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS) $(SUPPORTOBJS)
 
@@ -43,22 +44,19 @@ $(SUPPORTOBJS) : build/support-%.o : support/%.c | build
 build/otfccdump.o : otfccdump.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-build/otfccdump$(SUFFIX) : build/otfccdump.o $(OBJECTS)
-	$(LINK) $^ -o $@
-
 build/otfccbuild.o : otfccbuild.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-build/otfccbuild$(SUFFIX) : build/otfccbuild.o $(OBJECTS)
-	$(LINK) $^ -o $@
+$(TARGETS): build/%$(SUFFIX) : build/%.o $(OBJECTS)
+	$(LINK) $^ -o $@ -lm
 
-objects:build/otfccdump$(SUFFIX) build/otfccbuild$(SUFFIX)
+objects: $(TARGETS)
 
 TESTFILES = build/test-payload-1$(SUFFIX)
 build/%.o : tests/%.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 build/%$(SUFFIX) : build/%.o $(OBJECTS)
-	$(LINK) $^ -o $@
+	$(LINK) $^ -o $@ -lm
 
 test: $(TESTFILES)
 	@echo "====== Start Test ======"

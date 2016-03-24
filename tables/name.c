@@ -1,15 +1,7 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
+#include "name.h"
 #include "../support/unicodeconv.h"
 
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
-
-void caryll_read_name(caryll_font *font, caryll_packet packet) {
+table_name *caryll_read_name(caryll_packet packet) {
 	FOR_TABLE('name', table) {
 		table_name *name = NULL;
 		font_file_pointer data = table.data;
@@ -46,31 +38,28 @@ void caryll_read_name(caryll_font *font, caryll_packet packet) {
 			}
 			name->records[j] = record;
 		}
-		font->name = name;
-
-		goto FINIS;
+		return name;
 	TABLE_NAME_CORRUPTED:
 		fprintf(stderr, "table 'name' corrupted.\n");
 		if (name) free(name);
-		font->name = NULL;
-	FINIS:;
 	}
+	return NULL;
 }
 
-void caryll_delete_table_name(caryll_font *font) {
-	for (uint16_t j = 0; j < font->name->count; j++) {
-		if (font->name->records[j]->nameString) sdsfree(font->name->records[j]->nameString);
-		free(font->name->records[j]);
+void caryll_delete_name(table_name *table) {
+	for (uint16_t j = 0; j < table->count; j++) {
+		if (table->records[j]->nameString) sdsfree(table->records[j]->nameString);
+		free(table->records[j]);
 	}
-	free(font->name->records);
-	free(font->name);
+	free(table->records);
+	free(table);
 }
 
-void caryll_name_to_json(caryll_font *font, json_value *root) {
-	if (!font->name) return;
-	json_value *name = json_array_new(font->name->count);
-	for (uint16_t j = 0; j < font->name->count; j++) {
-		name_record *r = font->name->records[j];
+void caryll_name_to_json(table_name *table, json_value *root) {
+	if (!table) return;
+	json_value *name = json_array_new(table->count);
+	for (uint16_t j = 0; j < table->count; j++) {
+		name_record *r = table->records[j];
 		json_value *record = json_object_new(5);
 		json_object_push(record, "platformID", json_integer_new(r->platformID));
 		json_object_push(record, "encodingID", json_integer_new(r->encodingID));

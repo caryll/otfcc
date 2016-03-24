@@ -1,8 +1,9 @@
 #ifndef CARYLL_TABLES_VHEA_H
 #define CARYLL_TABLES_VHEA_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
 typedef struct {
 	// Vertical Metrics header
@@ -22,6 +23,6 @@ typedef struct {
 	uint16_t numOf;
 } table_vhea;
 
-void caryll_read_vhea(caryll_font *font, caryll_packet packet);
+table_vhea *caryll_read_vhea(caryll_packet packet);
 
 #endif

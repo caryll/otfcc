@@ -1,12 +1,6 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "hdmx.h"
 
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
-
-void caryll_read_hdmx(caryll_font *font, caryll_packet packet) {
+table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp) {
 	FOR_TABLE('hdmx', table) {
 		font_file_pointer data = table.data;
 
@@ -17,22 +11,23 @@ void caryll_read_hdmx(caryll_font *font, caryll_packet packet) {
 		hdmx->records = (device_record *)malloc(sizeof(device_record) * hdmx->numRecords);
 
 		for (uint32_t i = 0; i < hdmx->numRecords; i++) {
-			hdmx->records[i].pixelSize = *(data + 8 + i * (2 + font->maxp->numGlyphs));
-			hdmx->records[i].maxWidth = *(data + 8 + i * (2 + font->maxp->numGlyphs) + 1);
-			hdmx->records[i].widths = (uint8_t *)malloc(sizeof(uint8_t) * font->maxp->numGlyphs);
-			memcpy(hdmx->records[i].widths, data + 8 + i * (2 + font->maxp->numGlyphs) + 2, font->maxp->numGlyphs);
+			hdmx->records[i].pixelSize = *(data + 8 + i * (2 + maxp->numGlyphs));
+			hdmx->records[i].maxWidth = *(data + 8 + i * (2 + maxp->numGlyphs) + 1);
+			hdmx->records[i].widths = (uint8_t *)malloc(sizeof(uint8_t) * maxp->numGlyphs);
+			memcpy(hdmx->records[i].widths, data + 8 + i * (2 + maxp->numGlyphs) + 2, maxp->numGlyphs);
 		}
 
-		font->hdmx = hdmx;
+		return hdmx;
 	}
+	return NULL;
 }
 
-void caryll_delete_table_hdmx(caryll_font *font) {
-	if (font->hdmx->records != NULL) {
-		for (uint32_t i = 0; i < font->hdmx->numRecords; i++) {
-			if (font->hdmx->records[i].widths != NULL) free(font->hdmx->records[i].widths);
+void caryll_delete_hdmx(table_hdmx *table) {
+	if (table->records != NULL) {
+		for (uint32_t i = 0; i < table->numRecords; i++) {
+			if (table->records[i].widths != NULL) free(table->records[i].widths);
 		}
-		free(font->hdmx->records);
+		free(table->records);
 	}
-	free(font->hdmx);
+	free(table);
 }

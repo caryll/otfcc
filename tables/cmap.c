@@ -1,11 +1,4 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
+#include "cmap.h"
 
 static void encode(cmap_hash *map, int c, uint16_t gid) {
 	cmap_entry *s;
@@ -76,7 +69,7 @@ static int by_unicode(cmap_entry *a, cmap_entry *b) {
 }
 
 // OTFCC will not support all `cmap` mappings.
-void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
+cmap_hash *caryll_read_cmap(caryll_packet packet) {
 	// the map is a reference to a hash table
 	cmap_hash *map = NULL;
 	FOR_TABLE('cmap', table) {
@@ -97,32 +90,32 @@ void caryll_read_cmap(caryll_font *font, caryll_packet packet) {
 			}
 		};
 		HASH_SORT(*map, by_unicode);
-		font->cmap = map;
+		return map;
+
+	CMAP_CORRUPTED:
+		fprintf(stderr, "table 'cmap' corrupted.\n");
+		if (map != NULL) free(map);
 	}
-	return;
-CMAP_CORRUPTED:
-	fprintf(stderr, "table 'cmap' corrupted.\n");
-	if (map != NULL) free(map);
-	return;
+	return NULL;
 }
 
-void caryll_delete_table_cmap(caryll_font *font) {
+void caryll_delete_cmap(cmap_hash *table) {
 	cmap_entry *s, *tmp;
-	HASH_ITER(hh, *(font->cmap), s, tmp) {
+	HASH_ITER(hh, *(table), s, tmp) {
 		// delete and free all cmap entries
 		s->glyph.name = NULL;
-		HASH_DEL(*(font->cmap), s);
+		HASH_DEL(*(table), s);
 		free(s);
 	}
-	free(font->cmap);
+	free(table);
 }
 
-void caryll_cmap_to_json(caryll_font *font, json_value *root) {
-	if (!font->cmap) return;
-	json_value *cmap = json_object_new(HASH_COUNT(*font->cmap));
+void caryll_cmap_to_json(cmap_hash *table, json_value *root) {
+	if (!table) return;
+	json_value *cmap = json_object_new(HASH_COUNT(*table));
 
 	cmap_entry *item;
-	foreach_hash(item, *font->cmap) {
+	foreach_hash(item, *table) {
 		sds key = sdsfromlonglong(item->unicode);
 		json_object_push(cmap, key, json_string_new_length(sdslen(item->glyph.name), item->glyph.name));
 		sdsfree(key);
@@ -130,8 +123,8 @@ void caryll_cmap_to_json(caryll_font *font, json_value *root) {
 	json_object_push(root, "cmap", cmap);
 }
 
-void caryll_cmap_from_json(caryll_font *font, json_value *root) {
-	if (root->type != json_object) return;
+cmap_hash *caryll_cmap_from_json(json_value *root) {
+	if (root->type != json_object) return NULL;
 	cmap_hash hash = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
@@ -156,7 +149,9 @@ void caryll_cmap_from_json(caryll_font *font, json_value *root) {
 	}
 	if (hash) {
 		HASH_SORT(hash, by_unicode);
-		font->cmap = malloc(sizeof(cmap_hash *));
-		*font->cmap = hash;
+		cmap_hash *map = malloc(sizeof(cmap_hash *));
+		*map = hash;
+		return map;
 	}
+	return NULL;
 }

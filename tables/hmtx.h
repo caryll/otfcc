@@ -1,8 +1,12 @@
 #ifndef CARYLL_TABLES_HMTX_H
 #define CARYLL_TABLES_HMTX_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
+
+#include "hhea.h"
+#include "maxp.h"
 
 typedef struct {
 	uint16_t advanceWidth;
@@ -15,7 +19,7 @@ typedef struct {
 	int16_t *leftSideBearing;
 } table_hmtx;
 
-void caryll_read_hmtx(caryll_font *font, caryll_packet packet);
-void caryll_delete_table_hmtx(caryll_font *font);
+table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp *maxp);
+void caryll_delete_hmtx(table_hmtx *table);
 
 #endif

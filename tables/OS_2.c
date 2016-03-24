@@ -1,12 +1,6 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "OS_2.h"
 
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
-
-void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
+table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 	table_OS_2 *os_2 = NULL;
 	FOR_TABLE('OS/2', table) {
 		font_file_pointer data = table.data;
@@ -64,68 +58,65 @@ void caryll_read_OS_2(caryll_font *font, caryll_packet packet) {
 			os_2->usLowerOpticalPointSize = caryll_blt16u(data + 96);
 			os_2->usLowerOpticalPointSize = caryll_blt16u(data + 98);
 		}
-		font->OS_2 = os_2;
-	}
-	return;
+		return os_2;
 
-OS_2_CORRUPTED:
-	fprintf(stderr, "table 'OS/2' corrupted.\n");
-	if (os_2 != NULL) free(os_2);
-	font->OS_2 = NULL;
-	return;
+	OS_2_CORRUPTED:
+		fprintf(stderr, "table 'OS/2' corrupted.\n");
+		if (os_2 != NULL) free(os_2);
+	}
+	return NULL;
 }
 
-void caryll_OS_2_to_json(caryll_font *font, json_value *root) {
-	if (!font->OS_2) return;
+void caryll_OS_2_to_json(table_OS_2 *table, json_value *root) {
+	if (!table) return;
 	json_value *os_2 = json_object_new(30);
-	json_object_push(os_2, "version", json_integer_new(font->OS_2->version));
-	json_object_push(os_2, "xAvgCharWidth", json_integer_new(font->OS_2->xAvgCharWidth));
-	json_object_push(os_2, "usWeightClass", json_integer_new(font->OS_2->usWeightClass));
-	json_object_push(os_2, "usWidthClass", json_integer_new(font->OS_2->usWidthClass));
-	json_object_push(os_2, "fsType", json_integer_new(font->OS_2->fsType));
-	json_object_push(os_2, "ySubscriptXSize", json_integer_new(font->OS_2->ySubscriptXSize));
-	json_object_push(os_2, "ySubscriptYSize", json_integer_new(font->OS_2->ySubscriptYSize));
-	json_object_push(os_2, "ySubscriptXOffset", json_integer_new(font->OS_2->ySubscriptXOffset));
-	json_object_push(os_2, "ySubscriptYOffset", json_integer_new(font->OS_2->ySubscriptYOffset));
-	json_object_push(os_2, "ySupscriptXSize", json_integer_new(font->OS_2->ySupscriptXSize));
-	json_object_push(os_2, "ySupscriptXOffset", json_integer_new(font->OS_2->ySupscriptXOffset));
-	json_object_push(os_2, "ySupscriptYOffset", json_integer_new(font->OS_2->ySupscriptYOffset));
-	json_object_push(os_2, "yStrikeoutSize", json_integer_new(font->OS_2->yStrikeoutSize));
-	json_object_push(os_2, "yStrikeoutPosition", json_integer_new(font->OS_2->yStrikeoutPosition));
-	json_object_push(os_2, "sFamilyClass", json_integer_new(font->OS_2->sFamilyClass));
+	json_object_push(os_2, "version", json_integer_new(table->version));
+	json_object_push(os_2, "xAvgCharWidth", json_integer_new(table->xAvgCharWidth));
+	json_object_push(os_2, "usWeightClass", json_integer_new(table->usWeightClass));
+	json_object_push(os_2, "usWidthClass", json_integer_new(table->usWidthClass));
+	json_object_push(os_2, "fsType", json_integer_new(table->fsType));
+	json_object_push(os_2, "ySubscriptXSize", json_integer_new(table->ySubscriptXSize));
+	json_object_push(os_2, "ySubscriptYSize", json_integer_new(table->ySubscriptYSize));
+	json_object_push(os_2, "ySubscriptXOffset", json_integer_new(table->ySubscriptXOffset));
+	json_object_push(os_2, "ySubscriptYOffset", json_integer_new(table->ySubscriptYOffset));
+	json_object_push(os_2, "ySupscriptXSize", json_integer_new(table->ySupscriptXSize));
+	json_object_push(os_2, "ySupscriptXOffset", json_integer_new(table->ySupscriptXOffset));
+	json_object_push(os_2, "ySupscriptYOffset", json_integer_new(table->ySupscriptYOffset));
+	json_object_push(os_2, "yStrikeoutSize", json_integer_new(table->yStrikeoutSize));
+	json_object_push(os_2, "yStrikeoutPosition", json_integer_new(table->yStrikeoutPosition));
+	json_object_push(os_2, "sFamilyClass", json_integer_new(table->sFamilyClass));
 
 	json_value *panose = json_array_new(10);
 	for (uint8_t j = 0; j < 10; j++) {
-		json_array_push(panose, json_integer_new(font->OS_2->panose[j]));
+		json_array_push(panose, json_integer_new(table->panose[j]));
 	}
 	json_object_push(os_2, "panose", panose);
 
-	json_object_push(os_2, "ulUnicodeRange1", json_integer_new(font->OS_2->ulUnicodeRange1));
-	json_object_push(os_2, "ulUnicodeRange2", json_integer_new(font->OS_2->ulUnicodeRange2));
-	json_object_push(os_2, "ulUnicodeRange3", json_integer_new(font->OS_2->ulUnicodeRange3));
-	json_object_push(os_2, "ulUnicodeRange4", json_integer_new(font->OS_2->ulUnicodeRange4));
+	json_object_push(os_2, "ulUnicodeRange1", json_integer_new(table->ulUnicodeRange1));
+	json_object_push(os_2, "ulUnicodeRange2", json_integer_new(table->ulUnicodeRange2));
+	json_object_push(os_2, "ulUnicodeRange3", json_integer_new(table->ulUnicodeRange3));
+	json_object_push(os_2, "ulUnicodeRange4", json_integer_new(table->ulUnicodeRange4));
 
-	sds vendorid = sdsnewlen(font->OS_2->achVendID, 4);
+	sds vendorid = sdsnewlen(table->achVendID, 4);
 	json_object_push(os_2, "achVendID", json_string_new(vendorid));
 	sdsfree(vendorid);
 
-	json_object_push(os_2, "fsSelection", json_integer_new(font->OS_2->fsSelection));
-	json_object_push(os_2, "usFirstCharIndex", json_integer_new(font->OS_2->usFirstCharIndex));
-	json_object_push(os_2, "usLastCharIndex", json_integer_new(font->OS_2->usLastCharIndex));
-	json_object_push(os_2, "sTypoAscender", json_integer_new(font->OS_2->sTypoAscender));
-	json_object_push(os_2, "sTypoDescender", json_integer_new(font->OS_2->sTypoDescender));
-	json_object_push(os_2, "sTypoLineGap", json_integer_new(font->OS_2->sTypoLineGap));
-	json_object_push(os_2, "usWinAscent", json_integer_new(font->OS_2->usWinAscent));
-	json_object_push(os_2, "usWinDescent", json_integer_new(font->OS_2->usWinDescent));
-	json_object_push(os_2, "ulCodePageRange1", json_integer_new(font->OS_2->ulCodePageRange1));
-	json_object_push(os_2, "ulCodePageRange2", json_integer_new(font->OS_2->ulCodePageRange2));
-	json_object_push(os_2, "sxHeight", json_integer_new(font->OS_2->sxHeight));
-	json_object_push(os_2, "sCapHeight", json_integer_new(font->OS_2->sCapHeight));
-	json_object_push(os_2, "usDefaultChar", json_integer_new(font->OS_2->usDefaultChar));
-	json_object_push(os_2, "usBreakChar", json_integer_new(font->OS_2->usBreakChar));
-	json_object_push(os_2, "usMaxContext", json_integer_new(font->OS_2->usMaxContext));
-	json_object_push(os_2, "usLowerOpticalPointSize", json_integer_new(font->OS_2->usLowerOpticalPointSize));
-	json_object_push(os_2, "usUpperOpticalPointSize", json_integer_new(font->OS_2->usUpperOpticalPointSize));
+	json_object_push(os_2, "fsSelection", json_integer_new(table->fsSelection));
+	json_object_push(os_2, "usFirstCharIndex", json_integer_new(table->usFirstCharIndex));
+	json_object_push(os_2, "usLastCharIndex", json_integer_new(table->usLastCharIndex));
+	json_object_push(os_2, "sTypoAscender", json_integer_new(table->sTypoAscender));
+	json_object_push(os_2, "sTypoDescender", json_integer_new(table->sTypoDescender));
+	json_object_push(os_2, "sTypoLineGap", json_integer_new(table->sTypoLineGap));
+	json_object_push(os_2, "usWinAscent", json_integer_new(table->usWinAscent));
+	json_object_push(os_2, "usWinDescent", json_integer_new(table->usWinDescent));
+	json_object_push(os_2, "ulCodePageRange1", json_integer_new(table->ulCodePageRange1));
+	json_object_push(os_2, "ulCodePageRange2", json_integer_new(table->ulCodePageRange2));
+	json_object_push(os_2, "sxHeight", json_integer_new(table->sxHeight));
+	json_object_push(os_2, "sCapHeight", json_integer_new(table->sCapHeight));
+	json_object_push(os_2, "usDefaultChar", json_integer_new(table->usDefaultChar));
+	json_object_push(os_2, "usBreakChar", json_integer_new(table->usBreakChar));
+	json_object_push(os_2, "usMaxContext", json_integer_new(table->usMaxContext));
+	json_object_push(os_2, "usLowerOpticalPointSize", json_integer_new(table->usLowerOpticalPointSize));
+	json_object_push(os_2, "usUpperOpticalPointSize", json_integer_new(table->usUpperOpticalPointSize));
 	json_object_push(root, "OS_2", os_2);
 }
-

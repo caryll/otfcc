@@ -20,15 +20,14 @@ int main(int argc, char *argv[]) {
 
 	json_value *root = json_object_new(12);
 	
-	caryll_head_to_json(font, root);
-	caryll_hhea_to_json(font, root);
-	caryll_post_to_json(font, root);
-	caryll_OS_2_to_json(font, root);
-	caryll_cmap_to_json(font, root);
-	caryll_name_to_json(font, root);
-	caryll_maxp_to_json(font, root);
-	caryll_glyphorder_to_json(font, root);
-	caryll_glyf_to_json(font, root);
+	caryll_head_to_json(font->head, root);
+	caryll_hhea_to_json(font->hhea, root);
+	caryll_maxp_to_json(font->maxp, root);
+	caryll_name_to_json(font->name, root);
+	caryll_post_to_json(font->post, root);
+	caryll_OS_2_to_json(font->OS_2, root);
+	caryll_cmap_to_json(font->cmap, root);
+	caryll_glyf_to_json(font->glyf, root);
 	
 	push_stopwatch("Convert to JSON", &begin);
 

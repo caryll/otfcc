@@ -1,8 +1,11 @@
 #ifndef CARYLL_TABLES_HDMX_H
 #define CARYLL_TABLES_HDMX_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
+
+#include "maxp.h"
 
 typedef struct {
 	uint8_t pixelSize;
@@ -18,7 +21,7 @@ typedef struct {
 	device_record *records;
 } table_hdmx;
 
-void caryll_read_hdmx(caryll_font *font, caryll_packet packet);
-void caryll_delete_table_hdmx(caryll_font *font);
+table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp);
+void caryll_delete_hdmx(table_hdmx *table);
 
 #endif

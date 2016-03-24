@@ -1,11 +1,11 @@
 #ifndef CARYLL_TABLES_POST_H
 #define CARYLL_TABLES_POST_H
 
-#include <stdint.h>
-#include "../caryll-font.h"
-#include "../support/glyphorder.h"
+#include "../support/util.h"
+#include "../caryll-sfnt.h"
+#include "../caryll-io.h"
 
-#include "../extern/json-builder.h"
+#include "../support/glyphorder.h"
 
 typedef struct {
 	// PostScript information
@@ -21,8 +21,8 @@ typedef struct {
 	glyph_order_hash *post_name_map;
 } table_post;
 
-void caryll_read_post(caryll_font *font, caryll_packet packet);
-void caryll_delete_table_post(caryll_font *font);
-void caryll_post_to_json(caryll_font *font, json_value *root);
+table_post *caryll_read_post(caryll_packet packet);
+void caryll_delete_post(table_post *table);
+void caryll_post_to_json(table_post *table, json_value *root);
 
 #endif

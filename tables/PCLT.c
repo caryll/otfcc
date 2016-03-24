@@ -1,12 +1,6 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "PCLT.h"
 
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
-
-void caryll_read_PCLT(caryll_font *font, caryll_packet packet) {
+table_PCLT *caryll_read_PCLT(caryll_packet packet) {
 	FOR_TABLE('PCLT', table) {
 		font_file_pointer data = table.data;
 
@@ -27,6 +21,7 @@ void caryll_read_PCLT(caryll_font *font, caryll_packet packet) {
 		PCLT->SerifStyle = *(data + 52);
 		PCLT->pad = 0;
 
-		font->PCLT = PCLT;
+		return PCLT;
 	}
+	return NULL;
 }
