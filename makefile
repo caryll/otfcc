@@ -24,8 +24,7 @@ OBJTABLES = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-name.o
 EXTOBJS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
 SUPPORTOBJS = build/support-glyphorder.o build/support-aglfn.o \
-              build/support-stopwatch.o build/support-unicodeconv.o \
-			  build/support-util.o
+              build/support-stopwatch.o build/support-unicodeconv.o 
 
 OBJECTS = $(OBJTABLES) $(OBJOTFCCMAIN) $(EXTOBJS) $(SUPPORTOBJS)
 
