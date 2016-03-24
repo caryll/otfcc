@@ -83,7 +83,7 @@ void time_now(struct timespec *tv) {
 
 #define BILLION 1000000000
 
-void timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *result) {
+static void timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *result) {
 	if ((stop->tv_nsec - start->tv_nsec) < 0) {
 		result->tv_sec = stop->tv_sec - start->tv_sec - 1;
 		result->tv_nsec = stop->tv_nsec - start->tv_nsec + BILLION;

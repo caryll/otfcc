@@ -20,7 +20,7 @@
 
 #define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
 
-INLINE json_value *json_obj_get(json_value *obj, const char *key) {
+static INLINE json_value *json_obj_get(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return NULL;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -28,7 +28,7 @@ INLINE json_value *json_obj_get(json_value *obj, const char *key) {
 	}
 	return NULL;
 }
-INLINE json_value *json_obj_get_type(json_value *obj, const char *key, json_type type) {
+static INLINE json_value *json_obj_get_type(json_value *obj, const char *key, json_type type) {
 	json_value *v = json_obj_get(obj, key);
 	if (v && v->type == type) return v;
 	return NULL;

@@ -113,7 +113,7 @@ void caryll_glyphorder_to_json(caryll_font *font, json_value *root) {
 	json_object_push(root, "glyph_order", order);
 }
 
-void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table) {
+static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table) {
 	for (uint32_t j = 0; j < table->u.array.length; j++) {
 		json_value *item = table->u.array.values[j];
 		if (item->type == json_string) {
@@ -137,7 +137,7 @@ void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_val
 		}
 	}
 }
-void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_value *table) {
+static void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_value *table) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
 		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
@@ -164,7 +164,7 @@ void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_value *
 		sdsfree(unicodeStr);
 	}
 }
-void caryll_glyphorder_from_json_order_glyf(glyph_order_hash *hash, json_value *table) {
+static void caryll_glyphorder_from_json_order_glyf(glyph_order_hash *hash, json_value *table) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
 		sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		glyph_order_entry *item = NULL;

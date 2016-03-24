@@ -20,7 +20,7 @@ glyf_glyph *spaceGlyph() {
 	return g;
 }
 
-glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint16_t *cp) {
+static INLINE glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint16_t *cp) {
 	if (*cp >= contours[*cc].pointsCount) {
 		*cp = 0;
 		*cc += 1;
@@ -28,7 +28,7 @@ glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint16_t *cp) {
 	return &contours[*cc].points[(*cp)++];
 }
 
-glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
+static glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
 	glyf_glyph *g = spaceGlyph();
 	g->numberOfContours = numberOfContours;
 	g->numberOfReferences = 0;
@@ -138,7 +138,7 @@ glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfC
 	return g;
 }
 
-glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
+static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 	glyf_glyph *g = spaceGlyph();
 	g->numberOfContours = 0;
 	// pass 1, read references quantity
@@ -228,7 +228,7 @@ glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 	return g;
 }
 
-glyf_glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
+static glyf_glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	font_file_pointer start = data + offset;
 	int16_t numberOfContours = caryll_blt16u(start);
 	if (numberOfContours > 0) {

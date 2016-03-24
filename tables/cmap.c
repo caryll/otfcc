@@ -7,7 +7,7 @@
 #include "../caryll-font.h"
 #include "../caryll-io.h"
 
-void encode(cmap_hash *map, int c, uint16_t gid) {
+static void encode(cmap_hash *map, int c, uint16_t gid) {
 	cmap_entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
@@ -19,7 +19,7 @@ void encode(cmap_hash *map, int c, uint16_t gid) {
 	}
 }
 
-void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
+static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	if (lengthLimit < 16) return;
 	uint32_t nGroups = caryll_blt32u(start + 12);
 	if (lengthLimit < 16 + 12 * nGroups) return;
@@ -33,7 +33,7 @@ void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit, cmap_h
 	}
 }
 
-void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
+static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	if (lengthLimit < 14) return;
 	uint16_t segmentsCount = caryll_blt16u(start + 6) / 2;
 	if (lengthLimit < 16 + segmentsCount * 8) return;
@@ -62,7 +62,7 @@ void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, cmap_ha
 	}
 }
 
-void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
+static void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	uint16_t format = caryll_blt16u(start);
 	if (format == 4) {
 		caryll_read_format_4(start, lengthLimit, map);
@@ -71,7 +71,7 @@ void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, cm
 	}
 }
 
-int by_unicode(cmap_entry *a, cmap_entry *b) {
+static int by_unicode(cmap_entry *a, cmap_entry *b) {
 	return (a->unicode - b->unicode);
 }
 
