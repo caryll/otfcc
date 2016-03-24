@@ -3,7 +3,6 @@
 
 #include "../support/util.h"
 #include "../caryll-sfnt.h"
-#include "../caryll-io.h"
 
 // We will support format 0, 4, 12 of CMAP only
 typedef struct {

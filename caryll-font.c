@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "caryll-io.h"
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
 

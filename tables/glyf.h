@@ -3,7 +3,6 @@
 
 #include "../support/util.h"
 #include "../caryll-sfnt.h"
-#include "../caryll-io.h"
 
 #include "head.h"
 #include "maxp.h"

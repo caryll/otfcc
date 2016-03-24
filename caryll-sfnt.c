@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "caryll-io.h"
+#include "support/util.h"
 #include "caryll-sfnt.h"
 
 static void caryll_read_packets(caryll_sfnt *font, FILE *file) {

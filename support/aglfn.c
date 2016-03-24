@@ -1,12 +1,4 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../caryll-io.h"
-
+#include "aglfn.h"
 #include "glyphorder.h"
 // This table contains standard AGLFN 1.7 glyph names, mapped to Unicode.
 void setup_aglfn_glyph_names(glyph_order_hash *map) {
