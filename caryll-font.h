@@ -1,18 +1,7 @@
 #ifndef CARYLL_FONT_H
-
-#include "caryll-sfnt.h"
-#include "extern/uthash.h"
-
-#define FOR_TABLE(name, table)                                                                                         \
-	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
-	     keep = !keep, count++)                                                                                        \
-		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
-			if (table.tag == (name))                                                                                   \
-				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
-
-#define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
-
 #define CARYLL_FONT_H
+#include "caryll-sfnt.h"
+#include "support/util.h"
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_font;

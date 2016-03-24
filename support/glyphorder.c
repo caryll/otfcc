@@ -197,16 +197,15 @@ static int compare_glyphorder_entry_b(glyph_order_entry *a, glyph_order_entry *b
 void caryll_glyphorder_from_json(caryll_font *font, json_value *root) {
 	if (root->type != json_object) return;
 	glyph_order_hash hash = NULL;
-	for (uint32_t _k = 0; _k < root->u.object.length; _k++) {
-		sds key = sdsnewlen(root->u.object.values[_k].name, root->u.object.values[_k].name_length);
-		json_value *val = root->u.object.values[_k].value;
-		if (strcmp(key, "glyph_order") == 0 && val->type == json_array) {
-			caryll_glyphorder_from_json_order_subtable(&hash, val);
-		} else if (strcmp(key, "cmap") == 0 && val->type == json_object) {
-			caryll_glyphorder_from_json_order_cmap(&hash, val);
-		} else if (strcmp(key, "glyf") == 0 && val->type == json_object) {
-			caryll_glyphorder_from_json_order_glyf(&hash, val);
-		}
+	json_value *table;
+	if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
+		caryll_glyphorder_from_json_order_subtable(&hash, table);
+	}
+	if ((table = json_obj_get_type(root, "cmap", json_object))) {
+		caryll_glyphorder_from_json_order_cmap(&hash, table);
+	}
+	if ((table = json_obj_get_type(root, "glyf", json_object))) {
+		caryll_glyphorder_from_json_order_glyf(&hash, table);
 	}
 	HASH_SORT(hash, compare_glyphorder_entry_b);
 	glyph_order_entry *item;

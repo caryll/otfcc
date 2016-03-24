@@ -129,3 +129,34 @@ void caryll_cmap_to_json(caryll_font *font, json_value *root) {
 	}
 	json_object_push(root, "cmap", cmap);
 }
+
+void caryll_cmap_from_json(caryll_font *font, json_value *root) {
+	if (root->type != json_object) return;
+	cmap_hash hash = NULL;
+	json_value *table = NULL;
+	if ((table = json_obj_get_type(root, "cmap", json_object))) {
+		for (uint32_t j = 0; j < table->u.object.length; j++) {
+			sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+			json_value *item = table->u.object.values[j].value;
+			int32_t unicode = atoi(unicodeStr);
+			sdsfree(unicodeStr);
+			if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
+				sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
+				cmap_entry *item = NULL;
+				HASH_FIND_INT(hash, &unicode, item);
+				if (!item) {
+					item = calloc(1, sizeof(cmap_entry));
+					item->unicode = unicode;
+					item->glyph.name = sdsdup(gname);
+					HASH_ADD_INT(hash, unicode, item);
+				}
+				sdsfree(gname);
+			}
+		}
+	}
+	if (hash) {
+		HASH_SORT(hash, by_unicode);
+		font->cmap = malloc(sizeof(cmap_hash *));
+		*font->cmap = hash;
+	}
+}
