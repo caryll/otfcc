@@ -51,7 +51,6 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 void caryll_font_close(caryll_font *font) {
 	if (font->glyf != NULL) caryll_delete_glyf(font->glyf);
 	if (font->cmap != NULL) caryll_delete_cmap(font->cmap);
-	if (font->glyph_order != NULL) { delete_glyph_order_map(font->glyph_order); }
 	if (font->head != NULL) free(font->head);
 	if (font->hhea != NULL) free(font->hhea);
 	if (font->maxp != NULL) free(font->maxp);
@@ -60,6 +59,7 @@ void caryll_font_close(caryll_font *font) {
 	if (font->hmtx != NULL) caryll_delete_hmtx(font->hmtx);
 	if (font->post != NULL) caryll_delete_post(font->post);
 	if (font->hdmx != NULL) caryll_delete_hdmx(font->hdmx);
+	if (font->glyph_order != NULL) { delete_glyph_order_map(font->glyph_order); }
 	if (font != NULL) free(font);
 }
 
