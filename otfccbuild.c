@@ -25,8 +25,22 @@ int main(int argc, char *argv[]) {
 
 	if (buffer) {
 		json_value *fontdump = json_parse(buffer, length);
-		json_value_free(fontdump);
 		free(buffer);
+		if (fontdump) {
+			caryll_font *font = caryll_font_new();
+			caryll_glyphorder_from_json(font, fontdump);
+
+			
+			glyph_order_entry *item;
+			foreach_hash(item, *font->glyph_order) {
+				fprintf(stderr, "%d,%d -> %s (%d)\n", item->dump_order_type, item->dump_order_entry, item->name,
+				        item->gid);
+			}
+			
+
+			json_value_free(fontdump);
+			caryll_font_close(font);
+		}
 	}
 	return 0;
 }

@@ -107,8 +107,111 @@ void caryll_glyphorder_to_json(caryll_font *font, json_value *root) {
 	if (!font->glyf) return;
 	json_value *order = json_array_new(font->glyf->numberGlyphs);
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		json_array_push(order, json_string_new_length(sdslen(font->glyf->glyphs[j]->name), font->glyf->glyphs[j]->name));
+		json_array_push(order,
+		                json_string_new_length(sdslen(font->glyf->glyphs[j]->name), font->glyf->glyphs[j]->name));
 	}
 	json_object_push(root, "glyph_order", order);
 }
 
+void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table) {
+	for (uint32_t j = 0; j < table->u.array.length; j++) {
+		json_value *item = table->u.array.values[j];
+		if (item->type == json_string) {
+			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
+			glyph_order_entry *item = NULL;
+			HASH_FIND_STR(*hash, gname, item);
+			if (item) {
+				// found an entry
+				if (item->dump_order_type > dump_order_type_glyphorder) {
+					item->dump_order_type = dump_order_type_glyphorder;
+					item->dump_order_entry = j;
+				}
+			} else {
+				item = calloc(1, sizeof(glyph_order_entry));
+				item->dump_order_type = dump_order_type_glyphorder;
+				item->dump_order_entry = j;
+				item->name = sdsdup(gname);
+				HASH_ADD_STR(*hash, name, item);
+			}
+			sdsfree(gname);
+		}
+	}
+}
+void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_value *table) {
+	for (uint32_t j = 0; j < table->u.object.length; j++) {
+		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		json_value *item = table->u.object.values[j].value;
+		int32_t unicode = atoi(unicodeStr);
+		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
+			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
+			glyph_order_entry *item = NULL;
+			HASH_FIND_STR(*hash, gname, item);
+			if (item) {
+				// found an entry
+				if (item->dump_order_type > dump_order_type_cmap) {
+					item->dump_order_type = dump_order_type_cmap;
+					item->dump_order_entry = unicode;
+				}
+			} else {
+				item = calloc(1, sizeof(glyph_order_entry));
+				item->dump_order_type = dump_order_type_cmap;
+				item->dump_order_entry = unicode;
+				item->name = sdsdup(gname);
+				HASH_ADD_STR(*hash, name, item);
+			}
+			sdsfree(gname);
+		}
+		sdsfree(unicodeStr);
+	}
+}
+void caryll_glyphorder_from_json_order_glyf(glyph_order_hash *hash, json_value *table) {
+	for (uint32_t j = 0; j < table->u.object.length; j++) {
+		sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		glyph_order_entry *item = NULL;
+		HASH_FIND_STR(*hash, gname, item);
+		if (item) {
+			// found an entry
+			if (item->dump_order_type > dump_order_type_glyf) {
+				item->dump_order_type = dump_order_type_glyf;
+				item->dump_order_entry = j;
+			}
+		} else {
+			item = calloc(1, sizeof(glyph_order_entry));
+			item->dump_order_type = dump_order_type_glyf;
+			item->dump_order_entry = j;
+			item->name = sdsdup(gname);
+			HASH_ADD_STR(*hash, name, item);
+		}
+		sdsfree(gname);
+	}
+}
+
+static int compare_glyphorder_entry_b(glyph_order_entry *a, glyph_order_entry *b) {
+	if (a->dump_order_type < b->dump_order_type) return (-1);
+	if (a->dump_order_type > b->dump_order_type) return (1);
+	if (a->dump_order_entry < b->dump_order_entry) return (-1);
+	if (a->dump_order_entry > b->dump_order_entry) return (1);
+	return 0;
+}
+
+void caryll_glyphorder_from_json(caryll_font *font, json_value *root) {
+	if (root->type != json_object) return;
+	glyph_order_hash hash = NULL;
+	for (uint32_t _k = 0; _k < root->u.object.length; _k++) {
+		sds key = sdsnewlen(root->u.object.values[_k].name, root->u.object.values[_k].name_length);
+		json_value *val = root->u.object.values[_k].value;
+		if (strcmp(key, "glyph_order") == 0 && val->type == json_array) {
+			caryll_glyphorder_from_json_order_subtable(&hash, val);
+		} else if (strcmp(key, "cmap") == 0 && val->type == json_object) {
+			caryll_glyphorder_from_json_order_cmap(&hash, val);
+		} else if (strcmp(key, "glyf") == 0 && val->type == json_object) {
+			caryll_glyphorder_from_json_order_glyf(&hash, val);
+		}
+	}
+	HASH_SORT(hash, compare_glyphorder_entry_b);
+	glyph_order_entry *item;
+	uint32_t j = 0;
+	foreach_hash(item, hash) { item->gid = j++; }
+	font->glyph_order = malloc(sizeof(glyph_order_hash));
+	*font->glyph_order = hash;
+}

@@ -25,23 +25,28 @@ void caryll_font_unconsolidate(caryll_font *font) {
 	caryll_name_glyf(font);
 }
 
+caryll_font *caryll_font_new() {
+	caryll_font *font = calloc(1, sizeof(caryll_font));
+	if(!font) return NULL;
+	font->head = NULL;
+	font->hhea = NULL;
+	font->maxp = NULL;
+	font->hmtx = NULL;
+	font->post = NULL;
+	font->name = NULL;
+	font->hdmx = NULL;
+	font->glyf = NULL;
+	font->cmap = NULL;
+	font->glyph_order = NULL;
+	return font;
+}
+
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 	if (sfnt->count - 1 < index)
 		return NULL;
 	else {
-		caryll_font *font = (caryll_font *)malloc(sizeof(caryll_font) * 1);
+		caryll_font *font = caryll_font_new();
 		caryll_packet packet = sfnt->packets[index];
-
-		font->head = NULL;
-		font->hhea = NULL;
-		font->maxp = NULL;
-		font->hmtx = NULL;
-		font->post = NULL;
-		font->name = NULL;
-		font->hdmx = NULL;
-		font->glyf = NULL;
-		font->cmap = NULL;
-		font->glyph_order = NULL;
 
 		caryll_read_head(font, packet);
 		caryll_read_hhea(font, packet);

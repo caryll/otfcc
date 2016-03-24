@@ -16,6 +16,8 @@ typedef struct {
 typedef struct {
 	int gid;
 	sds name;
+	uint8_t dump_order_type;
+	uint32_t dump_order_entry;
 	UT_hash_handle hh;
 } glyph_order_entry;
 typedef glyph_order_entry *glyph_order_hash;
@@ -28,5 +30,10 @@ int try_name_glyph(glyph_order_hash *glyph_order, uint16_t _id, sds name);
 void delete_glyph_order_map(glyph_order_hash *map);
 
 void caryll_glyphorder_to_json(caryll_font *font, json_value *root);
+void caryll_glyphorder_from_json(caryll_font *font, json_value *root);
+
+static int dump_order_type_glyphorder = 1;
+static int dump_order_type_cmap = 2;
+static int dump_order_type_glyf = 3;
 
 #endif

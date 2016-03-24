@@ -55,6 +55,7 @@ struct _caryll_font {
 	glyph_order_hash *glyph_order;
 };
 
+caryll_font *caryll_font_new();
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
 void caryll_font_close(caryll_font *font);
 
