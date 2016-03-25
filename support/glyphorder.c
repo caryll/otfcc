@@ -41,17 +41,11 @@ static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, j
 			glyph_order_entry *item = NULL;
 			HASH_FIND_STR(*hash, gname, item);
 			if (item) {
-				// found an entry
+				// Escalate
 				if (item->dump_order_type > dump_order_type_glyphorder) {
 					item->dump_order_type = dump_order_type_glyphorder;
 					item->dump_order_entry = j;
 				}
-			} else {
-				item = calloc(1, sizeof(glyph_order_entry));
-				item->dump_order_type = dump_order_type_glyphorder;
-				item->dump_order_entry = j;
-				item->name = sdsdup(gname);
-				HASH_ADD_STR(*hash, name, item);
 			}
 			sdsfree(gname);
 		}
@@ -67,17 +61,11 @@ static void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_
 			glyph_order_entry *item = NULL;
 			HASH_FIND_STR(*hash, gname, item);
 			if (item) {
-				// found an entry
+				// Escalate
 				if (item->dump_order_type > dump_order_type_cmap) {
 					item->dump_order_type = dump_order_type_cmap;
 					item->dump_order_entry = unicode;
 				}
-			} else {
-				item = calloc(1, sizeof(glyph_order_entry));
-				item->dump_order_type = dump_order_type_cmap;
-				item->dump_order_entry = unicode;
-				item->name = sdsdup(gname);
-				HASH_ADD_STR(*hash, name, item);
 			}
 			sdsfree(gname);
 		}
@@ -89,13 +77,7 @@ static void caryll_glyphorder_from_json_order_glyf(glyph_order_hash *hash, json_
 		sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		glyph_order_entry *item = NULL;
 		HASH_FIND_STR(*hash, gname, item);
-		if (item) {
-			// found an entry
-			if (item->dump_order_type > dump_order_type_glyf) {
-				item->dump_order_type = dump_order_type_glyf;
-				item->dump_order_entry = j;
-			}
-		} else {
+		if (!item) {
 			item = calloc(1, sizeof(glyph_order_entry));
 			item->dump_order_type = dump_order_type_glyf;
 			item->dump_order_entry = j;
@@ -118,14 +100,14 @@ glyph_order_hash *caryll_glyphorder_from_json(json_value *root) {
 	if (root->type != json_object) return NULL;
 	glyph_order_hash hash = NULL;
 	json_value *table;
-	if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
-		caryll_glyphorder_from_json_order_subtable(&hash, table);
-	}
-	if ((table = json_obj_get_type(root, "cmap", json_object))) {
-		caryll_glyphorder_from_json_order_cmap(&hash, table);
-	}
 	if ((table = json_obj_get_type(root, "glyf", json_object))) {
 		caryll_glyphorder_from_json_order_glyf(&hash, table);
+		if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
+			caryll_glyphorder_from_json_order_subtable(&hash, table);
+		}
+		if ((table = json_obj_get_type(root, "cmap", json_object))) {
+			caryll_glyphorder_from_json_order_cmap(&hash, table);
+		}
 	}
 	HASH_SORT(hash, compare_glyphorder_entry_b);
 	glyph_order_entry *item;
