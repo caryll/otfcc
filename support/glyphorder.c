@@ -46,6 +46,8 @@ static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, j
 					item->dump_order_type = dump_order_type_glyphorder;
 					item->dump_order_entry = j;
 				}
+			} else {
+				fprintf(stderr, "Ignored quoting missing glyph /%s in glyph_order (mapped to %d).\n", gname, j);
 			}
 			sdsfree(gname);
 		}
@@ -66,6 +68,8 @@ static void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_
 					item->dump_order_type = dump_order_type_cmap;
 					item->dump_order_entry = unicode;
 				}
+			} else {
+				fprintf(stderr, "Ignored quoting missing glyph /%s in cmap (mapped to U+%04X).\n", gname, unicode);
 			}
 			sdsfree(gname);
 		}
