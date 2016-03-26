@@ -3,6 +3,7 @@
 
 #include "../support/util.h"
 #include "../caryll-sfnt.h"
+#include "../support/glyphorder.h"
 
 #include "head.h"
 #include "maxp.h"
@@ -71,5 +72,5 @@ glyf_glyph *spaceGlyph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root);
-
+table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order);
 #endif

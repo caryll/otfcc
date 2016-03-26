@@ -39,6 +39,76 @@ static INLINE json_value *json_obj_get_type(json_value *obj, const char *key, js
 	if (v && v->type == type) return v;
 	return NULL;
 }
+static INLINE double json_obj_getnum(json_value *obj, const char *key) {
+	if (!obj || obj->type != json_object) return 0.0;
+	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
+		char *ck = obj->u.object.values[_k].name;
+		json_value *cv = obj->u.object.values[_k].value;
+		if (strcmp(ck, key) == 0) {
+			if (cv && cv->type == json_integer) return cv->u.integer;
+			if (cv && cv->type == json_double) return cv->u.dbl;
+		}
+	}
+	return 0.0;
+}
+static INLINE int32_t json_obj_getint(json_value *obj, const char *key) {
+	if (!obj || obj->type != json_object) return 0;
+	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
+		char *ck = obj->u.object.values[_k].name;
+		json_value *cv = obj->u.object.values[_k].value;
+		if (strcmp(ck, key) == 0) {
+			if (cv && cv->type == json_integer) return cv->u.integer;
+			if (cv && cv->type == json_double) return cv->u.dbl;
+		}
+	}
+	return 0;
+}
+static INLINE double json_obj_getnum_fallback(json_value *obj, const char *key, double fallback) {
+	if (!obj || obj->type != json_object) return fallback;
+	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
+		char *ck = obj->u.object.values[_k].name;
+		json_value *cv = obj->u.object.values[_k].value;
+		if (strcmp(ck, key) == 0) {
+			if (cv && cv->type == json_integer) return cv->u.integer;
+			if (cv && cv->type == json_double) return cv->u.dbl;
+		}
+	}
+	return fallback;
+}
+static INLINE int32_t json_obj_getint_fallback(json_value *obj, const char *key, int32_t fallback) {
+	if (!obj || obj->type != json_object) return fallback;
+	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
+		char *ck = obj->u.object.values[_k].name;
+		json_value *cv = obj->u.object.values[_k].value;
+		if (strcmp(ck, key) == 0) {
+			if (cv && cv->type == json_integer) return cv->u.integer;
+			if (cv && cv->type == json_double) return cv->u.dbl;
+		}
+	}
+	return fallback;
+}
+static INLINE bool json_obj_getbool(json_value *obj, const char *key) {
+	if (!obj || obj->type != json_object) return false;
+	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
+		char *ck = obj->u.object.values[_k].name;
+		json_value *cv = obj->u.object.values[_k].value;
+		if (strcmp(ck, key) == 0) {
+			if (cv && cv->type == json_boolean) return cv->u.boolean;
+		}
+	}
+	return false;
+}
+static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, bool fallback) {
+	if (!obj || obj->type != json_object) return fallback;
+	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
+		char *ck = obj->u.object.values[_k].name;
+		json_value *cv = obj->u.object.values[_k].value;
+		if (strcmp(ck, key) == 0) {
+			if (cv && cv->type == json_boolean) return cv->u.boolean;
+		}
+	}
+	return fallback;
+}
 
 // inline io util functions
 typedef uint8_t *font_file_pointer;
@@ -132,6 +202,10 @@ static INLINE uint64_t caryll_get64u(FILE *file) {
 	return caryll_endian_convert64(tmp);
 }
 
+static INLINE uint8_t caryll_blt8u(uint8_t *src) {
+	return *src;
+}
+
 static INLINE uint16_t caryll_blt16u(uint8_t *src) {
 	uint16_t b0 = ((uint16_t)*src) << 8;
 	uint16_t b1 = ((uint16_t) * (src + 1));
@@ -159,6 +233,39 @@ static INLINE uint64_t caryll_blt64u(uint8_t *src) {
 	uint64_t b7 = ((uint64_t) * (src + 7));
 
 	return (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
+}
+
+static INLINE int8_t caryll_blt8s(uint8_t *src) {
+	return (int8_t)(*src);
+}
+
+static INLINE int16_t caryll_blt16s(uint8_t *src) {
+	uint16_t b0 = ((uint16_t)*src) << 8;
+	uint16_t b1 = ((uint16_t) * (src + 1));
+
+	return (int16_t)(b0 | b1);
+}
+
+static INLINE int32_t caryll_blt32s(uint8_t *src) {
+	uint32_t b0 = ((uint32_t)*src) << 24;
+	uint32_t b1 = ((uint32_t) * (src + 1)) << 16;
+	uint32_t b2 = ((uint32_t) * (src + 2)) << 8;
+	uint32_t b3 = ((uint32_t) * (src + 3));
+
+	return (int32_t)(b0 | b1 | b2 | b3);
+}
+
+static INLINE int64_t caryll_blt64s(uint8_t *src) {
+	uint64_t b0 = ((uint64_t)*src) << 56;
+	uint64_t b1 = ((uint64_t) * (src + 1)) << 48;
+	uint64_t b2 = ((uint64_t) * (src + 2)) << 40;
+	uint64_t b3 = ((uint64_t) * (src + 3)) << 32;
+	uint64_t b4 = ((uint64_t) * (src + 4)) << 24;
+	uint64_t b5 = ((uint64_t) * (src + 5)) << 16;
+	uint64_t b6 = ((uint64_t) * (src + 6)) << 8;
+	uint64_t b7 = ((uint64_t) * (src + 7));
+
+	return (int64_t)(b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
 }
 
 static INLINE float caryll_from_f2dot14(int16_t x) {

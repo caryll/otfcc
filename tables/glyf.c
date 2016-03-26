@@ -82,13 +82,13 @@ static glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t nu
 		uint8_t flag = flags[coordinatesRead];
 		int16_t x;
 		if (flag & GLYF_FLAG_X_SHORT) {
-			x = (flag & GLYF_FLAG_POSITIVE_X ? 1 : -1) * coordinatesStart[coordinatesOffset];
+			x = (flag & GLYF_FLAG_POSITIVE_X ? 1 : -1) * caryll_blt8u(coordinatesStart + coordinatesOffset);
 			coordinatesOffset += 1;
 		} else {
 			if (flag & GLYF_FLAG_SAME_X) {
 				x = 0;
 			} else {
-				x = caryll_blt16u(coordinatesStart + coordinatesOffset);
+				x = caryll_blt16s(coordinatesStart + coordinatesOffset);
 				coordinatesOffset += 2;
 			}
 		}
@@ -103,13 +103,13 @@ static glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t nu
 		uint8_t flag = flags[coordinatesRead];
 		int16_t y;
 		if (flag & GLYF_FLAG_Y_SHORT) {
-			y = (flag & GLYF_FLAG_POSITIVE_Y ? 1 : -1) * coordinatesStart[coordinatesOffset];
+			y = (flag & GLYF_FLAG_POSITIVE_Y ? 1 : -1) * caryll_blt8u(coordinatesStart + coordinatesOffset);
 			coordinatesOffset += 1;
 		} else {
 			if (flag & GLYF_FLAG_SAME_Y) {
 				y = 0;
 			} else {
-				y = caryll_blt16u(coordinatesStart + coordinatesOffset);
+				y = caryll_blt16s(coordinatesStart + coordinatesOffset);
 				coordinatesOffset += 2;
 			}
 		}
@@ -171,12 +171,12 @@ static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 
 		offset += 4; // flags & index
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
-			x = caryll_blt16u(start + offset);
-			y = caryll_blt16u(start + offset + 2);
+			x = caryll_blt16s(start + offset);
+			y = caryll_blt16s(start + offset + 2);
 			offset += 4;
 		} else {
-			x = caryll_blt16u(start + offset);
-			y = caryll_blt16u(start + offset + 1);
+			x = caryll_blt8s(start + offset);
+			y = caryll_blt8s(start + offset + 1);
 			offset += 2;
 		}
 		float a = 1.0;
@@ -184,17 +184,17 @@ static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		float c = 0.0;
 		float d = 1.0;
 		if (flags & WE_HAVE_A_SCALE) {
-			a = d = caryll_from_f2dot14(caryll_blt16u(start + offset));
+			a = d = caryll_from_f2dot14(caryll_blt16s(start + offset));
 			offset += 2;
 		} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
-			a = caryll_from_f2dot14(caryll_blt16u(start + offset));
-			d = caryll_from_f2dot14(caryll_blt16u(start + offset + 2));
+			a = caryll_from_f2dot14(caryll_blt16s(start + offset));
+			d = caryll_from_f2dot14(caryll_blt16s(start + offset + 2));
 			offset += 4;
 		} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
-			a = caryll_from_f2dot14(caryll_blt16u(start + offset));
-			b = caryll_from_f2dot14(caryll_blt16u(start + offset + 2));
-			c = caryll_from_f2dot14(caryll_blt16u(start + offset + 4));
-			d = caryll_from_f2dot14(caryll_blt16u(start + offset + 2));
+			a = caryll_from_f2dot14(caryll_blt16s(start + offset));
+			b = caryll_from_f2dot14(caryll_blt16s(start + offset + 2));
+			c = caryll_from_f2dot14(caryll_blt16s(start + offset + 4));
+			d = caryll_from_f2dot14(caryll_blt16s(start + offset + 2));
 			offset += 8;
 		}
 		g->references[j].glyph.gid = index;
@@ -384,6 +384,7 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root) {
 				json_object_push(ref, "useMyMetrics", json_boolean_new(r.useMyMetrics));
 				json_array_push(references, ref);
 			}
+			json_object_push(glyph, "references", references);
 		}
 		// instructions
 		{
@@ -398,4 +399,112 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root) {
 	json_object_push(root, "glyf", glyf);
 
 	caryll_glyphorder_to_json(table, root);
+}
+
+static INLINE void caryll_glyf_point_from_json(glyf_point *point, json_value *pointdump) {
+	point->x = json_obj_getnum(pointdump, "x");
+	point->y = json_obj_getnum(pointdump, "y");
+	point->onCurve = json_obj_getbool(pointdump, "on");
+}
+static INLINE void caryll_glyf_reference_from_json(glyf_reference *ref, json_value *refdump) {
+	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
+	if (_gname) {
+		ref->glyph.name = sdsnewlen(_gname->u.string.ptr, _gname->u.string.length);
+		ref->x = json_obj_getnum_fallback(refdump, "x", 0.0);
+		ref->y = json_obj_getnum_fallback(refdump, "y", 0.0);
+		ref->a = json_obj_getnum_fallback(refdump, "a", 1.0);
+		ref->b = json_obj_getnum_fallback(refdump, "b", 0.0);
+		ref->c = json_obj_getnum_fallback(refdump, "c", 0.0);
+		ref->d = json_obj_getnum_fallback(refdump, "d", 1.0);
+		ref->overlap = json_obj_getbool_fallback(refdump, "overlap", true);
+		ref->useMyMetrics = json_obj_getbool_fallback(refdump, "useMyMetrics", false);
+	} else {
+		// Invalid glyph references
+		ref->glyph.name = NULL;
+		ref->x = 0.0;
+		ref->y = 0.0;
+		ref->a = 1.0;
+		ref->b = 0.0;
+		ref->c = 0.0;
+		ref->d = 1.0;
+		ref->overlap = true;
+		ref->useMyMetrics = false;
+	}
+}
+
+glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump) {
+	glyf_glyph *g = malloc(sizeof(glyf_glyph));
+	json_value *col;
+	g->name = NULL;
+	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
+	if ((col = json_obj_get_type(glyphdump, "contours", json_array))) {
+		g->numberOfContours = col->u.array.length;
+		g->contours = malloc(g->numberOfContours * sizeof(glyf_contour));
+		for (uint16_t j = 0; j < g->numberOfContours; j++) {
+			json_value *contourdump = col->u.array.values[j];
+			if (contourdump && contourdump->type == json_array) {
+				g->contours[j].pointsCount = contourdump->u.array.length;
+				g->contours[j].points = malloc(g->contours[j].pointsCount * sizeof(glyf_point));
+				for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
+					caryll_glyf_point_from_json(&(g->contours[j].points[k]), contourdump->u.array.values[k]);
+				}
+			} else {
+				g->contours[j].pointsCount = 0;
+				g->contours[j].points = NULL;
+			}
+		}
+	} else {
+		g->numberOfContours = 0;
+		g->contours = NULL;
+	}
+
+	if ((col = json_obj_get_type(glyphdump, "references", json_array))) {
+		g->numberOfReferences = col->u.array.length;
+		g->references = malloc(g->numberOfReferences * sizeof(glyf_reference));
+		for (uint16_t j = 0; j < g->numberOfReferences; j++) {
+			caryll_glyf_reference_from_json(&(g->references[j]), col->u.array.values[j]);
+		}
+	} else {
+		g->numberOfReferences = 0;
+		g->references = NULL;
+	}
+
+	if ((col = json_obj_get_type(glyphdump, "instructions", json_array))) {
+		g->instructionsLength = col->u.array.length;
+		g->instructions = calloc(g->instructionsLength, sizeof(uint8_t));
+		for (uint16_t j = 0; j < g->instructionsLength; j++) {
+			json_value *byte = col->u.array.values[j];
+			if (byte && byte->type == json_integer)
+				g->instructions[j] = byte->u.integer;
+			else if (byte && byte->type == json_double)
+				g->instructions[j] = byte->u.dbl;
+		}
+	} else {
+		g->instructionsLength = 0;
+		g->instructions = NULL;
+	}
+	return g;
+}
+
+table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order) {
+	if (root->type != json_object || !glyph_order) return NULL;
+	table_glyf *glyf = NULL;
+	json_value *table;
+	if ((table = json_obj_get_type(root, "glyf", json_object))) {
+		uint16_t numGlyphs = table->u.object.length;
+		glyf = malloc(sizeof(table_glyf));
+		glyf->numberGlyphs = numGlyphs;
+		glyf->glyphs = calloc(numGlyphs, sizeof(glyf_glyph *));
+		for (uint16_t j = 0; j < numGlyphs; j++) {
+			sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+			json_value *glyphdump = table->u.object.values[j].value;
+			glyph_order_entry *order_entry;
+			HASH_FIND_STR(glyph_order, gname, order_entry);
+			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
+				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump);
+			}
+			sdsfree(gname);
+		}
+	}
+	return NULL;
 }

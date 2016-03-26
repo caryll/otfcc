@@ -35,9 +35,9 @@ table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 			os_2->fsSelection = caryll_blt16u(data + 62);
 			os_2->usFirstCharIndex = caryll_blt16u(data + 64);
 			os_2->usLastCharIndex = caryll_blt16u(data + 66);
-			os_2->sTypoAscender = caryll_blt16u(data + 68);
-			os_2->sTypoDescender = caryll_blt16u(data + 70);
-			os_2->sTypoLineGap = caryll_blt16u(data + 72);
+			os_2->sTypoAscender = caryll_blt16s(data + 68);
+			os_2->sTypoDescender = caryll_blt16s(data + 70);
+			os_2->sTypoLineGap = caryll_blt16s(data + 72);
 			os_2->usWinAscent = caryll_blt16u(data + 74);
 			os_2->usWinDescent = caryll_blt16u(data + 76);
 			os_2->ulCodePageRange1 = caryll_blt32u(data + 78);
@@ -46,8 +46,8 @@ table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 		// version 2, 3, 4
 		if (os_2->version >= 2 && length < 96) goto OS_2_CORRUPTED;
 		if (os_2->version >= 2) {
-			os_2->sxHeight = caryll_blt16u(data + 86);
-			os_2->sCapHeight = caryll_blt16u(data + 88);
+			os_2->sxHeight = caryll_blt16s(data + 86);
+			os_2->sCapHeight = caryll_blt16s(data + 88);
 			os_2->usDefaultChar = caryll_blt16u(data + 90);
 			os_2->usBreakChar = caryll_blt16u(data + 92);
 			os_2->usMaxContext = caryll_blt16u(data + 94);
