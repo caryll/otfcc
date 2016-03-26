@@ -203,71 +203,43 @@ static INLINE uint64_t caryll_get64u(FILE *file) {
 }
 
 static INLINE uint8_t caryll_blt8u(uint8_t *src) {
-	return *src;
+	return src[0];
 }
-
 static INLINE uint16_t caryll_blt16u(uint8_t *src) {
-	uint16_t b0 = ((uint16_t)*src) << 8;
-	uint16_t b1 = ((uint16_t) * (src + 1));
-
+	uint16_t b0 = ((uint16_t)src[0]) << 8;
+	uint16_t b1 = ((uint16_t)src[1]);
 	return (b0 | b1);
 }
-
 static INLINE uint32_t caryll_blt32u(uint8_t *src) {
-	uint32_t b0 = ((uint32_t)*src) << 24;
-	uint32_t b1 = ((uint32_t) * (src + 1)) << 16;
-	uint32_t b2 = ((uint32_t) * (src + 2)) << 8;
-	uint32_t b3 = ((uint32_t) * (src + 3));
-
+	uint32_t b0 = ((uint32_t)src[0]) << 24;
+	uint32_t b1 = ((uint32_t)src[1]) << 16;
+	uint32_t b2 = ((uint32_t)src[2]) << 8;
+	uint32_t b3 = ((uint32_t)src[3]);
 	return (b0 | b1 | b2 | b3);
 }
-
 static INLINE uint64_t caryll_blt64u(uint8_t *src) {
-	uint64_t b0 = ((uint64_t)*src) << 56;
-	uint64_t b1 = ((uint64_t) * (src + 1)) << 48;
-	uint64_t b2 = ((uint64_t) * (src + 2)) << 40;
-	uint64_t b3 = ((uint64_t) * (src + 3)) << 32;
-	uint64_t b4 = ((uint64_t) * (src + 4)) << 24;
-	uint64_t b5 = ((uint64_t) * (src + 5)) << 16;
-	uint64_t b6 = ((uint64_t) * (src + 6)) << 8;
-	uint64_t b7 = ((uint64_t) * (src + 7));
-
+	uint64_t b0 = ((uint64_t)src[0]) << 56;
+	uint64_t b1 = ((uint64_t)src[1]) << 48;
+	uint64_t b2 = ((uint64_t)src[2]) << 40;
+	uint64_t b3 = ((uint64_t)src[3]) << 32;
+	uint64_t b4 = ((uint64_t)src[4]) << 24;
+	uint64_t b5 = ((uint64_t)src[5]) << 16;
+	uint64_t b6 = ((uint64_t)src[6]) << 8;
+	uint64_t b7 = ((uint64_t)src[7]);
 	return (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
 }
-
 static INLINE int8_t caryll_blt8s(uint8_t *src) {
-	return (int8_t)(*src);
+	return (int8_t)caryll_blt8u(src);
 }
-
 static INLINE int16_t caryll_blt16s(uint8_t *src) {
-	uint16_t b0 = ((uint16_t)*src) << 8;
-	uint16_t b1 = ((uint16_t) * (src + 1));
-
-	return (int16_t)(b0 | b1);
+	return (int16_t)caryll_blt16u(src);
 }
-
 static INLINE int32_t caryll_blt32s(uint8_t *src) {
-	uint32_t b0 = ((uint32_t)*src) << 24;
-	uint32_t b1 = ((uint32_t) * (src + 1)) << 16;
-	uint32_t b2 = ((uint32_t) * (src + 2)) << 8;
-	uint32_t b3 = ((uint32_t) * (src + 3));
-
-	return (int32_t)(b0 | b1 | b2 | b3);
+	return (int32_t)caryll_blt32u(src);
 }
-
 static INLINE int64_t caryll_blt64s(uint8_t *src) {
-	uint64_t b0 = ((uint64_t)*src) << 56;
-	uint64_t b1 = ((uint64_t) * (src + 1)) << 48;
-	uint64_t b2 = ((uint64_t) * (src + 2)) << 40;
-	uint64_t b3 = ((uint64_t) * (src + 3)) << 32;
-	uint64_t b4 = ((uint64_t) * (src + 4)) << 24;
-	uint64_t b5 = ((uint64_t) * (src + 5)) << 16;
-	uint64_t b6 = ((uint64_t) * (src + 6)) << 8;
-	uint64_t b7 = ((uint64_t) * (src + 7));
-
-	return (int64_t)(b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
+	return (int64_t)caryll_blt64u(src);
 }
-
 static INLINE float caryll_from_f2dot14(int16_t x) {
 	return x / 16384.0;
 }
