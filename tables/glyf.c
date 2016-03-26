@@ -204,6 +204,8 @@ static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		g->references[j].d = d;
 		g->references[j].x = x;
 		g->references[j].y = y;
+		g->references[j].overlap = flags & OVERLAP_COMPOUND;
+		g->references[j].useMyMetrics = flags & USE_MY_METRICS;
 	}
 	if (glyphHasInstruction) {
 		uint16_t instructionLength = caryll_blt16u(start + offset);

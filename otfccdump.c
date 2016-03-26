@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 	push_stopwatch("Convert to JSON", &begin);
 
 	json_serialize_opts options;
-	options.mode = json_serialize_mode_packed;
+	options.mode = json_serialize_mode_multiline;
 	options.opts = 0;
 	options.indent_size = 4;
 

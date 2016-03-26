@@ -67,6 +67,8 @@ typedef struct {
 #define WE_HAVE_AN_X_AND_Y_SCALE (1 << 6)
 #define WE_HAVE_A_TWO_BY_TWO (1 << 7)
 #define WE_HAVE_INSTRUCTIONS (1 << 8)
+#define USE_MY_METRICS (1 << 9)
+#define OVERLAP_COMPOUND (1 << 10)
 
 glyf_glyph *spaceGlyph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
