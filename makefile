@@ -25,7 +25,8 @@ TABLE_OBJECTS = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-name.o
 EXTERN_OBJECTS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
 SUPPORT_OBJECTS = build/support-glyphorder.o build/support-aglfn.o \
-              build/support-stopwatch.o build/support-unicodeconv.o 
+              build/support-stopwatch.o build/support-unicodeconv.o \
+			  build/support-buffer.o
 TARGETS = build/otfccdump$(SUFFIX) build/otfccbuild$(SUFFIX)
 
 OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS)
@@ -50,7 +51,7 @@ $(TARGETS): build/%$(SUFFIX) : build/%.o $(OBJECTS)
 
 objects: $(TARGETS)
 
-TESTFILES = build/test-payload-1$(SUFFIX)
+TESTFILES = build/test-payload-1$(SUFFIX) build/test-buffer$(SUFFIX)
 build/%.o : tests/%.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 build/%$(SUFFIX) : build/%.o $(OBJECTS)
@@ -58,6 +59,7 @@ build/%$(SUFFIX) : build/%.o $(OBJECTS)
 
 test: $(TESTFILES)
 	@echo "====== Start Test ======"
+	@build/test-buffer$(SUFFIX)
 	@build/test-payload-1$(SUFFIX) tests/payload/test-out.ttf
 
 debug:

@@ -4,6 +4,7 @@
 
 #include "../caryll-sfnt.h"
 #include "../caryll-font.h"
+#include "../support/buffer.h"
 
 #include "kit.h"
 
@@ -13,7 +14,7 @@ int main(int argc, char *argv[]) {
 	caryll_font *font = caryll_font_open(sfnt, 0);
 
 	int nChecks = 0;
-	
+
 	{ // Simple fields
 		assert_equal("head.version", font->head->version, 0x10000);
 		assert_equal("OS/2.version", font->OS_2->version, 0x0004);
@@ -69,6 +70,11 @@ int main(int argc, char *argv[]) {
 		HASH_FIND_INT(*(font->cmap), &testindex, s);
 		assert_exists("Found cmap entry for U+9DF9", s);
 		if (s != NULL) assert_equal("U+9DF9 Mapping correct", s->glyph.gid, 9);
+	}
+	
+	{ // name
+		assert_equal("Should have 34 name records", font->name->count, 34);
+		assert_equal("Name item 13 should be 'http://www.apache.org/licenses/LICENSE-2.0.html'", strcmp(font->name->records[13]->nameString, "http://www.apache.org/licenses/LICENSE-2.0.html"), 0);
 	}
 
 	caryll_font_close(font);
