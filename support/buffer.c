@@ -27,28 +27,30 @@ static void bufbeforewrite(caryll_buffer *buf, size_t towrite) {
 	if (len <= curlen) return;
 	buf->s = sdsMakeRoomFor(buf->s, len - curlen);
 	if (buf->s == NULL) return;
-	if (len - curlen + 1 - towrite > 0) {
-		memset(buf->s + curlen, 0, (len - curlen + 1 - towrite));
-	}
+	if (len - curlen + 1 - towrite > 0) { memset(buf->s + curlen, 0, (len - curlen + 1 - towrite)); }
 	sdssetlen(buf->s, len);
 	return;
 }
 void bufwrite8(caryll_buffer *buf, uint8_t byte) {
 	bufbeforewrite(buf, 1);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = byte;
 }
 void bufwrite16l(caryll_buffer *buf, uint16_t x) {
 	bufbeforewrite(buf, 2);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = x & 0xFF;
 	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
 }
 void bufwrite16b(caryll_buffer *buf, uint16_t x) {
 	bufbeforewrite(buf, 2);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
 	buf->s[buf->cursor++] = x & 0xFF;
 }
 void bufwrite32l(caryll_buffer *buf, uint32_t x) {
 	bufbeforewrite(buf, 4);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = x & 0xFF;
 	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
 	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
@@ -56,6 +58,7 @@ void bufwrite32l(caryll_buffer *buf, uint32_t x) {
 }
 void bufwrite32b(caryll_buffer *buf, uint32_t x) {
 	bufbeforewrite(buf, 4);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = (x >> 24) & 0xFF;
 	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
 	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
@@ -63,6 +66,7 @@ void bufwrite32b(caryll_buffer *buf, uint32_t x) {
 }
 void bufwrite64l(caryll_buffer *buf, uint64_t x) {
 	bufbeforewrite(buf, 8);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = x & 0xFF;
 	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
 	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
@@ -74,6 +78,7 @@ void bufwrite64l(caryll_buffer *buf, uint64_t x) {
 }
 void bufwrite64b(caryll_buffer *buf, uint64_t x) {
 	bufbeforewrite(buf, 8);
+	if (!buf->s) return;
 	buf->s[buf->cursor++] = (x >> 56) & 0xFF;
 	buf->s[buf->cursor++] = (x >> 48) & 0xFF;
 	buf->s[buf->cursor++] = (x >> 40) & 0xFF;
@@ -84,20 +89,26 @@ void bufwrite64b(caryll_buffer *buf, uint64_t x) {
 	buf->s[buf->cursor++] = x & 0xFF;
 }
 void bufwrite_sds(caryll_buffer *buf, sds str) {
+	if (!str) return;
 	size_t len = sdslen(str);
 	bufbeforewrite(buf, len);
+	if (!buf->s) return;
 	memcpy(buf->s + buf->cursor, str, len);
 	buf->cursor += len;
 }
 void bufwrite_str(caryll_buffer *buf, const char *str) {
+	if (!str) return;
 	size_t len = strlen(str);
 	bufbeforewrite(buf, len);
+	if (!buf->s) return;
 	memcpy(buf->s + buf->cursor, str, len);
 	buf->cursor += len;
 }
 void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that) {
+	if (!that || !that->s) return;
 	size_t len = buflen(that);
 	bufbeforewrite(buf, len);
+	if (!buf->s) return;
 	memcpy(buf->s + buf->cursor, that->s, len);
 	buf->cursor += len;
 }
