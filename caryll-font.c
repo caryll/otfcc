@@ -143,6 +143,7 @@ void caryll_font_unconsolidate(caryll_font *font) {
 }
 
 void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
+	uint16_t nReferencesConsolidated = 0;
 	for (uint16_t j = 0; j < g->numberOfReferences; j++) {
 		glyph_order_entry *entry = NULL;
 		glyf_reference *r = &(g->references[j]);
@@ -152,6 +153,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 				r->glyph.gid = entry->gid;
 				sdsfree(r->glyph.name);
 				r->glyph.name = entry->name;
+				nReferencesConsolidated += 1;
 			} else {
 				fprintf(stderr, "[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
 				        r->glyph.name, g->name);
@@ -162,6 +164,21 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		} else {
 			r->glyph.gid = 0;
 			r->glyph.name = NULL;
+		}
+	}
+	if (nReferencesConsolidated < g->numberOfReferences) {
+		if (nReferencesConsolidated == 0) {
+			free(g->references);
+			g->references = NULL;
+			g->numberOfReferences = 0;
+		} else {
+			glyf_reference *consolidatedReferences = calloc(nReferencesConsolidated, sizeof(glyf_reference));
+			for (uint16_t j = 0, k = 0; j < g->numberOfReferences; j++) {
+				if (g->references[j].glyph.name) { consolidatedReferences[k++] = g->references[j]; }
+			}
+			free(g->references);
+			g->references = consolidatedReferences;
+			g->numberOfReferences = nReferencesConsolidated;
 		}
 	}
 }

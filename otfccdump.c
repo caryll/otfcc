@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
 	bool show_pretty = false;
 	bool show_ugly = false;
 	bool show_time = false;
+	uint32_t ttcindex = 0;
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
 	                            {"pretty", no_argument, NULL, 'p'},
@@ -25,6 +26,7 @@ int main(int argc, char *argv[]) {
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-instructions", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
+	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
 	caryll_dump_options dumpopts = {.ignore_glyph_order = false, .ignore_instructions = false};
 	int option_index = 0;
@@ -33,7 +35,7 @@ int main(int argc, char *argv[]) {
 	sds outputPath = NULL;
 	sds inPath = NULL;
 
-	while ((c = getopt_long(argc, argv, "vhpo:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 		case 0:
 			/* If this option set a flag, do nothing else now. */
@@ -56,6 +58,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 'o':
 			outputPath = sdsnew(optarg);
+			break;
+		case 'n':
+			ttcindex = atoi(optarg);
 			break;
 		}
 	}
@@ -86,11 +91,16 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
+		if (ttcindex >= sfnt->count) {
+			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
+			        (sfnt->count - 1));
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	caryll_font *font;
 	{
-		font = caryll_font_open(sfnt, 0);
+		font = caryll_font_open(sfnt, ttcindex);
 		if (show_time) push_stopwatch("Parse SFNT", &begin);
 	}
 
@@ -138,7 +148,7 @@ int main(int argc, char *argv[]) {
 
 	{
 		free(buf);
-		json_value_free(root);
+		json_builder_free(root);
 		caryll_font_close(font);
 		caryll_sfnt_close(sfnt);
 		if (inPath) sdsfree(inPath);

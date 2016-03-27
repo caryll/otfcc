@@ -45,8 +45,12 @@ struct _caryll_font {
 
 caryll_font *caryll_font_new();
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
+// Unconsolidate: replace all glyphIDs with glyph name and remove redundent data of glyphs.
 void caryll_font_unconsolidate(caryll_font *font);
+// Consolidate: Check the font data avalibility and replace all glyph names with glyphID (if present).
 void caryll_font_consolidate(caryll_font *font);
+// Stat: Calculate required statistics data of fonts.
+void caryll_font_stat(caryll_font *font);
 void caryll_font_close(caryll_font *font);
 
 #endif
