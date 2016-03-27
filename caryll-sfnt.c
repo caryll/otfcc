@@ -31,6 +31,7 @@ static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
 caryll_sfnt *caryll_sfnt_open(const char *path) {
 	caryll_sfnt *font = (caryll_sfnt *)malloc(sizeof(caryll_sfnt) * 1);
 	FILE *file = fopen(path, "rb");
+	if (!file) return NULL;
 
 	font->type = caryll_get32u(file);
 
