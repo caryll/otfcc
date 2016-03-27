@@ -24,6 +24,6 @@ typedef struct {
 } table_maxp;
 
 table_maxp *caryll_read_maxp(caryll_packet packet);
-void caryll_maxp_to_json(table_maxp *table, json_value *root);
+void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_options dumpopts);
 
 #endif

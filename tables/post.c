@@ -64,7 +64,7 @@ void caryll_delete_post(table_post *table) {
 	free(table);
 }
 
-void caryll_post_to_json(table_post *table, json_value *root) {
+void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *post = json_object_new(10);
 	json_object_push(post, "version", json_integer_new(table->version));

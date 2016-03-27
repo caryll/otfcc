@@ -67,7 +67,7 @@ table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_OS_2_to_json(table_OS_2 *table, json_value *root) {
+void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *os_2 = json_object_new(30);
 	json_object_push(os_2, "version", json_integer_new(table->version));

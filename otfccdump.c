@@ -12,18 +12,21 @@
 #include "caryll-font.h"
 
 int main(int argc, char *argv[]) {
-	bool show_help = 0;
-	bool show_version = 0;
-	bool show_pretty = 0;
-	bool show_ugly = 0;
-	bool show_time = 0;
+	bool show_help = false;
+	bool show_version = false;
+	bool show_pretty = false;
+	bool show_ugly = false;
+	bool show_time = false;
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
 	                            {"pretty", no_argument, NULL, 'p'},
 	                            {"ugly", no_argument, NULL, 0},
 	                            {"time", no_argument, NULL, 0},
+	                            {"ignore-glyph-order", no_argument, NULL, 0},
+	                            {"ignore-instructions", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
+	caryll_dump_options dumpopts = {.ignore_glyph_order = false, .ignore_instructions = false};
 	int option_index = 0;
 	int c;
 
@@ -37,6 +40,10 @@ int main(int argc, char *argv[]) {
 			if (longopts[option_index].flag != 0) break;
 			if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
 			if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
+			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts.ignore_glyph_order = true; }
+			if (strcmp(longopts[option_index].name, "ignore-instructions") == 0) {
+				dumpopts.ignore_instructions = true;
+			}
 			break;
 		case 'v':
 			show_version = true;
@@ -90,14 +97,14 @@ int main(int argc, char *argv[]) {
 	json_value *root;
 	{
 		root = json_object_new(12);
-		caryll_head_to_json(font->head, root);
-		caryll_hhea_to_json(font->hhea, root);
-		caryll_maxp_to_json(font->maxp, root);
-		caryll_name_to_json(font->name, root);
-		caryll_post_to_json(font->post, root);
-		caryll_OS_2_to_json(font->OS_2, root);
-		caryll_cmap_to_json(font->cmap, root);
-		caryll_glyf_to_json(font->glyf, root);
+		caryll_head_to_json(font->head, root, dumpopts);
+		caryll_hhea_to_json(font->hhea, root, dumpopts);
+		caryll_maxp_to_json(font->maxp, root, dumpopts);
+		caryll_name_to_json(font->name, root, dumpopts);
+		caryll_post_to_json(font->post, root, dumpopts);
+		caryll_OS_2_to_json(font->OS_2, root, dumpopts);
+		caryll_cmap_to_json(font->cmap, root, dumpopts);
+		caryll_glyf_to_json(font->glyf, root, dumpopts);
 		if (show_time) push_stopwatch("Convert to JSON", &begin);
 	}
 

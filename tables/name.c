@@ -55,7 +55,7 @@ void caryll_delete_name(table_name *table) {
 	free(table);
 }
 
-void caryll_name_to_json(table_name *table, json_value *root) {
+void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *name = json_array_new(table->count);
 	for (uint16_t j = 0; j < table->count; j++) {

@@ -110,7 +110,7 @@ void caryll_delete_cmap(cmap_hash *table) {
 	free(table);
 }
 
-void caryll_cmap_to_json(cmap_hash *table, json_value *root) {
+void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *cmap = json_object_new(HASH_COUNT(*table));
 

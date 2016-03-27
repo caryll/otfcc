@@ -46,7 +46,7 @@ table_maxp *caryll_read_maxp(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_maxp_to_json(table_maxp *table, json_value *root) {
+void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *maxp = json_object_new(15);
 	json_object_push(maxp, "version", json_integer_new(table->version));

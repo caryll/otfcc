@@ -32,7 +32,7 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_hhea_to_json(table_hhea *table, json_value *root) {
+void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *hhea = json_object_new(13);
 	json_object_push(hhea, "version", json_integer_new(table->version));

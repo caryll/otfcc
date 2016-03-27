@@ -23,6 +23,6 @@ typedef struct {
 } table_hhea;
 
 table_hhea *caryll_read_hhea(caryll_packet packet);
-void caryll_hhea_to_json(table_hhea *table, json_value *root);
+void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_options dumpopts);
 
 #endif

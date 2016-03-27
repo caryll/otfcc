@@ -250,4 +250,10 @@ typedef struct {
 	sds name;
 } glyph_handle;
 
+// dump options
+typedef struct {
+	bool ignore_glyph_order;
+	bool ignore_instructions;
+} caryll_dump_options;
+
 #endif

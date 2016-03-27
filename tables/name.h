@@ -21,6 +21,6 @@ typedef struct {
 
 table_name *caryll_read_name(caryll_packet packet);
 void caryll_delete_name(table_name *table);
-void caryll_name_to_json(table_name *table, json_value *root);
+void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_options dumpopts);
 
 #endif

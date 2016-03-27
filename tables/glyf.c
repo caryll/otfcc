@@ -344,7 +344,7 @@ json_value *coord_to_json(float z) {
 		return json_double_new(z);
 	}
 }
-void caryll_glyf_to_json(table_glyf *table, json_value *root) {
+void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *glyf = json_object_new(table->numberGlyphs);
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
@@ -389,7 +389,7 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root) {
 			json_object_push(glyph, "references", references);
 		}
 		// instructions
-		{
+		if(!dumpopts.ignore_instructions) {
 			json_value *instructions = json_array_new(g->instructionsLength);
 			for (uint16_t j = 0; j < g->instructionsLength; j++) {
 				json_array_push(instructions, json_integer_new(g->instructions[j]));
@@ -400,7 +400,7 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root) {
 	}
 	json_object_push(root, "glyf", glyf);
 
-	caryll_glyphorder_to_json(table, root);
+	if(!dumpopts.ignore_glyph_order) caryll_glyphorder_to_json(table, root);
 }
 
 static INLINE void caryll_glyf_point_from_json(glyf_point *point, json_value *pointdump) {

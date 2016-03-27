@@ -31,7 +31,7 @@ table_head *caryll_read_head(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_head_to_json(table_head *table, json_value *root) {
+void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
 	json_value *head = json_object_new(15);
 	json_object_push(head, "version", json_integer_new(table->version));
