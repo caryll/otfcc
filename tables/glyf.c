@@ -1,7 +1,7 @@
 #include "glyf.h"
 #include <math.h>
 
-glyf_glyph *spaceGlyph() {
+glyf_glyph *caryll_glyf_new() {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->numberOfContours = 0;
 	g->numberOfReferences = 0;
@@ -23,7 +23,7 @@ static INLINE glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint1
 }
 
 static glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
-	glyf_glyph *g = spaceGlyph();
+	glyf_glyph *g = caryll_glyf_new();
 	g->numberOfContours = numberOfContours;
 	g->numberOfReferences = 0;
 
@@ -133,7 +133,7 @@ static glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t nu
 }
 
 static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
-	glyf_glyph *g = spaceGlyph();
+	glyf_glyph *g = caryll_glyf_new();
 	g->numberOfContours = 0;
 	// pass 1, read references quantity
 	uint16_t flags;
@@ -281,7 +281,7 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
 			} else { // space glyph
-				glyf->glyphs[j] = spaceGlyph();
+				glyf->glyphs[j] = caryll_glyf_new();
 			}
 		}
 		goto PRESENT;
@@ -434,10 +434,10 @@ static INLINE void caryll_glyf_reference_from_json(glyf_reference *ref, json_val
 	}
 }
 
-glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump) {
+glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_order_entry *order_entry) {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	json_value *col;
-	g->name = NULL;
+	g->name = order_entry->name;
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	if ((col = json_obj_get_type(glyphdump, "contours", json_array))) {
 		g->numberOfContours = col->u.array.length;
@@ -503,10 +503,11 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 			glyph_order_entry *order_entry;
 			HASH_FIND_STR(glyph_order, gname, order_entry);
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
-				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump);
+				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump, order_entry);
 			}
 			sdsfree(gname);
 		}
+		return glyf;
 	}
 	return NULL;
 }

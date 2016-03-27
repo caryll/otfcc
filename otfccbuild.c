@@ -35,6 +35,9 @@ int main(int argc, char *argv[]) {
 			font->glyph_order = caryll_glyphorder_from_json(root);
 			font->cmap = caryll_cmap_from_json(root);
 			font->glyf = caryll_glyf_from_json(root, *font->glyph_order);
+			
+			caryll_font_consolidate(font);
+			
 			push_stopwatch("Parse json to font", &begin);
 			json_value_free(root);
 			caryll_font_close(font);

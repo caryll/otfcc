@@ -46,6 +46,7 @@ struct _caryll_font {
 caryll_font *caryll_font_new();
 caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
 void caryll_font_unconsolidate(caryll_font *font);
+void caryll_font_consolidate(caryll_font *font);
 void caryll_font_close(caryll_font *font);
 
 #endif
