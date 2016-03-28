@@ -126,3 +126,19 @@ void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that) {
 	memcpy(buf->s + buf->cursor, that->s, len);
 	buf->cursor += len;
 }
+
+void buflongalign(caryll_buffer *buf) {
+	size_t cp = buf->cursor;
+	bufseek(buf, buflen(buf));
+	if (buflen(buf) % 4 == 1) {
+		bufwrite8(buf, 0);
+		bufwrite8(buf, 0);
+		bufwrite8(buf, 0);
+	} else if (buflen(buf) % 4 == 2) {
+		bufwrite8(buf, 0);
+		bufwrite8(buf, 0);
+	} else if (buflen(buf) % 4 == 3) {
+		bufwrite8(buf, 0);
+	}
+	bufseek(buf, cp);
+}

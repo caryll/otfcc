@@ -753,16 +753,7 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 			}
 		}
 		// pad extra zeroes
-		if (buflen(gbuf) % 4 == 1) {
-			bufwrite8(gbuf, 0);
-			bufwrite8(gbuf, 0);
-			bufwrite8(gbuf, 0);
-		} else if (buflen(gbuf) % 4 == 2) {
-			bufwrite8(gbuf, 0);
-			bufwrite8(gbuf, 0);
-		} else if (buflen(gbuf) % 4 == 3) {
-			bufwrite8(gbuf, 0);
-		}
+		buflongalign(gbuf);
 		bufwrite_buf(bufglyf, gbuf);
 	}
 	loca[table->numberGlyphs] = bufglyf->cursor;

@@ -16,7 +16,7 @@ endif
 build : 
 	@- mkdir $@
 
-MAIN_OBJECTS_1 = build/caryll-font.o build/caryll-sfnt.o
+MAIN_OBJECTS_1 = build/caryll-font.o build/caryll-sfnt.o build/caryll-sfnt-builder.o
 MAIN_OBJECTS = $(MAIN_OBJECTS_1) build/otfccdump.o build/otfccbuild.o
 TABLE_OBJECTS = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-hmtx.o build/table-post.o build/table-hdmx.o \

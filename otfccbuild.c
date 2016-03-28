@@ -1,13 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-
-#include "extern/json.h"
-#include "support/stopwatch.h"
-
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
+#include "extern/json.h"
+#include "support/stopwatch.h"
+#include "caryll-sfnt-builder.h"
+
+void print_table(sfnt_builder_entry *t) {
+	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff, ((uint32_t)(t->tag) >> 16) & 0xff,
+	        ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
+}
 
 int main(int argc, char *argv[]) {
 	struct timespec begin;
@@ -37,11 +37,29 @@ int main(int argc, char *argv[]) {
 			font->cmap = caryll_cmap_from_json(root);
 			font->glyf = caryll_glyf_from_json(root, *font->glyph_order);
 			push_stopwatch("Parse json to font", &begin);
+
 			json_value_free(root);
 			caryll_font_consolidate(font);
 			push_stopwatch("Consolidation", &begin);
+
 			caryll_font_stat(font);
 			push_stopwatch("Stating", &begin);
+
+			{
+				caryll_buffer *bufglyf = bufnew();
+				caryll_buffer *bufloca = bufnew();
+				caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
+				
+				sfnt_builder *builder = sfnt_builder_new();
+				sfnt_builder_push_table(builder, 'glyf', bufglyf);
+				sfnt_builder_push_table(builder, 'loca', bufloca);
+				{
+					sfnt_builder_entry *item;
+					foreach_hash(item, builder->tables) print_table(item);
+				}
+				sfnt_builder_delete(builder);
+			}
+
 			caryll_font_close(font);
 			push_stopwatch("Finalize", &begin);
 		}
