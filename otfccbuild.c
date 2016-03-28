@@ -39,6 +39,8 @@ int main(int argc, char *argv[]) {
 			json_value_free(root);
 			caryll_font_consolidate(font);
 			push_stopwatch("Consolidation", &begin);
+			caryll_font_stat(font);
+			push_stopwatch("Stating", &begin);
 			caryll_font_close(font);
 			push_stopwatch("Finalize", &begin);
 		}

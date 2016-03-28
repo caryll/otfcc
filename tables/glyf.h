@@ -35,6 +35,18 @@ typedef struct {
 } glyf_reference;
 
 typedef struct {
+	float xMin;
+	float xMax;
+	float yMin;
+	float yMax;
+	uint16_t nestDepth;
+	uint16_t nPoints;
+	uint16_t nContours;
+	uint16_t nCompositePoints;
+	uint16_t nCompositeContours;
+} glyf_glyph_stat;
+
+typedef struct {
 	sds name;
 	uint16_t numberOfContours;
 	uint16_t numberOfReferences;
@@ -45,6 +57,8 @@ typedef struct {
 	// NOTE: SFNT does not support mixed glyphs, but we do.
 	glyf_contour *contours;
 	glyf_reference *references;
+
+	glyf_glyph_stat stat;
 } glyf_glyph;
 
 typedef struct {
@@ -75,4 +89,5 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options dumpopts);
 table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order);
+void caryll_stat_glyf(table_glyf *table);
 #endif

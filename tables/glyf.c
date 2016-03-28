@@ -11,6 +11,15 @@ glyf_glyph *caryll_glyf_new() {
 	g->references = NULL;
 	g->advanceWidth = 0;
 	g->name = NULL;
+	g->stat.xMin = 0;
+	g->stat.xMax = 0;
+	g->stat.yMin = 0;
+	g->stat.yMax = 0;
+	g->stat.nestDepth = 0;
+	g->stat.nPoints = 0;
+	g->stat.nContours = 0;
+	g->stat.nCompositePoints = 0;
+	g->stat.nCompositeContours = 0;
 	return g;
 }
 
@@ -118,9 +127,9 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 	}
 	free(flags);
 	// turn deltas to absolute coordiantes
+	int16_t cx = 0;
+	int16_t cy = 0;
 	for (uint16_t j = 0; j < numberOfContours; j++) {
-		int16_t cx = 0;
-		int16_t cy = 0;
 		for (uint16_t k = 0; k < contours[j].pointsCount; k++) {
 			cx += contours[j].points[k].x;
 			contours[j].points[k].x = cx;
@@ -519,4 +528,97 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 		return glyf;
 	}
 	return NULL;
+}
+
+typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
+
+glyf_glyph_stat stat_single_glyph(table_glyf *table, glyf_reference *gr, stat_status *stated, uint8_t depth,
+                                  uint16_t topj) {
+	glyf_glyph_stat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+	uint16_t j = gr->glyph.gid;
+	if (depth >= 0xFF) return stat;
+	if (stated[j] == stat_doing) {
+		// We have a circular reference
+		fprintf(stderr, "[Stat] Circular glyph reference found in gid %d to gid %d. The reference will be dropped.\n",
+		        topj, j);
+		stated[j] = stat_completed;
+		return stat;
+	}
+
+	glyf_glyph *g = table->glyphs[gr->glyph.gid];
+	stated[j] = stat_doing;
+	float xmin = 0xFFFF;
+	float xmax = -0xFFFF;
+	float ymin = 0xFFFF;
+	float ymax = -0xFFFF;
+	uint16_t nestDepth = 0;
+	uint16_t nPoints = 0;
+	uint16_t nCompositePoints = 0;
+	uint16_t nCompositeContours = 0;
+	// Stat xmin, xmax, ymin, ymax
+	for (uint16_t c = 0; c < g->numberOfContours; c++) {
+		for (uint16_t pj = 0; pj < g->contours[c].pointsCount; pj++) {
+			// Stat point coordinates USING the matrix transformation
+			glyf_point *p = &(g->contours[c].points[pj]);
+			float x = gr->x + gr->a * p->x + gr->b * p->y;
+			float y = gr->y + gr->c * p->x + gr->d * p->y;
+			if (x < xmin) xmin = x;
+			if (x > xmax) xmax = x;
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+			nPoints += 1;
+		}
+	}
+	nCompositePoints = nPoints;
+	nCompositeContours = g->numberOfContours;
+	for (uint16_t r = 0; r < g->numberOfReferences; r++) {
+		glyf_reference ref;
+		glyf_reference *rr = &(g->references[r]);
+		ref.glyph.gid = g->references[r].glyph.gid;
+		ref.glyph.name = NULL;
+		// composite affine transformations
+		ref.a = gr->a * rr->a + rr->b * gr->c;
+		ref.b = rr->a * gr->b + rr->b * gr->d;
+		ref.c = gr->a * rr->c + gr->c * rr->d;
+		ref.d = gr->b * rr->c + rr->d * gr->d;
+		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
+		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
+
+		glyf_glyph_stat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj);
+		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
+		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
+		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
+		if (thatstat.yMax > ymax) ymax = thatstat.yMax;
+		if (thatstat.nestDepth + 1 > nestDepth) nestDepth = thatstat.nestDepth + 1;
+		nCompositePoints += thatstat.nCompositePoints;
+		nCompositeContours += thatstat.nCompositeContours;
+	}
+	stat.xMin = xmin;
+	stat.xMax = xmax;
+	stat.yMin = ymin;
+	stat.yMax = ymax;
+	stat.nestDepth = nestDepth;
+	stat.nPoints = nPoints;
+	stat.nContours = g->numberOfContours;
+	stat.nCompositePoints = nCompositePoints;
+	stat.nCompositeContours = nCompositeContours;
+	stated[j] = stat_completed;
+	return stat;
+}
+
+void caryll_stat_glyf(table_glyf *table) {
+	stat_status *stated = calloc(table->numberGlyphs, sizeof(stat_status));
+	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+		glyf_reference gr;
+		gr.glyph.gid = j;
+		gr.glyph.name = NULL;
+		gr.x = 0;
+		gr.y = 0;
+		gr.a = 1;
+		gr.b = 0;
+		gr.c = 0;
+		gr.d = 1;
+		table->glyphs[j]->stat = stat_single_glyph(table, &gr, stated, 0, j);
+	}
+	free(stated);
 }

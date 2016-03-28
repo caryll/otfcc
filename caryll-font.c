@@ -142,6 +142,8 @@ void caryll_font_unconsolidate(caryll_font *font) {
 	caryll_name_glyf(font);
 }
 
+
+// Consolidation
 void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 	uint16_t nReferencesConsolidated = 0;
 	for (uint16_t j = 0; j < g->numberOfReferences; j++) {
@@ -220,4 +222,10 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 void caryll_font_consolidate(caryll_font *font) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
+}
+
+
+// Stating
+void caryll_font_stat(caryll_font *font) {
+	if(font->glyf) caryll_stat_glyf(font->glyf);
 }
