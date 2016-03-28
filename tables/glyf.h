@@ -92,6 +92,6 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_option
 table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order);
 void caryll_stat_glyf(table_glyf *table);
 
-void caryll_write_glyf(table_glyf *table, caryll_buffer *bufglyf, caryll_buffer *bufloca);
+void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca);
 
 #endif

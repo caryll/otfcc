@@ -625,12 +625,14 @@ void caryll_stat_glyf(table_glyf *table) {
 
 #define EPSILON (1e-5)
 
-void caryll_write_glyf(table_glyf *table, caryll_buffer *bufglyf, caryll_buffer *bufloca) {
+void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca) {
 	caryll_buffer *gbuf = bufnew();
 	caryll_buffer *flags = bufnew();
 	caryll_buffer *xs = bufnew();
 	caryll_buffer *ys = bufnew();
+	uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+		loca[j] = bufglyf->cursor;
 		glyf_glyph *g = table->glyphs[j];
 		bufclear(gbuf);
 		if (g->numberOfContours > 0) {
@@ -750,10 +752,36 @@ void caryll_write_glyf(table_glyf *table, caryll_buffer *bufglyf, caryll_buffer 
 				if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 			}
 		}
+		// pad extra zeroes
+		if (buflen(gbuf) % 4 == 1) {
+			bufwrite8(gbuf, 0);
+			bufwrite8(gbuf, 0);
+			bufwrite8(gbuf, 0);
+		} else if (buflen(gbuf) % 4 == 2) {
+			bufwrite8(gbuf, 0);
+			bufwrite8(gbuf, 0);
+		} else if (buflen(gbuf) % 4 == 3) {
+			bufwrite8(gbuf, 0);
+		}
 		bufwrite_buf(bufglyf, gbuf);
+	}
+	loca[table->numberGlyphs] = bufglyf->cursor;
+	if (bufglyf->cursor >= 0x20000) {
+		head->indexToLocFormat = 1;
+	} else {
+		head->indexToLocFormat = 0;
+	}
+	// write loca table
+	for (uint32_t j = 0; j <= table->numberGlyphs; j++) {
+		if (head->indexToLocFormat) {
+			bufwrite32b(bufloca, loca[j]);
+		} else {
+			bufwrite16b(bufloca, loca[j] >> 1);
+		}
 	}
 	buffree(gbuf);
 	buffree(flags);
 	buffree(xs);
 	buffree(ys);
+	free(loca);
 }

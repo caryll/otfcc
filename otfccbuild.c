@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
 		push_stopwatch("Parse JSON", &begin);
 		if (root) {
 			caryll_font *font = caryll_font_new();
+			font->head = caryll_head_new();
 			font->glyph_order = caryll_glyphorder_from_json(root);
 			font->cmap = caryll_cmap_from_json(root);
 			font->glyf = caryll_glyf_from_json(root, *font->glyph_order);

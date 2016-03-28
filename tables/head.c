@@ -1,4 +1,10 @@
 #include "head.h"
+
+table_head *caryll_head_new(){
+	table_head *head = (table_head *)calloc(1, sizeof(table_head));
+	return head;
+}
+
 table_head *caryll_read_head(caryll_packet packet) {
 	FOR_TABLE('head', table) {
 		font_file_pointer data = table.data;
