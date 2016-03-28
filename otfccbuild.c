@@ -32,7 +32,11 @@ int main(int argc, char *argv[]) {
 		push_stopwatch("Parse JSON", &begin);
 		if (root) {
 			caryll_font *font = caryll_font_new();
-			font->head = caryll_head_new();
+			font->head = caryll_head_from_json(root);
+			font->hhea = caryll_hhea_from_json(root);
+			font->OS_2 = caryll_OS_2_from_json(root);
+			font->maxp = caryll_maxp_from_json(root);
+			font->post = caryll_post_from_json(root);
 			font->glyph_order = caryll_glyphorder_from_json(root);
 			font->cmap = caryll_cmap_from_json(root);
 			font->glyf = caryll_glyf_from_json(root, *font->glyph_order);
@@ -48,14 +52,15 @@ int main(int argc, char *argv[]) {
 				caryll_buffer *bufglyf = bufnew();
 				caryll_buffer *bufloca = bufnew();
 				caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
-				
-				caryll_buffer *bufhead = bufnew();
-				caryll_write_head(font->head, bufhead);
 
 				sfnt_builder *builder = sfnt_builder_new();
-				sfnt_builder_push_table(builder, 'head', bufhead);
-				sfnt_builder_push_table(builder, 'glyf', bufglyf);
+				sfnt_builder_push_table(builder, 'head', caryll_write_head(font->head));
+				sfnt_builder_push_table(builder, 'hhea', caryll_write_hhea(font->hhea));
+				sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2));
+				sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
+				sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
 				sfnt_builder_push_table(builder, 'loca', bufloca);
+				sfnt_builder_push_table(builder, 'glyf', bufglyf);
 
 				caryll_buffer *otf = sfnt_builder_serialize(builder);
 				FILE *outfile = fopen(argv[2], "wb");

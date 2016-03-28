@@ -27,7 +27,7 @@ typedef struct {
 	uint32_t ulUnicodeRange2;
 	uint32_t ulUnicodeRange3;
 	uint32_t ulUnicodeRange4;
-	int8_t achVendID[4];
+	uint8_t achVendID[4];
 	uint16_t fsSelection;
 	uint16_t usFirstCharIndex;
 	uint16_t usLastCharIndex;
@@ -46,7 +46,11 @@ typedef struct {
 	uint16_t usLowerOpticalPointSize;
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
+
+table_OS_2 *caryll_OS_2_new();
 table_OS_2 *caryll_read_OS_2(caryll_packet packet);
 void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_options dumpopts);
+table_OS_2 *caryll_OS_2_from_json(json_value *root);
+caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2);
 
 #endif

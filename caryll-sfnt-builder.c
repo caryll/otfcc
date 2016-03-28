@@ -1,4 +1,19 @@
 #include "caryll-sfnt-builder.h"
+
+uint32_t buf_checksum(caryll_buffer *buffer) {
+	uint32_t actualLength = buflen(buffer);
+	buflongalign(buffer);
+	uint32_t sum = 0;
+	{
+		uint32_t *start = (uint32_t *)buffer->s;
+		uint32_t *end = start + ((actualLength + 3) & ~3) / sizeof(uint32_t);
+		while (start < end) {
+			sum += caryll_endian_convert32(*start++);
+		}
+	}
+	return sum;
+}
+
 static INLINE sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	sfnt_builder_entry *table = malloc(sizeof(sfnt_builder_entry));
 	table->tag = tag;
@@ -11,7 +26,7 @@ static INLINE sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buf
 		uint32_t *start = (uint32_t *)buffer->s;
 		uint32_t *end = start + ((table->length + 3) & ~3) / sizeof(uint32_t);
 		while (start < end) {
-			sum += *start++;
+			sum += caryll_endian_convert32(*start++);
 		}
 	}
 	table->checksum = sum;
@@ -67,8 +82,10 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 		bufseek(buffer, offset);
 		bufwrite_buf(buffer, table->buffer);
 		bufseek(buffer, cp);
-		offset += buflen(table->buffer) + 4;
+		offset += buflen(table->buffer);
 	}
-
+	uint32_t wholeChecksum = buf_checksum(buffer);
+	bufseek(buffer, 12 + nTables * 16 + 8);
+	bufwrite32b(buffer, 0xB1B0AFBA - wholeChecksum);
 	return buffer;
 }

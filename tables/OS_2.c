@@ -1,5 +1,10 @@
 #include "OS_2.h"
 
+table_OS_2 *caryll_OS_2_new() {
+	table_OS_2 *os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));
+	return os_2;
+}
+
 table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 	table_OS_2 *os_2 = NULL;
 	FOR_TABLE('OS/2', table) {
@@ -119,4 +124,118 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_option
 	json_object_push(os_2, "usLowerOpticalPointSize", json_integer_new(table->usLowerOpticalPointSize));
 	json_object_push(os_2, "usUpperOpticalPointSize", json_integer_new(table->usUpperOpticalPointSize));
 	json_object_push(root, "OS_2", os_2);
+}
+
+table_OS_2 *caryll_OS_2_from_json(json_value *root) {
+	table_OS_2 *os_2 = caryll_OS_2_new();
+	json_value *table = NULL;
+	if ((table = json_obj_get_type(root, "OS_2", json_object))) {
+		os_2->version = json_obj_getnum_fallback(table, "version", 0);
+		os_2->xAvgCharWidth = json_obj_getnum_fallback(table, "xAvgCharWidth", 0);
+		os_2->usWeightClass = json_obj_getnum_fallback(table, "usWeightClass", 0);
+		os_2->usWidthClass = json_obj_getnum_fallback(table, "usWidthClass", 0);
+		os_2->fsType = json_obj_getnum_fallback(table, "fsType", 0);
+		os_2->ySubscriptXSize = json_obj_getnum_fallback(table, "ySubscriptXSize", 0);
+		os_2->ySubscriptYSize = json_obj_getnum_fallback(table, "ySubscriptYSize", 0);
+		os_2->ySubscriptXOffset = json_obj_getnum_fallback(table, "ySubscriptXOffset", 0);
+		os_2->ySubscriptYOffset = json_obj_getnum_fallback(table, "ySubscriptYOffset", 0);
+		os_2->ySupscriptXSize = json_obj_getnum_fallback(table, "ySupscriptXSize", 0);
+		os_2->ySupscriptXOffset = json_obj_getnum_fallback(table, "ySupscriptXOffset", 0);
+		os_2->ySupscriptYOffset = json_obj_getnum_fallback(table, "ySupscriptYOffset", 0);
+		os_2->yStrikeoutSize = json_obj_getnum_fallback(table, "yStrikeoutSize", 0);
+		os_2->yStrikeoutPosition = json_obj_getnum_fallback(table, "yStrikeoutPosition", 0);
+		os_2->sFamilyClass = json_obj_getnum_fallback(table, "sFamilyClass", 0);
+		os_2->fsSelection = json_obj_getnum_fallback(table, "fsSelection", 0);
+		os_2->usFirstCharIndex = json_obj_getnum_fallback(table, "usFirstCharIndex", 0);
+		os_2->usLastCharIndex = json_obj_getnum_fallback(table, "usLastCharIndex", 0);
+		os_2->sTypoAscender = json_obj_getnum_fallback(table, "sTypoAscender", 0);
+		os_2->sTypoDescender = json_obj_getnum_fallback(table, "sTypoDescender", 0);
+		os_2->sTypoLineGap = json_obj_getnum_fallback(table, "sTypoLineGap", 0);
+		os_2->usWinAscent = json_obj_getnum_fallback(table, "usWinAscent", 0);
+		os_2->usWinDescent = json_obj_getnum_fallback(table, "usWinDescent", 0);
+		os_2->ulCodePageRange1 = json_obj_getnum_fallback(table, "ulCodePageRange1", 0);
+		os_2->ulCodePageRange2 = json_obj_getnum_fallback(table, "ulCodePageRange2", 0);
+		os_2->sxHeight = json_obj_getnum_fallback(table, "sxHeight", 0);
+		os_2->sCapHeight = json_obj_getnum_fallback(table, "sCapHeight", 0);
+		os_2->usDefaultChar = json_obj_getnum_fallback(table, "usDefaultChar", 0);
+		os_2->usBreakChar = json_obj_getnum_fallback(table, "usBreakChar", 0);
+		os_2->usMaxContext = json_obj_getnum_fallback(table, "usMaxContext", 0);
+		os_2->usLowerOpticalPointSize = json_obj_getnum_fallback(table, "usLowerOpticalPointSize", 0);
+		os_2->usUpperOpticalPointSize = json_obj_getnum_fallback(table, "usUpperOpticalPointSize", 0);
+		// panose
+		json_value *panose = NULL;
+		if ((panose = json_obj_get_type(table, "panose", json_array))) {
+			for (int j = 0; j < panose->u.array.length; j++)
+				if (j >= 0 && j < 10) {
+					json_value *term = panose->u.array.values[j];
+					if (term->type == json_integer) {
+						os_2->panose[j] = term->u.integer;
+					} else if (term->type == json_double) {
+						os_2->panose[j] = term->u.dbl;
+					}
+				}
+		}
+		// achVendID
+		json_value *vendorid = NULL;
+		if ((vendorid = json_obj_get_type(table, "achVendID", json_string))) {
+			os_2->achVendID[0] = ' ';
+			os_2->achVendID[1] = ' ';
+			os_2->achVendID[2] = ' ';
+			os_2->achVendID[3] = ' ';
+			if (vendorid->u.string.length >= 4) {
+				memcpy(os_2->achVendID, vendorid->u.string.ptr, 4);
+			} else {
+				memcpy(os_2->achVendID, vendorid->u.string.ptr, vendorid->u.string.length);
+			}
+		}
+	}
+	if (os_2->version < 1) os_2->version = 1;
+	return os_2;
+}
+
+caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2) {
+	caryll_buffer *buf = bufnew();
+	if (!os_2) return buf;
+	bufwrite16b(buf, os_2->version);
+	bufwrite16b(buf, os_2->xAvgCharWidth);
+	bufwrite16b(buf, os_2->usWeightClass);
+	bufwrite16b(buf, os_2->usWidthClass);
+	bufwrite16b(buf, os_2->fsType);
+	bufwrite16b(buf, os_2->ySubscriptXSize);
+	bufwrite16b(buf, os_2->ySubscriptYSize);
+	bufwrite16b(buf, os_2->ySubscriptXOffset);
+	bufwrite16b(buf, os_2->ySubscriptYOffset);
+	bufwrite16b(buf, os_2->ySupscriptXSize);
+	bufwrite16b(buf, os_2->ySupscriptYSize);
+	bufwrite16b(buf, os_2->ySupscriptXOffset);
+	bufwrite16b(buf, os_2->ySupscriptYOffset);
+	bufwrite16b(buf, os_2->yStrikeoutSize);
+	bufwrite16b(buf, os_2->yStrikeoutPosition);
+	bufwrite16b(buf, os_2->sFamilyClass);
+	bufwrite_bytes(buf, 10, os_2->panose);
+	bufwrite32b(buf, os_2->ulUnicodeRange1);
+	bufwrite32b(buf, os_2->ulUnicodeRange2);
+	bufwrite32b(buf, os_2->ulUnicodeRange3);
+	bufwrite32b(buf, os_2->ulUnicodeRange4);
+	bufwrite_bytes(buf, 4, os_2->achVendID);
+	bufwrite16b(buf, os_2->fsSelection);
+	bufwrite16b(buf, os_2->usFirstCharIndex);
+	bufwrite16b(buf, os_2->usLastCharIndex);
+	bufwrite16b(buf, os_2->sTypoAscender);
+	bufwrite16b(buf, os_2->sTypoDescender);
+	bufwrite16b(buf, os_2->sTypoLineGap);
+	bufwrite16b(buf, os_2->usWinAscent);
+	bufwrite16b(buf, os_2->usWinDescent);
+	bufwrite32b(buf, os_2->ulCodePageRange1);
+	bufwrite32b(buf, os_2->ulCodePageRange2);
+	if(os_2->version < 2) return buf;
+	bufwrite16b(buf, os_2->sxHeight);
+	bufwrite16b(buf, os_2->sCapHeight);
+	bufwrite16b(buf, os_2->usDefaultChar);
+	bufwrite16b(buf, os_2->usBreakChar);
+	bufwrite16b(buf, os_2->usMaxContext);
+	if(os_2->version < 5) return buf;
+	bufwrite16b(buf, os_2->usLowerOpticalPointSize);
+	bufwrite16b(buf, os_2->usUpperOpticalPointSize);
+	return buf;
 }

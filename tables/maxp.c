@@ -1,5 +1,11 @@
 #include "maxp.h"
 
+table_maxp *caryll_maxp_new() {
+	table_maxp *maxp = calloc(1, sizeof(table_maxp));
+	maxp->version = 0x00001000;
+	return maxp;
+}
+
 table_maxp *caryll_read_maxp(caryll_packet packet) {
 	FOR_TABLE('maxp', table) {
 		font_file_pointer data = table.data;
@@ -66,4 +72,48 @@ void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_option
 	json_object_push(maxp, "maxComponentDepth", json_integer_new(table->maxComponentDepth));
 
 	json_object_push(root, "maxp", maxp);
+}
+
+table_maxp *caryll_maxp_from_json(json_value *root) {
+	table_maxp *maxp = caryll_maxp_new();
+	json_value *table = NULL;
+	if ((table = json_obj_get_type(root, "maxp", json_object))) {
+		maxp->version = json_obj_getnum(table, "version");
+		maxp->numGlyphs = json_obj_getnum(table, "numGlyphs");
+//		maxp->maxPoints = json_obj_getnum(table, "maxPoints");
+//		maxp->maxContours = json_obj_getnum(table, "maxContours");
+//		maxp->maxCompositePoints = json_obj_getnum(table, "maxCompositePoints");
+//		maxp->maxCompositeContours = json_obj_getnum(table, "maxCompositeContours");
+		maxp->maxZones = json_obj_getnum(table, "maxZones");
+		maxp->maxTwilightPoints = json_obj_getnum(table, "maxTwilightPoints");
+		maxp->maxStorage = json_obj_getnum(table, "maxStorage");
+		maxp->maxFunctionDefs = json_obj_getnum(table, "maxFunctionDefs");
+		maxp->maxInstructionDefs = json_obj_getnum(table, "maxInstructionDefs");
+		maxp->maxStackElements = json_obj_getnum(table, "maxStackElements");
+//		maxp->maxSizeOfInstructions = json_obj_getnum(table, "maxSizeOfInstructions");
+//		maxp->maxComponentElements = json_obj_getnum(table, "maxComponentElements");
+//		maxp->maxComponentDepth = json_obj_getnum(table, "maxComponentDepth");
+	}
+	return maxp;
+}
+
+caryll_buffer *caryll_write_maxp(table_maxp *maxp) {
+	caryll_buffer *buf = bufnew();
+	if (!maxp) return buf;
+	bufwrite32b(buf, maxp->version);
+	bufwrite16b(buf, maxp->numGlyphs);
+	bufwrite16b(buf, maxp->maxPoints);
+	bufwrite16b(buf, maxp->maxContours);
+	bufwrite16b(buf, maxp->maxCompositePoints);
+	bufwrite16b(buf, maxp->maxCompositeContours);
+	bufwrite16b(buf, maxp->maxZones);
+	bufwrite16b(buf, maxp->maxTwilightPoints);
+	bufwrite16b(buf, maxp->maxStorage);
+	bufwrite16b(buf, maxp->maxFunctionDefs);
+	bufwrite16b(buf, maxp->maxInstructionDefs);
+	bufwrite16b(buf, maxp->maxStackElements);
+	bufwrite16b(buf, maxp->maxSizeOfInstructions);
+	bufwrite16b(buf, maxp->maxComponentElements);
+	bufwrite16b(buf, maxp->maxComponentDepth);
+	return buf;
 }

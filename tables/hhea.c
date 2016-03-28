@@ -1,5 +1,10 @@
 #include "hhea.h"
 
+table_hhea *caryll_hhea_new() {
+	table_hhea *hhea = (table_hhea *)calloc(1, sizeof(table_hhea));
+	return hhea;
+}
+
 table_hhea *caryll_read_hhea(caryll_packet packet) {
 	FOR_TABLE('hhea', table) {
 		font_file_pointer data = table.data;
@@ -49,4 +54,48 @@ void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_option
 	json_object_push(hhea, "lowestmetricDataFormatRecPPEM", json_integer_new(table->metricDataFormat));
 	json_object_push(hhea, "numberOfMetrics", json_integer_new(table->numberOfMetrics));
 	json_object_push(root, "hhea", hhea);
+}
+
+table_hhea *caryll_hhea_from_json(json_value *root) {
+	table_hhea *hhea = caryll_hhea_new();
+	json_value *table = NULL;
+	if ((table = json_obj_get_type(root, "hhea", json_object))) {
+		hhea->version = json_obj_getnum_fallback(table, "version", 0);
+		hhea->ascender = json_obj_getnum_fallback(table, "ascender", 0);
+		hhea->descender = json_obj_getnum_fallback(table, "descender", 0);
+		hhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);
+		hhea->advanceWithMax = json_obj_getnum_fallback(table, "advanceWithMax", 0);
+		hhea->minLeftSideBearing = json_obj_getnum_fallback(table, "minLeftSideBearing", 0);
+		hhea->minRightSideBearing = json_obj_getnum_fallback(table, "minRightSideBearing", 0);
+		hhea->xMaxExtent = json_obj_getnum_fallback(table, "xMaxExtent", 0);
+		hhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
+		hhea->caretSlopeRun = json_obj_getnum_fallback(table, "yMcaretSlopeRunax", 0);
+		hhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
+		hhea->metricDataFormat = json_obj_getnum_fallback(table, "lowestmetricDataFormatRecPPEM", 0);
+		hhea->numberOfMetrics = json_obj_getnum_fallback(table, "numberOfMetrics", 0);
+	}
+	return hhea;
+}
+
+caryll_buffer *caryll_write_hhea(table_hhea *hhea) {
+	caryll_buffer *buf = bufnew();
+	if(!hhea) return buf;
+	bufwrite32b(buf, hhea->version);
+	bufwrite16b(buf, hhea->ascender);
+	bufwrite16b(buf, hhea->descender);
+	bufwrite16b(buf, hhea->lineGap);
+	bufwrite16b(buf, hhea->advanceWithMax);
+	bufwrite16b(buf, hhea->minLeftSideBearing);
+	bufwrite16b(buf, hhea->minRightSideBearing);
+	bufwrite16b(buf, hhea->xMaxExtent);
+	bufwrite16b(buf, hhea->caretSlopeRise);
+	bufwrite16b(buf, hhea->caretSlopeRun);
+	bufwrite16b(buf, hhea->caretOffset);
+	bufwrite16b(buf, hhea->reserved[0]);
+	bufwrite16b(buf, hhea->reserved[1]);
+	bufwrite16b(buf, hhea->reserved[2]);
+	bufwrite16b(buf, hhea->reserved[3]);
+	bufwrite16b(buf, hhea->metricDataFormat);
+	bufwrite16b(buf, hhea->numberOfMetrics);
+	return buf;
 }

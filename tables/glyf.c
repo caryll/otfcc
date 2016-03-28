@@ -606,8 +606,12 @@ glyf_glyph_stat stat_single_glyph(table_glyf *table, glyf_reference *gr, stat_st
 	return stat;
 }
 
-void caryll_stat_glyf(table_glyf *table) {
+void caryll_stat_glyf(table_glyf *table, table_head *head, table_maxp *maxp) {
 	stat_status *stated = calloc(table->numberGlyphs, sizeof(stat_status));
+	float xmin = 0xFFFF;
+	float xmax = -0xFFFF;
+	float ymin = 0xFFFF;
+	float ymax = -0xFFFF;
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
 		glyf_reference gr;
 		gr.glyph.gid = j;
@@ -618,9 +622,47 @@ void caryll_stat_glyf(table_glyf *table) {
 		gr.b = 0;
 		gr.c = 0;
 		gr.d = 1;
-		table->glyphs[j]->stat = stat_single_glyph(table, &gr, stated, 0, j);
+		glyf_glyph_stat thatstat = table->glyphs[j]->stat = stat_single_glyph(table, &gr, stated, 0, j);
+		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
+		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
+		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
+		if (thatstat.yMax > ymax) ymax = thatstat.yMax;
 	}
 	free(stated);
+	head->xMin = xmin;
+	head->xMax = xmax;
+	head->yMin = ymin;
+	head->yMax = ymax;
+	maxp->numGlyphs = table->numberGlyphs;
+	if (maxp->version == 0x10000) {
+		uint16_t nestDepth = 0;
+		uint16_t nPoints = 0;
+		uint16_t nContours = 0;
+		uint16_t nComponents = 0;
+		uint16_t nCompositePoints = 0;
+		uint16_t nCompositeContours = 0;
+		uint16_t instSize = 0;
+		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+			glyf_glyph *g = table->glyphs[j];
+			if (g->numberOfContours > 0) {
+				if (g->stat.nPoints > nPoints) nPoints = g->stat.nPoints;
+				if (g->stat.nContours > nContours) nContours = g->stat.nContours;
+			} else if (g->numberOfReferences > 0) {
+				if (g->stat.nCompositePoints > nCompositePoints) nCompositePoints = g->stat.nCompositePoints;
+				if (g->stat.nCompositeContours > nCompositeContours) nCompositeContours = g->stat.nCompositeContours;
+				if (g->stat.nestDepth > nestDepth) nestDepth = g->stat.nestDepth;
+				if (g->numberOfReferences > nComponents) nComponents = g->numberOfReferences;
+			}
+			if(g->instructionsLength > instSize) instSize = g->instructionsLength;
+		}
+		maxp->maxPoints = nPoints;
+		maxp->maxContours = nContours;
+		maxp->maxCompositePoints = nCompositePoints;
+		maxp->maxCompositeContours = nCompositeContours;
+		maxp->maxComponentDepth = nestDepth;
+		maxp->maxComponentElements = nComponents;
+		maxp->maxSizeOfInstructions = instSize;
+	}
 }
 
 #define EPSILON (1e-5)

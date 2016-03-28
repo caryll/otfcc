@@ -1,7 +1,8 @@
 #include "head.h"
 
-table_head *caryll_head_new(){
+table_head *caryll_head_new() {
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));
+	head->magicNumber = 0xF50F3CF5;
 	head->unitsPerEm = 1000;
 	return head;
 }
@@ -59,7 +60,32 @@ void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_option
 	json_object_push(root, "head", head);
 }
 
-void caryll_write_head(table_head *head, caryll_buffer *buf){
+table_head *caryll_head_from_json(json_value *root) {
+	table_head *head = caryll_head_new();
+	json_value *table = NULL;
+	if ((table = json_obj_get_type(root, "head", json_object))) {
+		head->version = json_obj_getnum_fallback(table, "version", 0);
+		head->fontRevison = json_obj_getnum_fallback(table, "fontRevison", 0);
+		head->flags = json_obj_getnum_fallback(table, "flags", 0);
+		head->unitsPerEm = json_obj_getnum_fallback(table, "unitsPerEm", 0);
+		head->created = json_obj_getnum_fallback(table, "created", 0);
+		head->modified = json_obj_getnum_fallback(table, "modified", 0);
+		head->xMin = json_obj_getnum_fallback(table, "xMin", 0);
+		head->xMax = json_obj_getnum_fallback(table, "xMax", 0);
+		head->yMin = json_obj_getnum_fallback(table, "yMin", 0);
+		head->yMax = json_obj_getnum_fallback(table, "yMax", 0);
+		head->macStyle = json_obj_getnum_fallback(table, "macStyle", 0);
+		head->lowestRecPPEM = json_obj_getnum_fallback(table, "lowestRecPPEM", 0);
+		head->fontDirectoryHint = json_obj_getnum_fallback(table, "fontDirectoryHint", 0);
+		head->indexToLocFormat = json_obj_getnum_fallback(table, "indexToLocFormat", 0);
+		head->glyphDataFormat = json_obj_getnum_fallback(table, "glyphDataFormat", 0);
+	}
+	return head;
+}
+
+caryll_buffer *caryll_write_head(table_head *head) {
+	caryll_buffer *buf = bufnew();
+	if(!head) return buf;
 	bufwrite32b(buf, head->version);
 	bufwrite32b(buf, head->fontRevison);
 	bufwrite32b(buf, head->checkSumAdjustment);
@@ -77,4 +103,5 @@ void caryll_write_head(table_head *head, caryll_buffer *buf){
 	bufwrite16b(buf, head->fontDirectoryHint);
 	bufwrite16b(buf, head->indexToLocFormat);
 	bufwrite16b(buf, head->glyphDataFormat);
+	return buf;
 }
