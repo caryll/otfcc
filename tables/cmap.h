@@ -16,5 +16,5 @@ cmap_hash *caryll_read_cmap(caryll_packet packet);
 void caryll_delete_cmap(cmap_hash *table);
 void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options dumpopts);
 cmap_hash *caryll_cmap_from_json(json_value *root);
-
+caryll_buffer *caryll_write_cmap(cmap_hash *cmap);
 #endif

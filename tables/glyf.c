@@ -83,7 +83,7 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 
 	// read X coordinates
 	font_file_pointer coordinatesStart = flagStart + flagBytesReadSofar;
-	uint8_t coordinatesOffset = 0;
+	uint32_t coordinatesOffset = 0;
 	uint16_t coordinatesRead = 0;
 	currentContour = 0;
 	currentContourPointIndex = 0;
@@ -653,7 +653,7 @@ void caryll_stat_glyf(table_glyf *table, table_head *head, table_maxp *maxp) {
 				if (g->stat.nestDepth > nestDepth) nestDepth = g->stat.nestDepth;
 				if (g->numberOfReferences > nComponents) nComponents = g->numberOfReferences;
 			}
-			if(g->instructionsLength > instSize) instSize = g->instructionsLength;
+			if (g->instructionsLength > instSize) instSize = g->instructionsLength;
 		}
 		maxp->maxPoints = nPoints;
 		maxp->maxContours = nContours;

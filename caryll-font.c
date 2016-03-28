@@ -58,7 +58,7 @@ void caryll_font_close(caryll_font *font) {
 	if (font->hmtx != NULL) caryll_delete_hmtx(font->hmtx);
 	if (font->post != NULL) caryll_delete_post(font->post);
 	if (font->hdmx != NULL) caryll_delete_hdmx(font->hdmx);
-	if (font->glyph_order != NULL) { delete_glyph_order_map(font->glyph_order); }
+	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font != NULL) free(font);
 }
 
@@ -229,6 +229,7 @@ void caryll_font_stat_hmtx(caryll_font *font) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
 	hmtx->metrics = malloc(sizeof(horizontal_metric) * font->glyf->numberGlyphs);
+	hmtx->leftSideBearing = NULL;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
 		hmtx->metrics[j].lsb = font->glyf->glyphs[j]->stat.xMin;

@@ -155,3 +155,203 @@ cmap_hash *caryll_cmap_from_json(json_value *root) {
 	}
 	return NULL;
 }
+// writing tables
+#define FLUSH_SEQUENCE_FORMAT_4                                                                                        \
+	bufwrite16b(endCount, lastUnicodeEnd);                                                                             \
+	bufwrite16b(startCount, lastUnicodeStart);                                                                         \
+	if (isSequencial) {                                                                                                \
+		bufwrite16b(idDelta, lastGIDStart - lastUnicodeStart);                                                         \
+		bufwrite16b(idRangeOffset, 0);                                                                                 \
+	} else {                                                                                                           \
+		bufwrite16b(idDelta, 0);                                                                                       \
+		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                                        \
+	}                                                                                                                  \
+	segmentsCount += 1;
+caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
+	caryll_buffer *buf = bufnew();
+	caryll_buffer *endCount = bufnew();
+	caryll_buffer *startCount = bufnew();
+	caryll_buffer *idDelta = bufnew();
+	caryll_buffer *idRangeOffset = bufnew();
+	caryll_buffer *glyphIdArray = bufnew();
+
+	bool started = false;
+	int lastUnicodeStart = 0xFFFFFF;
+	int lastUnicodeEnd = 0xFFFFFF;
+	int lastGIDStart = 0xFFFFFF;
+	int lastGIDEnd = 0xFFFFFF;
+	size_t lastGlyphIdArrayOffset = 0;
+	bool isSequencial = true;
+	uint16_t segmentsCount = 0;
+
+	cmap_entry *item;
+	foreach_hash(item, *cmap) if (item->unicode <= 0xFFFF) {
+		if (!started) {
+			started = true;
+			lastUnicodeStart = lastUnicodeEnd = item->unicode;
+			lastGIDStart = lastGIDEnd = item->glyph.gid;
+			isSequencial = true;
+		} else {
+			if (item->unicode == lastUnicodeEnd + 1 &&
+			    !(item->glyph.gid != lastGIDEnd + 1 && isSequencial && lastGIDEnd - lastGIDStart >= 4)) {
+				if (isSequencial && !(item->glyph.gid == lastGIDEnd + 1)) {
+					lastGlyphIdArrayOffset = glyphIdArray->cursor;
+					// oops, sequencial glyphid broken
+					for (int j = lastGIDStart; j <= lastGIDEnd; j++) {
+						bufwrite16b(glyphIdArray, j);
+					}
+				}
+				lastUnicodeEnd = item->unicode;
+				isSequencial = isSequencial && (item->glyph.gid == lastGIDEnd + 1);
+				lastGIDEnd = item->glyph.gid;
+				if (!isSequencial) { bufwrite16b(glyphIdArray, lastGIDEnd); }
+			} else {
+				// we have a segment
+				FLUSH_SEQUENCE_FORMAT_4;
+
+				lastUnicodeStart = lastUnicodeEnd = item->unicode;
+				lastGIDStart = lastGIDEnd = item->glyph.gid;
+				isSequencial = true;
+			}
+		}
+	}
+
+	FLUSH_SEQUENCE_FORMAT_4;
+	bufwrite16b(endCount, 0xFFFF);
+	bufwrite16b(startCount, 0xFFFF);
+	bufwrite16b(idDelta, 0);
+	bufwrite16b(idRangeOffset, 0);
+	segmentsCount += 1;
+
+	for (int j = 0; j < segmentsCount; j++) {
+		// rewrite idRangeOffset
+		uint16_t ro = caryll_blt16u((uint8_t *)idRangeOffset->s + j * 2);
+		if (ro) {
+			ro -= 1;
+			ro += 2 * (segmentsCount - j);
+			bufseek(idRangeOffset, 2 * j);
+			bufwrite16b(idRangeOffset, ro);
+		}
+	}
+
+	bufwrite16b(buf, 4);
+	bufwrite16b(buf, 0); // fill later
+	bufwrite16b(buf, 0);
+	bufwrite16b(buf, segmentsCount << 1);
+	uint32_t i;
+	uint32_t j;
+	for (j = 0, i = 1; i <= segmentsCount; ++j) {
+		i <<= 1;
+	}
+	bufwrite16b(buf, i);
+	bufwrite16b(buf, j - 1);
+	bufwrite16b(buf, 2 * segmentsCount - i);
+	bufwrite_buf(buf, endCount);
+	bufwrite16b(buf, 0);
+	bufwrite_buf(buf, startCount);
+	bufwrite_buf(buf, idDelta);
+	bufwrite_buf(buf, idRangeOffset);
+	bufwrite_buf(buf, glyphIdArray);
+
+	bufseek(buf, 2);
+	bufwrite16b(buf, buflen(buf));
+
+	buffree(endCount);
+	buffree(startCount);
+	buffree(idDelta);
+	buffree(idRangeOffset);
+	buffree(glyphIdArray);
+	return buf;
+}
+caryll_buffer *caryll_write_cmap_format12(cmap_hash *cmap) {
+	caryll_buffer *buf = bufnew();
+	bufwrite16b(buf, 12);
+	bufwrite16b(buf, 0);
+	bufwrite32b(buf, 0); // fill later
+	bufwrite32b(buf, 0);
+	bufwrite32b(buf, 0); // fill later
+
+	uint32_t nGroups = 0;
+	bool started = false;
+	int lastUnicodeStart = 0xFFFFFF;
+	int lastUnicodeEnd = 0xFFFFFF;
+	int lastGIDStart = 0xFFFFFF;
+	int lastGIDEnd = 0xFFFFFF;
+	cmap_entry *item;
+	foreach_hash(item, *cmap) {
+		if (!started) {
+			started = true;
+			lastUnicodeStart = lastUnicodeEnd = item->unicode;
+			lastGIDStart = lastGIDEnd = item->glyph.gid;
+		} else if (item->unicode == lastUnicodeEnd + 1 && item->glyph.gid == lastGIDEnd + 1) {
+			lastUnicodeEnd = item->unicode;
+			lastGIDEnd = item->glyph.gid;
+		} else {
+			bufwrite32b(buf, lastUnicodeStart);
+			bufwrite32b(buf, lastUnicodeEnd);
+			bufwrite32b(buf, lastGIDStart);
+			nGroups += 1;
+			lastUnicodeStart = lastUnicodeEnd = item->unicode;
+			lastGIDStart = lastGIDEnd = item->glyph.gid;
+		}
+	}
+	bufwrite32b(buf, lastUnicodeStart);
+	bufwrite32b(buf, lastUnicodeEnd);
+	bufwrite32b(buf, lastGIDStart);
+	nGroups += 1;
+
+	bufseek(buf, 4);
+	bufwrite32b(buf, buflen(buf));
+	bufseek(buf, 12);
+	bufwrite32b(buf, nGroups);
+	return buf;
+}
+caryll_buffer *caryll_write_cmap(cmap_hash *cmap) {
+	caryll_buffer *buf = bufnew();
+	if (!cmap || !*cmap) return buf;
+
+	cmap_entry *entry;
+	bool hasSMP = false;
+	foreach_hash(entry, *cmap) {
+		if (entry->unicode > 0xFFFF) { hasSMP = true; }
+	}
+
+	bufwrite16b(buf, 0);
+	uint8_t nTables = hasSMP ? 4 : 2;
+	bufwrite16b(buf, nTables);
+	uint32_t offset = 4 + 8 * nTables;
+	size_t cp = 0;
+	if (true) {
+		caryll_buffer *format4 = caryll_write_cmap_format4(cmap);
+		// Windows format 4;
+		bufwrite16b(buf, 3);
+		bufwrite16b(buf, 1);
+		bufwrite32b(buf, offset);
+		// Unicode format 4:
+		bufwrite16b(buf, 0);
+		bufwrite16b(buf, 1);
+		bufwrite32b(buf, offset);
+		cp = buf->cursor;
+		bufseek(buf, offset);
+		bufwrite_buf(buf, format4);
+		bufseek(buf, cp);
+		offset += buflen(format4);
+		buffree(format4);
+	}
+	if (hasSMP) {
+		caryll_buffer *format12 = caryll_write_cmap_format12(cmap);
+		bufwrite16b(buf, 3);
+		bufwrite16b(buf, 10);
+		bufwrite32b(buf, offset);
+		bufwrite16b(buf, 0);
+		bufwrite16b(buf, 10);
+		bufwrite32b(buf, offset);
+		cp = buf->cursor;
+		bufseek(buf, offset);
+		bufwrite_buf(buf, format12);
+		bufseek(buf, cp);
+		offset += buflen(format12);
+		buffree(format12);
+	}
+	return buf;
+}

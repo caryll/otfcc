@@ -34,6 +34,7 @@ table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp 
 }
 
 void caryll_delete_hmtx(table_hmtx *table) {
+	if (!table) return;
 	if (table->metrics != NULL) free(table->metrics);
 	if (table->leftSideBearing != NULL) free(table->leftSideBearing);
 	free(table);

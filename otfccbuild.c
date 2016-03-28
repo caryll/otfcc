@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
 				                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
 				sfnt_builder_push_table(builder, 'loca', bufloca);
 				sfnt_builder_push_table(builder, 'glyf', bufglyf);
+				sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
 
 				caryll_buffer *otf = sfnt_builder_serialize(builder);
 				FILE *outfile = fopen(argv[2], "wb");
