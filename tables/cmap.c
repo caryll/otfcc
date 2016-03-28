@@ -341,9 +341,11 @@ caryll_buffer *caryll_write_cmap(cmap_hash *cmap) {
 	}
 	if (hasSMP) {
 		caryll_buffer *format12 = caryll_write_cmap_format12(cmap);
+		// Windows format 12;
 		bufwrite16b(buf, 3);
 		bufwrite16b(buf, 10);
 		bufwrite32b(buf, offset);
+		// Unicode format 12:
 		bufwrite16b(buf, 0);
 		bufwrite16b(buf, 4);
 		bufwrite32b(buf, offset);
