@@ -76,6 +76,7 @@ typedef struct {
 #define GLYF_FLAG_POSITIVE_Y (1 << 5)
 
 #define ARG_1_AND_2_ARE_WORDS (1 << 0)
+#define ARGS_ARE_XY_VALUES (1 << 1)
 #define MORE_COMPONENTS (1 << 5)
 #define WE_HAVE_A_SCALE (1 << 3)
 #define WE_HAVE_AN_X_AND_Y_SCALE (1 << 6)
@@ -90,4 +91,7 @@ void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options dumpopts);
 table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order);
 void caryll_stat_glyf(table_glyf *table);
+
+void caryll_write_glyf(table_glyf *table, caryll_buffer *bufglyf, caryll_buffer *bufloca);
+
 #endif

@@ -622,3 +622,138 @@ void caryll_stat_glyf(table_glyf *table) {
 	}
 	free(stated);
 }
+
+#define EPSILON (1e-5)
+
+void caryll_write_glyf(table_glyf *table, caryll_buffer *bufglyf, caryll_buffer *bufloca) {
+	caryll_buffer *gbuf = bufnew();
+	caryll_buffer *flags = bufnew();
+	caryll_buffer *xs = bufnew();
+	caryll_buffer *ys = bufnew();
+	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+		glyf_glyph *g = table->glyphs[j];
+		bufclear(gbuf);
+		if (g->numberOfContours > 0) {
+			bufwrite16b(gbuf, g->numberOfContours);
+			bufwrite16b(gbuf, (int16_t)g->stat.xMin);
+			bufwrite16b(gbuf, (int16_t)g->stat.yMin);
+			bufwrite16b(gbuf, (int16_t)g->stat.xMax);
+			bufwrite16b(gbuf, (int16_t)g->stat.yMax);
+
+			// endPtsOfContours[n]
+			uint16_t ptid = 0;
+			for (uint16_t j = 0; j < g->numberOfContours; j++) {
+				ptid += g->contours[j].pointsCount;
+				bufwrite16b(gbuf, ptid - 1);
+			}
+
+			// instructions
+			bufwrite16b(gbuf, g->instructionsLength);
+			if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
+
+			// flags and points
+			bufclear(flags);
+			bufclear(xs);
+			bufclear(ys);
+			int16_t cx = 0;
+			int16_t cy = 0;
+			for (uint16_t j = 0; j < g->numberOfContours; j++) {
+				for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
+					glyf_point *p = &(g->contours[j].points[k]);
+					uint8_t flag = p->onCurve ? GLYF_FLAG_ON_CURVE : 0;
+					int16_t dx = p->x - cx;
+					int16_t dy = p->y - cy;
+					if (dx == 0) {
+						flag |= GLYF_FLAG_SAME_X;
+					} else if (dx >= -0xFF && dx <= 0xFF) {
+						flag |= GLYF_FLAG_X_SHORT;
+						if (dx > 0) {
+							flag |= GLYF_FLAG_POSITIVE_X;
+							bufwrite8(xs, dx);
+						} else {
+							bufwrite8(xs, -dx);
+						}
+					} else {
+						bufwrite16b(xs, dx);
+					}
+
+					if (dy == 0) {
+						flag |= GLYF_FLAG_SAME_Y;
+					} else if (dy >= -0xFF && dy <= 0xFF) {
+						flag |= GLYF_FLAG_Y_SHORT;
+						if (dy > 0) {
+							flag |= GLYF_FLAG_POSITIVE_Y;
+							bufwrite8(ys, dy);
+						} else {
+							bufwrite8(ys, -dy);
+						}
+					} else {
+						bufwrite16b(ys, dy);
+					}
+
+					bufwrite8(flags, flag);
+					cx += dx;
+					cy += dy;
+				}
+				bufwrite_buf(gbuf, flags);
+				bufwrite_buf(gbuf, xs);
+				bufwrite_buf(gbuf, ys);
+			}
+		} else if (g->numberOfReferences > 0) {
+			bufwrite16b(gbuf, (-1));
+			bufwrite16b(gbuf, (int16_t)g->stat.xMin);
+			bufwrite16b(gbuf, (int16_t)g->stat.yMin);
+			bufwrite16b(gbuf, (int16_t)g->stat.xMax);
+			bufwrite16b(gbuf, (int16_t)g->stat.yMax);
+			for (uint16_t j = 0; j < g->numberOfReferences; j++) {
+				glyf_reference *r = &(g->references[j]);
+				uint16_t flags = ARGS_ARE_XY_VALUES |
+				                 (j < g->numberOfReferences - 1 ? MORE_COMPONENTS
+				                                                : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
+				int16_t arg1 = r->x;
+				int16_t arg2 = r->y;
+				if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128)) flags |= ARG_1_AND_2_ARE_WORDS;
+				if (fabsf(r->b) > EPSILON || fabsf(r->c) > EPSILON) {
+					flags |= WE_HAVE_A_TWO_BY_TWO;
+				} else if (fabsf(r->a - 1) > EPSILON || fabsf(r->d - 1) > EPSILON) {
+					if (fabsf(r->a - r->d) > EPSILON) {
+						flags |= WE_HAVE_AN_X_AND_Y_SCALE;
+					} else {
+						flags |= WE_HAVE_A_SCALE;
+					}
+				}
+				if (r->useMyMetrics) flags |= USE_MY_METRICS;
+
+				bufwrite16b(gbuf, flags);
+				bufwrite16b(gbuf, r->glyph.gid);
+				if (flags & ARG_1_AND_2_ARE_WORDS) {
+					bufwrite16b(gbuf, arg1);
+					bufwrite16b(gbuf, arg2);
+				} else {
+					bufwrite8(gbuf, arg1);
+					bufwrite8(gbuf, arg2);
+				}
+				if (flags & WE_HAVE_A_SCALE) {
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+				} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
+				} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->b));
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->c));
+					bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
+				}
+			}
+			if (g->instructionsLength) {
+				bufwrite16b(gbuf, g->instructionsLength);
+				if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
+			}
+		}
+		bufwrite_buf(bufglyf, gbuf);
+	}
+	buffree(gbuf);
+	buffree(flags);
+	buffree(xs);
+	buffree(ys);
+}

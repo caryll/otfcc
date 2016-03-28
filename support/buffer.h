@@ -15,6 +15,7 @@ void buffree(caryll_buffer *buf);
 size_t buflen(caryll_buffer *buf);
 size_t bufpos(caryll_buffer *buf);
 void bufseek(caryll_buffer *buf, size_t pos);
+void bufclear(caryll_buffer *buf);
 
 void bufwrite8(caryll_buffer *buf, uint8_t byte);
 void bufwrite16l(caryll_buffer *buf, uint16_t x);
@@ -26,6 +27,7 @@ void bufwrite64b(caryll_buffer *buf, uint64_t x);
 
 void bufwrite_sds(caryll_buffer *buf, sds str);
 void bufwrite_str(caryll_buffer *buf, const char *str);
+void bufwrite_bytes(caryll_buffer *buf, size_t size, uint8_t *str);
 void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that);
 
 #endif

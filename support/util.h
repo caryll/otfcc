@@ -10,6 +10,7 @@
 #include "../extern/json.h"
 #include "../extern/json-builder.h"
 #include "../extern/sds.h"
+#include "buffer.h"
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
@@ -242,6 +243,9 @@ static INLINE int64_t caryll_blt64s(uint8_t *src) {
 }
 static INLINE float caryll_from_f2dot14(int16_t x) {
 	return x / 16384.0;
+}
+static INLINE int16_t caryll_to_f2dot14(float x){
+	return x * 16384.0;
 }
 
 // glyph reference type

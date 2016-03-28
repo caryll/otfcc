@@ -20,6 +20,10 @@ size_t bufpos(caryll_buffer *buf) {
 void bufseek(caryll_buffer *buf, size_t pos) {
 	buf->cursor = pos;
 }
+void bufclear(caryll_buffer *buf){
+	sdsclear(buf->s);
+	buf->cursor = 0;
+}
 
 static void bufbeforewrite(caryll_buffer *buf, size_t towrite) {
 	size_t curlen = sdslen(buf->s);
@@ -99,6 +103,13 @@ void bufwrite_sds(caryll_buffer *buf, sds str) {
 void bufwrite_str(caryll_buffer *buf, const char *str) {
 	if (!str) return;
 	size_t len = strlen(str);
+	bufbeforewrite(buf, len);
+	if (!buf->s) return;
+	memcpy(buf->s + buf->cursor, str, len);
+	buf->cursor += len;
+}
+void bufwrite_bytes(caryll_buffer *buf, size_t len, uint8_t *str) {
+	if (!str) return;
 	bufbeforewrite(buf, len);
 	if (!buf->s) return;
 	memcpy(buf->s + buf->cursor, str, len);
