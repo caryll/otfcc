@@ -2,6 +2,7 @@
 
 table_head *caryll_head_new(){
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));
+	head->unitsPerEm = 1000;
 	return head;
 }
 
@@ -56,4 +57,24 @@ void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_option
 	json_object_push(head, "indexToLocFormat", json_integer_new(table->indexToLocFormat));
 	json_object_push(head, "glyphDataFormat", json_integer_new(table->glyphDataFormat));
 	json_object_push(root, "head", head);
+}
+
+void caryll_write_head(table_head *head, caryll_buffer *buf){
+	bufwrite32b(buf, head->version);
+	bufwrite32b(buf, head->fontRevison);
+	bufwrite32b(buf, head->checkSumAdjustment);
+	bufwrite32b(buf, head->magicNumber);
+	bufwrite16b(buf, head->flags);
+	bufwrite16b(buf, head->unitsPerEm);
+	bufwrite64b(buf, head->created);
+	bufwrite64b(buf, head->modified);
+	bufwrite16b(buf, head->xMin);
+	bufwrite16b(buf, head->yMin);
+	bufwrite16b(buf, head->xMax);
+	bufwrite16b(buf, head->yMax);
+	bufwrite16b(buf, head->macStyle);
+	bufwrite16b(buf, head->lowestRecPPEM);
+	bufwrite16b(buf, head->fontDirectoryHint);
+	bufwrite16b(buf, head->indexToLocFormat);
+	bufwrite16b(buf, head->glyphDataFormat);
 }

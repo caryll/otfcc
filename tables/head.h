@@ -28,5 +28,6 @@ typedef struct {
 table_head *caryll_head_new();
 table_head *caryll_read_head(caryll_packet packet);
 void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_options dumpopts);
+void caryll_write_head(table_head *table, caryll_buffer *bufhead);
 
 #endif

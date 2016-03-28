@@ -657,14 +657,15 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 			bufclear(flags);
 			bufclear(xs);
 			bufclear(ys);
-			int16_t cx = 0;
-			int16_t cy = 0;
-			for (uint16_t j = 0; j < g->numberOfContours; j++) {
-				for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
-					glyf_point *p = &(g->contours[j].points[k]);
+			float cx = 0;
+			float cy = 0;
+			for (uint16_t cj = 0; cj < g->numberOfContours; cj++) {
+				for (uint16_t k = 0; k < g->contours[cj].pointsCount; k++) {
+					glyf_point *p = &(g->contours[cj].points[k]);
 					uint8_t flag = p->onCurve ? GLYF_FLAG_ON_CURVE : 0;
 					int16_t dx = p->x - cx;
 					int16_t dy = p->y - cy;
+
 					if (dx == 0) {
 						flag |= GLYF_FLAG_SAME_X;
 					} else if (dx >= -0xFF && dx <= 0xFF) {
@@ -678,7 +679,6 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 					} else {
 						bufwrite16b(xs, dx);
 					}
-
 					if (dy == 0) {
 						flag |= GLYF_FLAG_SAME_Y;
 					} else if (dy >= -0xFF && dy <= 0xFF) {
@@ -692,26 +692,25 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 					} else {
 						bufwrite16b(ys, dy);
 					}
-
 					bufwrite8(flags, flag);
-					cx += dx;
-					cy += dy;
+					cx = p->x;
+					cy = p->y;
 				}
-				bufwrite_buf(gbuf, flags);
-				bufwrite_buf(gbuf, xs);
-				bufwrite_buf(gbuf, ys);
 			}
+			bufwrite_buf(gbuf, flags);
+			bufwrite_buf(gbuf, xs);
+			bufwrite_buf(gbuf, ys);
 		} else if (g->numberOfReferences > 0) {
 			bufwrite16b(gbuf, (-1));
 			bufwrite16b(gbuf, (int16_t)g->stat.xMin);
 			bufwrite16b(gbuf, (int16_t)g->stat.yMin);
 			bufwrite16b(gbuf, (int16_t)g->stat.xMax);
 			bufwrite16b(gbuf, (int16_t)g->stat.yMax);
-			for (uint16_t j = 0; j < g->numberOfReferences; j++) {
-				glyf_reference *r = &(g->references[j]);
-				uint16_t flags = ARGS_ARE_XY_VALUES |
-				                 (j < g->numberOfReferences - 1 ? MORE_COMPONENTS
-				                                                : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
+			for (uint16_t rj = 0; rj < g->numberOfReferences; rj++) {
+				glyf_reference *r = &(g->references[rj]);
+				uint16_t flags = ARGS_ARE_XY_VALUES | (rj < g->numberOfReferences - 1
+				                                           ? MORE_COMPONENTS
+				                                           : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
 				int16_t arg1 = r->x;
 				int16_t arg2 = r->y;
 				if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128)) flags |= ARG_1_AND_2_ARE_WORDS;

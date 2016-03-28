@@ -14,3 +14,5 @@ typedef struct {
 sfnt_builder *sfnt_builder_new();
 void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer *buffer);
 void sfnt_builder_delete(sfnt_builder *builder);
+
+caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder);

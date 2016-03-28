@@ -5,8 +5,8 @@
 #include "caryll-sfnt-builder.h"
 
 void print_table(sfnt_builder_entry *t) {
-	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff, ((uint32_t)(t->tag) >> 16) & 0xff,
-	        ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
+	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
+	        ((uint32_t)(t->tag) >> 16) & 0xff, ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
 }
 
 int main(int argc, char *argv[]) {
@@ -44,20 +44,26 @@ int main(int argc, char *argv[]) {
 
 			caryll_font_stat(font);
 			push_stopwatch("Stating", &begin);
-
 			{
 				caryll_buffer *bufglyf = bufnew();
 				caryll_buffer *bufloca = bufnew();
 				caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
 				
+				caryll_buffer *bufhead = bufnew();
+				caryll_write_head(font->head, bufhead);
+
 				sfnt_builder *builder = sfnt_builder_new();
+				sfnt_builder_push_table(builder, 'head', bufhead);
 				sfnt_builder_push_table(builder, 'glyf', bufglyf);
 				sfnt_builder_push_table(builder, 'loca', bufloca);
-				{
-					sfnt_builder_entry *item;
-					foreach_hash(item, builder->tables) print_table(item);
-				}
+
+				caryll_buffer *otf = sfnt_builder_serialize(builder);
+				FILE *outfile = fopen(argv[2], "wb");
+				fwrite(otf->s, sizeof(uint8_t), buflen(otf), outfile);
+				fclose(outfile);
+
 				sfnt_builder_delete(builder);
+				buffree(otf);
 			}
 
 			caryll_font_close(font);
