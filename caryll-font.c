@@ -239,14 +239,33 @@ void caryll_font_stat_hmtx(caryll_font *font) {
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
 	hmtx->metrics = malloc(sizeof(horizontal_metric) * font->glyf->numberGlyphs);
 	hmtx->leftSideBearing = NULL;
+	int16_t minLSB = 0x7FFF;
+	int16_t minRSB = 0x7FFF;
+	int16_t maxExtent = -0x8000;
+	uint16_t maxWidth = 0;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
+		if (hmtx->metrics[j].advanceWidth > maxWidth) maxWidth = hmtx->metrics[j].advanceWidth;
 		hmtx->metrics[j].lsb = font->glyf->glyphs[j]->stat.xMin;
+		if (hmtx->metrics[j].lsb < minLSB) minLSB = hmtx->metrics[j].lsb;
+		int16_t rsb = font->glyf->glyphs[j]->advanceWidth - font->glyf->glyphs[j]->stat.xMax;
+		if (rsb < minRSB) minRSB = rsb;
+		if (font->glyf->glyphs[j]->stat.xMax > maxExtent) maxExtent = font->glyf->glyphs[j]->stat.xMax;
 	}
 	font->hhea->numberOfMetrics = font->glyf->numberGlyphs;
+	font->hhea->minLeftSideBearing = minLSB;
+	font->hhea->minRightSideBearing = minRSB;
+	font->hhea->xMaxExtent = maxExtent;
+	font->hhea->advanceWithMax = maxWidth;
 	font->hmtx = hmtx;
 }
 void caryll_font_stat(caryll_font *font) {
 	if (font->glyf && font->head && font->maxp) caryll_stat_glyf(font->glyf, font->head, font->maxp);
+	if (font->fpgm && font->maxp && font->fpgm->length > font->maxp->maxSizeOfInstructions) {
+		font->maxp->maxSizeOfInstructions = font->fpgm->length;
+	}
+	if (font->prep && font->maxp && font->prep->length > font->maxp->maxSizeOfInstructions) {
+		font->maxp->maxSizeOfInstructions = font->prep->length;
+	}
 	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
 }
