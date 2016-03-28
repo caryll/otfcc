@@ -38,3 +38,20 @@ void caryll_delete_hmtx(table_hmtx *table) {
 	if (table->leftSideBearing != NULL) free(table->leftSideBearing);
 	free(table);
 }
+
+caryll_buffer *caryll_write_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t count_k) {
+	caryll_buffer *buf = bufnew();
+	if (!hmtx) return buf;
+	if (hmtx->metrics) {
+		for (uint16_t j = 0; j < count_a; j++) {
+			bufwrite16b(buf, hmtx->metrics[j].advanceWidth);
+			bufwrite16b(buf, hmtx->metrics[j].lsb);
+		}
+	}
+	if (hmtx->leftSideBearing) {
+		for (uint16_t j = 0; j < count_k; j++) {
+			bufwrite16b(buf, hmtx->leftSideBearing[j]);
+		}
+	}
+	return buf;
+}

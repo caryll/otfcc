@@ -59,6 +59,9 @@ int main(int argc, char *argv[]) {
 				sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2));
 				sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
 				sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
+				sfnt_builder_push_table(builder, 'hmtx',
+				                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
+				                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
 				sfnt_builder_push_table(builder, 'loca', bufloca);
 				sfnt_builder_push_table(builder, 'glyf', bufglyf);
 

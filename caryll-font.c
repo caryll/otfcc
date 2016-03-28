@@ -218,12 +218,25 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 		}
 	}
 }
+
 void caryll_font_consolidate(caryll_font *font) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
 }
 
 // Stating
+void caryll_font_stat_hmtx(caryll_font *font) {
+	if (!font->glyf) return;
+	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
+	hmtx->metrics = malloc(sizeof(horizontal_metric) * font->glyf->numberGlyphs);
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
+		hmtx->metrics[j].lsb = font->glyf->glyphs[j]->stat.xMin;
+	}
+	font->hhea->numberOfMetrics = font->glyf->numberGlyphs;
+	font->hmtx = hmtx;
+}
 void caryll_font_stat(caryll_font *font) {
 	if (font->glyf && font->head && font->maxp) caryll_stat_glyf(font->glyf, font->head, font->maxp);
+	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
 }
