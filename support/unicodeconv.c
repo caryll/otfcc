@@ -172,3 +172,90 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 	}
 	return out0;
 }
+
+uint8_t *utf8toutf16be(sds _in, size_t *out_bytes) {
+	if (!_in) {
+		*out_bytes = 0;
+		return NULL;
+	}
+	sds in = _in;
+	size_t inlen = sdslen(in);
+	char *inend = in + inlen;
+
+	uint32_t wordsNeeded = 0;
+	uint8_t trailing = 0;
+	uint32_t c = 0;
+	while (in < inend) {
+		uint8_t d = *in++;
+		if (d < 0x80) {
+			c = d;
+			trailing = 0;
+		} else if (d < 0xC0) {
+			break; // trailing byte in leading position
+		} else if (d < 0xE0) {
+			c = d & 0x1F;
+			trailing = 1;
+		} else if (d < 0xF0) {
+			c = d & 0x0F;
+			trailing = 2;
+		} else if (d < 0xF8) {
+			c = d & 0x07;
+			trailing = 3;
+		} else {
+			break;
+		}
+		if (inend - in < trailing) { break; }
+		for (; trailing; trailing--) {
+			if ((in >= inend) || (((d = *in++) & 0xC0) != 0x80)) break;
+			c <<= 6;
+			c |= d & 0x3F;
+		}
+		if (c < 0x10000) {
+			wordsNeeded += 1;
+		} else if (c < 0x110000) {
+			wordsNeeded += 2;
+		}
+	}
+	uint8_t *_out = malloc(2 * wordsNeeded * sizeof(uint8_t));
+	uint8_t *out = _out;
+	in = _in;
+	while (in < inend) {
+		uint8_t d = *in++;
+		if (d < 0x80) {
+			c = d;
+			trailing = 0;
+		} else if (d < 0xC0) {
+			break; // trailing byte in leading position
+		} else if (d < 0xE0) {
+			c = d & 0x1F;
+			trailing = 1;
+		} else if (d < 0xF0) {
+			c = d & 0x0F;
+			trailing = 2;
+		} else if (d < 0xF8) {
+			c = d & 0x07;
+			trailing = 3;
+		} else {
+			break;
+		}
+		if (inend - in < trailing) { break; }
+		for (; trailing; trailing--) {
+			if ((in >= inend) || (((d = *in++) & 0xC0) != 0x80)) break;
+			c <<= 6;
+			c |= d & 0x3F;
+		}
+		if (c < 0x10000) {
+			*(out++) = (c >> 8) & 0xFF;
+			*(out++) = c & 0xFF;
+		} else if (c < 0x110000) {
+			uint16_t tmp1 = 0xD800 | (c >> 10);
+			*(out++) = (tmp1 >> 8) & 0xFF;
+			*(out++) = tmp1 & 0xFF;
+			uint16_t tmp2 = 0xDC00 | (c & 0x03FF);
+			*(out++) = (tmp2 >> 8) & 0xFF;
+			*(out++) = tmp2 & 0xFF;
+		}
+	}
+	*out_bytes = wordsNeeded * 2;
+	return _out;
+}

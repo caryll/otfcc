@@ -84,7 +84,8 @@ cmap_hash *caryll_read_cmap(caryll_packet packet) {
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
 			uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
-			if (platform == 0 || (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
+			if ((platform == 0 && encoding == 3) || (platform == 0 && encoding == 4) ||
+			    (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
 				uint32_t tableOffset = caryll_blt32u(data + 4 + 8 * j + 4);
 				caryll_read_mapping_table(data + tableOffset, length - tableOffset, map);
 			}
@@ -329,7 +330,7 @@ caryll_buffer *caryll_write_cmap(cmap_hash *cmap) {
 		bufwrite32b(buf, offset);
 		// Unicode format 4:
 		bufwrite16b(buf, 0);
-		bufwrite16b(buf, 1);
+		bufwrite16b(buf, 3);
 		bufwrite32b(buf, offset);
 		cp = buf->cursor;
 		bufseek(buf, offset);
@@ -344,7 +345,7 @@ caryll_buffer *caryll_write_cmap(cmap_hash *cmap) {
 		bufwrite16b(buf, 10);
 		bufwrite32b(buf, offset);
 		bufwrite16b(buf, 0);
-		bufwrite16b(buf, 10);
+		bufwrite16b(buf, 4);
 		bufwrite32b(buf, offset);
 		cp = buf->cursor;
 		bufseek(buf, offset);

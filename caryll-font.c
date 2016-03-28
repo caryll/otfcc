@@ -20,6 +20,9 @@ caryll_font *caryll_font_new() {
 	font->glyf = NULL;
 	font->cmap = NULL;
 	font->glyph_order = NULL;
+	font->fpgm = NULL;
+	font->prep = NULL;
+	font->cvt_ = NULL;
 	return font;
 }
 
@@ -40,6 +43,9 @@ caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index) {
 		font->hdmx = caryll_read_hdmx(packet, font->maxp);
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
 		font->cmap = caryll_read_cmap(packet);
+		font->fpgm = caryll_read_fpgm_prep(packet, 'fpgm');
+		font->prep = caryll_read_fpgm_prep(packet, 'prep');
+		font->cvt_ = caryll_read_fpgm_prep(packet, 'cvt ');
 
 		caryll_font_unconsolidate(font);
 
@@ -58,6 +64,9 @@ void caryll_font_close(caryll_font *font) {
 	if (font->hmtx != NULL) caryll_delete_hmtx(font->hmtx);
 	if (font->post != NULL) caryll_delete_post(font->post);
 	if (font->hdmx != NULL) caryll_delete_hdmx(font->hdmx);
+	if (font->fpgm != NULL) caryll_delete_fpgm_prep(font->fpgm);
+	if (font->prep != NULL) caryll_delete_fpgm_prep(font->prep);
+	if (font->cvt_ != NULL) caryll_delete_fpgm_prep(font->cvt_);
 	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font != NULL) free(font);
 }

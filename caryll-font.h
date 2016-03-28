@@ -17,6 +17,7 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/name.h"
 #include "./tables/glyf.h"
 #include "./tables/cmap.h"
+#include "./tables/fpgm-prep.h"
 
 #include "./tables/hdmx.h"
 #include "./tables/LTSH.h"
@@ -39,6 +40,10 @@ struct _caryll_font {
 	table_glyf *glyf;
 	cmap_hash *cmap;
 	table_name *name;
+	
+	table_fpgm_prep *fpgm;
+	table_fpgm_prep *prep;
+	table_fpgm_prep *cvt_;
 
 	glyph_order_hash *glyph_order;
 };

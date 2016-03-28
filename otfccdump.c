@@ -115,6 +115,9 @@ int main(int argc, char *argv[]) {
 		caryll_OS_2_to_json(font->OS_2, root, dumpopts);
 		caryll_cmap_to_json(font->cmap, root, dumpopts);
 		caryll_glyf_to_json(font->glyf, root, dumpopts);
+		caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
+		caryll_fpgm_prep_to_json(font->prep, root, dumpopts, "prep");
+		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
 		if (show_time) push_stopwatch("Convert to JSON", &begin);
 	}
 

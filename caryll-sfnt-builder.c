@@ -58,7 +58,9 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 		buffree(buffer);
 	}
 }
-
+int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) {
+	return (a->tag - b->tag);
+}
 caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	caryll_buffer *buffer = bufnew();
 	if (!builder) return buffer;
@@ -72,6 +74,8 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 
 	sfnt_builder_entry *table;
 	uint32_t offset = 12 + nTables * 16;
+	uint32_t headOffset = offset;
+	HASH_SORT(builder->tables, byTag);
 	foreach_hash(table, builder->tables) {
 		// write table directory
 		bufwrite32b(buffer, table->tag);
@@ -82,10 +86,12 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 		bufseek(buffer, offset);
 		bufwrite_buf(buffer, table->buffer);
 		bufseek(buffer, cp);
+		// record where the [head] is
+		if (table->tag == 'head') { headOffset = offset; }
 		offset += buflen(table->buffer);
 	}
 	uint32_t wholeChecksum = buf_checksum(buffer);
-	bufseek(buffer, 12 + nTables * 16 + 8);
+	bufseek(buffer, headOffset + 8);
 	bufwrite32b(buffer, 0xB1B0AFBA - wholeChecksum);
 	return buffer;
 }

@@ -30,7 +30,8 @@ table_name *caryll_read_name(caryll_packet packet) {
 				// Mac Roman
 				sds nameString = sdsnewlen(data + (name->stringOffset) + offset, length);
 				record->nameString = nameString;
-			} else if (record->platformID == 0 || (record->platformID == 3 && record->encodingID == 1)) {
+			} else if ((record->platformID == 0 && record->encodingID == 1) ||
+			           (record->platformID == 3 && record->encodingID == 1)) {
 				sds nameString = utf16be_to_utf8(data + (name->stringOffset) + offset, length);
 				record->nameString = nameString;
 			} else {
@@ -69,4 +70,81 @@ void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_option
 		json_array_push(name, record);
 	}
 	json_object_push(root, "name", name);
+}
+table_name *caryll_name_from_json(json_value *root) {
+	table_name *name = calloc(1, sizeof(table_name));
+	json_value *table = NULL;
+	if ((table = json_obj_get_type(root, "name", json_array))) {
+		uint16_t validCount = 0;
+		for (uint32_t j = 0; j < table->u.array.length; j++) {
+			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
+				json_value *record = table->u.array.values[j];
+				if (json_obj_get_type(record, "platformID", json_integer) &&
+				    json_obj_get_type(record, "encodingID", json_integer) &&
+				    json_obj_get_type(record, "languageID", json_integer) &&
+				    json_obj_get_type(record, "nameID", json_integer) &&
+				    json_obj_get_type(record, "nameString", json_string)) {
+					validCount += 1;
+				}
+			}
+		}
+		name->count = validCount;
+		name->records = calloc(validCount, sizeof(name_record *));
+		validCount = 0;
+		for (uint32_t j = 0; j < table->u.array.length; j++) {
+			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
+				json_value *record = table->u.array.values[j];
+				if (json_obj_get_type(record, "platformID", json_integer) &&
+				    json_obj_get_type(record, "encodingID", json_integer) &&
+				    json_obj_get_type(record, "languageID", json_integer) &&
+				    json_obj_get_type(record, "nameID", json_integer) &&
+				    json_obj_get_type(record, "nameString", json_string)) {
+
+					name->records[validCount] = malloc(sizeof(name_record));
+					name->records[validCount]->platformID = json_obj_getint(record, "platformID");
+					name->records[validCount]->encodingID = json_obj_getint(record, "encodingID");
+					name->records[validCount]->languageID = json_obj_getint(record, "languageID");
+					name->records[validCount]->nameID = json_obj_getint(record, "nameID");
+
+					json_value *str = json_obj_get_type(record, "nameString", json_string);
+					name->records[validCount]->nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
+					validCount += 1;
+				}
+			}
+		}
+	}
+	return name;
+}
+caryll_buffer *caryll_write_name(table_name *name) {
+	caryll_buffer *buf = bufnew();
+	if (!name) return buf;
+	bufwrite16b(buf, 0);
+	bufwrite16b(buf, name->count);
+	bufwrite16b(buf, 0); // fill later
+	caryll_buffer *strings = bufnew();
+	for (uint16_t j = 0; j < name->count; j++) {
+		name_record *record = name->records[j];
+		bufwrite16b(buf, record->platformID);
+		bufwrite16b(buf, record->encodingID);
+		bufwrite16b(buf, record->languageID);
+		bufwrite16b(buf, record->nameID);
+		size_t cbefore = strings->cursor;
+		if (record->platformID == 3 && record->encodingID == 1) {
+			size_t words;
+			uint8_t *u16 = utf8toutf16be(record->nameString, &words);
+			bufwrite_bytes(strings, words, u16);
+			free(u16);
+		} else {
+			bufwrite_bytes(strings, sdslen(record->nameString), (uint8_t *)record->nameString);
+		}
+		size_t cafter = strings->cursor;
+		bufwrite16b(buf, cafter - cbefore);
+		bufwrite16b(buf, cbefore);
+	}
+	size_t stringsOffset = buf->cursor;
+	bufwrite_buf(buf, strings);
+	bufseek(buf, 4);
+	bufwrite16b(buf, stringsOffset);
+	buffree(strings);
+	return buf;
 }

@@ -37,9 +37,13 @@ int main(int argc, char *argv[]) {
 			font->OS_2 = caryll_OS_2_from_json(root);
 			font->maxp = caryll_maxp_from_json(root);
 			font->post = caryll_post_from_json(root);
+			font->name = caryll_name_from_json(root);
 			font->glyph_order = caryll_glyphorder_from_json(root);
 			font->cmap = caryll_cmap_from_json(root);
 			font->glyf = caryll_glyf_from_json(root, *font->glyph_order);
+			font->fpgm = caryll_fpgm_prep_from_json(root, "fpgm");
+			font->prep = caryll_fpgm_prep_from_json(root, "prep");
+			font->cvt_ = caryll_fpgm_prep_from_json(root, "cvt_");
 			push_stopwatch("Parse json to font", &begin);
 
 			json_value_free(root);
@@ -58,13 +62,17 @@ int main(int argc, char *argv[]) {
 				sfnt_builder_push_table(builder, 'hhea', caryll_write_hhea(font->hhea));
 				sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2));
 				sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
+				sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name));
 				sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
+				sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
+				sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm));
+				sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
+				sfnt_builder_push_table(builder, 'cvt ', caryll_write_fpgm_prep(font->cvt_));
 				sfnt_builder_push_table(builder, 'hmtx',
 				                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
 				                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
 				sfnt_builder_push_table(builder, 'loca', bufloca);
 				sfnt_builder_push_table(builder, 'glyf', bufglyf);
-				sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
 
 				caryll_buffer *otf = sfnt_builder_serialize(builder);
 				FILE *outfile = fopen(argv[2], "wb");

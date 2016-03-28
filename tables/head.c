@@ -2,7 +2,7 @@
 
 table_head *caryll_head_new() {
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));
-	head->magicNumber = 0xF50F3CF5;
+	head->magicNumber = 0x5f0f3cf5;
 	head->unitsPerEm = 1000;
 	return head;
 }
