@@ -5,6 +5,7 @@
 
 #include <getopt.h>
 #include "support/stopwatch.h"
+#include "version.h"
 
 void print_table(sfnt_builder_entry *t) {
 	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
@@ -53,11 +54,20 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (show_help) {
-		fprintf(stdout, "WIP\n");
+		fprintf(stdout, "otfccbuild version %s\n", VERSION);
+
+		fprintf(stdout, "\n"
+		                "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
+		                " -h, --help           : Display this help message and exit.\n"
+		                " -v, --version        : Display version information and exit.\n"
+		                " -o <file>            : Set output file path to <file>.\n"
+		                " --time               : Time each substep.\n"
+		                " --ignore-glyph-order : Ignore the glyph order information in the input, except for gid0.\n"
+		                " --ignore-hints       : Ignore the hinting information in the input.\n");
 		return 0;
 	}
 	if (show_version) {
-		fprintf(stdout, "0.0.1\n");
+		fprintf(stdout, "otfccbuild version %s\n", VERSION);
 		return 0;
 	}
 
@@ -141,9 +151,9 @@ int main(int argc, char *argv[]) {
 		sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name));
 		sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
 		sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
-		if(font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm));
-		if(font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
-		if(font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_fpgm_prep(font->cvt_));
+		if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm));
+		if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
+		if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_fpgm_prep(font->cvt_));
 		sfnt_builder_push_table(builder, 'hmtx',
 		                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
 		                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));

@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include "extern/json-builder.h"
 #include "support/stopwatch.h"
+#include "version.h"
 
 int main(int argc, char *argv[]) {
 	bool show_help = false;
@@ -57,11 +58,22 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (show_help) {
-		fprintf(stdout, "WIP\n");
+		fprintf(stdout, "otfccdump version %s\n", VERSION);
+		fprintf(stdout, "\n"
+		                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
+		                " -h, --help              : Display this help message and exit.\n"
+		                " -v, --version           : Display version information and exit.\n"
+		                " -o <file>               : Set output file path to <file>.\n"
+		                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font file.\n"
+		                " --pretty                : Prettify the output JSON.\n"
+		                " --ugly                  : Force uglify the output JSON.\n"
+		                " --time                  : Time each substep.\n"
+		                " --ignore-glyph-order    : Do not export glyph order information.\n"
+		                " --ignore-hints          : Do not export hingint information.\n");
 		return 0;
 	}
 	if (show_version) {
-		fprintf(stdout, "0.0.1\n");
+		fprintf(stdout, "otfccdump version %s\n", VERSION);
 		return 0;
 	}
 
