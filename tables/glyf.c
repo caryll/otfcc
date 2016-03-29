@@ -282,7 +282,7 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 		uint32_t length = table.length;
 		if (length < offsets[numGlyphs]) goto GLYF_CORRUPTED;
 
-		glyf = (table_glyf *)malloc(sizeof(table_glyf *));
+		glyf = malloc(sizeof(table_glyf));
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = malloc(sizeof(glyf_glyph) * numGlyphs);
 
@@ -332,8 +332,8 @@ void caryll_delete_glyf(table_glyf *table) {
 				free(g);
 			}
 		}
+		free(table->glyphs);
 	}
-	free(table->glyphs);
 	free(table);
 }
 
