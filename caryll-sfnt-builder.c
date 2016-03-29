@@ -33,13 +33,14 @@ static INLINE sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buf
 	return table;
 }
 
-sfnt_builder *sfnt_builder_new() {
+sfnt_builder *new_sfnt_builder() {
 	sfnt_builder *builder = malloc(sizeof(sfnt_builder));
 	builder->count = 0;
 	builder->tables = NULL;
 	return builder;
 }
-void sfnt_builder_delete(sfnt_builder *builder) {
+void delete_sfnt_builder(sfnt_builder *builder) {
+	if(!builder) return;
 	sfnt_builder_entry *item, *tmp;
 	HASH_ITER(hh, builder->tables, item, tmp) {
 		HASH_DEL(builder->tables, item);
@@ -49,6 +50,7 @@ void sfnt_builder_delete(sfnt_builder *builder) {
 	free(builder);
 }
 void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer *buffer) {
+	if(!builder) return;
 	sfnt_builder_entry *item;
 	HASH_FIND_INT(builder->tables, &tag, item);
 	if (!item) {

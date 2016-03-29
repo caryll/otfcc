@@ -18,6 +18,7 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/glyf.h"
 #include "./tables/cmap.h"
 #include "./tables/fpgm-prep.h"
+#include "./tables/gasp.h"
 
 #include "./tables/hdmx.h"
 #include "./tables/LTSH.h"
@@ -40,6 +41,7 @@ struct _caryll_font {
 	table_glyf *glyf;
 	cmap_hash *cmap;
 	table_name *name;
+	table_gasp *gasp;
 	
 	table_fpgm_prep *fpgm;
 	table_fpgm_prep *prep;
@@ -48,9 +50,12 @@ struct _caryll_font {
 	glyph_order_hash *glyph_order;
 };
 
-caryll_font *caryll_font_new();
-caryll_font *caryll_font_open(caryll_sfnt *sfnt, uint32_t index);
-void caryll_font_close(caryll_font *font);
+caryll_font *caryll_new_font();
+caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index);
+void caryll_delete_font(caryll_font *font);
+json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options dumpopts);
+caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options dumpopts);
+caryll_buffer *caryll_write_font(caryll_font *font);
 
 #include "fontops/unconsolidate.h"
 #include "fontops/consolidate.h"

@@ -28,7 +28,7 @@ static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
 	}
 }
 
-caryll_sfnt *caryll_sfnt_open(const char *path) {
+caryll_sfnt *caryll_read_sfnt(const char *path) {
 	caryll_sfnt *font = (caryll_sfnt *)malloc(sizeof(caryll_sfnt) * 1);
 	FILE *file = fopen(path, "rb");
 	if (!file) return NULL;
@@ -72,7 +72,7 @@ caryll_sfnt *caryll_sfnt_open(const char *path) {
 	return font;
 }
 
-void caryll_sfnt_close(caryll_sfnt *font) {
+void caryll_delete_sfnt(caryll_sfnt *font) {
 	if (font->count > 0) {
 		for (uint32_t count = 0; count < font->count; count++) {
 			for (int i = 0; i < font->packets[count].numTables; i++) {

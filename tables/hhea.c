@@ -1,6 +1,6 @@
 #include "hhea.h"
 
-table_hhea *caryll_hhea_new() {
+table_hhea *caryll_new_hhea() {
 	table_hhea *hhea = (table_hhea *)calloc(1, sizeof(table_hhea));
 	return hhea;
 }
@@ -57,7 +57,7 @@ void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_option
 }
 
 table_hhea *caryll_hhea_from_json(json_value *root, caryll_dump_options dumpopts) {
-	table_hhea *hhea = caryll_hhea_new();
+	table_hhea *hhea = caryll_new_hhea();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
 		hhea->version = json_obj_getnum_fallback(table, "version", 0);

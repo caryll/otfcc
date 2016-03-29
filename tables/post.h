@@ -20,7 +20,7 @@ typedef struct {
 	glyph_order_hash *post_name_map;
 } table_post;
 
-table_post *caryll_post_new();
+table_post *caryll_new_post();
 table_post *caryll_read_post(caryll_packet packet);
 void caryll_delete_post(table_post *table);
 void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_options dumpopts);

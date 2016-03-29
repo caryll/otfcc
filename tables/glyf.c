@@ -1,7 +1,7 @@
 #include "glyf.h"
 #include <math.h>
 
-glyf_glyph *caryll_glyf_new() {
+glyf_glyph *caryll_new_glyf_glhph() {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->numberOfContours = 0;
 	g->numberOfReferences = 0;
@@ -32,7 +32,7 @@ static INLINE glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint1
 }
 
 static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
-	glyf_glyph *g = caryll_glyf_new();
+	glyf_glyph *g = caryll_new_glyf_glhph();
 	g->numberOfContours = numberOfContours;
 	g->numberOfReferences = 0;
 
@@ -142,7 +142,7 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 }
 
 static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
-	glyf_glyph *g = caryll_glyf_new();
+	glyf_glyph *g = caryll_new_glyf_glhph();
 	g->numberOfContours = 0;
 	// pass 1, read references quantity
 	uint16_t flags;
@@ -290,7 +290,7 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
 			} else { // space glyph
-				glyf->glyphs[j] = caryll_glyf_new();
+				glyf->glyphs[j] = caryll_new_glyf_glhph();
 			}
 		}
 		goto PRESENT;
@@ -337,6 +337,7 @@ void caryll_delete_glyf(table_glyf *table) {
 	free(table);
 }
 
+// to json
 static INLINE json_value *coord_to_json(float z) {
 	if (roundf(z) == z) {
 		return json_integer_new(z);
@@ -416,6 +417,7 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_option
 	if (!dumpopts.ignore_glyph_order) caryll_glyphorder_to_json(table, root);
 }
 
+// from json
 static INLINE void glyf_point_from_json(glyf_point *point, json_value *pointdump) {
 	point->x = json_obj_getnum(pointdump, "x");
 	point->y = json_obj_getnum(pointdump, "y");
@@ -536,6 +538,7 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 	return NULL;
 }
 
+// serialize
 #define EPSILON (1e-5)
 static INLINE void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
 	caryll_buffer *flags = bufnew();

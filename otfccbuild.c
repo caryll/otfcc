@@ -123,20 +123,10 @@ int main(int argc, char *argv[]) {
 
 	caryll_font *font;
 	{
-		font = caryll_font_new();
-		font->glyph_order = caryll_glyphorder_from_json(root, dumpopts);
-		font->head = caryll_head_from_json(root, dumpopts);
-		font->hhea = caryll_hhea_from_json(root, dumpopts);
-		font->OS_2 = caryll_OS_2_from_json(root, dumpopts);
-		font->maxp = caryll_maxp_from_json(root, dumpopts);
-		font->post = caryll_post_from_json(root, dumpopts);
-		font->name = caryll_name_from_json(root, dumpopts);
-		font->cmap = caryll_cmap_from_json(root, dumpopts);
-		font->glyf = caryll_glyf_from_json(root, *font->glyph_order, dumpopts);
-		if (!dumpopts.ignore_hints) {
-			font->fpgm = caryll_fpgm_prep_from_json(root, "fpgm");
-			font->prep = caryll_fpgm_prep_from_json(root, "prep");
-			font->cvt_ = caryll_fpgm_prep_from_json(root, "cvt_");
+		font = caryll_font_from_json(root, dumpopts);
+		if (!font) {
+			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
+			exit(EXIT_FAILURE);
 		}
 		json_value_free(root);
 		if (show_time) push_stopwatch("Convert JSON to font", &begin);
@@ -147,36 +137,14 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Consolidation and Stating", &begin);
 	}
 	{
-		caryll_buffer *bufglyf = bufnew();
-		caryll_buffer *bufloca = bufnew();
-		caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
-
-		sfnt_builder *builder = sfnt_builder_new();
-		sfnt_builder_push_table(builder, 'head', caryll_write_head(font->head));
-		sfnt_builder_push_table(builder, 'hhea', caryll_write_hhea(font->hhea));
-		sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2));
-		sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
-		sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name));
-		sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
-		sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
-		if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm));
-		if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
-		if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_fpgm_prep(font->cvt_));
-		sfnt_builder_push_table(builder, 'hmtx',
-		                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
-		                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
-		sfnt_builder_push_table(builder, 'loca', bufloca);
-		sfnt_builder_push_table(builder, 'glyf', bufglyf);
-
-		caryll_buffer *otf = sfnt_builder_serialize(builder);
+		caryll_buffer *otf = caryll_write_font(font);
 		FILE *outfile = fopen(outputPath, "wb");
 		fwrite(otf->s, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);
 
-		sfnt_builder_delete(builder);
 		buffree(otf);
-		caryll_font_close(font);
+		caryll_delete_font(font);
 		if (show_time) push_stopwatch("Finalize", &begin);
 	}
 	return 0;

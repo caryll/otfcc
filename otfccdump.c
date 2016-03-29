@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
 
 	caryll_sfnt *sfnt;
 	{
-		sfnt = caryll_sfnt_open(inPath);
+		sfnt = caryll_read_sfnt(inPath);
 		if (!sfnt || sfnt->count == 0) {
 			fprintf(stderr, "Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -112,25 +112,20 @@ int main(int argc, char *argv[]) {
 
 	caryll_font *font;
 	{
-		font = caryll_font_open(sfnt, ttcindex);
+		font = caryll_read_font(sfnt, ttcindex);
+		if (!font) {
+			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
+			exit(EXIT_FAILURE);
+		}
 		if (show_time) push_stopwatch("Parse SFNT", &begin);
 	}
 
 	json_value *root;
 	{
-		root = json_object_new(12);
-		caryll_head_to_json(font->head, root, dumpopts);
-		caryll_hhea_to_json(font->hhea, root, dumpopts);
-		caryll_maxp_to_json(font->maxp, root, dumpopts);
-		caryll_name_to_json(font->name, root, dumpopts);
-		caryll_post_to_json(font->post, root, dumpopts);
-		caryll_OS_2_to_json(font->OS_2, root, dumpopts);
-		caryll_cmap_to_json(font->cmap, root, dumpopts);
-		caryll_glyf_to_json(font->glyf, root, dumpopts);
-		if (!dumpopts.ignore_hints) {
-			caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
-			caryll_fpgm_prep_to_json(font->prep, root, dumpopts, "prep");
-			caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
+		root = caryll_font_to_json(font, dumpopts);
+		if (!root) {
+			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
+			exit(EXIT_FAILURE);
 		}
 		if (show_time) push_stopwatch("Convert to JSON", &begin);
 	}
@@ -165,9 +160,9 @@ int main(int argc, char *argv[]) {
 
 	{
 		free(buf);
-		json_builder_free(root);
-		caryll_font_close(font);
-		caryll_sfnt_close(sfnt);
+		if (root) json_builder_free(root);
+		if (font) caryll_delete_font(font);
+		if (sfnt) caryll_delete_sfnt(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);
 		if (show_time) push_stopwatch("Complete", &begin);

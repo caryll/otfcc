@@ -10,8 +10,8 @@
 
 int main(int argc, char *argv[]) {
 	printf("Testing Payload %s\n", argv[1]);
-	caryll_sfnt *sfnt = caryll_sfnt_open(argv[1]);
-	caryll_font *font = caryll_font_open(sfnt, 0);
+	caryll_sfnt *sfnt = caryll_read_sfnt(argv[1]);
+	caryll_font *font = caryll_read_font(sfnt, 0);
 
 	int nChecks = 0;
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 		assert_equal("Name item 13 should be 'http://www.apache.org/licenses/LICENSE-2.0.html'", strcmp(font->name->records[13]->nameString, "http://www.apache.org/licenses/LICENSE-2.0.html"), 0);
 	}
 
-	caryll_font_close(font);
-	caryll_sfnt_close(sfnt);
+	caryll_delete_font(font);
+	caryll_delete_sfnt(sfnt);
 	return 0;
 }

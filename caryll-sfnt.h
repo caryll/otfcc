@@ -27,7 +27,7 @@ typedef struct {
 	caryll_packet *packets;
 } caryll_sfnt;
 
-caryll_sfnt *caryll_sfnt_open(const char *path);
-void caryll_sfnt_close(caryll_sfnt *font);
+caryll_sfnt *caryll_read_sfnt(const char *path);
+void caryll_delete_sfnt(caryll_sfnt *font);
 
 #endif

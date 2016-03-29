@@ -1,18 +1,25 @@
 #include "fpgm-prep.h"
 
 table_fpgm_prep *caryll_read_fpgm_prep(caryll_packet packet, uint32_t tag) {
+	table_fpgm_prep *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		table_fpgm_prep *table = malloc(sizeof(table_fpgm_prep));
-		table->length = length;
-		table->bytes = malloc(sizeof(uint8_t) * length);
-		memcpy(table->bytes, data, length);
-		return table;
+		t = malloc(sizeof(table_fpgm_prep));
+		if (!t) goto FAIL;
+		t->length = length;
+		t->bytes = malloc(sizeof(uint8_t) * length);
+		if (!t->bytes) goto FAIL;
+		memcpy(t->bytes, data, length);
+		return t;
+	FAIL:
+		caryll_delete_fpgm_prep(t);
+		t = NULL;
 	}
 	return NULL;
 }
 void caryll_delete_fpgm_prep(table_fpgm_prep *table) {
+	if (!table) return;
 	if (table->bytes) free(table->bytes);
 	free(table);
 }
@@ -29,8 +36,10 @@ table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, const char *tag) {
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, tag, json_array))) {
 		t = malloc(sizeof(table_fpgm_prep));
+		if (!t) goto FAIL;
 		t->length = table->u.array.length;
 		t->bytes = malloc(sizeof(uint8_t) * t->length);
+		if (!t->bytes) goto FAIL;
 		for (uint32_t j = 0; j < table->u.array.length; j++) {
 			json_value *v = table->u.array.values[j];
 			if (v->type == json_integer) {
@@ -41,6 +50,9 @@ table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, const char *tag) {
 		}
 	}
 	return t;
+FAIL:
+	if (t) caryll_delete_fpgm_prep(t);
+	return NULL;
 }
 
 caryll_buffer *caryll_write_fpgm_prep(table_fpgm_prep *table) {

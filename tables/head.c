@@ -1,6 +1,6 @@
 #include "head.h"
 
-table_head *caryll_head_new() {
+table_head *caryll_new_head() {
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));
 	head->magicNumber = 0x5f0f3cf5;
 	head->unitsPerEm = 1000;
@@ -61,7 +61,7 @@ void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_option
 }
 
 table_head *caryll_head_from_json(json_value *root, caryll_dump_options dumpopts) {
-	table_head *head = caryll_head_new();
+	table_head *head = caryll_new_head();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
 		head->version = json_obj_getnum_fallback(table, "version", 0);

@@ -85,7 +85,7 @@ typedef struct {
 #define USE_MY_METRICS (1 << 9)
 #define OVERLAP_COMPOUND (1 << 10)
 
-glyf_glyph *caryll_glyf_new();
+glyf_glyph *caryll_new_glyf_glhph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options dumpopts);

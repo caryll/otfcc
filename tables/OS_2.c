@@ -1,6 +1,6 @@
 #include "OS_2.h"
 
-table_OS_2 *caryll_OS_2_new() {
+table_OS_2 *caryll_new_OS_2() {
 	table_OS_2 *os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));
 	return os_2;
 }
@@ -127,7 +127,8 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_option
 }
 
 table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options dumpopts) {
-	table_OS_2 *os_2 = caryll_OS_2_new();
+	table_OS_2 *os_2 = caryll_new_OS_2();
+	if (!os_2) return NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "OS_2", json_object))) {
 		os_2->version = json_obj_getnum_fallback(table, "version", 0);
@@ -228,13 +229,13 @@ caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2) {
 	bufwrite16b(buf, os_2->usWinDescent);
 	bufwrite32b(buf, os_2->ulCodePageRange1);
 	bufwrite32b(buf, os_2->ulCodePageRange2);
-	if(os_2->version < 2) return buf;
+	if (os_2->version < 2) return buf;
 	bufwrite16b(buf, os_2->sxHeight);
 	bufwrite16b(buf, os_2->sCapHeight);
 	bufwrite16b(buf, os_2->usDefaultChar);
 	bufwrite16b(buf, os_2->usBreakChar);
 	bufwrite16b(buf, os_2->usMaxContext);
-	if(os_2->version < 5) return buf;
+	if (os_2->version < 5) return buf;
 	bufwrite16b(buf, os_2->usLowerOpticalPointSize);
 	bufwrite16b(buf, os_2->usUpperOpticalPointSize);
 	return buf;

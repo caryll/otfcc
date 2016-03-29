@@ -1,6 +1,6 @@
 #include "maxp.h"
 
-table_maxp *caryll_maxp_new() {
+table_maxp *caryll_new_maxp() {
 	table_maxp *maxp = calloc(1, sizeof(table_maxp));
 	maxp->version = 0x00001000;
 	return maxp;
@@ -75,7 +75,7 @@ void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_option
 }
 
 table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options dumpopts) {
-	table_maxp *maxp = caryll_maxp_new();
+	table_maxp *maxp = caryll_new_maxp();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {
 		maxp->version = json_obj_getnum(table, "version");
