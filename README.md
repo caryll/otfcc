@@ -9,7 +9,7 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 
 ## `otfcc` command line tool
 
-### `otfccdump` : Dumps a OpenType font file into JSON
+### `otfccdump` : Dumps an OpenType font file into JSON
 ``` bash
 otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
