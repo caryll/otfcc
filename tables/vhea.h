@@ -5,7 +5,6 @@
 #include "../caryll-sfnt.h"
 
 typedef struct {
-	// Vertical Metrics header
 	uint32_t version;
 	int16_t ascent;
 	int16_t descent;
@@ -17,11 +16,17 @@ typedef struct {
 	int16_t caretSlopeRise;
 	int16_t caretSlopeRun;
 	int16_t caretOffset;
-	int16_t dummy[4];
+	int16_t dummy0;
+	int16_t dummy1;
+	int16_t dummy2;
+	int16_t dummy3;
 	int16_t metricDataFormat;
-	uint16_t numOf;
+	uint16_t numOfLongVerMetrics;
 } table_vhea;
 
+table_vhea *caryll_new_vhea();
 table_vhea *caryll_read_vhea(caryll_packet packet);
-
+void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_dump_options dumpopts);
+table_vhea *caryll_vhea_from_json(json_value *root, caryll_dump_options dumpopts);
+caryll_buffer *caryll_write_vhea(table_vhea *vhea);
 #endif

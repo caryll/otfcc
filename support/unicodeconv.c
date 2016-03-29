@@ -37,7 +37,6 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 		}
 	}
 	in = (uint16_t *)inb;
-	const uint8_t *processed = inb;
 	sds out = sdsnewlen("", bytesNeeded);
 	sds out0 = out;
 
@@ -71,7 +70,6 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 		for (; bits >= 0; bits -= 6) {
 			*out++ = ((c >> bits) & 0x3F) | 0x80;
 		}
-		processed = (const uint8_t *)in;
 	}
 	return out0;
 }
@@ -122,7 +120,6 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 		}
 	}
 	in = (uint16_t *)inb;
-	const uint8_t *processed = inb;
 	sds out = sdsnewlen("", bytesNeeded);
 	sds out0 = out;
 
@@ -168,7 +165,6 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 		for (; bits >= 0; bits -= 6) {
 			*out++ = ((c >> bits) & 0x3F) | 0x80;
 		}
-		processed = (const uint8_t *)in;
 	}
 	return out0;
 }

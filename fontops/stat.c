@@ -136,6 +136,7 @@ void caryll_stat_maxp(caryll_font *font) {
 void caryll_font_stat_hmtx(caryll_font *font) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
+	if(!hmtx) return;
 	hmtx->metrics = malloc(sizeof(horizontal_metric) * font->glyf->numberGlyphs);
 	hmtx->leftSideBearing = NULL;
 	int16_t minLSB = 0x7FFF;

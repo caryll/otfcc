@@ -34,18 +34,18 @@ struct _caryll_font {
 	table_hmtx *hmtx;
 	table_post *post;
 	table_hdmx *hdmx;
-	table_LTSH *LTSH;
-	table_PCLT *PCLT;
+
 	table_vhea *vhea;
 	table_vmtx *vmtx;
+
 	table_glyf *glyf;
 	cmap_hash *cmap;
 	table_name *name;
-	table_gasp *gasp;
 	
 	table_fpgm_prep *fpgm;
 	table_fpgm_prep *prep;
 	table_fpgm_prep *cvt_;
+	table_gasp *gasp;
 
 	glyph_order_hash *glyph_order;
 };

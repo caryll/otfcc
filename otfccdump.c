@@ -160,8 +160,8 @@ int main(int argc, char *argv[]) {
 
 	{
 		free(buf);
-		if (root) json_builder_free(root);
 		if (font) caryll_delete_font(font);
+		if (root) json_builder_free(root);
 		if (sfnt) caryll_delete_sfnt(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);

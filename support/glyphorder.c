@@ -33,6 +33,10 @@ void delete_glyph_order_map(glyph_order_hash *map) {
 	free(map);
 }
 
+static int dump_order_type_glyphorder = 1;
+static int dump_order_dotnotdef = 2;
+static int dump_order_type_cmap = 3;
+static int dump_order_type_glyf = 4;
 static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table,
                                                        caryll_dump_options dumpopts) {
 	uint32_t uplimit = table->u.array.length;

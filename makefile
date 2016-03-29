@@ -3,8 +3,11 @@ LINK = clang
 
 ifeq ($(VERSION), debug)
 CFLAGS = -g -Ddebug
+CFLAGS_EXTERN = -g -Ddebug
+LINKFLAGS = -g -Ddebug
 else
-CFLAGS = -O3 -Wall
+CFLAGS = -O3 -Wall -Wno-multichar
+CFLAGS_EXTERN = -O3
 endif
 
 all : objects
@@ -33,7 +36,7 @@ TARGETS = build/otfccdump$(SUFFIX) build/otfccbuild$(SUFFIX)
 OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS)
 
 $(EXTERN_OBJECTS) : build/extern-%.o : extern/%.c | build
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS_EXTERN) -c $< -o $@
 
 SUPPORT_H = $(subst .o,.h,$(subst build/support-,support/,$(SUPPORT_OBJECTS))) support/util.h
 $(SUPPORT_OBJECTS) : build/support-%.o : support/%.c | build
@@ -52,7 +55,7 @@ $(MAIN_OBJECTS) : build/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(FONTOPS_H
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TARGETS): build/%$(SUFFIX) : build/%.o $(OBJECTS)
-	$(LINK) $^ -o $@ -lm
+	$(LINK) $(LINKFLAGS) $^ -o $@ -lm
 
 objects: $(TARGETS)
 
@@ -60,7 +63,7 @@ TESTFILES = build/test-payload-1$(SUFFIX) build/test-buffer$(SUFFIX)
 build/%.o : tests/%.c | build
 	$(CC) $(CFLAGS) -c $^ -o $@
 build/%$(SUFFIX) : build/%.o $(OBJECTS)
-	$(LINK) $^ -o $@ -lm
+	$(LINK) $(LINKFLAGS) $^ -o $@ -lm
 
 test: $(TESTFILES)
 	@echo "====== Start Test ======"
