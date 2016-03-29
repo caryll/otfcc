@@ -6,6 +6,23 @@
 #include "support/stopwatch.h"
 #include "version.h"
 
+void printInfo() {
+	fprintf(stdout, "This is otfccdump, version %s.\n", VERSION);
+}
+void printHelp() {
+	fprintf(stdout, "\n"
+	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
+	                " -h, --help              : Display this help message and exit.\n"
+	                " -v, --version           : Display version information and exit.\n"
+	                " -o <file>               : Set output file path to <file>.\n"
+	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font file.\n"
+	                " --pretty                : Prettify the output JSON.\n"
+	                " --ugly                  : Force uglify the output JSON.\n"
+	                " --time                  : Time each substep.\n"
+	                " --ignore-glyph-order    : Do not export glyph order information.\n"
+	                " --ignore-hints          : Do not export hingint information.\n");
+}
+
 int main(int argc, char *argv[]) {
 	bool show_help = false;
 	bool show_version = false;
@@ -58,27 +75,18 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (show_help) {
-		fprintf(stdout, "This is otfccdump, version %s.\n", VERSION);
-		fprintf(stdout, "\n"
-		                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
-		                " -h, --help              : Display this help message and exit.\n"
-		                " -v, --version           : Display version information and exit.\n"
-		                " -o <file>               : Set output file path to <file>.\n"
-		                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font file.\n"
-		                " --pretty                : Prettify the output JSON.\n"
-		                " --ugly                  : Force uglify the output JSON.\n"
-		                " --time                  : Time each substep.\n"
-		                " --ignore-glyph-order    : Do not export glyph order information.\n"
-		                " --ignore-hints          : Do not export hingint information.\n");
+		printInfo();
+		printHelp();
 		return 0;
 	}
 	if (show_version) {
-		fprintf(stdout, "This is otfccdump, version %s.\n", VERSION);
+		printInfo();
 		return 0;
 	}
 
 	if (optind >= argc) {
-		fprintf(stderr, "Expected argument after options\n");
+		fprintf(stderr, "Expected argument for input file name.\n");
+		printHelp();
 		exit(EXIT_FAILURE);
 	} else {
 		inPath = sdsnew(argv[optind]);

@@ -7,6 +7,20 @@
 #include "support/stopwatch.h"
 #include "version.h"
 
+void printInfo() {
+	fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION);
+}
+void printHelp() {
+	fprintf(stdout, "\n"
+	                "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
+	                " -h, --help           : Display this help message and exit.\n"
+	                " -v, --version        : Display version information and exit.\n"
+	                " -o <file>            : Set output file path to <file>.\n"
+	                " --time               : Time each substep.\n"
+	                " --ignore-glyph-order : Ignore the glyph order information in the input, except for gid0.\n"
+	                " --ignore-hints       : Ignore the hinting information in the input.\n");
+}
+
 void print_table(sfnt_builder_entry *t) {
 	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
 	        ((uint32_t)(t->tag) >> 16) & 0xff, ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
@@ -54,31 +68,25 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (show_help) {
-		fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION);
-
-		fprintf(stdout, "\n"
-		                "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
-		                " -h, --help           : Display this help message and exit.\n"
-		                " -v, --version        : Display version information and exit.\n"
-		                " -o <file>            : Set output file path to <file>.\n"
-		                " --time               : Time each substep.\n"
-		                " --ignore-glyph-order : Ignore the glyph order information in the input, except for gid0.\n"
-		                " --ignore-hints       : Ignore the hinting information in the input.\n");
+		printInfo();
+		printHelp();
 		return 0;
 	}
 	if (show_version) {
-		fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION);
+		printInfo();
 		return 0;
 	}
 
 	if (optind >= argc) {
 		fprintf(stderr, "Expected argument after options for input file name. Exit.\n");
+		printHelp();
 		exit(EXIT_FAILURE);
 	} else {
 		inPath = sdsnew(argv[optind]);
 	}
 	if (!outputPath) {
 		fprintf(stderr, "Unable to build OpenType font tile : output path not specified. Exit.\n");
+		printHelp();
 		exit(EXIT_FAILURE);
 	}
 
