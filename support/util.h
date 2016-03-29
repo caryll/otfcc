@@ -258,6 +258,7 @@ typedef struct {
 typedef struct {
 	bool ignore_glyph_order;
 	bool ignore_hints;
+	bool has_vertical_metrics;
 } caryll_dump_options;
 
 #endif

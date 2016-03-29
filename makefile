@@ -25,7 +25,8 @@ TABLE_OBJECTS = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-hmtx.o build/table-post.o build/table-hdmx.o \
 	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
 	build/table-OS_2.o build/table-glyf.o build/table-cmap.o \
-	build/table-name.o build/table-fpgm-prep.o build/table-gasp.o
+	build/table-name.o build/table-fpgm-prep.o build/table-gasp.o \
+	build/table-vmtx.o
 FONTOP_OBJECTS = build/fontop-unconsolidate.o build/fontop-consolidate.o build/fontop-stat.o
 EXTERN_OBJECTS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
 SUPPORT_OBJECTS = build/support-glyphorder.o build/support-aglfn.o \

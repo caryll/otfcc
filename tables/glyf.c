@@ -11,6 +11,8 @@ glyf_glyph *caryll_new_glyf_glhph() {
 	g->references = NULL;
 	g->advanceWidth = 0;
 	g->name = NULL;
+	g->advanceHeight = 0;
+	g->verticalOrigin = 0;
 	g->stat.xMin = 0;
 	g->stat.xMax = 0;
 	g->stat.yMin = 0;
@@ -236,11 +238,17 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 static INLINE glyf_glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	font_file_pointer start = data + offset;
 	int16_t numberOfContours = caryll_blt16u(start);
+	glyf_glyph *g;
 	if (numberOfContours > 0) {
-		return caryll_read_simple_glyph(start + 10, numberOfContours);
+		g = caryll_read_simple_glyph(start + 10, numberOfContours);
 	} else {
-		return caryll_read_composite_glyph(start + 10);
+		g = caryll_read_composite_glyph(start + 10);
 	}
+	g->stat.xMin = caryll_blt16s(start + 2);
+	g->stat.yMin = caryll_blt16s(start + 4);
+	g->stat.xMax = caryll_blt16s(start + 6);
+	g->stat.yMax = caryll_blt16s(start + 8);
+	return g;
 }
 
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp) {
@@ -387,9 +395,13 @@ static INLINE json_value *glyf_glyph_instructions_to_json(glyf_glyph *g, caryll_
 	return instructions;
 }
 static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options dumpopts) {
-	json_value *glyph = json_object_new(4);
+	json_value *glyph = json_object_new(7);
 	json_object_push(glyph, "name", json_string_new_length(sdslen(g->name), g->name));
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
+	if(dumpopts.has_vertical_metrics){
+		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
+		json_object_push(glyph, "verticalOrigin", json_integer_new(g->verticalOrigin));
+	}
 	json_object_push(glyph, "contours", glyf_glyph_contours_to_json(g, dumpopts));
 	json_object_push(glyph, "references", glyf_glyph_references_to_json(g, dumpopts));
 	if (!dumpopts.ignore_hints) {
@@ -503,6 +515,8 @@ static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, gly
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->name = order_entry->name;
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
+	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");
+	g->verticalOrigin = json_obj_getint(glyphdump, "verticalOrigin");
 	glyf_contours_from_json(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_references_from_json(json_obj_get_type(glyphdump, "references", json_array), g);
 	if (!dumpopts.ignore_hints) {

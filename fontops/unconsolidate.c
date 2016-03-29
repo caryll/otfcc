@@ -69,9 +69,23 @@ void caryll_name_glyf(caryll_font *font) {
 }
 void caryll_font_unconsolidate(caryll_font *font) {
 	// Merge hmtx table into glyf.
-	uint32_t count_a = font->hhea->numberOfMetrics;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		font->glyf->glyphs[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+	if (font->hhea && font->hmtx) {
+		uint32_t count_a = font->hhea->numberOfMetrics;
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			font->glyf->glyphs[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+		}
+	}
+	// Merge vmtx table into glyf.
+	if (font->vhea && font->vmtx) {
+		uint32_t count_a = font->vhea->numOfLongVerMetrics;
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			font->glyf->glyphs[j]->advanceHeight = font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
+			if (j < count_a) {
+				font->glyf->glyphs[j]->verticalOrigin = font->vmtx->metrics[j].tsb + font->glyf->glyphs[j]->stat.yMax;
+			} else {
+				font->glyf->glyphs[j]->verticalOrigin = font->vmtx->topSideBearing[j - count_a] + font->glyf->glyphs[j]->stat.yMax;
+			}
+		}
 	}
 
 	// Name glyphs

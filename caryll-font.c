@@ -63,6 +63,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->hmtx = caryll_read_hmtx(packet, font->hhea, font->maxp);
 		font->hdmx = caryll_read_hdmx(packet, font->maxp);
 		font->vhea = caryll_read_vhea(packet);
+		if (font->vhea) font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
 		font->cmap = caryll_read_cmap(packet);
 		font->fpgm = caryll_read_fpgm_prep(packet, 'fpgm');
 		font->prep = caryll_read_fpgm_prep(packet, 'prep');
@@ -70,7 +71,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->gasp = caryll_read_gasp(packet);
 
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
-		
+
 		caryll_font_unconsolidate(font);
 		return font;
 	}
@@ -78,6 +79,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 
 json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options dumpopts) {
 	json_value *root = json_object_new(48);
+	dumpopts.has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	if (!root) return NULL;
 	caryll_head_to_json(font->head, root, dumpopts);
 	caryll_hhea_to_json(font->hhea, root, dumpopts);
@@ -140,8 +142,13 @@ caryll_buffer *caryll_write_font(caryll_font *font) {
 	if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
 	if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_fpgm_prep(font->cvt_));
 	if (font->gasp) sfnt_builder_push_table(builder, 'gasp', caryll_write_gasp(font->gasp));
-	
+
 	if (font->vhea) sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea));
+	if (font->vmtx) {
+		sfnt_builder_push_table(builder, 'vmtx',
+		                        caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
+		                                          font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics));
+	}
 	caryll_buffer *otf = sfnt_builder_serialize(builder);
 	delete_sfnt_builder(builder);
 	return otf;

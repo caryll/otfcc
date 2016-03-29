@@ -136,28 +136,90 @@ void caryll_stat_maxp(caryll_font *font) {
 void caryll_font_stat_hmtx(caryll_font *font) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
-	if(!hmtx) return;
-	hmtx->metrics = malloc(sizeof(horizontal_metric) * font->glyf->numberGlyphs);
-	hmtx->leftSideBearing = NULL;
+	if (!hmtx) return;
+	uint16_t count_a = font->glyf->numberGlyphs;
+	while (count_a > 2 &&
+	       font->glyf->glyphs[count_a - 1]->advanceWidth == font->glyf->glyphs[count_a - 2]->advanceWidth) {
+		count_a--;
+	}
+	int16_t count_k = font->glyf->numberGlyphs - count_a;
+	hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
+	if (count_k > 0) {
+		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
+	} else {
+		hmtx->leftSideBearing = NULL;
+	}
 	int16_t minLSB = 0x7FFF;
 	int16_t minRSB = 0x7FFF;
 	int16_t maxExtent = -0x8000;
 	uint16_t maxWidth = 0;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
-		if (hmtx->metrics[j].advanceWidth > maxWidth) maxWidth = hmtx->metrics[j].advanceWidth;
-		hmtx->metrics[j].lsb = font->glyf->glyphs[j]->stat.xMin;
-		if (hmtx->metrics[j].lsb < minLSB) minLSB = hmtx->metrics[j].lsb;
-		int16_t rsb = font->glyf->glyphs[j]->advanceWidth - font->glyf->glyphs[j]->stat.xMax;
+		uint16_t advanceWidth = font->glyf->glyphs[j]->advanceWidth;
+		int16_t lsb = font->glyf->glyphs[j]->stat.xMin;
+		int16_t rsb = advanceWidth - font->glyf->glyphs[j]->stat.xMax;
+
+		if (j < count_a) {
+			hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
+			hmtx->metrics[j].lsb = font->glyf->glyphs[j]->stat.xMin;
+		} else {
+			hmtx->leftSideBearing[j - count_a] = lsb;
+		}
+
+		if (advanceWidth > maxWidth) maxWidth = advanceWidth;
+		if (lsb < minLSB) minLSB = lsb;
 		if (rsb < minRSB) minRSB = rsb;
 		if (font->glyf->glyphs[j]->stat.xMax > maxExtent) maxExtent = font->glyf->glyphs[j]->stat.xMax;
 	}
-	font->hhea->numberOfMetrics = font->glyf->numberGlyphs;
+	font->hhea->numberOfMetrics = count_a;
 	font->hhea->minLeftSideBearing = minLSB;
 	font->hhea->minRightSideBearing = minRSB;
 	font->hhea->xMaxExtent = maxExtent;
 	font->hhea->advanceWithMax = maxWidth;
 	font->hmtx = hmtx;
+}
+void caryll_font_stat_vmtx(caryll_font *font) {
+	if (!font->glyf) return;
+	table_vmtx *vmtx = malloc(sizeof(table_vmtx) * 1);
+	if (!vmtx) return;
+	uint16_t count_a = font->glyf->numberGlyphs;
+	while (count_a > 2 &&
+	       font->glyf->glyphs[count_a - 1]->advanceHeight == font->glyf->glyphs[count_a - 2]->advanceHeight) {
+		count_a--;
+	}
+	int16_t count_k = font->glyf->numberGlyphs - count_a;
+	vmtx->metrics = malloc(sizeof(vertical_metric) * count_a);
+	if (count_k > 0) {
+		vmtx->topSideBearing = malloc(sizeof(int16_t) * count_k);
+	} else {
+		vmtx->topSideBearing = NULL;
+	}
+
+	int16_t minTSB = 0x7FFF;
+	int16_t minBSB = 0x7FFF;
+	int16_t maxExtent = -0x8000;
+	uint16_t maxHeight = 0;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		glyf_glyph *g = font->glyf->glyphs[j];
+		uint16_t advanceHeight = g->advanceHeight;
+		int16_t tsb = g->verticalOrigin - g->stat.yMax;
+		int16_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
+		if (j < count_a) {
+			vmtx->metrics[j].advanceHeight = advanceHeight;
+			vmtx->metrics[j].tsb = tsb;
+		} else {
+			vmtx->topSideBearing[j - count_a] = tsb;
+		}
+		if (advanceHeight > maxHeight) maxHeight = advanceHeight;
+		if (tsb < minTSB) minTSB = tsb;
+		if (bsb < minBSB) minBSB = bsb;
+		if (g->verticalOrigin - g->stat.yMin > maxExtent) maxExtent = g->verticalOrigin - g->stat.yMin;
+	}
+	font->vhea->numOfLongVerMetrics = count_a;
+	font->vhea->minTop = minTSB;
+	font->vhea->minBottom = minBSB;
+	font->vhea->yMaxExtent = maxExtent;
+	font->vhea->advanceHeightMax = maxHeight;
+	font->vmtx = vmtx;
 }
 void caryll_font_stat(caryll_font *font) {
 	if (font->glyf && font->head) caryll_stat_glyf(font);
@@ -169,4 +231,5 @@ void caryll_font_stat(caryll_font *font) {
 		font->maxp->maxSizeOfInstructions = font->prep->length;
 	}
 	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
+	if (font->glyf && font->vhea) caryll_font_stat_vmtx(font);
 }

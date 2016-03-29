@@ -52,7 +52,12 @@ typedef struct {
 	uint16_t numberOfReferences;
 	uint16_t instructionsLength;
 	uint8_t *instructions;
+	
+	// horizontal metric
 	uint16_t advanceWidth;
+	// vertical metric
+	float verticalOrigin;
+	uint16_t advanceHeight;
 
 	// NOTE: SFNT does not support mixed glyphs, but we do.
 	glyf_contour *contours;
