@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (show_help) {
-		fprintf(stdout, "otfccbuild version %s\n", VERSION);
+		fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION);
 
 		fprintf(stdout, "\n"
 		                "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 	if (show_version) {
-		fprintf(stdout, "otfccbuild version %s\n", VERSION);
+		fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION);
 		return 0;
 	}
 

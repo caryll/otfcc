@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	if (show_help) {
-		fprintf(stdout, "otfccdump version %s\n", VERSION);
+		fprintf(stdout, "This is otfccdump, version %s.\n", VERSION);
 		fprintf(stdout, "\n"
 		                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
 		                " -h, --help              : Display this help message and exit.\n"
@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 		return 0;
 	}
 	if (show_version) {
-		fprintf(stdout, "otfccdump version %s\n", VERSION);
+		fprintf(stdout, "This is otfccdump, version %s.\n", VERSION);
 		return 0;
 	}
 
