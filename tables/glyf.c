@@ -391,7 +391,7 @@ static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options 
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
 	json_object_push(glyph, "contours", glyf_glyph_contours_to_json(g, dumpopts));
 	json_object_push(glyph, "references", glyf_glyph_references_to_json(g, dumpopts));
-	if (!dumpopts.ignore_instructions) {
+	if (!dumpopts.ignore_hints) {
 		json_object_push(glyph, "instructions", glyf_glyph_instructions_to_json(g, dumpopts));
 	}
 	return glyph;
@@ -496,17 +496,23 @@ static INLINE void glyf_instructions_from_json(json_value *col, glyf_glyph *g) {
 			g->instructions[j] = byte->u.dbl;
 	}
 }
-static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_order_entry *order_entry) {
+static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_order_entry *order_entry,
+                                                      caryll_dump_options dumpopts) {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->name = order_entry->name;
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	glyf_contours_from_json(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_references_from_json(json_obj_get_type(glyphdump, "references", json_array), g);
-	glyf_instructions_from_json(json_obj_get_type(glyphdump, "instructions", json_array), g);
+	if (!dumpopts.ignore_hints) {
+		glyf_instructions_from_json(json_obj_get_type(glyphdump, "instructions", json_array), g);
+	} else {
+		g->instructionsLength = 0;
+		g->instructions = NULL;
+	}
 	return g;
 }
 
-table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order) {
+table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, caryll_dump_options dumpopts) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -521,7 +527,7 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 			glyph_order_entry *order_entry;
 			HASH_FIND_STR(glyph_order, gname, order_entry);
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
-				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump, order_entry);
+				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump, order_entry, dumpopts);
 			}
 			sdsfree(gname);
 		}
@@ -530,268 +536,144 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 	return NULL;
 }
 
-typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
-
-glyf_glyph_stat stat_single_glyph(table_glyf *table, glyf_reference *gr, stat_status *stated, uint8_t depth,
-                                  uint16_t topj) {
-	glyf_glyph_stat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-	uint16_t j = gr->glyph.gid;
-	if (depth >= 0xFF) return stat;
-	if (stated[j] == stat_doing) {
-		// We have a circular reference
-		fprintf(stderr, "[Stat] Circular glyph reference found in gid %d to gid %d. The reference will be dropped.\n",
-		        topj, j);
-		stated[j] = stat_completed;
-		return stat;
-	}
-
-	glyf_glyph *g = table->glyphs[gr->glyph.gid];
-	stated[j] = stat_doing;
-	float xmin = 0xFFFF;
-	float xmax = -0xFFFF;
-	float ymin = 0xFFFF;
-	float ymax = -0xFFFF;
-	uint16_t nestDepth = 0;
-	uint16_t nPoints = 0;
-	uint16_t nCompositePoints = 0;
-	uint16_t nCompositeContours = 0;
-	// Stat xmin, xmax, ymin, ymax
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		for (uint16_t pj = 0; pj < g->contours[c].pointsCount; pj++) {
-			// Stat point coordinates USING the matrix transformation
-			glyf_point *p = &(g->contours[c].points[pj]);
-			float x = gr->x + gr->a * p->x + gr->b * p->y;
-			float y = gr->y + gr->c * p->x + gr->d * p->y;
-			if (x < xmin) xmin = x;
-			if (x > xmax) xmax = x;
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
-			nPoints += 1;
-		}
-	}
-	nCompositePoints = nPoints;
-	nCompositeContours = g->numberOfContours;
-	for (uint16_t r = 0; r < g->numberOfReferences; r++) {
-		glyf_reference ref;
-		glyf_reference *rr = &(g->references[r]);
-		ref.glyph.gid = g->references[r].glyph.gid;
-		ref.glyph.name = NULL;
-		// composite affine transformations
-		ref.a = gr->a * rr->a + rr->b * gr->c;
-		ref.b = rr->a * gr->b + rr->b * gr->d;
-		ref.c = gr->a * rr->c + gr->c * rr->d;
-		ref.d = gr->b * rr->c + rr->d * gr->d;
-		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
-		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
-
-		glyf_glyph_stat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj);
-		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
-		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
-		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
-		if (thatstat.yMax > ymax) ymax = thatstat.yMax;
-		if (thatstat.nestDepth + 1 > nestDepth) nestDepth = thatstat.nestDepth + 1;
-		nCompositePoints += thatstat.nCompositePoints;
-		nCompositeContours += thatstat.nCompositeContours;
-	}
-	stat.xMin = xmin;
-	stat.xMax = xmax;
-	stat.yMin = ymin;
-	stat.yMax = ymax;
-	stat.nestDepth = nestDepth;
-	stat.nPoints = nPoints;
-	stat.nContours = g->numberOfContours;
-	stat.nCompositePoints = nCompositePoints;
-	stat.nCompositeContours = nCompositeContours;
-	stated[j] = stat_completed;
-	return stat;
-}
-
-void caryll_stat_glyf(table_glyf *table, table_head *head, table_maxp *maxp) {
-	stat_status *stated = calloc(table->numberGlyphs, sizeof(stat_status));
-	float xmin = 0xFFFF;
-	float xmax = -0xFFFF;
-	float ymin = 0xFFFF;
-	float ymax = -0xFFFF;
-	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-		glyf_reference gr;
-		gr.glyph.gid = j;
-		gr.glyph.name = NULL;
-		gr.x = 0;
-		gr.y = 0;
-		gr.a = 1;
-		gr.b = 0;
-		gr.c = 0;
-		gr.d = 1;
-		glyf_glyph_stat thatstat = table->glyphs[j]->stat = stat_single_glyph(table, &gr, stated, 0, j);
-		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
-		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
-		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
-		if (thatstat.yMax > ymax) ymax = thatstat.yMax;
-	}
-	free(stated);
-	head->xMin = xmin;
-	head->xMax = xmax;
-	head->yMin = ymin;
-	head->yMax = ymax;
-	maxp->numGlyphs = table->numberGlyphs;
-	if (maxp->version == 0x10000) {
-		uint16_t nestDepth = 0;
-		uint16_t nPoints = 0;
-		uint16_t nContours = 0;
-		uint16_t nComponents = 0;
-		uint16_t nCompositePoints = 0;
-		uint16_t nCompositeContours = 0;
-		uint16_t instSize = 0;
-		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-			glyf_glyph *g = table->glyphs[j];
-			if (g->numberOfContours > 0) {
-				if (g->stat.nPoints > nPoints) nPoints = g->stat.nPoints;
-				if (g->stat.nContours > nContours) nContours = g->stat.nContours;
-			} else if (g->numberOfReferences > 0) {
-				if (g->stat.nCompositePoints > nCompositePoints) nCompositePoints = g->stat.nCompositePoints;
-				if (g->stat.nCompositeContours > nCompositeContours) nCompositeContours = g->stat.nCompositeContours;
-				if (g->stat.nestDepth > nestDepth) nestDepth = g->stat.nestDepth;
-				if (g->numberOfReferences > nComponents) nComponents = g->numberOfReferences;
-			}
-			if (g->instructionsLength > instSize) instSize = g->instructionsLength;
-		}
-		maxp->maxPoints = nPoints;
-		maxp->maxContours = nContours;
-		maxp->maxCompositePoints = nCompositePoints;
-		maxp->maxCompositeContours = nCompositeContours;
-		maxp->maxComponentDepth = nestDepth;
-		maxp->maxComponentElements = nComponents;
-		maxp->maxSizeOfInstructions = instSize;
-	}
-}
-
 #define EPSILON (1e-5)
-
-void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca) {
-	caryll_buffer *gbuf = bufnew();
+static INLINE void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
 	caryll_buffer *flags = bufnew();
 	caryll_buffer *xs = bufnew();
 	caryll_buffer *ys = bufnew();
+
+	bufwrite16b(gbuf, g->numberOfContours);
+	bufwrite16b(gbuf, (int16_t)g->stat.xMin);
+	bufwrite16b(gbuf, (int16_t)g->stat.yMin);
+	bufwrite16b(gbuf, (int16_t)g->stat.xMax);
+	bufwrite16b(gbuf, (int16_t)g->stat.yMax);
+
+	// endPtsOfContours[n]
+	uint16_t ptid = 0;
+	for (uint16_t j = 0; j < g->numberOfContours; j++) {
+		ptid += g->contours[j].pointsCount;
+		bufwrite16b(gbuf, ptid - 1);
+	}
+
+	// instructions
+	bufwrite16b(gbuf, g->instructionsLength);
+	if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
+
+	// flags and points
+	bufclear(flags);
+	bufclear(xs);
+	bufclear(ys);
+	float cx = 0;
+	float cy = 0;
+	for (uint16_t cj = 0; cj < g->numberOfContours; cj++) {
+		for (uint16_t k = 0; k < g->contours[cj].pointsCount; k++) {
+			glyf_point *p = &(g->contours[cj].points[k]);
+			uint8_t flag = p->onCurve ? GLYF_FLAG_ON_CURVE : 0;
+			int16_t dx = p->x - cx;
+			int16_t dy = p->y - cy;
+			if (dx == 0) {
+				flag |= GLYF_FLAG_SAME_X;
+			} else if (dx >= -0xFF && dx <= 0xFF) {
+				flag |= GLYF_FLAG_X_SHORT;
+				if (dx > 0) {
+					flag |= GLYF_FLAG_POSITIVE_X;
+					bufwrite8(xs, dx);
+				} else {
+					bufwrite8(xs, -dx);
+				}
+			} else {
+				bufwrite16b(xs, dx);
+			}
+
+			if (dy == 0) {
+				flag |= GLYF_FLAG_SAME_Y;
+			} else if (dy >= -0xFF && dy <= 0xFF) {
+				flag |= GLYF_FLAG_Y_SHORT;
+				if (dy > 0) {
+					flag |= GLYF_FLAG_POSITIVE_Y;
+					bufwrite8(ys, dy);
+				} else {
+					bufwrite8(ys, -dy);
+				}
+			} else {
+				bufwrite16b(ys, dy);
+			}
+			bufwrite8(flags, flag);
+			cx = p->x;
+			cy = p->y;
+		}
+	}
+	bufwrite_buf(gbuf, flags);
+	bufwrite_buf(gbuf, xs);
+	bufwrite_buf(gbuf, ys);
+
+	buffree(flags);
+	buffree(xs);
+	buffree(ys);
+}
+static INLINE void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
+	bufwrite16b(gbuf, (-1));
+	bufwrite16b(gbuf, (int16_t)g->stat.xMin);
+	bufwrite16b(gbuf, (int16_t)g->stat.yMin);
+	bufwrite16b(gbuf, (int16_t)g->stat.xMax);
+	bufwrite16b(gbuf, (int16_t)g->stat.yMax);
+	for (uint16_t rj = 0; rj < g->numberOfReferences; rj++) {
+		glyf_reference *r = &(g->references[rj]);
+		uint16_t flags =
+		    ARGS_ARE_XY_VALUES |
+		    (rj < g->numberOfReferences - 1 ? MORE_COMPONENTS : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
+		int16_t arg1 = r->x;
+		int16_t arg2 = r->y;
+		if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128)) flags |= ARG_1_AND_2_ARE_WORDS;
+		if (fabsf(r->b) > EPSILON || fabsf(r->c) > EPSILON) {
+			flags |= WE_HAVE_A_TWO_BY_TWO;
+		} else if (fabsf(r->a - 1) > EPSILON || fabsf(r->d - 1) > EPSILON) {
+			if (fabsf(r->a - r->d) > EPSILON) {
+				flags |= WE_HAVE_AN_X_AND_Y_SCALE;
+			} else {
+				flags |= WE_HAVE_A_SCALE;
+			}
+		}
+		if (r->useMyMetrics) flags |= USE_MY_METRICS;
+
+		bufwrite16b(gbuf, flags);
+		bufwrite16b(gbuf, r->glyph.gid);
+		if (flags & ARG_1_AND_2_ARE_WORDS) {
+			bufwrite16b(gbuf, arg1);
+			bufwrite16b(gbuf, arg2);
+		} else {
+			bufwrite8(gbuf, arg1);
+			bufwrite8(gbuf, arg2);
+		}
+		if (flags & WE_HAVE_A_SCALE) {
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+		} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
+		} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->b));
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->c));
+			bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
+		}
+	}
+	if (g->instructionsLength) {
+		bufwrite16b(gbuf, g->instructionsLength);
+		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
+	}
+}
+void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca) {
+	caryll_buffer *gbuf = bufnew();
+
 	uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
 		loca[j] = bufglyf->cursor;
 		glyf_glyph *g = table->glyphs[j];
 		bufclear(gbuf);
 		if (g->numberOfContours > 0) {
-			bufwrite16b(gbuf, g->numberOfContours);
-			bufwrite16b(gbuf, (int16_t)g->stat.xMin);
-			bufwrite16b(gbuf, (int16_t)g->stat.yMin);
-			bufwrite16b(gbuf, (int16_t)g->stat.xMax);
-			bufwrite16b(gbuf, (int16_t)g->stat.yMax);
-
-			// endPtsOfContours[n]
-			uint16_t ptid = 0;
-			for (uint16_t j = 0; j < g->numberOfContours; j++) {
-				ptid += g->contours[j].pointsCount;
-				bufwrite16b(gbuf, ptid - 1);
-			}
-
-			// instructions
-			bufwrite16b(gbuf, g->instructionsLength);
-			if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
-
-			// flags and points
-			bufclear(flags);
-			bufclear(xs);
-			bufclear(ys);
-			float cx = 0;
-			float cy = 0;
-			for (uint16_t cj = 0; cj < g->numberOfContours; cj++) {
-				for (uint16_t k = 0; k < g->contours[cj].pointsCount; k++) {
-					glyf_point *p = &(g->contours[cj].points[k]);
-					uint8_t flag = p->onCurve ? GLYF_FLAG_ON_CURVE : 0;
-					int16_t dx = p->x - cx;
-					int16_t dy = p->y - cy;
-
-					if (dx == 0) {
-						flag |= GLYF_FLAG_SAME_X;
-					} else if (dx >= -0xFF && dx <= 0xFF) {
-						flag |= GLYF_FLAG_X_SHORT;
-						if (dx > 0) {
-							flag |= GLYF_FLAG_POSITIVE_X;
-							bufwrite8(xs, dx);
-						} else {
-							bufwrite8(xs, -dx);
-						}
-					} else {
-						bufwrite16b(xs, dx);
-					}
-					if (dy == 0) {
-						flag |= GLYF_FLAG_SAME_Y;
-					} else if (dy >= -0xFF && dy <= 0xFF) {
-						flag |= GLYF_FLAG_Y_SHORT;
-						if (dy > 0) {
-							flag |= GLYF_FLAG_POSITIVE_Y;
-							bufwrite8(ys, dy);
-						} else {
-							bufwrite8(ys, -dy);
-						}
-					} else {
-						bufwrite16b(ys, dy);
-					}
-					bufwrite8(flags, flag);
-					cx = p->x;
-					cy = p->y;
-				}
-			}
-			bufwrite_buf(gbuf, flags);
-			bufwrite_buf(gbuf, xs);
-			bufwrite_buf(gbuf, ys);
+			glyf_write_simple(g, gbuf);
 		} else if (g->numberOfReferences > 0) {
-			bufwrite16b(gbuf, (-1));
-			bufwrite16b(gbuf, (int16_t)g->stat.xMin);
-			bufwrite16b(gbuf, (int16_t)g->stat.yMin);
-			bufwrite16b(gbuf, (int16_t)g->stat.xMax);
-			bufwrite16b(gbuf, (int16_t)g->stat.yMax);
-			for (uint16_t rj = 0; rj < g->numberOfReferences; rj++) {
-				glyf_reference *r = &(g->references[rj]);
-				uint16_t flags = ARGS_ARE_XY_VALUES | (rj < g->numberOfReferences - 1
-				                                           ? MORE_COMPONENTS
-				                                           : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
-				int16_t arg1 = r->x;
-				int16_t arg2 = r->y;
-				if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128)) flags |= ARG_1_AND_2_ARE_WORDS;
-				if (fabsf(r->b) > EPSILON || fabsf(r->c) > EPSILON) {
-					flags |= WE_HAVE_A_TWO_BY_TWO;
-				} else if (fabsf(r->a - 1) > EPSILON || fabsf(r->d - 1) > EPSILON) {
-					if (fabsf(r->a - r->d) > EPSILON) {
-						flags |= WE_HAVE_AN_X_AND_Y_SCALE;
-					} else {
-						flags |= WE_HAVE_A_SCALE;
-					}
-				}
-				if (r->useMyMetrics) flags |= USE_MY_METRICS;
-
-				bufwrite16b(gbuf, flags);
-				bufwrite16b(gbuf, r->glyph.gid);
-				if (flags & ARG_1_AND_2_ARE_WORDS) {
-					bufwrite16b(gbuf, arg1);
-					bufwrite16b(gbuf, arg2);
-				} else {
-					bufwrite8(gbuf, arg1);
-					bufwrite8(gbuf, arg2);
-				}
-				if (flags & WE_HAVE_A_SCALE) {
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
-				} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
-				} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->b));
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->c));
-					bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
-				}
-			}
-			if (g->instructionsLength) {
-				bufwrite16b(gbuf, g->instructionsLength);
-				if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
-			}
+			glyf_write_composite(g, gbuf);
 		}
 		// pad extra zeroes
 		buflongalign(gbuf);
@@ -812,8 +694,5 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 		}
 	}
 	buffree(gbuf);
-	buffree(flags);
-	buffree(xs);
-	buffree(ys);
 	free(loca);
 }

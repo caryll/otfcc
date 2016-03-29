@@ -71,7 +71,7 @@ void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_option
 	}
 	json_object_push(root, "name", name);
 }
-table_name *caryll_name_from_json(json_value *root) {
+table_name *caryll_name_from_json(json_value *root, caryll_dump_options dumpopts) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {

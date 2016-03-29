@@ -50,7 +50,7 @@ typedef struct {
 table_OS_2 *caryll_OS_2_new();
 table_OS_2 *caryll_read_OS_2(caryll_packet packet);
 void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_options dumpopts);
-table_OS_2 *caryll_OS_2_from_json(json_value *root);
+table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options dumpopts);
 caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2);
 
 #endif

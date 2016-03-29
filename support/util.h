@@ -257,7 +257,7 @@ typedef struct {
 // dump options
 typedef struct {
 	bool ignore_glyph_order;
-	bool ignore_instructions;
+	bool ignore_hints;
 } caryll_dump_options;
 
 #endif

@@ -23,13 +23,14 @@ TABLE_OBJECTS = build/table-head.o build/table-hhea.o build/table-maxp.o \
 	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
 	build/table-OS_2.o build/table-glyf.o build/table-cmap.o \
 	build/table-name.o build/table-fpgm-prep.o
+FONTOP_OBJECTS = build/fontop-unconsolidate.o build/fontop-consolidate.o build/fontop-stat.o
 EXTERN_OBJECTS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
 SUPPORT_OBJECTS = build/support-glyphorder.o build/support-aglfn.o \
               build/support-stopwatch.o build/support-unicodeconv.o \
 			  build/support-buffer.o
 TARGETS = build/otfccdump$(SUFFIX) build/otfccbuild$(SUFFIX)
 
-OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS)
+OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS)
 
 $(EXTERN_OBJECTS) : build/extern-%.o : extern/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -41,9 +42,13 @@ $(SUPPORT_OBJECTS) : build/support-%.o : support/%.c | build
 TABLES_H = $(subst .o,.h,$(subst build/table-,tables/,$(TABLE_OBJECTS)))
 $(TABLE_OBJECTS) : build/table-%.o : tables/%.c tables/%.h $(SUPPORT_H) $(TABLES_H) | build
 	$(CC) $(CFLAGS) -c $< -o $@
+	
+FONTOPS_H = $(subst .o,.h,$(subst build/fontop-,fontops/,$(FONTOP_OBJECTS)))
+$(FONTOP_OBJECTS) : build/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) | build
+	$(CC) $(CFLAGS) -c $< -o $@
 
 MAIN_H = $(subst .o,.h,$(subst build/,,$(MAIN_OBJECTS_1)))
-$(MAIN_OBJECTS) : build/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) | build
+$(MAIN_OBJECTS) : build/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(FONTOPS_H) | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TARGETS): build/%$(SUFFIX) : build/%.o $(OBJECTS)

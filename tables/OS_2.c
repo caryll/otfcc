@@ -126,7 +126,7 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_option
 	json_object_push(root, "OS_2", os_2);
 }
 
-table_OS_2 *caryll_OS_2_from_json(json_value *root) {
+table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options dumpopts) {
 	table_OS_2 *os_2 = caryll_OS_2_new();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "OS_2", json_object))) {

@@ -33,8 +33,11 @@ void delete_glyph_order_map(glyph_order_hash *map) {
 	free(map);
 }
 
-static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table) {
-	for (uint32_t j = 0; j < table->u.array.length; j++) {
+static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table,
+                                                       caryll_dump_options dumpopts) {
+	uint32_t uplimit = table->u.array.length;
+	if (uplimit >= 1 && dumpopts.ignore_glyph_order) { uplimit = 1; }
+	for (uint32_t j = 0; j < uplimit; j++) {
 		json_value *item = table->u.array.values[j];
 		if (item->type == json_string) {
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
@@ -83,7 +86,11 @@ static void caryll_glyphorder_from_json_order_glyf(glyph_order_hash *hash, json_
 		HASH_FIND_STR(*hash, gname, item);
 		if (!item) {
 			item = calloc(1, sizeof(glyph_order_entry));
-			item->dump_order_type = dump_order_type_glyf;
+			if (strcmp(gname, ".notdef") == 0) {
+				item->dump_order_type = dump_order_dotnotdef;
+			} else {
+				item->dump_order_type = dump_order_type_glyf;
+			}
 			item->dump_order_entry = j;
 			item->name = sdsdup(gname);
 			HASH_ADD_STR(*hash, name, item);
@@ -100,14 +107,14 @@ static int compare_glyphorder_entry_b(glyph_order_entry *a, glyph_order_entry *b
 	return 0;
 }
 
-glyph_order_hash *caryll_glyphorder_from_json(json_value *root) {
+glyph_order_hash *caryll_glyphorder_from_json(json_value *root, caryll_dump_options dumpopts) {
 	if (root->type != json_object) return NULL;
 	glyph_order_hash hash = NULL;
 	json_value *table;
 	if ((table = json_obj_get_type(root, "glyf", json_object))) {
 		caryll_glyphorder_from_json_order_glyf(&hash, table);
 		if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
-			caryll_glyphorder_from_json_order_subtable(&hash, table);
+			caryll_glyphorder_from_json_order_subtable(&hash, table, dumpopts);
 		}
 		if ((table = json_obj_get_type(root, "cmap", json_object))) {
 			caryll_glyphorder_from_json_order_cmap(&hash, table);

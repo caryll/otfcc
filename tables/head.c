@@ -60,7 +60,7 @@ void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_option
 	json_object_push(root, "head", head);
 }
 
-table_head *caryll_head_from_json(json_value *root) {
+table_head *caryll_head_from_json(json_value *root, caryll_dump_options dumpopts) {
 	table_head *head = caryll_head_new();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {

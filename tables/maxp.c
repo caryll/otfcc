@@ -74,7 +74,7 @@ void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_option
 	json_object_push(root, "maxp", maxp);
 }
 
-table_maxp *caryll_maxp_from_json(json_value *root) {
+table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options dumpopts) {
 	table_maxp *maxp = caryll_maxp_new();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {

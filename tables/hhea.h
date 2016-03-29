@@ -25,7 +25,7 @@ typedef struct {
 table_hhea *caryll_hhea_new();
 table_hhea *caryll_read_hhea(caryll_packet packet);
 void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_options dumpopts);
-table_hhea *caryll_hhea_from_json(json_value *root);
+table_hhea *caryll_hhea_from_json(json_value *root, caryll_dump_options dumpopts);
 caryll_buffer *caryll_write_hhea(table_hhea *hhea);
 
 #endif

@@ -56,7 +56,7 @@ void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_option
 	json_object_push(root, "hhea", hhea);
 }
 
-table_hhea *caryll_hhea_from_json(json_value *root) {
+table_hhea *caryll_hhea_from_json(json_value *root, caryll_dump_options dumpopts) {
 	table_hhea *hhea = caryll_hhea_new();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {

@@ -82,7 +82,7 @@ void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_option
 	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
 	json_object_push(root, "post", post);
 }
-table_post *caryll_post_from_json(json_value *root) {
+table_post *caryll_post_from_json(json_value *root, caryll_dump_options dumpopts) {
 	table_post *post = caryll_post_new();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {

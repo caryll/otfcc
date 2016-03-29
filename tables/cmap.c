@@ -124,7 +124,7 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options
 	json_object_push(root, "cmap", cmap);
 }
 
-cmap_hash *caryll_cmap_from_json(json_value *root) {
+cmap_hash *caryll_cmap_from_json(json_value *root, caryll_dump_options dumpopts) {
 	if (root->type != json_object) return NULL;
 	cmap_hash hash = NULL;
 	json_value *table = NULL;

@@ -1,15 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-
-#include <getopt.h>
-
-#include "extern/json-builder.h"
-#include "support/stopwatch.h"
-
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
+#include <unistd.h>
+#include <getopt.h>
+#include "extern/json-builder.h"
+#include "support/stopwatch.h"
 
 int main(int argc, char *argv[]) {
 	bool show_help = false;
@@ -24,11 +18,11 @@ int main(int argc, char *argv[]) {
 	                            {"ugly", no_argument, NULL, 0},
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
-	                            {"ignore-instructions", no_argument, NULL, 0},
+	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
-	caryll_dump_options dumpopts = {.ignore_glyph_order = false, .ignore_instructions = false};
+	caryll_dump_options dumpopts = {.ignore_glyph_order = false, .ignore_hints = false};
 	int option_index = 0;
 	int c;
 
@@ -43,9 +37,7 @@ int main(int argc, char *argv[]) {
 			if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
 			if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
 			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts.ignore_glyph_order = true; }
-			if (strcmp(longopts[option_index].name, "ignore-instructions") == 0) {
-				dumpopts.ignore_instructions = true;
-			}
+			if (strcmp(longopts[option_index].name, "ignore-hints") == 0) { dumpopts.ignore_hints = true; }
 			break;
 		case 'v':
 			show_version = true;
@@ -115,9 +107,11 @@ int main(int argc, char *argv[]) {
 		caryll_OS_2_to_json(font->OS_2, root, dumpopts);
 		caryll_cmap_to_json(font->cmap, root, dumpopts);
 		caryll_glyf_to_json(font->glyf, root, dumpopts);
-		caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
-		caryll_fpgm_prep_to_json(font->prep, root, dumpopts, "prep");
-		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
+		if (!dumpopts.ignore_hints) {
+			caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
+			caryll_fpgm_prep_to_json(font->prep, root, dumpopts, "prep");
+			caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
+		}
 		if (show_time) push_stopwatch("Convert to JSON", &begin);
 	}
 

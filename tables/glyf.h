@@ -89,9 +89,7 @@ glyf_glyph *caryll_glyf_new();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options dumpopts);
-table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order);
-void caryll_stat_glyf(table_glyf *table, table_head *head, table_maxp *maxp);
-
+table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, caryll_dump_options dumpopts);
 void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca);
 
 #endif
