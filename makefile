@@ -1,13 +1,20 @@
 CC = clang
 LINK = clang
+CFLAGS = -O3 -Wall -Wno-multichar
+CFLAGS_EXTERN = -O3
 
 ifeq ($(VERSION), debug)
 CFLAGS = -g -Ddebug
 CFLAGS_EXTERN = -g -Ddebug
 LINKFLAGS = -g -Ddebug
-else
-CFLAGS = -O3 -Wall -Wno-multichar
-CFLAGS_EXTERN = -O3
+endif
+
+ifeq ($(VERSION), gcclto)
+CC = gcc
+LINK = gcc
+CFLAGS = -O3 -flto -Wall -Wno-multichar
+CFLAGS_EXTERN = -O3 -flto
+LINKFLAGS = -O3 -flto
 endif
 
 all : objects
