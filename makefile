@@ -3,18 +3,35 @@ LINK = clang
 CFLAGS = -O3 -Wall -Wno-multichar -D_CARYLL_USE_PRE_SERIALIZED
 CFLAGS_EXTERN = -O3 -D_CARYLL_USE_PRE_SERIALIZED
 
-ifeq ($(VERSION), debug)
+TARGETDIR = $(if $(TARGET),build/$(TARGET),build)
+DIRS = $(if $(TARGET),build $(TARGETDIR),$(TARGETDIR))
+
+ifeq ($(TARGET), debug)
 CFLAGS = -g -Ddebug
 CFLAGS_EXTERN = -g -Ddebug
 LINKFLAGS = -g -Ddebug
 endif
 
-ifeq ($(VERSION), gcclto)
+ifeq ($(TARGET), mingw-w32)
 CC = gcc
 LINK = gcc
-CFLAGS = -O3 -flto -Wall -Wno-multichar  -D_CARYLL_USE_PRE_SERIALIZED
-CFLAGS_EXTERN = -O3 -flto -D_CARYLL_USE_PRE_SERIALIZED
-LINKFLAGS = -O3 -flto
+CFLAGS = -m32 -O3 -flto -Wall -Wno-multichar -D_CARYLL_USE_PRE_SERIALIZED
+CFLAGS_EXTERN = -m32 -O3 -flto -D_CARYLL_USE_PRE_SERIALIZED
+LINKFLAGS = -m32
+endif
+
+ifeq ($(TARGET), mingw-w64)
+CC = gcc
+LINK = gcc
+CFLAGS = -m64 -O3 -flto -Wall -Wno-multichar -D_CARYLL_USE_PRE_SERIALIZED
+CFLAGS_EXTERN = -m64 -O3 -flto -D_CARYLL_USE_PRE_SERIALIZED
+LINKFLAGS = -m64
+endif
+
+ifeq ($(TARGET), mingw-clang-w64)
+CFLAGS = -m64 -O3 -Wall -Wno-multichar -D_CARYLL_USE_PRE_SERIALIZED
+CFLAGS_EXTERN = -m64 -O3 -D_CARYLL_USE_PRE_SERIALIZED
+LINKFLAGS = -m64
 endif
 
 all : objects
@@ -23,62 +40,68 @@ ifdef SystemRoot # win32 + tdm-gcc
 SUFFIX = .exe
 endif
 
-build : 
-	@- mkdir $@
-
-MAIN_OBJECTS_1 = build/caryll-font.o build/caryll-sfnt.o build/caryll-sfnt-builder.o
-MAIN_OBJECTS = $(MAIN_OBJECTS_1) build/otfccdump.o build/otfccbuild.o
-TABLE_OBJECTS = build/table-head.o build/table-hhea.o build/table-maxp.o \
-	build/table-hmtx.o build/table-post.o build/table-hdmx.o \
-	build/table-PCLT.o build/table-LTSH.o build/table-vhea.o \
-	build/table-OS_2.o build/table-glyf.o build/table-cmap.o \
-	build/table-name.o build/table-fpgm-prep.o build/table-gasp.o \
-	build/table-vmtx.o
-FONTOP_OBJECTS = build/fontop-unconsolidate.o build/fontop-consolidate.o build/fontop-stat.o
-EXTERN_OBJECTS = build/extern-sds.o build/extern-json.o build/extern-json-builder.o
-SUPPORT_OBJECTS = build/support-glyphorder.o build/support-aglfn.o \
-              build/support-stopwatch.o build/support-unicodeconv.o \
-			  build/support-buffer.o
-TARGETS = build/otfccdump$(SUFFIX) build/otfccbuild$(SUFFIX)
+MAIN_OBJECTS_1 = $(TARGETDIR)/caryll-font.o $(TARGETDIR)/caryll-sfnt.o $(TARGETDIR)/caryll-sfnt-builder.o
+MAIN_OBJECTS = $(MAIN_OBJECTS_1) $(TARGETDIR)/otfccdump.o $(TARGETDIR)/otfccbuild.o
+TABLE_OBJECTS = $(TARGETDIR)/table-head.o $(TARGETDIR)/table-hhea.o $(TARGETDIR)/table-maxp.o \
+	$(TARGETDIR)/table-hmtx.o $(TARGETDIR)/table-post.o $(TARGETDIR)/table-hdmx.o \
+	$(TARGETDIR)/table-PCLT.o $(TARGETDIR)/table-LTSH.o $(TARGETDIR)/table-vhea.o \
+	$(TARGETDIR)/table-OS_2.o $(TARGETDIR)/table-glyf.o $(TARGETDIR)/table-cmap.o \
+	$(TARGETDIR)/table-name.o $(TARGETDIR)/table-fpgm-prep.o $(TARGETDIR)/table-gasp.o \
+	$(TARGETDIR)/table-vmtx.o
+FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o $(TARGETDIR)/fontop-stat.o
+EXTERN_OBJECTS = $(TARGETDIR)/extern-sds.o $(TARGETDIR)/extern-json.o $(TARGETDIR)/extern-json-builder.o
+SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o \
+              $(TARGETDIR)/support-stopwatch.o $(TARGETDIR)/support-unicodeconv.o \
+			  $(TARGETDIR)/support-buffer.o
+EXECUTABLES = $(TARGETDIR)/otfccdump$(SUFFIX) $(TARGETDIR)/otfccbuild$(SUFFIX)
 
 OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS)
 
-$(EXTERN_OBJECTS) : build/extern-%.o : extern/%.c | build
+$(EXTERN_OBJECTS) : $(TARGETDIR)/extern-%.o : extern/%.c | $(DIRS)
 	$(CC) $(CFLAGS_EXTERN) -c $< -o $@
 
-SUPPORT_H = $(subst .o,.h,$(subst build/support-,support/,$(SUPPORT_OBJECTS))) support/util.h
-$(SUPPORT_OBJECTS) : build/support-%.o : support/%.c | build
+SUPPORT_H = $(subst .o,.h,$(subst $(TARGETDIR)/support-,support/,$(SUPPORT_OBJECTS))) support/util.h
+$(SUPPORT_OBJECTS) : $(TARGETDIR)/support-%.o : support/%.c | $(DIRS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-TABLES_H = $(subst .o,.h,$(subst build/table-,tables/,$(TABLE_OBJECTS)))
-$(TABLE_OBJECTS) : build/table-%.o : tables/%.c tables/%.h $(SUPPORT_H) $(TABLES_H) | build
+TABLES_H = $(subst .o,.h,$(subst $(TARGETDIR)/table-,tables/,$(TABLE_OBJECTS)))
+$(TABLE_OBJECTS) : $(TARGETDIR)/table-%.o : tables/%.c tables/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
 	$(CC) $(CFLAGS) -c $< -o $@
 	
-FONTOPS_H = $(subst .o,.h,$(subst build/fontop-,fontops/,$(FONTOP_OBJECTS)))
-$(FONTOP_OBJECTS) : build/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) | build
+FONTOPS_H = $(subst .o,.h,$(subst $(TARGETDIR)/fontop-,fontops/,$(FONTOP_OBJECTS)))
+$(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-MAIN_H = $(subst .o,.h,$(subst build/,,$(MAIN_OBJECTS_1)))
-$(MAIN_OBJECTS) : build/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(FONTOPS_H) | build
+MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,,$(MAIN_OBJECTS_1)))
+$(MAIN_OBJECTS) : $(TARGETDIR)/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(FONTOPS_H) | $(DIRS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGETS): build/%$(SUFFIX) : build/%.o $(OBJECTS)
-	$(LINK) $(LINKFLAGS) $^ -o $@ -lm
+$(EXECUTABLES): $(TARGETDIR)/%$(SUFFIX) : $(TARGETDIR)/%.o $(OBJECTS)
+	$(LINK) $(LINKFLAGS) $^ -o $@
 
-objects: $(TARGETS)
+objects: $(EXECUTABLES)
 
-TESTFILES = build/test-payload-1$(SUFFIX) build/test-buffer$(SUFFIX)
-build/%.o : tests/%.c | build
+TESTFILES = $(TARGETDIR)/test-payload-1$(SUFFIX) $(TARGETDIR)/test-buffer$(SUFFIX)
+$(TARGETDIR)/%.o : tests/%.c | $(DIRS)
 	$(CC) $(CFLAGS) -c $^ -o $@
-build/%$(SUFFIX) : build/%.o $(OBJECTS)
-	$(LINK) $(LINKFLAGS) $^ -o $@ -lm
+$(TARGETDIR)/%$(SUFFIX) : $(TARGETDIR)/%.o $(OBJECTS)
+	$(LINK) $(LINKFLAGS) $^ -o $@
 
 test: $(TESTFILES)
 	@echo "====== Start Test ======"
-	@build/test-buffer$(SUFFIX)
-	@build/test-payload-1$(SUFFIX) tests/payload/test-out.ttf
+	@$(TARGETDIR)/test-buffer$(SUFFIX)
+	@$(TARGETDIR)/test-payload-1$(SUFFIX) tests/payload/test-out.ttf
 
-debug:
-	make VERSION=debug
-release:
-	make VERSION=release
+debug :
+	make TARGET=debug
+release :
+	make TARGET=release
+
+# directories
+build :
+	@- mkdir $@
+
+ifdef TARGET
+$(TARGETDIR) : | build
+	@- mkdir $@
+endif
