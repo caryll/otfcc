@@ -221,6 +221,175 @@ void caryll_font_stat_vmtx(caryll_font *font) {
 	font->vhea->advanceHeightMax = maxHeight;
 	font->vmtx = vmtx;
 }
+void caryll_font_stat_OS_2(caryll_font *font) {
+	cmap_entry *item;
+	// Stat for OS/2.ulUnicodeRange.
+	uint32_t u1 = 0;
+	uint32_t u2 = 0;
+	uint32_t u3 = 0;
+	uint32_t u4 = 0;
+	foreach_hash(item, *font->cmap) {
+		int u = item->unicode;
+		// Reference: https://www.microsoft.com/typography/otspec/os2.htm#ur
+		if ((u >= 0x0000 && u <= 0x007F)) { u1 |= (1 << 0); }
+		if ((u >= 0x0080 && u <= 0x00FF)) { u1 |= (1 << 1); }
+		if ((u >= 0x0100 && u <= 0x017F)) { u1 |= (1 << 2); }
+		if ((u >= 0x0180 && u <= 0x024F)) { u1 |= (1 << 3); }
+		if ((u >= 0x0250 && u <= 0x02AF) || (u >= 0x1D00 && u <= 0x1D7F) || (u >= 0x1D80 && u <= 0x1DBF)) {
+			u1 |= (1 << 4);
+		}
+		if ((u >= 0x02B0 && u <= 0x02FF) || (u >= 0xA700 && u <= 0xA71F)) { u1 |= (1 << 5); }
+		if ((u >= 0x0300 && u <= 0x036F) || (u >= 0x1DC0 && u <= 0x1DFF)) { u1 |= (1 << 6); }
+		if ((u >= 0x0370 && u <= 0x03FF)) { u1 |= (1 << 7); }
+		if ((u >= 0x2C80 && u <= 0x2CFF)) { u1 |= (1 << 8); }
+		if ((u >= 0x0400 && u <= 0x04FF) || (u >= 0x0500 && u <= 0x052F) || (u >= 0x2DE0 && u <= 0x2DFF) ||
+		    (u >= 0xA640 && u <= 0xA69F)) {
+			u1 |= (1 << 9);
+		}
+		if ((u >= 0x0530 && u <= 0x058F)) { u1 |= (1 << 10); }
+		if ((u >= 0x0590 && u <= 0x05FF)) { u1 |= (1 << 11); }
+		if ((u >= 0xA500 && u <= 0xA63F)) { u1 |= (1 << 12); }
+		if ((u >= 0x0600 && u <= 0x06FF) || (u >= 0x0750 && u <= 0x077F)) { u1 |= (1 << 13); }
+		if ((u >= 0x07C0 && u <= 0x07FF)) { u1 |= (1 << 14); }
+		if ((u >= 0x0900 && u <= 0x097F)) { u1 |= (1 << 15); }
+		if ((u >= 0x0980 && u <= 0x09FF)) { u1 |= (1 << 16); }
+		if ((u >= 0x0A00 && u <= 0x0A7F)) { u1 |= (1 << 17); }
+		if ((u >= 0x0A80 && u <= 0x0AFF)) { u1 |= (1 << 18); }
+		if ((u >= 0x0B00 && u <= 0x0B7F)) { u1 |= (1 << 19); }
+		if ((u >= 0x0B80 && u <= 0x0BFF)) { u1 |= (1 << 20); }
+		if ((u >= 0x0C00 && u <= 0x0C7F)) { u1 |= (1 << 21); }
+		if ((u >= 0x0C80 && u <= 0x0CFF)) { u1 |= (1 << 22); }
+		if ((u >= 0x0D00 && u <= 0x0D7F)) { u1 |= (1 << 23); }
+		if ((u >= 0x0E00 && u <= 0x0E7F)) { u1 |= (1 << 24); }
+		if ((u >= 0x0E80 && u <= 0x0EFF)) { u1 |= (1 << 25); }
+		if ((u >= 0x10A0 && u <= 0x10FF) || (u >= 0x2D00 && u <= 0x2D2F)) { u1 |= (1 << 26); }
+		if ((u >= 0x1B00 && u <= 0x1B7F)) { u1 |= (1 << 27); }
+		if ((u >= 0x1100 && u <= 0x11FF)) { u1 |= (1 << 28); }
+		if ((u >= 0x1E00 && u <= 0x1EFF) || (u >= 0x2C60 && u <= 0x2C7F) || (u >= 0xA720 && u <= 0xA7FF)) {
+			u1 |= (1 << 29);
+		}
+		if ((u >= 0x1F00 && u <= 0x1FFF)) { u1 |= (1 << 30); }
+		if ((u >= 0x2000 && u <= 0x206F) || (u >= 0x2E00 && u <= 0x2E7F)) { u1 |= (1 << 31); }
+		if ((u >= 0x2070 && u <= 0x209F)) { u2 |= (1 << 0); }
+		if ((u >= 0x20A0 && u <= 0x20CF)) { u2 |= (1 << 1); }
+		if ((u >= 0x20D0 && u <= 0x20FF)) { u2 |= (1 << 2); }
+		if ((u >= 0x2100 && u <= 0x214F)) { u2 |= (1 << 3); }
+		if ((u >= 0x2150 && u <= 0x218F)) { u2 |= (1 << 4); }
+		if ((u >= 0x2190 && u <= 0x21FF) || (u >= 0x27F0 && u <= 0x27FF) || (u >= 0x2900 && u <= 0x297F) ||
+		    (u >= 0x2B00 && u <= 0x2BFF)) {
+			u2 |= (1 << 5);
+		}
+		if ((u >= 0x2200 && u <= 0x22FF) || (u >= 0x2A00 && u <= 0x2AFF) || (u >= 0x27C0 && u <= 0x27EF) ||
+		    (u >= 0x2980 && u <= 0x29FF)) {
+			u2 |= (1 << 6);
+		}
+		if ((u >= 0x2300 && u <= 0x23FF)) { u2 |= (1 << 7); }
+		if ((u >= 0x2400 && u <= 0x243F)) { u2 |= (1 << 8); }
+		if ((u >= 0x2440 && u <= 0x245F)) { u2 |= (1 << 9); }
+		if ((u >= 0x2460 && u <= 0x24FF)) { u2 |= (1 << 10); }
+		if ((u >= 0x2500 && u <= 0x257F)) { u2 |= (1 << 11); }
+		if ((u >= 0x2580 && u <= 0x259F)) { u2 |= (1 << 12); }
+		if ((u >= 0x25A0 && u <= 0x25FF)) { u2 |= (1 << 13); }
+		if ((u >= 0x2600 && u <= 0x26FF)) { u2 |= (1 << 14); }
+		if ((u >= 0x2700 && u <= 0x27BF)) { u2 |= (1 << 15); }
+		if ((u >= 0x3000 && u <= 0x303F)) { u2 |= (1 << 16); }
+		if ((u >= 0x3040 && u <= 0x309F)) { u2 |= (1 << 17); }
+		if ((u >= 0x30A0 && u <= 0x30FF) || (u >= 0x31F0 && u <= 0x31FF)) { u2 |= (1 << 18); }
+		if ((u >= 0x3100 && u <= 0x312F) || (u >= 0x31A0 && u <= 0x31BF)) { u2 |= (1 << 19); }
+		if ((u >= 0x3130 && u <= 0x318F)) { u2 |= (1 << 20); }
+		if ((u >= 0xA840 && u <= 0xA87F)) { u2 |= (1 << 21); }
+		if ((u >= 0x3200 && u <= 0x32FF)) { u2 |= (1 << 22); }
+		if ((u >= 0x3300 && u <= 0x33FF)) { u2 |= (1 << 23); }
+		if ((u >= 0xAC00 && u <= 0xD7AF)) { u2 |= (1 << 24); }
+		if ((u >= 0xD800 && u <= 0xDFFF)) { u2 |= (1 << 25); }
+		if ((u >= 0x10900 && u <= 0x1091F)) { u2 |= (1 << 26); }
+		if ((u >= 0x4E00 && u <= 0x9FFF) || (u >= 0x2E80 && u <= 0x2EFF) || (u >= 0x2F00 && u <= 0x2FDF) ||
+		    (u >= 0x2FF0 && u <= 0x2FFF) || (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x20000 && u <= 0x2A6DF) ||
+		    (u >= 0x3190 && u <= 0x319F)) {
+			u2 |= (1 << 27);
+		}
+		if ((u >= 0xE000 && u <= 0xF8FF)) { u2 |= (1 << 28); }
+		if ((u >= 0x31C0 && u <= 0x31EF) || (u >= 0xF900 && u <= 0xFAFF) || (u >= 0x2F800 && u <= 0x2FA1F)) {
+			u2 |= (1 << 29);
+		}
+		if ((u >= 0xFB00 && u <= 0xFB4F)) { u2 |= (1 << 30); }
+		if ((u >= 0xFB50 && u <= 0xFDFF)) { u2 |= (1 << 31); }
+		if ((u >= 0xFE20 && u <= 0xFE2F)) { u3 |= (1 << 0); }
+		if ((u >= 0xFE10 && u <= 0xFE1F) || (u >= 0xFE30 && u <= 0xFE4F)) { u3 |= (1 << 1); }
+		if ((u >= 0xFE50 && u <= 0xFE6F)) { u3 |= (1 << 2); }
+		if ((u >= 0xFE70 && u <= 0xFEFF)) { u3 |= (1 << 3); }
+		if ((u >= 0xFF00 && u <= 0xFFEF)) { u3 |= (1 << 4); }
+		if ((u >= 0xFFF0 && u <= 0xFFFF)) { u3 |= (1 << 5); }
+		if ((u >= 0x0F00 && u <= 0x0FFF)) { u3 |= (1 << 6); }
+		if ((u >= 0x0700 && u <= 0x074F)) { u3 |= (1 << 7); }
+		if ((u >= 0x0780 && u <= 0x07BF)) { u3 |= (1 << 8); }
+		if ((u >= 0x0D80 && u <= 0x0DFF)) { u3 |= (1 << 9); }
+		if ((u >= 0x1000 && u <= 0x109F)) { u3 |= (1 << 10); }
+		if ((u >= 0x1200 && u <= 0x137F) || (u >= 0x1380 && u <= 0x139F) || (u >= 0x2D80 && u <= 0x2DDF)) {
+			u3 |= (1 << 11);
+		}
+		if ((u >= 0x13A0 && u <= 0x13FF)) { u3 |= (1 << 12); }
+		if ((u >= 0x1400 && u <= 0x167F)) { u3 |= (1 << 13); }
+		if ((u >= 0x1680 && u <= 0x169F)) { u3 |= (1 << 14); }
+		if ((u >= 0x16A0 && u <= 0x16FF)) { u3 |= (1 << 15); }
+		if ((u >= 0x1780 && u <= 0x17FF) || (u >= 0x19E0 && u <= 0x19FF)) { u3 |= (1 << 16); }
+		if ((u >= 0x1800 && u <= 0x18AF)) { u3 |= (1 << 17); }
+		if ((u >= 0x2800 && u <= 0x28FF)) { u3 |= (1 << 18); }
+		if ((u >= 0xA000 && u <= 0xA48F) || (u >= 0xA490 && u <= 0xA4CF)) { u3 |= (1 << 19); }
+		if ((u >= 0x1700 && u <= 0x171F) || (u >= 0x1720 && u <= 0x173F) || (u >= 0x1740 && u <= 0x175F) ||
+		    (u >= 0x1760 && u <= 0x177F)) {
+			u3 |= (1 << 20);
+		}
+		if ((u >= 0x10300 && u <= 0x1032F)) { u3 |= (1 << 21); }
+		if ((u >= 0x10330 && u <= 0x1034F)) { u3 |= (1 << 22); }
+		if ((u >= 0x10400 && u <= 0x1044F)) { u3 |= (1 << 23); }
+		if ((u >= 0x1D000 && u <= 0x1D0FF) || (u >= 0x1D100 && u <= 0x1D1FF) || (u >= 0x1D200 && u <= 0x1D24F)) {
+			u3 |= (1 << 24);
+		}
+		if ((u >= 0x1D400 && u <= 0x1D7FF)) { u3 |= (1 << 25); }
+		if ((u >= 0xFF000 && u <= 0xFFFFD) || (u >= 0x100000 && u <= 0x10FFFD)) { u3 |= (1 << 26); }
+		if ((u >= 0xFE00 && u <= 0xFE0F) || (u >= 0xE0100 && u <= 0xE01EF)) { u3 |= (1 << 27); }
+		if ((u >= 0xE0000 && u <= 0xE007F)) { u3 |= (1 << 28); }
+		if ((u >= 0x1900 && u <= 0x194F)) { u3 |= (1 << 29); }
+		if ((u >= 0x1950 && u <= 0x197F)) { u3 |= (1 << 30); }
+		if ((u >= 0x1980 && u <= 0x19DF)) { u3 |= (1 << 31); }
+		if ((u >= 0x1A00 && u <= 0x1A1F)) { u4 |= (1 << 0); }
+		if ((u >= 0x2C00 && u <= 0x2C5F)) { u4 |= (1 << 1); }
+		if ((u >= 0x2D30 && u <= 0x2D7F)) { u4 |= (1 << 2); }
+		if ((u >= 0x4DC0 && u <= 0x4DFF)) { u4 |= (1 << 3); }
+		if ((u >= 0xA800 && u <= 0xA82F)) { u4 |= (1 << 4); }
+		if ((u >= 0x10000 && u <= 0x1007F) || (u >= 0x10080 && u <= 0x100FF) || (u >= 0x10100 && u <= 0x1013F)) {
+			u4 |= (1 << 5);
+		}
+		if ((u >= 0x10140 && u <= 0x1018F)) { u4 |= (1 << 6); }
+		if ((u >= 0x10380 && u <= 0x1039F)) { u4 |= (1 << 7); }
+		if ((u >= 0x103A0 && u <= 0x103DF)) { u4 |= (1 << 8); }
+		if ((u >= 0x10450 && u <= 0x1047F)) { u4 |= (1 << 9); }
+		if ((u >= 0x10480 && u <= 0x104AF)) { u4 |= (1 << 10); }
+		if ((u >= 0x10800 && u <= 0x1083F)) { u4 |= (1 << 11); }
+		if ((u >= 0x10A00 && u <= 0x10A5F)) { u4 |= (1 << 12); }
+		if ((u >= 0x1D300 && u <= 0x1D35F)) { u4 |= (1 << 13); }
+		if ((u >= 0x12000 && u <= 0x123FF) || (u >= 0x12400 && u <= 0x1247F)) { u4 |= (1 << 14); }
+		if ((u >= 0x1D360 && u <= 0x1D37F)) { u4 |= (1 << 15); }
+		if ((u >= 0x1B80 && u <= 0x1BBF)) { u4 |= (1 << 16); }
+		if ((u >= 0x1C00 && u <= 0x1C4F)) { u4 |= (1 << 17); }
+		if ((u >= 0x1C50 && u <= 0x1C7F)) { u4 |= (1 << 18); }
+		if ((u >= 0xA880 && u <= 0xA8DF)) { u4 |= (1 << 19); }
+		if ((u >= 0xA900 && u <= 0xA92F)) { u4 |= (1 << 20); }
+		if ((u >= 0xA930 && u <= 0xA95F)) { u4 |= (1 << 21); }
+		if ((u >= 0xAA00 && u <= 0xAA5F)) { u4 |= (1 << 22); }
+		if ((u >= 0x10190 && u <= 0x101CF)) { u4 |= (1 << 23); }
+		if ((u >= 0x101D0 && u <= 0x101FF)) { u4 |= (1 << 24); }
+		if ((u >= 0x102A0 && u <= 0x102DF) || (u >= 0x10280 && u <= 0x1029F) || (u >= 0x10920 && u <= 0x1093F)) {
+			u4 |= (1 << 25);
+		}
+		if ((u >= 0x1F030 && u <= 0x1F09F) || (u >= 0x1F000 && u <= 0x1F02F)) { u4 |= (1 << 26); }
+	}
+	font->OS_2->ulUnicodeRange1 = u1;
+	font->OS_2->ulUnicodeRange2 = u2;
+	font->OS_2->ulUnicodeRange3 = u3;
+	font->OS_2->ulUnicodeRange4 = u4;
+}
 void caryll_font_stat(caryll_font *font) {
 	if (font->glyf && font->head) caryll_stat_glyf(font);
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) caryll_stat_maxp(font);
@@ -230,6 +399,7 @@ void caryll_font_stat(caryll_font *font) {
 	if (font->prep && font->maxp && font->prep->length > font->maxp->maxSizeOfInstructions) {
 		font->maxp->maxSizeOfInstructions = font->prep->length;
 	}
+	if (font->OS_2 && font->cmap) caryll_font_stat_OS_2(font);
 	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
 	if (font->glyf && font->vhea) caryll_font_stat_vmtx(font);
 }

@@ -1,4 +1,5 @@
 #include "caryll-sfnt-builder.h"
+#include "version.h"
 
 uint32_t buf_checksum(caryll_buffer *buffer) {
 	uint32_t actualLength = buflen(buffer);
@@ -75,7 +76,7 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	bufwrite16b(buffer, nTables * 16 - searchRange);
 
 	sfnt_builder_entry *table;
-	uint32_t offset = 12 + nTables * 16;
+	uint32_t offset = 32 + nTables * 16;
 	uint32_t headOffset = offset;
 	HASH_SORT(builder->tables, byTag);
 	foreach_hash(table, builder->tables) {
@@ -92,6 +93,9 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 		if (table->tag == 'head') { headOffset = offset; }
 		offset += buflen(table->buffer);
 	}
+	// we are right after the table directory
+	// add copyright information
+	bufwrite_bytes(buffer, 20, (uint8_t *)("BY OTFCC " VERSION));
 	uint32_t wholeChecksum = buf_checksum(buffer);
 	bufseek(buffer, headOffset + 8);
 	bufwrite32b(buffer, 0xB1B0AFBA - wholeChecksum);
