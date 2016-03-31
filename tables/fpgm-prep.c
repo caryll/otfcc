@@ -29,7 +29,7 @@ void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root, caryll_d
 	for (uint32_t j = 0; j < table->length; j++) {
 		json_array_push(t, json_integer_new(table->bytes[j]));
 	}
-	json_object_push(root, tag, t);
+	json_object_push(root, tag, preserialize(t));
 }
 table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, const char *tag) {
 	table_fpgm_prep *t = NULL;

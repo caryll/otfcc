@@ -30,8 +30,6 @@ typedef struct {
 	float d;
 	float x;
 	float y;
-	bool useMyMetrics;
-	bool overlap;
 } glyf_reference;
 
 typedef struct {

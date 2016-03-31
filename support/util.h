@@ -261,4 +261,22 @@ typedef struct {
 	bool has_vertical_metrics;
 } caryll_dump_options;
 
+#define MOVE /*move*/
+
+static INLINE json_value *preserialize(MOVE json_value *x){
+#ifdef CARYLL_USE_PRE_SERIALIZED
+	json_serialize_opts opts = {.mode = json_serialize_mode_packed};
+	size_t preserialize_len = json_measure_ex(x, opts);
+	char *buf = (char *)malloc(preserialize_len);
+	json_serialize_ex(buf, x, opts);
+	json_builder_free(x);
+	
+	json_value *xx = json_string_new_length(preserialize_len - 1, buf);
+	xx->type = json_pre_serialized;
+	return xx;
+#else
+	return x;
+#endif
+}
+
 #endif

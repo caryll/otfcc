@@ -1,7 +1,7 @@
 CC = clang
 LINK = clang
-CFLAGS = -O3 -Wall -Wno-multichar
-CFLAGS_EXTERN = -O3
+CFLAGS = -O3 -Wall -Wno-multichar -D_CARYLL_USE_PRE_SERIALIZED
+CFLAGS_EXTERN = -O3 -D_CARYLL_USE_PRE_SERIALIZED
 
 ifeq ($(VERSION), debug)
 CFLAGS = -g -Ddebug
@@ -12,8 +12,8 @@ endif
 ifeq ($(VERSION), gcclto)
 CC = gcc
 LINK = gcc
-CFLAGS = -O3 -flto -Wall -Wno-multichar
-CFLAGS_EXTERN = -O3 -flto
+CFLAGS = -O3 -flto -Wall -Wno-multichar  -D_CARYLL_USE_PRE_SERIALIZED
+CFLAGS_EXTERN = -O3 -flto -D_CARYLL_USE_PRE_SERIALIZED
 LINKFLAGS = -O3 -flto
 endif
 

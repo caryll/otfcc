@@ -215,8 +215,6 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		g->references[j].d = d;
 		g->references[j].x = x;
 		g->references[j].y = y;
-		g->references[j].overlap = flags & OVERLAP_COMPOUND;
-		g->references[j].useMyMetrics = flags & USE_MY_METRICS;
 	}
 	if (glyphHasInstruction) {
 		uint16_t instructionLength = caryll_blt16u(start + offset);
@@ -381,8 +379,6 @@ static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g, caryll_du
 		json_object_push(ref, "b", coord_to_json(r.b));
 		json_object_push(ref, "c", coord_to_json(r.c));
 		json_object_push(ref, "d", coord_to_json(r.d));
-		json_object_push(ref, "overlap", json_boolean_new(r.overlap));
-		json_object_push(ref, "useMyMetrics", json_boolean_new(r.useMyMetrics));
 		json_array_push(references, ref);
 	}
 	return references;
@@ -402,10 +398,10 @@ static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options 
 		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
 		json_object_push(glyph, "verticalOrigin", json_integer_new(g->verticalOrigin));
 	}
-	json_object_push(glyph, "contours", glyf_glyph_contours_to_json(g, dumpopts));
-	json_object_push(glyph, "references", glyf_glyph_references_to_json(g, dumpopts));
+	json_object_push(glyph, "contours", preserialize(glyf_glyph_contours_to_json(g, dumpopts)));
+	json_object_push(glyph, "references", preserialize(glyf_glyph_references_to_json(g, dumpopts)));
 	if (!dumpopts.ignore_hints) {
-		json_object_push(glyph, "instructions", glyf_glyph_instructions_to_json(g, dumpopts));
+		json_object_push(glyph, "instructions", preserialize(glyf_glyph_instructions_to_json(g, dumpopts)));
 	}
 	return glyph;
 }
@@ -415,7 +411,7 @@ void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
 		json_array_push(order, json_string_new_length(sdslen(table->glyphs[j]->name), table->glyphs[j]->name));
 	}
-	json_object_push(root, "glyph_order", order);
+	json_object_push(root, "glyph_order", preserialize(order));
 }
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options dumpopts) {
 	if (!table) return;
@@ -445,8 +441,6 @@ static INLINE void glyf_reference_from_json(glyf_reference *ref, json_value *ref
 		ref->b = json_obj_getnum_fallback(refdump, "b", 0.0);
 		ref->c = json_obj_getnum_fallback(refdump, "c", 0.0);
 		ref->d = json_obj_getnum_fallback(refdump, "d", 1.0);
-		ref->overlap = json_obj_getbool_fallback(refdump, "overlap", true);
-		ref->useMyMetrics = json_obj_getbool_fallback(refdump, "useMyMetrics", false);
 	} else {
 		// Invalid glyph references
 		ref->glyph.name = NULL;
@@ -456,8 +450,6 @@ static INLINE void glyf_reference_from_json(glyf_reference *ref, json_value *ref
 		ref->b = 0.0;
 		ref->c = 0.0;
 		ref->d = 1.0;
-		ref->overlap = true;
-		ref->useMyMetrics = false;
 	}
 }
 static INLINE void glyf_contours_from_json(json_value *col, glyf_glyph *g) {
@@ -651,8 +643,6 @@ static INLINE void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 				flags |= WE_HAVE_A_SCALE;
 			}
 		}
-		if (r->useMyMetrics) flags |= USE_MY_METRICS;
-
 		bufwrite16b(gbuf, flags);
 		bufwrite16b(gbuf, r->glyph.gid);
 		if (flags & ARG_1_AND_2_ARE_WORDS) {

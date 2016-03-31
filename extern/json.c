@@ -988,7 +988,9 @@ void json_value_free_ex (json_settings * settings, json_value * value)
             continue;
 
          case json_string:
-
+#ifdef CARYLL_USE_PRE_SERIALIZED
+         case json_pre_serialized:
+#endif
             settings->mem_free (value->u.string.ptr, settings->user_data);
             break;
 
