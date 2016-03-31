@@ -10,7 +10,7 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 ## `otfcc` command line tool
 
 ### `otfccdump` : Dumps an OpenType font file into JSON
-``` bash
+```
 otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
  -h, --help              : Display this help message and exit.
@@ -25,14 +25,17 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 ```
 
 ### `otfccbuild` : Builds an OpenType font file form JSON
-```bash
+```
 otfccbuild [OPTIONS] input.json -o output.[ttf|otf]
 
- -h, --help           : Display this help message and exit.
- -v, --version        : Display version information and exit.
- -o <file>            : Set output file path to <file>.
- --time               : Time each substep.
- --ignore-glyph-order : Ignore the glyph order information in the input, except for gid0.
- --ignore-hints       : Ignore the hinting information in the input.
+ -h, --help                : Display this help message and exit.
+ -v, --version             : Display version information and exit.
+ -o <file>                 : Set output file path to <file>.
+ --time                    : Time each substep.
+ --ignore-glyph-order      : Ignore the glyph order information in the input.
+ --ignore-hints            : Ignore the hinting information in the input.
+ --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input
+                             instead of stating the average width of glyphs.
+                             Useful when creating a monospaced font.
 ```
 
