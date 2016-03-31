@@ -69,17 +69,14 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->prep = caryll_read_fpgm_prep(packet, 'prep');
 		font->cvt_ = caryll_read_fpgm_prep(packet, 'cvt ');
 		font->gasp = caryll_read_gasp(packet);
-
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
-
-		caryll_font_unconsolidate(font);
 		return font;
 	}
 }
 
-json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options dumpopts) {
+json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts) {
 	json_value *root = json_object_new(48);
-	dumpopts.has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
+	dumpopts->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	if (!root) return NULL;
 	caryll_head_to_json(font->head, root, dumpopts);
 	caryll_hhea_to_json(font->hhea, root, dumpopts);
@@ -90,7 +87,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options dumpopts)
 	caryll_OS_2_to_json(font->OS_2, root, dumpopts);
 	caryll_cmap_to_json(font->cmap, root, dumpopts);
 	caryll_glyf_to_json(font->glyf, root, dumpopts);
-	if (!dumpopts.ignore_hints) {
+	if (!dumpopts->ignore_hints) {
 		caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
 		caryll_fpgm_prep_to_json(font->prep, root, dumpopts, "prep");
 		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
@@ -99,7 +96,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options dumpopts)
 	return root;
 }
 
-caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options dumpopts) {
+caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	caryll_font *font = caryll_new_font();
 	if (!font) return NULL;
 	font->glyph_order = caryll_glyphorder_from_json(root, dumpopts);
@@ -111,7 +108,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options dumpopt
 	font->name = caryll_name_from_json(root, dumpopts);
 	font->cmap = caryll_cmap_from_json(root, dumpopts);
 	font->glyf = caryll_glyf_from_json(root, *font->glyph_order, dumpopts);
-	if (!dumpopts.ignore_hints) {
+	if (!dumpopts->ignore_hints) {
 		font->fpgm = caryll_fpgm_prep_from_json(root, "fpgm");
 		font->prep = caryll_fpgm_prep_from_json(root, "prep");
 		font->cvt_ = caryll_fpgm_prep_from_json(root, "cvt_");

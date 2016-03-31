@@ -20,7 +20,7 @@ typedef struct {
 table_gasp *caryll_new_gasp();
 void caryll_delete_gasp(table_gasp *table);
 table_gasp *caryll_read_gasp(caryll_packet packet);
-void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_dump_options dumpopts);
+void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_dump_options *dumpopts);
 table_gasp *caryll_gasp_from_json(json_value *root);
 caryll_buffer *caryll_write_gasp(table_gasp *table);
 #endif

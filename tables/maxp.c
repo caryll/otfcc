@@ -52,7 +52,7 @@ table_maxp *caryll_read_maxp(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_options dumpopts) {
+void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *maxp = json_object_new(15);
 	json_object_push(maxp, "version", json_integer_new(table->version));
@@ -74,7 +74,7 @@ void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_option
 	json_object_push(root, "maxp", maxp);
 }
 
-table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options dumpopts) {
+table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	table_maxp *maxp = caryll_new_maxp();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {

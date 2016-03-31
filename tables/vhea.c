@@ -34,7 +34,7 @@ table_vhea *caryll_read_vhea(caryll_packet packet) {
 	}
 	return NULL;
 }
-void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_dump_options dumpopts) {
+void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
 	json_object_push(vhea, "ascent", json_integer_new(table->ascent));
@@ -51,7 +51,7 @@ void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_dump_option
 	json_object_push(root, "vhea", vhea);
 }
 
-table_vhea *caryll_vhea_from_json(json_value *root, caryll_dump_options dumpopts) {
+table_vhea *caryll_vhea_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {

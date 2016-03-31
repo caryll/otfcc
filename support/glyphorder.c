@@ -38,9 +38,9 @@ static int dump_order_dotnotdef = 2;
 static int dump_order_type_cmap = 3;
 static int dump_order_type_glyf = 4;
 static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, json_value *table,
-                                                       caryll_dump_options dumpopts) {
+                                                       caryll_dump_options *dumpopts) {
 	uint32_t uplimit = table->u.array.length;
-	if (uplimit >= 1 && dumpopts.ignore_glyph_order) { uplimit = 1; }
+	if (uplimit >= 1 && dumpopts->ignore_glyph_order) { uplimit = 1; }
 	for (uint32_t j = 0; j < uplimit; j++) {
 		json_value *item = table->u.array.values[j];
 		if (item->type == json_string) {
@@ -111,7 +111,7 @@ static int compare_glyphorder_entry_b(glyph_order_entry *a, glyph_order_entry *b
 	return 0;
 }
 
-glyph_order_hash *caryll_glyphorder_from_json(json_value *root, caryll_dump_options dumpopts) {
+glyph_order_hash *caryll_glyphorder_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	if (root->type != json_object) return NULL;
 	glyph_order_hash hash = NULL;
 	json_value *table;

@@ -72,7 +72,7 @@ table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_options dumpopts) {
+void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *os_2 = json_object_new(30);
 	json_object_push(os_2, "version", json_integer_new(table->version));
@@ -126,7 +126,7 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_option
 	json_object_push(root, "OS_2", os_2);
 }
 
-table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options dumpopts) {
+table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	table_OS_2 *os_2 = caryll_new_OS_2();
 	if (!os_2) return NULL;
 	json_value *table = NULL;

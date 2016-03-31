@@ -49,7 +49,7 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 	}
 	return NULL;
 }
-void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_dump_options dumpopts) {
+void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *t = json_array_new(table->numRanges);
 	for (uint16_t j = 0; j < table->numRanges; j++) {

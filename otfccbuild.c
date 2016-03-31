@@ -13,12 +13,15 @@ void printInfo() {
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
-	                " -h, --help           : Display this help message and exit.\n"
-	                " -v, --version        : Display version information and exit.\n"
-	                " -o <file>            : Set output file path to <file>.\n"
-	                " --time               : Time each substep.\n"
-	                " --ignore-glyph-order : Ignore the glyph order information in the input, except for gid0.\n"
-	                " --ignore-hints       : Ignore the hinting information in the input.\n");
+	                " -h, --help                : Display this help message and exit.\n"
+	                " -v, --version             : Display version information and exit.\n"
+	                " -o <file>                 : Set output file path to <file>.\n"
+	                " --time                    : Time each substep.\n"
+	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
+	                " --ignore-hints            : Ignore the hinting information in the input.\n"
+	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
+	                "                             instead of stating the average width of glyphs.\n"
+	                "                             Useful when creating a monospaced font.\n");
 }
 
 void print_table(sfnt_builder_entry *t) {
@@ -37,15 +40,13 @@ int main(int argc, char *argv[]) {
 	sds inPath = NULL;
 	int option_index = 0;
 	int c;
-	caryll_dump_options dumpopts = {.ignore_glyph_order = false, .ignore_hints = false};
+	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
 
-	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
-	                            {"help", no_argument, NULL, 'h'},
-	                            {"time", no_argument, NULL, 0},
-	                            {"ignore-glyph-order", no_argument, NULL, 0},
-	                            {"ignore-hints", no_argument, NULL, 0},
-	                            {"output", required_argument, NULL, 'o'},
-	                            {0, 0, 0, 0}};
+	struct option longopts[] = {
+	    {"version", no_argument, NULL, 'v'},      {"help", no_argument, NULL, 'h'},
+	    {"time", no_argument, NULL, 0},           {"ignore-glyph-order", no_argument, NULL, 0},
+	    {"ignore-hints", no_argument, NULL, 0},   {"keep-average-char-width", no_argument, NULL, 0},
+	    {"output", required_argument, NULL, 'o'}, {0, 0, 0, 0}};
 
 	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
 		switch (c) {
@@ -53,8 +54,11 @@ int main(int argc, char *argv[]) {
 			/* If this option set a flag, do nothing else now. */
 			if (longopts[option_index].flag != 0) break;
 			if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
-			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts.ignore_glyph_order = true; }
-			if (strcmp(longopts[option_index].name, "ignore-hints") == 0) { dumpopts.ignore_hints = true; }
+			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts->ignore_glyph_order = true; }
+			if (strcmp(longopts[option_index].name, "ignore-hints") == 0) { dumpopts->ignore_hints = true; }
+			if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
+				dumpopts->keep_average_char_width = true;
+			}
 			break;
 		case 'v':
 			show_version = true;
@@ -132,8 +136,8 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Convert JSON to font", &begin);
 	}
 	{
-		caryll_font_consolidate(font);
-		caryll_font_stat(font);
+		caryll_font_consolidate(font, dumpopts);
+		caryll_font_stat(font, dumpopts);
 		if (show_time) push_stopwatch("Consolidation and Stating", &begin);
 	}
 	{
@@ -145,6 +149,7 @@ int main(int argc, char *argv[]) {
 
 		buffree(otf);
 		caryll_delete_font(font);
+		if (dumpopts) free(dumpopts);
 		if (show_time) push_stopwatch("Finalize", &begin);
 	}
 	return 0;

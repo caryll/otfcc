@@ -259,6 +259,7 @@ typedef struct {
 	bool ignore_glyph_order;
 	bool ignore_hints;
 	bool has_vertical_metrics;
+	bool keep_average_char_width;
 } caryll_dump_options;
 
 #define MOVE /*move*/

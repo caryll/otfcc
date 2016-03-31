@@ -40,7 +40,8 @@ int main(int argc, char *argv[]) {
 	                            {"output", required_argument, NULL, 'o'},
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
-	caryll_dump_options dumpopts = {.ignore_glyph_order = false, .ignore_hints = false};
+	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
+
 	int option_index = 0;
 	int c;
 
@@ -54,8 +55,8 @@ int main(int argc, char *argv[]) {
 			if (longopts[option_index].flag != 0) break;
 			if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
 			if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
-			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts.ignore_glyph_order = true; }
-			if (strcmp(longopts[option_index].name, "ignore-hints") == 0) { dumpopts.ignore_hints = true; }
+			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts->ignore_glyph_order = true; }
+			if (strcmp(longopts[option_index].name, "ignore-hints") == 0) { dumpopts->ignore_hints = true; }
 			break;
 		case 'v':
 			show_version = true;
@@ -117,6 +118,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
+		caryll_font_unconsolidate(font);
 		if (show_time) push_stopwatch("Parse SFNT", &begin);
 	}
 
@@ -165,6 +167,7 @@ int main(int argc, char *argv[]) {
 		if (sfnt) caryll_delete_sfnt(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);
+		if (dumpopts) free(dumpopts);
 		if (show_time) push_stopwatch("Complete", &begin);
 	}
 

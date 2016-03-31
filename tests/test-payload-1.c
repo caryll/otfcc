@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
 	printf("Testing Payload %s\n", argv[1]);
 	caryll_sfnt *sfnt = caryll_read_sfnt(argv[1]);
 	caryll_font *font = caryll_read_font(sfnt, 0);
+	caryll_font_unconsolidate(font);
 
 	int nChecks = 0;
 

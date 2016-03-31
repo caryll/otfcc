@@ -77,7 +77,7 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 	}
 }
 
-void caryll_font_consolidate(caryll_font *font) {
+void caryll_font_consolidate(caryll_font *font, caryll_dump_options *dumpopts) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
 }
