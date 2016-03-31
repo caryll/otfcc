@@ -301,10 +301,10 @@ void caryll_font_stat_OS_2(caryll_font *font) {
 		if ((u >= 0x3200 && u <= 0x32FF)) { u2 |= (1 << 22); }
 		if ((u >= 0x3300 && u <= 0x33FF)) { u2 |= (1 << 23); }
 		if ((u >= 0xAC00 && u <= 0xD7AF)) { u2 |= (1 << 24); }
-		if ((u >= 0xD800 && u <= 0xDFFF)) { u2 |= (1 << 25); }
+		if ((u >= 0xD800 && u <= 0xDFFF) || u > 0xFFFF) { u2 |= (1 << 25); }
 		if ((u >= 0x10900 && u <= 0x1091F)) { u2 |= (1 << 26); }
 		if ((u >= 0x4E00 && u <= 0x9FFF) || (u >= 0x2E80 && u <= 0x2EFF) || (u >= 0x2F00 && u <= 0x2FDF) ||
-		    (u >= 0x2FF0 && u <= 0x2FFF) || (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x20000 && u <= 0x2A6DF) ||
+		    (u >= 0x2FF0 && u <= 0x2FFF) || (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x20000 && u <= 0x2F7FF) ||
 		    (u >= 0x3190 && u <= 0x319F)) {
 			u2 |= (1 << 27);
 		}
