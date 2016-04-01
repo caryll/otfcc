@@ -3,13 +3,6 @@
 #include "../support/util.h"
 #include "../caryll-sfnt.h"
 
-typedef struct {
-	sds name;
-	uint16_t reqFeatureIndex;
-	uint16_t featureCount;
-	uint16_t *featureIndex;
-} otl_language_system;
-
 typedef enum {
 	otl_unknown = 0,
 
@@ -35,9 +28,28 @@ typedef enum {
 	gpos_extend = 0x29
 } otl_lookup_type;
 
+typedef struct { otl_lookup_type type; } otl_lookup;
+
 typedef struct {
-	uint32_t nLanguages;
+	sds name;
+	uint16_t lookupCount;
+	otl_lookup **lookups;
+} otl_feature;
+
+typedef struct {
+	sds name;
+	otl_feature *requiredFeature;
+	uint16_t featureCount;
+	otl_feature **features;
+} otl_language_system;
+
+typedef struct {
+	uint32_t languageCount;
 	otl_language_system *languages;
+	uint16_t featureCount;
+	otl_feature *features;
+	uint16_t lookupCount;
+	otl_lookup *lookups;
 } table_otl;
 
 void caryll_read_GSUB_GPOS(caryll_packet packet);
