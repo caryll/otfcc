@@ -197,8 +197,13 @@ FAIL:
 
 typedef struct {
 	int gid;
+	int covIndex;
 	UT_hash_handle hh;
 } coverage_entry;
+
+int by_covIndex(coverage_entry *a, coverage_entry *b){
+	return a->covIndex - b->covIndex;
+}
 
 otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_coverage *coverage = malloc(sizeof(otl_coverage));
@@ -219,9 +224,11 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 				if (!item) {
 					item = calloc(1, sizeof(coverage_entry));
 					item->gid = gid;
+					item->covIndex = j;
 					HASH_ADD_INT(hash, gid, item);
 				}
 			}
+			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
 			coverage->glyphs = malloc(coverage->numGlyphs * sizeof(glyph_handle));
 			{
@@ -244,16 +251,19 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 			for (uint16_t j = 0; j < rangeCount; j++) {
 				uint16_t start = caryll_blt16u(data + offset + 4 + 6 * j);
 				uint16_t end = caryll_blt16u(data + offset + 4 + 6 * j + 2);
+				uint16_t startCoverageIndex = caryll_blt16u(data + offset + 4 + 6 * j + 4);
 				for (int k = start; k <= end; k++) {
 					coverage_entry *item = NULL;
 					HASH_FIND_INT(hash, &k, item);
 					if (!item) {
 						item = calloc(1, sizeof(coverage_entry));
 						item->gid = k;
+						item->covIndex = startCoverageIndex + k;
 						HASH_ADD_INT(hash, gid, item);
 					}
 				}
 			}
+			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
 			coverage->glyphs = malloc(coverage->numGlyphs * sizeof(glyph_handle));
 			{
