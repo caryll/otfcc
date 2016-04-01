@@ -26,7 +26,7 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/vhea.h"
 #include "./tables/vmtx.h"
 
-#include "./tables/GSUB-GPOS.h"
+#include "./tables/otl.h"
 
 struct _caryll_font {
 	table_head *head;
@@ -48,6 +48,9 @@ struct _caryll_font {
 	table_fpgm_prep *prep;
 	table_fpgm_prep *cvt_;
 	table_gasp *gasp;
+	
+	table_otl *GSUB;
+	table_otl *GPOS;
 
 	glyph_order_hash *glyph_order;
 };

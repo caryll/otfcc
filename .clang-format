@@ -7,3 +7,4 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: true
 ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+IndentCaseLabels: true

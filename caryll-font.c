@@ -25,6 +25,8 @@ caryll_font *caryll_new_font() {
 	font->gasp = NULL;
 	font->vhea = NULL;
 	font->vmtx = NULL;
+	font->GSUB = NULL;
+	font->GPOS = NULL;
 	return font;
 }
 
@@ -44,7 +46,9 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->gasp) caryll_delete_gasp(font->gasp);
 	if (font->glyf) caryll_delete_glyf(font->glyf);
 	if (font->cmap) caryll_delete_cmap(font->cmap);
-	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }	
+	if (font->GSUB) caryll_delete_otl(font->GSUB);
+	if (font->GPOS) caryll_delete_otl(font->GPOS);
+	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font) free(font);
 }
 
@@ -70,9 +74,9 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->cvt_ = caryll_read_fpgm_prep(packet, 'cvt ');
 		font->gasp = caryll_read_gasp(packet);
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
-		
-		caryll_read_GSUB_GPOS(packet);
-		
+
+		font->GSUB = caryll_read_otl(packet, 'GSUB');
+		font->GPOS = caryll_read_otl(packet, 'GPOS');
 		return font;
 	}
 }
@@ -96,7 +100,8 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
 		caryll_gasp_to_json(font->gasp, root, dumpopts);
 	}
-	
+	caryll_otl_to_json(font->GSUB, root, dumpopts, "GSUB");
+	caryll_otl_to_json(font->GPOS, root, dumpopts, "GPOS");
 	return root;
 }
 
