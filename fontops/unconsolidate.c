@@ -74,22 +74,28 @@ void caryll_name_coverage(caryll_font *font, otl_coverage *coverage) {
 }
 void caryll_name_lookup(caryll_font *font, otl_lookup *lookup) {
 	switch (lookup->type) {
-	case otl_type_gsub_single:
-		for (uint16_t j = 0; j < lookup->subtableCount; j++)
-			if (lookup->subtables[j]) {
-				caryll_name_coverage(font, lookup->subtables[j]->gsub_single.from);
-				caryll_name_coverage(font, lookup->subtables[j]->gsub_single.to);
-			}
-		break;
-	default:
-		break;
+		case otl_type_gsub_single:
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				if (lookup->subtables[j]) {
+					caryll_name_coverage(font, lookup->subtables[j]->gsub_single.from);
+					caryll_name_coverage(font, lookup->subtables[j]->gsub_single.to);
+				}
+			break;
+		default:
+			break;
 	}
 }
 
 void caryll_name_features(caryll_font *font) {
 	if (font->glyph_order && font->GSUB) {
 		for (uint32_t j = 0; j < font->GSUB->lookupCount; j++) {
-			otl_lookup *lookup = &(font->GSUB->lookups[j]);
+			otl_lookup *lookup = font->GSUB->lookups[j];
+			caryll_name_lookup(font, lookup);
+		}
+	}
+	if (font->glyph_order && font->GPOS) {
+		for (uint32_t j = 0; j < font->GPOS->lookupCount; j++) {
+			otl_lookup *lookup = font->GPOS->lookups[j];
 			caryll_name_lookup(font, lookup);
 		}
 	}

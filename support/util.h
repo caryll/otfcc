@@ -244,7 +244,7 @@ static INLINE int64_t caryll_blt64s(uint8_t *src) {
 static INLINE float caryll_from_f2dot14(int16_t x) {
 	return x / 16384.0;
 }
-static INLINE int16_t caryll_to_f2dot14(float x){
+static INLINE int16_t caryll_to_f2dot14(float x) {
 	return x * 16384.0;
 }
 
@@ -264,14 +264,14 @@ typedef struct {
 
 #define MOVE /*move*/
 
-static INLINE json_value *preserialize(MOVE json_value *x){
+static INLINE json_value *preserialize(MOVE json_value *x) {
 #ifdef CARYLL_USE_PRE_SERIALIZED
 	json_serialize_opts opts = {.mode = json_serialize_mode_packed};
 	size_t preserialize_len = json_measure_ex(x, opts);
 	char *buf = (char *)malloc(preserialize_len);
 	json_serialize_ex(buf, x, opts);
 	json_builder_free(x);
-	
+
 	json_value *xx = json_string_new_length(preserialize_len - 1, buf);
 	xx->type = json_pre_serialized;
 	return xx;
@@ -280,4 +280,23 @@ static INLINE json_value *preserialize(MOVE json_value *x){
 #endif
 }
 
+static INLINE void *__caryll_allocate(size_t n, unsigned long line) {
+	void *p = malloc(n);
+	if (!p) {
+		fprintf(stderr, "[%ld]Out of memory(%ld bytes)\n", line, (unsigned long)n);
+		exit(EXIT_FAILURE);
+	}
+	return p;
+}
+#ifdef __cplusplus
+#define NEW(ptr) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)) * (n), __LINE__)
+#define FREE(ptr) (free(ptr), ptr = nullptr)
+#define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)
+#else
+#define NEW(ptr) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)), __LINE__)
+#define NEW_N(ptr, n) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)) * (n), __LINE__)
+#define FREE(ptr) (free(ptr), ptr = NULL)
+#define DELETE(fn, ptr) (fn(ptr), ptr = NULL)
+#endif
 #endif

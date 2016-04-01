@@ -38,7 +38,7 @@ typedef struct {
 	otl_coverage *to;
 } subtable_gsub_single;
 
-typedef union{
+typedef union { 
 	subtable_gsub_single gsub_single;
 } otl_subtable;
 
@@ -70,18 +70,20 @@ typedef struct {
 	uint16_t featureCount;
 	otl_feature *features;
 	uint16_t lookupCount;
-	otl_lookup *lookups;
+	otl_lookup **lookups;
 } table_otl;
 
 table_otl *caryll_new_otl();
 void caryll_delete_otl(table_otl *table);
 table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag);
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag);
+table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, char *tag);
 
 // Coverage functions
 void caryll_delete_coverage(otl_coverage *coverage);
 otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 json_value *caryll_coverage_to_json(otl_coverage *coverage);
+otl_coverage *caryll_coverage_from_json(json_value *cov);
 
 #include "otl-gsub-single.h"
 

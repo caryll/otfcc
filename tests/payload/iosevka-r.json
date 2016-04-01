@@ -22018,5 +22018,772 @@
             "symmetric_smoothing": true,
             "symmetric_gridfit": true
         }
-    ]
+    ],
+    "GSUB": {
+        "languages": {
+            "DFLT_DFLT": {
+                "features": [
+                    "calt_0",
+                    "ccmp_1",
+                    "cv01_3",
+                    "cv02_4",
+                    "cv03_5",
+                    "cv04_6",
+                    "cv05_7",
+                    "cv06_8",
+                    "cv07_9",
+                    "cv08_10",
+                    "cv09_11",
+                    "cv10_12",
+                    "cv11_13",
+                    "cv12_14",
+                    "cv13_15",
+                    "cv14_16",
+                    "cv15_17",
+                    "cv16_18",
+                    "cv17_19",
+                    "cv18_20",
+                    "cv19_21",
+                    "cv20_22",
+                    "cv21_23",
+                    "cv22_24",
+                    "cv23_25",
+                    "ss01_27",
+                    "ss02_28",
+                    "ss03_29",
+                    "ss04_30",
+                    "ss05_31",
+                    "ss06_32",
+                    "ss07_33",
+                    "ss08_34",
+                    "ss09_35",
+                    "ss10_36"
+                ]
+            },
+            "cyrl_DFLT": {
+                "features": [
+                    "calt_0",
+                    "ccmp_1",
+                    "cv01_3",
+                    "cv02_4",
+                    "cv03_5",
+                    "cv04_6",
+                    "cv05_7",
+                    "cv06_8",
+                    "cv07_9",
+                    "cv08_10",
+                    "cv09_11",
+                    "cv10_12",
+                    "cv11_13",
+                    "cv12_14",
+                    "cv13_15",
+                    "cv14_16",
+                    "cv15_17",
+                    "cv16_18",
+                    "cv17_19",
+                    "cv18_20",
+                    "cv19_21",
+                    "cv20_22",
+                    "cv21_23",
+                    "cv22_24",
+                    "cv23_25",
+                    "ss01_27",
+                    "ss02_28",
+                    "ss03_29",
+                    "ss04_30",
+                    "ss05_31",
+                    "ss06_32",
+                    "ss07_33",
+                    "ss08_34",
+                    "ss09_35",
+                    "ss10_36"
+                ]
+            },
+            "cyrl_SRB ": {
+                "features": [
+                    "locl_26"
+                ]
+            },
+            "grek_DFLT": {
+                "features": [
+                    "calt_0",
+                    "ccmp_2",
+                    "cv01_3",
+                    "cv02_4",
+                    "cv03_5",
+                    "cv04_6",
+                    "cv05_7",
+                    "cv06_8",
+                    "cv07_9",
+                    "cv08_10",
+                    "cv09_11",
+                    "cv10_12",
+                    "cv11_13",
+                    "cv12_14",
+                    "cv13_15",
+                    "cv14_16",
+                    "cv15_17",
+                    "cv16_18",
+                    "cv17_19",
+                    "cv18_20",
+                    "cv19_21",
+                    "cv20_22",
+                    "cv21_23",
+                    "cv22_24",
+                    "cv23_25",
+                    "ss01_27",
+                    "ss02_28",
+                    "ss03_29",
+                    "ss04_30",
+                    "ss05_31",
+                    "ss06_32",
+                    "ss07_33",
+                    "ss08_34",
+                    "ss09_35",
+                    "ss10_36"
+                ]
+            },
+            "latn_DFLT": {
+                "features": [
+                    "calt_0",
+                    "ccmp_1",
+                    "cv01_3",
+                    "cv02_4",
+                    "cv03_5",
+                    "cv04_6",
+                    "cv05_7",
+                    "cv06_8",
+                    "cv07_9",
+                    "cv08_10",
+                    "cv09_11",
+                    "cv10_12",
+                    "cv11_13",
+                    "cv12_14",
+                    "cv13_15",
+                    "cv14_16",
+                    "cv15_17",
+                    "cv16_18",
+                    "cv17_19",
+                    "cv18_20",
+                    "cv19_21",
+                    "cv20_22",
+                    "cv21_23",
+                    "cv22_24",
+                    "cv23_25",
+                    "ss01_27",
+                    "ss02_28",
+                    "ss03_29",
+                    "ss04_30",
+                    "ss05_31",
+                    "ss06_32",
+                    "ss07_33",
+                    "ss08_34",
+                    "ss09_35",
+                    "ss10_36"
+                ]
+            }
+        },
+        "features": {
+            "calt_0": [
+                "lookup_calt_0"
+            ],
+            "ccmp_1": [
+                "lookup_ccmp_0"
+            ],
+            "ccmp_2": [
+                "lookup_ccmp_0",
+                "lookup_ccmp_1"
+            ],
+            "cv01_3": [
+                "lookup_cv01_0"
+            ],
+            "cv02_4": [
+                "lookup_cv02_0"
+            ],
+            "cv03_5": [
+                "lookup_cv03_0"
+            ],
+            "cv04_6": [
+                "lookup_cv04_0"
+            ],
+            "cv05_7": [
+                "lookup_cv05_0"
+            ],
+            "cv06_8": [
+                "lookup_cv06_0"
+            ],
+            "cv07_9": [
+                "lookup_cv07_0"
+            ],
+            "cv08_10": [
+                "lookup_cv08_0"
+            ],
+            "cv09_11": [
+                "lookup_cv09_0"
+            ],
+            "cv10_12": [
+                "lookup_cv10_0"
+            ],
+            "cv11_13": [
+                "lookup_cv11_0"
+            ],
+            "cv12_14": [
+                "lookup_cv12_0"
+            ],
+            "cv13_15": [
+                "lookup_cv13_0"
+            ],
+            "cv14_16": [
+                "lookup_cv14_0"
+            ],
+            "cv15_17": [
+                "lookup_cv15_0"
+            ],
+            "cv16_18": [
+                "lookup_cv16_0"
+            ],
+            "cv17_19": [
+                "lookup_cv17_0"
+            ],
+            "cv18_20": [
+                "lookup_cv18_0"
+            ],
+            "cv19_21": [
+                "lookup_cv19_0"
+            ],
+            "cv20_22": [
+                "lookup_cv20_0"
+            ],
+            "cv21_23": [
+                "lookup_cv21_0"
+            ],
+            "cv22_24": [
+                "lookup_cv22_0"
+            ],
+            "cv23_25": [
+                "lookup_cv23_0"
+            ],
+            "locl_26": [
+                "lookup_locl_0"
+            ],
+            "ss01_27": [
+                "lookup_cv05_0",
+                "lookup_cv09_0"
+            ],
+            "ss02_28": [
+                "lookup_cv06_0",
+                "lookup_cv10_0"
+            ],
+            "ss03_29": [
+                "lookup_cv04_0",
+                "lookup_cv08_0"
+            ],
+            "ss04_30": [
+                "lookup_cv11_0"
+            ],
+            "ss05_31": [
+                "lookup_cv12_0"
+            ],
+            "ss06_32": [
+                "lookup_cv13_0"
+            ],
+            "ss07_33": [
+                "lookup_cv14_0"
+            ],
+            "ss08_34": [
+                "lookup_cv15_0"
+            ],
+            "ss09_35": [
+                "lookup_cv18_0",
+                "lookup_cv20_0",
+                "lookup_cv16_0"
+            ],
+            "ss10_36": [
+                "lookup_cv19_0",
+                "lookup_cv21_0",
+                "lookup_cv17_0"
+            ]
+        },
+        "lookups": {
+            "lookup_cv03_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
+                        "to": ["glyph129","glyph134","glyph134","glyph1186","glyph1191","glyph1196","glyph1201","glyph1268","glyph1274","glyph1280","glyph1286","glyph1390","glyph1457","glyph1463","glyph1516","glyph1585","glyph1696","glyph1702","glyph1900","glyph1906"]
+                    }
+                ]
+            },
+            "lookup_cv04_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
+                        "to": ["glyph130","glyph135","glyph135","glyph1187","glyph1192","glyph1197","glyph1202","glyph1269","glyph1275","glyph1281","glyph1287","glyph1391","glyph1458","glyph1464","glyph1517","glyph1586","glyph1697","glyph1703","glyph1901","glyph1907"]
+                    }
+                ]
+            },
+            "lookup_cv05_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
+                        "to": ["glyph127","glyph136","glyph136","glyph1188","glyph1193","glyph1198","glyph1203","glyph1270","glyph1276","glyph1282","glyph1288","glyph1392","glyph1459","glyph1465","glyph1518","glyph1587","glyph1698","glyph1704","glyph1902","glyph1908"]
+                    }
+                ]
+            },
+            "lookup_cv06_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
+                        "to": ["glyph128","glyph137","glyph137","glyph1189","glyph1194","glyph1199","glyph1204","glyph1271","glyph1277","glyph1283","glyph1289","glyph1393","glyph1460","glyph1466","glyph1519","glyph1588","glyph1699","glyph1705","glyph1903","glyph1909"]
+                    }
+                ]
+            },
+            "lookup_cv07_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
+                        "to": ["glyph166","glyph166","glyph1297","glyph1303","glyph1308","glyph1313","glyph1372","glyph1714","glyph1720","glyph1726","glyph1732"]
+                    }
+                ]
+            },
+            "lookup_cv08_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
+                        "to": ["glyph167","glyph167","glyph1298","glyph1304","glyph1309","glyph1314","glyph1373","glyph1715","glyph1721","glyph1727","glyph1733"]
+                    }
+                ]
+            },
+            "lookup_cv09_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
+                        "to": ["glyph164","glyph164","glyph1299","glyph1305","glyph1310","glyph1315","glyph1374","glyph1716","glyph1722","glyph1728","glyph1734"]
+                    }
+                ]
+            },
+            "lookup_cv10_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
+                        "to": ["glyph165","glyph165","glyph1300","glyph1306","glyph1311","glyph1316","glyph1375","glyph1717","glyph1723","glyph1729","glyph1735"]
+                    }
+                ]
+            },
+            "lookup_cv01_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["a","uni0430","agrave","aacute","acircumflex","atilde","adieresis","aring","amacron","abreve","aogonek","uni01CE","uni01DF","uni01E1","aringacute","uni0201","uni0203","uni0227","uni04D1","uni04D3","uni1D8F","uni1E01","uni1E9A","uni1EA1","uni1EA3","uni1EA5","uni1EA7","uni1EA9","uni1EAB","uni1EAD","uni1EAF","uni1EB1","uni1EB3","uni1EB5","uni1EB7"],
+                        "to": ["glyph189","glyph189","glyph1163","glyph1166","glyph1169","glyph1172","glyph1175","glyph1178","glyph1219","glyph1223","glyph1227","glyph1386","glyph1408","glyph1412","glyph1437","glyph1445","glyph1449","glyph1487","glyph1604","glyph1608","glyph1643","glyph1650","glyph1829","glyph1836","glyph1840","glyph1844","glyph1848","glyph1852","glyph1856","glyph1860","glyph1864","glyph1868","glyph1872","glyph1876","glyph1880"]
+                    }
+                ]
+            },
+            "lookup_cv02_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["a","uni0430","agrave","aacute","acircumflex","atilde","adieresis","aring","amacron","abreve","aogonek","uni01CE","uni01DF","uni01E1","aringacute","uni0201","uni0203","uni0227","uni04D1","uni04D3","uni1D8F","uni1E01","uni1E9A","uni1EA1","uni1EA3","uni1EA5","uni1EA7","uni1EA9","uni1EAB","uni1EAD","uni1EAF","uni1EB1","uni1EB3","uni1EB5","uni1EB7"],
+                        "to": ["glyph190","glyph190","glyph1164","glyph1167","glyph1170","glyph1173","glyph1176","glyph1179","glyph1220","glyph1224","glyph1228","glyph1387","glyph1409","glyph1413","glyph1438","glyph1446","glyph1450","glyph1488","glyph1605","glyph1609","glyph1644","glyph1651","glyph1830","glyph1837","glyph1841","glyph1845","glyph1849","glyph1853","glyph1857","glyph1861","glyph1865","glyph1869","glyph1873","glyph1877","glyph1881"]
+                    }
+                ]
+            },
+            "lookup_cv11_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["g","gcircumflex","gbreve","gdotaccent","uni0123","gcaron","uni01F5","uni1E21"],
+                        "to": ["glyph319","glyph1250","glyph1254","glyph1258","glyph1262","glyph1418","glyph1431","glyph1682"]
+                    }
+                ]
+            },
+            "lookup_cv12_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["g","gcircumflex","gbreve","gdotaccent","uni0123","gcaron","uni01F5","uni1E21"],
+                        "to": ["glyph320","glyph1251","glyph1255","glyph1259","glyph1263","glyph1419","glyph1432","glyph1683"]
+                    }
+                ]
+            },
+            "lookup_cv13_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["zero"],
+                        "to": ["glyph651"]
+                    }
+                ]
+            },
+            "lookup_cv14_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["zero"],
+                        "to": ["glyph652"]
+                    }
+                ]
+            },
+            "lookup_cv15_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["zero"],
+                        "to": ["glyph650"]
+                    }
+                ]
+            },
+            "lookup_cv22_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["paragraph"],
+                        "to": ["glyph714"]
+                    }
+                ]
+            },
+            "lookup_cv23_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["paragraph"],
+                        "to": ["glyph715"]
+                    }
+                ]
+            },
+            "lookup_cv18_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["asterisk"],
+                        "to": ["glyph718"]
+                    }
+                ]
+            },
+            "lookup_cv19_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["asterisk"],
+                        "to": ["glyph719"]
+                    }
+                ]
+            },
+            "lookup_cv20_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["underscore"],
+                        "to": ["glyph725"]
+                    }
+                ]
+            },
+            "lookup_cv21_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["underscore"],
+                        "to": ["glyph726"]
+                    }
+                ]
+            },
+            "lookup_cv16_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["asciitilde"],
+                        "to": ["glyph16"]
+                    }
+                ]
+            },
+            "lookup_cv17_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["asciitilde"],
+                        "to": ["glyph778"]
+                    }
+                ]
+            },
+            "lookup_11_23": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["uni0345"],
+                        "to": ["glyph48"]
+                    }
+                ]
+            },
+            "lookup_11_24": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["uni0328"],
+                        "to": ["glyph46"]
+                    }
+                ]
+            },
+            "lookup_ccmp_0": {},
+            "lookup_11_26": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["i","uni0456","j","uni0458","iogonek"],
+                        "to": ["dotlessi","dotlessi","uni0237","uni0237","glyph132"]
+                    }
+                ]
+            },
+            "lookup_ccmp_1": {},
+            "lookup_locl_0": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["uni0431"],
+                        "to": ["glyph490"]
+                    }
+                ]
+            },
+            "lookup_11_29": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1086","glyph1109"]
+                    }
+                ]
+            },
+            "lookup_11_30": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1087","glyph1110"]
+                    }
+                ]
+            },
+            "lookup_11_31": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1091","glyph1114"]
+                    }
+                ]
+            },
+            "lookup_11_32": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1092","glyph1115"]
+                    }
+                ]
+            },
+            "lookup_11_33": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1088","glyph1111"]
+                    }
+                ]
+            },
+            "lookup_11_34": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1089","glyph1112"]
+                    }
+                ]
+            },
+            "lookup_11_35": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1090","glyph1113"]
+                    }
+                ]
+            },
+            "lookup_11_36": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1099","glyph1122"]
+                    }
+                ]
+            },
+            "lookup_11_37": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1100","glyph1123"]
+                    }
+                ]
+            },
+            "lookup_11_38": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1101","glyph1124"]
+                    }
+                ]
+            },
+            "lookup_11_39": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1102","glyph1125"]
+                    }
+                ]
+            },
+            "lookup_11_40": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1105","glyph1128"]
+                    }
+                ]
+            },
+            "lookup_11_41": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1106","glyph1129"]
+                    }
+                ]
+            },
+            "lookup_11_42": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1103","glyph1126"]
+                    }
+                ]
+            },
+            "lookup_11_43": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1104","glyph1127"]
+                    }
+                ]
+            },
+            "lookup_11_44": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["hyphen","equal"],
+                        "to": ["glyph1107","glyph1130"]
+                    }
+                ]
+            },
+            "lookup_11_45": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["less"],
+                        "to": ["glyph1083"]
+                    }
+                ]
+            },
+            "lookup_11_46": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["greater"],
+                        "to": ["glyph1080"]
+                    }
+                ]
+            },
+            "lookup_11_47": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["less"],
+                        "to": ["glyph1085"]
+                    }
+                ]
+            },
+            "lookup_11_48": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["greater"],
+                        "to": ["glyph1082"]
+                    }
+                ]
+            },
+            "lookup_11_49": {
+                "type": "gsub_single",
+                "subtables": [
+                    {
+                        "from": ["exclam"],
+                        "to": ["glyph1132"]
+                    }
+                ]
+            },
+            "lookup_calt_0": {}
+        }
+    },
+    "GPOS": {
+        "languages": {
+            "DFLT_DFLT": {
+                "features": [
+                    "mark_0",
+                    "mkmk_1"
+                ]
+            },
+            "cyrl_DFLT": {
+                "features": [
+                    "mark_0",
+                    "mkmk_1"
+                ]
+            },
+            "grek_DFLT": {
+                "features": [
+                    "mark_0",
+                    "mkmk_1"
+                ]
+            },
+            "latn_DFLT": {
+                "features": [
+                    "mark_0",
+                    "mkmk_1"
+                ]
+            }
+        },
+        "features": {
+            "mark_0": [
+                "lookup_mark_0",
+                "lookup_mark_1",
+                "lookup_mark_2"
+            ],
+            "mkmk_1": [
+                "lookup_mkmk_0"
+            ]
+        },
+        "lookups": {
+            "lookup_mark_0": {},
+            "lookup_mark_1": {},
+            "lookup_mark_2": {},
+            "lookup_mkmk_0": {}
+        }
+    }
 }

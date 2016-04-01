@@ -76,8 +76,100 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 		}
 	}
 }
+static void consolidate_coverage(caryll_font *font, otl_coverage *coverage) {
+	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+		glyph_order_entry *ordentry;
+		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
+		if (ordentry) {
+			coverage->glyphs[j].gid = ordentry->gid;
+			sdsfree(coverage->glyphs[j].name);
+			coverage->glyphs[j].name = ordentry->name;
+		} else {
+			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in feature coverage.\n", coverage->glyphs[j].name);
+			coverage->glyphs[j].gid = 0;
+			DELETE(sdsfree, coverage->glyphs[j].name);
+		}
+	}
+}
+typedef struct {
+	int fromid;
+	sds fromname;
+	int toid;
+	sds toname;
+	UT_hash_handle hh;
+} gsub_map_hash;
+static INLINE int by_from_id(gsub_map_hash *a, gsub_map_hash *b) {
+	return a->fromid - b->fromid;
+}
+static void consolidate_gsub_single(caryll_font *font, otl_lookup *lookup) {
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		subtable_gsub_single *subtable = &(lookup->subtables[j]->gsub_single);
+		consolidate_coverage(font, subtable->from);
+		consolidate_coverage(font, subtable->to);
+		uint16_t len = (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs
+		                                                                    : subtable->from->numGlyphs);
+		gsub_map_hash *h = NULL;
+		for (uint16_t k = 0; k < len; k++) {
+			if (subtable->from->glyphs[k].name && subtable->to->glyphs[k].name) {
+				gsub_map_hash *s;
+				HASH_FIND_INT(h, &(subtable->from->glyphs[k].gid), s);
+				if (s) {
+					fprintf(stderr, "[Consolidate] Double mapping a glyph in a single substitution /%s.\n",
+					        subtable->from->glyphs[k].name);
+				} else {
+					NEW(s);
+					s->fromid = subtable->from->glyphs[k].gid;
+					s->toid = subtable->to->glyphs[k].gid;
+					s->fromname = subtable->from->glyphs[k].name;
+					s->toname = subtable->to->glyphs[k].name;
+					HASH_ADD_INT(h, fromid, s);
+				}
+			}
+		}
+		HASH_SORT(h, by_from_id);
+		subtable->from->numGlyphs = HASH_COUNT(h);
+		subtable->to->numGlyphs = HASH_COUNT(h);
+		FREE(subtable->from->glyphs);
+		FREE(subtable->to->glyphs);
+		NEW_N(subtable->from->glyphs, subtable->from->numGlyphs);
+		NEW_N(subtable->to->glyphs, subtable->to->numGlyphs);
+		{
+			gsub_map_hash *s, *tmp;
+			uint16_t j = 0;
+			HASH_ITER(hh, h, s, tmp){
+				subtable->from->glyphs[j].gid = s->fromid;
+				subtable->from->glyphs[j].name = s->fromname;
+				subtable->to->glyphs[j].gid = s->toid;
+				subtable->to->glyphs[j].name = s->toname;
+				j++;
+				fprintf(stderr, "%s %d -> %s %d\n", s->fromname, s->fromid, s->toname, s->toid);
+				HASH_DEL(h, s);
+				free(s);
+			}
+		}
+	}
+}
+void declare_consolidate_type(otl_lookup_type type, void (*fn)(caryll_font *, otl_lookup *), caryll_font *font,
+                              otl_lookup *lookup) {
+	if (lookup && lookup->subtableCount && lookup->type == type) fn(font, lookup);
+}
+void caryll_consolidate_lookup(caryll_font *font, otl_lookup *lookup) {
+	declare_consolidate_type(otl_type_gsub_single, consolidate_gsub_single, font, lookup);
+}
+
+void caryll_font_consolidate_otl(caryll_font *font) {
+	if (font->glyph_order && font->GSUB)
+		for (uint16_t j = 0; j < font->GSUB->lookupCount; j++) {
+			caryll_consolidate_lookup(font, font->GSUB->lookups[j]);
+		}
+	if (font->glyph_order && font->GPOS)
+		for (uint16_t j = 0; j < font->GPOS->lookupCount; j++) {
+			caryll_consolidate_lookup(font, font->GPOS->lookups[j]);
+		}
+}
 
 void caryll_font_consolidate(caryll_font *font, caryll_dump_options *dumpopts) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
+	caryll_font_consolidate_otl(font);
 }
