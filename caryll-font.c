@@ -44,7 +44,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->gasp) caryll_delete_gasp(font->gasp);
 	if (font->glyf) caryll_delete_glyf(font->glyf);
 	if (font->cmap) caryll_delete_cmap(font->cmap);
-	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
+	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }	
 	if (font) free(font);
 }
 
@@ -70,6 +70,9 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->cvt_ = caryll_read_fpgm_prep(packet, 'cvt ');
 		font->gasp = caryll_read_gasp(packet);
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
+		
+		caryll_read_GSUB_GPOS(packet);
+		
 		return font;
 	}
 }
@@ -93,6 +96,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
 		caryll_gasp_to_json(font->gasp, root, dumpopts);
 	}
+	
 	return root;
 }
 

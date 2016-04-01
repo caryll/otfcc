@@ -26,6 +26,8 @@ typedef struct _caryll_font caryll_font;
 #include "./tables/vhea.h"
 #include "./tables/vmtx.h"
 
+#include "./tables/GSUB-GPOS.h"
+
 struct _caryll_font {
 	table_head *head;
 	table_hhea *hhea;
