@@ -631,7 +631,6 @@ uint32_t featureNameToTag(sds name) {
 	if (sdslen(name) > 1) { tag |= ((uint8_t)name[1]) << 16; }
 	if (sdslen(name) > 2) { tag |= ((uint8_t)name[2]) << 8; }
 	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
-	fprintf(stderr, "[%s] %d %08x\n", name, sdslen(name), tag);
 	return tag;
 }
 
