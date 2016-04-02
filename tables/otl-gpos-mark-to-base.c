@@ -28,49 +28,46 @@ void caryll_delete_gpos_mark_to_base(otl_lookup *lookup) {
 	}
 }
 
-void caryll_read_gpos_mark_to_base(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup) {
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-		otl_subtable *_subtable;
-		NEW(_subtable);
-		subtable_gpos_mark_to_base *subtable = &(_subtable->gpos_mark_to_base);
+otl_subtable *caryll_read_gpos_mark_to_base(font_file_pointer data, uint32_t tableLength,
+                                                     uint32_t subtableOffset) {
+	otl_subtable *_subtable;
+	NEW(_subtable);
+	subtable_gpos_mark_to_base *subtable = &(_subtable->gpos_mark_to_base);
+	if (tableLength < subtableOffset + 12) goto FAIL;
 
-		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
-		if (tableLength < subtableOffset + 12) goto FAIL;
+	subtable->marks = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
+	subtable->bases = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 4));
+	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
+		goto FAIL;
 
-		subtable->marks = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
-		subtable->bases = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 4));
-		if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
-			goto FAIL;
+	subtable->classCount = read_16u(data + subtableOffset + 6);
+	uint16_t markArrayOffset = subtableOffset + read_16u(data + subtableOffset + 8);
+	subtable->markArray = otl_read_mark_array(data, tableLength, markArrayOffset);
+	if (!subtable->markArray || subtable->markArray->markCount != subtable->marks->numGlyphs) goto FAIL;
 
-		subtable->classCount = read_16u(data + subtableOffset + 6);
-		uint16_t markArrayOffset = subtableOffset + read_16u(data + subtableOffset + 8);
-		subtable->markArray = otl_read_mark_array(data, tableLength, markArrayOffset);
-		if (!subtable->markArray || subtable->markArray->markCount != subtable->marks->numGlyphs) goto FAIL;
-
-		uint16_t baseArrayOffset = subtableOffset + read_16u(data + subtableOffset + 10);
-		checkLength(baseArrayOffset + 2 + 2 * subtable->bases->numGlyphs * subtable->classCount);
-		if (read_16u(data + baseArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
-		NEW_N(subtable->baseArray, subtable->bases->numGlyphs);
-		uint16_t _offset = baseArrayOffset + 2;
-		for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-			NEW_N(subtable->baseArray[j], subtable->classCount);
-			for (uint16_t k = 0; k < subtable->classCount; k++) {
-				if (read_16u(data + _offset)) {
-					subtable->baseArray[j][k] =
-					    otl_read_anchor(data, tableLength, baseArrayOffset + read_16u(data + _offset));
-				} else {
-					subtable->baseArray[j][k].x = 0;
-					subtable->baseArray[j][k].y = 0;
-				}
-				_offset += 2;
+	uint16_t baseArrayOffset = subtableOffset + read_16u(data + subtableOffset + 10);
+	checkLength(baseArrayOffset + 2 + 2 * subtable->bases->numGlyphs * subtable->classCount);
+	if (read_16u(data + baseArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
+	NEW_N(subtable->baseArray, subtable->bases->numGlyphs);
+	uint16_t _offset = baseArrayOffset + 2;
+	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+		NEW_N(subtable->baseArray[j], subtable->classCount);
+		for (uint16_t k = 0; k < subtable->classCount; k++) {
+			if (read_16u(data + _offset)) {
+				subtable->baseArray[j][k] =
+				    otl_read_anchor(data, tableLength, baseArrayOffset + read_16u(data + _offset));
+			} else {
+				subtable->baseArray[j][k].x = 0;
+				subtable->baseArray[j][k].y = 0;
 			}
+			_offset += 2;
 		}
-		goto OK;
-	FAIL:
-		DELETE(delete_mtb_subtable, _subtable);
-	OK:
-		lookup->subtables[j] = _subtable;
 	}
+	goto OK;
+FAIL:
+	DELETE(delete_mtb_subtable, _subtable);
+OK:
+	return _subtable;
 }
 
 void caryll_gpos_mark_to_base_to_json(otl_lookup *lookup, json_value *dump) {

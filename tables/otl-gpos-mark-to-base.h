@@ -3,6 +3,7 @@
 
 #include "otl.h"
 void caryll_delete_gpos_mark_to_base(otl_lookup *lookup);
-void caryll_read_gpos_mark_to_base(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup);
+otl_subtable *caryll_read_gpos_mark_to_base(font_file_pointer data, uint32_t tableLength,
+                                                     uint32_t subtableOffset);
 void caryll_gpos_mark_to_base_to_json(otl_lookup *lookup, json_value *dump);
 #endif

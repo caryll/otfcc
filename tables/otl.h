@@ -13,7 +13,7 @@ typedef enum {
 	otl_type_gsub_ligature = 0x14,
 	otl_type_gsub_context = 0x15,
 	otl_type_gsub_chain = 0x16,
-	otl_type_gsub_extension = 0x17,
+	otl_type_gsub_extend = 0x17,
 	otl_type_gsub_reverse = 0x18,
 
 	otl_type_gpos_unknown = 0x20,
@@ -27,6 +27,8 @@ typedef enum {
 	otl_type_gpos_chain = 0x28,
 	otl_type_gpos_extend = 0x29
 } otl_lookup_type;
+
+typedef union _otl_subtable otl_subtable;
 
 typedef struct {
 	uint16_t numGlyphs;
@@ -61,12 +63,18 @@ typedef struct {
 	otl_mark_array *markArray;
 } subtable_gpos_mark_to_base;
 
-typedef union {
+typedef struct {
+	uint16_t type;
+	otl_subtable *subtable;
+} subtable_extend;
+
+typedef union _otl_subtable {
 	subtable_gsub_single gsub_single;
 	subtable_gpos_mark_to_base gpos_mark_to_base;
+	subtable_extend extend;
 } otl_subtable;
 
-typedef struct {
+typedef struct _otl_lookup {
 	sds name;
 	otl_lookup_type type;
 	uint32_t _offset;
@@ -97,6 +105,9 @@ typedef struct {
 	otl_lookup **lookups;
 } table_otl;
 
+otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                       otl_lookup_type lookupType);
+
 table_otl *caryll_new_otl();
 void caryll_delete_otl(table_otl *table);
 table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag);
@@ -113,6 +124,7 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
 #include "otl-gsub-single.h"
 #include "otl-gpos-mark-to-base.h"
+#include "otl-extend.h"
 
 #define checkLength(offset)                                                                                            \
 	if (tableLength < offset) { goto FAIL; }

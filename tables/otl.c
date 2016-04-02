@@ -16,6 +16,21 @@ void caryll_delete_coverage(otl_coverage *coverage) {
 	if (coverage) free(coverage);
 }
 
+void caryll_delete_lookup(otl_lookup *lookup) {
+	if (!lookup) return;
+	switch (lookup->type) {
+		case otl_type_gsub_single:
+			caryll_delete_gsub_single(lookup);
+			break;
+		case otl_type_gpos_mark_to_base:
+			caryll_delete_gpos_mark_to_base(lookup);
+			break;
+		default:
+			free(lookup);
+			break;
+	}
+}
+
 void caryll_delete_otl(table_otl *table) {
 	if (!table) return;
 	if (table->languages) {
@@ -36,16 +51,7 @@ void caryll_delete_otl(table_otl *table) {
 	}
 	if (table->lookups) {
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
-			switch (table->lookups[j]->type) {
-				case otl_type_gsub_single:
-					caryll_delete_gsub_single(table->lookups[j]);
-					break;
-				case otl_type_gpos_mark_to_base:
-					caryll_delete_gpos_mark_to_base(table->lookups[j]);
-					break;
-				default:
-					break;
-			}
+			caryll_delete_lookup(table->lookups[j]);
 		}
 		free(table->lookups);
 	}
@@ -292,26 +298,53 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 	return coverage;
 }
 
+otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                       otl_lookup_type lookupType) {
+	switch (lookupType) {
+		case otl_type_gsub_single:
+			return caryll_read_gsub_single(data, tableLength, subtableOffset);
+		case otl_type_gpos_mark_to_base:
+			return caryll_read_gpos_mark_to_base(data, tableLength, subtableOffset);
+		case otl_type_gsub_extend:
+		case otl_type_gpos_extend:
+			return caryll_read_otl_extend(data, tableLength, subtableOffset, lookupType);
+		default:
+			return NULL;
+	}
+}
+
 void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup) {
 	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
-	if (tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
+	if (!lookup->subtableCount || tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
+		lookup->type = otl_type_unknown;
 		lookup->subtableCount = 0;
 		lookup->subtables = NULL;
 		return;
 	}
 	NEW_N(lookup->subtables, lookup->subtableCount);
-	switch (lookup->type) {
-		case otl_type_gsub_single:
-			caryll_read_gsub_single(data, tableLength, lookup);
-			break;
-		case otl_type_gpos_mark_to_base:
-			caryll_read_gpos_mark_to_base(data, tableLength, lookup);
-			break;
-		default:
-			lookup->type = otl_type_unknown;
-			if (lookup->subtables) free(lookup->subtables);
-			lookup->subtables = NULL;
-			break;
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
+		lookup->subtables[j] = caryll_read_otl_subtable(data, tableLength, subtableOffset, lookup->type);
+	}
+	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
+		lookup->type = lookup->subtables[0]->extend.type;
+		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+			if (lookup->subtables[j] && lookup->subtables[j]->extend.type == lookup->type) {
+				otl_subtable *st = lookup->subtables[j]->extend.subtable;
+				FREE(lookup->subtables[j]);
+				lookup->subtables[j] = st;
+			} else {
+				// delete this subtable
+				otl_lookup *temp;
+				NEW(temp);
+				temp->type = lookup->subtables[j]->extend.type;
+				temp->subtableCount = 1;
+				NEW_N(temp->subtables, 1);
+				temp->subtables[0] = lookup->subtables[j]->extend.subtable;
+				DELETE(caryll_delete_lookup, temp);
+				FREE(lookup->subtables[j]);
+			}
+		}
 	}
 }
 
@@ -681,13 +714,98 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 	}
 }
 
-void declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_lookup *lookup), otl_lookup *lookup,
-                           caryll_buffer *buf, size_t *offset) {
+bool declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subtable *_subtable), otl_lookup *lookup,
+                           caryll_buffer *buf, uint32_t **subtableOffsets, uint32_t *lastOffset) {
 	if (lookup->type == type) {
-		bufseek(buf, *offset);
-		bufwrite_bufdel(buf, fn(lookup));
-		*offset = buf->cursor;
+		NEW_N(*subtableOffsets, lookup->subtableCount);
+		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+			*subtableOffsets[j] = buf->cursor;
+			*lastOffset = buf->cursor;
+			bufwrite_bufdel(buf, fn(lookup->subtables[j]));
+		}
+		return true;
 	}
+	return false;
+}
+
+// When writing lookups, otfcc will try to maintain everything correctly.
+static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
+	caryll_buffer *bufl = bufnew();
+	caryll_buffer *bufsts = bufnew();
+	uint32_t **subtableOffsets;
+	NEW_N(subtableOffsets, table->lookupCount);
+	bool *lookupWritten;
+	NEW_N(lookupWritten, table->lookupCount);
+	uint32_t lastOffset = 0;
+	for (uint16_t j = 0; j < table->lookupCount; j++) {
+		subtableOffsets[j] = NULL;
+		bool written = false;
+		written = written || declare_lookup_writer(otl_type_gsub_single, caryll_write_gsub_single_subtable,
+		                                           table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
+		lookupWritten[j] = written;
+	}
+	// estimate the length of headers
+	size_t headerSize = 2 + 2 * table->lookupCount;
+	for (uint16_t j = 0; j < table->lookupCount; j++) {
+		if (lookupWritten[j]) { headerSize += 6 + 2 * table->lookups[j]->subtableCount; }
+	}
+	bool useExtended = lastOffset >= 0xFF00 - headerSize;
+	if (useExtended) {
+		for (uint16_t j = 0; j < table->lookupCount; j++) {
+			if (lookupWritten[j]) { headerSize += 8 * table->lookups[j]->subtableCount; }
+		}
+	}
+	// write the header
+	bufwrite16b(bufl, table->lookupCount);
+	size_t hp = bufl->cursor;
+	bufseek(bufl, 2 + table->lookupCount * 2);
+	for (uint16_t j = 0; j < table->lookupCount; j++) {
+		if (!lookupWritten[j]) continue;
+		otl_lookup *lookup = table->lookups[j];
+		size_t lookupOffset = bufl->cursor;
+		if (useExtended) {
+			bufwrite16b(
+			    bufl, (lookup->type > otl_type_gpos_unknown
+			               ? otl_type_gpos_extend - otl_type_gpos_unknown
+			               : lookup->type > otl_type_gsub_unknown ? otl_type_gsub_extend - otl_type_gsub_unknown : 0));
+		} else {
+			bufwrite16b(bufl, (lookup->type > otl_type_gpos_unknown
+			                       ? lookup->type - otl_type_gpos_unknown
+			                       : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0));
+		}
+		bufwrite16b(bufl, 0);
+		bufwrite16b(bufl, lookup->subtableCount);
+		if (useExtended) {
+			for (uint16_t k = 0; k < lookup->subtableCount; k++) { // subtable offsets
+				bufwrite16b(bufl, 6 + 2 * lookup->subtableCount + 8 * k);
+			}
+			for (uint16_t k = 0; k < lookup->subtableCount; k++) { // extension subtables
+				size_t subtableStart = bufl->cursor;
+				bufwrite16b(bufl, 1);
+				bufwrite16b(bufl,
+				            (lookup->type > otl_type_gpos_unknown
+				                 ? lookup->type - otl_type_gpos_unknown
+				                 : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0));
+				bufwrite32b(bufl, subtableOffsets[j][k] + headerSize - subtableStart);
+			}
+		} else {
+			for (uint16_t k = 0; k < lookup->subtableCount; k++) { // subtable offsets
+				bufwrite16b(bufl, subtableOffsets[j][k] + headerSize - lookupOffset);
+			}
+		}
+		free(subtableOffsets[j]);
+
+		size_t cp = bufl->cursor;
+		bufseek(bufl, hp);
+		bufwrite16b(bufl, lookupOffset);
+		hp = bufl->cursor;
+		bufseek(bufl, cp);
+	}
+	free(subtableOffsets);
+	free(lookupWritten);
+	bufseek(bufl, headerSize);
+	bufwrite_bufdel(bufl, bufsts);
+	return bufl;
 }
 
 uint32_t featureNameToTag(sds name) {
@@ -697,6 +815,31 @@ uint32_t featureNameToTag(sds name) {
 	if (sdslen(name) > 2) { tag |= ((uint8_t)name[2]) << 8; }
 	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
 	return tag;
+}
+static INLINE caryll_buffer *writeOTLFeatures(table_otl *table) {
+	caryll_buffer *buff = bufnew();
+	bufwrite16b(buff, table->featureCount);
+	size_t offset = 2 + table->featureCount * 6;
+	for (uint16_t j = 0; j < table->featureCount; j++) {
+		bufwrite32b(buff, featureNameToTag(table->features[j]->name));
+		bufwrite16b(buff, offset);
+		size_t cp = buff->cursor;
+		bufseek(buff, offset);
+		bufwrite16b(buff, 0);
+		bufwrite16b(buff, table->features[j]->lookupCount);
+		for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
+			// reverse lookup
+			for (uint16_t l = 0; l < table->lookupCount; l++) {
+				if (table->features[j]->lookups[k] == table->lookups[l]) {
+					bufwrite16b(buff, l);
+					break;
+				}
+			}
+		}
+		offset = buff->cursor;
+		bufseek(buff, cp);
+	}
+	return buff;
 }
 
 typedef struct {
@@ -764,44 +907,6 @@ static INLINE caryll_buffer *writeScript(script_stat_hash *script, table_otl *ta
 	return buf;
 }
 
-static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
-	caryll_buffer *bufl = bufnew();
-	bufwrite16b(bufl, table->lookupCount);
-	size_t offset = 2 + 2 * table->lookupCount;
-	for (uint16_t j = 0; j < table->lookupCount; j++) {
-		size_t cp = bufl->cursor;
-		size_t begin = offset;
-		declare_lookup_writer(otl_type_gsub_single, caryll_write_gsub_single, table->lookups[j], bufl, &offset);
-		bufseek(bufl, cp);
-		bufwrite16b(bufl, begin);
-	}
-	return bufl;
-}
-static INLINE caryll_buffer *writeOTLFeatures(table_otl *table) {
-	caryll_buffer *buff = bufnew();
-	bufwrite16b(buff, table->featureCount);
-	size_t offset = 2 + table->featureCount * 6;
-	for (uint16_t j = 0; j < table->featureCount; j++) {
-		bufwrite32b(buff, featureNameToTag(table->features[j]->name));
-		bufwrite16b(buff, offset);
-		size_t cp = buff->cursor;
-		bufseek(buff, offset);
-		bufwrite16b(buff, 0);
-		bufwrite16b(buff, table->features[j]->lookupCount);
-		for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
-			// reverse lookup
-			for (uint16_t l = 0; l < table->lookupCount; l++) {
-				if (table->features[j]->lookups[k] == table->lookups[l]) {
-					bufwrite16b(buff, l);
-					break;
-				}
-			}
-		}
-		offset = buff->cursor;
-		bufseek(buff, cp);
-	}
-	return buff;
-}
 static INLINE caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
 	caryll_buffer *bufs = bufnew();
 	script_stat_hash *h = NULL;
