@@ -126,6 +126,15 @@ void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that) {
 	memcpy(buf->s + buf->cursor, that->s, len);
 	buf->cursor += len;
 }
+void bufwrite_bufdel(caryll_buffer *buf, caryll_buffer *that) {
+	if (!that || !that->s) return;
+	size_t len = buflen(that);
+	bufbeforewrite(buf, len);
+	if (!buf->s) return;
+	memcpy(buf->s + buf->cursor, that->s, len);
+	buffree(that);
+	buf->cursor += len;
+}
 
 void buflongalign(caryll_buffer *buf) {
 	size_t cp = buf->cursor;

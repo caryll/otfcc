@@ -43,7 +43,7 @@ void caryll_read_gsub_single(font_file_pointer data, uint32_t tableLength, otl_l
 			NEW(to);
 			to->numGlyphs = toglyphs;
 			NEW_N(to->glyphs, to->numGlyphs);
-			
+
 			for (uint16_t j = 0; j < to->numGlyphs; j++) {
 				to->glyphs[j].gid = caryll_blt16u(data + subtableOffset + 6 + j * 2);
 				to->glyphs[j].name = NULL;
@@ -104,3 +104,28 @@ FAIL:
 	DELETE(caryll_delete_gsub_single, lookup);
 	return NULL;
 };
+
+caryll_buffer *caryll_write_gsub_single(otl_lookup *lookup) {
+	caryll_buffer *buf = bufnew();
+	bufwrite16b(buf, otl_type_gsub_single - otl_type_gsub_unknown);
+	bufwrite16b(buf, 0);
+	bufwrite16b(buf, lookup->subtableCount);
+	uint16_t offset = buf->cursor + 2 * lookup->subtableCount;
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		size_t cp = buf->cursor;
+		caryll_buffer *bufst = bufnew();
+		bufwrite16b(bufst, 2);
+		bufwrite16b(bufst, 6 + lookup->subtables[j]->gsub_single.to->numGlyphs * 2);
+		bufwrite16b(bufst, lookup->subtables[j]->gsub_single.to->numGlyphs);
+		for (uint16_t k = 0; k < lookup->subtables[j]->gsub_single.to->numGlyphs; k++) {
+			bufwrite16b(bufst, lookup->subtables[j]->gsub_single.to->glyphs[k].gid);
+		}
+		bufwrite_bufdel(bufst, caryll_write_coverage(lookup->subtables[j]->gsub_single.from));
+		bufseek(buf, offset);
+		bufwrite_bufdel(buf, bufst);
+		bufseek(buf, cp);
+		bufwrite16b(buf, offset);
+		offset += buflen(bufst);
+	}
+	return buf;
+}

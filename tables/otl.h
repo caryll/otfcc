@@ -66,9 +66,9 @@ typedef struct {
 
 typedef struct {
 	uint32_t languageCount;
-	otl_language_system *languages;
+	otl_language_system **languages;
 	uint16_t featureCount;
-	otl_feature *features;
+	otl_feature **features;
 	uint16_t lookupCount;
 	otl_lookup **lookups;
 } table_otl;
@@ -78,12 +78,14 @@ void caryll_delete_otl(table_otl *table);
 table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag);
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag);
 table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, char *tag);
+caryll_buffer *caryll_write_otl(table_otl *table);
 
 // Coverage functions
 void caryll_delete_coverage(otl_coverage *coverage);
 otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 json_value *caryll_coverage_to_json(otl_coverage *coverage);
 otl_coverage *caryll_coverage_from_json(json_value *cov);
+caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
 #include "otl-gsub-single.h"
 

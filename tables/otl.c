@@ -20,15 +20,17 @@ void caryll_delete_otl(table_otl *table) {
 	if (!table) return;
 	if (table->languages) {
 		for (uint16_t j = 0; j < table->languageCount; j++) {
-			if (table->languages[j].name) sdsfree(table->languages[j].name);
-			if (table->languages[j].features) free(table->languages[j].features);
+			if (table->languages[j]->name) sdsfree(table->languages[j]->name);
+			if (table->languages[j]->features) free(table->languages[j]->features);
+			free(table->languages[j]);
 		}
 		free(table->languages);
 	}
 	if (table->features) {
 		for (uint16_t j = 0; j < table->featureCount; j++) {
-			if (table->features[j].name) sdsfree(table->features[j].name);
-			if (table->features[j].lookups) free(table->features[j].lookups);
+			if (table->features[j]->name) sdsfree(table->features[j]->name);
+			if (table->features[j]->lookups) free(table->features[j]->lookups);
+			free(table->features[j]);
 		}
 		free(table->features);
 	}
@@ -50,11 +52,11 @@ void caryll_delete_otl(table_otl *table) {
 	if (tableLength < offset) { goto FAIL; }
 
 void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, otl_language_system *lang,
-                   uint16_t featureCount, otl_feature *features) {
+                   uint16_t featureCount, otl_feature **features) {
 	checkLength(base + 6);
 	uint16_t rid = caryll_blt16u(data + base + 2);
 	if (rid < featureCount) {
-		lang->requiredFeature = &(features[rid]);
+		lang->requiredFeature = features[rid];
 	} else {
 		lang->requiredFeature = NULL;
 	}
@@ -65,7 +67,7 @@ void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, 
 	for (uint16_t j = 0; j < lang->featureCount; j++) {
 		uint16_t featureIndex = caryll_blt16u(data + base + 6 + 2 * j);
 		if (featureIndex < featureCount) {
-			lang->features[j] = &(features[featureIndex]);
+			lang->features[j] = features[featureIndex];
 		} else {
 			lang->features[j] = NULL;
 		}
@@ -110,25 +112,28 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 	{
 		uint16_t featureCount = caryll_blt16u(data + featureListOffset);
 		checkLength(featureListOffset + 2 + featureCount * 6);
-		otl_feature *features;
+		otl_feature **features;
 		NEW_N(features, featureCount);
 		for (uint16_t j = 0; j < featureCount; j++) {
+			otl_feature *feature;
+			NEW(feature);
+			features[j] = feature;
 			uint32_t tag = caryll_blt32u(data + featureListOffset + 2 + j * 6);
-			features[j].name = sdscatprintf(sdsempty(), "%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-			                                (tag >> 8) & 0xff, tag & 0xff, j);
+			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+			                                 (tag >> 8) & 0xff, tag & 0xff, j);
 			uint32_t featureOffset = featureListOffset + caryll_blt16u(data + featureListOffset + 2 + j * 6 + 4);
 
 			checkLength(featureOffset + 4);
 			uint16_t lookupCount = caryll_blt16u(data + featureOffset + 2);
 			checkLength(featureOffset + 4 + lookupCount * 2);
-			features[j].lookupCount = lookupCount;
-			NEW_N(features[j].lookups, lookupCount);
+			features[j]->lookupCount = lookupCount;
+			NEW_N(features[j]->lookups, lookupCount);
 			for (uint16_t k = 0; k < lookupCount; k++) {
 				uint16_t lookupid = caryll_blt16u(data + featureOffset + 4 + k * 2);
 				if (lookupid < table->lookupCount) {
-					features[j].lookups[k] = table->lookups[lookupid];
-					if (!features[j].lookups[k]->name) {
-						features[j].lookups[k]->name =
+					features[j]->lookups[k] = table->lookups[lookupid];
+					if (!features[j]->lookups[k]->name) {
+						features[j]->lookups[k]->name =
 						    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
 						                 (tag >> 8) & 0xff, tag & 0xff, k);
 					}
@@ -138,7 +143,6 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 		table->featureCount = featureCount;
 		table->features = features;
 	}
-
 	// parse script list
 	{
 		uint16_t scriptCount = caryll_blt16u(data + scriptListOffset);
@@ -154,8 +158,7 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 		}
 
 		table->languageCount = nLanguageCombinations;
-
-		otl_language_system *languages;
+		otl_language_system **languages;
 		NEW_N(languages, nLanguageCombinations);
 
 		uint16_t currentLang = 0;
@@ -164,9 +167,10 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 			uint32_t scriptOffset = scriptListOffset + caryll_blt16u(data + scriptListOffset + 2 + 6 * j + 4);
 			uint16_t defaultLangSystem = caryll_blt16u(data + scriptOffset);
 			if (defaultLangSystem) {
-				languages[currentLang].name = sdscatprintf(sdsempty(), "%c%c%c%c_DFLT", (tag >> 24) & 0xFF,
-				                                           (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff);
-				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, &(languages[currentLang]),
+				NEW(languages[currentLang]);
+				languages[currentLang]->name = sdscatprintf(sdsempty(), "%c%c%c%c_DFLT", (tag >> 24) & 0xFF,
+				                                            (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff);
+				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, languages[currentLang],
 				              table->featureCount, table->features);
 				currentLang += 1;
 			}
@@ -174,10 +178,11 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 			for (uint16_t k = 0; k < langSysCount; k++) {
 				uint32_t langTag = caryll_blt32u(data + scriptOffset + 4 + 6 * k);
 				uint16_t langSys = caryll_blt16u(data + scriptOffset + 4 + 6 * k + 4);
-				languages[currentLang].name = sdscatprintf(
+				NEW(languages[currentLang]);
+				languages[currentLang]->name = sdscatprintf(
 				    sdsempty(), "%c%c%c%c_%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF, (tag >> 8) & 0xff,
 				    tag & 0xff, (langTag >> 24) & 0xFF, (langTag >> 16) & 0xFF, (langTag >> 8) & 0xff, langTag & 0xff);
-				parseLanguage(data, tableLength, scriptOffset + langSys, &(languages[currentLang]), table->featureCount,
+				parseLanguage(data, tableLength, scriptOffset + langSys, languages[currentLang], table->featureCount,
 				              table->features);
 				currentLang += 1;
 			}
@@ -349,17 +354,17 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 		json_value *languages = json_object_new(table->languageCount);
 		for (uint16_t j = 0; j < table->languageCount; j++) {
 			json_value *language = json_object_new(5);
-			if (table->languages[j].requiredFeature) {
+			if (table->languages[j]->requiredFeature) {
 				json_object_push(language, "requiredFeature",
-				                 json_string_new(table->languages[j].requiredFeature->name));
+				                 json_string_new(table->languages[j]->requiredFeature->name));
 			}
-			json_value *features = json_array_new(table->languages[j].featureCount);
-			for (uint16_t k = 0; k < table->languages[j].featureCount; k++)
-				if (table->languages[j].features[k]) {
-					json_array_push(features, json_string_new(table->languages[j].features[k]->name));
+			json_value *features = json_array_new(table->languages[j]->featureCount);
+			for (uint16_t k = 0; k < table->languages[j]->featureCount; k++)
+				if (table->languages[j]->features[k]) {
+					json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
 				}
 			json_object_push(language, "features", features);
-			json_object_push(languages, table->languages[j].name, language);
+			json_object_push(languages, table->languages[j]->name, language);
 		}
 		json_object_push(otl, "languages", languages);
 	}
@@ -367,12 +372,12 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 		// dump feature list
 		json_value *features = json_object_new(table->featureCount);
 		for (uint16_t j = 0; j < table->featureCount; j++) {
-			json_value *feature = json_array_new(table->features[j].lookupCount);
-			for (uint16_t k = 0; k < table->features[j].lookupCount; k++)
-				if (table->features[j].lookups[k]) {
-					json_array_push(feature, json_string_new(table->features[j].lookups[k]->name));
+			json_value *feature = json_array_new(table->features[j]->lookupCount);
+			for (uint16_t k = 0; k < table->features[j]->lookupCount; k++)
+				if (table->features[j]->lookups[k]) {
+					json_array_push(feature, json_string_new(table->features[j]->lookups[k]->name));
 				}
-			json_object_push(features, table->features[j].name, feature);
+			json_object_push(features, table->features[j]->name, feature);
 		}
 		json_object_push(otl, "features", features);
 	}
@@ -509,7 +514,8 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 		for (uint32_t j = 0; j < languages->u.object.length; j++) {
 			char *languageName = languages->u.object.values[j].name;
 			json_value *_language = languages->u.object.values[j].value;
-			if (_language->type == json_object) {
+			if (languages->u.object.values[j].name_length == 9 && languageName[4] == '_' &&
+			    _language->type == json_object) {
 				otl_feature *requiredFeature = NULL;
 				json_value *_rf = json_obj_get_type(_language, "requiredFeature", json_string);
 				if (_rf) {
@@ -554,6 +560,7 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 			}
 		}
 	}
+	if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) goto FAIL;
 	{
 		lookup_hash *s, *tmp;
 		otl->lookupCount = HASH_COUNT(lh);
@@ -573,10 +580,9 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 		NEW_N(otl->features, otl->featureCount);
 		uint16_t j = 0;
 		HASH_ITER(hh, fh, s, tmp) {
-			otl->features[j] = *s->feature;
+			otl->features[j] = s->feature;
 			HASH_DEL(fh, s);
 			sdsfree(s->name);
-			free(s->feature);
 			free(s);
 			j++;
 		}
@@ -587,10 +593,9 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 		NEW_N(otl->languages, otl->languageCount);
 		uint16_t j = 0;
 		HASH_ITER(hh, sh, s, tmp) {
-			otl->languages[j] = *s->script;
+			otl->languages[j] = s->script;
 			HASH_DEL(sh, s);
 			sdsfree(s->name);
-			free(s->script);
 			free(s);
 			j++;
 		}
@@ -599,4 +604,221 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 FAIL:
 	caryll_delete_otl(otl);
 	return NULL;
+}
+
+caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
+	caryll_buffer *buf = bufnew();
+	bufwrite16b(buf, 1);
+	bufwrite16b(buf, coverage->numGlyphs);
+	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+		bufwrite16b(buf, coverage->glyphs[j].gid);
+	}
+	return buf;
+}
+
+void declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_lookup *lookup), otl_lookup *lookup,
+                           caryll_buffer *buf, size_t *offset) {
+	if (lookup->type == type) {
+		bufseek(buf, *offset);
+		bufwrite_bufdel(buf, fn(lookup));
+		*offset = buf->cursor;
+	}
+}
+
+uint32_t featureNameToTag(sds name) {
+	uint32_t tag = 0;
+	if (sdslen(name) > 0) { tag |= ((uint8_t)name[0]) << 24; }
+	if (sdslen(name) > 1) { tag |= ((uint8_t)name[1]) << 16; }
+	if (sdslen(name) > 2) { tag |= ((uint8_t)name[2]) << 8; }
+	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
+	fprintf(stderr, "[%s] %d %08x\n", name, sdslen(name), tag);
+	return tag;
+}
+
+typedef struct {
+	sds tag;
+	uint16_t lc;
+	otl_language_system *dl;
+	otl_language_system **ll;
+	UT_hash_handle hh;
+} script_stat_hash;
+
+static INLINE caryll_buffer *writeLanguage(otl_language_system *lang, table_otl *table) {
+	caryll_buffer *buf = bufnew();
+	bufwrite16b(buf, 0x0000);
+	if (lang->requiredFeature) {
+		bool found = false;
+		for (uint16_t j = 0; j < table->featureCount; j++)
+			if (table->features[j] == lang->requiredFeature) {
+				bufwrite16b(buf, j);
+				found = true;
+				break;
+			}
+		if (!found) bufwrite16b(buf, 0xFFFF);
+	} else {
+		bufwrite16b(buf, 0xFFFF);
+	}
+	bufwrite16b(buf, lang->featureCount);
+	for (uint16_t k = 0; k < lang->featureCount; k++) {
+		bool found = false;
+		for (uint16_t j = 0; j < table->featureCount; j++)
+			if (table->features[j] == lang->features[k]) {
+				bufwrite16b(buf, j);
+				found = true;
+				break;
+			}
+		if (!found) bufwrite16b(buf, 0xFFFF);
+	}
+	return buf;
+}
+
+static INLINE caryll_buffer *writeScript(script_stat_hash *script, table_otl *table) {
+	caryll_buffer *buf = bufnew();
+	size_t offset = script->lc * 6 + 4;
+	if (script->dl) {
+		bufwrite16b(buf, offset);
+		size_t cp = buf->cursor;
+		bufseek(buf, offset);
+		bufwrite_bufdel(buf, writeLanguage(script->dl, table));
+		offset = buf->cursor;
+		bufseek(buf, cp);
+	} else {
+		bufwrite16b(buf, 0);
+	}
+	bufwrite16b(buf, script->lc);
+	for (uint16_t j = 0; j < script->lc; j++) {
+		sds tag = sdsnewlen(script->ll[j]->name + 5, 4);
+		bufwrite32b(buf, featureNameToTag(tag));
+		sdsfree(tag);
+		bufwrite16b(buf, offset);
+		size_t cp = buf->cursor;
+		bufseek(buf, offset);
+		bufwrite_bufdel(buf, writeLanguage(script->ll[j], table));
+		offset = buf->cursor;
+		bufseek(buf, cp);
+	}
+	return buf;
+}
+
+caryll_buffer *caryll_write_otl(table_otl *table) {
+	caryll_buffer *buf = bufnew();
+	bufwrite32b(buf, 0x10000);
+
+	// lookups
+	caryll_buffer *bufl = bufnew();
+	{
+		bufwrite16b(bufl, table->lookupCount);
+		size_t offset = 2 + 2 * table->lookupCount;
+		for (uint16_t j = 0; j < table->lookupCount; j++) {
+			size_t cp = bufl->cursor;
+			size_t begin = offset;
+			declare_lookup_writer(otl_type_gsub_single, caryll_write_gsub_single, table->lookups[j], bufl, &offset);
+			bufseek(bufl, cp);
+			bufwrite16b(bufl, begin);
+		}
+	}
+
+	// features
+	caryll_buffer *buff = bufnew();
+	{
+		bufwrite16b(buff, table->featureCount);
+		size_t offset = 2 + table->featureCount * 6;
+		for (uint16_t j = 0; j < table->featureCount; j++) {
+			bufwrite32b(buff, featureNameToTag(table->features[j]->name));
+			bufwrite16b(buff, offset);
+			size_t cp = buff->cursor;
+			bufseek(buff, offset);
+			bufwrite16b(buff, 0);
+			bufwrite16b(buff, table->features[j]->lookupCount);
+			for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
+				// reverse lookup
+				for (uint16_t l = 0; l < table->lookupCount; l++) {
+					if (table->features[j]->lookups[k] == table->lookups[l]) {
+						bufwrite16b(buff, l);
+						break;
+					}
+				}
+			}
+			offset = buff->cursor;
+			bufseek(buff, cp);
+		}
+	}
+
+	// scripts
+	caryll_buffer *bufs = bufnew();
+	{
+		script_stat_hash *h = NULL;
+		for (uint16_t j = 0; j < table->languageCount; j++) {
+			sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
+			bool isDefault = strncmp(table->languages[j]->name + 5, "DFLT", 4) == 0 ||
+			                 strncmp(table->languages[j]->name + 5, "dflt", 4) == 0;
+			script_stat_hash *s = NULL;
+			HASH_FIND_STR(h, scriptTag, s);
+			if (s) {
+				if (isDefault) {
+					s->dl = table->languages[j];
+				} else {
+					s->lc += 1;
+					s->ll[s->lc - 1] = table->languages[j];
+				}
+			} else {
+				NEW(s);
+				s->tag = scriptTag;
+				s->dl = NULL;
+				NEW_N(s->ll, table->languageCount);
+				if (isDefault) {
+					s->dl = table->languages[j];
+					s->lc = 0;
+				} else {
+					s->lc = 1;
+					s->ll[s->lc - 1] = table->languages[j];
+				}
+				HASH_ADD_STR(h, tag, s);
+			}
+		}
+		bufwrite16b(bufs, HASH_COUNT(h));
+		size_t offset = 2 + 6 * HASH_COUNT(h);
+		script_stat_hash *s, *tmp;
+		HASH_ITER(hh, h, s, tmp) {
+			bufwrite32b(bufs, featureNameToTag(s->tag));
+			bufwrite16b(bufs, offset);
+			size_t cp = bufs->cursor;
+			bufseek(bufs, offset);
+			bufwrite_bufdel(bufs, writeScript(s, table));
+			offset = bufs->cursor;
+			bufseek(bufs, cp);
+
+			HASH_DEL(h, s);
+			sdsfree(s->tag);
+			free(s->ll);
+			free(s);
+		}
+	}
+
+	size_t rootOffset = 10;
+	{
+		bufwrite16b(buf, rootOffset);
+		size_t cp = buf->cursor;
+		bufseek(buf, rootOffset);
+		bufwrite_bufdel(buf, bufs);
+		rootOffset = buf->cursor;
+		bufseek(buf, cp);
+	}
+	{
+		bufwrite16b(buf, rootOffset);
+		size_t cp = buf->cursor;
+		bufseek(buf, rootOffset);
+		bufwrite_bufdel(buf, buff);
+		rootOffset = buf->cursor;
+		bufseek(buf, cp);
+	}
+	{
+		bufwrite16b(buf, rootOffset);
+		size_t cp = buf->cursor;
+		bufseek(buf, rootOffset);
+		bufwrite_bufdel(buf, bufl);
+		rootOffset = buf->cursor;
+		bufseek(buf, cp);
+	}
+	return buf;
 }

@@ -142,7 +142,6 @@ static void consolidate_gsub_single(caryll_font *font, otl_lookup *lookup) {
 				subtable->to->glyphs[j].gid = s->toid;
 				subtable->to->glyphs[j].name = s->toname;
 				j++;
-				fprintf(stderr, "%s %d -> %s %d\n", s->fromname, s->fromid, s->toname, s->toid);
 				HASH_DEL(h, s);
 				free(s);
 			}
