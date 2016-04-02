@@ -327,23 +327,36 @@ void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lo
 		lookup->subtables[j] = caryll_read_otl_subtable(data, tableLength, subtableOffset, lookup->type);
 	}
 	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
-		lookup->type = lookup->subtables[0]->extend.type;
+		lookup->type = 0;
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-			if (lookup->subtables[j] && lookup->subtables[j]->extend.type == lookup->type) {
-				otl_subtable *st = lookup->subtables[j]->extend.subtable;
-				FREE(lookup->subtables[j]);
-				lookup->subtables[j] = st;
-			} else {
-				// delete this subtable
-				otl_lookup *temp;
-				NEW(temp);
-				temp->type = lookup->subtables[j]->extend.type;
-				temp->subtableCount = 1;
-				NEW_N(temp->subtables, 1);
-				temp->subtables[0] = lookup->subtables[j]->extend.subtable;
-				DELETE(caryll_delete_lookup, temp);
-				FREE(lookup->subtables[j]);
+			if (lookup->subtables[j]) {
+				lookup->type = lookup->subtables[j]->extend.type;
+				break;
 			}
+		}
+		if (lookup->type) {
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+				if (lookup->subtables[j] && lookup->subtables[j]->extend.type == lookup->type) {
+					// this subtable is valid
+					otl_subtable *st = lookup->subtables[j]->extend.subtable;
+					FREE(lookup->subtables[j]);
+					lookup->subtables[j] = st;
+				} else if (lookup->subtables[j]) {
+					// delete this subtable
+					otl_lookup *temp;
+					NEW(temp);
+					temp->type = lookup->subtables[j]->extend.type;
+					temp->subtableCount = 1;
+					NEW_N(temp->subtables, 1);
+					temp->subtables[0] = lookup->subtables[j]->extend.subtable;
+					DELETE(caryll_delete_lookup, temp);
+					FREE(lookup->subtables[j]);
+				}
+			}
+		} else {
+			FREE(lookup->subtables);
+			lookup->subtableCount = 0;
+			return;
 		}
 	}
 }
