@@ -114,7 +114,7 @@ static void consolidate_gsub_single(caryll_font *font, otl_lookup *lookup) {
 				gsub_map_hash *s;
 				HASH_FIND_INT(h, &(subtable->from->glyphs[k].gid), s);
 				if (s) {
-					fprintf(stderr, "[Consolidate] Double mapping a glyph in a single substitution /%s.\n",
+					fprintf(stderr, "[Consolidate] Double-mapping a glyph in a single substitution /%s.\n",
 					        subtable->from->glyphs[k].name);
 				} else {
 					NEW(s);
@@ -127,6 +127,10 @@ static void consolidate_gsub_single(caryll_font *font, otl_lookup *lookup) {
 			}
 		}
 		HASH_SORT(h, by_from_id);
+		if (HASH_COUNT(h) != subtable->from->numGlyphs || HASH_COUNT(h) != subtable->to->numGlyphs) {
+			fprintf(stderr, "[Consolidate] In single subsitution lookup %s, some mappings are ignored.\n",
+			        lookup->name);
+		}
 		subtable->from->numGlyphs = HASH_COUNT(h);
 		subtable->to->numGlyphs = HASH_COUNT(h);
 		FREE(subtable->from->glyphs);
@@ -136,7 +140,7 @@ static void consolidate_gsub_single(caryll_font *font, otl_lookup *lookup) {
 		{
 			gsub_map_hash *s, *tmp;
 			uint16_t j = 0;
-			HASH_ITER(hh, h, s, tmp){
+			HASH_ITER(hh, h, s, tmp) {
 				subtable->from->glyphs[j].gid = s->fromid;
 				subtable->from->glyphs[j].name = s->fromname;
 				subtable->to->glyphs[j].gid = s->toid;

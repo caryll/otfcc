@@ -449,7 +449,7 @@ static INLINE void parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value
 	}
 }
 
-lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
+static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 	lookup_hash *lh = NULL;
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
 		if (lookups->u.object.values[j].value->type == json_object) {
@@ -460,7 +460,7 @@ lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 	}
 	return lh;
 }
-feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh) {
+static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag) {
 	feature_hash *fh = NULL;
 	for (uint32_t j = 0; j < features->u.object.length; j++) {
 		char *featureName = features->u.object.values[j].name;
@@ -489,16 +489,23 @@ feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh) {
 					s->feature->lookups = al;
 					HASH_ADD_STR(fh, name, s);
 				} else {
-					free(al);
+					fprintf(
+					    stderr,
+					    "[OTFCC-fea] There is no valid lookup assignments for [%s/%s]. This feature will be ignored.\n",
+					    tag, featureName);
+					FREE(al);
 				}
 			} else {
+				fprintf(stderr,
+				        "[OTFCC-fea] There is no valid lookup assignments for [%s/%s]. This feature will be ignored.\n",
+				        tag, featureName);
 				FREE(al);
 			}
 		}
 	}
 	return fh;
 }
-script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh) {
+static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh, const char *tag) {
 	script_hash *sh = NULL;
 	// languages
 	for (uint32_t j = 0; j < languages->u.object.length; j++) {
@@ -542,9 +549,17 @@ script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh)
 					s->script->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
+					fprintf(stderr,
+					        "[OTFCC-fea] There is no valid featue assignments for [%s/%s]. This language term will "
+					        "be ignored.\n",
+					        tag, languageName);
 					if (af) { FREE(af); }
 				}
 			} else {
+				fprintf(stderr, "[OTFCC-fea] There is no valid featue assignments for [%s/%s]. This language term will "
+				                "be ignored.\n",
+				        tag, languageName);
+
 				if (af) { FREE(af); }
 			}
 		}
@@ -552,7 +567,7 @@ script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh)
 	return sh;
 }
 
-table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, char *tag) {
+table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, const char *tag) {
 	table_otl *otl = NULL;
 	NEW(otl);
 	json_value *table = json_obj_get_type(root, tag, json_object);
@@ -563,8 +578,8 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 	if (!languages || !features || !lookups) goto FAIL;
 
 	lookup_hash *lh = figureOutLookupsFromJSON(lookups);
-	feature_hash *fh = figureOutFeaturesFromJSON(features, lh);
-	script_hash *sh = figureOutLanguagesFromJson(languages, fh);
+	feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag);
+	script_hash *sh = figureOutLanguagesFromJson(languages, fh, tag);
 	if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) goto FAIL;
 
 	{
@@ -608,6 +623,7 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 	}
 	return otl;
 FAIL:
+	fprintf(stderr, "[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
 	caryll_delete_otl(otl);
 	return NULL;
 }
