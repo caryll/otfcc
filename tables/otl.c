@@ -449,6 +449,109 @@ static INLINE void parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value
 	}
 }
 
+lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
+	lookup_hash *lh = NULL;
+	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
+		if (lookups->u.object.values[j].value->type == json_object) {
+			char *lookupName = lookups->u.object.values[j].name;
+			json_value *lookup = lookups->u.object.values[j].value;
+			parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
+		}
+	}
+	return lh;
+}
+feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh) {
+	feature_hash *fh = NULL;
+	for (uint32_t j = 0; j < features->u.object.length; j++) {
+		char *featureName = features->u.object.values[j].name;
+		json_value *_feature = features->u.object.values[j].value;
+		if (_feature->type == json_array) {
+			uint16_t nal = 0;
+			otl_lookup **al;
+			NEW_N(al, _feature->u.array.length);
+			for (uint16_t k = 0; k < _feature->u.array.length; k++) {
+				json_value *term = _feature->u.array.values[k];
+				if (term->type == json_string) {
+					lookup_hash *item = NULL;
+					HASH_FIND_STR(lh, term->u.string.ptr, item);
+					if (item) { al[nal++] = item->lookup; }
+				}
+			}
+			if (nal > 0) {
+				feature_hash *s = NULL;
+				HASH_FIND_STR(fh, featureName, s);
+				if (!s) {
+					NEW(s);
+					s->name = sdsnew(featureName);
+					NEW(s->feature);
+					s->feature->name = sdsdup(s->name);
+					s->feature->lookupCount = nal;
+					s->feature->lookups = al;
+					HASH_ADD_STR(fh, name, s);
+				} else {
+					free(al);
+				}
+			} else {
+				FREE(al);
+			}
+		}
+	}
+	return fh;
+}
+script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh) {
+	script_hash *sh = NULL;
+	// languages
+	for (uint32_t j = 0; j < languages->u.object.length; j++) {
+		char *languageName = languages->u.object.values[j].name;
+		json_value *_language = languages->u.object.values[j].value;
+		if (languages->u.object.values[j].name_length == 9 && languageName[4] == '_' &&
+		    _language->type == json_object) {
+			otl_feature *requiredFeature = NULL;
+			json_value *_rf = json_obj_get_type(_language, "requiredFeature", json_string);
+			if (_rf) {
+				// required feature term
+				feature_hash *rf = NULL;
+				HASH_FIND_STR(fh, _rf->u.string.ptr, rf);
+				if (rf) { requiredFeature = rf->feature; }
+			}
+
+			uint16_t naf = 0;
+			otl_feature **af = NULL;
+			json_value *_features = json_obj_get_type(_language, "features", json_array);
+			if (_features) {
+				NEW_N(af, _features->u.array.length);
+				for (uint16_t k = 0; k < _features->u.array.length; k++) {
+					json_value *term = _features->u.array.values[k];
+					if (term->type == json_string) {
+						feature_hash *item = NULL;
+						HASH_FIND_STR(fh, term->u.string.ptr, item);
+						if (item) { af[naf++] = item->feature; }
+					}
+				}
+			}
+			if (requiredFeature || (af && naf > 0)) {
+				script_hash *s = NULL;
+				HASH_FIND_STR(sh, languageName, s);
+				if (!s) {
+					NEW(s);
+					s->name = sdsnew(languageName);
+					NEW(s->script);
+					s->script->name = sdsdup(s->name);
+					s->script->requiredFeature = requiredFeature;
+					s->script->featureCount = naf;
+					s->script->features = af;
+					HASH_ADD_STR(sh, name, s);
+				} else {
+					if (af) { FREE(af); }
+				}
+			} else {
+				if (af) { FREE(af); }
+			}
+		}
+	}
+	return sh;
+}
+
 table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, char *tag) {
 	table_otl *otl = NULL;
 	NEW(otl);
@@ -459,108 +562,11 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
 	if (!languages || !features || !lookups) goto FAIL;
 
-	lookup_hash *lh = NULL;
-	{
-		// lookup
-		for (uint32_t j = 0; j < lookups->u.object.length; j++) {
-			if (lookups->u.object.values[j].value->type == json_object) {
-				char *lookupName = lookups->u.object.values[j].name;
-				json_value *lookup = lookups->u.object.values[j].value;
-				parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
-			}
-		}
-	}
-	feature_hash *fh = NULL;
-	{
-		// feature
-		for (uint32_t j = 0; j < features->u.object.length; j++) {
-			char *featureName = features->u.object.values[j].name;
-			json_value *_feature = features->u.object.values[j].value;
-			if (_feature->type == json_array) {
-				uint16_t nal = 0;
-				otl_lookup **al;
-				NEW_N(al, _feature->u.array.length);
-				for (uint16_t k = 0; k < _feature->u.array.length; k++) {
-					json_value *term = _feature->u.array.values[k];
-					if (term->type == json_string) {
-						lookup_hash *item = NULL;
-						HASH_FIND_STR(lh, term->u.string.ptr, item);
-						if (item) { al[nal++] = item->lookup; }
-					}
-				}
-				if (nal > 0) {
-					feature_hash *s = NULL;
-					HASH_FIND_STR(fh, featureName, s);
-					if (!s) {
-						NEW(s);
-						s->name = sdsnew(featureName);
-						NEW(s->feature);
-						s->feature->name = sdsdup(s->name);
-						s->feature->lookupCount = nal;
-						s->feature->lookups = al;
-						HASH_ADD_STR(fh, name, s);
-					} else {
-						free(al);
-					}
-				} else {
-					FREE(al);
-				}
-			}
-		}
-	}
-	script_hash *sh = NULL;
-	{
-		// languages
-		for (uint32_t j = 0; j < languages->u.object.length; j++) {
-			char *languageName = languages->u.object.values[j].name;
-			json_value *_language = languages->u.object.values[j].value;
-			if (languages->u.object.values[j].name_length == 9 && languageName[4] == '_' &&
-			    _language->type == json_object) {
-				otl_feature *requiredFeature = NULL;
-				json_value *_rf = json_obj_get_type(_language, "requiredFeature", json_string);
-				if (_rf) {
-					// required feature term
-					feature_hash *rf = NULL;
-					HASH_FIND_STR(fh, _rf->u.string.ptr, rf);
-					if (rf) { requiredFeature = rf->feature; }
-				}
-
-				uint16_t naf = 0;
-				otl_feature **af = NULL;
-				json_value *_features = json_obj_get_type(_language, "features", json_array);
-				if (_features) {
-					NEW_N(af, _features->u.array.length);
-					for (uint16_t k = 0; k < _features->u.array.length; k++) {
-						json_value *term = _features->u.array.values[k];
-						if (term->type == json_string) {
-							feature_hash *item = NULL;
-							HASH_FIND_STR(fh, term->u.string.ptr, item);
-							if (item) { af[naf++] = item->feature; }
-						}
-					}
-				}
-				if (requiredFeature || (af && naf > 0)) {
-					script_hash *s = NULL;
-					HASH_FIND_STR(sh, languageName, s);
-					if (!s) {
-						NEW(s);
-						s->name = sdsnew(languageName);
-						NEW(s->script);
-						s->script->name = sdsdup(s->name);
-						s->script->requiredFeature = requiredFeature;
-						s->script->featureCount = naf;
-						s->script->features = af;
-						HASH_ADD_STR(sh, name, s);
-					} else {
-						if (af) { FREE(af); }
-					}
-				} else {
-					if (af) { FREE(af); }
-				}
-			}
-		}
-	}
+	lookup_hash *lh = figureOutLookupsFromJSON(lookups);
+	feature_hash *fh = figureOutFeaturesFromJSON(features, lh);
+	script_hash *sh = figureOutLanguagesFromJson(languages, fh);
 	if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) goto FAIL;
+
 	{
 		lookup_hash *s, *tmp;
 		otl->lookupCount = HASH_COUNT(lh);
@@ -607,13 +613,45 @@ FAIL:
 }
 
 caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
-	caryll_buffer *buf = bufnew();
-	bufwrite16b(buf, 1);
-	bufwrite16b(buf, coverage->numGlyphs);
+	caryll_buffer *format1 = bufnew();
+	bufwrite16b(format1, 1);
+	bufwrite16b(format1, coverage->numGlyphs);
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
-		bufwrite16b(buf, coverage->glyphs[j].gid);
+		bufwrite16b(format1, coverage->glyphs[j].gid);
 	}
-	return buf;
+	if (coverage->numGlyphs < 2) return format1;
+
+	caryll_buffer *format2 = bufnew();
+	bufwrite16b(format2, 2);
+	caryll_buffer *ranges = bufnew();
+	uint16_t startGID = coverage->glyphs[0].gid;
+	uint16_t endGID = startGID;
+	uint16_t nRanges = 0;
+	for (uint16_t j = 1; j < coverage->numGlyphs; j++) {
+		uint16_t current = coverage->glyphs[j].gid;
+		if (current == endGID + 1) {
+			endGID = current;
+		} else {
+			bufwrite16b(ranges, startGID);
+			bufwrite16b(ranges, endGID);
+			bufwrite16b(ranges, j + startGID - endGID - 1);
+			nRanges += 1;
+			startGID = endGID = current;
+		}
+	}
+	bufwrite16b(ranges, startGID);
+	bufwrite16b(ranges, endGID);
+	bufwrite16b(ranges, coverage->numGlyphs + startGID - endGID - 1);
+	nRanges += 1;
+	bufwrite16b(format2, nRanges);
+	bufwrite_bufdel(format2, ranges);
+	if (buflen(format1) < buflen(format2)) {
+		buffree(format2);
+		return format1;
+	} else {
+		buffree(format1);
+		return format2;
+	}
 }
 
 void declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_lookup *lookup), otl_lookup *lookup,
@@ -699,100 +737,102 @@ static INLINE caryll_buffer *writeScript(script_stat_hash *script, table_otl *ta
 	return buf;
 }
 
+static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
+	caryll_buffer *bufl = bufnew();
+	bufwrite16b(bufl, table->lookupCount);
+	size_t offset = 2 + 2 * table->lookupCount;
+	for (uint16_t j = 0; j < table->lookupCount; j++) {
+		size_t cp = bufl->cursor;
+		size_t begin = offset;
+		declare_lookup_writer(otl_type_gsub_single, caryll_write_gsub_single, table->lookups[j], bufl, &offset);
+		bufseek(bufl, cp);
+		bufwrite16b(bufl, begin);
+	}
+	return bufl;
+}
+static INLINE caryll_buffer *writeOTLFeatures(table_otl *table) {
+	caryll_buffer *buff = bufnew();
+	bufwrite16b(buff, table->featureCount);
+	size_t offset = 2 + table->featureCount * 6;
+	for (uint16_t j = 0; j < table->featureCount; j++) {
+		bufwrite32b(buff, featureNameToTag(table->features[j]->name));
+		bufwrite16b(buff, offset);
+		size_t cp = buff->cursor;
+		bufseek(buff, offset);
+		bufwrite16b(buff, 0);
+		bufwrite16b(buff, table->features[j]->lookupCount);
+		for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
+			// reverse lookup
+			for (uint16_t l = 0; l < table->lookupCount; l++) {
+				if (table->features[j]->lookups[k] == table->lookups[l]) {
+					bufwrite16b(buff, l);
+					break;
+				}
+			}
+		}
+		offset = buff->cursor;
+		bufseek(buff, cp);
+	}
+	return buff;
+}
+static INLINE caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
+	caryll_buffer *bufs = bufnew();
+	script_stat_hash *h = NULL;
+	for (uint16_t j = 0; j < table->languageCount; j++) {
+		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
+		bool isDefault = strncmp(table->languages[j]->name + 5, "DFLT", 4) == 0 ||
+		                 strncmp(table->languages[j]->name + 5, "dflt", 4) == 0;
+		script_stat_hash *s = NULL;
+		HASH_FIND_STR(h, scriptTag, s);
+		if (s) {
+			if (isDefault) {
+				s->dl = table->languages[j];
+			} else {
+				s->lc += 1;
+				s->ll[s->lc - 1] = table->languages[j];
+			}
+		} else {
+			NEW(s);
+			s->tag = scriptTag;
+			s->dl = NULL;
+			NEW_N(s->ll, table->languageCount);
+			if (isDefault) {
+				s->dl = table->languages[j];
+				s->lc = 0;
+			} else {
+				s->lc = 1;
+				s->ll[s->lc - 1] = table->languages[j];
+			}
+			HASH_ADD_STR(h, tag, s);
+		}
+	}
+	bufwrite16b(bufs, HASH_COUNT(h));
+	size_t offset = 2 + 6 * HASH_COUNT(h);
+	script_stat_hash *s, *tmp;
+	HASH_ITER(hh, h, s, tmp) {
+		bufwrite32b(bufs, featureNameToTag(s->tag));
+		bufwrite16b(bufs, offset);
+		size_t cp = bufs->cursor;
+		bufseek(bufs, offset);
+		bufwrite_bufdel(bufs, writeScript(s, table));
+		offset = bufs->cursor;
+		bufseek(bufs, cp);
+
+		HASH_DEL(h, s);
+		sdsfree(s->tag);
+		free(s->ll);
+		free(s);
+	}
+	return bufs;
+}
+
 caryll_buffer *caryll_write_otl(table_otl *table) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 
-	// lookups
-	caryll_buffer *bufl = bufnew();
-	{
-		bufwrite16b(bufl, table->lookupCount);
-		size_t offset = 2 + 2 * table->lookupCount;
-		for (uint16_t j = 0; j < table->lookupCount; j++) {
-			size_t cp = bufl->cursor;
-			size_t begin = offset;
-			declare_lookup_writer(otl_type_gsub_single, caryll_write_gsub_single, table->lookups[j], bufl, &offset);
-			bufseek(bufl, cp);
-			bufwrite16b(bufl, begin);
-		}
-	}
-
-	// features
-	caryll_buffer *buff = bufnew();
-	{
-		bufwrite16b(buff, table->featureCount);
-		size_t offset = 2 + table->featureCount * 6;
-		for (uint16_t j = 0; j < table->featureCount; j++) {
-			bufwrite32b(buff, featureNameToTag(table->features[j]->name));
-			bufwrite16b(buff, offset);
-			size_t cp = buff->cursor;
-			bufseek(buff, offset);
-			bufwrite16b(buff, 0);
-			bufwrite16b(buff, table->features[j]->lookupCount);
-			for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
-				// reverse lookup
-				for (uint16_t l = 0; l < table->lookupCount; l++) {
-					if (table->features[j]->lookups[k] == table->lookups[l]) {
-						bufwrite16b(buff, l);
-						break;
-					}
-				}
-			}
-			offset = buff->cursor;
-			bufseek(buff, cp);
-		}
-	}
-
-	// scripts
-	caryll_buffer *bufs = bufnew();
-	{
-		script_stat_hash *h = NULL;
-		for (uint16_t j = 0; j < table->languageCount; j++) {
-			sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
-			bool isDefault = strncmp(table->languages[j]->name + 5, "DFLT", 4) == 0 ||
-			                 strncmp(table->languages[j]->name + 5, "dflt", 4) == 0;
-			script_stat_hash *s = NULL;
-			HASH_FIND_STR(h, scriptTag, s);
-			if (s) {
-				if (isDefault) {
-					s->dl = table->languages[j];
-				} else {
-					s->lc += 1;
-					s->ll[s->lc - 1] = table->languages[j];
-				}
-			} else {
-				NEW(s);
-				s->tag = scriptTag;
-				s->dl = NULL;
-				NEW_N(s->ll, table->languageCount);
-				if (isDefault) {
-					s->dl = table->languages[j];
-					s->lc = 0;
-				} else {
-					s->lc = 1;
-					s->ll[s->lc - 1] = table->languages[j];
-				}
-				HASH_ADD_STR(h, tag, s);
-			}
-		}
-		bufwrite16b(bufs, HASH_COUNT(h));
-		size_t offset = 2 + 6 * HASH_COUNT(h);
-		script_stat_hash *s, *tmp;
-		HASH_ITER(hh, h, s, tmp) {
-			bufwrite32b(bufs, featureNameToTag(s->tag));
-			bufwrite16b(bufs, offset);
-			size_t cp = bufs->cursor;
-			bufseek(bufs, offset);
-			bufwrite_bufdel(bufs, writeScript(s, table));
-			offset = bufs->cursor;
-			bufseek(bufs, cp);
-
-			HASH_DEL(h, s);
-			sdsfree(s->tag);
-			free(s->ll);
-			free(s);
-		}
-	}
+	caryll_buffer *bufl = writeOTLLookups(table);
+	caryll_buffer *buff = writeOTLFeatures(table);
+	caryll_buffer *bufs = writeOTLScriptAndLanguages(table);
 
 	size_t rootOffset = 10;
 	{

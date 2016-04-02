@@ -114,13 +114,30 @@ caryll_buffer *caryll_write_gsub_single(otl_lookup *lookup) {
 	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 		size_t cp = buf->cursor;
 		caryll_buffer *bufst = bufnew();
-		bufwrite16b(bufst, 2);
-		bufwrite16b(bufst, 6 + lookup->subtables[j]->gsub_single.to->numGlyphs * 2);
-		bufwrite16b(bufst, lookup->subtables[j]->gsub_single.to->numGlyphs);
-		for (uint16_t k = 0; k < lookup->subtables[j]->gsub_single.to->numGlyphs; k++) {
-			bufwrite16b(bufst, lookup->subtables[j]->gsub_single.to->glyphs[k].gid);
+		subtable_gsub_single *subtable = &(lookup->subtables[j]->gsub_single);
+
+		bool isConstantDifference = true;
+		if (subtable->from->numGlyphs > 1) {
+			int32_t difference = subtable->to->glyphs[0].gid - subtable->from->glyphs[0].gid;
+			for (uint16_t j = 1; j < subtable->from->numGlyphs; j++) {
+				isConstantDifference = isConstantDifference &&
+				                       ((subtable->to->glyphs[j].gid - subtable->from->glyphs[j].gid) == difference);
+			}
 		}
-		bufwrite_bufdel(bufst, caryll_write_coverage(lookup->subtables[j]->gsub_single.from));
+		if (isConstantDifference && subtable->from->numGlyphs > 0) {
+			bufwrite16b(bufst, 1);
+			bufwrite16b(bufst, 6);
+			bufwrite16b(bufst, subtable->to->glyphs[0].gid - subtable->from->glyphs[0].gid);
+			bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
+		} else {
+			bufwrite16b(bufst, 2);
+			bufwrite16b(bufst, 6 + subtable->to->numGlyphs * 2);
+			bufwrite16b(bufst, subtable->to->numGlyphs);
+			for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
+				bufwrite16b(bufst, subtable->to->glyphs[k].gid);
+			}
+			bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
+		}
 		bufseek(buf, offset);
 		bufwrite_bufdel(buf, bufst);
 		bufseek(buf, cp);
