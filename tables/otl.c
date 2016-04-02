@@ -39,6 +39,10 @@ void caryll_delete_otl(table_otl *table) {
 			switch (table->lookups[j]->type) {
 				case otl_type_gsub_single:
 					caryll_delete_gsub_single(table->lookups[j]);
+					break;
+				case otl_type_gpos_mark_to_base:
+					caryll_delete_gpos_mark_to_base(table->lookups[j]);
+					break;
 				default:
 					break;
 			}
@@ -48,24 +52,21 @@ void caryll_delete_otl(table_otl *table) {
 	free(table);
 }
 
-#define checkLength(offset)                                                                                            \
-	if (tableLength < offset) { goto FAIL; }
-
 void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, otl_language_system *lang,
                    uint16_t featureCount, otl_feature **features) {
 	checkLength(base + 6);
-	uint16_t rid = caryll_blt16u(data + base + 2);
+	uint16_t rid = read_16u(data + base + 2);
 	if (rid < featureCount) {
 		lang->requiredFeature = features[rid];
 	} else {
 		lang->requiredFeature = NULL;
 	}
-	lang->featureCount = caryll_blt16u(data + base + 4);
+	lang->featureCount = read_16u(data + base + 4);
 	checkLength(base + 6 + lang->featureCount * 2);
 
 	NEW_N(lang->features, lang->featureCount);
 	for (uint16_t j = 0; j < lang->featureCount; j++) {
-		uint16_t featureIndex = caryll_blt16u(data + base + 6 + 2 * j);
+		uint16_t featureIndex = read_16u(data + base + 6 + 2 * j);
 		if (featureIndex < featureCount) {
 			lang->features[j] = features[featureIndex];
 		} else {
@@ -84,25 +85,25 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 	table_otl *table = caryll_new_otl();
 	if (!table) goto FAIL;
 	checkLength(10);
-	uint32_t scriptListOffset = caryll_blt16u(data + 4);
+	uint32_t scriptListOffset = read_16u(data + 4);
 	checkLength(scriptListOffset + 2);
-	uint32_t featureListOffset = caryll_blt16u(data + 6);
+	uint32_t featureListOffset = read_16u(data + 6);
 	checkLength(featureListOffset + 2);
-	uint32_t lookupListOffset = caryll_blt16u(data + 8);
+	uint32_t lookupListOffset = read_16u(data + 8);
 	checkLength(lookupListOffset + 2);
 
 	// parse lookup list
 	{
-		uint16_t lookupCount = caryll_blt16u(data + lookupListOffset);
+		uint16_t lookupCount = read_16u(data + lookupListOffset);
 		checkLength(lookupListOffset + 2 + lookupCount * 2);
 		otl_lookup **lookups;
 		NEW_N(lookups, lookupCount);
 		for (uint16_t j = 0; j < lookupCount; j++) {
 			NEW(lookups[j]);
 			lookups[j]->name = NULL;
-			lookups[j]->_offset = lookupListOffset + caryll_blt16u(data + lookupListOffset + 2 + 2 * j);
+			lookups[j]->_offset = lookupListOffset + read_16u(data + lookupListOffset + 2 + 2 * j);
 			checkLength(lookups[j]->_offset + 6);
-			lookups[j]->type = caryll_blt16u(data + lookups[j]->_offset) + lookup_type_base;
+			lookups[j]->type = read_16u(data + lookups[j]->_offset) + lookup_type_base;
 		}
 		table->lookupCount = lookupCount;
 		table->lookups = lookups;
@@ -110,7 +111,7 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 
 	// parse feature list
 	{
-		uint16_t featureCount = caryll_blt16u(data + featureListOffset);
+		uint16_t featureCount = read_16u(data + featureListOffset);
 		checkLength(featureListOffset + 2 + featureCount * 6);
 		otl_feature **features;
 		NEW_N(features, featureCount);
@@ -118,18 +119,18 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 			otl_feature *feature;
 			NEW(feature);
 			features[j] = feature;
-			uint32_t tag = caryll_blt32u(data + featureListOffset + 2 + j * 6);
+			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
 			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
 			                                 (tag >> 8) & 0xff, tag & 0xff, j);
-			uint32_t featureOffset = featureListOffset + caryll_blt16u(data + featureListOffset + 2 + j * 6 + 4);
+			uint32_t featureOffset = featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
 
 			checkLength(featureOffset + 4);
-			uint16_t lookupCount = caryll_blt16u(data + featureOffset + 2);
+			uint16_t lookupCount = read_16u(data + featureOffset + 2);
 			checkLength(featureOffset + 4 + lookupCount * 2);
 			features[j]->lookupCount = lookupCount;
 			NEW_N(features[j]->lookups, lookupCount);
 			for (uint16_t k = 0; k < lookupCount; k++) {
-				uint16_t lookupid = caryll_blt16u(data + featureOffset + 4 + k * 2);
+				uint16_t lookupid = read_16u(data + featureOffset + 4 + k * 2);
 				if (lookupid < table->lookupCount) {
 					features[j]->lookups[k] = table->lookups[lookupid];
 					if (!features[j]->lookups[k]->name) {
@@ -145,16 +146,16 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 	}
 	// parse script list
 	{
-		uint16_t scriptCount = caryll_blt16u(data + scriptListOffset);
+		uint16_t scriptCount = read_16u(data + scriptListOffset);
 		checkLength(scriptListOffset + 2 + 6 * scriptCount);
 
 		uint32_t nLanguageCombinations = 0;
 		for (uint16_t j = 0; j < scriptCount; j++) {
-			uint32_t scriptOffset = scriptListOffset + caryll_blt16u(data + scriptListOffset + 2 + 6 * j + 4);
+			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
 			checkLength(scriptOffset + 4);
 
-			uint16_t defaultLangSystem = caryll_blt16u(data + scriptOffset);
-			nLanguageCombinations += (defaultLangSystem ? 1 : 0) + caryll_blt16u(data + scriptOffset + 2);
+			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
+			nLanguageCombinations += (defaultLangSystem ? 1 : 0) + read_16u(data + scriptOffset + 2);
 		}
 
 		table->languageCount = nLanguageCombinations;
@@ -163,9 +164,9 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 
 		uint16_t currentLang = 0;
 		for (uint16_t j = 0; j < scriptCount; j++) {
-			uint32_t tag = caryll_blt32u(data + scriptListOffset + 2 + 6 * j);
-			uint32_t scriptOffset = scriptListOffset + caryll_blt16u(data + scriptListOffset + 2 + 6 * j + 4);
-			uint16_t defaultLangSystem = caryll_blt16u(data + scriptOffset);
+			uint32_t tag = read_32u(data + scriptListOffset + 2 + 6 * j);
+			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
+			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
 			if (defaultLangSystem) {
 				NEW(languages[currentLang]);
 				languages[currentLang]->name = sdscatprintf(sdsempty(), "%c%c%c%c_DFLT", (tag >> 24) & 0xFF,
@@ -174,10 +175,10 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 				              table->featureCount, table->features);
 				currentLang += 1;
 			}
-			uint16_t langSysCount = caryll_blt16u(data + scriptOffset + 2);
+			uint16_t langSysCount = read_16u(data + scriptOffset + 2);
 			for (uint16_t k = 0; k < langSysCount; k++) {
-				uint32_t langTag = caryll_blt32u(data + scriptOffset + 4 + 6 * k);
-				uint16_t langSys = caryll_blt16u(data + scriptOffset + 4 + 6 * k + 4);
+				uint32_t langTag = read_32u(data + scriptOffset + 4 + 6 * k);
+				uint16_t langSys = read_16u(data + scriptOffset + 4 + 6 * k + 4);
 				NEW(languages[currentLang]);
 				languages[currentLang]->name = sdscatprintf(
 				    sdsempty(), "%c%c%c%c_%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF, (tag >> 8) & 0xff,
@@ -217,15 +218,15 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 	coverage->numGlyphs = 0;
 	coverage->glyphs = NULL;
 	if (tableLength < offset + 4) return coverage;
-	uint16_t format = caryll_blt16u(data + offset);
+	uint16_t format = read_16u(data + offset);
 	switch (format) {
 		case 1: {
-			uint16_t glyphCount = caryll_blt16u(data + offset + 2);
+			uint16_t glyphCount = read_16u(data + offset + 2);
 			if (tableLength < offset + 4 + glyphCount * 2) return coverage;
 			coverage_entry *hash = NULL;
 			for (uint16_t j = 0; j < glyphCount; j++) {
 				coverage_entry *item = NULL;
-				int gid = caryll_blt16u(data + offset + 4 + j * 2);
+				int gid = read_16u(data + offset + 4 + j * 2);
 				HASH_FIND_INT(hash, &gid, item);
 				if (!item) {
 					NEW(item);
@@ -251,13 +252,13 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 			break;
 		}
 		case 2: {
-			uint16_t rangeCount = caryll_blt16u(data + offset + 2);
+			uint16_t rangeCount = read_16u(data + offset + 2);
 			if (tableLength < offset + 4 + rangeCount * 6) return coverage;
 			coverage_entry *hash = NULL;
 			for (uint16_t j = 0; j < rangeCount; j++) {
-				uint16_t start = caryll_blt16u(data + offset + 4 + 6 * j);
-				uint16_t end = caryll_blt16u(data + offset + 4 + 6 * j + 2);
-				uint16_t startCoverageIndex = caryll_blt16u(data + offset + 4 + 6 * j + 4);
+				uint16_t start = read_16u(data + offset + 4 + 6 * j);
+				uint16_t end = read_16u(data + offset + 4 + 6 * j + 2);
+				uint16_t startCoverageIndex = read_16u(data + offset + 4 + 6 * j + 4);
 				for (int k = start; k <= end; k++) {
 					coverage_entry *item = NULL;
 					HASH_FIND_INT(hash, &k, item);
@@ -292,7 +293,7 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 }
 
 void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup) {
-	lookup->subtableCount = caryll_blt16u(data + lookup->_offset + 4);
+	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
 	if (tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
 		lookup->subtableCount = 0;
 		lookup->subtables = NULL;
@@ -302,6 +303,9 @@ void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lo
 	switch (lookup->type) {
 		case otl_type_gsub_single:
 			caryll_read_gsub_single(data, tableLength, lookup);
+			break;
+		case otl_type_gpos_mark_to_base:
+			caryll_read_gpos_mark_to_base(data, tableLength, lookup);
 			break;
 		default:
 			lookup->type = otl_type_unknown;
@@ -341,6 +345,9 @@ void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	switch (lookup->type) {
 		case otl_type_gsub_single:
 			caryll_gsub_single_to_json(lookup, dump);
+			break;
+		case otl_type_gpos_mark_to_base:
+			caryll_gpos_mark_to_base_to_json(lookup, dump);
 			break;
 		default:
 			break;
@@ -459,9 +466,7 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 			json_value *lookup = lookups->u.object.values[j].value;
 			bool parsed = false;
 			parsed |= parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
-			if(!parsed){
-				fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName);
-			}
+			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
 		}
 	}
 	return lh;

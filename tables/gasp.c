@@ -25,16 +25,16 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 		uint32_t length = table.length;
 		if (length < 4) { goto FAIL; }
 		gasp = malloc(sizeof(table_gasp));
-		gasp->version = caryll_blt16u(data);
-		gasp->numRanges = caryll_blt16u(data + 2);
+		gasp->version = read_16u(data);
+		gasp->numRanges = read_16u(data + 2);
 		if (length < 4 + gasp->numRanges * 4) { goto FAIL; }
 
 		gasp->records = malloc(gasp->numRanges * sizeof(gasp_record));
 		if (!gasp->records) goto FAIL;
 
 		for (uint32_t j = 0; j < gasp->numRanges; j++) {
-			gasp->records[j].rangeMaxPPEM = caryll_blt16u(data + 4 + j * 4);
-			uint16_t rangeGaspBehavior = caryll_blt16u(data + 4 + j * 4 + 2);
+			gasp->records[j].rangeMaxPPEM = read_16u(data + 4 + j * 4);
+			uint16_t rangeGaspBehavior = read_16u(data + 4 + j * 4 + 2);
 			gasp->records[j].dogray = !!(rangeGaspBehavior & GASP_DOGRAY);
 			gasp->records[j].gridfit = !!(rangeGaspBehavior & GASP_GRIDFIT);
 			gasp->records[j].symmetric_smoothing = !!(rangeGaspBehavior & GASP_SYMMETRIC_SMOOTHING);

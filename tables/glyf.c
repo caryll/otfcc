@@ -41,13 +41,13 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 	glyf_contour *contours = (glyf_contour *)malloc(sizeof(glyf_contour) * numberOfContours);
 	uint16_t lastPointIndex = 0;
 	for (uint16_t j = 0; j < numberOfContours; j++) {
-		uint16_t lastPointInCurrentContour = caryll_blt16u(start + 2 * j);
+		uint16_t lastPointInCurrentContour = read_16u(start + 2 * j);
 		contours[j].pointsCount = lastPointInCurrentContour - lastPointIndex + 1;
 		contours[j].points = (glyf_point *)malloc(sizeof(glyf_point) * contours[j].pointsCount);
 		lastPointIndex = lastPointInCurrentContour + 1;
 	}
 
-	uint16_t instructionLength = caryll_blt16u(start + 2 * numberOfContours);
+	uint16_t instructionLength = read_16u(start + 2 * numberOfContours);
 	uint8_t *instructions = NULL;
 	if (instructionLength > 0) {
 		instructions = (font_file_pointer)malloc(sizeof(uint8_t) * instructionLength);
@@ -93,13 +93,13 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 		uint8_t flag = flags[coordinatesRead];
 		int16_t x;
 		if (flag & GLYF_FLAG_X_SHORT) {
-			x = (flag & GLYF_FLAG_POSITIVE_X ? 1 : -1) * caryll_blt8u(coordinatesStart + coordinatesOffset);
+			x = (flag & GLYF_FLAG_POSITIVE_X ? 1 : -1) * read_8u(coordinatesStart + coordinatesOffset);
 			coordinatesOffset += 1;
 		} else {
 			if (flag & GLYF_FLAG_SAME_X) {
 				x = 0;
 			} else {
-				x = caryll_blt16s(coordinatesStart + coordinatesOffset);
+				x = read_16s(coordinatesStart + coordinatesOffset);
 				coordinatesOffset += 2;
 			}
 		}
@@ -114,13 +114,13 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 		uint8_t flag = flags[coordinatesRead];
 		int16_t y;
 		if (flag & GLYF_FLAG_Y_SHORT) {
-			y = (flag & GLYF_FLAG_POSITIVE_Y ? 1 : -1) * caryll_blt8u(coordinatesStart + coordinatesOffset);
+			y = (flag & GLYF_FLAG_POSITIVE_Y ? 1 : -1) * read_8u(coordinatesStart + coordinatesOffset);
 			coordinatesOffset += 1;
 		} else {
 			if (flag & GLYF_FLAG_SAME_Y) {
 				y = 0;
 			} else {
-				y = caryll_blt16s(coordinatesStart + coordinatesOffset);
+				y = read_16s(coordinatesStart + coordinatesOffset);
 				coordinatesOffset += 2;
 			}
 		}
@@ -152,7 +152,7 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 	uint32_t offset = 0;
 	bool glyphHasInstruction = false;
 	do {
-		flags = caryll_blt16u(start + offset);
+		flags = read_16u(start + offset);
 		offset += 4; // flags & index
 		numberOfReferences += 1;
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
@@ -175,19 +175,19 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 	g->references = (glyf_reference *)malloc(sizeof(glyf_reference) * numberOfReferences);
 	offset = 0;
 	for (uint16_t j = 0; j < numberOfReferences; j++) {
-		flags = caryll_blt16u(start + offset);
-		uint16_t index = caryll_blt16u(start + offset + 2);
+		flags = read_16u(start + offset);
+		uint16_t index = read_16u(start + offset + 2);
 		int16_t x = 0;
 		int16_t y = 0;
 
 		offset += 4; // flags & index
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
-			x = caryll_blt16s(start + offset);
-			y = caryll_blt16s(start + offset + 2);
+			x = read_16s(start + offset);
+			y = read_16s(start + offset + 2);
 			offset += 4;
 		} else {
-			x = caryll_blt8s(start + offset);
-			y = caryll_blt8s(start + offset + 1);
+			x = read_8s(start + offset);
+			y = read_8s(start + offset + 1);
 			offset += 2;
 		}
 		float a = 1.0;
@@ -195,17 +195,17 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		float c = 0.0;
 		float d = 1.0;
 		if (flags & WE_HAVE_A_SCALE) {
-			a = d = caryll_from_f2dot14(caryll_blt16s(start + offset));
+			a = d = caryll_from_f2dot14(read_16s(start + offset));
 			offset += 2;
 		} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
-			a = caryll_from_f2dot14(caryll_blt16s(start + offset));
-			d = caryll_from_f2dot14(caryll_blt16s(start + offset + 2));
+			a = caryll_from_f2dot14(read_16s(start + offset));
+			d = caryll_from_f2dot14(read_16s(start + offset + 2));
 			offset += 4;
 		} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
-			a = caryll_from_f2dot14(caryll_blt16s(start + offset));
-			b = caryll_from_f2dot14(caryll_blt16s(start + offset + 2));
-			c = caryll_from_f2dot14(caryll_blt16s(start + offset + 4));
-			d = caryll_from_f2dot14(caryll_blt16s(start + offset + 2));
+			a = caryll_from_f2dot14(read_16s(start + offset));
+			b = caryll_from_f2dot14(read_16s(start + offset + 2));
+			c = caryll_from_f2dot14(read_16s(start + offset + 4));
+			d = caryll_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
 		g->references[j].glyph.gid = index;
@@ -217,7 +217,7 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		g->references[j].y = y;
 	}
 	if (glyphHasInstruction) {
-		uint16_t instructionLength = caryll_blt16u(start + offset);
+		uint16_t instructionLength = read_16u(start + offset);
 		font_file_pointer instructions = NULL;
 		if (instructionLength > 0) {
 			instructions = (font_file_pointer)malloc(sizeof(uint8_t) * instructionLength);
@@ -235,17 +235,17 @@ static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 
 static INLINE glyf_glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	font_file_pointer start = data + offset;
-	int16_t numberOfContours = caryll_blt16u(start);
+	int16_t numberOfContours = read_16u(start);
 	glyf_glyph *g;
 	if (numberOfContours > 0) {
 		g = caryll_read_simple_glyph(start + 10, numberOfContours);
 	} else {
 		g = caryll_read_composite_glyph(start + 10);
 	}
-	g->stat.xMin = caryll_blt16s(start + 2);
-	g->stat.yMin = caryll_blt16s(start + 4);
-	g->stat.xMax = caryll_blt16s(start + 6);
-	g->stat.yMax = caryll_blt16s(start + 8);
+	g->stat.xMin = read_16s(start + 2);
+	g->stat.yMin = read_16s(start + 4);
+	g->stat.xMax = read_16s(start + 6);
+	g->stat.yMax = read_16s(start + 8);
 	return g;
 }
 
@@ -267,9 +267,9 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 		if (length < 2 * numGlyphs + 2) goto LOCA_CORRUPTED;
 		for (uint32_t j = 0; j < numGlyphs + 1; j++) {
 			if (locaIsLong) {
-				offsets[j] = caryll_blt32u(data + j * 4);
+				offsets[j] = read_32u(data + j * 4);
 			} else {
-				offsets[j] = caryll_blt16u(data + j * 2) * 2;
+				offsets[j] = read_16u(data + j * 2) * 2;
 			}
 			if (j > 0 && offsets[j] < offsets[j - 1]) goto LOCA_CORRUPTED;
 		}

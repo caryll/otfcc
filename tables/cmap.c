@@ -14,12 +14,12 @@ static void encode(cmap_hash *map, int c, uint16_t gid) {
 
 static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	if (lengthLimit < 16) return;
-	uint32_t nGroups = caryll_blt32u(start + 12);
+	uint32_t nGroups = read_32u(start + 12);
 	if (lengthLimit < 16 + 12 * nGroups) return;
 	for (uint32_t j = 0; j < nGroups; j++) {
-		uint32_t startCode = caryll_blt32u(start + 16 + 12 * j);
-		uint32_t endCode = caryll_blt32u(start + 16 + 12 * j + 4);
-		uint32_t startGID = caryll_blt32u(start + 16 + 12 * j + 8);
+		uint32_t startCode = read_32u(start + 16 + 12 * j);
+		uint32_t endCode = read_32u(start + 16 + 12 * j + 4);
+		uint32_t startGID = read_32u(start + 16 + 12 * j + 8);
 		for (uint32_t c = startCode; c <= endCode; c++) {
 			encode(map, c, (c - startCode) + startGID);
 		}
@@ -28,14 +28,14 @@ static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit,
 
 static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	if (lengthLimit < 14) return;
-	uint16_t segmentsCount = caryll_blt16u(start + 6) / 2;
+	uint16_t segmentsCount = read_16u(start + 6) / 2;
 	if (lengthLimit < 16 + segmentsCount * 8) return;
 	for (uint16_t j = 0; j < segmentsCount; j++) {
-		uint16_t endCode = caryll_blt16u(start + 14 + j * 2);
-		uint16_t startCode = caryll_blt16u(start + 14 + segmentsCount * 2 + 2 + j * 2);
-		int16_t idDelta = caryll_blt16u(start + 14 + segmentsCount * 4 + 2 + j * 2);
+		uint16_t endCode = read_16u(start + 14 + j * 2);
+		uint16_t startCode = read_16u(start + 14 + segmentsCount * 2 + 2 + j * 2);
+		int16_t idDelta = read_16u(start + 14 + segmentsCount * 4 + 2 + j * 2);
 		uint32_t idRangeOffsetOffset = 14 + segmentsCount * 6 + 2 + j * 2;
-		uint16_t idRangeOffset = caryll_blt16u(start + idRangeOffsetOffset);
+		uint16_t idRangeOffset = read_16u(start + idRangeOffsetOffset);
 		if (startCode < 0xFFFF) {
 			if (idRangeOffset == 0) {
 				for (uint16_t c = startCode; c <= endCode; c++) {
@@ -47,7 +47,7 @@ static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, 
 					uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
 					if (glyphOffset + 2 >= lengthLimit) continue; // ignore this encoding slot when o-o-r
 
-					uint16_t gid = (caryll_blt16u(start + glyphOffset) + idDelta) & 0xFFFF;
+					uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
 					if (c != 0xFFFF) { encode(map, c, gid); }
 				}
 			}
@@ -56,7 +56,7 @@ static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, 
 }
 
 static void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
-	uint16_t format = caryll_blt16u(start);
+	uint16_t format = read_16u(start);
 	if (format == 4) {
 		caryll_read_format_4(start, lengthLimit, map);
 	} else if (format == 12) {
@@ -79,14 +79,14 @@ cmap_hash *caryll_read_cmap(caryll_packet packet) {
 
 		map = malloc(sizeof(cmap_hash));
 		*map = NULL; // intialize to empty hashtable
-		uint16_t numTables = caryll_blt16u(data + 2);
+		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 		for (uint16_t j = 0; j < numTables; j++) {
-			uint16_t platform = caryll_blt16u(data + 4 + 8 * j);
-			uint16_t encoding = caryll_blt16u(data + 4 + 8 * j + 2);
+			uint16_t platform = read_16u(data + 4 + 8 * j);
+			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
 			if ((platform == 0 && encoding == 3) || (platform == 0 && encoding == 4) ||
 			    (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
-				uint32_t tableOffset = caryll_blt32u(data + 4 + 8 * j + 4);
+				uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
 				caryll_read_mapping_table(data + tableOffset, length - tableOffset, map);
 			}
 		};
@@ -226,7 +226,7 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 
 	for (int j = 0; j < segmentsCount; j++) {
 		// rewrite idRangeOffset
-		uint16_t ro = caryll_blt16u((uint8_t *)idRangeOffset->s + j * 2);
+		uint16_t ro = read_16u((uint8_t *)idRangeOffset->s + j * 2);
 		if (ro) {
 			ro -= 1;
 			ro += 2 * (segmentsCount - j);

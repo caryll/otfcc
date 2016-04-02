@@ -11,23 +11,23 @@ table_vhea *caryll_read_vhea(caryll_packet packet) {
 		size_t length = table.length;
 		if (length >= 36) {
 			vhea = (table_vhea *)malloc(sizeof(table_vhea) * 1);
-			vhea->version = caryll_blt32u(data);
-			vhea->ascent = caryll_blt16s(data + 4);
-			vhea->descent = caryll_blt16s(data + 6);
-			vhea->lineGap = caryll_blt16s(data + 8);
-			vhea->advanceHeightMax = caryll_blt16s(data + 10);
-			vhea->minTop = caryll_blt16s(data + 12);
-			vhea->minBottom = caryll_blt16s(data + 14);
-			vhea->yMaxExtent = caryll_blt16s(data + 16);
-			vhea->caretSlopeRise = caryll_blt16s(data + 18);
-			vhea->caretSlopeRun = caryll_blt16s(data + 20);
-			vhea->caretOffset = caryll_blt16s(data + 22);
+			vhea->version = read_32u(data);
+			vhea->ascent = read_16s(data + 4);
+			vhea->descent = read_16s(data + 6);
+			vhea->lineGap = read_16s(data + 8);
+			vhea->advanceHeightMax = read_16s(data + 10);
+			vhea->minTop = read_16s(data + 12);
+			vhea->minBottom = read_16s(data + 14);
+			vhea->yMaxExtent = read_16s(data + 16);
+			vhea->caretSlopeRise = read_16s(data + 18);
+			vhea->caretSlopeRun = read_16s(data + 20);
+			vhea->caretOffset = read_16s(data + 22);
 			vhea->dummy0 = 0;
 			vhea->dummy1 = 0;
 			vhea->dummy2 = 0;
 			vhea->dummy3 = 0;
 			vhea->metricDataFormat = 0;
-			vhea->numOfLongVerMetrics = caryll_blt16u(data + 34);
+			vhea->numOfLongVerMetrics = read_16u(data + 34);
 
 			return vhea;
 		}

@@ -38,8 +38,32 @@ typedef struct {
 	otl_coverage *to;
 } subtable_gsub_single;
 
-typedef union { 
+typedef struct {
+	int16_t x;
+	int16_t y;
+} otl_anchor;
+
+typedef struct {
+	uint16_t markClass;
+	otl_anchor anchor;
+} otl_mark_record;
+
+typedef struct {
+	uint16_t markCount;
+	otl_mark_record *records;
+} otl_mark_array;
+
+typedef struct {
+	otl_coverage *marks;
+	otl_coverage *bases;
+	uint16_t classCount;
+	otl_anchor **baseArray;
+	otl_mark_array *markArray;
+} subtable_gpos_mark_to_base;
+
+typedef union {
 	subtable_gsub_single gsub_single;
+	subtable_gpos_mark_to_base gpos_mark_to_base;
 } otl_subtable;
 
 typedef struct {
@@ -88,5 +112,9 @@ otl_coverage *caryll_coverage_from_json(json_value *cov);
 caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
 #include "otl-gsub-single.h"
+#include "otl-gpos-mark-to-base.h"
+
+#define checkLength(offset)                                                                                            \
+	if (tableLength < offset) { goto FAIL; }
 
 #endif

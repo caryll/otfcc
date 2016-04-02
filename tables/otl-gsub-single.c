@@ -16,11 +16,11 @@ void caryll_read_gsub_single(font_file_pointer data, uint32_t tableLength, otl_l
 		otl_subtable *subtable;
 		NEW(subtable);
 
-		uint32_t subtableOffset = lookup->_offset + caryll_blt16u(data + lookup->_offset + 6 + j * 2);
+		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
 		if (tableLength < subtableOffset + 6) goto FAIL;
-		uint16_t subtableFormat = caryll_blt16u(data + subtableOffset);
+		uint16_t subtableFormat = read_16u(data + subtableOffset);
 		otl_coverage *from =
-		    caryll_read_coverage(data, tableLength, subtableOffset + caryll_blt16u(data + subtableOffset + 2));
+		    caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
 		subtable->gsub_single.from = from;
 		if (!from || from->numGlyphs == 0) goto FAIL;
 
@@ -30,14 +30,14 @@ void caryll_read_gsub_single(font_file_pointer data, uint32_t tableLength, otl_l
 			to->numGlyphs = from->numGlyphs;
 			NEW_N(to->glyphs, to->numGlyphs);
 
-			uint16_t delta = caryll_blt16u(data + subtableOffset + 4);
+			uint16_t delta = read_16u(data + subtableOffset + 4);
 			for (uint16_t j = 0; j < from->numGlyphs; j++) {
 				to->glyphs[j].gid = from->glyphs[j].gid + delta;
 				to->glyphs[j].name = NULL;
 			}
 			subtable->gsub_single.to = to;
 		} else {
-			uint16_t toglyphs = caryll_blt16u(data + subtableOffset + 4);
+			uint16_t toglyphs = read_16u(data + subtableOffset + 4);
 			if (tableLength < subtableOffset + 6 + toglyphs * 2 || toglyphs != from->numGlyphs) goto FAIL;
 			otl_coverage *to;
 			NEW(to);
@@ -45,7 +45,7 @@ void caryll_read_gsub_single(font_file_pointer data, uint32_t tableLength, otl_l
 			NEW_N(to->glyphs, to->numGlyphs);
 
 			for (uint16_t j = 0; j < to->numGlyphs; j++) {
-				to->glyphs[j].gid = caryll_blt16u(data + subtableOffset + 6 + j * 2);
+				to->glyphs[j].gid = read_16u(data + subtableOffset + 6 + j * 2);
 				to->glyphs[j].name = NULL;
 			}
 			subtable->gsub_single.to = to;

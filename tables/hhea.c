@@ -14,23 +14,23 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 			fprintf(stderr, "table 'hhea' corrupted.\n");
 		} else {
 			table_hhea *hhea = (table_hhea *)malloc(sizeof(table_hhea) * 1);
-			hhea->version = caryll_blt32u(data);
-			hhea->ascender = caryll_blt16u(data + 4);
-			hhea->descender = caryll_blt16u(data + 6);
-			hhea->lineGap = caryll_blt16u(data + 8);
-			hhea->advanceWithMax = caryll_blt16u(data + 10);
-			hhea->minLeftSideBearing = caryll_blt16u(data + 12);
-			hhea->minRightSideBearing = caryll_blt16u(data + 14);
-			hhea->xMaxExtent = caryll_blt16u(data + 16);
-			hhea->caretSlopeRise = caryll_blt16u(data + 18);
-			hhea->caretSlopeRun = caryll_blt16u(data + 20);
-			hhea->caretOffset = caryll_blt16u(data + 22);
-			hhea->reserved[0] = caryll_blt16u(data + 24);
-			hhea->reserved[1] = caryll_blt16u(data + 26);
-			hhea->reserved[2] = caryll_blt16u(data + 28);
-			hhea->reserved[3] = caryll_blt16u(data + 30);
-			hhea->metricDataFormat = caryll_blt16u(data + 32);
-			hhea->numberOfMetrics = caryll_blt16u(data + 34);
+			hhea->version = read_32u(data);
+			hhea->ascender = read_16u(data + 4);
+			hhea->descender = read_16u(data + 6);
+			hhea->lineGap = read_16u(data + 8);
+			hhea->advanceWithMax = read_16u(data + 10);
+			hhea->minLeftSideBearing = read_16u(data + 12);
+			hhea->minRightSideBearing = read_16u(data + 14);
+			hhea->xMaxExtent = read_16u(data + 16);
+			hhea->caretSlopeRise = read_16u(data + 18);
+			hhea->caretSlopeRun = read_16u(data + 20);
+			hhea->caretOffset = read_16u(data + 22);
+			hhea->reserved[0] = read_16u(data + 24);
+			hhea->reserved[1] = read_16u(data + 26);
+			hhea->reserved[2] = read_16u(data + 28);
+			hhea->reserved[3] = read_16u(data + 30);
+			hhea->metricDataFormat = read_16u(data + 32);
+			hhea->numberOfMetrics = read_16u(data + 34);
 			return hhea;
 		}
 	}

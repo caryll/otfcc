@@ -17,12 +17,12 @@ table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp 
 		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
 
 		for (uint32_t ia = 0; ia < count_a; ia++) {
-			hmtx->metrics[ia].advanceWidth = caryll_blt16u(data + ia * 4);
-			hmtx->metrics[ia].lsb = caryll_blt16u(data + ia * 4 + 2);
+			hmtx->metrics[ia].advanceWidth = read_16u(data + ia * 4);
+			hmtx->metrics[ia].lsb = read_16u(data + ia * 4 + 2);
 		}
 
 		for (uint32_t ik = 0; ik < count_k; ik++) {
-			hmtx->leftSideBearing[ik] = caryll_blt16u(data + count_a * 4 + ik * 2);
+			hmtx->leftSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
 		}
 
 		return hmtx;

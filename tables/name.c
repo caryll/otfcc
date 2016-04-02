@@ -10,21 +10,21 @@ table_name *caryll_read_name(caryll_packet packet) {
 
 		name = calloc(1, sizeof(table_name));
 		if (!name) goto TABLE_NAME_CORRUPTED;
-		name->format = caryll_blt16u(data);
-		name->count = caryll_blt16u(data + 2);
-		name->stringOffset = caryll_blt16u(data + 4);
+		name->format = read_16u(data);
+		name->count = read_16u(data + 2);
+		name->stringOffset = read_16u(data + 4);
 		if (length < 6 + 12 * name->count) goto TABLE_NAME_CORRUPTED;
 
 		name->records = calloc(name->count, sizeof(name_record *));
 		for (uint16_t j = 0; j < name->count; j++) {
 			name_record *record = calloc(1, sizeof(name_record));
-			record->platformID = caryll_blt16u(data + 6 + j * 12);
-			record->encodingID = caryll_blt16u(data + 6 + j * 12 + 2);
-			record->languageID = caryll_blt16u(data + 6 + j * 12 + 4);
-			record->nameID = caryll_blt16u(data + 6 + j * 12 + 6);
+			record->platformID = read_16u(data + 6 + j * 12);
+			record->encodingID = read_16u(data + 6 + j * 12 + 2);
+			record->languageID = read_16u(data + 6 + j * 12 + 4);
+			record->nameID = read_16u(data + 6 + j * 12 + 6);
 			record->nameString = NULL;
-			uint16_t length = caryll_blt16u(data + 6 + j * 12 + 8);
-			uint16_t offset = caryll_blt16u(data + 6 + j * 12 + 10);
+			uint16_t length = read_16u(data + 6 + j * 12 + 8);
+			uint16_t offset = read_16u(data + 6 + j * 12 + 10);
 
 			if (record->platformID == 1 && record->encodingID == 0) {
 				// Mac Roman

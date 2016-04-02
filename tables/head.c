@@ -16,23 +16,23 @@ table_head *caryll_read_head(caryll_packet packet) {
 			fprintf(stderr, "table 'head' corrupted.\n");
 		} else {
 			table_head *head = (table_head *)malloc(sizeof(table_head) * 1);
-			head->version = caryll_blt32u(data);
-			head->fontRevison = caryll_blt32u(data + 4);
-			head->checkSumAdjustment = caryll_blt32u(data + 8);
-			head->magicNumber = caryll_blt32u(data + 12);
-			head->flags = caryll_blt16u(data + 16);
-			head->unitsPerEm = caryll_blt16u(data + 18);
-			head->created = caryll_blt64u(data + 20);
-			head->modified = caryll_blt64u(data + 28);
-			head->xMin = caryll_blt16u(data + 36);
-			head->yMin = caryll_blt16u(data + 38);
-			head->xMax = caryll_blt16u(data + 40);
-			head->yMax = caryll_blt16u(data + 42);
-			head->macStyle = caryll_blt16u(data + 44);
-			head->lowestRecPPEM = caryll_blt16u(data + 46);
-			head->fontDirectoryHint = caryll_blt16u(data + 48);
-			head->indexToLocFormat = caryll_blt16u(data + 50);
-			head->glyphDataFormat = caryll_blt16u(data + 52);
+			head->version = read_32u(data);
+			head->fontRevison = read_32u(data + 4);
+			head->checkSumAdjustment = read_32u(data + 8);
+			head->magicNumber = read_32u(data + 12);
+			head->flags = read_16u(data + 16);
+			head->unitsPerEm = read_16u(data + 18);
+			head->created = read_64u(data + 20);
+			head->modified = read_64u(data + 28);
+			head->xMin = read_16u(data + 36);
+			head->yMin = read_16u(data + 38);
+			head->xMax = read_16u(data + 40);
+			head->yMax = read_16u(data + 42);
+			head->macStyle = read_16u(data + 44);
+			head->lowestRecPPEM = read_16u(data + 46);
+			head->fontDirectoryHint = read_16u(data + 48);
+			head->indexToLocFormat = read_16u(data + 50);
+			head->glyphDataFormat = read_16u(data + 52);
 			return head;
 		}
 	}

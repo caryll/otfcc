@@ -5,9 +5,9 @@ table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp) {
 		font_file_pointer data = table.data;
 
 		table_hdmx *hdmx = (table_hdmx *)malloc(sizeof(table_hdmx) * 1);
-		hdmx->version = caryll_blt16u(data);
-		hdmx->numRecords = caryll_blt16u(data + 2);
-		hdmx->sizeDeviceRecord = caryll_blt32u(data + 4);
+		hdmx->version = read_16u(data);
+		hdmx->numRecords = read_16u(data + 2);
+		hdmx->sizeDeviceRecord = read_32u(data + 4);
 		hdmx->records = (device_record *)malloc(sizeof(device_record) * hdmx->numRecords);
 
 		for (uint32_t i = 0; i < hdmx->numRecords; i++) {

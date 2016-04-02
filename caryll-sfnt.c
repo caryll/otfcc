@@ -78,10 +78,8 @@ void caryll_delete_sfnt(caryll_sfnt *font) {
 			for (int i = 0; i < font->packets[count].numTables; i++) {
 				free(font->packets[count].pieces[i].data);
 			}
-
 			free(font->packets[count].pieces);
 		}
 	}
-
 	free(font);
 }
