@@ -11,15 +11,9 @@ void buffree(caryll_buffer *buf) {
 	if (buf->s) sdsfree(buf->s);
 	free(buf);
 }
-size_t buflen(caryll_buffer *buf) {
-	return sdslen(buf->s);
-}
-size_t bufpos(caryll_buffer *buf) {
-	return buf->cursor;
-}
-void bufseek(caryll_buffer *buf, size_t pos) {
-	buf->cursor = pos;
-}
+size_t buflen(caryll_buffer *buf) { return sdslen(buf->s); }
+size_t bufpos(caryll_buffer *buf) { return buf->cursor; }
+void bufseek(caryll_buffer *buf, size_t pos) { buf->cursor = pos; }
 void bufclear(caryll_buffer *buf) {
 	sdsclear(buf->s);
 	buf->cursor = 0;
@@ -150,4 +144,22 @@ void buflongalign(caryll_buffer *buf) {
 		bufwrite8(buf, 0);
 	}
 	bufseek(buf, cp);
+}
+
+// bufpingpong16b writes a buffer and an offset towards it.
+// [ ^                            ] + ###### that
+//   ^cp             ^offset
+//                           |
+//                           V
+// [ @^              ######       ] , and the value of [@] equals to the former offset.
+//    ^cp                  ^offset
+// Common in writing OpenType features.
+
+void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, size_t *cp) {
+	bufwrite16b(buf, *offset);
+	*cp = buf->cursor;
+	bufseek(buf, *offset);
+	bufwrite_bufdel(buf, that);
+	*offset = buf->cursor;
+	bufseek(buf, *cp);
 }

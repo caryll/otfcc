@@ -61,7 +61,7 @@ typedef struct {
 	uint16_t classCount;
 	otl_anchor **baseArray;
 	otl_mark_array *markArray;
-} subtable_gpos_mark_to_base;
+} subtable_gpos_mark_to_single;
 
 typedef struct {
 	uint16_t type;
@@ -70,7 +70,7 @@ typedef struct {
 
 typedef union _otl_subtable {
 	subtable_gsub_single gsub_single;
-	subtable_gpos_mark_to_base gpos_mark_to_base;
+	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_extend extend;
 } otl_subtable;
 
@@ -123,7 +123,7 @@ otl_coverage *caryll_coverage_from_json(json_value *cov);
 caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
 #include "otl-gsub-single.h"
-#include "otl-gpos-mark-to-base.h"
+#include "otl-gpos-mark-to-single.h"
 #include "otl-extend.h"
 
 #define checkLength(offset)                                                                                            \

@@ -68,7 +68,7 @@ void caryll_gsub_single_to_json(otl_lookup *lookup, json_value *dump) {
 	json_object_push(dump, "subtables", subtables);
 }
 
-otl_lookup *caryll_gsub_single_from_json(json_value *_lookup) {
+otl_lookup *caryll_gsub_single_from_json(json_value *_lookup, char *_type) {
 	otl_lookup *lookup = NULL;
 	json_value *_subtables = json_obj_get_type(_lookup, "subtables", json_array);
 	if (!_subtables) goto FAIL;
@@ -127,46 +127,4 @@ caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {
 		bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
 	}
 	return bufst;
-}
-
-caryll_buffer *caryll_write_gsub_single(otl_lookup *lookup) {
-	caryll_buffer *buf = bufnew();
-	bufwrite16b(buf, otl_type_gsub_single - otl_type_gsub_unknown);
-	bufwrite16b(buf, 0);
-	bufwrite16b(buf, lookup->subtableCount);
-	uint16_t offset = buf->cursor + 2 * lookup->subtableCount;
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-		size_t cp = buf->cursor;
-		caryll_buffer *bufst = bufnew();
-		subtable_gsub_single *subtable = &(lookup->subtables[j]->gsub_single);
-
-		bool isConstantDifference = true;
-		if (subtable->from->numGlyphs > 1) {
-			int32_t difference = subtable->to->glyphs[0].gid - subtable->from->glyphs[0].gid;
-			for (uint16_t j = 1; j < subtable->from->numGlyphs; j++) {
-				isConstantDifference = isConstantDifference &&
-				                       ((subtable->to->glyphs[j].gid - subtable->from->glyphs[j].gid) == difference);
-			}
-		}
-		if (isConstantDifference && subtable->from->numGlyphs > 0) {
-			bufwrite16b(bufst, 1);
-			bufwrite16b(bufst, 6);
-			bufwrite16b(bufst, subtable->to->glyphs[0].gid - subtable->from->glyphs[0].gid);
-			bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
-		} else {
-			bufwrite16b(bufst, 2);
-			bufwrite16b(bufst, 6 + subtable->to->numGlyphs * 2);
-			bufwrite16b(bufst, subtable->to->numGlyphs);
-			for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
-				bufwrite16b(bufst, subtable->to->glyphs[k].gid);
-			}
-			bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
-		}
-		bufseek(buf, offset);
-		bufwrite_bufdel(buf, bufst);
-		bufseek(buf, cp);
-		bufwrite16b(buf, offset);
-		offset += buflen(bufst);
-	}
-	return buf;
 }

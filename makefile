@@ -49,7 +49,7 @@ TABLE_OBJECTS = $(TARGETDIR)/table-head.o $(TARGETDIR)/table-hhea.o $(TARGETDIR)
 	$(TARGETDIR)/table-name.o $(TARGETDIR)/table-fpgm-prep.o $(TARGETDIR)/table-gasp.o \
 	$(TARGETDIR)/table-vmtx.o \
 	$(TARGETDIR)/table-otl.o $(TARGETDIR)/table-otl-extend.o $(TARGETDIR)/table-otl-gsub-single.o \
-	$(TARGETDIR)/table-otl-gpos-common.o $(TARGETDIR)/table-otl-gpos-mark-to-base.o
+	$(TARGETDIR)/table-otl-gpos-common.o $(TARGETDIR)/table-otl-gpos-mark-to-single.o
 FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o $(TARGETDIR)/fontop-stat.o
 EXTERN_OBJECTS = $(TARGETDIR)/extern-sds.o $(TARGETDIR)/extern-json.o $(TARGETDIR)/extern-json-builder.o
 SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o \

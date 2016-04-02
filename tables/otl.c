@@ -16,15 +16,16 @@ void caryll_delete_coverage(otl_coverage *coverage) {
 	if (coverage) free(coverage);
 }
 
+#define DECLARE_DELETE_TYPE(type, fn)                                                                                  \
+	case type:                                                                                                         \
+		fn(lookup);                                                                                                    \
+		break;
 void caryll_delete_lookup(otl_lookup *lookup) {
 	if (!lookup) return;
 	switch (lookup->type) {
-		case otl_type_gsub_single:
-			caryll_delete_gsub_single(lookup);
-			break;
-		case otl_type_gpos_mark_to_base:
-			caryll_delete_gpos_mark_to_base(lookup);
-			break;
+		DECLARE_DELETE_TYPE(otl_type_gsub_single, caryll_delete_gsub_single);
+		DECLARE_DELETE_TYPE(otl_type_gpos_mark_to_base, caryll_delete_gpos_mark_to_single);
+		DECLARE_DELETE_TYPE(otl_type_gpos_mark_to_mark, caryll_delete_gpos_mark_to_single);
 		default:
 			free(lookup);
 			break;
@@ -214,9 +215,7 @@ typedef struct {
 	UT_hash_handle hh;
 } coverage_entry;
 
-int by_covIndex(coverage_entry *a, coverage_entry *b) {
-	return a->covIndex - b->covIndex;
-}
+int by_covIndex(coverage_entry *a, coverage_entry *b) { return a->covIndex - b->covIndex; }
 
 otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_coverage *coverage;
@@ -304,7 +303,8 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 		case otl_type_gsub_single:
 			return caryll_read_gsub_single(data, tableLength, subtableOffset);
 		case otl_type_gpos_mark_to_base:
-			return caryll_read_gpos_mark_to_base(data, tableLength, subtableOffset);
+		case otl_type_gpos_mark_to_mark:
+			return caryll_read_gpos_mark_to_single(data, tableLength, subtableOffset);
 		case otl_type_gsub_extend:
 		case otl_type_gpos_extend:
 			return caryll_read_otl_extend(data, tableLength, subtableOffset, lookupType);
@@ -393,7 +393,8 @@ void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 			caryll_gsub_single_to_json(lookup, dump);
 			break;
 		case otl_type_gpos_mark_to_base:
-			caryll_gpos_mark_to_base_to_json(lookup, dump);
+		case otl_type_gpos_mark_to_mark:
+			caryll_gpos_mark_to_single_to_json(lookup, dump);
 			break;
 		default:
 			break;
@@ -483,14 +484,14 @@ typedef struct {
 	UT_hash_handle hh;
 } script_hash;
 
-static INLINE bool parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value *lookup), json_value *lookup,
+static INLINE bool parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value *, char *), json_value *lookup,
                                           char *lookupName, lookup_hash **lh) {
 	json_value *type = json_obj_get_type(lookup, "type", json_string);
 	if (type && strcmp(type->u.string.ptr, lt) == 0) {
 		lookup_hash *item = NULL;
 		HASH_FIND_STR(*lh, lookupName, item);
 		if (!item) {
-			otl_lookup *_lookup = fn(lookup);
+			otl_lookup *_lookup = fn(lookup, type->u.string.ptr);
 			if (_lookup) {
 				NEW(item);
 				item->name = sdsnew(lookupName);
@@ -512,6 +513,10 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 			json_value *lookup = lookups->u.object.values[j].value;
 			bool parsed = false;
 			parsed |= parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
+			parsed |= parse_json_lookup_type("gpos_mark_to_base", caryll_gpos_mark_to_single_from_json, lookup,
+			                                 lookupName, &lh);
+			parsed |= parse_json_lookup_type("gpos_mark_to_mark", caryll_gpos_mark_to_single_from_json, lookup,
+			                                 lookupName, &lh);
 			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
 		}
 	}
@@ -727,8 +732,8 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 	}
 }
 
-bool declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subtable *_subtable), otl_lookup *lookup,
-                           caryll_buffer *buf, uint32_t **subtableOffsets, uint32_t *lastOffset) {
+bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subtable *_subtable), otl_lookup *lookup,
+                            caryll_buffer *buf, uint32_t **subtableOffsets, uint32_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtableOffsets, lookup->subtableCount);
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
@@ -742,6 +747,9 @@ bool declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subtab
 }
 
 // When writing lookups, otfcc will try to maintain everything correctly.
+#define DECLARE_LOOKUP_WRITER(type, fn)                                                                                \
+	if (!written)                                                                                                      \
+		written = _declare_lookup_writer(type, fn, table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
 static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	caryll_buffer *bufl = bufnew();
 	caryll_buffer *bufsts = bufnew();
@@ -753,8 +761,9 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
 		subtableOffsets[j] = NULL;
 		bool written = false;
-		written = written || declare_lookup_writer(otl_type_gsub_single, caryll_write_gsub_single_subtable,
-		                                           table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
+		DECLARE_LOOKUP_WRITER(otl_type_gsub_single, caryll_write_gsub_single_subtable);
+		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_base, caryll_write_gpos_mark_to_single);
+		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_mark, caryll_write_gpos_mark_to_single);
 		lookupWritten[j] = written;
 	}
 	// estimate the length of headers

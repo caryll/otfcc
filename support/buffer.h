@@ -31,6 +31,8 @@ void bufwrite_bytes(caryll_buffer *buf, size_t size, uint8_t *str);
 void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that);
 void bufwrite_bufdel(caryll_buffer *buf, caryll_buffer *that);
 
+void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, size_t *cp);
+
 void buflongalign(caryll_buffer *buf);
 
 #endif
