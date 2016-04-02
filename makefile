@@ -59,26 +59,32 @@ EXECUTABLES = $(TARGETDIR)/otfccdump$(SUFFIX) $(TARGETDIR)/otfccbuild$(SUFFIX)
 OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS)
 
 $(EXTERN_OBJECTS) : $(TARGETDIR)/extern-%.o : extern/%.c | $(DIRS)
-	$(CC) $(CFLAGS_EXTERN) -c $< -o $@
+	@echo CXX $@
+	@$(CC) $(CFLAGS_EXTERN) -c $< -o $@
 
 SUPPORT_H = $(subst .o,.h,$(subst $(TARGETDIR)/support-,support/,$(SUPPORT_OBJECTS))) support/util.h
 $(SUPPORT_OBJECTS) : $(TARGETDIR)/support-%.o : support/%.c | $(DIRS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo CXX $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 TABLES_H = $(subst .o,.h,$(subst $(TARGETDIR)/table-,tables/,$(TABLE_OBJECTS)))
 $(TABLE_OBJECTS) : $(TARGETDIR)/table-%.o : tables/%.c tables/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo CXX $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 	
 FONTOPS_H = $(subst .o,.h,$(subst $(TARGETDIR)/fontop-,fontops/,$(FONTOP_OBJECTS)))
 $(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo CXX $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,,$(MAIN_OBJECTS_1)))
 $(MAIN_OBJECTS) : $(TARGETDIR)/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(FONTOPS_H) | $(DIRS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo CXX $@
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXECUTABLES): $(TARGETDIR)/%$(SUFFIX) : $(TARGETDIR)/%.o $(OBJECTS)
-	$(LINK) $(LINKFLAGS) $^ -o $@
+	@echo CXX $@
+	@$(LINK) $(LINKFLAGS) $^ -o $@
 
 objects: $(EXECUTABLES)
 

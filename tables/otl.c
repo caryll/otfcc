@@ -430,7 +430,7 @@ typedef struct {
 	UT_hash_handle hh;
 } script_hash;
 
-static INLINE void parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value *lookup), json_value *lookup,
+static INLINE bool parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value *lookup), json_value *lookup,
                                           char *lookupName, lookup_hash **lh) {
 	json_value *type = json_obj_get_type(lookup, "type", json_string);
 	if (type && strcmp(type->u.string.ptr, lt) == 0) {
@@ -444,9 +444,11 @@ static INLINE void parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value
 				item->lookup = _lookup;
 				item->lookup->name = sdsdup(item->name);
 				HASH_ADD_STR(*lh, name, item);
+				return true;
 			}
 		}
 	}
+	return false;
 }
 
 static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
@@ -455,7 +457,11 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 		if (lookups->u.object.values[j].value->type == json_object) {
 			char *lookupName = lookups->u.object.values[j].name;
 			json_value *lookup = lookups->u.object.values[j].value;
-			parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
+			bool parsed = false;
+			parsed |= parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
+			if(!parsed){
+				fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName);
+			}
 		}
 	}
 	return lh;
