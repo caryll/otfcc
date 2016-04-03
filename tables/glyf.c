@@ -394,7 +394,7 @@ static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options 
 	json_value *glyph = json_object_new(7);
 	json_object_push(glyph, "name", json_string_new_length(sdslen(g->name), g->name));
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
-	if(dumpopts->has_vertical_metrics){
+	if (dumpopts->has_vertical_metrics) {
 		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
 		json_object_push(glyph, "verticalOrigin", json_integer_new(g->verticalOrigin));
 	}
@@ -544,6 +544,33 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 	return NULL;
 }
 
+caryll_buffer *shrinkFlags(caryll_buffer *flags) {
+	if (!buflen(flags)) return (flags);
+	caryll_buffer *shrunk = bufnew();
+	bufwrite8(shrunk, flags->s[0]);
+	int repeating = 0;
+	for (size_t j = 1; j < buflen(flags); j++) {
+		if (flags->s[j] == flags->s[j - 1]) {
+			if (repeating && repeating < 0xFE) {
+				shrunk->s[shrunk->cursor - 1] += 1;
+				repeating += 1;
+			} else if (repeating == 0) {
+				shrunk->s[shrunk->cursor - 1] |= GLYF_FLAG_REPEAT;
+				bufwrite8(shrunk, 1);
+				repeating += 1;
+			} else {
+				repeating = 0;
+				bufwrite8(shrunk, flags->s[j]);
+			}
+		} else {
+			repeating = 0;
+			bufwrite8(shrunk, flags->s[j]);
+		}
+	}
+	buffree(flags);
+	return shrunk;
+}
+
 // serialize
 #define EPSILON (1e-5)
 static INLINE void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
@@ -612,6 +639,7 @@ static INLINE void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
 			cy = p->y;
 		}
 	}
+	flags = shrinkFlags(flags);
 	bufwrite_buf(gbuf, flags);
 	bufwrite_buf(gbuf, xs);
 	bufwrite_buf(gbuf, ys);
