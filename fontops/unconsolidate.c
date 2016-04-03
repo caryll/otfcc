@@ -75,26 +75,26 @@ void caryll_name_coverage(caryll_font *font, otl_coverage *coverage) {
 void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, table_otl *table) {
 	uint16_t totalRules = 0;
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
-		if (lookup->subtables[j]) { totalRules += lookup->subtables[j]->gsub_chaining.rulesCount; }
+		if (lookup->subtables[j]) { totalRules += lookup->subtables[j]->chaining.rulesCount; }
 	otl_subtable **newsts;
 	NEW_N(newsts, totalRules);
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
 		if (lookup->subtables[j]) {
-			for (uint16_t k = 0; k < lookup->subtables[j]->gsub_chaining.rulesCount; k++) {
+			for (uint16_t k = 0; k < lookup->subtables[j]->chaining.rulesCount; k++) {
 				NEW(newsts[jj]);
-				newsts[jj]->gsub_chaining.rulesCount = 1;
-				NEW(newsts[jj]->gsub_chaining.rules);
-				newsts[jj]->gsub_chaining.rules[0] = lookup->subtables[j]->gsub_chaining.rules[k];
+				newsts[jj]->chaining.rulesCount = 1;
+				NEW(newsts[jj]->chaining.rules);
+				newsts[jj]->chaining.rules[0] = lookup->subtables[j]->chaining.rules[k];
 				jj += 1;
 			}
-			free(lookup->subtables[j]->gsub_chaining.rules);
+			free(lookup->subtables[j]->chaining.rules);
 			free(lookup->subtables[j]);
 		}
 	lookup->subtableCount = totalRules;
 	lookup->subtables = newsts;
 	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-		subtable_gsub_chaining *subtable = &(lookup->subtables[j]->gsub_chaining);
+		subtable_chaining *subtable = &(lookup->subtables[j]->chaining);
 		otl_chaining_rule *rule = subtable->rules[0];
 		for (uint16_t k = 0; k < rule->matchCount; k++) {
 			caryll_name_coverage(font, rule->match[k]);
@@ -116,6 +116,7 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 				}
 			break;
 		case otl_type_gsub_chaining:
+		case otl_type_gpos_chaining:
 			unconsolidate_gsub_chain(font, lookup, table);
 			break;
 		case otl_type_gpos_mark_to_base:
