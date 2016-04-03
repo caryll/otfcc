@@ -76,7 +76,7 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 		}
 	}
 }
-static void consolidate_coverage(caryll_font *font, otl_coverage *coverage) {
+static void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName) {
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
 		glyph_order_entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
@@ -85,7 +85,8 @@ static void consolidate_coverage(caryll_font *font, otl_coverage *coverage) {
 			sdsfree(coverage->glyphs[j].name);
 			coverage->glyphs[j].name = ordentry->name;
 		} else {
-			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in feature coverage.\n", coverage->glyphs[j].name);
+			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", coverage->glyphs[j].name,
+			        lookupName);
 			coverage->glyphs[j].gid = 0;
 			DELETE(sdsfree, coverage->glyphs[j].name);
 		}
@@ -101,8 +102,8 @@ typedef struct {
 static INLINE int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) { return a->fromid - b->fromid; }
 static void consolidate_gsub_single(caryll_font *font, otl_subtable *_subtable, sds lookupName) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
-	consolidate_coverage(font, subtable->from);
-	consolidate_coverage(font, subtable->to);
+	consolidate_coverage(font, subtable->from, lookupName);
+	consolidate_coverage(font, subtable->to, lookupName);
 	uint16_t len =
 	    (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs : subtable->from->numGlyphs);
 	gsub_single_map_hash *h = NULL;
@@ -164,8 +165,8 @@ typedef struct {
 static INLINE int base_by_gid(base_hash *a, base_hash *b) { return a->gid - b->gid; }
 static void consolidate_mark_to_single(caryll_font *font, otl_subtable *_subtable, sds lookupName) {
 	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
-	consolidate_coverage(font, subtable->marks);
-	consolidate_coverage(font, subtable->bases);
+	consolidate_coverage(font, subtable->marks, lookupName);
+	consolidate_coverage(font, subtable->bases, lookupName);
 	{ // consolidate marks
 		mark_hash *hm = NULL;
 		for (uint16_t k = 0; k < subtable->marks->numGlyphs; k++) {
@@ -178,6 +179,9 @@ static void consolidate_mark_to_single(caryll_font *font, otl_subtable *_subtabl
 					s->name = subtable->marks->glyphs[k].name;
 					s->markrec = subtable->markArray->records[k];
 					HASH_ADD_INT(hm, gid, s);
+				} else {
+					fprintf(stderr, "[Consolidate] Ignored anchor double-definition for /%s in lookup %s.\n",
+					        subtable->marks->glyphs[k].name, lookupName);
 				}
 			}
 		}
@@ -209,6 +213,8 @@ static void consolidate_mark_to_single(caryll_font *font, otl_subtable *_subtabl
 					HASH_ADD_INT(hm, gid, s);
 				} else {
 					free(subtable->baseArray[k]);
+					fprintf(stderr, "[Consolidate] Ignored anchor double-definition for /%s in lookup %s.\n",
+					        subtable->bases->glyphs[k].name, lookupName);
 				}
 			} else {
 				free(subtable->baseArray[k]);
