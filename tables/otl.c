@@ -297,11 +297,77 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 	return coverage;
 }
 
+otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_classdef *cd;
+	NEW(cd);
+	cd->numGlyphs = 0;
+	cd->glyphs = NULL;
+	cd->classes = NULL;
+	if (tableLength < offset + 4) return cd;
+	uint16_t format = read_16u(data + offset);
+	if (format == 1 && tableLength >= offset + 6) {
+		uint16_t startGID = read_16u(data + offset + 2);
+		uint16_t count = read_16u(data + offset + 4);
+		if (tableLength >= offset + 6 + count * 2) {
+			cd->numGlyphs = count;
+			NEW_N(cd->glyphs, count);
+			NEW_N(cd->classes, count);
+			for (uint16_t j = 0; j < count; j++) {
+				cd->glyphs[j].gid = startGID + j;
+				cd->glyphs[j].name = NULL;
+				cd->classes[j] = read_16u(data + offset + 6 + j * 2);
+			}
+			return cd;
+		}
+	} else if (format == 2) {
+		// The ranges may overlap.
+		// Use hashtable.
+		uint16_t rangeCount = read_16u(data + offset + 2);
+		if (tableLength < offset + 4 + rangeCount * 6) return cd;
+		coverage_entry *hash = NULL;
+		for (uint16_t j = 0; j < rangeCount; j++) {
+			uint16_t start = read_16u(data + offset + 4 + 6 * j);
+			uint16_t end = read_16u(data + offset + 4 + 6 * j + 2);
+			uint16_t cls = read_16u(data + offset + 4 + 6 * j + 4);
+			for (int k = start; k <= end; k++) {
+				coverage_entry *item = NULL;
+				HASH_FIND_INT(hash, &k, item);
+				if (!item) {
+					NEW(item);
+					item->gid = k;
+					item->covIndex = cls;
+					HASH_ADD_INT(hash, gid, item);
+				}
+			}
+		}
+		HASH_SORT(hash, by_covIndex);
+		cd->numGlyphs = HASH_COUNT(hash);
+		NEW_N(cd->glyphs, cd->numGlyphs);
+		NEW_N(cd->classes, cd->numGlyphs);
+		{
+			uint16_t j = 0;
+			coverage_entry *e, *tmp;
+			HASH_ITER(hh, hash, e, tmp) {
+				cd->glyphs[j].gid = e->gid;
+				cd->glyphs[j].name = NULL;
+				cd->classes[j] = e->covIndex;
+				HASH_DEL(hash, e);
+				free(e);
+				j++;
+			}
+		}
+		return cd;
+	}
+	return cd;
+}
+
 otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                        otl_lookup_type lookupType) {
 	switch (lookupType) {
 		case otl_type_gsub_single:
 			return caryll_read_gsub_single(data, tableLength, subtableOffset);
+		case otl_type_gsub_chain:
+			return caryll_read_gsub_chaining(data, tableLength, subtableOffset);
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:
 			return caryll_read_gpos_mark_to_single(data, tableLength, subtableOffset);
@@ -391,6 +457,9 @@ void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	switch (lookup->type) {
 		case otl_type_gsub_single:
 			caryll_gsub_single_to_json(lookup, dump);
+			break;
+		case otl_type_gsub_chain:
+			caryll_gsub_chaining_to_json(lookup, dump);
 			break;
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:

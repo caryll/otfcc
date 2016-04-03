@@ -36,10 +36,36 @@ typedef struct {
 } otl_coverage;
 
 typedef struct {
+	uint16_t numGlyphs;
+	glyph_handle *glyphs;
+	uint16_t *classes;
+} otl_classdef;
+
+// GSUB subtable formats
+typedef struct {
 	otl_coverage *from;
 	otl_coverage *to;
 } subtable_gsub_single;
 
+typedef struct {
+	uint16_t index;
+	uint16_t lookupIndex;
+	sds lookupName;
+} otl_contextual_application;
+typedef struct {
+	uint16_t matchCount;
+	uint16_t inputBegins;
+	uint16_t inputEnds;
+	otl_coverage **match;
+	uint16_t applyCount;
+	otl_contextual_application *apply;
+} otl_chaining_rule;
+typedef struct {
+	uint16_t rulesCount;
+	otl_chaining_rule **rules;
+} subtable_gsub_chaining;
+
+// GPOS subtable formats
 typedef struct {
 	bool present;
 	int16_t x;
@@ -71,6 +97,7 @@ typedef struct {
 
 typedef union _otl_subtable {
 	subtable_gsub_single gsub_single;
+	subtable_gsub_chaining gsub_chaining;
 	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_extend extend;
 } otl_subtable;
@@ -123,9 +150,13 @@ json_value *caryll_coverage_to_json(otl_coverage *coverage);
 otl_coverage *caryll_coverage_from_json(json_value *cov);
 caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
+// Classdef functions
+otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+
 #include "otl-gsub-single.h"
 #include "otl-gpos-mark-to-single.h"
 #include "otl-extend.h"
+#include "otl-chaining.h"
 
 #define checkLength(offset)                                                                                            \
 	if (tableLength < offset) { goto FAIL; }

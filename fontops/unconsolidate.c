@@ -72,7 +72,41 @@ void caryll_name_coverage(caryll_font *font, otl_coverage *coverage) {
 		lookup_name(font->glyph_order, coverage->glyphs[j].gid, &(coverage->glyphs[j].name));
 	}
 }
-void caryll_name_lookup(caryll_font *font, otl_lookup *lookup) {
+void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, table_otl *table) {
+	uint16_t totalRules = 0;
+	for (uint16_t j = 0; j < lookup->subtableCount; j++)
+		if (lookup->subtables[j]) { totalRules += lookup->subtables[j]->gsub_chaining.rulesCount; }
+	otl_subtable **newsts;
+	NEW_N(newsts, totalRules);
+	uint16_t jj = 0;
+	for (uint16_t j = 0; j < lookup->subtableCount; j++)
+		if (lookup->subtables[j]) {
+			for (uint16_t k = 0; k < lookup->subtables[j]->gsub_chaining.rulesCount; k++) {
+				NEW(newsts[jj]);
+				newsts[jj]->gsub_chaining.rulesCount = 1;
+				NEW(newsts[jj]->gsub_chaining.rules);
+				newsts[jj]->gsub_chaining.rules[0] = lookup->subtables[j]->gsub_chaining.rules[k];
+				jj += 1;
+			}
+			free(lookup->subtables[j]->gsub_chaining.rules);
+			free(lookup->subtables[j]);
+		}
+	lookup->subtableCount = totalRules;
+	lookup->subtables = newsts;
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		subtable_gsub_chaining *subtable = &(lookup->subtables[j]->gsub_chaining);
+		otl_chaining_rule *rule = subtable->rules[0];
+		for (uint16_t k = 0; k < rule->matchCount; k++) {
+			caryll_name_coverage(font, rule->match[k]);
+		}
+		for (uint16_t k = 0; k < rule->applyCount; k++)
+			if (rule->apply[k].lookupIndex < table->lookupCount) {
+				rule->apply[k].lookupName = table->lookups[rule->apply[k].lookupIndex]->name;
+			}
+	}
+}
+
+void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table) {
 	switch (lookup->type) {
 		case otl_type_gsub_single:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
@@ -80,6 +114,9 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup) {
 					caryll_name_coverage(font, lookup->subtables[j]->gsub_single.from);
 					caryll_name_coverage(font, lookup->subtables[j]->gsub_single.to);
 				}
+			break;
+		case otl_type_gsub_chain:
+			unconsolidate_gsub_chain(font, lookup, table);
 			break;
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:
@@ -98,13 +135,13 @@ void caryll_name_features(caryll_font *font) {
 	if (font->glyph_order && font->GSUB) {
 		for (uint32_t j = 0; j < font->GSUB->lookupCount; j++) {
 			otl_lookup *lookup = font->GSUB->lookups[j];
-			caryll_name_lookup(font, lookup);
+			caryll_name_lookup(font, lookup, font->GSUB);
 		}
 	}
 	if (font->glyph_order && font->GPOS) {
 		for (uint32_t j = 0; j < font->GPOS->lookupCount; j++) {
 			otl_lookup *lookup = font->GPOS->lookups[j];
-			caryll_name_lookup(font, lookup);
+			caryll_name_lookup(font, lookup, font->GSUB);
 		}
 	}
 }

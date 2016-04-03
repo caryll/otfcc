@@ -85,6 +85,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 	json_value *root = json_object_new(48);
 	dumpopts->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	if (!root) return NULL;
+	///*
 	caryll_head_to_json(font->head, root, dumpopts);
 	caryll_hhea_to_json(font->hhea, root, dumpopts);
 	caryll_maxp_to_json(font->maxp, root, dumpopts);
@@ -100,6 +101,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
 		caryll_gasp_to_json(font->gasp, root, dumpopts);
 	}
+	//*/
 	caryll_otl_to_json(font->GSUB, root, dumpopts, "GSUB");
 	caryll_otl_to_json(font->GPOS, root, dumpopts, "GPOS");
 	return root;
