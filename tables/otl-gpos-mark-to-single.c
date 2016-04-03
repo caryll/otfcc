@@ -33,22 +33,20 @@ otl_subtable *caryll_read_gpos_mark_to_single(font_file_pointer data, uint32_t t
 	NEW(_subtable);
 	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
 	if (tableLength < subtableOffset + 12) goto FAIL;
-
 	subtable->marks = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
 	subtable->bases = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 4));
 	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
 		goto FAIL;
-
 	subtable->classCount = read_16u(data + subtableOffset + 6);
-	uint16_t markArrayOffset = subtableOffset + read_16u(data + subtableOffset + 8);
+	uint32_t markArrayOffset = subtableOffset + read_16u(data + subtableOffset + 8);
 	subtable->markArray = otl_read_mark_array(data, tableLength, markArrayOffset);
 	if (!subtable->markArray || subtable->markArray->markCount != subtable->marks->numGlyphs) goto FAIL;
 
-	uint16_t baseArrayOffset = subtableOffset + read_16u(data + subtableOffset + 10);
+	uint32_t baseArrayOffset = subtableOffset + read_16u(data + subtableOffset + 10);
 	checkLength(baseArrayOffset + 2 + 2 * subtable->bases->numGlyphs * subtable->classCount);
 	if (read_16u(data + baseArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
 	NEW_N(subtable->baseArray, subtable->bases->numGlyphs);
-	uint16_t _offset = baseArrayOffset + 2;
+	uint32_t _offset = baseArrayOffset + 2;
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		NEW_N(subtable->baseArray[j], subtable->classCount);
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
