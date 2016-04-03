@@ -55,17 +55,11 @@ OK:
 	return subtable;
 }
 
-void caryll_gsub_single_to_json(otl_lookup *lookup, json_value *dump) {
-	json_object_push(dump, "type", json_string_new("gsub_single"));
-	json_value *subtables = json_array_new(lookup->subtableCount);
-	for (uint16_t j = 0; j < lookup->subtableCount; j++)
-		if (lookup->subtables[j]) {
-			json_value *st = json_object_new(2);
-			json_object_push(st, "from", caryll_coverage_to_json(lookup->subtables[j]->gsub_single.from));
-			json_object_push(st, "to", caryll_coverage_to_json(lookup->subtables[j]->gsub_single.to));
-			json_array_push(subtables, st);
-		}
-	json_object_push(dump, "subtables", subtables);
+json_value *caryll_gsub_single_to_json(otl_subtable *_subtable) {
+	json_value *st = json_object_new(2);
+	json_object_push(st, "from", caryll_coverage_to_json(_subtable->gsub_single.from));
+	json_object_push(st, "to", caryll_coverage_to_json(_subtable->gsub_single.to));
+	return st;
 }
 
 otl_lookup *caryll_gsub_single_from_json(json_value *_lookup, char *_type) {
@@ -75,6 +69,7 @@ otl_lookup *caryll_gsub_single_from_json(json_value *_lookup, char *_type) {
 
 	NEW(lookup);
 	lookup->type = otl_type_gsub_single;
+	lookup->flags = json_obj_getnum(_lookup, "flags");
 	lookup->subtableCount = _subtables->u.array.length;
 	NEW_N(lookup->subtables, lookup->subtableCount);
 

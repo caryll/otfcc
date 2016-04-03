@@ -22307,6 +22307,7 @@
         "lookups": {
             "lookup_cv03_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
@@ -22316,6 +22317,7 @@
             },
             "lookup_cv04_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
@@ -22325,6 +22327,7 @@
             },
             "lookup_cv05_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
@@ -22334,6 +22337,7 @@
             },
             "lookup_cv06_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
@@ -22343,6 +22347,7 @@
             },
             "lookup_cv07_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
@@ -22352,6 +22357,7 @@
             },
             "lookup_cv08_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
@@ -22361,6 +22367,7 @@
             },
             "lookup_cv09_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
@@ -22370,6 +22377,7 @@
             },
             "lookup_cv10_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
@@ -22379,6 +22387,7 @@
             },
             "lookup_cv01_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["a","uni0430","agrave","aacute","acircumflex","atilde","adieresis","aring","amacron","abreve","aogonek","uni01CE","uni01DF","uni01E1","aringacute","uni0201","uni0203","uni0227","uni04D1","uni04D3","uni1D8F","uni1E01","uni1E9A","uni1EA1","uni1EA3","uni1EA5","uni1EA7","uni1EA9","uni1EAB","uni1EAD","uni1EAF","uni1EB1","uni1EB3","uni1EB5","uni1EB7"],
@@ -22388,6 +22397,7 @@
             },
             "lookup_cv02_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["a","uni0430","agrave","aacute","acircumflex","atilde","adieresis","aring","amacron","abreve","aogonek","uni01CE","uni01DF","uni01E1","aringacute","uni0201","uni0203","uni0227","uni04D1","uni04D3","uni1D8F","uni1E01","uni1E9A","uni1EA1","uni1EA3","uni1EA5","uni1EA7","uni1EA9","uni1EAB","uni1EAD","uni1EAF","uni1EB1","uni1EB3","uni1EB5","uni1EB7"],
@@ -22397,6 +22407,7 @@
             },
             "lookup_cv11_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["g","gcircumflex","gbreve","gdotaccent","uni0123","gcaron","uni01F5","uni1E21"],
@@ -22406,6 +22417,7 @@
             },
             "lookup_cv12_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["g","gcircumflex","gbreve","gdotaccent","uni0123","gcaron","uni01F5","uni1E21"],
@@ -22415,6 +22427,7 @@
             },
             "lookup_cv13_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["zero"],
@@ -22424,6 +22437,7 @@
             },
             "lookup_cv14_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["zero"],
@@ -22433,6 +22447,7 @@
             },
             "lookup_cv15_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["zero"],
@@ -22442,6 +22457,7 @@
             },
             "lookup_cv22_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["paragraph"],
@@ -22451,6 +22467,7 @@
             },
             "lookup_cv23_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["paragraph"],
@@ -22460,6 +22477,7 @@
             },
             "lookup_cv18_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["asterisk"],
@@ -22469,6 +22487,7 @@
             },
             "lookup_cv19_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["asterisk"],
@@ -22478,6 +22497,7 @@
             },
             "lookup_cv20_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["underscore"],
@@ -22487,6 +22507,7 @@
             },
             "lookup_cv21_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["underscore"],
@@ -22496,6 +22517,7 @@
             },
             "lookup_cv16_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["asciitilde"],
@@ -22505,6 +22527,7 @@
             },
             "lookup_cv17_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["asciitilde"],
@@ -22514,6 +22537,7 @@
             },
             "lookup_11_23": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["uni0345"],
@@ -22523,6 +22547,7 @@
             },
             "lookup_11_24": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["uni0328"],
@@ -22530,9 +22555,108 @@
                     }
                 ]
             },
-            "lookup_ccmp_0": {},
+            "lookup_ccmp_0": {
+                "type": "gsub_chaining",
+                "flags": 0,
+                "subtables": [
+                    {
+                        "match": [
+                            ["i","uni0456","j","uni0458","iogonek"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"]
+                        ],
+                        "apply": [{"at":0,"lookup":"lookup_11_26"}],
+                        "inputBegins": 0,
+                        "inputEnds": 1
+                    },
+                    {
+                        "match": [
+                            ["eta"],
+                            ["uni0345"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_23"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["eta"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0345"]
+                        ],
+                        "apply": [{"at":2,"lookup":"lookup_11_23"}],
+                        "inputBegins": 2,
+                        "inputEnds": 3
+                    },
+                    {
+                        "match": [
+                            ["eta"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0345"]
+                        ],
+                        "apply": [{"at":3,"lookup":"lookup_11_23"}],
+                        "inputBegins": 3,
+                        "inputEnds": 4
+                    },
+                    {
+                        "match": [
+                            ["eta"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0345"]
+                        ],
+                        "apply": [{"at":4,"lookup":"lookup_11_23"}],
+                        "inputBegins": 4,
+                        "inputEnds": 5
+                    },
+                    {
+                        "match": [
+                            ["A","uni0410","a","uni0430","u"],
+                            ["uni0328"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_24"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["A","uni0410","a","uni0430","u"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0328"]
+                        ],
+                        "apply": [{"at":2,"lookup":"lookup_11_24"}],
+                        "inputBegins": 2,
+                        "inputEnds": 3
+                    },
+                    {
+                        "match": [
+                            ["A","uni0410","a","uni0430","u"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0328"]
+                        ],
+                        "apply": [{"at":3,"lookup":"lookup_11_24"}],
+                        "inputBegins": 3,
+                        "inputEnds": 4
+                    },
+                    {
+                        "match": [
+                            ["A","uni0410","a","uni0430","u"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0307","uni0308","uni030A","uni1AB2","gravecomb","acutecomb","uni0302","uni030C","tildecomb","uni034A","uni034B","uni034C","uni0304","uni0305","uni033F","uni0306","uni0311","hookabovecomb","uni030F","uni030B","uni0313","uni0312","uni0314","uni030D","uni030E","uni0346","uni033E","uni0310","uni0352","uni0340","uni0341","uni0342","uni0343","uni033D","uni1DFE","uni0350","uni0351","uni0357","glyph107","glyph109","glyph111","glyph113","glyph115","glyph117","uni0344","uni0363","uni0364","uni0365","uni0366","uni0367","uni0368","uni0369","uni036A","uni036B","uni036C","uni036D","uni036E","uni036F"],
+                            ["uni0328"]
+                        ],
+                        "apply": [{"at":4,"lookup":"lookup_11_24"}],
+                        "inputBegins": 4,
+                        "inputEnds": 5
+                    }
+                ]
+            },
             "lookup_11_26": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["i","uni0456","j","uni0458","iogonek"],
@@ -22540,9 +22664,14 @@
                     }
                 ]
             },
-            "lookup_ccmp_1": {},
+            "lookup_ccmp_1": {
+                "type": "gsub_ligature",
+                "flags": 0,
+                "subtables": []
+            },
             "lookup_locl_0": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["uni0431"],
@@ -22552,6 +22681,7 @@
             },
             "lookup_11_29": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22561,6 +22691,7 @@
             },
             "lookup_11_30": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22570,6 +22701,7 @@
             },
             "lookup_11_31": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22579,6 +22711,7 @@
             },
             "lookup_11_32": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22588,6 +22721,7 @@
             },
             "lookup_11_33": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22597,6 +22731,7 @@
             },
             "lookup_11_34": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22606,6 +22741,7 @@
             },
             "lookup_11_35": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22615,6 +22751,7 @@
             },
             "lookup_11_36": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22624,6 +22761,7 @@
             },
             "lookup_11_37": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22633,6 +22771,7 @@
             },
             "lookup_11_38": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22642,6 +22781,7 @@
             },
             "lookup_11_39": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22651,6 +22791,7 @@
             },
             "lookup_11_40": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22660,6 +22801,7 @@
             },
             "lookup_11_41": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22669,6 +22811,7 @@
             },
             "lookup_11_42": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22678,6 +22821,7 @@
             },
             "lookup_11_43": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22687,6 +22831,7 @@
             },
             "lookup_11_44": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["hyphen","equal"],
@@ -22696,6 +22841,7 @@
             },
             "lookup_11_45": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["less"],
@@ -22705,6 +22851,7 @@
             },
             "lookup_11_46": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["greater"],
@@ -22714,6 +22861,7 @@
             },
             "lookup_11_47": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["less"],
@@ -22723,6 +22871,7 @@
             },
             "lookup_11_48": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["greater"],
@@ -22732,6 +22881,7 @@
             },
             "lookup_11_49": {
                 "type": "gsub_single",
+                "flags": 0,
                 "subtables": [
                     {
                         "from": ["exclam"],
@@ -22739,7 +22889,160 @@
                     }
                 ]
             },
-            "lookup_calt_0": {}
+            "lookup_calt_0": {
+                "type": "gsub_chaining",
+                "flags": 0,
+                "subtables": [
+                    {
+                        "match": [
+                            ["less"],
+                            ["hyphen","equal"],
+                            ["hyphen","equal"],
+                            ["greater"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_34"},{"at":2,"lookup":"lookup_11_33"}],
+                        "inputBegins": 1,
+                        "inputEnds": 3
+                    },
+                    {
+                        "match": [
+                            ["less"],
+                            ["hyphen","equal"],
+                            ["greater"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_44"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["less"],
+                            ["hyphen","equal"],
+                            ["less"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_43"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["less"],
+                            ["hyphen","equal"],
+                            ["hyphen","equal"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_34"},{"at":2,"lookup":"lookup_11_36"}],
+                        "inputBegins": 1,
+                        "inputEnds": 3
+                    },
+                    {
+                        "match": [
+                            ["less"],
+                            ["less"],
+                            ["hyphen","equal"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_45"},{"at":2,"lookup":"lookup_11_32"}],
+                        "inputBegins": 1,
+                        "inputEnds": 3
+                    },
+                    {
+                        "match": [
+                            ["less"],
+                            ["hyphen"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_30"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["less"],
+                            ["exclam"],
+                            ["hyphen"],
+                            ["hyphen"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_49"},{"at":2,"lookup":"lookup_11_35"},{"at":3,"lookup":"lookup_11_36"}],
+                        "inputBegins": 1,
+                        "inputEnds": 4
+                    },
+                    {
+                        "match": [
+                            ["greater"],
+                            ["greater"],
+                            ["hyphen","equal"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_48"},{"at":2,"lookup":"lookup_11_40"}],
+                        "inputBegins": 1,
+                        "inputEnds": 3
+                    },
+                    {
+                        "match": [
+                            ["greater"],
+                            ["hyphen","equal"],
+                            ["greater"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_42"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["greater"],
+                            ["hyphen"]
+                        ],
+                        "apply": [{"at":1,"lookup":"lookup_11_38"}],
+                        "inputBegins": 1,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["hyphen","equal"],
+                            ["hyphen","equal"],
+                            ["greater"]
+                        ],
+                        "apply": [{"at":0,"lookup":"lookup_11_37"},{"at":1,"lookup":"lookup_11_33"}],
+                        "inputBegins": 0,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["hyphen","equal"],
+                            ["greater"],
+                            ["greater"]
+                        ],
+                        "apply": [{"at":0,"lookup":"lookup_11_31"},{"at":1,"lookup":"lookup_11_46"}],
+                        "inputBegins": 0,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["hyphen","equal"],
+                            ["greater"]
+                        ],
+                        "apply": [{"at":0,"lookup":"lookup_11_29"}],
+                        "inputBegins": 0,
+                        "inputEnds": 1
+                    },
+                    {
+                        "match": [
+                            ["hyphen","equal"],
+                            ["less"],
+                            ["less"]
+                        ],
+                        "apply": [{"at":0,"lookup":"lookup_11_41"},{"at":1,"lookup":"lookup_11_47"}],
+                        "inputBegins": 0,
+                        "inputEnds": 2
+                    },
+                    {
+                        "match": [
+                            ["hyphen","equal"],
+                            ["less"]
+                        ],
+                        "apply": [{"at":0,"lookup":"lookup_11_39"}],
+                        "inputBegins": 0,
+                        "inputEnds": 1
+                    }
+                ]
+            }
         }
     },
     "GPOS": {
@@ -22782,6 +23085,7 @@
         "lookups": {
             "lookup_mark_0": {
                 "type": "gpos_mark_to_base",
+                "flags": 0,
                 "subtables": [
                     {
                         "classCount": 2,
@@ -24761,6 +25065,7 @@
             },
             "lookup_mark_1": {
                 "type": "gpos_mark_to_base",
+                "flags": 0,
                 "subtables": [
                     {
                         "classCount": 4,
@@ -26646,6 +26951,7 @@
             },
             "lookup_mark_2": {
                 "type": "gpos_mark_to_base",
+                "flags": 0,
                 "subtables": [
                     {
                         "classCount": 2,
@@ -28539,6 +28845,7 @@
             },
             "lookup_mkmk_0": {
                 "type": "gpos_mark_to_mark",
+                "flags": 0,
                 "subtables": [
                     {
                         "classCount": 8,

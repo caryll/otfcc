@@ -1,4 +1,4 @@
-#include "otl-chaining.h"
+#include "otl-gsub-chaining.h"
 static void deleteRule(otl_chaining_rule *rule) {
 	if (rule && rule->match && rule->matchCount) {
 		for (uint16_t k = 0; k < rule->matchCount; k++) {
@@ -210,30 +210,25 @@ FAIL:
 	DELETE(delete_otl_chaining_subtable, _subtable);
 	return NULL;
 }
-void caryll_gsub_chaining_to_json(otl_lookup *lookup, json_value *dump) {
-	json_object_push(dump, "type", json_string_new("gsub_chaining"));
-	json_value *subtables = json_array_new(lookup->subtableCount);
-	for (uint16_t j = 0; j < lookup->subtableCount; j++)
-		if (lookup->subtables[j]) {
-			subtable_gsub_chaining *subtable = &(lookup->subtables[j]->gsub_chaining);
-			otl_chaining_rule *rule = subtable->rules[0];
-			json_value *_st = json_object_new(4);
-			json_value *_match = json_array_new(rule->matchCount);
-			for (uint16_t j = 0; j < rule->matchCount; j++) {
-				json_array_push(_match, caryll_coverage_to_json(rule->match[j]));
-			}
-			json_value *_apply = json_array_new(rule->applyCount);
-			for (uint16_t j = 0; j < rule->applyCount; j++) {
-				json_value *_application = json_object_new(2);
-				json_object_push(_application, "at", json_integer_new(rule->apply[j].index));
-				json_object_push(_application, "lookup", json_string_new(rule->apply[j].lookupName));
-				json_array_push(_apply, _application);
-			}
-			json_object_push(_st, "match", _match);
-			json_object_push(_st, "apply", preserialize(_apply));
-			json_object_push(_st, "inputBegins", json_integer_new(rule->inputBegins));
-			json_object_push(_st, "inputEnds", json_integer_new(rule->inputEnds));
-			json_array_push(subtables, _st);
-		}
-	json_object_push(dump, "subtables", subtables);
+json_value *caryll_gsub_chaining_to_json(otl_subtable *_subtable) {
+
+	subtable_gsub_chaining *subtable = &(_subtable->gsub_chaining);
+	otl_chaining_rule *rule = subtable->rules[0];
+	json_value *_st = json_object_new(4);
+	json_value *_match = json_array_new(rule->matchCount);
+	for (uint16_t j = 0; j < rule->matchCount; j++) {
+		json_array_push(_match, caryll_coverage_to_json(rule->match[j]));
+	}
+	json_value *_apply = json_array_new(rule->applyCount);
+	for (uint16_t j = 0; j < rule->applyCount; j++) {
+		json_value *_application = json_object_new(2);
+		json_object_push(_application, "at", json_integer_new(rule->apply[j].index));
+		json_object_push(_application, "lookup", json_string_new(rule->apply[j].lookupName));
+		json_array_push(_apply, _application);
+	}
+	json_object_push(_st, "match", _match);
+	json_object_push(_st, "apply", preserialize(_apply));
+	json_object_push(_st, "inputBegins", json_integer_new(rule->inputBegins));
+	json_object_push(_st, "inputEnds", json_integer_new(rule->inputEnds));
+	return _st;
 }

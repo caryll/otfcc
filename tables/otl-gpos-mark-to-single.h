@@ -5,7 +5,7 @@
 void caryll_delete_gpos_mark_to_single(otl_lookup *lookup);
 otl_subtable *caryll_read_gpos_mark_to_single(font_file_pointer data, uint32_t tableLength,
                                                      uint32_t subtableOffset);
-void caryll_gpos_mark_to_single_to_json(otl_lookup *lookup, json_value *dump);
+json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st);
 otl_lookup *caryll_gpos_mark_to_single_from_json(json_value *_lookup, char *_type);
 caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable);
 #endif

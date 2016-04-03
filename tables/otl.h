@@ -12,7 +12,7 @@ typedef enum {
 	otl_type_gsub_alternate = 0x13,
 	otl_type_gsub_ligature = 0x14,
 	otl_type_gsub_context = 0x15,
-	otl_type_gsub_chain = 0x16,
+	otl_type_gsub_chaining = 0x16,
 	otl_type_gsub_extend = 0x17,
 	otl_type_gsub_reverse = 0x18,
 
@@ -24,7 +24,7 @@ typedef enum {
 	otl_type_gpos_mark_to_ligature = 0x25,
 	otl_type_gpos_mark_to_mark = 0x26,
 	otl_type_gpos_context = 0x27,
-	otl_type_gpos_chain = 0x28,
+	otl_type_gpos_chaining = 0x28,
 	otl_type_gpos_extend = 0x29
 } otl_lookup_type;
 
@@ -156,7 +156,7 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 #include "otl-gsub-single.h"
 #include "otl-gpos-mark-to-single.h"
 #include "otl-extend.h"
-#include "otl-chaining.h"
+#include "otl-gsub-chaining.h"
 
 #define checkLength(offset)                                                                                            \
 	if (tableLength < offset) { goto FAIL; }

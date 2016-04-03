@@ -68,43 +68,36 @@ OK:
 	return _subtable;
 }
 
-void caryll_gpos_mark_to_single_to_json(otl_lookup *lookup, json_value *dump) {
-	json_object_push(dump, "type", json_string_new(lookup->type == otl_type_gpos_mark_to_base ? "gpos_mark_to_base"
-	                                                                                          : "gpos_mark_to_mark"));
-	json_value *_subtables = json_array_new(lookup->subtableCount);
-	for (uint16_t j = 0; j < lookup->subtableCount; j++)
-		if (lookup->subtables[j]) {
-			subtable_gpos_mark_to_single *subtable = &(lookup->subtables[j]->gpos_mark_to_single);
-			json_value *_subtable = json_object_new(3);
-			json_value *_marks = json_object_new(subtable->marks->numGlyphs);
-			json_value *_bases = json_object_new(subtable->bases->numGlyphs);
-			for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-				json_value *_mark = json_object_new(3);
-				json_object_push(_mark, "class", json_integer_new(subtable->markArray->records[j].markClass));
-				json_object_push(_mark, "x", json_integer_new(subtable->markArray->records[j].anchor.x));
-				json_object_push(_mark, "y", json_integer_new(subtable->markArray->records[j].anchor.y));
-				json_object_push(_marks, subtable->marks->glyphs[j].name, preserialize(_mark));
+json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st) {
+	subtable_gpos_mark_to_single *subtable = &(st->gpos_mark_to_single);
+	json_value *_subtable = json_object_new(3);
+	json_value *_marks = json_object_new(subtable->marks->numGlyphs);
+	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
+	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
+		json_value *_mark = json_object_new(3);
+		json_object_push(_mark, "class", json_integer_new(subtable->markArray->records[j].markClass));
+		json_object_push(_mark, "x", json_integer_new(subtable->markArray->records[j].anchor.x));
+		json_object_push(_mark, "y", json_integer_new(subtable->markArray->records[j].anchor.y));
+		json_object_push(_marks, subtable->marks->glyphs[j].name, preserialize(_mark));
+	}
+	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+		json_value *_base = json_array_new(subtable->classCount);
+		for (uint16_t k = 0; k < subtable->classCount; k++) {
+			if (subtable->baseArray[j][k].present) {
+				json_value *_anchor = json_object_new(2);
+				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
+				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
+				json_array_push(_base, _anchor);
+			} else {
+				json_array_push(_base, json_null_new());
 			}
-			for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-				json_value *_base = json_array_new(subtable->classCount);
-				for (uint16_t k = 0; k < subtable->classCount; k++) {
-					if (subtable->baseArray[j][k].present) {
-						json_value *_anchor = json_object_new(2);
-						json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
-						json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
-						json_array_push(_base, _anchor);
-					} else {
-						json_array_push(_base, json_null_new());
-					}
-				}
-				json_object_push(_bases, subtable->bases->glyphs[j].name, preserialize(_base));
-			}
-			json_object_push(_subtable, "classCount", json_integer_new(subtable->classCount));
-			json_object_push(_subtable, "marks", _marks);
-			json_object_push(_subtable, "bases", _bases);
-			json_array_push(_subtables, _subtable);
 		}
-	json_object_push(dump, "subtables", _subtables);
+		json_object_push(_bases, subtable->bases->glyphs[j].name, preserialize(_base));
+	}
+	json_object_push(_subtable, "classCount", json_integer_new(subtable->classCount));
+	json_object_push(_subtable, "marks", _marks);
+	json_object_push(_subtable, "bases", _bases);
+	return _subtable;
 }
 
 static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtable, uint16_t classCount) {
@@ -165,6 +158,7 @@ otl_lookup *caryll_gpos_mark_to_single_from_json(json_value *_lookup, char *_typ
 
 	NEW(lookup);
 	lookup->type = strcmp(_type, "gpos_mark_to_mark") == 0 ? otl_type_gpos_mark_to_mark : otl_type_gpos_mark_to_base;
+	lookup->flags = json_obj_getnum(_lookup, "flags");
 	lookup->subtableCount = _subtables->u.array.length;
 	NEW_N(lookup->subtables, lookup->subtableCount);
 

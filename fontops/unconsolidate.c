@@ -115,7 +115,7 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 					caryll_name_coverage(font, lookup->subtables[j]->gsub_single.to);
 				}
 			break;
-		case otl_type_gsub_chain:
+		case otl_type_gsub_chaining:
 			unconsolidate_gsub_chain(font, lookup, table);
 			break;
 		case otl_type_gpos_mark_to_base:

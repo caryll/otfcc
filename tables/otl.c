@@ -366,7 +366,7 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 	switch (lookupType) {
 		case otl_type_gsub_single:
 			return caryll_read_gsub_single(data, tableLength, subtableOffset);
-		case otl_type_gsub_chain:
+		case otl_type_gsub_chaining:
 			return caryll_read_gsub_chaining(data, tableLength, subtableOffset);
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:
@@ -380,6 +380,7 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 }
 
 void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup) {
+	lookup->flags = read_16u(data + lookup->_offset + 2);
 	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
 	if (!lookup->subtableCount || tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
 		lookup->type = otl_type_unknown;
@@ -453,20 +454,52 @@ json_value *caryll_coverage_to_json(otl_coverage *coverage) {
 	}
 	return preserialize(a);
 }
+
 void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
-	switch (lookup->type) {
-		case otl_type_gsub_single:
-			caryll_gsub_single_to_json(lookup, dump);
-			break;
-		case otl_type_gsub_chain:
-			caryll_gsub_chaining_to_json(lookup, dump);
-			break;
-		case otl_type_gpos_mark_to_base:
-		case otl_type_gpos_mark_to_mark:
-			caryll_gpos_mark_to_single_to_json(lookup, dump);
-			break;
-		default:
-			break;
+	char *tableNames[] = {[otl_type_unknown] = "unknown",
+	                      [otl_type_gsub_unknown] = "gsub_unknown",
+	                      [otl_type_gsub_single] = "gsub_single",
+	                      [otl_type_gsub_multiple] = "gsub_multiple",
+	                      [otl_type_gsub_alternate] = "gsub_alternate",
+	                      [otl_type_gsub_ligature] = "gsub_ligature",
+	                      [otl_type_gsub_context] = "gsub_context",
+	                      [otl_type_gsub_chaining] = "gsub_chaining",
+	                      [otl_type_gsub_extend] = "gsub_extend",
+	                      [otl_type_gsub_reverse] = "gsub_reverse",
+	                      [otl_type_gpos_unknown] = "gpos_unknown",
+	                      [otl_type_gpos_single] = "gpos_single",
+	                      [otl_type_gpos_pair] = "gpos_pair",
+	                      [otl_type_gpos_cursive] = "gpos_cursive",
+	                      [otl_type_gpos_mark_to_base] = "gpos_mark_to_base",
+	                      [otl_type_gpos_mark_to_ligature] = "gpos_mark_to_ligature",
+	                      [otl_type_gpos_mark_to_mark] = "gpos_mark_to_mark",
+	                      [otl_type_gpos_context] = "gpos_context",
+	                      [otl_type_gpos_chaining] = "gpos_chaining",
+	                      [otl_type_gpos_extend] = "gpos_extend"};
+	if (tableNames[lookup->type]) {
+		json_object_push(dump, "type", json_string_new(tableNames[lookup->type]));
+		json_object_push(dump, "flags", json_integer_new(lookup->flags));
+		json_value *subtables = json_array_new(lookup->subtableCount);
+		for (uint16_t j = 0; j < lookup->subtableCount; j++)
+			if (lookup->subtables[j]) {
+				json_value *_st = NULL;
+				switch (lookup->type) {
+					case otl_type_gsub_single:
+						_st = caryll_gsub_single_to_json(lookup->subtables[j]);
+						break;
+					case otl_type_gsub_chaining:
+						_st = caryll_gsub_chaining_to_json(lookup->subtables[j]);
+						break;
+					case otl_type_gpos_mark_to_base:
+					case otl_type_gpos_mark_to_mark:
+						_st = caryll_gpos_mark_to_single_to_json(lookup->subtables[j]);
+						break;
+					default:
+						break;
+				}
+				if (_st) { json_array_push(subtables, _st); }
+			}
+		json_object_push(dump, "subtables", subtables);
 	}
 }
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag) {
