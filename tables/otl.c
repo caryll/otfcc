@@ -773,6 +773,7 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
+		fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout.\n");
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
 			if (lookupWritten[j]) { headerSize += 8 * table->lookups[j]->subtableCount; }
 		}

@@ -173,14 +173,16 @@ static void consolidate_mark_to_single(caryll_font *font, otl_subtable *_subtabl
 			if (subtable->marks->glyphs[k].name) {
 				mark_hash *s = NULL;
 				HASH_FIND_INT(hm, &(subtable->marks->glyphs[k].gid), s);
-				if (!s) {
+				if (!s && subtable->markArray->records[k].anchor.present &&
+				    subtable->markArray->records[k].markClass < subtable->classCount) {
 					NEW(s);
 					s->gid = subtable->marks->glyphs[k].gid;
 					s->name = subtable->marks->glyphs[k].name;
 					s->markrec = subtable->markArray->records[k];
 					HASH_ADD_INT(hm, gid, s);
 				} else {
-					fprintf(stderr, "[Consolidate] Ignored anchor double-definition for /%s in lookup %s.\n",
+					fprintf(stderr,
+					        "[Consolidate] Ignored invalid or double-mapping mark definition for /%s in lookup %s.\n",
 					        subtable->marks->glyphs[k].name, lookupName);
 				}
 			}

@@ -41,6 +41,7 @@ typedef struct {
 } subtable_gsub_single;
 
 typedef struct {
+	bool present;
 	int16_t x;
 	int16_t y;
 } otl_anchor;

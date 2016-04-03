@@ -54,6 +54,7 @@ otl_subtable *caryll_read_gpos_mark_to_single(font_file_pointer data, uint32_t t
 				subtable->baseArray[j][k] =
 				    otl_read_anchor(data, tableLength, baseArrayOffset + read_16u(data + _offset));
 			} else {
+				subtable->baseArray[j][k].present = false;
 				subtable->baseArray[j][k].x = 0;
 				subtable->baseArray[j][k].y = 0;
 			}
@@ -69,7 +70,7 @@ OK:
 
 void caryll_gpos_mark_to_single_to_json(otl_lookup *lookup, json_value *dump) {
 	json_object_push(dump, "type", json_string_new(lookup->type == otl_type_gpos_mark_to_base ? "gpos_mark_to_base"
-	                                                                                            : "gpos_mark_to_mark"));
+	                                                                                          : "gpos_mark_to_mark"));
 	json_value *_subtables = json_array_new(lookup->subtableCount);
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
 		if (lookup->subtables[j]) {
@@ -87,10 +88,14 @@ void caryll_gpos_mark_to_single_to_json(otl_lookup *lookup, json_value *dump) {
 			for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 				json_value *_base = json_array_new(subtable->classCount);
 				for (uint16_t k = 0; k < subtable->classCount; k++) {
-					json_value *_anchor = json_object_new(2);
-					json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
-					json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
-					json_array_push(_base, _anchor);
+					if (subtable->baseArray[j][k].present) {
+						json_value *_anchor = json_object_new(2);
+						json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
+						json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
+						json_array_push(_base, _anchor);
+					} else {
+						json_array_push(_base, json_null_new());
+					}
 				}
 				json_object_push(_bases, subtable->bases->glyphs[j].name, preserialize(_base));
 			}
@@ -115,10 +120,12 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtabl
 		subtable->marks->glyphs[j].name = sdsnewlen(gname, _marks->u.object.values[j].name_length);
 		if (anchorRecord && anchorRecord->type == json_object) {
 			subtable->markArray->records[j].markClass = json_obj_getint(anchorRecord, "class");
+			subtable->markArray->records[j].anchor.present = true;
 			subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
 			subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
 		} else {
 			subtable->markArray->records[j].markClass = 0;
+			subtable->markArray->records[j].anchor.present = false;
 			subtable->markArray->records[j].anchor.x = 0;
 			subtable->markArray->records[j].anchor.y = 0;
 		}
@@ -134,6 +141,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 		subtable->bases->glyphs[j].name = sdsnewlen(gname, _bases->u.object.values[j].name_length);
 		NEW_N(subtable->baseArray[j], classCount);
 		for (uint16_t k = 0; k < classCount; k++) {
+			subtable->baseArray[j][k].present = false;
 			subtable->baseArray[j][k].x = 0;
 			subtable->baseArray[j][k].y = 0;
 		}
@@ -142,6 +150,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 			for (uint16_t k = 0; k < classCount && k < baseRecord->u.array.length; k++) {
 				json_value *anchor = baseRecord->u.array.values[k];
 				if (anchor->type == json_object) {
+					subtable->baseArray[j][k].present = true;
 					subtable->baseArray[j][k].x = json_obj_getnum(anchor, "x");
 					subtable->baseArray[j][k].y = json_obj_getnum(anchor, "y");
 				}
@@ -197,32 +206,36 @@ static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_has
 caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 	caryll_buffer *buf = bufnew();
 	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
-	// we will aggerate these anchors
 
+	// we will aggerate these anchors to reduce subtable size as more as possible
 	anchor_aggeration_hash *agh = NULL, *s, *tmp;
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		int position = getPositon(subtable->markArray->records[j].anchor);
-		HASH_FIND_INT(agh, &position, s);
-		if (!s) {
-			NEW(s);
-			s->position = position;
-			s->x = subtable->markArray->records[j].anchor.x;
-			s->y = subtable->markArray->records[j].anchor.y;
-			s->index = HASH_COUNT(agh);
-			HASH_ADD_INT(agh, position, s);
-		}
-	}
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		for (uint16_t k = 0; k < subtable->classCount; k++) {
-			int position = getPositon(subtable->baseArray[j][k]);
+		if (subtable->markArray->records[j].anchor.present) {
+			int position = getPositon(subtable->markArray->records[j].anchor);
 			HASH_FIND_INT(agh, &position, s);
 			if (!s) {
 				NEW(s);
 				s->position = position;
-				s->x = subtable->baseArray[j][k].x;
-				s->y = subtable->baseArray[j][k].y;
+				s->x = subtable->markArray->records[j].anchor.x;
+				s->y = subtable->markArray->records[j].anchor.y;
 				s->index = HASH_COUNT(agh);
 				HASH_ADD_INT(agh, position, s);
+			}
+		}
+	}
+	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+		for (uint16_t k = 0; k < subtable->classCount; k++) {
+			if (subtable->baseArray[j][k].present) {
+				int position = getPositon(subtable->baseArray[j][k]);
+				HASH_FIND_INT(agh, &position, s);
+				if (!s) {
+					NEW(s);
+					s->position = position;
+					s->x = subtable->baseArray[j][k].x;
+					s->y = subtable->baseArray[j][k].y;
+					s->index = HASH_COUNT(agh);
+					HASH_ADD_INT(agh, position, s);
+				}
 			}
 		}
 	}
