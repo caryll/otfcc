@@ -443,12 +443,13 @@ void classify_around(otl_lookup *lookup, uint16_t j) {
 				}
 				if (!check) {
 					allcheck = false;
-					break;
+					goto endcheck;
 				}
 			}
 			if (allcheck) { compatibility[k] = true, compatibleCount += 1; }
 		}
 	}
+endcheck:
 	if (compatibleCount > 1) {
 		fprintf(stderr, "[Autoclassifier] %d subtables in %s are class-compatible to subtable %d.", compatibleCount,
 		        lookup->name, j);
