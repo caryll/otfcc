@@ -566,6 +566,10 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	if (!cov || cov->type != json_array) return c;
 
 	c->numGlyphs = cov->u.array.length;
+	if (!c->numGlyphs) {
+		c->glyphs = NULL;
+		return c;
+	}
 	NEW_N(c->glyphs, c->numGlyphs);
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < c->numGlyphs; j++) {

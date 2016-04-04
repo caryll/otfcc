@@ -17,6 +17,18 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable) {
 			}
 			free(subtable->rules);
 		}
+		if (subtable->bc) {
+			if (subtable->bc->glyphs) free(subtable->bc->glyphs);
+			if (subtable->bc->classes) free(subtable->bc->classes);
+		}
+		if (subtable->ic) {
+			if (subtable->ic->glyphs) free(subtable->ic->glyphs);
+			if (subtable->ic->classes) free(subtable->ic->classes);
+		}
+		if (subtable->fc) {
+			if (subtable->fc->glyphs) free(subtable->fc->glyphs);
+			if (subtable->fc->classes) free(subtable->fc->classes);
+		}
 		free(_subtable);
 	}
 }
@@ -535,7 +547,7 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 					uint16_t nInput = rule->inputEnds - rule->inputBegins;
 					uint16_t nLookahead = rule->matchCount - rule->inputEnds;
 					uint16_t nSubst = rule->applyCount;
-
+					
 					bufwrite16b(buf, nBacktrack);
 					for (uint16_t m = 0; m < rule->inputBegins; m++) {
 						bufwrite16b(buf, rule->match[m]->glyphs[0].gid);

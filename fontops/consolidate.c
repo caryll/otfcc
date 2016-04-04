@@ -369,6 +369,13 @@ static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier
 			NEW(rule->match[m]->glyphs);
 			rule->match[m]->glyphs[0].gid = s->cls;
 			rule->match[m]->glyphs[0].name = NULL;
+		} else {
+			caryll_delete_coverage(rule->match[m]);
+			NEW(rule->match[m]);
+			rule->match[m]->numGlyphs = 1;
+			NEW(rule->match[m]->glyphs);
+			rule->match[m]->glyphs[0].gid = 0;
+			rule->match[m]->glyphs[0].name = NULL;
 		}
 }
 static otl_classdef *toClass(classifier_hash *h) {
@@ -443,8 +450,8 @@ void classify_around(otl_lookup *lookup, uint16_t j) {
 		}
 	}
 	if (compatibleCount > 1) {
-		fprintf(stderr, "[Autoclassifier] %d subtables in %s are class-compatible to subtable %d.",
-		        compatibleCount, lookup->name, j);
+		fprintf(stderr, "[Autoclassifier] %d subtables in %s are class-compatible to subtable %d.", compatibleCount,
+		        lookup->name, j);
 		fprintf(stderr, " Class count : B%d I%d F%d.\n", classno_b, classno_i, classno_f);
 		compatibility[j] = true;
 		free(subtable0->rules);
