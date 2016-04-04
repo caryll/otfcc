@@ -268,11 +268,15 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 	bufwrite16b(buf, subtable->bases->numGlyphs);
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
-			anchor_aggeration_hash *s;
-			int position = getPositon(subtable->baseArray[j][k]);
-			HASH_FIND_INT(agh, &position, s);
-			if (s) {
-				bufwrite16b(buf, offset + s->index * 6 + markArraySize + baseArraySize - baseArrayStart);
+			if (subtable->baseArray[j][k].present) {
+				anchor_aggeration_hash *s;
+				int position = getPositon(subtable->baseArray[j][k]);
+				HASH_FIND_INT(agh, &position, s);
+				if (s) {
+					bufwrite16b(buf, offset + s->index * 6 + markArraySize + baseArraySize - baseArrayStart);
+				} else {
+					bufwrite16b(buf, 0);
+				}
 			} else {
 				bufwrite16b(buf, 0);
 			}

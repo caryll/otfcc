@@ -84,6 +84,9 @@ void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, table_otl *
 			for (uint16_t k = 0; k < lookup->subtables[j]->chaining.rulesCount; k++) {
 				NEW(newsts[jj]);
 				newsts[jj]->chaining.rulesCount = 1;
+				newsts[jj]->chaining.bc = NULL;
+				newsts[jj]->chaining.ic = NULL;
+				newsts[jj]->chaining.fc = NULL;
 				NEW(newsts[jj]->chaining.rules);
 				newsts[jj]->chaining.rules[0] = lookup->subtables[j]->chaining.rules[k];
 				jj += 1;
