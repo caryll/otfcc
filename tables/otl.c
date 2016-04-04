@@ -848,6 +848,42 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 		return format2;
 	}
 }
+caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
+	caryll_buffer *buf = bufnew();
+	bufwrite16b(buf, 2);
+	if (!cd->numGlyphs) {
+		bufwrite16b(buf, 1);
+		bufwrite16b(buf, 0);
+		bufwrite16b(buf, 0);
+		bufwrite16b(buf, 1);
+		return buf;
+	}
+	uint16_t startGID = cd->glyphs[0].gid;
+	uint16_t endGID = startGID;
+	uint16_t lastClass = cd->classes[0];
+	uint16_t nRanges = 0;
+	caryll_buffer *ranges = bufnew();
+	for (uint16_t j = 1; j < cd->numGlyphs; j++) {
+		uint16_t current = cd->glyphs[j].gid;
+		if (current == endGID + 1 && cd->classes[j] == lastClass) {
+			endGID = current;
+		} else {
+			bufwrite16b(ranges, startGID);
+			bufwrite16b(ranges, endGID);
+			bufwrite16b(ranges, lastClass);
+			nRanges += 1;
+			startGID = endGID = current;
+			lastClass = cd->classes[j];
+		}
+	}
+	bufwrite16b(ranges, startGID);
+	bufwrite16b(ranges, endGID);
+	bufwrite16b(ranges, lastClass);
+	nRanges += 1;
+	bufwrite16b(buf, nRanges);
+	bufwrite_bufdel(buf, ranges);
+	return buf;
+}
 
 bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subtable *_subtable), otl_lookup *lookup,
                             caryll_buffer *buf, uint32_t **subtableOffsets, uint32_t *lastOffset) {
@@ -903,9 +939,13 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	size_t hp = bufl->cursor;
 	bufseek(bufl, 2 + table->lookupCount * 2);
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
-		if (!lookupWritten[j]) continue;
+		if (!lookupWritten[j]) { fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name); }
 		otl_lookup *lookup = table->lookups[j];
 		size_t lookupOffset = bufl->cursor;
+		if (lookupOffset > 0xFFFF) {
+			fprintf(stderr, "[OTFCC-fea] Warning, Lookup %s Written at 0x%llX, this lookup is corrupted.\n",
+			        table->lookups[j]->name, lookupOffset);
+		}
 		if (useExtended) {
 			bufwrite16b(
 			    bufl, (lookup->type > otl_type_gpos_unknown
@@ -937,8 +977,8 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 			}
 		}
 		free(subtableOffsets[j]);
-
 		size_t cp = bufl->cursor;
+
 		bufseek(bufl, hp);
 		bufwrite16b(bufl, lookupOffset);
 		hp = bufl->cursor;

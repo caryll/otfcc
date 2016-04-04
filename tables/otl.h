@@ -37,6 +37,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t numGlyphs;
+	uint16_t maxclass;
 	glyph_handle *glyphs;
 	uint16_t *classes;
 } otl_classdef;
@@ -63,6 +64,11 @@ typedef struct {
 typedef struct {
 	uint16_t rulesCount;
 	otl_chaining_rule **rules;
+	
+	bool classified;
+	otl_classdef *bc;
+	otl_classdef *ic;
+	otl_classdef *fc;
 } subtable_chaining;
 
 // GPOS subtable formats
@@ -152,6 +158,7 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
 // Classdef functions
 otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 
 #include "otl-gsub-single.h"
 #include "otl-gpos-mark-to-single.h"
