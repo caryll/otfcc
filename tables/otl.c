@@ -466,6 +466,18 @@ json_value *caryll_coverage_to_json(otl_coverage *coverage) {
 	return preserialize(a);
 }
 
+static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, json_value *(*dumper)(otl_subtable *st),
+                            otl_lookup *lookup, json_value *dump) {
+	if (lookup->type == llt) {
+		json_object_push(dump, "type", json_string_new(lt));
+		json_object_push(dump, "flags", json_integer_new(lookup->flags));
+		json_value *subtables = json_array_new(lookup->subtableCount);
+		for (uint16_t j = 0; j < lookup->subtableCount; j++)
+			if (lookup->subtables[j]) { json_array_push(subtables, dumper(lookup->subtables[j])); }
+		json_object_push(dump, "subtables", subtables);
+	}
+}
+#define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
 void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	char *tableNames[] = {[otl_type_unknown] = "unknown",
 	                      [otl_type_gsub_unknown] = "gsub_unknown",
@@ -487,36 +499,13 @@ void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	                      [otl_type_gpos_context] = "gpos_context",
 	                      [otl_type_gpos_chaining] = "gpos_chaining",
 	                      [otl_type_gpos_extend] = "gpos_extend"};
-	if (tableNames[lookup->type]) {
-		json_object_push(dump, "type", json_string_new(tableNames[lookup->type]));
-		json_object_push(dump, "flags", json_integer_new(lookup->flags));
-		json_value *subtables = json_array_new(lookup->subtableCount);
-		for (uint16_t j = 0; j < lookup->subtableCount; j++)
-			if (lookup->subtables[j]) {
-				json_value *_st = NULL;
-				switch (lookup->type) {
-					case otl_type_gsub_single:
-						_st = caryll_gsub_single_to_json(lookup->subtables[j]);
-						break;
-					case otl_type_gsub_multiple:
-					case otl_type_gsub_alternate:
-						_st = caryll_gsub_multi_to_json(lookup->subtables[j]);
-						break;
-					case otl_type_gsub_chaining:
-					case otl_type_gpos_chaining:
-						_st = caryll_chaining_to_json(lookup->subtables[j]);
-						break;
-					case otl_type_gpos_mark_to_base:
-					case otl_type_gpos_mark_to_mark:
-						_st = caryll_gpos_mark_to_single_to_json(lookup->subtables[j]);
-						break;
-					default:
-						break;
-				}
-				if (_st) { json_array_push(subtables, _st); }
-			}
-		json_object_push(dump, "subtables", subtables);
-	}
+	LOOKUP_DUMPER(otl_type_gsub_single, caryll_gsub_single_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_multiple, caryll_gsub_multi_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_alternate, caryll_gsub_multi_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_chaining, caryll_chaining_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_chaining, caryll_chaining_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_to_json);
 }
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
@@ -662,7 +651,7 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 			LOOKUP_PARSER("gpos_chaining", otl_type_gpos_chaining, caryll_chaining_from_json);
 			LOOKUP_PARSER("gpos_mark_to_base", otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_from_json);
 			LOOKUP_PARSER("gpos_mark_to_mark", otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_from_json);
-			
+
 			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
 		}
 	}
@@ -970,11 +959,11 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	size_t hp = bufl->cursor;
 	bufseek(bufl, 2 + table->lookupCount * 2);
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
-		if (!lookupWritten[j]) { 
+		if (!lookupWritten[j]) {
 			fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name);
 			continue;
 		}
-		
+
 		otl_lookup *lookup = table->lookups[j];
 		size_t lookupOffset = bufl->cursor;
 		if (lookupOffset > 0xFFFF) {

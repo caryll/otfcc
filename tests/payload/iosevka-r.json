@@ -22664,11 +22664,7 @@
                     }
                 ]
             },
-            "lookup_ccmp_1": {
-                "type": "gsub_ligature",
-                "flags": 0,
-                "subtables": []
-            },
+            "lookup_ccmp_1": {},
             "lookup_locl_0": {
                 "type": "gsub_single",
                 "flags": 0,
