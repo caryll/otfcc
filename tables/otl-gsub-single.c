@@ -1,12 +1,15 @@
 #include "otl-gsub-single.h"
 void caryll_delete_gsub_single(otl_lookup *lookup) {
 	if (lookup) {
-		if (lookup->subtables)
+		if (lookup->subtables) {
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
 				if (lookup->subtables[j]) {
 					caryll_delete_coverage(lookup->subtables[j]->gsub_single.from);
 					caryll_delete_coverage(lookup->subtables[j]->gsub_single.to);
+					free(lookup->subtables[j]);
 				}
+			free(lookup->subtables);
+		}
 		FREE(lookup);
 	}
 }
@@ -62,38 +65,16 @@ json_value *caryll_gsub_single_to_json(otl_subtable *_subtable) {
 	return st;
 }
 
-otl_lookup *caryll_gsub_single_from_json(json_value *_lookup, char *_type) {
-	otl_lookup *lookup = NULL;
-	json_value *_subtables = json_obj_get_type(_lookup, "subtables", json_array);
-	if (!_subtables) goto FAIL;
+otl_subtable *caryll_gsub_single_from_json(json_value *_subtable) {
+	json_value *_from = json_obj_get_type(_subtable, "from", json_array);
+	json_value *_to = json_obj_get_type(_subtable, "to", json_array);
+	if (!_from || !_to) return NULL;
 
-	NEW(lookup);
-	lookup->type = otl_type_gsub_single;
-	lookup->flags = json_obj_getnum(_lookup, "flags");
-	lookup->subtableCount = _subtables->u.array.length;
-	NEW_N(lookup->subtables, lookup->subtableCount);
-
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-		json_value *_subtable = _subtables->u.array.values[j];
-		if (_subtable && _subtable->type == json_object) {
-			json_value *_from = json_obj_get_type(_subtable, "from", json_array);
-			json_value *_to = json_obj_get_type(_subtable, "to", json_array);
-			if (_from && _to) {
-				otl_subtable *st;
-				NEW(st);
-				st->gsub_single.from = caryll_coverage_from_json(_from);
-				st->gsub_single.to = caryll_coverage_from_json(_to);
-				lookup->subtables[jj] = st;
-				jj += 1;
-			}
-		}
-	}
-	lookup->subtableCount = jj;
-	return lookup;
-FAIL:
-	DELETE(caryll_delete_gsub_single, lookup);
-	return NULL;
+	otl_subtable *st;
+	NEW(st);
+	st->gsub_single.from = caryll_coverage_from_json(_from);
+	st->gsub_single.to = caryll_coverage_from_json(_to);
+	return st;
 };
 
 caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {

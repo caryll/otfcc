@@ -49,6 +49,11 @@ typedef struct {
 } subtable_gsub_single;
 
 typedef struct {
+	otl_coverage *from;
+	otl_coverage **to;
+} subtable_gsub_multi;
+
+typedef struct {
 	uint16_t index;
 	uint16_t lookupIndex;
 	sds lookupName;
@@ -103,6 +108,7 @@ typedef struct {
 
 typedef union _otl_subtable {
 	subtable_gsub_single gsub_single;
+	subtable_gsub_multi gsub_multi;
 	subtable_chaining chaining;
 	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_extend extend;
@@ -161,9 +167,10 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 
 #include "otl-gsub-single.h"
+#include "otl-gsub-multi.h"
 #include "otl-gpos-mark-to-single.h"
-#include "otl-extend.h"
 #include "otl-chaining.h"
+#include "otl-extend.h"
 
 #define checkLength(offset)                                                                                            \
 	if (tableLength < offset) { goto FAIL; }

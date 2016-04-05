@@ -368,6 +368,9 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 	switch (lookupType) {
 		case otl_type_gsub_single:
 			return caryll_read_gsub_single(data, tableLength, subtableOffset);
+		case otl_type_gsub_multiple:
+		case otl_type_gsub_alternate:
+			return caryll_read_gsub_multi(data, tableLength, subtableOffset);
 		case otl_type_gsub_chaining:
 		case otl_type_gpos_chaining:
 			return caryll_read_chaining(data, tableLength, subtableOffset);
@@ -495,7 +498,12 @@ void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 					case otl_type_gsub_single:
 						_st = caryll_gsub_single_to_json(lookup->subtables[j]);
 						break;
+					case otl_type_gsub_multiple:
+					case otl_type_gsub_alternate:
+						_st = caryll_gsub_multi_to_json(lookup->subtables[j]);
+						break;
 					case otl_type_gsub_chaining:
+					case otl_type_gpos_chaining:
 						_st = caryll_chaining_to_json(lookup->subtables[j]);
 						break;
 					case otl_type_gpos_mark_to_base:
@@ -602,28 +610,44 @@ typedef struct {
 	UT_hash_handle hh;
 } script_hash;
 
-static INLINE bool parse_json_lookup_type(char *lt, otl_lookup *(*fn)(json_value *, char *), json_value *lookup,
-                                          char *lookupName, lookup_hash **lh) {
-	json_value *type = json_obj_get_type(lookup, "type", json_string);
-	if (type && strcmp(type->u.string.ptr, lt) == 0) {
-		lookup_hash *item = NULL;
-		HASH_FIND_STR(*lh, lookupName, item);
-		if (!item) {
-			otl_lookup *_lookup = fn(lookup, type->u.string.ptr);
-			if (_lookup) {
-				NEW(item);
-				item->name = sdsnew(lookupName);
-				_lookup->name = sdsdup(item->name);
-				item->lookup = _lookup;
-				item->lookup->name = sdsdup(item->name);
-				HASH_ADD_STR(*lh, name, item);
-				return true;
-			}
+static INLINE bool _declareLookupParser(char *lt, otl_lookup_type llt, otl_subtable *(*parser)(json_value *),
+                                        json_value *_lookup, char *lookupName, lookup_hash **lh) {
+	json_value *type = json_obj_get_type(_lookup, "type", json_string);
+	if (!type || strcmp(type->u.string.ptr, lt)) return false;
+	lookup_hash *item = NULL;
+	HASH_FIND_STR(*lh, lookupName, item);
+	if (item) return false;
+	json_value *_subtables = json_obj_get_type(_lookup, "subtables", json_array);
+	if (!_subtables) return false;
+
+	otl_lookup *lookup;
+	NEW(lookup);
+	lookup->type = llt;
+	lookup->flags = json_obj_getnum(_lookup, "flags");
+	lookup->subtableCount = _subtables->u.array.length;
+	NEW_N(lookup->subtables, lookup->subtableCount);
+	uint16_t jj = 0;
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		json_value *_subtable = _subtables->u.array.values[j];
+		if (_subtable && _subtable->type == json_object) {
+			otl_subtable *_st = parser(_subtable);
+			if (_st) { lookup->subtables[jj++] = _st; }
 		}
 	}
-	return false;
+	lookup->subtableCount = jj;
+
+	NEW(item);
+	item->name = sdsnew(lookupName);
+	lookup->name = sdsdup(item->name);
+	item->lookup = lookup;
+	item->lookup->name = sdsdup(item->name);
+	HASH_ADD_STR(*lh, name, item);
+
+	return true;
 }
 
+#define LOOKUP_PARSER(lt, llt, parser)                                                                                 \
+	if (!parsed) { parsed = _declareLookupParser(lt, llt, parser, lookup, lookupName, &lh); }
 static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 	lookup_hash *lh = NULL;
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
@@ -631,13 +655,14 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 			char *lookupName = lookups->u.object.values[j].name;
 			json_value *lookup = lookups->u.object.values[j].value;
 			bool parsed = false;
-			parsed |= parse_json_lookup_type("gsub_single", caryll_gsub_single_from_json, lookup, lookupName, &lh);
-			parsed |= parse_json_lookup_type("gsub_chaining", caryll_chaining_from_json, lookup, lookupName, &lh);
-			parsed |= parse_json_lookup_type("gpos_chaining", caryll_chaining_from_json, lookup, lookupName, &lh);
-			parsed |= parse_json_lookup_type("gpos_mark_to_base", caryll_gpos_mark_to_single_from_json, lookup,
-			                                 lookupName, &lh);
-			parsed |= parse_json_lookup_type("gpos_mark_to_mark", caryll_gpos_mark_to_single_from_json, lookup,
-			                                 lookupName, &lh);
+			LOOKUP_PARSER("gsub_single", otl_type_gsub_single, caryll_gsub_single_from_json);
+			LOOKUP_PARSER("gsub_multiple", otl_type_gsub_multiple, caryll_gsub_multi_from_json);
+			LOOKUP_PARSER("gsub_alternate", otl_type_gsub_alternate, caryll_gsub_multi_from_json);
+			LOOKUP_PARSER("gsub_chaining", otl_type_gsub_chaining, caryll_chaining_from_json);
+			LOOKUP_PARSER("gpos_chaining", otl_type_gpos_chaining, caryll_chaining_from_json);
+			LOOKUP_PARSER("gpos_mark_to_base", otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_from_json);
+			LOOKUP_PARSER("gpos_mark_to_mark", otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_from_json);
+			
 			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
 		}
 	}
@@ -920,6 +945,8 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 		subtableOffsets[j] = NULL;
 		bool written = false;
 		DECLARE_LOOKUP_WRITER(otl_type_gsub_single, caryll_write_gsub_single_subtable);
+		DECLARE_LOOKUP_WRITER(otl_type_gsub_multiple, caryll_write_gsub_multi_subtable);
+		DECLARE_LOOKUP_WRITER(otl_type_gsub_alternate, caryll_write_gsub_multi_subtable);
 		DECLARE_LOOKUP_WRITER(otl_type_gsub_chaining, caryll_write_chaining);
 		DECLARE_LOOKUP_WRITER(otl_type_gpos_chaining, caryll_write_chaining);
 		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_base, caryll_write_gpos_mark_to_single);
@@ -943,7 +970,11 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	size_t hp = bufl->cursor;
 	bufseek(bufl, 2 + table->lookupCount * 2);
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
-		if (!lookupWritten[j]) { fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name); }
+		if (!lookupWritten[j]) { 
+			fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name);
+			continue;
+		}
+		
 		otl_lookup *lookup = table->lookups[j];
 		size_t lookupOffset = bufl->cursor;
 		if (lookupOffset > 0xFFFF) {

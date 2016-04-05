@@ -14,7 +14,7 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable);
 otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 json_value *caryll_chaining_to_json(otl_subtable *_subtable);
-otl_lookup *caryll_chaining_from_json(json_value *_lookup, char *_type);
+otl_subtable *caryll_chaining_from_json(json_value *_subtable);
 caryll_buffer *caryll_write_chaining(otl_subtable *_subtable);
 
 #endif

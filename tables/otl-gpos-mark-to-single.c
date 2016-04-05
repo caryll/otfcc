@@ -21,9 +21,11 @@ static void delete_mtb_subtable(otl_subtable *_subtable) {
 
 void caryll_delete_gpos_mark_to_single(otl_lookup *lookup) {
 	if (lookup) {
-		if (lookup->subtables)
+		if (lookup->subtables) {
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
 				delete_mtb_subtable(lookup->subtables[j]);
+			free(lookup->subtables);
+		}
 		free(lookup);
 	}
 }
@@ -151,41 +153,17 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 		}
 	}
 }
-otl_lookup *caryll_gpos_mark_to_single_from_json(json_value *_lookup, char *_type) {
-	otl_lookup *lookup = NULL;
-	json_value *_subtables = json_obj_get_type(_lookup, "subtables", json_array);
-	if (!_subtables) goto FAIL;
-
-	NEW(lookup);
-	lookup->type = strcmp(_type, "gpos_mark_to_mark") == 0 ? otl_type_gpos_mark_to_mark : otl_type_gpos_mark_to_base;
-	lookup->flags = json_obj_getnum(_lookup, "flags");
-	lookup->subtableCount = _subtables->u.array.length;
-	NEW_N(lookup->subtables, lookup->subtableCount);
-
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-		json_value *_subtable = _subtables->u.array.values[j];
-		if (_subtable && _subtable->type == json_object) {
-			json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
-			json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
-			uint16_t classCount = json_obj_getint(_subtable, "classCount");
-			if (_marks && _bases && classCount) {
-				otl_subtable *st;
-				NEW(st);
-				st->gpos_mark_to_single.classCount = classCount;
-				parseMarks(_marks, &(st->gpos_mark_to_single), classCount);
-				parseBases(_bases, &(st->gpos_mark_to_single), classCount);
-				lookup->subtables[jj] = st;
-				jj += 1;
-			}
-		}
-	}
-	lookup->subtableCount = jj;
-	return lookup;
-
-FAIL:
-	DELETE(caryll_delete_gpos_mark_to_single, lookup);
-	return NULL;
+otl_subtable *caryll_gpos_mark_to_single_from_json(json_value *_subtable) {
+	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
+	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
+	uint16_t classCount = json_obj_getint(_subtable, "classCount");
+	if (!_marks || !_bases || !classCount) return NULL;
+	otl_subtable *st;
+	NEW(st);
+	st->gpos_mark_to_single.classCount = classCount;
+	parseMarks(_marks, &(st->gpos_mark_to_single), classCount);
+	parseBases(_bases, &(st->gpos_mark_to_single), classCount);
+	return st;
 }
 
 typedef struct {

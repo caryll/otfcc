@@ -34,9 +34,11 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable) {
 }
 void caryll_delete_chaining(otl_lookup *lookup) {
 	if (lookup) {
-		if (lookup->subtables)
+		if (lookup->subtables) {
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
 				delete_otl_chaining_subtable(lookup->subtables[j]);
+			free(lookup->subtables);
+		}
 		free(lookup);
 	}
 }
@@ -393,66 +395,45 @@ json_value *caryll_chaining_to_json(otl_subtable *_subtable) {
 	return _st;
 }
 
-otl_lookup *caryll_chaining_from_json(json_value *_lookup, char *_type) {
-	otl_lookup *lookup = NULL;
-	json_value *_subtables = json_obj_get_type(_lookup, "subtables", json_array);
-	if (!_subtables) goto FAIL;
-
-	NEW(lookup);
-	lookup->type = strcmp(_type, "gpos_chaining") == 0 ? otl_type_gpos_chaining : otl_type_gsub_chaining;
-	lookup->flags = json_obj_getnum(_lookup, "flags");
-	lookup->subtableCount = _subtables->u.array.length;
-	NEW_N(lookup->subtables, lookup->subtableCount);
-
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-		json_value *_subtable = _subtables->u.array.values[j];
-		if (_subtable && _subtable->type == json_object) {
-			json_value *_match = json_obj_get_type(_subtable, "match", json_array);
-			json_value *_apply = json_obj_get_type(_subtable, "apply", json_array);
-			if (_match && _apply) {
-				otl_subtable *_st;
-				NEW(_st);
-				subtable_chaining *subtable = &(_st->chaining);
-				subtable->rulesCount = 1;
-				subtable->classified = false;
-				subtable->bc = NULL;
-				subtable->ic = NULL;
-				subtable->fc = NULL;
-				NEW(subtable->rules);
-				NEW(subtable->rules[0]);
-				otl_chaining_rule *rule = subtable->rules[0];
-				rule->matchCount = _match->u.array.length;
-				NEW_N(rule->match, rule->matchCount);
-				rule->applyCount = _apply->u.array.length;
-				NEW_N(rule->apply, rule->applyCount);
-				rule->inputBegins = json_obj_getnum_fallback(_subtable, "inputBegins", 0);
-				rule->inputEnds = json_obj_getnum_fallback(_subtable, "inputEnds", rule->matchCount);
-				for (uint16_t j = 0; j < rule->matchCount; j++) {
-					rule->match[j] = caryll_coverage_from_json(_match->u.array.values[j]);
-				}
-				for (uint16_t j = 0; j < rule->applyCount; j++) {
-					rule->apply[j].index = 0;
-					rule->apply[j].lookupIndex = 0;
-					rule->apply[j].lookupName = NULL;
-					json_value *_application = _apply->u.array.values[j];
-					if (_application->type == json_object) {
-						json_value *_ln = json_obj_get_type(_application, "lookup", json_string);
-						if (_ln) {
-							rule->apply[j].lookupName = sdsnewlen(_ln->u.string.ptr, _ln->u.string.length);
-							rule->apply[j].index = json_obj_getnum(_application, "at");
-						}
-					}
-				}
-				lookup->subtables[jj++] = _st;
+otl_subtable *caryll_chaining_from_json(json_value *_subtable) {
+	json_value *_match = json_obj_get_type(_subtable, "match", json_array);
+	json_value *_apply = json_obj_get_type(_subtable, "apply", json_array);
+	if (!_match || !_apply) return NULL;
+	
+	otl_subtable *_st;
+	NEW(_st);
+	subtable_chaining *subtable = &(_st->chaining);
+	subtable->rulesCount = 1;
+	subtable->classified = false;
+	subtable->bc = NULL;
+	subtable->ic = NULL;
+	subtable->fc = NULL;
+	NEW(subtable->rules);
+	NEW(subtable->rules[0]);
+	otl_chaining_rule *rule = subtable->rules[0];
+	rule->matchCount = _match->u.array.length;
+	NEW_N(rule->match, rule->matchCount);
+	rule->applyCount = _apply->u.array.length;
+	NEW_N(rule->apply, rule->applyCount);
+	rule->inputBegins = json_obj_getnum_fallback(_subtable, "inputBegins", 0);
+	rule->inputEnds = json_obj_getnum_fallback(_subtable, "inputEnds", rule->matchCount);
+	for (uint16_t j = 0; j < rule->matchCount; j++) {
+		rule->match[j] = caryll_coverage_from_json(_match->u.array.values[j]);
+	}
+	for (uint16_t j = 0; j < rule->applyCount; j++) {
+		rule->apply[j].index = 0;
+		rule->apply[j].lookupIndex = 0;
+		rule->apply[j].lookupName = NULL;
+		json_value *_application = _apply->u.array.values[j];
+		if (_application->type == json_object) {
+			json_value *_ln = json_obj_get_type(_application, "lookup", json_string);
+			if (_ln) {
+				rule->apply[j].lookupName = sdsnewlen(_ln->u.string.ptr, _ln->u.string.length);
+				rule->apply[j].index = json_obj_getnum(_application, "at");
 			}
 		}
 	}
-	lookup->subtableCount = jj;
-	return lookup;
-FAIL:
-	DELETE(caryll_delete_chaining, lookup);
-	return NULL;
+	return _st;
 }
 
 caryll_buffer *caryll_write_chaining_coverage(otl_subtable *_subtable) {
@@ -547,7 +528,7 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 					uint16_t nInput = rule->inputEnds - rule->inputBegins;
 					uint16_t nLookahead = rule->matchCount - rule->inputEnds;
 					uint16_t nSubst = rule->applyCount;
-					
+
 					bufwrite16b(buf, nBacktrack);
 					for (uint16_t m = 0; m < rule->inputBegins; m++) {
 						bufwrite16b(buf, rule->match[m]->glyphs[0].gid);

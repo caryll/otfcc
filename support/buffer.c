@@ -154,7 +154,15 @@ void buflongalign(caryll_buffer *buf) {
 // [ @^              ######       ] , and the value of [@] equals to the former offset.
 //    ^cp                  ^offset
 // Common in writing OpenType features.
-
+void bufping16b(caryll_buffer *buf, size_t *offset, size_t *cp) {
+	bufwrite16b(buf, *offset);
+	*cp = buf->cursor;
+	bufseek(buf, *offset);
+}
+void bufpong(caryll_buffer *buf, size_t *offset, size_t *cp) {
+	*offset = buf->cursor;
+	bufseek(buf, *cp);
+}
 void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, size_t *cp) {
 	bufwrite16b(buf, *offset);
 	*cp = buf->cursor;
