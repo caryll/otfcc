@@ -77,21 +77,24 @@ json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st) {
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		json_value *_mark = json_object_new(3);
-		json_object_push(_mark, "class", json_integer_new(subtable->markArray->records[j].markClass));
+		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray->records[j].markClass);
+		json_object_push(_mark, "class", json_string_new_length(sdslen(markClassName), markClassName));
+		sdsfree(markClassName);
 		json_object_push(_mark, "x", json_integer_new(subtable->markArray->records[j].anchor.x));
 		json_object_push(_mark, "y", json_integer_new(subtable->markArray->records[j].anchor.y));
 		json_object_push(_marks, subtable->marks->glyphs[j].name, preserialize(_mark));
 	}
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		json_value *_base = json_array_new(subtable->classCount);
+		json_value *_base = json_object_new(subtable->classCount);
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
 			if (subtable->baseArray[j][k].present) {
+
 				json_value *_anchor = json_object_new(2);
 				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
 				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
-				json_array_push(_base, _anchor);
-			} else {
-				json_array_push(_base, json_null_new());
+				sds markClassName = sdscatfmt(sdsempty(), "ac_%i", k);
+				json_object_push_length(_base, sdslen(markClassName), markClassName, _anchor);
+				sdsfree(markClassName);
 			}
 		}
 		json_object_push(_bases, subtable->bases->glyphs[j].name, preserialize(_base));
@@ -102,7 +105,12 @@ json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st) {
 	return _subtable;
 }
 
-static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtable, uint16_t classCount) {
+typedef struct {
+	sds className;
+	uint16_t classID;
+	UT_hash_handle hh;
+} classname_hash;
+static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtable, classname_hash **h) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
 	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
@@ -114,10 +122,29 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtabl
 		json_value *anchorRecord = _marks->u.object.values[j].value;
 		subtable->marks->glyphs[j].name = sdsnewlen(gname, _marks->u.object.values[j].name_length);
 		if (anchorRecord && anchorRecord->type == json_object) {
-			subtable->markArray->records[j].markClass = json_obj_getint(anchorRecord, "class");
-			subtable->markArray->records[j].anchor.present = true;
-			subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
-			subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
+			json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
+			if (_className) {
+				sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
+				classname_hash *s;
+				HASH_FIND_STR(*h, className, s);
+				if (!s) {
+					NEW(s);
+					s->className = className;
+					s->classID = HASH_COUNT(*h);
+					HASH_ADD_STR(*h, className, s);
+				} else {
+					sdsfree(className);
+				}
+				subtable->markArray->records[j].markClass = s->classID;
+				subtable->markArray->records[j].anchor.present = true;
+				subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
+				subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
+			} else {
+				subtable->markArray->records[j].markClass = 0;
+				subtable->markArray->records[j].anchor.present = true;
+				subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
+				subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
+			}
 		} else {
 			subtable->markArray->records[j].markClass = 0;
 			subtable->markArray->records[j].anchor.present = false;
@@ -126,7 +153,8 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtabl
 		}
 	}
 }
-static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtable, uint16_t classCount) {
+static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtable, classname_hash **h) {
+	uint16_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
 	NEW_N(subtable->bases->glyphs, subtable->bases->numGlyphs);
@@ -141,14 +169,23 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 			subtable->baseArray[j][k].y = 0;
 		}
 		json_value *baseRecord = _bases->u.object.values[j].value;
-		if (baseRecord && baseRecord->type == json_array) {
-			for (uint16_t k = 0; k < classCount && k < baseRecord->u.array.length; k++) {
-				json_value *anchor = baseRecord->u.array.values[k];
-				if (anchor->type == json_object) {
-					subtable->baseArray[j][k].present = true;
-					subtable->baseArray[j][k].x = json_obj_getnum(anchor, "x");
-					subtable->baseArray[j][k].y = json_obj_getnum(anchor, "y");
+		if (baseRecord && baseRecord->type == json_object) {
+			for (uint16_t k = 0; k < baseRecord->u.object.length; k++) {
+				sds className =
+				    sdsnewlen(baseRecord->u.object.values[k].name, baseRecord->u.object.values[k].name_length);
+				classname_hash *s;
+				HASH_FIND_STR(*h, className, s);
+				if (s) {
+					json_value *anchor = baseRecord->u.object.values[k].value;
+					if (anchor->type == json_object) {
+						subtable->baseArray[j][s->classID].present = true;
+						subtable->baseArray[j][s->classID].x = json_obj_getnum(anchor, "x");
+						subtable->baseArray[j][s->classID].y = json_obj_getnum(anchor, "y");
+					}
+				} else {
+					fprintf(stderr, "[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n", className, gname);
 				}
+				sdsfree(className);
 			}
 		}
 	}
@@ -160,9 +197,18 @@ otl_subtable *caryll_gpos_mark_to_single_from_json(json_value *_subtable) {
 	if (!_marks || !_bases || !classCount) return NULL;
 	otl_subtable *st;
 	NEW(st);
-	st->gpos_mark_to_single.classCount = classCount;
-	parseMarks(_marks, &(st->gpos_mark_to_single), classCount);
-	parseBases(_bases, &(st->gpos_mark_to_single), classCount);
+	classname_hash *h = NULL;
+	parseMarks(_marks, &(st->gpos_mark_to_single), &h);
+	st->gpos_mark_to_single.classCount = HASH_COUNT(h);
+	parseBases(_bases, &(st->gpos_mark_to_single), &h);
+
+	classname_hash *s, *tmp;
+	HASH_ITER(hh, h, s, tmp) {
+		HASH_DEL(h, s);
+		sdsfree(s->className);
+		free(s);
+	}
+
 	return st;
 }
 
