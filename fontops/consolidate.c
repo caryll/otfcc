@@ -256,6 +256,10 @@ static bool consolidate_gsub_chaining(caryll_font *font, table_otl *table, otl_s
 		consolidate_coverage(font, rule->match[j], lookupName);
 		shrink_coverage(rule->match[j]);
 	}
+	if(rule->inputBegins < 0) rule->inputBegins = 0;
+	if(rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
+	if(rule->inputEnds < 0) rule->inputEnds = 0;
+	if(rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		bool foundLookup = false;
 		if (rule->apply[j].lookupName) {
