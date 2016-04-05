@@ -211,6 +211,27 @@ static bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subt
 	return false;
 }
 
+static bool consolidate_gsub_ligature(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
+	consolidate_coverage(font, subtable->to, lookupName);
+	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
+		consolidate_coverage(font, subtable->from[j], lookupName);
+		shrink_coverage(subtable->from[j]);
+	}
+	uint16_t jj = 0;
+	for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
+		if (subtable->to->glyphs[k].name && subtable->from[k]->numGlyphs) {
+			subtable->to->glyphs[jj] = subtable->to->glyphs[k];
+			subtable->from[jj] = subtable->from[k];
+			jj++;
+		} else {
+			caryll_delete_coverage(subtable->from[k]);
+		}
+	}
+	subtable->to->numGlyphs = jj;
+	return false;
+}
+
 typedef struct {
 	int gid;
 	sds name;
@@ -591,6 +612,7 @@ void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *
 	declare_consolidate_type(otl_type_gsub_single, consolidate_gsub_single, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_multiple, consolidate_gsub_multi, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_alternate, consolidate_gsub_multi, font, table, lookup);
+	declare_consolidate_type(otl_type_gsub_ligature, consolidate_gsub_ligature, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_chaining, consolidate_gsub_chaining, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_chaining, consolidate_gsub_chaining, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_mark_to_base, consolidate_mark_to_single, font, table, lookup);

@@ -47,11 +47,14 @@ typedef struct {
 	otl_coverage *from;
 	otl_coverage *to;
 } subtable_gsub_single;
-
 typedef struct {
 	otl_coverage *from;
 	otl_coverage **to;
 } subtable_gsub_multi;
+typedef struct {
+	otl_coverage **from;
+	otl_coverage *to;
+} subtable_gsub_ligature;
 
 typedef struct {
 	uint16_t index;
@@ -109,6 +112,7 @@ typedef struct {
 typedef union _otl_subtable {
 	subtable_gsub_single gsub_single;
 	subtable_gsub_multi gsub_multi;
+	subtable_gsub_ligature gsub_ligature;
 	subtable_chaining chaining;
 	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_extend extend;
@@ -168,6 +172,7 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 
 #include "otl-gsub-single.h"
 #include "otl-gsub-multi.h"
+#include "otl-gsub-ligature.h"
 #include "otl-gpos-mark-to-single.h"
 #include "otl-chaining.h"
 #include "otl-extend.h"

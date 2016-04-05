@@ -124,6 +124,7 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 		checkLength(featureListOffset + 2 + featureCount * 6);
 		otl_feature **features;
 		NEW_N(features, featureCount);
+		uint16_t lnk = 0;
 		for (uint16_t j = 0; j < featureCount; j++) {
 			otl_feature *feature;
 			NEW(feature);
@@ -145,7 +146,7 @@ table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, 
 					if (!features[j]->lookups[k]->name) {
 						features[j]->lookups[k]->name =
 						    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-						                 (tag >> 8) & 0xff, tag & 0xff, k);
+						                 (tag >> 8) & 0xff, tag & 0xff, lnk++);
 					}
 				}
 			}
@@ -371,6 +372,8 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 		case otl_type_gsub_multiple:
 		case otl_type_gsub_alternate:
 			return caryll_read_gsub_multi(data, tableLength, subtableOffset);
+		case otl_type_gsub_ligature:
+			return caryll_read_gsub_ligature(data, tableLength, subtableOffset);
 		case otl_type_gsub_chaining:
 		case otl_type_gpos_chaining:
 			return caryll_read_chaining(data, tableLength, subtableOffset);
@@ -502,6 +505,7 @@ void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	LOOKUP_DUMPER(otl_type_gsub_single, caryll_gsub_single_to_json);
 	LOOKUP_DUMPER(otl_type_gsub_multiple, caryll_gsub_multi_to_json);
 	LOOKUP_DUMPER(otl_type_gsub_alternate, caryll_gsub_multi_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_ligature, caryll_gsub_ligature_to_json);
 	LOOKUP_DUMPER(otl_type_gsub_chaining, caryll_chaining_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_chaining, caryll_chaining_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_to_json);
@@ -647,6 +651,7 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 			LOOKUP_PARSER("gsub_single", otl_type_gsub_single, caryll_gsub_single_from_json);
 			LOOKUP_PARSER("gsub_multiple", otl_type_gsub_multiple, caryll_gsub_multi_from_json);
 			LOOKUP_PARSER("gsub_alternate", otl_type_gsub_alternate, caryll_gsub_multi_from_json);
+			LOOKUP_PARSER("gsub_ligature", otl_type_gsub_ligature, caryll_gsub_ligature_from_json);
 			LOOKUP_PARSER("gsub_chaining", otl_type_gsub_chaining, caryll_chaining_from_json);
 			LOOKUP_PARSER("gpos_chaining", otl_type_gpos_chaining, caryll_chaining_from_json);
 			LOOKUP_PARSER("gpos_mark_to_base", otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_from_json);
@@ -936,6 +941,7 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 		DECLARE_LOOKUP_WRITER(otl_type_gsub_single, caryll_write_gsub_single_subtable);
 		DECLARE_LOOKUP_WRITER(otl_type_gsub_multiple, caryll_write_gsub_multi_subtable);
 		DECLARE_LOOKUP_WRITER(otl_type_gsub_alternate, caryll_write_gsub_multi_subtable);
+		DECLARE_LOOKUP_WRITER(otl_type_gsub_ligature, caryll_write_gsub_ligature_subtable);
 		DECLARE_LOOKUP_WRITER(otl_type_gsub_chaining, caryll_write_chaining);
 		DECLARE_LOOKUP_WRITER(otl_type_gpos_chaining, caryll_write_chaining);
 		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_base, caryll_write_gpos_mark_to_single);

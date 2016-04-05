@@ -159,6 +159,11 @@ void bufping16b(caryll_buffer *buf, size_t *offset, size_t *cp) {
 	*cp = buf->cursor;
 	bufseek(buf, *offset);
 }
+void bufping16bd(caryll_buffer *buf, size_t *offset, size_t *shift, size_t *cp) {
+	bufwrite16b(buf, *offset - *shift);
+	*cp = buf->cursor;
+	bufseek(buf, *offset);
+}
 void bufpong(caryll_buffer *buf, size_t *offset, size_t *cp) {
 	*offset = buf->cursor;
 	bufseek(buf, *cp);

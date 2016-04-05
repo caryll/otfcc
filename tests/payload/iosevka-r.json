@@ -22188,124 +22188,124 @@
                 "lookup_calt_0"
             ],
             "ccmp_1": [
-                "lookup_ccmp_0"
-            ],
-            "ccmp_2": [
-                "lookup_ccmp_0",
                 "lookup_ccmp_1"
             ],
+            "ccmp_2": [
+                "lookup_ccmp_1",
+                "lookup_ccmp_2"
+            ],
             "cv01_3": [
-                "lookup_cv01_0"
+                "lookup_cv01_3"
             ],
             "cv02_4": [
-                "lookup_cv02_0"
+                "lookup_cv02_4"
             ],
             "cv03_5": [
-                "lookup_cv03_0"
+                "lookup_cv03_5"
             ],
             "cv04_6": [
-                "lookup_cv04_0"
+                "lookup_cv04_6"
             ],
             "cv05_7": [
-                "lookup_cv05_0"
+                "lookup_cv05_7"
             ],
             "cv06_8": [
-                "lookup_cv06_0"
+                "lookup_cv06_8"
             ],
             "cv07_9": [
-                "lookup_cv07_0"
+                "lookup_cv07_9"
             ],
             "cv08_10": [
-                "lookup_cv08_0"
+                "lookup_cv08_10"
             ],
             "cv09_11": [
-                "lookup_cv09_0"
+                "lookup_cv09_11"
             ],
             "cv10_12": [
-                "lookup_cv10_0"
+                "lookup_cv10_12"
             ],
             "cv11_13": [
-                "lookup_cv11_0"
+                "lookup_cv11_13"
             ],
             "cv12_14": [
-                "lookup_cv12_0"
+                "lookup_cv12_14"
             ],
             "cv13_15": [
-                "lookup_cv13_0"
+                "lookup_cv13_15"
             ],
             "cv14_16": [
-                "lookup_cv14_0"
+                "lookup_cv14_16"
             ],
             "cv15_17": [
-                "lookup_cv15_0"
+                "lookup_cv15_17"
             ],
             "cv16_18": [
-                "lookup_cv16_0"
+                "lookup_cv16_18"
             ],
             "cv17_19": [
-                "lookup_cv17_0"
+                "lookup_cv17_19"
             ],
             "cv18_20": [
-                "lookup_cv18_0"
+                "lookup_cv18_20"
             ],
             "cv19_21": [
-                "lookup_cv19_0"
+                "lookup_cv19_21"
             ],
             "cv20_22": [
-                "lookup_cv20_0"
+                "lookup_cv20_22"
             ],
             "cv21_23": [
-                "lookup_cv21_0"
+                "lookup_cv21_23"
             ],
             "cv22_24": [
-                "lookup_cv22_0"
+                "lookup_cv22_24"
             ],
             "cv23_25": [
-                "lookup_cv23_0"
+                "lookup_cv23_25"
             ],
             "locl_26": [
-                "lookup_locl_0"
+                "lookup_locl_26"
             ],
             "ss01_27": [
-                "lookup_cv05_0",
-                "lookup_cv09_0"
+                "lookup_cv05_7",
+                "lookup_cv09_11"
             ],
             "ss02_28": [
-                "lookup_cv06_0",
-                "lookup_cv10_0"
+                "lookup_cv06_8",
+                "lookup_cv10_12"
             ],
             "ss03_29": [
-                "lookup_cv04_0",
-                "lookup_cv08_0"
+                "lookup_cv04_6",
+                "lookup_cv08_10"
             ],
             "ss04_30": [
-                "lookup_cv11_0"
+                "lookup_cv11_13"
             ],
             "ss05_31": [
-                "lookup_cv12_0"
+                "lookup_cv12_14"
             ],
             "ss06_32": [
-                "lookup_cv13_0"
+                "lookup_cv13_15"
             ],
             "ss07_33": [
-                "lookup_cv14_0"
+                "lookup_cv14_16"
             ],
             "ss08_34": [
-                "lookup_cv15_0"
+                "lookup_cv15_17"
             ],
             "ss09_35": [
-                "lookup_cv18_0",
-                "lookup_cv20_0",
-                "lookup_cv16_0"
+                "lookup_cv18_20",
+                "lookup_cv20_22",
+                "lookup_cv16_18"
             ],
             "ss10_36": [
-                "lookup_cv19_0",
-                "lookup_cv21_0",
-                "lookup_cv17_0"
+                "lookup_cv19_21",
+                "lookup_cv21_23",
+                "lookup_cv17_19"
             ]
         },
         "lookups": {
-            "lookup_cv03_0": {
+            "lookup_cv03_5": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22315,7 +22315,7 @@
                     }
                 ]
             },
-            "lookup_cv04_0": {
+            "lookup_cv04_6": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22325,7 +22325,7 @@
                     }
                 ]
             },
-            "lookup_cv05_0": {
+            "lookup_cv05_7": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22335,7 +22335,7 @@
                     }
                 ]
             },
-            "lookup_cv06_0": {
+            "lookup_cv06_8": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22345,7 +22345,7 @@
                     }
                 ]
             },
-            "lookup_cv07_0": {
+            "lookup_cv07_9": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22355,7 +22355,7 @@
                     }
                 ]
             },
-            "lookup_cv08_0": {
+            "lookup_cv08_10": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22365,7 +22365,7 @@
                     }
                 ]
             },
-            "lookup_cv09_0": {
+            "lookup_cv09_11": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22375,7 +22375,7 @@
                     }
                 ]
             },
-            "lookup_cv10_0": {
+            "lookup_cv10_12": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22385,7 +22385,7 @@
                     }
                 ]
             },
-            "lookup_cv01_0": {
+            "lookup_cv01_3": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22395,7 +22395,7 @@
                     }
                 ]
             },
-            "lookup_cv02_0": {
+            "lookup_cv02_4": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22405,7 +22405,7 @@
                     }
                 ]
             },
-            "lookup_cv11_0": {
+            "lookup_cv11_13": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22415,7 +22415,7 @@
                     }
                 ]
             },
-            "lookup_cv12_0": {
+            "lookup_cv12_14": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22425,7 +22425,7 @@
                     }
                 ]
             },
-            "lookup_cv13_0": {
+            "lookup_cv13_15": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22435,7 +22435,7 @@
                     }
                 ]
             },
-            "lookup_cv14_0": {
+            "lookup_cv14_16": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22445,7 +22445,7 @@
                     }
                 ]
             },
-            "lookup_cv15_0": {
+            "lookup_cv15_17": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22455,7 +22455,7 @@
                     }
                 ]
             },
-            "lookup_cv22_0": {
+            "lookup_cv22_24": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22465,7 +22465,7 @@
                     }
                 ]
             },
-            "lookup_cv23_0": {
+            "lookup_cv23_25": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22475,7 +22475,7 @@
                     }
                 ]
             },
-            "lookup_cv18_0": {
+            "lookup_cv18_20": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22485,7 +22485,7 @@
                     }
                 ]
             },
-            "lookup_cv19_0": {
+            "lookup_cv19_21": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22495,7 +22495,7 @@
                     }
                 ]
             },
-            "lookup_cv20_0": {
+            "lookup_cv20_22": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22505,7 +22505,7 @@
                     }
                 ]
             },
-            "lookup_cv21_0": {
+            "lookup_cv21_23": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22515,7 +22515,7 @@
                     }
                 ]
             },
-            "lookup_cv16_0": {
+            "lookup_cv16_18": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22525,7 +22525,7 @@
                     }
                 ]
             },
-            "lookup_cv17_0": {
+            "lookup_cv17_19": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -22555,7 +22555,7 @@
                     }
                 ]
             },
-            "lookup_ccmp_0": {
+            "lookup_ccmp_1": {
                 "type": "gsub_chaining",
                 "flags": 0,
                 "subtables": [
@@ -22664,8 +22664,23 @@
                     }
                 ]
             },
-            "lookup_ccmp_1": {},
-            "lookup_locl_0": {
+            "lookup_ccmp_2": {
+                "type": "gsub_ligature",
+                "flags": 0,
+                "subtables": [
+                    {
+                        "maps": [
+                            {"to":"glyph115","from":["uni0313","uni0342"]},
+                            {"to":"glyph115","from":["uni0313","uni0342"]},
+                            {"to":"glyph115","from":["uni0313","uni0342"]},
+                            {"to":"glyph113","from":["uni0314","acutecomb"]},
+                            {"to":"glyph113","from":["uni0314","acutecomb"]},
+                            {"to":"glyph113","from":["uni0314","acutecomb"]}
+                        ]
+                    }
+                ]
+            },
+            "lookup_locl_26": {
                 "type": "gsub_single",
                 "flags": 0,
                 "subtables": [
@@ -23075,7 +23090,7 @@
                 "lookup_mark_2"
             ],
             "mkmk_1": [
-                "lookup_mkmk_0"
+                "lookup_mkmk_3"
             ]
         },
         "lookups": {
@@ -28839,7 +28854,7 @@
                     }
                 ]
             },
-            "lookup_mkmk_0": {
+            "lookup_mkmk_3": {
                 "type": "gpos_mark_to_mark",
                 "flags": 0,
                 "subtables": [

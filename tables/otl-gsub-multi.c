@@ -26,6 +26,8 @@ otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLengt
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
+	subtable->from = NULL;
+	subtable->to = NULL;
 	checkLength(offset + 6);
 
 	subtable->from = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
@@ -56,32 +58,40 @@ FAIL:
 json_value *caryll_gsub_multi_to_json(otl_subtable *_subtable) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	json_value *st = json_object_new(2);
-	json_object_push(st, "from", caryll_coverage_to_json(subtable->from));
-	json_value *_to = json_array_new(subtable->from->numGlyphs);
+	json_value *_maps = json_array_new(subtable->from->numGlyphs);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
-		json_array_push(_to, caryll_coverage_to_json(subtable->to[j]));
+		json_value *_map = json_object_new(2);
+		json_object_push(_map, "from", json_string_new(subtable->from->glyphs[j].name));
+		json_object_push(_map, "to", caryll_coverage_to_json(subtable->to[j]));
+		json_array_push(_maps, preserialize(_map));
 	}
-	json_object_push(st, "to", _to);
+	json_object_push(st, "maps", _maps);
 	return st;
 }
 
 otl_subtable *caryll_gsub_multi_from_json(json_value *_subtable) {
-	json_value *_from = json_obj_get_type(_subtable, "from", json_array);
-	json_value *_to = json_obj_get_type(_subtable, "to", json_array);
-	if (!_from || !_to) { return NULL; }
+	json_value *_maps = json_obj_get_type(_subtable, "maps", json_array);
+	if (!_maps) { return NULL; }
 	otl_subtable *_st;
 	NEW(_st);
 	subtable_gsub_multi *st = &(_st->gsub_multi);
-	st->from = caryll_coverage_from_json(_from);
-	uint16_t replacementCount = st->from->numGlyphs;
-	if (replacementCount > _to->u.array.length) {
-		replacementCount = _to->u.array.length;
-		st->from->numGlyphs = replacementCount;
+	NEW(st->from);
+	st->from->numGlyphs = _maps->u.array.length;
+	NEW_N(st->from->glyphs, st->from->numGlyphs);
+	NEW_N(st->to, st->from->numGlyphs);
+
+	uint16_t jj = 0;
+	for (uint16_t k = 0; k < st->from->numGlyphs; k++) {
+		json_value *_map = _maps->u.array.values[k];
+		if (!_map || _map->type != json_object) continue;
+		json_value *_from = json_obj_get_type(_map, "from", json_string);
+		json_value *_to = json_obj_get_type(_map, "to", json_array);
+		if (!_from || !_to) continue;
+		st->from->glyphs[jj].name = sdsnewlen(_from->u.string.ptr, _from->u.string.length);
+		st->to[jj] = caryll_coverage_from_json(_to);
+		jj += 1;
 	}
-	NEW_N(st->to, replacementCount);
-	for (uint16_t k = 0; k < replacementCount; k++) {
-		st->to[k] = caryll_coverage_from_json(_to->u.array.values[k]);
-	}
+	st->from->numGlyphs = jj;
 	return _st;
 }
 
