@@ -136,7 +136,8 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 						caryll_name_coverage(font, lookup->subtables[j]->gsub_ligature.from[k]);
 					}
 				}
-			break;		case otl_type_gsub_chaining:
+			break;
+		case otl_type_gsub_chaining:
 		case otl_type_gpos_chaining:
 			unconsolidate_gsub_chain(font, lookup, table);
 			break;
@@ -146,6 +147,13 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 				if (lookup->subtables[j]) {
 					caryll_name_coverage(font, lookup->subtables[j]->gpos_mark_to_single.marks);
 					caryll_name_coverage(font, lookup->subtables[j]->gpos_mark_to_single.bases);
+				}
+			break;
+		case otl_type_gpos_mark_to_ligature:
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				if (lookup->subtables[j]) {
+					caryll_name_coverage(font, lookup->subtables[j]->gpos_mark_to_ligature.marks);
+					caryll_name_coverage(font, lookup->subtables[j]->gpos_mark_to_ligature.bases);
 				}
 			break;
 		default:

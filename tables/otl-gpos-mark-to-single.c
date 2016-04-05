@@ -88,7 +88,6 @@ json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st) {
 		json_value *_base = json_object_new(subtable->classCount);
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
 			if (subtable->baseArray[j][k].present) {
-
 				json_value *_anchor = json_object_new(2);
 				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
 				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
@@ -121,36 +120,31 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtabl
 		char *gname = _marks->u.object.values[j].name;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
 		subtable->marks->glyphs[j].name = sdsnewlen(gname, _marks->u.object.values[j].name_length);
-		if (anchorRecord && anchorRecord->type == json_object) {
-			json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
-			if (_className) {
-				sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
-				classname_hash *s;
-				HASH_FIND_STR(*h, className, s);
-				if (!s) {
-					NEW(s);
-					s->className = className;
-					s->classID = HASH_COUNT(*h);
-					HASH_ADD_STR(*h, className, s);
-				} else {
-					sdsfree(className);
-				}
-				subtable->markArray->records[j].markClass = s->classID;
-				subtable->markArray->records[j].anchor.present = true;
-				subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
-				subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
-			} else {
-				subtable->markArray->records[j].markClass = 0;
-				subtable->markArray->records[j].anchor.present = true;
-				subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
-				subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
-			}
+
+		subtable->markArray->records[j].markClass = 0;
+		subtable->markArray->records[j].anchor.present = false;
+		subtable->markArray->records[j].anchor.x = 0;
+		subtable->markArray->records[j].anchor.y = 0;
+
+		if (!anchorRecord || anchorRecord->type != json_object) continue;
+		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
+		if (!_className) continue;
+
+		sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
+		classname_hash *s;
+		HASH_FIND_STR(*h, className, s);
+		if (!s) {
+			NEW(s);
+			s->className = className;
+			s->classID = HASH_COUNT(*h);
+			HASH_ADD_STR(*h, className, s);
 		} else {
-			subtable->markArray->records[j].markClass = 0;
-			subtable->markArray->records[j].anchor.present = false;
-			subtable->markArray->records[j].anchor.x = 0;
-			subtable->markArray->records[j].anchor.y = 0;
+			sdsfree(className);
 		}
+		subtable->markArray->records[j].markClass = s->classID;
+		subtable->markArray->records[j].anchor.present = true;
+		subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
+		subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
 	}
 }
 static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtable, classname_hash **h) {
@@ -169,32 +163,33 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 			subtable->baseArray[j][k].y = 0;
 		}
 		json_value *baseRecord = _bases->u.object.values[j].value;
-		if (baseRecord && baseRecord->type == json_object) {
-			for (uint16_t k = 0; k < baseRecord->u.object.length; k++) {
-				sds className =
-				    sdsnewlen(baseRecord->u.object.values[k].name, baseRecord->u.object.values[k].name_length);
-				classname_hash *s;
-				HASH_FIND_STR(*h, className, s);
-				if (s) {
-					json_value *anchor = baseRecord->u.object.values[k].value;
-					if (anchor->type == json_object) {
-						subtable->baseArray[j][s->classID].present = true;
-						subtable->baseArray[j][s->classID].x = json_obj_getnum(anchor, "x");
-						subtable->baseArray[j][s->classID].y = json_obj_getnum(anchor, "y");
-					}
-				} else {
-					fprintf(stderr, "[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n", className, gname);
-				}
-				sdsfree(className);
+		if (!baseRecord || baseRecord->type != json_object) continue;
+
+		for (uint16_t k = 0; k < baseRecord->u.object.length; k++) {
+			sds className = sdsnewlen(baseRecord->u.object.values[k].name, baseRecord->u.object.values[k].name_length);
+			classname_hash *s;
+			HASH_FIND_STR(*h, className, s);
+			if (!s) {
+				fprintf(stderr, "[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n",
+				        className, gname);
+				goto NEXT;
 			}
+
+			json_value *anchor = baseRecord->u.object.values[k].value;
+			if (!anchor || anchor->type != json_object) goto NEXT;
+
+			subtable->baseArray[j][s->classID].present = true;
+			subtable->baseArray[j][s->classID].x = json_obj_getnum(anchor, "x");
+			subtable->baseArray[j][s->classID].y = json_obj_getnum(anchor, "y");
+		NEXT:
+			sdsfree(className);
 		}
 	}
 }
 otl_subtable *caryll_gpos_mark_to_single_from_json(json_value *_subtable) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
-	uint16_t classCount = json_obj_getint(_subtable, "classCount");
-	if (!_marks || !_bases || !classCount) return NULL;
+	if (!_marks || !_bases) return NULL;
 	otl_subtable *st;
 	NEW(st);
 	classname_hash *h = NULL;
@@ -222,6 +217,21 @@ typedef struct {
 static INLINE int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
 static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) { return a->index - b->index; }
 caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
+
+	/* structure :
+	| format           | 0
+	| markCoverage *   |
+	| baseCoverage *   |
+	| classCount       |
+	| markArray    *   |
+	| baseArray    *   | 10
+	| markCoverage     | 12
+	| baseCoverage     | 12 + a
+	| markArray        | 12 + a + b
+	| baseArray        | 12 + a + b + c
+	| anchor directory | 12 + a + b + c + d
+	*/
+
 	caryll_buffer *buf = bufnew();
 	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
 
@@ -260,21 +270,24 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 	HASH_SORT(agh, byAnchorIndex);
 
 	bufwrite16b(buf, 1);
-	size_t offset = 12;
+	size_t covOffset = 12;
 	size_t cp = buf->cursor;
-	bufpingpong16b(buf, caryll_write_coverage(subtable->marks), &offset, &cp);
-	bufpingpong16b(buf, caryll_write_coverage(subtable->bases), &offset, &cp);
+	bufpingpong16b(buf, caryll_write_coverage(subtable->marks), &covOffset, &cp);
+	bufpingpong16b(buf, caryll_write_coverage(subtable->bases), &covOffset, &cp);
 	bufwrite16b(buf, subtable->classCount);
 	// for now, we will write markArray and baseArray.
 	// since these tables' length are fixed
 	// dealing with them will be much easier.
 	size_t markArraySize = 2 + 4 * subtable->marks->numGlyphs;
 	size_t baseArraySize = 2 + 2 * subtable->bases->numGlyphs * subtable->classCount;
-	bufwrite16b(buf, offset);
-	bufwrite16b(buf, offset + markArraySize);
+	size_t markArrayOffset = covOffset;
+	size_t baseArrayOffset = covOffset + markArraySize;
+	size_t anchorDirectoryOffset = covOffset + markArraySize + baseArraySize;
+	bufwrite16b(buf, markArrayOffset);
+	bufwrite16b(buf, baseArrayOffset);
+	
 	// Write the markArray
-	bufseek(buf, offset);
-	size_t markArrayStart = buf->cursor;
+	bufseek(buf, markArrayOffset);
 	bufwrite16b(buf, subtable->marks->numGlyphs);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		bufwrite16b(buf, subtable->markArray->records[j].markClass);
@@ -282,13 +295,13 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 		int position = getPositon(subtable->markArray->records[j].anchor);
 		HASH_FIND_INT(agh, &position, s);
 		if (s) {
-			bufwrite16b(buf, offset + s->index * 6 + markArraySize + baseArraySize - markArrayStart);
+			bufwrite16b(buf, anchorDirectoryOffset + s->index * 6 - markArrayOffset);
 		} else {
 			bufwrite16b(buf, 0);
 		}
 	}
 
-	size_t baseArrayStart = buf->cursor;
+	bufseek(buf, baseArrayOffset);
 	bufwrite16b(buf, subtable->bases->numGlyphs);
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
@@ -297,7 +310,7 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 				int position = getPositon(subtable->baseArray[j][k]);
 				HASH_FIND_INT(agh, &position, s);
 				if (s) {
-					bufwrite16b(buf, offset + s->index * 6 + markArraySize + baseArraySize - baseArrayStart);
+					bufwrite16b(buf, anchorDirectoryOffset + s->index * 6 - baseArrayOffset);
 				} else {
 					bufwrite16b(buf, 0);
 				}
@@ -306,6 +319,8 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 			}
 		}
 	}
+
+	bufseek(buf, anchorDirectoryOffset);
 
 	HASH_ITER(hh, agh, s, tmp) {
 		bufwrite16b(buf, 1);
