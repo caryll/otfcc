@@ -356,7 +356,6 @@ static void consolidateLigArray(caryll_font *font, table_otl *table, sds lookupN
 		bases->glyphs[k].gid = s->gid;
 		bases->glyphs[k].name = s->name;
 		ligArray[k] = s->ligAttachment;
-		fprintf(stderr, "%04x %s %d\n", s->gid, s->name, s->ligAttachment->componentCount);
 		k++;
 		HASH_DEL(hm, s);
 		free(s);
