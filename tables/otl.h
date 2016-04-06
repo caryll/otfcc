@@ -42,6 +42,13 @@ typedef struct {
 	uint16_t *classes;
 } otl_classdef;
 
+typedef struct {
+	int16_t dx;
+	int16_t dy;
+	int16_t dWidth;
+	int16_t dHeight;
+} otl_position_value;
+
 // GSUB subtable formats
 typedef struct {
 	otl_coverage *from;
@@ -80,6 +87,11 @@ typedef struct {
 } subtable_chaining;
 
 // GPOS subtable formats
+typedef struct {
+	otl_coverage *coverage;
+	otl_position_value *values;
+} subtable_gpos_single;
+
 typedef struct {
 	bool present;
 	int16_t x;
@@ -127,6 +139,7 @@ typedef union _otl_subtable {
 	subtable_gsub_multi gsub_multi;
 	subtable_gsub_ligature gsub_ligature;
 	subtable_chaining chaining;
+	subtable_gpos_single gpos_single;
 	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_gpos_mark_to_ligature gpos_mark_to_ligature;
 	subtable_extend extend;
@@ -187,6 +200,7 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 #include "otl-gsub-single.h"
 #include "otl-gsub-multi.h"
 #include "otl-gsub-ligature.h"
+#include "otl-gpos-single.h"
 #include "otl-gpos-mark-to-single.h"
 #include "otl-gpos-mark-to-ligature.h"
 #include "otl-chaining.h"

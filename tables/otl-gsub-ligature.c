@@ -84,38 +84,29 @@ FAIL:
 
 json_value *caryll_gsub_ligature_to_json(otl_subtable *_subtable) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
-	json_value *st = json_object_new(2);
-	json_value *_maps = json_array_new(subtable->to->numGlyphs);
+	json_value *st = json_object_new(subtable->to->numGlyphs);
 	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
-		json_value *_map = json_object_new(2);
-		json_object_push(_map, "to", json_string_new(subtable->to->glyphs[j].name));
-		json_object_push(_map, "from", caryll_coverage_to_json(subtable->from[j]));
-		json_array_push(_maps, preserialize(_map));
+		json_object_push(st, subtable->to->glyphs[j].name, caryll_coverage_to_json(subtable->from[j]));
 	}
-	json_object_push(st, "maps", _maps);
 	return st;
 }
 
 otl_subtable *caryll_gsub_ligature_from_json(json_value *_subtable) {
-	json_value *_maps = json_obj_get_type(_subtable, "maps", json_array);
-	if (!_maps) { return NULL; }
 	otl_subtable *_st;
 	NEW(_st);
 	subtable_gsub_ligature *st = &(_st->gsub_ligature);
 	NEW(st->to);
-	st->to->numGlyphs = _maps->u.array.length;
+	st->to->numGlyphs = _subtable->u.object.length;
 	NEW_N(st->to->glyphs, st->to->numGlyphs);
 	NEW_N(st->from, st->to->numGlyphs);
 
 	uint16_t jj = 0;
 	for (uint16_t k = 0; k < st->to->numGlyphs; k++) {
-		json_value *_map = _maps->u.array.values[k];
-		if (!_map || _map->type != json_object) continue;
-		json_value *_from = json_obj_get_type(_map, "from", json_array);
-		json_value *_to = json_obj_get_type(_map, "to", json_string);
-		if (!_from || !_to) continue;
+		json_value *_from = _subtable->u.object.values[k].value;
+		if (!_from || _from->type != json_array) continue;
+		st->to->glyphs[jj].name =
+		    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length);
 		st->from[jj] = caryll_coverage_from_json(_from);
-		st->to->glyphs[jj].name = sdsnewlen(_to->u.string.ptr, _to->u.string.length);
 		jj += 1;
 	}
 	st->to->numGlyphs = jj;

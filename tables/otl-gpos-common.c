@@ -44,3 +44,20 @@ FAIL:
 	DELETE(otl_delete_mark_array, array);
 	return NULL;
 }
+
+json_value *gpos_value_to_json(otl_position_value value) {
+	json_value *v = json_object_new(4);
+	if (value.dx) json_object_push(v, "dx", json_integer_new(value.dx));
+	if (value.dy) json_object_push(v, "dy", json_integer_new(value.dy));
+	if (value.dWidth) json_object_push(v, "dWidth", json_integer_new(value.dWidth));
+	if (value.dHeight) json_object_push(v, "dHeight", json_integer_new(value.dHeight));
+	return preserialize(v);
+}
+otl_position_value gpos_value_from_json(json_value *pos) {
+	otl_position_value v = {0, 0, 0, 0};
+	v.dx = json_obj_getnum(pos, "dx");
+	v.dy = json_obj_getnum(pos, "dy");
+	v.dWidth = json_obj_getnum(pos, "dWidth");
+	v.dHeight = json_obj_getnum(pos, "dHeight");
+	return v;
+}

@@ -59,22 +59,35 @@ OK:
 }
 
 json_value *caryll_gsub_single_to_json(otl_subtable *_subtable) {
-	json_value *st = json_object_new(2);
-	json_object_push(st, "from", caryll_coverage_to_json(_subtable->gsub_single.from));
-	json_object_push(st, "to", caryll_coverage_to_json(_subtable->gsub_single.to));
+	subtable_gsub_single *subtable = &(_subtable->gsub_single);
+	json_value *st = json_object_new(subtable->from->numGlyphs);
+	for (uint16_t j = 0; j < subtable->from->numGlyphs && j < subtable->from->numGlyphs; j++) {
+		json_object_push(st, subtable->from->glyphs[j].name, json_string_new(subtable->to->glyphs[j].name));
+	}
 	return st;
 }
 
 otl_subtable *caryll_gsub_single_from_json(json_value *_subtable) {
-	json_value *_from = json_obj_get_type(_subtable, "from", json_array);
-	json_value *_to = json_obj_get_type(_subtable, "to", json_array);
-	if (!_from || !_to) return NULL;
-
-	otl_subtable *st;
-	NEW(st);
-	st->gsub_single.from = caryll_coverage_from_json(_from);
-	st->gsub_single.to = caryll_coverage_from_json(_to);
-	return st;
+	otl_subtable *_st;
+	NEW(_st);
+	subtable_gsub_single *subtable = &(_st->gsub_single);
+	NEW(subtable->from);
+	NEW(subtable->to);
+	subtable->from->numGlyphs = subtable->to->numGlyphs = _subtable->u.object.length;
+	NEW_N(subtable->from->glyphs, subtable->from->numGlyphs);
+	NEW_N(subtable->to->glyphs, subtable->to->numGlyphs);
+	uint16_t jj = 0;
+	for (uint16_t j = 0; j < _subtable->u.object.length; j++) {
+		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_string) {
+			subtable->from->glyphs[jj].name =
+			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
+			subtable->to->glyphs[jj].name = sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
+			                                          _subtable->u.object.values[j].value->u.string.length);
+			jj++;
+		}
+	}
+	subtable->from->numGlyphs = subtable->to->numGlyphs = jj;
+	return _st;
 };
 
 caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {

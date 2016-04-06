@@ -1,5 +1,32 @@
 #include "otl.h"
 
+typedef struct {
+	char *name;
+	otl_lookup *lookup;
+	UT_hash_handle hh;
+} lookup_hash;
+
+typedef struct {
+	char *name;
+	otl_feature *feature;
+	UT_hash_handle hh;
+} feature_hash;
+
+typedef struct {
+	char *name;
+	otl_language_system *script;
+	UT_hash_handle hh;
+} script_hash;
+
+void caryll_delete_lookup(otl_lookup *lookup);
+otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                       otl_lookup_type lookupType);
+static INLINE void _lookup_to_json(otl_lookup *lookup, json_value *dump);
+static INLINE bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh);
+static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf, uint32_t **subtableOffsets,
+                                   uint32_t *lastOffset);
+
+// COMMON PART
 table_otl *caryll_new_otl() {
 	table_otl *table;
 	NEW(table);
@@ -14,28 +41,6 @@ table_otl *caryll_new_otl() {
 void caryll_delete_coverage(otl_coverage *coverage) {
 	if (coverage && coverage->glyphs) free(coverage->glyphs);
 	if (coverage) free(coverage);
-}
-
-#define DECLARE_DELETE_TYPE(type, fn)                                                                                  \
-	case type:                                                                                                         \
-		fn(lookup);                                                                                                    \
-		break;
-void caryll_delete_lookup(otl_lookup *lookup) {
-	if (!lookup) return;
-	switch (lookup->type) {
-		DECLARE_DELETE_TYPE(otl_type_gsub_single, caryll_delete_gsub_single);
-		DECLARE_DELETE_TYPE(otl_type_gsub_multiple, caryll_delete_gsub_multi);
-		DECLARE_DELETE_TYPE(otl_type_gsub_alternate, caryll_delete_gsub_multi);
-		DECLARE_DELETE_TYPE(otl_type_gsub_ligature, caryll_delete_gsub_ligature);
-		DECLARE_DELETE_TYPE(otl_type_gsub_chaining, caryll_delete_chaining);
-		DECLARE_DELETE_TYPE(otl_type_gpos_chaining, caryll_delete_chaining);
-		DECLARE_DELETE_TYPE(otl_type_gpos_mark_to_base, caryll_delete_gpos_mark_to_single);
-		DECLARE_DELETE_TYPE(otl_type_gpos_mark_to_mark, caryll_delete_gpos_mark_to_single);
-		DECLARE_DELETE_TYPE(otl_type_gpos_mark_to_ligature, caryll_delete_gpos_mark_to_ligature);
-		default:
-			free(lookup);
-			break;
-	}
 }
 
 void caryll_delete_otl(table_otl *table) {
@@ -368,35 +373,6 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 	return cd;
 }
 
-otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                       otl_lookup_type lookupType) {
-	switch (lookupType) {
-		case otl_type_gsub_single:
-			return caryll_read_gsub_single(data, tableLength, subtableOffset);
-		case otl_type_gsub_multiple:
-		case otl_type_gsub_alternate:
-			return caryll_read_gsub_multi(data, tableLength, subtableOffset);
-		case otl_type_gsub_ligature:
-			return caryll_read_gsub_ligature(data, tableLength, subtableOffset);
-		case otl_type_gsub_chaining:
-		case otl_type_gpos_chaining:
-			return caryll_read_chaining(data, tableLength, subtableOffset);
-		case otl_type_gsub_context:
-		case otl_type_gpos_context:
-			return caryll_read_contextual(data, tableLength, subtableOffset);
-		case otl_type_gpos_mark_to_base:
-		case otl_type_gpos_mark_to_mark:
-			return caryll_read_gpos_mark_to_single(data, tableLength, subtableOffset);
-		case otl_type_gpos_mark_to_ligature:
-			return caryll_read_gpos_mark_to_ligature(data, tableLength, subtableOffset);
-		case otl_type_gsub_extend:
-		case otl_type_gpos_extend:
-			return caryll_read_otl_extend(data, tableLength, subtableOffset, lookupType);
-		default:
-			return NULL;
-	}
-}
-
 void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup) {
 	lookup->flags = read_16u(data + lookup->_offset + 2);
 	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
@@ -486,38 +462,7 @@ static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, j
 		json_object_push(dump, "subtables", subtables);
 	}
 }
-#define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
-void caryll_lookup_to_json(otl_lookup *lookup, json_value *dump) {
-	char *tableNames[] = {[otl_type_unknown] = "unknown",
-	                      [otl_type_gsub_unknown] = "gsub_unknown",
-	                      [otl_type_gsub_single] = "gsub_single",
-	                      [otl_type_gsub_multiple] = "gsub_multiple",
-	                      [otl_type_gsub_alternate] = "gsub_alternate",
-	                      [otl_type_gsub_ligature] = "gsub_ligature",
-	                      [otl_type_gsub_context] = "gsub_context",
-	                      [otl_type_gsub_chaining] = "gsub_chaining",
-	                      [otl_type_gsub_extend] = "gsub_extend",
-	                      [otl_type_gsub_reverse] = "gsub_reverse",
-	                      [otl_type_gpos_unknown] = "gpos_unknown",
-	                      [otl_type_gpos_single] = "gpos_single",
-	                      [otl_type_gpos_pair] = "gpos_pair",
-	                      [otl_type_gpos_cursive] = "gpos_cursive",
-	                      [otl_type_gpos_mark_to_base] = "gpos_mark_to_base",
-	                      [otl_type_gpos_mark_to_ligature] = "gpos_mark_to_ligature",
-	                      [otl_type_gpos_mark_to_mark] = "gpos_mark_to_mark",
-	                      [otl_type_gpos_context] = "gpos_context",
-	                      [otl_type_gpos_chaining] = "gpos_chaining",
-	                      [otl_type_gpos_extend] = "gpos_extend"};
-	LOOKUP_DUMPER(otl_type_gsub_single, caryll_gsub_single_to_json);
-	LOOKUP_DUMPER(otl_type_gsub_multiple, caryll_gsub_multi_to_json);
-	LOOKUP_DUMPER(otl_type_gsub_alternate, caryll_gsub_multi_to_json);
-	LOOKUP_DUMPER(otl_type_gsub_ligature, caryll_gsub_ligature_to_json);
-	LOOKUP_DUMPER(otl_type_gsub_chaining, caryll_chaining_to_json);
-	LOOKUP_DUMPER(otl_type_gpos_chaining, caryll_chaining_to_json);
-	LOOKUP_DUMPER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_to_json);
-	LOOKUP_DUMPER(otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_to_json);
-	LOOKUP_DUMPER(otl_type_gpos_mark_to_ligature, caryll_gpos_mark_to_ligature_to_json);
-}
+
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
 	json_value *otl = json_object_new(3);
@@ -558,7 +503,7 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 		json_value *lookups = json_object_new(table->lookupCount);
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
 			json_value *lookup = json_object_new(5);
-			caryll_lookup_to_json(table->lookups[j], lookup);
+			_lookup_to_json(table->lookups[j], lookup);
 			json_object_push(lookups, table->lookups[j]->name, lookup);
 		}
 		json_object_push(otl, "lookups", lookups);
@@ -592,25 +537,7 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	return c;
 }
 
-typedef struct {
-	char *name;
-	otl_lookup *lookup;
-	UT_hash_handle hh;
-} lookup_hash;
-
-typedef struct {
-	char *name;
-	otl_feature *feature;
-	UT_hash_handle hh;
-} feature_hash;
-
-typedef struct {
-	char *name;
-	otl_language_system *script;
-	UT_hash_handle hh;
-} script_hash;
-
-static INLINE bool _declareLookupParser(char *lt, otl_lookup_type llt, otl_subtable *(*parser)(json_value *),
+static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl_subtable *(*parser)(json_value *),
                                         json_value *_lookup, char *lookupName, lookup_hash **lh) {
 	json_value *type = json_obj_get_type(_lookup, "type", json_string);
 	if (!type || strcmp(type->u.string.ptr, lt)) return false;
@@ -646,30 +573,6 @@ static INLINE bool _declareLookupParser(char *lt, otl_lookup_type llt, otl_subta
 	return true;
 }
 
-#define LOOKUP_PARSER(lt, llt, parser)                                                                                 \
-	if (!parsed) { parsed = _declareLookupParser(lt, llt, parser, lookup, lookupName, &lh); }
-static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
-	lookup_hash *lh = NULL;
-	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
-		if (lookups->u.object.values[j].value->type == json_object) {
-			char *lookupName = lookups->u.object.values[j].name;
-			json_value *lookup = lookups->u.object.values[j].value;
-			bool parsed = false;
-			LOOKUP_PARSER("gsub_single", otl_type_gsub_single, caryll_gsub_single_from_json);
-			LOOKUP_PARSER("gsub_multiple", otl_type_gsub_multiple, caryll_gsub_multi_from_json);
-			LOOKUP_PARSER("gsub_alternate", otl_type_gsub_alternate, caryll_gsub_multi_from_json);
-			LOOKUP_PARSER("gsub_ligature", otl_type_gsub_ligature, caryll_gsub_ligature_from_json);
-			LOOKUP_PARSER("gsub_chaining", otl_type_gsub_chaining, caryll_chaining_from_json);
-			LOOKUP_PARSER("gpos_chaining", otl_type_gpos_chaining, caryll_chaining_from_json);
-			LOOKUP_PARSER("gpos_mark_to_base", otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_from_json);
-			LOOKUP_PARSER("gpos_mark_to_mark", otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_from_json);
-			LOOKUP_PARSER("gpos_mark_to_ligature", otl_type_gpos_mark_to_ligature, caryll_gpos_mark_to_ligature_from_json);
-
-			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
-		}
-	}
-	return lh;
-}
 static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag) {
 	feature_hash *fh = NULL;
 	for (uint32_t j = 0; j < features->u.object.length; j++) {
@@ -775,6 +678,18 @@ static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, fea
 		}
 	}
 	return sh;
+}
+
+static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
+	lookup_hash *lh = NULL;
+	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
+		if (lookups->u.object.values[j].value->type == json_object) {
+			char *lookupName = lookups->u.object.values[j].name;
+			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, &lh);
+			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
+		}
+	}
+	return lh;
 }
 
 table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, const char *tag) {
@@ -931,9 +846,6 @@ bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subta
 }
 
 // When writing lookups, otfcc will try to maintain everything correctly.
-#define DECLARE_LOOKUP_WRITER(type, fn)                                                                                \
-	if (!written)                                                                                                      \
-		written = _declare_lookup_writer(type, fn, table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
 static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	caryll_buffer *bufl = bufnew();
 	caryll_buffer *bufsts = bufnew();
@@ -945,17 +857,7 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	uint32_t lastOffset = 0;
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
 		subtableOffsets[j] = NULL;
-		bool written = false;
-		DECLARE_LOOKUP_WRITER(otl_type_gsub_single, caryll_write_gsub_single_subtable);
-		DECLARE_LOOKUP_WRITER(otl_type_gsub_multiple, caryll_write_gsub_multi_subtable);
-		DECLARE_LOOKUP_WRITER(otl_type_gsub_alternate, caryll_write_gsub_multi_subtable);
-		DECLARE_LOOKUP_WRITER(otl_type_gsub_ligature, caryll_write_gsub_ligature_subtable);
-		DECLARE_LOOKUP_WRITER(otl_type_gsub_chaining, caryll_write_chaining);
-		DECLARE_LOOKUP_WRITER(otl_type_gpos_chaining, caryll_write_chaining);
-		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_base, caryll_write_gpos_mark_to_single);
-		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_mark, caryll_write_gpos_mark_to_single);
-		DECLARE_LOOKUP_WRITER(otl_type_gpos_mark_to_ligature, caryll_write_gpos_mark_to_ligature);
-		lookupWritten[j] = written;
+		lookupWritten[j] = _write_subtable(table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
 	}
 	// estimate the length of headers
 	size_t headerSize = 2 + 2 * table->lookupCount;
@@ -1214,4 +1116,127 @@ caryll_buffer *caryll_write_otl(table_otl *table) {
 		bufseek(buf, cp);
 	}
 	return buf;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//                                    CONFIG PART                                     //
+////////////////////////////////////////////////////////////////////////////////////////
+
+#define DELETE_TYPE(type, fn)                                                                                          \
+	case type:                                                                                                         \
+		fn(lookup);                                                                                                    \
+		break;
+void caryll_delete_lookup(otl_lookup *lookup) {
+	if (!lookup) return;
+	switch (lookup->type) {
+		DELETE_TYPE(otl_type_gsub_single, caryll_delete_gsub_single);
+		DELETE_TYPE(otl_type_gsub_multiple, caryll_delete_gsub_multi);
+		DELETE_TYPE(otl_type_gsub_alternate, caryll_delete_gsub_multi);
+		DELETE_TYPE(otl_type_gsub_ligature, caryll_delete_gsub_ligature);
+		DELETE_TYPE(otl_type_gsub_chaining, caryll_delete_chaining);
+		DELETE_TYPE(otl_type_gpos_chaining, caryll_delete_chaining);
+		DELETE_TYPE(otl_type_gpos_mark_to_base, caryll_delete_gpos_mark_to_single);
+		DELETE_TYPE(otl_type_gpos_mark_to_mark, caryll_delete_gpos_mark_to_single);
+		DELETE_TYPE(otl_type_gpos_mark_to_ligature, caryll_delete_gpos_mark_to_ligature);
+		default:
+			free(lookup);
+			break;
+	}
+}
+
+#define LOOKUP_READER(llt, fn)                                                                                         \
+	case llt:                                                                                                          \
+		return fn(data, tableLength, subtableOffset);
+otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                       otl_lookup_type lookupType) {
+	switch (lookupType) {
+		LOOKUP_READER(otl_type_gsub_single, caryll_read_gsub_single);
+		LOOKUP_READER(otl_type_gsub_multiple, caryll_read_gsub_multi);
+		LOOKUP_READER(otl_type_gsub_alternate, caryll_read_gsub_multi);
+		LOOKUP_READER(otl_type_gsub_ligature, caryll_read_gsub_ligature);
+		LOOKUP_READER(otl_type_gsub_chaining, caryll_read_chaining);
+		LOOKUP_READER(otl_type_gpos_chaining, caryll_read_chaining);
+		LOOKUP_READER(otl_type_gsub_context, caryll_read_contextual);
+		LOOKUP_READER(otl_type_gpos_context, caryll_read_contextual);
+		LOOKUP_READER(otl_type_gpos_single, caryll_read_gpos_single);
+		LOOKUP_READER(otl_type_gpos_mark_to_base, caryll_read_gpos_mark_to_single);
+		LOOKUP_READER(otl_type_gpos_mark_to_mark, caryll_read_gpos_mark_to_single);
+		LOOKUP_READER(otl_type_gpos_mark_to_ligature, caryll_read_gpos_mark_to_ligature);
+		case otl_type_gsub_extend:
+		case otl_type_gpos_extend:
+			return caryll_read_otl_extend(data, tableLength, subtableOffset, lookupType);
+		default:
+			return NULL;
+	}
+}
+
+static const char *tableNames[] = {[otl_type_unknown] = "unknown",
+                                   [otl_type_gsub_unknown] = "gsub_unknown",
+                                   [otl_type_gsub_single] = "gsub_single",
+                                   [otl_type_gsub_multiple] = "gsub_multiple",
+                                   [otl_type_gsub_alternate] = "gsub_alternate",
+                                   [otl_type_gsub_ligature] = "gsub_ligature",
+                                   [otl_type_gsub_context] = "gsub_context",
+                                   [otl_type_gsub_chaining] = "gsub_chaining",
+                                   [otl_type_gsub_extend] = "gsub_extend",
+                                   [otl_type_gsub_reverse] = "gsub_reverse",
+                                   [otl_type_gpos_unknown] = "gpos_unknown",
+                                   [otl_type_gpos_single] = "gpos_single",
+                                   [otl_type_gpos_pair] = "gpos_pair",
+                                   [otl_type_gpos_cursive] = "gpos_cursive",
+                                   [otl_type_gpos_mark_to_base] = "gpos_mark_to_base",
+                                   [otl_type_gpos_mark_to_ligature] = "gpos_mark_to_ligature",
+                                   [otl_type_gpos_mark_to_mark] = "gpos_mark_to_mark",
+                                   [otl_type_gpos_context] = "gpos_context",
+                                   [otl_type_gpos_chaining] = "gpos_chaining",
+                                   [otl_type_gpos_extend] = "gpos_extend"};
+
+#define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
+static INLINE void _lookup_to_json(otl_lookup *lookup, json_value *dump) {
+	LOOKUP_DUMPER(otl_type_gsub_single, caryll_gsub_single_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_multiple, caryll_gsub_multi_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_alternate, caryll_gsub_multi_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_ligature, caryll_gsub_ligature_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_chaining, caryll_chaining_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_chaining, caryll_chaining_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_single, caryll_gpos_single_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_mark_to_ligature, caryll_gpos_mark_to_ligature_to_json);
+}
+
+#define LOOKUP_PARSER(llt, parser)                                                                                     \
+	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, lh); }
+
+static INLINE bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh) {
+	bool parsed = false;
+	LOOKUP_PARSER(otl_type_gsub_single, caryll_gsub_single_from_json);
+	LOOKUP_PARSER(otl_type_gsub_multiple, caryll_gsub_multi_from_json);
+	LOOKUP_PARSER(otl_type_gsub_alternate, caryll_gsub_multi_from_json);
+	LOOKUP_PARSER(otl_type_gsub_ligature, caryll_gsub_ligature_from_json);
+	LOOKUP_PARSER(otl_type_gsub_chaining, caryll_chaining_from_json);
+	LOOKUP_PARSER(otl_type_gpos_single, caryll_gpos_single_from_json);
+	LOOKUP_PARSER(otl_type_gpos_chaining, caryll_chaining_from_json);
+	LOOKUP_PARSER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_from_json);
+	LOOKUP_PARSER(otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_from_json);
+	LOOKUP_PARSER(otl_type_gpos_mark_to_ligature, caryll_gpos_mark_to_ligature_from_json);
+	return parsed;
+}
+
+#define LOOKUP_WRITER(type, fn)                                                                                        \
+	if (!written) written = _declare_lookup_writer(type, fn, lookup, buf, subtableOffsets, lastOffset);
+static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf, uint32_t **subtableOffsets,
+                                   uint32_t *lastOffset) {
+	bool written = false;
+	LOOKUP_WRITER(otl_type_gsub_single, caryll_write_gsub_single_subtable);
+	LOOKUP_WRITER(otl_type_gsub_multiple, caryll_write_gsub_multi_subtable);
+	LOOKUP_WRITER(otl_type_gsub_alternate, caryll_write_gsub_multi_subtable);
+	LOOKUP_WRITER(otl_type_gsub_ligature, caryll_write_gsub_ligature_subtable);
+	LOOKUP_WRITER(otl_type_gsub_chaining, caryll_write_chaining);
+	LOOKUP_WRITER(otl_type_gpos_single, caryll_write_gpos_single);
+	LOOKUP_WRITER(otl_type_gpos_chaining, caryll_write_chaining);
+	LOOKUP_WRITER(otl_type_gpos_mark_to_base, caryll_write_gpos_mark_to_single);
+	LOOKUP_WRITER(otl_type_gpos_mark_to_mark, caryll_write_gpos_mark_to_single);
+	LOOKUP_WRITER(otl_type_gpos_mark_to_ligature, caryll_write_gpos_mark_to_ligature);
+	return written;
 }

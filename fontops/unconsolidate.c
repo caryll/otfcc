@@ -141,6 +141,12 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 		case otl_type_gpos_chaining:
 			unconsolidate_gsub_chain(font, lookup, table);
 			break;
+		case otl_type_gpos_single:
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				if (lookup->subtables[j]) {
+					caryll_name_coverage(font, lookup->subtables[j]->gpos_single.coverage);
+				}
+			break;
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
@@ -171,7 +177,7 @@ void caryll_name_features(caryll_font *font) {
 	if (font->glyph_order && font->GPOS) {
 		for (uint32_t j = 0; j < font->GPOS->lookupCount; j++) {
 			otl_lookup *lookup = font->GPOS->lookups[j];
-			caryll_name_lookup(font, lookup, font->GSUB);
+			caryll_name_lookup(font, lookup, font->GPOS);
 		}
 	}
 }

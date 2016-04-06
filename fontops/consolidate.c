@@ -233,6 +233,52 @@ static bool consolidate_gsub_ligature(caryll_font *font, table_otl *table, otl_s
 }
 
 typedef struct {
+	int fromid;
+	sds fromname;
+	otl_position_value v;
+	UT_hash_handle hh;
+} gpos_single_hash;
+static INLINE int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) { return a->fromid - b->fromid; }
+static bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+	subtable_gpos_single *subtable = &(_subtable->gpos_single);
+	consolidate_coverage(font, subtable->coverage, lookupName);
+	gpos_single_hash *h = NULL;
+	for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
+		if (subtable->coverage->glyphs[k].name) {
+			gpos_single_hash *s;
+			int fromid = subtable->coverage->glyphs[k].gid;
+			HASH_FIND_INT(h, &fromid, s);
+			if (s) {
+				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a single substitution /%s.\n",
+				        subtable->coverage->glyphs[k].name);
+			} else {
+				NEW(s);
+				s->fromid = subtable->coverage->glyphs[k].gid;
+				s->fromname = subtable->coverage->glyphs[k].name;
+				s->v = subtable->values[k];
+				HASH_ADD_INT(h, fromid, s);
+			}
+		}
+	}
+	HASH_SORT(h, gpos_by_from_id);
+
+	subtable->coverage->numGlyphs = HASH_COUNT(h);
+	{
+		gpos_single_hash *s, *tmp;
+		uint16_t j = 0;
+		HASH_ITER(hh, h, s, tmp) {
+			subtable->coverage->glyphs[j].gid = s->fromid;
+			subtable->coverage->glyphs[j].name = s->fromname;
+			subtable->values[j] = s->v;
+			j++;
+			HASH_DEL(h, s);
+			free(s);
+		}
+	}
+	return false;
+}
+
+typedef struct {
 	int gid;
 	sds name;
 	otl_mark_record markrec;
@@ -380,7 +426,7 @@ static bool consolidate_mark_to_ligature(caryll_font *font, table_otl *table, ot
 	return false;
 }
 
-static bool consolidate_gsub_chaining(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+static bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	otl_chaining_rule *rule = subtable->rules[0];
 	for (uint16_t j = 0; j < rule->matchCount; j++) {
@@ -403,8 +449,8 @@ static bool consolidate_gsub_chaining(caryll_font *font, table_otl *table, otl_s
 				}
 		}
 		if (!foundLookup && rule->apply[j].lookupName) {
-			// fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookupName,
-			//        lookupName);
+			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookupName,
+			        lookupName);
 			DELETE(sdsfree, rule->apply[j].lookupName);
 		}
 	}
@@ -672,8 +718,9 @@ void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *
 	declare_consolidate_type(otl_type_gsub_multiple, consolidate_gsub_multi, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_alternate, consolidate_gsub_multi, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_ligature, consolidate_gsub_ligature, font, table, lookup);
-	declare_consolidate_type(otl_type_gsub_chaining, consolidate_gsub_chaining, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_chaining, consolidate_gsub_chaining, font, table, lookup);
+	declare_consolidate_type(otl_type_gsub_chaining, consolidate_chaining, font, table, lookup);
+	declare_consolidate_type(otl_type_gpos_single, consolidate_gpos_single, font, table, lookup);
+	declare_consolidate_type(otl_type_gpos_chaining, consolidate_chaining, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_mark_to_base, consolidate_mark_to_single, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_mark_to_mark, consolidate_mark_to_single, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature, font, table, lookup);
