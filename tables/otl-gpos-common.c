@@ -6,9 +6,12 @@ void otl_delete_mark_array(otl_mark_array *array) {
 		free(array);
 	};
 }
-
+otl_anchor otl_anchor_absent() {
+	otl_anchor anchor = {.present = false, .x = 0, .y = 0};
+	return anchor;
+}
 otl_anchor otl_read_anchor(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_anchor anchor = {.x = 0, .y = 0};
+	otl_anchor anchor = {.present = false, .x = 0, .y = 0};
 	checkLength(offset + 6);
 	anchor.present = true;
 	anchor.x = read_16s(data + offset + 2);
@@ -18,6 +21,24 @@ FAIL:
 	anchor.present = false;
 	anchor.x = 0;
 	anchor.y = 0;
+	return anchor;
+}
+json_value *otl_anchor_to_json(otl_anchor a) {
+	if (a.present) {
+		json_value *v = json_object_new(2);
+		json_object_push(v, "x", json_integer_new(a.x));
+		json_object_push(v, "y", json_integer_new(a.y));
+		return v;
+	} else {
+		return json_null_new();
+	}
+}
+otl_anchor otl_anchor_from_json(json_value *v) {
+	otl_anchor anchor = {.present = false, .x = 0, .y = 0};
+	if (!v || v->type != json_object) return anchor;
+	anchor.present = true;
+	anchor.x = json_obj_getnum_fallback(v, "x", 0);
+	anchor.y = json_obj_getnum_fallback(v, "y", 0);
 	return anchor;
 }
 

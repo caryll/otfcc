@@ -51,6 +51,7 @@ TABLE_OBJECTS = $(TARGETDIR)/table-head.o $(TARGETDIR)/table-hhea.o $(TARGETDIR)
 	$(TARGETDIR)/table-otl-gsub-single.o $(TARGETDIR)/table-otl-gsub-multi.o \
 	$(TARGETDIR)/table-otl-gsub-ligature.o $(TARGETDIR)/table-otl-chaining.o \
 	$(TARGETDIR)/table-otl-gpos-common.o $(TARGETDIR)/table-otl-gpos-single.o \
+	$(TARGETDIR)/table-otl-gpos-cursive.o \
 	$(TARGETDIR)/table-otl-gpos-mark-to-single.o $(TARGETDIR)/table-otl-gpos-mark-to-ligature.o
 
 FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o $(TARGETDIR)/fontop-stat.o

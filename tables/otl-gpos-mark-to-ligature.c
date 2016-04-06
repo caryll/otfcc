@@ -152,9 +152,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_ligature *subta
 		subtable->marks->glyphs[j].name = sdsnewlen(gname, _marks->u.object.values[j].name_length);
 
 		subtable->markArray->records[j].markClass = 0;
-		subtable->markArray->records[j].anchor.present = false;
-		subtable->markArray->records[j].anchor.x = 0;
-		subtable->markArray->records[j].anchor.y = 0;
+		subtable->markArray->records[j].anchor = otl_anchor_absent();
 
 		if (!anchorRecord || anchorRecord->type != json_object) continue;
 		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
@@ -200,9 +198,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subta
 			json_value *_componentRecord = baseRecord->u.array.values[k];
 			NEW_N(subtable->ligArray[j]->anchors[k], classCount);
 			for (uint16_t m = 0; m < classCount; m++) {
-				subtable->ligArray[j]->anchors[k][m].present = false;
-				subtable->ligArray[j]->anchors[k][m].x = 0;
-				subtable->ligArray[j]->anchors[k][m].y = 0;
+				subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent();
 			}
 			if (!_componentRecord || _componentRecord->type != json_object) { continue; }
 			for (uint16_t m = 0; m < _componentRecord->u.object.length; m++) {
@@ -211,13 +207,9 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subta
 				classname_hash *s;
 				HASH_FIND_STR(*h, className, s);
 				if (!s) goto NEXT;
+				subtable->ligArray[j]->anchors[k][s->classID] =
+				    otl_anchor_from_json(_componentRecord->u.object.values[m].value);
 
-				json_value *anchor = _componentRecord->u.object.values[m].value;
-				if (!anchor || anchor->type != json_object) goto NEXT;
-
-				subtable->ligArray[j]->anchors[k][s->classID].present = true;
-				subtable->ligArray[j]->anchors[k][s->classID].x = json_obj_getnum(anchor, "x");
-				subtable->ligArray[j]->anchors[k][s->classID].y = json_obj_getnum(anchor, "y");
 			NEXT:
 				sdsfree(className);
 			}
@@ -245,51 +237,20 @@ otl_subtable *caryll_gpos_mark_to_ligature_from_json(json_value *_subtable) {
 	return st;
 }
 
-typedef struct {
-	int position;
-	int x;
-	int y;
-	uint16_t index;
-	UT_hash_handle hh;
-} anchor_aggeration_hash;
-static INLINE int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
-static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) { return a->index - b->index; }
-
 caryll_buffer *caryll_write_gpos_mark_to_ligature(otl_subtable *_subtable) {
 	caryll_buffer *buf = bufnew();
 	subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
 
-	// we will aggerate these anchors to reduce subtable size as more as possible
+	// we will aggerate these anchors to reduce subtable size as more as
+	// possible
 	anchor_aggeration_hash *agh = NULL, *s, *tmp;
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		if (subtable->markArray->records[j].anchor.present) {
-			int position = getPositon(subtable->markArray->records[j].anchor);
-			HASH_FIND_INT(agh, &position, s);
-			if (!s) {
-				NEW(s);
-				s->position = position;
-				s->x = subtable->markArray->records[j].anchor.x;
-				s->y = subtable->markArray->records[j].anchor.y;
-				s->index = HASH_COUNT(agh);
-				HASH_ADD_INT(agh, position, s);
-			}
-		}
+		ANCHOR_AGGERATOR_PUSH(agh, subtable->markArray->records[j].anchor);
 	}
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			for (uint16_t m = 0; m < subtable->classCount; m++) {
-				if (subtable->ligArray[j]->anchors[k][m].present) {
-					int position = getPositon(subtable->ligArray[j]->anchors[k][m]);
-					HASH_FIND_INT(agh, &position, s);
-					if (!s) {
-						NEW(s);
-						s->position = position;
-						s->x = subtable->ligArray[j]->anchors[k][m].x;
-						s->y = subtable->ligArray[j]->anchors[k][m].y;
-						s->index = HASH_COUNT(agh);
-						HASH_ADD_INT(agh, position, s);
-					}
-				}
+				ANCHOR_AGGERATOR_PUSH(agh, subtable->ligArray[j]->anchors[k][m]);
 			}
 		}
 	}

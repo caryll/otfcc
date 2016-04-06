@@ -143,9 +143,11 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 			break;
 		case otl_type_gpos_single:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					caryll_name_coverage(font, lookup->subtables[j]->gpos_single.coverage);
-				}
+				if (lookup->subtables[j]) { caryll_name_coverage(font, lookup->subtables[j]->gpos_single.coverage); }
+			break;
+		case otl_type_gpos_cursive:
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				if (lookup->subtables[j]) { caryll_name_coverage(font, lookup->subtables[j]->gpos_cursive.coverage); }
 			break;
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:

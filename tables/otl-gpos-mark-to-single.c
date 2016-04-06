@@ -122,9 +122,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtabl
 		subtable->marks->glyphs[j].name = sdsnewlen(gname, _marks->u.object.values[j].name_length);
 
 		subtable->markArray->records[j].markClass = 0;
-		subtable->markArray->records[j].anchor.present = false;
-		subtable->markArray->records[j].anchor.x = 0;
-		subtable->markArray->records[j].anchor.y = 0;
+		subtable->markArray->records[j].anchor = otl_anchor_absent();
 
 		if (!anchorRecord || anchorRecord->type != json_object) continue;
 		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
@@ -158,9 +156,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 		subtable->bases->glyphs[j].name = sdsnewlen(gname, _bases->u.object.values[j].name_length);
 		NEW_N(subtable->baseArray[j], classCount);
 		for (uint16_t k = 0; k < classCount; k++) {
-			subtable->baseArray[j][k].present = false;
-			subtable->baseArray[j][k].x = 0;
-			subtable->baseArray[j][k].y = 0;
+			subtable->baseArray[j][k] = otl_anchor_absent();
 		}
 		json_value *baseRecord = _bases->u.object.values[j].value;
 		if (!baseRecord || baseRecord->type != json_object) continue;
@@ -174,13 +170,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 				        className, gname);
 				goto NEXT;
 			}
-
-			json_value *anchor = baseRecord->u.object.values[k].value;
-			if (!anchor || anchor->type != json_object) goto NEXT;
-
-			subtable->baseArray[j][s->classID].present = true;
-			subtable->baseArray[j][s->classID].x = json_obj_getnum(anchor, "x");
-			subtable->baseArray[j][s->classID].y = json_obj_getnum(anchor, "y");
+			subtable->baseArray[j][s->classID] = otl_anchor_from_json(baseRecord->u.object.values[k].value);
 		NEXT:
 			sdsfree(className);
 		}
@@ -207,15 +197,6 @@ otl_subtable *caryll_gpos_mark_to_single_from_json(json_value *_subtable) {
 	return st;
 }
 
-typedef struct {
-	int position;
-	int x;
-	int y;
-	uint16_t index;
-	UT_hash_handle hh;
-} anchor_aggeration_hash;
-static INLINE int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
-static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) { return a->index - b->index; }
 caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 
 	/* structure :
@@ -238,33 +219,11 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 	// we will aggerate these anchors to reduce subtable size as more as possible
 	anchor_aggeration_hash *agh = NULL, *s, *tmp;
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		if (subtable->markArray->records[j].anchor.present) {
-			int position = getPositon(subtable->markArray->records[j].anchor);
-			HASH_FIND_INT(agh, &position, s);
-			if (!s) {
-				NEW(s);
-				s->position = position;
-				s->x = subtable->markArray->records[j].anchor.x;
-				s->y = subtable->markArray->records[j].anchor.y;
-				s->index = HASH_COUNT(agh);
-				HASH_ADD_INT(agh, position, s);
-			}
-		}
+		ANCHOR_AGGERATOR_PUSH(agh, subtable->markArray->records[j].anchor);
 	}
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
-			if (subtable->baseArray[j][k].present) {
-				int position = getPositon(subtable->baseArray[j][k]);
-				HASH_FIND_INT(agh, &position, s);
-				if (!s) {
-					NEW(s);
-					s->position = position;
-					s->x = subtable->baseArray[j][k].x;
-					s->y = subtable->baseArray[j][k].y;
-					s->index = HASH_COUNT(agh);
-					HASH_ADD_INT(agh, position, s);
-				}
-			}
+			ANCHOR_AGGERATOR_PUSH(agh, subtable->baseArray[j][k]);
 		}
 	}
 	HASH_SORT(agh, byAnchorIndex);
@@ -285,7 +244,7 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 	size_t anchorDirectoryOffset = covOffset + markArraySize + baseArraySize;
 	bufwrite16b(buf, markArrayOffset);
 	bufwrite16b(buf, baseArrayOffset);
-	
+
 	// Write the markArray
 	bufseek(buf, markArrayOffset);
 	bufwrite16b(buf, subtable->marks->numGlyphs);

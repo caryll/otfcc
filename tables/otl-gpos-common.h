@@ -4,7 +4,10 @@
 #include "otl.h"
 
 // anchors
+otl_anchor otl_anchor_absent();
 otl_anchor otl_read_anchor(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+json_value *otl_anchor_to_json(otl_anchor a);
+otl_anchor otl_anchor_from_json(json_value *v);
 
 // mark arrays
 void otl_delete_mark_array(otl_mark_array *array);
@@ -46,5 +49,31 @@ static INLINE void otl_write_position(caryll_buffer *buf, otl_position_value v, 
 }
 json_value *gpos_value_to_json(otl_position_value value);
 otl_position_value gpos_value_from_json(json_value *pos);
+
+// anchor aggerator
+typedef struct {
+	int position;
+	int x;
+	int y;
+	uint16_t index;
+	UT_hash_handle hh;
+} anchor_aggeration_hash;
+static INLINE int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
+static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) { return a->index - b->index; }
+
+#define ANCHOR_AGGERATOR_PUSH(agh, anchor)                                                                             \
+	if ((anchor).present) {                                                                                            \
+		anchor_aggeration_hash *s;                                                                                     \
+		int position = getPositon(anchor);                                                                             \
+		HASH_FIND_INT((agh), &position, s);                                                                            \
+		if (!s) {                                                                                                      \
+			NEW(s);                                                                                                    \
+			s->position = position;                                                                                    \
+			s->x = (anchor).x;                                                                                         \
+			s->y = (anchor).y;                                                                                         \
+			s->index = HASH_COUNT(agh);                                                                                \
+			HASH_ADD_INT(agh, position, s);                                                                            \
+		}                                                                                                              \
+	}
 
 #endif

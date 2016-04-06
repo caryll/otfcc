@@ -99,6 +99,13 @@ typedef struct {
 } otl_anchor;
 
 typedef struct {
+	otl_coverage *coverage;
+	otl_anchor *enter;
+	otl_anchor *exit;
+} subtable_gpos_cursive;
+
+
+typedef struct {
 	uint16_t markClass;
 	otl_anchor anchor;
 } otl_mark_record;
@@ -140,6 +147,7 @@ typedef union _otl_subtable {
 	subtable_gsub_ligature gsub_ligature;
 	subtable_chaining chaining;
 	subtable_gpos_single gpos_single;
+	subtable_gpos_cursive gpos_cursive;
 	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_gpos_mark_to_ligature gpos_mark_to_ligature;
 	subtable_extend extend;
@@ -201,6 +209,7 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 #include "otl-gsub-multi.h"
 #include "otl-gsub-ligature.h"
 #include "otl-gpos-single.h"
+#include "otl-gpos-cursive.h"
 #include "otl-gpos-mark-to-single.h"
 #include "otl-gpos-mark-to-ligature.h"
 #include "otl-chaining.h"
