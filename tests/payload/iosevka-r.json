@@ -22310,8 +22310,26 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
-                        "to": ["glyph129","glyph134","glyph134","glyph1186","glyph1191","glyph1196","glyph1201","glyph1268","glyph1274","glyph1280","glyph1286","glyph1390","glyph1457","glyph1463","glyph1516","glyph1585","glyph1696","glyph1702","glyph1900","glyph1906"]
+                        "dotlessi": "glyph129",
+                        "i": "glyph134",
+                        "uni0456": "glyph134",
+                        "igrave": "glyph1186",
+                        "iacute": "glyph1191",
+                        "icircumflex": "glyph1196",
+                        "idieresis": "glyph1201",
+                        "itilde": "glyph1268",
+                        "imacron": "glyph1274",
+                        "ibreve": "glyph1280",
+                        "iogonek": "glyph1286",
+                        "uni01D0": "glyph1390",
+                        "uni0209": "glyph1457",
+                        "uni020B": "glyph1463",
+                        "uni0268": "glyph1516",
+                        "uni0457": "glyph1585",
+                        "uni1E2D": "glyph1696",
+                        "uni1E2F": "glyph1702",
+                        "uni1EC9": "glyph1900",
+                        "uni1ECB": "glyph1906"
                     }
                 ]
             },
@@ -22320,8 +22338,26 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
-                        "to": ["glyph130","glyph135","glyph135","glyph1187","glyph1192","glyph1197","glyph1202","glyph1269","glyph1275","glyph1281","glyph1287","glyph1391","glyph1458","glyph1464","glyph1517","glyph1586","glyph1697","glyph1703","glyph1901","glyph1907"]
+                        "dotlessi": "glyph130",
+                        "i": "glyph135",
+                        "uni0456": "glyph135",
+                        "igrave": "glyph1187",
+                        "iacute": "glyph1192",
+                        "icircumflex": "glyph1197",
+                        "idieresis": "glyph1202",
+                        "itilde": "glyph1269",
+                        "imacron": "glyph1275",
+                        "ibreve": "glyph1281",
+                        "iogonek": "glyph1287",
+                        "uni01D0": "glyph1391",
+                        "uni0209": "glyph1458",
+                        "uni020B": "glyph1464",
+                        "uni0268": "glyph1517",
+                        "uni0457": "glyph1586",
+                        "uni1E2D": "glyph1697",
+                        "uni1E2F": "glyph1703",
+                        "uni1EC9": "glyph1901",
+                        "uni1ECB": "glyph1907"
                     }
                 ]
             },
@@ -22330,8 +22366,26 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
-                        "to": ["glyph127","glyph136","glyph136","glyph1188","glyph1193","glyph1198","glyph1203","glyph1270","glyph1276","glyph1282","glyph1288","glyph1392","glyph1459","glyph1465","glyph1518","glyph1587","glyph1698","glyph1704","glyph1902","glyph1908"]
+                        "dotlessi": "glyph127",
+                        "i": "glyph136",
+                        "uni0456": "glyph136",
+                        "igrave": "glyph1188",
+                        "iacute": "glyph1193",
+                        "icircumflex": "glyph1198",
+                        "idieresis": "glyph1203",
+                        "itilde": "glyph1270",
+                        "imacron": "glyph1276",
+                        "ibreve": "glyph1282",
+                        "iogonek": "glyph1288",
+                        "uni01D0": "glyph1392",
+                        "uni0209": "glyph1459",
+                        "uni020B": "glyph1465",
+                        "uni0268": "glyph1518",
+                        "uni0457": "glyph1587",
+                        "uni1E2D": "glyph1698",
+                        "uni1E2F": "glyph1704",
+                        "uni1EC9": "glyph1902",
+                        "uni1ECB": "glyph1908"
                     }
                 ]
             },
@@ -22340,8 +22394,26 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["dotlessi","i","uni0456","igrave","iacute","icircumflex","idieresis","itilde","imacron","ibreve","iogonek","uni01D0","uni0209","uni020B","uni0268","uni0457","uni1E2D","uni1E2F","uni1EC9","uni1ECB"],
-                        "to": ["glyph128","glyph137","glyph137","glyph1189","glyph1194","glyph1199","glyph1204","glyph1271","glyph1277","glyph1283","glyph1289","glyph1393","glyph1460","glyph1466","glyph1519","glyph1588","glyph1699","glyph1705","glyph1903","glyph1909"]
+                        "dotlessi": "glyph128",
+                        "i": "glyph137",
+                        "uni0456": "glyph137",
+                        "igrave": "glyph1189",
+                        "iacute": "glyph1194",
+                        "icircumflex": "glyph1199",
+                        "idieresis": "glyph1204",
+                        "itilde": "glyph1271",
+                        "imacron": "glyph1277",
+                        "ibreve": "glyph1283",
+                        "iogonek": "glyph1289",
+                        "uni01D0": "glyph1393",
+                        "uni0209": "glyph1460",
+                        "uni020B": "glyph1466",
+                        "uni0268": "glyph1519",
+                        "uni0457": "glyph1588",
+                        "uni1E2D": "glyph1699",
+                        "uni1E2F": "glyph1705",
+                        "uni1EC9": "glyph1903",
+                        "uni1ECB": "glyph1909"
                     }
                 ]
             },
@@ -22350,8 +22422,17 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
-                        "to": ["glyph166","glyph166","glyph1297","glyph1303","glyph1308","glyph1313","glyph1372","glyph1714","glyph1720","glyph1726","glyph1732"]
+                        "l": "glyph166",
+                        "uni04CF": "glyph166",
+                        "lacute": "glyph1297",
+                        "uni013C": "glyph1303",
+                        "lcaron": "glyph1308",
+                        "lslash": "glyph1313",
+                        "uni019A": "glyph1372",
+                        "uni1E37": "glyph1714",
+                        "uni1E39": "glyph1720",
+                        "uni1E3B": "glyph1726",
+                        "uni1E3D": "glyph1732"
                     }
                 ]
             },
@@ -22360,8 +22441,17 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
-                        "to": ["glyph167","glyph167","glyph1298","glyph1304","glyph1309","glyph1314","glyph1373","glyph1715","glyph1721","glyph1727","glyph1733"]
+                        "l": "glyph167",
+                        "uni04CF": "glyph167",
+                        "lacute": "glyph1298",
+                        "uni013C": "glyph1304",
+                        "lcaron": "glyph1309",
+                        "lslash": "glyph1314",
+                        "uni019A": "glyph1373",
+                        "uni1E37": "glyph1715",
+                        "uni1E39": "glyph1721",
+                        "uni1E3B": "glyph1727",
+                        "uni1E3D": "glyph1733"
                     }
                 ]
             },
@@ -22370,8 +22460,17 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
-                        "to": ["glyph164","glyph164","glyph1299","glyph1305","glyph1310","glyph1315","glyph1374","glyph1716","glyph1722","glyph1728","glyph1734"]
+                        "l": "glyph164",
+                        "uni04CF": "glyph164",
+                        "lacute": "glyph1299",
+                        "uni013C": "glyph1305",
+                        "lcaron": "glyph1310",
+                        "lslash": "glyph1315",
+                        "uni019A": "glyph1374",
+                        "uni1E37": "glyph1716",
+                        "uni1E39": "glyph1722",
+                        "uni1E3B": "glyph1728",
+                        "uni1E3D": "glyph1734"
                     }
                 ]
             },
@@ -22380,8 +22479,17 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["l","uni04CF","lacute","uni013C","lcaron","lslash","uni019A","uni1E37","uni1E39","uni1E3B","uni1E3D"],
-                        "to": ["glyph165","glyph165","glyph1300","glyph1306","glyph1311","glyph1316","glyph1375","glyph1717","glyph1723","glyph1729","glyph1735"]
+                        "l": "glyph165",
+                        "uni04CF": "glyph165",
+                        "lacute": "glyph1300",
+                        "uni013C": "glyph1306",
+                        "lcaron": "glyph1311",
+                        "lslash": "glyph1316",
+                        "uni019A": "glyph1375",
+                        "uni1E37": "glyph1717",
+                        "uni1E39": "glyph1723",
+                        "uni1E3B": "glyph1729",
+                        "uni1E3D": "glyph1735"
                     }
                 ]
             },
@@ -22390,8 +22498,41 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["a","uni0430","agrave","aacute","acircumflex","atilde","adieresis","aring","amacron","abreve","aogonek","uni01CE","uni01DF","uni01E1","aringacute","uni0201","uni0203","uni0227","uni04D1","uni04D3","uni1D8F","uni1E01","uni1E9A","uni1EA1","uni1EA3","uni1EA5","uni1EA7","uni1EA9","uni1EAB","uni1EAD","uni1EAF","uni1EB1","uni1EB3","uni1EB5","uni1EB7"],
-                        "to": ["glyph189","glyph189","glyph1163","glyph1166","glyph1169","glyph1172","glyph1175","glyph1178","glyph1219","glyph1223","glyph1227","glyph1386","glyph1408","glyph1412","glyph1437","glyph1445","glyph1449","glyph1487","glyph1604","glyph1608","glyph1643","glyph1650","glyph1829","glyph1836","glyph1840","glyph1844","glyph1848","glyph1852","glyph1856","glyph1860","glyph1864","glyph1868","glyph1872","glyph1876","glyph1880"]
+                        "a": "glyph189",
+                        "uni0430": "glyph189",
+                        "agrave": "glyph1163",
+                        "aacute": "glyph1166",
+                        "acircumflex": "glyph1169",
+                        "atilde": "glyph1172",
+                        "adieresis": "glyph1175",
+                        "aring": "glyph1178",
+                        "amacron": "glyph1219",
+                        "abreve": "glyph1223",
+                        "aogonek": "glyph1227",
+                        "uni01CE": "glyph1386",
+                        "uni01DF": "glyph1408",
+                        "uni01E1": "glyph1412",
+                        "aringacute": "glyph1437",
+                        "uni0201": "glyph1445",
+                        "uni0203": "glyph1449",
+                        "uni0227": "glyph1487",
+                        "uni04D1": "glyph1604",
+                        "uni04D3": "glyph1608",
+                        "uni1D8F": "glyph1643",
+                        "uni1E01": "glyph1650",
+                        "uni1E9A": "glyph1829",
+                        "uni1EA1": "glyph1836",
+                        "uni1EA3": "glyph1840",
+                        "uni1EA5": "glyph1844",
+                        "uni1EA7": "glyph1848",
+                        "uni1EA9": "glyph1852",
+                        "uni1EAB": "glyph1856",
+                        "uni1EAD": "glyph1860",
+                        "uni1EAF": "glyph1864",
+                        "uni1EB1": "glyph1868",
+                        "uni1EB3": "glyph1872",
+                        "uni1EB5": "glyph1876",
+                        "uni1EB7": "glyph1880"
                     }
                 ]
             },
@@ -22400,8 +22541,41 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["a","uni0430","agrave","aacute","acircumflex","atilde","adieresis","aring","amacron","abreve","aogonek","uni01CE","uni01DF","uni01E1","aringacute","uni0201","uni0203","uni0227","uni04D1","uni04D3","uni1D8F","uni1E01","uni1E9A","uni1EA1","uni1EA3","uni1EA5","uni1EA7","uni1EA9","uni1EAB","uni1EAD","uni1EAF","uni1EB1","uni1EB3","uni1EB5","uni1EB7"],
-                        "to": ["glyph190","glyph190","glyph1164","glyph1167","glyph1170","glyph1173","glyph1176","glyph1179","glyph1220","glyph1224","glyph1228","glyph1387","glyph1409","glyph1413","glyph1438","glyph1446","glyph1450","glyph1488","glyph1605","glyph1609","glyph1644","glyph1651","glyph1830","glyph1837","glyph1841","glyph1845","glyph1849","glyph1853","glyph1857","glyph1861","glyph1865","glyph1869","glyph1873","glyph1877","glyph1881"]
+                        "a": "glyph190",
+                        "uni0430": "glyph190",
+                        "agrave": "glyph1164",
+                        "aacute": "glyph1167",
+                        "acircumflex": "glyph1170",
+                        "atilde": "glyph1173",
+                        "adieresis": "glyph1176",
+                        "aring": "glyph1179",
+                        "amacron": "glyph1220",
+                        "abreve": "glyph1224",
+                        "aogonek": "glyph1228",
+                        "uni01CE": "glyph1387",
+                        "uni01DF": "glyph1409",
+                        "uni01E1": "glyph1413",
+                        "aringacute": "glyph1438",
+                        "uni0201": "glyph1446",
+                        "uni0203": "glyph1450",
+                        "uni0227": "glyph1488",
+                        "uni04D1": "glyph1605",
+                        "uni04D3": "glyph1609",
+                        "uni1D8F": "glyph1644",
+                        "uni1E01": "glyph1651",
+                        "uni1E9A": "glyph1830",
+                        "uni1EA1": "glyph1837",
+                        "uni1EA3": "glyph1841",
+                        "uni1EA5": "glyph1845",
+                        "uni1EA7": "glyph1849",
+                        "uni1EA9": "glyph1853",
+                        "uni1EAB": "glyph1857",
+                        "uni1EAD": "glyph1861",
+                        "uni1EAF": "glyph1865",
+                        "uni1EB1": "glyph1869",
+                        "uni1EB3": "glyph1873",
+                        "uni1EB5": "glyph1877",
+                        "uni1EB7": "glyph1881"
                     }
                 ]
             },
@@ -22410,8 +22584,14 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["g","gcircumflex","gbreve","gdotaccent","uni0123","gcaron","uni01F5","uni1E21"],
-                        "to": ["glyph319","glyph1250","glyph1254","glyph1258","glyph1262","glyph1418","glyph1431","glyph1682"]
+                        "g": "glyph319",
+                        "gcircumflex": "glyph1250",
+                        "gbreve": "glyph1254",
+                        "gdotaccent": "glyph1258",
+                        "uni0123": "glyph1262",
+                        "gcaron": "glyph1418",
+                        "uni01F5": "glyph1431",
+                        "uni1E21": "glyph1682"
                     }
                 ]
             },
@@ -22420,8 +22600,14 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["g","gcircumflex","gbreve","gdotaccent","uni0123","gcaron","uni01F5","uni1E21"],
-                        "to": ["glyph320","glyph1251","glyph1255","glyph1259","glyph1263","glyph1419","glyph1432","glyph1683"]
+                        "g": "glyph320",
+                        "gcircumflex": "glyph1251",
+                        "gbreve": "glyph1255",
+                        "gdotaccent": "glyph1259",
+                        "uni0123": "glyph1263",
+                        "gcaron": "glyph1419",
+                        "uni01F5": "glyph1432",
+                        "uni1E21": "glyph1683"
                     }
                 ]
             },
@@ -22430,8 +22616,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["zero"],
-                        "to": ["glyph651"]
+                        "zero": "glyph651"
                     }
                 ]
             },
@@ -22440,8 +22625,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["zero"],
-                        "to": ["glyph652"]
+                        "zero": "glyph652"
                     }
                 ]
             },
@@ -22450,8 +22634,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["zero"],
-                        "to": ["glyph650"]
+                        "zero": "glyph650"
                     }
                 ]
             },
@@ -22460,8 +22643,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["paragraph"],
-                        "to": ["glyph714"]
+                        "paragraph": "glyph714"
                     }
                 ]
             },
@@ -22470,8 +22652,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["paragraph"],
-                        "to": ["glyph715"]
+                        "paragraph": "glyph715"
                     }
                 ]
             },
@@ -22480,8 +22661,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["asterisk"],
-                        "to": ["glyph718"]
+                        "asterisk": "glyph718"
                     }
                 ]
             },
@@ -22490,8 +22670,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["asterisk"],
-                        "to": ["glyph719"]
+                        "asterisk": "glyph719"
                     }
                 ]
             },
@@ -22500,8 +22679,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["underscore"],
-                        "to": ["glyph725"]
+                        "underscore": "glyph725"
                     }
                 ]
             },
@@ -22510,8 +22688,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["underscore"],
-                        "to": ["glyph726"]
+                        "underscore": "glyph726"
                     }
                 ]
             },
@@ -22520,8 +22697,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["asciitilde"],
-                        "to": ["glyph16"]
+                        "asciitilde": "glyph16"
                     }
                 ]
             },
@@ -22530,8 +22706,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["asciitilde"],
-                        "to": ["glyph778"]
+                        "asciitilde": "glyph778"
                     }
                 ]
             },
@@ -22540,8 +22715,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["uni0345"],
-                        "to": ["glyph48"]
+                        "uni0345": "glyph48"
                     }
                 ]
             },
@@ -22550,8 +22724,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["uni0328"],
-                        "to": ["glyph46"]
+                        "uni0328": "glyph46"
                     }
                 ]
             },
@@ -22659,8 +22832,11 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["i","uni0456","j","uni0458","iogonek"],
-                        "to": ["dotlessi","dotlessi","uni0237","uni0237","glyph132"]
+                        "i": "dotlessi",
+                        "uni0456": "dotlessi",
+                        "j": "uni0237",
+                        "uni0458": "uni0237",
+                        "iogonek": "glyph132"
                     }
                 ]
             },
@@ -22669,14 +22845,12 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "maps": [
-                            {"to":"glyph115","from":["uni0313","uni0342"]},
-                            {"to":"glyph115","from":["uni0313","uni0342"]},
-                            {"to":"glyph115","from":["uni0313","uni0342"]},
-                            {"to":"glyph113","from":["uni0314","acutecomb"]},
-                            {"to":"glyph113","from":["uni0314","acutecomb"]},
-                            {"to":"glyph113","from":["uni0314","acutecomb"]}
-                        ]
+                        "glyph115": ["uni0313","uni0342"],
+                        "glyph109": ["uni0313","acutecomb"],
+                        "glyph107": ["uni0313","gravecomb"],
+                        "glyph117": ["uni0314","uni0342"],
+                        "glyph113": ["uni0314","acutecomb"],
+                        "glyph111": ["uni0314","gravecomb"]
                     }
                 ]
             },
@@ -22685,8 +22859,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["uni0431"],
-                        "to": ["glyph490"]
+                        "uni0431": "glyph490"
                     }
                 ]
             },
@@ -22695,8 +22868,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1086","glyph1109"]
+                        "hyphen": "glyph1086",
+                        "equal": "glyph1109"
                     }
                 ]
             },
@@ -22705,8 +22878,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1087","glyph1110"]
+                        "hyphen": "glyph1087",
+                        "equal": "glyph1110"
                     }
                 ]
             },
@@ -22715,8 +22888,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1091","glyph1114"]
+                        "hyphen": "glyph1091",
+                        "equal": "glyph1114"
                     }
                 ]
             },
@@ -22725,8 +22898,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1092","glyph1115"]
+                        "hyphen": "glyph1092",
+                        "equal": "glyph1115"
                     }
                 ]
             },
@@ -22735,8 +22908,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1088","glyph1111"]
+                        "hyphen": "glyph1088",
+                        "equal": "glyph1111"
                     }
                 ]
             },
@@ -22745,8 +22918,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1089","glyph1112"]
+                        "hyphen": "glyph1089",
+                        "equal": "glyph1112"
                     }
                 ]
             },
@@ -22755,8 +22928,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1090","glyph1113"]
+                        "hyphen": "glyph1090",
+                        "equal": "glyph1113"
                     }
                 ]
             },
@@ -22765,8 +22938,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1099","glyph1122"]
+                        "hyphen": "glyph1099",
+                        "equal": "glyph1122"
                     }
                 ]
             },
@@ -22775,8 +22948,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1100","glyph1123"]
+                        "hyphen": "glyph1100",
+                        "equal": "glyph1123"
                     }
                 ]
             },
@@ -22785,8 +22958,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1101","glyph1124"]
+                        "hyphen": "glyph1101",
+                        "equal": "glyph1124"
                     }
                 ]
             },
@@ -22795,8 +22968,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1102","glyph1125"]
+                        "hyphen": "glyph1102",
+                        "equal": "glyph1125"
                     }
                 ]
             },
@@ -22805,8 +22978,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1105","glyph1128"]
+                        "hyphen": "glyph1105",
+                        "equal": "glyph1128"
                     }
                 ]
             },
@@ -22815,8 +22988,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1106","glyph1129"]
+                        "hyphen": "glyph1106",
+                        "equal": "glyph1129"
                     }
                 ]
             },
@@ -22825,8 +22998,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1103","glyph1126"]
+                        "hyphen": "glyph1103",
+                        "equal": "glyph1126"
                     }
                 ]
             },
@@ -22835,8 +23008,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1104","glyph1127"]
+                        "hyphen": "glyph1104",
+                        "equal": "glyph1127"
                     }
                 ]
             },
@@ -22845,8 +23018,8 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["hyphen","equal"],
-                        "to": ["glyph1107","glyph1130"]
+                        "hyphen": "glyph1107",
+                        "equal": "glyph1130"
                     }
                 ]
             },
@@ -22855,8 +23028,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["less"],
-                        "to": ["glyph1083"]
+                        "less": "glyph1083"
                     }
                 ]
             },
@@ -22865,8 +23037,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["greater"],
-                        "to": ["glyph1080"]
+                        "greater": "glyph1080"
                     }
                 ]
             },
@@ -22875,8 +23046,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["less"],
-                        "to": ["glyph1085"]
+                        "less": "glyph1085"
                     }
                 ]
             },
@@ -22885,8 +23055,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["greater"],
-                        "to": ["glyph1082"]
+                        "greater": "glyph1082"
                     }
                 ]
             },
@@ -22895,8 +23064,7 @@
                 "flags": 0,
                 "subtables": [
                     {
-                        "from": ["exclam"],
-                        "to": ["glyph1132"]
+                        "exclam": "glyph1132"
                     }
                 ]
             },
