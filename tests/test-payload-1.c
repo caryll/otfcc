@@ -2,9 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "../caryll-sfnt.h"
-#include "../caryll-font.h"
-#include "../support/buffer.h"
+#include "../src/caryll-sfnt.h"
+#include "../src/caryll-font.h"
 
 #include "kit.h"
 
