@@ -2,7 +2,7 @@
 #include "caryll-font.h"
 #include <unistd.h>
 #include <getopt.h>
-#include "extern/json-builder.h"
+
 #include "support/stopwatch.h"
 #include "version.h"
 

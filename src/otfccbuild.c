@@ -1,6 +1,5 @@
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
-#include "extern/json.h"
 #include "caryll-sfnt-builder.h"
 
 #include <getopt.h>

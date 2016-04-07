@@ -30,17 +30,8 @@ typedef enum {
 
 typedef union _otl_subtable otl_subtable;
 
-typedef struct {
-	uint16_t numGlyphs;
-	glyph_handle *glyphs;
-} otl_coverage;
-
-typedef struct {
-	uint16_t numGlyphs;
-	uint16_t maxclass;
-	glyph_handle *glyphs;
-	uint16_t *classes;
-} otl_classdef;
+#include "coverage.h"
+#include "classdef.h"
 
 typedef struct {
 	int16_t dx;
@@ -202,20 +193,6 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, const char *tag);
 caryll_buffer *caryll_write_otl(table_otl *table);
 
-// Coverage functions
-void caryll_delete_coverage(otl_coverage *coverage);
-otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-json_value *caryll_coverage_to_json(otl_coverage *coverage);
-otl_coverage *caryll_coverage_from_json(json_value *cov);
-caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
-
-// Classdef functions
-void caryll_delete_classdef(otl_classdef *cd);
-otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd);
-json_value *caryll_classdef_to_json(otl_classdef *cd);
-otl_classdef *caryll_classdef_from_json(json_value *_cd);
-caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 
 #include "gsub-single.h"
 #include "gsub-multi.h"

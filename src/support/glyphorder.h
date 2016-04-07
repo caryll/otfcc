@@ -2,9 +2,6 @@
 #define CARYLL_SUPPORT_GLYPHORDER_H
 
 #include "util.h"
-#include "../extern/uthash.h"
-#include "../extern/sds.h"
-#include "../extern/json-builder.h"
 
 typedef struct {
 	int gid;

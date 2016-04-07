@@ -36,7 +36,7 @@ endif
 
 all : objects
 
-ifdef SystemRoot # win32 + tdm-gcc
+ifdef SystemRoot # win32
 SUFFIX = .exe
 endif
 
@@ -49,7 +49,8 @@ TABLE_OBJECTS = $(TARGETDIR)/table-head.o $(TARGETDIR)/table-hhea.o $(TARGETDIR)
 	$(TARGETDIR)/table-name.o $(TARGETDIR)/table-fpgm-prep.o $(TARGETDIR)/table-gasp.o \
 	$(TARGETDIR)/table-vmtx.o
 
-OTL_OBJECTS = $(TARGETDIR)/otl-otl.o $(TARGETDIR)/otl-extend.o \
+OTL_OBJECTS = $(TARGETDIR)/otl-otl.o $(TARGETDIR)/otl-coverage.o \
+	$(TARGETDIR)/otl-classdef.o $(TARGETDIR)/otl-extend.o \
 	$(TARGETDIR)/otl-gsub-single.o $(TARGETDIR)/otl-gsub-multi.o \
 	$(TARGETDIR)/otl-gsub-ligature.o $(TARGETDIR)/otl-chaining.o \
 	$(TARGETDIR)/otl-gpos-common.o $(TARGETDIR)/otl-gpos-single.o \
@@ -71,44 +72,45 @@ SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o
 			  $(TARGETDIR)/support-buffer.o
 EXECUTABLES = $(TARGETDIR)/otfccdump$(SUFFIX) $(TARGETDIR)/otfccbuild$(SUFFIX)
 
-OBJECTS = $(TABLE_OBJECTS) $(OTL_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS) $(FONTOP_OTL_OBJECTS)
+OBJECTS = $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(TABLE_OBJECTS) $(OTL_OBJECTS) \
+	$(FONTOP_OBJECTS) $(FONTOP_OTL_OBJECTS) $(MAIN_OBJECTS_1) 
 
 $(EXTERN_OBJECTS) : $(TARGETDIR)/extern-%.o : extern/%.c | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS_EXTERN) -c $< -o $@
 
-SUPPORT_H = $(subst .o,.h,$(subst $(TARGETDIR)/support-,support/,$(SUPPORT_OBJECTS))) support/util.h
-$(SUPPORT_OBJECTS) : $(TARGETDIR)/support-%.o : support/%.c | $(DIRS)
+SUPPORT_H = $(subst .o,.h,$(subst $(TARGETDIR)/support-,src/support/,$(SUPPORT_OBJECTS))) src/support/util.h
+$(SUPPORT_OBJECTS) : $(TARGETDIR)/support-%.o : src/support/%.c | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-TABLES_H = $(subst .o,.h,$(subst $(TARGETDIR)/table-,tables/,$(TABLE_OBJECTS)))
-$(TABLE_OBJECTS) : $(TARGETDIR)/table-%.o : tables/%.c tables/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
+TABLES_H = $(subst .o,.h,$(subst $(TARGETDIR)/table-,src/tables/,$(TABLE_OBJECTS)))
+$(TABLE_OBJECTS) : $(TARGETDIR)/table-%.o : src/tables/%.c src/tables/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-OTL_H = $(subst .o,.h,$(subst $(TARGETDIR)/otl-,tables/otl/,$(OTL_OBJECTS)))
-$(OTL_OBJECTS) : $(TARGETDIR)/otl-%.o : tables/otl/%.c tables/otl/%.h $(SUPPORT_H) $(OTL_H) | $(DIRS)
+OTL_H = $(subst .o,.h,$(subst $(TARGETDIR)/otl-,src/tables/otl/,$(OTL_OBJECTS)))
+$(OTL_OBJECTS) : $(TARGETDIR)/otl-%.o : src/tables/otl/%.c src/tables/otl/%.h $(SUPPORT_H) $(OTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-FOPOTL_H = $(subst .o,.h,$(subst $(TARGETDIR)/fopotl-,fontops/otl/,$(FONTOP_OTL_OBJECTS)))
-$(FONTOP_OTL_OBJECTS) : $(TARGETDIR)/fopotl-%.o : fontops/otl/%.c fontops/otl/%.h $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FOPOTL_H) | $(DIRS)
+FOPOTL_H = $(subst .o,.h,$(subst $(TARGETDIR)/fopotl-,src/fontops/otl/,$(FONTOP_OTL_OBJECTS)))
+$(FONTOP_OTL_OBJECTS) : $(TARGETDIR)/fopotl-%.o : src/fontops/otl/%.c src/fontops/otl/%.h $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FOPOTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-FONTOPS_H = $(subst .o,.h,$(subst $(TARGETDIR)/fontop-,fontops/,$(FONTOP_OBJECTS)))
-$(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
+FONTOPS_H = $(subst .o,.h,$(subst $(TARGETDIR)/fontop-,src/fontops/,$(FONTOP_OBJECTS)))
+$(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : src/fontops/%.c src/fontops/%.h $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,,$(MAIN_OBJECTS_1)))
-$(MAIN_OBJECTS) : $(TARGETDIR)/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
+MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,src/,$(MAIN_OBJECTS_1)))
+$(MAIN_OBJECTS) : $(TARGETDIR)/%.o : src/%.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXECUTABLES): $(TARGETDIR)/%$(SUFFIX) : $(TARGETDIR)/%.o $(OBJECTS)
-	@echo CC "->" $@
+	@echo LINK "->" $@
 	@$(LINK) $(LINKFLAGS) $^ -o $@
 
 objects: $(EXECUTABLES)

@@ -6,10 +6,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include "../extern/uthash.h"
-#include "../extern/json.h"
-#include "../extern/json-builder.h"
-#include "../extern/sds.h"
+#include "../../extern/sds.h"
+#include "../../extern/uthash.h"
+#include "../../extern/json.h"
+#include "../../extern/json-builder.h"
 #include "buffer.h"
 
 #ifdef _MSC_VER
