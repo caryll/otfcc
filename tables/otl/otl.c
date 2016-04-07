@@ -309,6 +309,13 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 	return coverage;
 }
 
+void caryll_delete_classdef(otl_classdef *cd) {
+	if (cd) {
+		free(cd->glyphs);
+		free(cd->classes);
+		free(cd);
+	}
+}
 otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_classdef *cd;
 	NEW(cd);
@@ -324,11 +331,14 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 			cd->numGlyphs = count;
 			NEW_N(cd->glyphs, count);
 			NEW_N(cd->classes, count);
+			uint16_t maxclass = 0;
 			for (uint16_t j = 0; j < count; j++) {
 				cd->glyphs[j].gid = startGID + j;
 				cd->glyphs[j].name = NULL;
 				cd->classes[j] = read_16u(data + offset + 6 + j * 2);
+				if (cd->classes[j] > maxclass) maxclass = cd->classes[j];
 			}
+			cd->maxclass = maxclass;
 			return cd;
 		}
 	} else if (format == 2) {
@@ -358,18 +368,71 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 		NEW_N(cd->classes, cd->numGlyphs);
 		{
 			uint16_t j = 0;
+			uint16_t maxclass = 0;
 			coverage_entry *e, *tmp;
 			HASH_ITER(hh, hash, e, tmp) {
 				cd->glyphs[j].gid = e->gid;
 				cd->glyphs[j].name = NULL;
 				cd->classes[j] = e->covIndex;
+				if (e->covIndex > maxclass) maxclass = e->covIndex;
 				HASH_DEL(hash, e);
 				free(e);
 				j++;
 			}
+			cd->maxclass = maxclass;
 		}
 		return cd;
 	}
+	return cd;
+}
+
+otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
+	otl_classdef *cd;
+	NEW(cd);
+	coverage_entry *hash = NULL;
+	for (uint16_t j = 0; j < ocd->numGlyphs; j++) {
+		int gid = ocd->glyphs[j].gid;
+		int cid = ocd->classes[j];
+		coverage_entry *item = NULL;
+		HASH_FIND_INT(hash, &gid, item);
+		if (!item) {
+			NEW(item);
+			item->gid = gid;
+			item->covIndex = cid;
+			HASH_ADD_INT(hash, gid, item);
+		}
+	}
+	for (uint16_t j = 0; j < cov->numGlyphs; j++) {
+		int gid = cov->glyphs[j].gid;
+		coverage_entry *item = NULL;
+		HASH_FIND_INT(hash, &gid, item);
+		if (!item) {
+			NEW(item);
+			item->gid = gid;
+			item->covIndex = 0;
+			HASH_ADD_INT(hash, gid, item);
+		}
+	}
+	cd->numGlyphs = HASH_COUNT(hash);
+	HASH_SORT(hash, by_covIndex);
+	NEW_N(cd->glyphs, cd->numGlyphs);
+	NEW_N(cd->classes, cd->numGlyphs);
+	{
+		uint16_t j = 0;
+		uint16_t maxclass = 0;
+		coverage_entry *e, *tmp;
+		HASH_ITER(hh, hash, e, tmp) {
+			cd->glyphs[j].gid = e->gid;
+			cd->glyphs[j].name = NULL;
+			cd->classes[j] = e->covIndex;
+			if (e->covIndex > maxclass) maxclass = e->covIndex;
+			HASH_DEL(hash, e);
+			free(e);
+			j++;
+		}
+		cd->maxclass = maxclass;
+	}
+	caryll_delete_classdef(ocd);
 	return cd;
 }
 
@@ -450,6 +513,13 @@ json_value *caryll_coverage_to_json(otl_coverage *coverage) {
 	}
 	return preserialize(a);
 }
+json_value *caryll_classdef_to_json(otl_classdef *cd) {
+	json_value *a = json_object_new(cd->numGlyphs);
+	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+		json_object_push(a, cd->glyphs[j].name, json_integer_new(cd->classes[j]));
+	}
+	return preserialize(a);
+}
 
 static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, json_value *(*dumper)(otl_subtable *st),
                                           otl_lookup *lookup, json_value *dump) {
@@ -480,7 +550,7 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 				if (table->languages[j]->features[k]) {
 					json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
 				}
-			json_object_push(language, "features", features);
+			json_object_push(language, "features", preserialize(features));
 			json_object_push(languages, table->languages[j]->name, language);
 		}
 		json_object_push(otl, "languages", languages);
@@ -494,7 +564,7 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 				if (table->features[j]->lookups[k]) {
 					json_array_push(feature, json_string_new(table->features[j]->lookups[k]->name));
 				}
-			json_object_push(features, table->features[j]->name, feature);
+			json_object_push(features, table->features[j]->name, preserialize(feature));
 		}
 		json_object_push(otl, "features", features);
 	}
@@ -535,6 +605,30 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	}
 	c->numGlyphs = jj;
 	return c;
+}
+
+otl_classdef *caryll_classdef_from_json(json_value *_cd) {
+	if (!_cd || _cd->type != json_object) return NULL;
+	otl_classdef *cd;
+	NEW(cd);
+	cd->numGlyphs = _cd->u.object.length;
+	NEW_N(cd->glyphs, cd->numGlyphs);
+	NEW_N(cd->classes, cd->numGlyphs);
+	uint16_t maxclass = 0;
+	for (uint16_t j = 0; j < _cd->u.object.length; j++) {
+		cd->glyphs[j].name = sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length);
+		json_value *_cid = _cd->u.object.values[j].value;
+		if (_cid->type == json_integer) {
+			cd->classes[j] = _cid->u.integer;
+		} else if (_cid->type == json_double) {
+			cd->classes[j] = _cid->u.dbl;
+		} else {
+			cd->classes[j] = 0;
+		}
+		if (cd->classes[j] > maxclass) maxclass = cd->classes[j];
+	}
+	cd->maxclass = maxclass;
+	return cd;
 }
 
 static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl_subtable *(*parser)(json_value *),
@@ -794,6 +888,13 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 		return format2;
 	}
 }
+typedef struct {
+	uint16_t gid;
+	uint16_t cid;
+} classdef_sortrecord;
+static int by_gid(const void *a, const void *b) {
+	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
+}
 caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
 	caryll_buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
@@ -804,14 +905,26 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
 		bufwrite16b(buf, 1);
 		return buf;
 	}
-	uint16_t startGID = cd->glyphs[0].gid;
+
+	classdef_sortrecord *r;
+	NEW_N(r, cd->numGlyphs);
+	uint16_t jj = 0;
+	for (uint16_t j = 0; j < cd->numGlyphs; j++)
+		if (cd->classes[j]) {
+			r[jj].gid = cd->glyphs[j].gid;
+			r[jj].cid = cd->classes[j];
+			jj++;
+		}
+	qsort(r, jj, sizeof(classdef_sortrecord), by_gid);
+
+	uint16_t startGID = r[0].gid;
 	uint16_t endGID = startGID;
-	uint16_t lastClass = cd->classes[0];
+	uint16_t lastClass = r[0].cid;
 	uint16_t nRanges = 0;
 	caryll_buffer *ranges = bufnew();
-	for (uint16_t j = 1; j < cd->numGlyphs; j++) {
-		uint16_t current = cd->glyphs[j].gid;
-		if (current == endGID + 1 && cd->classes[j] == lastClass) {
+	for (uint16_t j = 1; j < jj; j++) {
+		uint16_t current = r[j].gid;
+		if (current == endGID + 1 && r[j].cid == lastClass) {
 			endGID = current;
 		} else {
 			bufwrite16b(ranges, startGID);
@@ -819,7 +932,7 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
 			bufwrite16b(ranges, lastClass);
 			nRanges += 1;
 			startGID = endGID = current;
-			lastClass = cd->classes[j];
+			lastClass = r[j].cid;
 		}
 	}
 	bufwrite16b(ranges, startGID);
@@ -828,6 +941,7 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
 	nRanges += 1;
 	bufwrite16b(buf, nRanges);
 	bufwrite_bufdel(buf, ranges);
+	free(r);
 	return buf;
 }
 
@@ -1166,6 +1280,7 @@ void caryll_delete_lookup(otl_lookup *lookup) {
 		DELETE_TYPE(otl_type_gsub_ligature, caryll_delete_gsub_ligature);
 		DELETE_TYPE(otl_type_gsub_chaining, caryll_delete_chaining);
 		DELETE_TYPE(otl_type_gpos_single, caryll_delete_gpos_single);
+		DELETE_TYPE(otl_type_gpos_pair, caryll_delete_gpos_pair);
 		DELETE_TYPE(otl_type_gpos_cursive, caryll_delete_gpos_cursive);
 		DELETE_TYPE(otl_type_gpos_chaining, caryll_delete_chaining);
 		DELETE_TYPE(otl_type_gpos_mark_to_base, caryll_delete_gpos_mark_to_single);
@@ -1189,6 +1304,7 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 		LOOKUP_READER(otl_type_gsub_context, caryll_read_contextual);
 		LOOKUP_READER(otl_type_gpos_context, caryll_read_contextual);
 		LOOKUP_READER(otl_type_gpos_single, caryll_read_gpos_single);
+		LOOKUP_READER(otl_type_gpos_pair, caryll_read_gpos_pair);
 		LOOKUP_READER(otl_type_gpos_cursive, caryll_read_gpos_cursive);
 		LOOKUP_READER(otl_type_gpos_mark_to_base, caryll_read_gpos_mark_to_single);
 		LOOKUP_READER(otl_type_gpos_mark_to_mark, caryll_read_gpos_mark_to_single);
@@ -1209,6 +1325,7 @@ static INLINE void _lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	LOOKUP_DUMPER(otl_type_gsub_chaining, caryll_chaining_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_chaining, caryll_chaining_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_single, caryll_gpos_single_to_json);
+	LOOKUP_DUMPER(otl_type_gpos_pair, caryll_gpos_pair_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_cursive, caryll_gpos_cursive_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_mark_to_mark, caryll_gpos_mark_to_single_to_json);
@@ -1223,6 +1340,7 @@ static INLINE bool _parse_lookup(json_value *lookup, char *lookupName, lookup_ha
 	LOOKUP_PARSER(otl_type_gsub_ligature, caryll_gsub_ligature_from_json);
 	LOOKUP_PARSER(otl_type_gsub_chaining, caryll_chaining_from_json);
 	LOOKUP_PARSER(otl_type_gpos_single, caryll_gpos_single_from_json);
+	LOOKUP_PARSER(otl_type_gpos_pair, caryll_gpos_pair_from_json);
 	LOOKUP_PARSER(otl_type_gpos_cursive, caryll_gpos_cursive_from_json);
 	LOOKUP_PARSER(otl_type_gpos_chaining, caryll_chaining_from_json);
 	LOOKUP_PARSER(otl_type_gpos_mark_to_base, caryll_gpos_mark_to_single_from_json);
@@ -1240,6 +1358,7 @@ static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf, uint3
 	LOOKUP_WRITER(otl_type_gsub_ligature, caryll_write_gsub_ligature_subtable);
 	LOOKUP_WRITER(otl_type_gsub_chaining, caryll_write_chaining);
 	LOOKUP_WRITER(otl_type_gpos_single, caryll_write_gpos_single);
+	LOOKUP_WRITER(otl_type_gpos_pair, caryll_write_gpos_pair);
 	LOOKUP_WRITER(otl_type_gpos_cursive, caryll_write_gpos_cursive);
 	LOOKUP_WRITER(otl_type_gpos_chaining, caryll_write_chaining);
 	LOOKUP_WRITER(otl_type_gpos_mark_to_base, caryll_write_gpos_mark_to_single);

@@ -1,4 +1,4 @@
-#include "otl-gsub-single.h"
+#include "gsub-single.h"
 void caryll_delete_gsub_single(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {

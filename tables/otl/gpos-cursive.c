@@ -1,5 +1,5 @@
-#include "otl-gpos-cursive.h"
-#include "otl-gpos-common.h"
+#include "gpos-cursive.h"
+#include "gpos-common.h"
 void caryll_delete_gpos_cursive(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {

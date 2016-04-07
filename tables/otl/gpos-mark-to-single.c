@@ -1,5 +1,5 @@
-#include "otl-gpos-mark-to-single.h"
-#include "otl-gpos-common.h"
+#include "gpos-mark-to-single.h"
+#include "gpos-common.h"
 
 static void delete_mtb_subtable(otl_subtable *_subtable) {
 	if (_subtable) {

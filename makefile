@@ -47,21 +47,31 @@ TABLE_OBJECTS = $(TARGETDIR)/table-head.o $(TARGETDIR)/table-hhea.o $(TARGETDIR)
 	$(TARGETDIR)/table-PCLT.o $(TARGETDIR)/table-LTSH.o $(TARGETDIR)/table-vhea.o \
 	$(TARGETDIR)/table-OS_2.o $(TARGETDIR)/table-glyf.o $(TARGETDIR)/table-cmap.o \
 	$(TARGETDIR)/table-name.o $(TARGETDIR)/table-fpgm-prep.o $(TARGETDIR)/table-gasp.o \
-	$(TARGETDIR)/table-vmtx.o $(TARGETDIR)/table-otl.o $(TARGETDIR)/table-otl-extend.o \
-	$(TARGETDIR)/table-otl-gsub-single.o $(TARGETDIR)/table-otl-gsub-multi.o \
-	$(TARGETDIR)/table-otl-gsub-ligature.o $(TARGETDIR)/table-otl-chaining.o \
-	$(TARGETDIR)/table-otl-gpos-common.o $(TARGETDIR)/table-otl-gpos-single.o \
-	$(TARGETDIR)/table-otl-gpos-cursive.o \
-	$(TARGETDIR)/table-otl-gpos-mark-to-single.o $(TARGETDIR)/table-otl-gpos-mark-to-ligature.o
+	$(TARGETDIR)/table-vmtx.o
 
-FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o $(TARGETDIR)/fontop-stat.o
+OTL_OBJECTS = $(TARGETDIR)/otl-otl.o $(TARGETDIR)/otl-extend.o \
+	$(TARGETDIR)/otl-gsub-single.o $(TARGETDIR)/otl-gsub-multi.o \
+	$(TARGETDIR)/otl-gsub-ligature.o $(TARGETDIR)/otl-chaining.o \
+	$(TARGETDIR)/otl-gpos-common.o $(TARGETDIR)/otl-gpos-single.o \
+	$(TARGETDIR)/otl-gpos-pair.o $(TARGETDIR)/otl-gpos-cursive.o \
+	$(TARGETDIR)/otl-gpos-mark-to-single.o $(TARGETDIR)/otl-gpos-mark-to-ligature.o
+
+FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o \
+	$(TARGETDIR)/fontop-stat.o
+
+FONTOP_OTL_OBJECTS = $(TARGETDIR)/fopotl-common.o \
+	$(TARGETDIR)/fopotl-gsub-single.o $(TARGETDIR)/fopotl-gsub-multi.o \
+	$(TARGETDIR)/fopotl-gsub-ligature.o $(TARGETDIR)/fopotl-chaining.o \
+	$(TARGETDIR)/fopotl-gpos-single.o $(TARGETDIR)/fopotl-gpos-pair.o \
+	$(TARGETDIR)/fopotl-gpos-cursive.o $(TARGETDIR)/fopotl-mark.o
+
 EXTERN_OBJECTS = $(TARGETDIR)/extern-sds.o $(TARGETDIR)/extern-json.o $(TARGETDIR)/extern-json-builder.o
 SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o \
               $(TARGETDIR)/support-stopwatch.o $(TARGETDIR)/support-unicodeconv.o \
 			  $(TARGETDIR)/support-buffer.o
 EXECUTABLES = $(TARGETDIR)/otfccdump$(SUFFIX) $(TARGETDIR)/otfccbuild$(SUFFIX)
 
-OBJECTS = $(TABLE_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS)
+OBJECTS = $(TABLE_OBJECTS) $(OTL_OBJECTS) $(MAIN_OBJECTS_1) $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(FONTOP_OBJECTS) $(FONTOP_OTL_OBJECTS)
 
 $(EXTERN_OBJECTS) : $(TARGETDIR)/extern-%.o : extern/%.c | $(DIRS)
 	@echo CC "->" $@
@@ -76,14 +86,24 @@ TABLES_H = $(subst .o,.h,$(subst $(TARGETDIR)/table-,tables/,$(TABLE_OBJECTS)))
 $(TABLE_OBJECTS) : $(TARGETDIR)/table-%.o : tables/%.c tables/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
-	
+
+OTL_H = $(subst .o,.h,$(subst $(TARGETDIR)/otl-,tables/otl/,$(OTL_OBJECTS)))
+$(OTL_OBJECTS) : $(TARGETDIR)/otl-%.o : tables/otl/%.c tables/otl/%.h $(SUPPORT_H) $(OTL_H) | $(DIRS)
+	@echo CC "->" $@
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+FOPOTL_H = $(subst .o,.h,$(subst $(TARGETDIR)/fopotl-,fontops/otl/,$(FONTOP_OTL_OBJECTS)))
+$(FONTOP_OTL_OBJECTS) : $(TARGETDIR)/fopotl-%.o : fontops/otl/%.c fontops/otl/%.h $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FOPOTL_H) | $(DIRS)
+	@echo CC "->" $@
+	@$(CC) $(CFLAGS) -c $< -o $@
+
 FONTOPS_H = $(subst .o,.h,$(subst $(TARGETDIR)/fontop-,fontops/,$(FONTOP_OBJECTS)))
-$(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) | $(DIRS)
+$(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : fontops/%.c fontops/%.h $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,,$(MAIN_OBJECTS_1)))
-$(MAIN_OBJECTS) : $(TARGETDIR)/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(FONTOPS_H) | $(DIRS)
+$(MAIN_OBJECTS) : $(TARGETDIR)/%.o : %.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 

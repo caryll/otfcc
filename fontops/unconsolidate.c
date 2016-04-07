@@ -72,6 +72,11 @@ void caryll_name_coverage(caryll_font *font, otl_coverage *coverage) {
 		lookup_name(font->glyph_order, coverage->glyphs[j].gid, &(coverage->glyphs[j].name));
 	}
 }
+void caryll_name_classdef(caryll_font *font, otl_classdef *cd) {
+	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+		lookup_name(font->glyph_order, cd->glyphs[j].gid, &(cd->glyphs[j].name));
+	}
+}
 void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, table_otl *table) {
 	uint16_t totalRules = 0;
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
@@ -144,6 +149,13 @@ void caryll_name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 		case otl_type_gpos_single:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
 				if (lookup->subtables[j]) { caryll_name_coverage(font, lookup->subtables[j]->gpos_single.coverage); }
+			break;
+		case otl_type_gpos_pair:
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				if (lookup->subtables[j]) {
+					caryll_name_classdef(font, lookup->subtables[j]->gpos_pair.first);
+					caryll_name_classdef(font, lookup->subtables[j]->gpos_pair.second);
+				}
 			break;
 		case otl_type_gpos_cursive:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)

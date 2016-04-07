@@ -14,6 +14,10 @@ void otl_delete_mark_array(otl_mark_array *array);
 otl_mark_array *otl_read_mark_array(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 
 // position values
+static const uint8_t FORMAT_DX = 1;
+static const uint8_t FORMAT_DY = 2;
+static const uint8_t FORMAT_DWIDTH = 4;
+static const uint8_t FORMAT_DHEIGHT = 8;
 
 #define a(n) n + 0, n + 1, n + 1, n + 2             // 2 bits
 #define b(n) a(n + 0), a(n + 1), a(n + 1), a(n + 2) // 4 bits
@@ -26,26 +30,29 @@ static const uint8_t bits_in[0x100] = {d(0)};
 #undef a
 
 static INLINE uint8_t position_format_length(uint16_t format) { return bits_in[format & 0xFF] << 1; }
-
-static INLINE otl_position_value otl_read_position(font_file_pointer data, uint32_t tableLength, uint32_t offset,
+static INLINE otl_position_value position_zero() {
+	otl_position_value v = {0, 0, 0, 0};
+	return v;
+}
+static INLINE otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                                    uint16_t format) {
 	otl_position_value v = {0, 0, 0, 0};
 	if (tableLength < offset + position_format_length(format)) return v;
-	if (format & 1) { v.dx = read_16u(data + offset), offset += 2; };
-	if (format & 2) { v.dy = read_16u(data + offset), offset += 2; };
-	if (format & 4) { v.dWidth = read_16u(data + offset), offset += 2; };
-	if (format & 8) { v.dHeight = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DX) { v.dx = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DY) { v.dy = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DWIDTH) { v.dWidth = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DHEIGHT) { v.dHeight = read_16u(data + offset), offset += 2; };
 	return v;
 }
-
 static INLINE uint8_t required_position_format(otl_position_value v) {
-	return (v.dx ? 1 : 0) | (v.dy ? 2 : 0) | (v.dWidth ? 4 : 0) | (v.dHeight ? 8 : 0);
+	return (v.dx ? FORMAT_DX : 0) | (v.dy ? FORMAT_DY : 0) | (v.dWidth ? FORMAT_DWIDTH : 0) |
+	       (v.dHeight ? FORMAT_DHEIGHT : 0);
 }
-static INLINE void otl_write_position(caryll_buffer *buf, otl_position_value v, uint16_t format) {
-	if (format & 1) bufwrite16b(buf, v.dx);
-	if (format & 2) bufwrite16b(buf, v.dy);
-	if (format & 4) bufwrite16b(buf, v.dWidth);
-	if (format & 8) bufwrite16b(buf, v.dHeight);
+static INLINE void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format) {
+	if (format & FORMAT_DX) bufwrite16b(buf, v.dx);
+	if (format & FORMAT_DY) bufwrite16b(buf, v.dy);
+	if (format & FORMAT_DWIDTH) bufwrite16b(buf, v.dWidth);
+	if (format & FORMAT_DHEIGHT) bufwrite16b(buf, v.dHeight);
 }
 json_value *gpos_value_to_json(otl_position_value value);
 otl_position_value gpos_value_from_json(json_value *pos);

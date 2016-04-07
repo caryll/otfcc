@@ -1,4 +1,4 @@
-#include "otl-chaining.h"
+#include "chaining.h"
 static void deleteRule(otl_chaining_rule *rule) {
 	if (rule && rule->match && rule->matchCount) {
 		for (uint16_t k = 0; k < rule->matchCount; k++) {

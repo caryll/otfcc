@@ -1,4 +1,4 @@
-#include "otl-gpos-common.h"
+#include "gpos-common.h"
 
 void otl_delete_mark_array(otl_mark_array *array) {
 	if (array) {
@@ -76,6 +76,7 @@ json_value *gpos_value_to_json(otl_position_value value) {
 }
 otl_position_value gpos_value_from_json(json_value *pos) {
 	otl_position_value v = {0, 0, 0, 0};
+	if (!pos || pos->type != json_object) return v;
 	v.dx = json_obj_getnum(pos, "dx");
 	v.dy = json_obj_getnum(pos, "dy");
 	v.dWidth = json_obj_getnum(pos, "dWidth");

@@ -1,5 +1,5 @@
-#include "otl-gpos-mark-to-ligature.h"
-#include "otl-gpos-common.h"
+#include "gpos-mark-to-ligature.h"
+#include "gpos-common.h"
 
 void delete_lig_attachment(mark_to_ligature_base *att) {
 	if (!att) return;

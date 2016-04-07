@@ -1,4 +1,4 @@
-#include "otl-gsub-multi.h"
+#include "gsub-multi.h"
 static void deleteGSUBMultiSubtable(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);

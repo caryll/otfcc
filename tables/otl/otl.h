@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLES_OTL_H
 #define CARYLL_TABLES_OTL_H
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include "../../support/util.h"
+#include "../../caryll-sfnt.h"
 
 typedef enum {
 	otl_type_unknown = 0,
@@ -79,7 +79,7 @@ typedef struct {
 typedef struct {
 	uint16_t rulesCount;
 	otl_chaining_rule **rules;
-	
+
 	bool classified;
 	otl_classdef *bc;
 	otl_classdef *ic;
@@ -100,10 +100,17 @@ typedef struct {
 
 typedef struct {
 	otl_coverage *coverage;
+	otl_classdef *first;
+	otl_classdef *second;
+	otl_position_value **firstValues;
+	otl_position_value **secondValues;
+} subtable_gpos_pair;
+
+typedef struct {
+	otl_coverage *coverage;
 	otl_anchor *enter;
 	otl_anchor *exit;
 } subtable_gpos_cursive;
-
 
 typedef struct {
 	uint16_t markClass;
@@ -147,6 +154,7 @@ typedef union _otl_subtable {
 	subtable_gsub_ligature gsub_ligature;
 	subtable_chaining chaining;
 	subtable_gpos_single gpos_single;
+	subtable_gpos_pair gpos_pair;
 	subtable_gpos_cursive gpos_cursive;
 	subtable_gpos_mark_to_single gpos_mark_to_single;
 	subtable_gpos_mark_to_ligature gpos_mark_to_ligature;
@@ -202,18 +210,23 @@ otl_coverage *caryll_coverage_from_json(json_value *cov);
 caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
 
 // Classdef functions
+void caryll_delete_classdef(otl_classdef *cd);
 otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd);
+json_value *caryll_classdef_to_json(otl_classdef *cd);
+otl_classdef *caryll_classdef_from_json(json_value *_cd);
 caryll_buffer *caryll_write_classdef(otl_classdef *cd);
 
-#include "otl-gsub-single.h"
-#include "otl-gsub-multi.h"
-#include "otl-gsub-ligature.h"
-#include "otl-gpos-single.h"
-#include "otl-gpos-cursive.h"
-#include "otl-gpos-mark-to-single.h"
-#include "otl-gpos-mark-to-ligature.h"
-#include "otl-chaining.h"
-#include "otl-extend.h"
+#include "gsub-single.h"
+#include "gsub-multi.h"
+#include "gsub-ligature.h"
+#include "gpos-single.h"
+#include "gpos-pair.h"
+#include "gpos-cursive.h"
+#include "gpos-mark-to-single.h"
+#include "gpos-mark-to-ligature.h"
+#include "chaining.h"
+#include "extend.h"
 
 #define checkLength(offset)                                                                                            \
 	if (tableLength < offset) { goto FAIL; }

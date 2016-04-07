@@ -1,4 +1,4 @@
-#include "otl-gsub-ligature.h"
+#include "gsub-ligature.h"
 static void deleteGSUBLigatureSubtable(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);

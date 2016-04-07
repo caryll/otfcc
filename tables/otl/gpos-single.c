@@ -1,5 +1,5 @@
-#include "otl-gpos-single.h"
-#include "otl-gpos-common.h"
+#include "gpos-single.h"
+#include "gpos-common.h"
 void caryll_delete_gpos_single(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
@@ -28,7 +28,7 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 	NEW_N(subtable->values, subtable->coverage->numGlyphs);
 
 	if (subtableFormat == 1) {
-		otl_position_value v = otl_read_position(data, tableLength, offset + 6, read_16u(data + offset + 4));
+		otl_position_value v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 			subtable->values[j] = v;
 		}
@@ -40,7 +40,7 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 			subtable->values[j] =
-			    otl_read_position(data, tableLength, offset + 6 + j * position_format_length(valueFormat), valueFormat);
+			    read_gpos_value(data, tableLength, offset + 6 + j * position_format_length(valueFormat), valueFormat);
 		}
 	}
 	goto OK;
@@ -100,7 +100,7 @@ caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
 		size_t cp = buf->cursor;
 		bufpingpong16b(buf, caryll_write_coverage(subtable->coverage), &offset, &cp);
 		bufwrite16b(buf, format);
-		otl_write_position(buf, subtable->values[0], format);
+		write_gpos_value(buf, subtable->values[0], format);
 	} else {
 		bufwrite16b(buf, 2);
 		size_t offset = 8 + position_format_length(format) * subtable->coverage->numGlyphs;
@@ -109,7 +109,7 @@ caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
 		bufwrite16b(buf, format);
 		bufwrite16b(buf, subtable->coverage->numGlyphs);
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-			otl_write_position(buf, subtable->values[j], format);
+			write_gpos_value(buf, subtable->values[j], format);
 		}
 	}
 	return buf;
