@@ -110,7 +110,7 @@ $(MAIN_OBJECTS) : $(TARGETDIR)/%.o : src/%.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) 
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(EXECUTABLES): $(TARGETDIR)/%$(SUFFIX) : $(TARGETDIR)/%.o $(OBJECTS)
-	@echo LINK "->" $@
+	@echo LD "->" $@
 	@$(LINK) $(LINKFLAGS) $^ -o $@
 
 objects: $(EXECUTABLES)
@@ -120,7 +120,7 @@ $(TARGETDIR)/%.o : tests/%.c | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $^ -o $@
 $(TARGETDIR)/%$(SUFFIX) : $(TARGETDIR)/%.o $(OBJECTS)
-	@echo CC "->" $@
+	@echo LD "->" $@
 	@$(LINK) $(LINKFLAGS) $^ -o $@
 
 test: $(TESTFILES)

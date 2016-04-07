@@ -1,4 +1,8 @@
+#ifndef CARYLL_SFNT_BUILDER_H
+#define CARYLL_SFNT_BUILDER_H
+
 #include "support/util.h"
+
 typedef struct {
 	int tag;
 	uint32_t length;
@@ -16,3 +20,5 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 void delete_sfnt_builder(sfnt_builder *builder);
 
 caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder);
+
+#endif
