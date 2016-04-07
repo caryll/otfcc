@@ -95,7 +95,7 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	}
 	// we are right after the table directory
 	// add copyright information
-	bufwrite_bytes(buffer, 20, (uint8_t *)("--- BY OTFCC " VERSION " ---          "));
+	bufwrite_bytes(buffer, 20, (uint8_t *)("-- BY OTFCC " VERSION " --          "));
 	uint32_t wholeChecksum = buf_checksum(buffer);
 	bufseek(buffer, headOffset + 8);
 	bufwrite32b(buffer, 0xB1B0AFBA - wholeChecksum);
