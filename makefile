@@ -55,7 +55,8 @@ OTL_OBJECTS = $(TARGETDIR)/otl-otl.o $(TARGETDIR)/otl-coverage.o \
 	$(TARGETDIR)/otl-gsub-ligature.o $(TARGETDIR)/otl-chaining.o \
 	$(TARGETDIR)/otl-gpos-common.o $(TARGETDIR)/otl-gpos-single.o \
 	$(TARGETDIR)/otl-gpos-pair.o $(TARGETDIR)/otl-gpos-cursive.o \
-	$(TARGETDIR)/otl-gpos-mark-to-single.o $(TARGETDIR)/otl-gpos-mark-to-ligature.o
+	$(TARGETDIR)/otl-gpos-mark-to-single.o $(TARGETDIR)/otl-gpos-mark-to-ligature.o \
+	$(TARGETDIR)/otl-gsub-reverse.o
 
 FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o \
 	$(TARGETDIR)/fontop-stat.o
@@ -64,7 +65,8 @@ FONTOP_OTL_OBJECTS = $(TARGETDIR)/fopotl-common.o \
 	$(TARGETDIR)/fopotl-gsub-single.o $(TARGETDIR)/fopotl-gsub-multi.o \
 	$(TARGETDIR)/fopotl-gsub-ligature.o $(TARGETDIR)/fopotl-chaining.o \
 	$(TARGETDIR)/fopotl-gpos-single.o $(TARGETDIR)/fopotl-gpos-pair.o \
-	$(TARGETDIR)/fopotl-gpos-cursive.o $(TARGETDIR)/fopotl-mark.o
+	$(TARGETDIR)/fopotl-gpos-cursive.o $(TARGETDIR)/fopotl-mark.o \
+	$(TARGETDIR)/fopotl-gsub-reverse.o
 
 EXTERN_OBJECTS = $(TARGETDIR)/extern-sds.o $(TARGETDIR)/extern-json.o $(TARGETDIR)/extern-json-builder.o
 SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o \

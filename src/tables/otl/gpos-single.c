@@ -36,13 +36,13 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 	} else {
 		uint16_t valueFormat = read_16u(data + offset + 4);
 		uint16_t valueCount = read_16u(data + offset + 6);
-		checkLength(offset + 6 + position_format_length(valueFormat) * valueCount);
+		checkLength(offset + 8 + position_format_length(valueFormat) * valueCount);
 		if (valueCount != subtable->coverage->numGlyphs) goto FAIL;
 
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 			subtable->values[j] =
 			    read_gpos_value(data, tableLength,
-			                    offset + 6 + j * position_format_length(valueFormat), valueFormat);
+			                    offset + 8 + j * position_format_length(valueFormat), valueFormat);
 		}
 	}
 	goto OK;

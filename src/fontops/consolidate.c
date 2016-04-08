@@ -81,9 +81,9 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 	}
 }
 
-void declare_consolidate_type(otl_lookup_type type,
-                              bool (*fn)(caryll_font *, table_otl *, otl_subtable *, sds),
-                              caryll_font *font, table_otl *table, otl_lookup *lookup) {
+static void __declare_consolidate_type(otl_lookup_type type,
+                                       bool (*fn)(caryll_font *, table_otl *, otl_subtable *, sds),
+                                       caryll_font *font, table_otl *table, otl_lookup *lookup) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 			if (lookup->subtables[j]) {
@@ -108,23 +108,21 @@ void declare_consolidate_type(otl_lookup_type type,
 		}
 	}
 }
+#define LOOKUP_CONSOLIDATOR(llt, fn) __declare_consolidate_type(llt, fn, font, table, lookup);
 void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *lookup) {
-	declare_consolidate_type(otl_type_gsub_single, consolidate_gsub_single, font, table, lookup);
-	declare_consolidate_type(otl_type_gsub_multiple, consolidate_gsub_multi, font, table, lookup);
-	declare_consolidate_type(otl_type_gsub_alternate, consolidate_gsub_multi, font, table, lookup);
-	declare_consolidate_type(otl_type_gsub_ligature, consolidate_gsub_ligature, font, table,
-	                         lookup);
-	declare_consolidate_type(otl_type_gsub_chaining, consolidate_chaining, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_single, consolidate_gpos_single, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_pair, consolidate_gpos_pair, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_cursive, consolidate_gpos_cursive, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_chaining, consolidate_chaining, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_mark_to_base, consolidate_mark_to_single, font, table,
-	                         lookup);
-	declare_consolidate_type(otl_type_gpos_mark_to_mark, consolidate_mark_to_single, font, table,
-	                         lookup);
-	declare_consolidate_type(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature, font,
-	                         table, lookup);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_base, consolidate_mark_to_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_mark, consolidate_mark_to_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature);
 }
 
 void caryll_font_consolidate_otl(caryll_font *font) {

@@ -935,6 +935,7 @@ void caryll_delete_lookup(otl_lookup *lookup) {
 		DELETE_TYPE(otl_type_gsub_alternate, caryll_delete_gsub_multi);
 		DELETE_TYPE(otl_type_gsub_ligature, caryll_delete_gsub_ligature);
 		DELETE_TYPE(otl_type_gsub_chaining, caryll_delete_chaining);
+		DELETE_TYPE(otl_type_gsub_reverse, caryll_delete_gsub_reverse);
 		DELETE_TYPE(otl_type_gpos_single, caryll_delete_gpos_single);
 		DELETE_TYPE(otl_type_gpos_pair, caryll_delete_gpos_pair);
 		DELETE_TYPE(otl_type_gpos_cursive, caryll_delete_gpos_cursive);
@@ -956,6 +957,7 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 		LOOKUP_READER(otl_type_gsub_alternate, caryll_read_gsub_multi);
 		LOOKUP_READER(otl_type_gsub_ligature, caryll_read_gsub_ligature);
 		LOOKUP_READER(otl_type_gsub_chaining, caryll_read_chaining);
+		LOOKUP_READER(otl_type_gsub_reverse, caryll_read_gsub_reverse);
 		LOOKUP_READER(otl_type_gpos_chaining, caryll_read_chaining);
 		LOOKUP_READER(otl_type_gsub_context, caryll_read_contextual);
 		LOOKUP_READER(otl_type_gpos_context, caryll_read_contextual);
@@ -979,6 +981,7 @@ static INLINE void _lookup_to_json(otl_lookup *lookup, json_value *dump) {
 	LOOKUP_DUMPER(otl_type_gsub_alternate, caryll_gsub_multi_to_json);
 	LOOKUP_DUMPER(otl_type_gsub_ligature, caryll_gsub_ligature_to_json);
 	LOOKUP_DUMPER(otl_type_gsub_chaining, caryll_chaining_to_json);
+	LOOKUP_DUMPER(otl_type_gsub_reverse, caryll_gsub_reverse_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_chaining, caryll_chaining_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_single, caryll_gpos_single_to_json);
 	LOOKUP_DUMPER(otl_type_gpos_pair, caryll_gpos_pair_to_json);
@@ -995,6 +998,7 @@ static INLINE bool _parse_lookup(json_value *lookup, char *lookupName, lookup_ha
 	LOOKUP_PARSER(otl_type_gsub_alternate, caryll_gsub_multi_from_json);
 	LOOKUP_PARSER(otl_type_gsub_ligature, caryll_gsub_ligature_from_json);
 	LOOKUP_PARSER(otl_type_gsub_chaining, caryll_chaining_from_json);
+	LOOKUP_PARSER(otl_type_gsub_reverse, caryll_gsub_reverse_from_json);
 	LOOKUP_PARSER(otl_type_gpos_single, caryll_gpos_single_from_json);
 	LOOKUP_PARSER(otl_type_gpos_pair, caryll_gpos_pair_from_json);
 	LOOKUP_PARSER(otl_type_gpos_cursive, caryll_gpos_cursive_from_json);
@@ -1013,6 +1017,7 @@ static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf,
 	LOOKUP_WRITER(otl_type_gsub_alternate, caryll_write_gsub_multi_subtable);
 	LOOKUP_WRITER(otl_type_gsub_ligature, caryll_write_gsub_ligature_subtable);
 	LOOKUP_WRITER(otl_type_gsub_chaining, caryll_write_chaining);
+	LOOKUP_WRITER(otl_type_gsub_reverse, caryll_write_gsub_reverse);
 	LOOKUP_WRITER(otl_type_gpos_single, caryll_write_gpos_single);
 	LOOKUP_WRITER(otl_type_gpos_pair, caryll_write_gpos_pair);
 	LOOKUP_WRITER(otl_type_gpos_cursive, caryll_write_gpos_cursive);

@@ -5,6 +5,7 @@
 #include "otl/gsub-single.h"
 #include "otl/gsub-multi.h"
 #include "otl/gsub-ligature.h"
+#include "otl/gsub-reverse.h"
 #include "otl/gpos-single.h"
 #include "otl/gpos-pair.h"
 #include "otl/gpos-cursive.h"

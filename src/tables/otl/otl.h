@@ -70,12 +70,18 @@ typedef struct {
 typedef struct {
 	uint16_t rulesCount;
 	otl_chaining_rule **rules;
-
 	bool classified;
 	otl_classdef *bc;
 	otl_classdef *ic;
 	otl_classdef *fc;
 } subtable_chaining;
+
+typedef struct {
+	uint16_t matchCount;
+	uint16_t inputIndex;
+	otl_coverage **match;
+	otl_coverage *to;
+} subtable_gsub_reverse;
 
 // GPOS subtable formats
 typedef struct {
@@ -144,6 +150,7 @@ typedef union _otl_subtable {
 	subtable_gsub_multi gsub_multi;
 	subtable_gsub_ligature gsub_ligature;
 	subtable_chaining chaining;
+	subtable_gsub_reverse gsub_reverse;
 	subtable_gpos_single gpos_single;
 	subtable_gpos_pair gpos_pair;
 	subtable_gpos_cursive gpos_cursive;
@@ -197,6 +204,7 @@ caryll_buffer *caryll_write_otl(table_otl *table);
 #include "gsub-single.h"
 #include "gsub-multi.h"
 #include "gsub-ligature.h"
+#include "gsub-reverse.h"
 #include "gpos-single.h"
 #include "gpos-pair.h"
 #include "gpos-cursive.h"
