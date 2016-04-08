@@ -40,6 +40,7 @@
 #endif
 
 #ifndef json_int_t
+   #include <stdint.h>
    #ifndef _MSC_VER
       #include <inttypes.h>
       #define json_int_t int64_t

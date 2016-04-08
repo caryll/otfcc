@@ -9,7 +9,7 @@
 // GPOS contextual
 // GPOS chaining
 
-void caryll_delete_chaining(otl_lookup *lookup) ;
+void caryll_delete_chaining(otl_lookup *lookup);
 void delete_otl_chaining_subtable(otl_subtable *_subtable);
 otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLength, uint32_t offset);

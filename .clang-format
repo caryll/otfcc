@@ -5,6 +5,9 @@ UseTab: ForIndentation
 AllowShortBlocksOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: true
-ColumnLimit: 120
+AllowShortLoopsOnASingleLine: true
+ColumnLimit: 100
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IndentCaseLabels: true
+AlignOperands: true
+AlignAfterOpenBracket: true

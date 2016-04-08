@@ -22,7 +22,8 @@ void caryll_delete_gsub_multi(otl_lookup *lookup) {
 	}
 }
 
-otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLength,
+                                     uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
@@ -59,7 +60,8 @@ json_value *caryll_gsub_multi_to_json(otl_subtable *_subtable) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	json_value *st = json_object_new(subtable->from->numGlyphs);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
-		json_object_push(st, subtable->from->glyphs[j].name, caryll_coverage_to_json(subtable->to[j]));
+		json_object_push(st, subtable->from->glyphs[j].name,
+		                 caryll_coverage_to_json(subtable->to[j]));
 	}
 	return st;
 }
@@ -77,8 +79,8 @@ otl_subtable *caryll_gsub_multi_from_json(json_value *_subtable) {
 	for (uint16_t k = 0; k < st->from->numGlyphs; k++) {
 		json_value *_to = _subtable->u.object.values[k].value;
 		if (!_to || _to->type != json_array) continue;
-		st->from->glyphs[jj].name =
-		    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length);
+		st->from->glyphs[jj].name = sdsnewlen(_subtable->u.object.values[k].name,
+		                                      _subtable->u.object.values[k].name_length);
 		st->to[jj] = caryll_coverage_from_json(_to);
 		jj += 1;
 	}

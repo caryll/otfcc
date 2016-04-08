@@ -53,9 +53,7 @@ table_post *caryll_read_post(caryll_packet packet) {
 					try_name_glyph(map, j, sdsnew(standardMacNames[nameMap]));
 				}
 			}
-			for (uint32_t j = 0; j < pendingNameIndex; j++) {
-				sdsfree(pendingNames[j]);
-			}
+			for (uint32_t j = 0; j < pendingNameIndex; j++) { sdsfree(pendingNames[j]); }
 			post->post_name_map = map;
 		}
 		return post;

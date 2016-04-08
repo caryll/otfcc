@@ -7,13 +7,17 @@ typedef struct {
 	sds toname;
 	UT_hash_handle hh;
 } gsub_single_map_hash;
-static INLINE int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) { return a->fromid - b->fromid; }
-bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+static INLINE int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
+	return a->fromid - b->fromid;
+}
+bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *_subtable,
+                             sds lookupName) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	consolidate_coverage(font, subtable->from, lookupName);
 	consolidate_coverage(font, subtable->to, lookupName);
 	uint16_t len =
-	    (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs : subtable->from->numGlyphs);
+	    (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs
+	                                                         : subtable->from->numGlyphs);
 	gsub_single_map_hash *h = NULL;
 	for (uint16_t k = 0; k < len; k++) {
 		if (subtable->from->glyphs[k].name && subtable->to->glyphs[k].name) {
@@ -21,7 +25,8 @@ bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *
 			int fromid = subtable->from->glyphs[k].gid;
 			HASH_FIND_INT(h, &fromid, s);
 			if (s) {
-				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a single substitution /%s.\n",
+				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
+				                "single substitution /%s.\n",
 				        subtable->from->glyphs[k].name);
 			} else {
 				NEW(s);
@@ -35,7 +40,9 @@ bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *
 	}
 	HASH_SORT(h, by_from_id);
 	if (HASH_COUNT(h) != subtable->from->numGlyphs || HASH_COUNT(h) != subtable->to->numGlyphs) {
-		fprintf(stderr, "[Consolidate] In single subsitution lookup %s, some mappings are ignored.\n", lookupName);
+		fprintf(stderr, "[Consolidate] In single subsitution lookup %s, some "
+		                "mappings are ignored.\n",
+		        lookupName);
 	}
 	subtable->from->numGlyphs = HASH_COUNT(h);
 	subtable->to->numGlyphs = HASH_COUNT(h);

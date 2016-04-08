@@ -15,7 +15,8 @@ void caryll_delete_gpos_cursive(otl_lookup *lookup) {
 		FREE(lookup);
 	}
 }
-otl_subtable *caryll_read_gpos_cursive(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_subtable *caryll_read_gpos_cursive(font_file_pointer data, uint32_t tableLength,
+                                       uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
@@ -24,7 +25,8 @@ otl_subtable *caryll_read_gpos_cursive(font_file_pointer data, uint32_t tableLen
 	subtable->exit = NULL;
 	checkLength(offset + 6);
 
-	subtable->coverage = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->coverage =
+	    caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
 	NEW_N(subtable->enter, subtable->coverage->numGlyphs);
 	NEW_N(subtable->exit, subtable->coverage->numGlyphs);
@@ -38,8 +40,12 @@ otl_subtable *caryll_read_gpos_cursive(font_file_pointer data, uint32_t tableLen
 		uint16_t exitOffset = read_16u(data + offset + 6 + 4 * j + 2);
 		subtable->enter[j] = otl_anchor_absent();
 		subtable->exit[j] = otl_anchor_absent();
-		if (enterOffset) { subtable->enter[j] = otl_read_anchor(data, tableLength, offset + enterOffset); }
-		if (exitOffset) { subtable->exit[j] = otl_read_anchor(data, tableLength, offset + exitOffset); }
+		if (enterOffset) {
+			subtable->enter[j] = otl_read_anchor(data, tableLength, offset + enterOffset);
+		}
+		if (exitOffset) {
+			subtable->exit[j] = otl_read_anchor(data, tableLength, offset + exitOffset);
+		}
 	}
 	goto OK;
 FAIL:
@@ -73,11 +79,15 @@ otl_subtable *caryll_gpos_cursive_from_json(json_value *_subtable) {
 	NEW_N(subtable->exit, _subtable->u.object.length);
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < _subtable->u.object.length; j++) {
-		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
-			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
+		if (_subtable->u.object.values[j].value &&
+		    _subtable->u.object.values[j].value->type == json_object) {
+			sds gname = sdsnewlen(_subtable->u.object.values[j].name,
+			                      _subtable->u.object.values[j].name_length);
 			subtable->coverage->glyphs[jj].name = gname;
-			subtable->enter[jj] = otl_anchor_from_json(json_obj_get(_subtable->u.object.values[j].value, "enter"));
-			subtable->exit[jj] = otl_anchor_from_json(json_obj_get(_subtable->u.object.values[j].value, "exit"));
+			subtable->enter[jj] =
+			    otl_anchor_from_json(json_obj_get(_subtable->u.object.values[j].value, "enter"));
+			subtable->exit[jj] =
+			    otl_anchor_from_json(json_obj_get(_subtable->u.object.values[j].value, "exit"));
 			jj++;
 		}
 	}

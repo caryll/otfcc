@@ -1,7 +1,9 @@
 #include "hmtx.h"
 
 table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp *maxp) {
-	if (!hhea || !maxp || hhea->numberOfMetrics == 0 || maxp->numGlyphs < hhea->numberOfMetrics) return NULL;
+	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) {
+		return NULL;
+	}
 	FOR_TABLE('hmtx', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -50,9 +52,7 @@ caryll_buffer *caryll_write_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t co
 		}
 	}
 	if (hmtx->leftSideBearing) {
-		for (uint16_t j = 0; j < count_k; j++) {
-			bufwrite16b(buf, hmtx->leftSideBearing[j]);
-		}
+		for (uint16_t j = 0; j < count_k; j++) { bufwrite16b(buf, hmtx->leftSideBearing[j]); }
 	}
 	return buf;
 }

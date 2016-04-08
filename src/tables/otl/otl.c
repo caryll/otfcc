@@ -19,12 +19,12 @@ typedef struct {
 } script_hash;
 
 void caryll_delete_lookup(otl_lookup *lookup);
-otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                       otl_lookup_type lookupType);
+otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength,
+                                       uint32_t subtableOffset, otl_lookup_type lookupType);
 static INLINE void _lookup_to_json(otl_lookup *lookup, json_value *dump);
 static INLINE bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh);
-static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf, uint32_t **subtableOffsets,
-                                   uint32_t *lastOffset);
+static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf,
+                                   uint32_t **subtableOffsets, uint32_t *lastOffset);
 
 // COMMON PART
 table_otl *caryll_new_otl() {
@@ -66,8 +66,9 @@ void caryll_delete_otl(table_otl *table) {
 	free(table);
 }
 
-static INLINE void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, otl_language_system *lang,
-                   uint16_t featureCount, otl_feature **features) {
+static INLINE void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base,
+                                 otl_language_system *lang, uint16_t featureCount,
+                                 otl_feature **features) {
 	checkLength(base + 6);
 	uint16_t rid = read_16u(data + base + 2);
 	if (rid < featureCount) {
@@ -95,7 +96,8 @@ FAIL:
 	return;
 }
 
-static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength, otl_lookup_type lookup_type_base) {
+static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableLength,
+                                                otl_lookup_type lookup_type_base) {
 	table_otl *table = caryll_new_otl();
 	if (!table) goto FAIL;
 	checkLength(10);
@@ -135,9 +137,10 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 			NEW(feature);
 			features[j] = feature;
 			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
-			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-			                                 (tag >> 8) & 0xff, tag & 0xff, j);
-			uint32_t featureOffset = featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
+			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%d", (tag >> 24) & 0xFF,
+			                                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, j);
+			uint32_t featureOffset =
+			    featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
 
 			checkLength(featureOffset + 4);
 			uint16_t lookupCount = read_16u(data + featureOffset + 2);
@@ -150,8 +153,8 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 					features[j]->lookups[k] = table->lookups[lookupid];
 					if (!features[j]->lookups[k]->name) {
 						features[j]->lookups[k]->name =
-						    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-						                 (tag >> 8) & 0xff, tag & 0xff, lnk++);
+						    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF,
+						                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, lnk++);
 					}
 				}
 			}
@@ -167,11 +170,13 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 
 		uint32_t nLanguageCombinations = 0;
 		for (uint16_t j = 0; j < scriptCount; j++) {
-			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
+			uint32_t scriptOffset =
+			    scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
 			checkLength(scriptOffset + 4);
 
 			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
-			nLanguageCombinations += (defaultLangSystem ? 1 : 0) + read_16u(data + scriptOffset + 2);
+			nLanguageCombinations +=
+			    (defaultLangSystem ? 1 : 0) + read_16u(data + scriptOffset + 2);
 		}
 
 		table->languageCount = nLanguageCombinations;
@@ -181,14 +186,16 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 		uint16_t currentLang = 0;
 		for (uint16_t j = 0; j < scriptCount; j++) {
 			uint32_t tag = read_32u(data + scriptListOffset + 2 + 6 * j);
-			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
+			uint32_t scriptOffset =
+			    scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
 			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
 			if (defaultLangSystem) {
 				NEW(languages[currentLang]);
-				languages[currentLang]->name = sdscatprintf(sdsempty(), "%c%c%c%c_DFLT", (tag >> 24) & 0xFF,
-				                                            (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff);
-				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, languages[currentLang],
-				              table->featureCount, table->features);
+				languages[currentLang]->name =
+				    sdscatprintf(sdsempty(), "%c%c%c%c_DFLT", (tag >> 24) & 0xFF,
+				                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff);
+				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem,
+				              languages[currentLang], table->featureCount, table->features);
 				currentLang += 1;
 			}
 			uint16_t langSysCount = read_16u(data + scriptOffset + 2);
@@ -197,10 +204,11 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 				uint16_t langSys = read_16u(data + scriptOffset + 4 + 6 * k + 4);
 				NEW(languages[currentLang]);
 				languages[currentLang]->name = sdscatprintf(
-				    sdsempty(), "%c%c%c%c_%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF, (tag >> 8) & 0xff,
-				    tag & 0xff, (langTag >> 24) & 0xFF, (langTag >> 16) & 0xFF, (langTag >> 8) & 0xff, langTag & 0xff);
-				parseLanguage(data, tableLength, scriptOffset + langSys, languages[currentLang], table->featureCount,
-				              table->features);
+				    sdsempty(), "%c%c%c%c_%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+				    (tag >> 8) & 0xff, tag & 0xff, (langTag >> 24) & 0xFF, (langTag >> 16) & 0xFF,
+				    (langTag >> 8) & 0xff, langTag & 0xff);
+				parseLanguage(data, tableLength, scriptOffset + langSys, languages[currentLang],
+				              table->featureCount, table->features);
 				currentLang += 1;
 			}
 		}
@@ -210,7 +218,8 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 	// name all lookups
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
 		if (!table->lookups[j]->name)
-			table->lookups[j]->name = sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups[j]->type, j);
+			table->lookups[j]->name =
+			    sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups[j]->type, j);
 	}
 	return table;
 FAIL:
@@ -218,7 +227,8 @@ FAIL:
 	return NULL;
 }
 
-static INLINE void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_lookup *lookup) {
+static INLINE void caryll_read_otl_lookup(font_file_pointer data, uint32_t tableLength,
+                                          otl_lookup *lookup) {
 	lookup->flags = read_16u(data + lookup->_offset + 2);
 	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
 	if (!lookup->subtableCount || tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
@@ -230,7 +240,8 @@ static INLINE void caryll_read_otl_lookup(font_file_pointer data, uint32_t table
 	NEW_N(lookup->subtables, lookup->subtableCount);
 	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
-		lookup->subtables[j] = caryll_read_otl_subtable(data, tableLength, subtableOffset, lookup->type);
+		lookup->subtables[j] =
+		    caryll_read_otl_subtable(data, tableLength, subtableOffset, lookup->type);
 	}
 	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
 		lookup->type = 0;
@@ -276,7 +287,8 @@ table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag) {
 		uint32_t length = table.length;
 		otl = caryll_read_otl_common(
 		    data, length,
-		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown));
+		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown
+		                                                           : otl_type_unknown));
 		if (!otl) goto FAIL;
 		for (uint16_t j = 0; j < otl->lookupCount; j++) {
 			caryll_read_otl_lookup(data, length, otl->lookups[j]);
@@ -289,7 +301,8 @@ table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag) {
 	return NULL;
 }
 
-static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, json_value *(*dumper)(otl_subtable *st),
+static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt,
+                                          json_value *(*dumper)(otl_subtable *st),
                                           otl_lookup *lookup, json_value *dump) {
 	if (lookup->type == llt) {
 		json_object_push(dump, "type", json_string_new(lt));
@@ -301,7 +314,8 @@ static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, j
 	}
 }
 
-void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag) {
+void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts,
+                        const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
 	json_value *otl = json_object_new(3);
 	{
@@ -316,7 +330,8 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 			json_value *features = json_array_new(table->languages[j]->featureCount);
 			for (uint16_t k = 0; k < table->languages[j]->featureCount; k++)
 				if (table->languages[j]->features[k]) {
-					json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
+					json_array_push(features,
+					                json_string_new(table->languages[j]->features[k]->name));
 				}
 			json_object_push(language, "features", preserialize(features));
 			json_object_push(languages, table->languages[j]->name, language);
@@ -349,8 +364,9 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 	json_object_push(root, tag, otl);
 }
 
-static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl_subtable *(*parser)(json_value *),
-                                        json_value *_lookup, char *lookupName, lookup_hash **lh) {
+static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt,
+                                        otl_subtable *(*parser)(json_value *), json_value *_lookup,
+                                        char *lookupName, lookup_hash **lh) {
 	json_value *type = json_obj_get_type(_lookup, "type", json_string);
 	if (!type || strcmp(type->u.string.ptr, lt)) return false;
 	lookup_hash *item = NULL;
@@ -385,7 +401,8 @@ static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl
 	return true;
 }
 
-static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag) {
+static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh,
+                                                      const char *tag) {
 	feature_hash *fh = NULL;
 	for (uint32_t j = 0; j < features->u.object.length; j++) {
 		char *featureName = features->u.object.values[j].name;
@@ -414,15 +431,16 @@ static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, look
 					s->feature->lookups = al;
 					HASH_ADD_STR(fh, name, s);
 				} else {
-					fprintf(
-					    stderr,
-					    "[OTFCC-fea] There is no valid lookup assignments for [%s/%s]. This feature will be ignored.\n",
-					    tag, featureName);
+					fprintf(stderr, "[OTFCC-fea] There is no valid lookup "
+					                "assignments for [%s/%s]. This feature "
+					                "will be ignored.\n",
+					        tag, featureName);
 					FREE(al);
 				}
 			} else {
-				fprintf(stderr,
-				        "[OTFCC-fea] There is no valid lookup assignments for [%s/%s]. This feature will be ignored.\n",
+				fprintf(stderr, "[OTFCC-fea] There is no valid lookup "
+				                "assignments for [%s/%s]. This feature will be "
+				                "ignored.\n",
 				        tag, featureName);
 				FREE(al);
 			}
@@ -430,7 +448,8 @@ static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, look
 	}
 	return fh;
 }
-static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh, const char *tag) {
+static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh,
+                                                      const char *tag) {
 	script_hash *sh = NULL;
 	// languages
 	for (uint32_t j = 0; j < languages->u.object.length; j++) {
@@ -474,14 +493,17 @@ static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, fea
 					s->script->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
-					fprintf(stderr,
-					        "[OTFCC-fea] There is no valid featue assignments for [%s/%s]. This language term will "
-					        "be ignored.\n",
+					fprintf(stderr, "[OTFCC-fea] There is no valid featue "
+					                "assignments for [%s/%s]. This language "
+					                "term will "
+					                "be ignored.\n",
 					        tag, languageName);
 					if (af) { FREE(af); }
 				}
 			} else {
-				fprintf(stderr, "[OTFCC-fea] There is no valid featue assignments for [%s/%s]. This language term will "
+				fprintf(stderr, "[OTFCC-fea] There is no valid featue "
+				                "assignments for [%s/%s]. This language term "
+				                "will "
 				                "be ignored.\n",
 				        tag, languageName);
 
@@ -498,7 +520,10 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 		if (lookups->u.object.values[j].value->type == json_object) {
 			char *lookupName = lookups->u.object.values[j].name;
 			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, &lh);
-			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
+			if (!parsed) {
+				fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n",
+				        lookupName);
+			}
 		}
 	}
 	return lh;
@@ -565,9 +590,10 @@ FAIL:
 	return NULL;
 }
 
-static bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(otl_subtable *_subtable),
-                                   otl_lookup *lookup, caryll_buffer *buf, uint32_t **subtableOffsets,
-                                   uint32_t *lastOffset) {
+static bool _declare_lookup_writer(otl_lookup_type type,
+                                   caryll_buffer *(*fn)(otl_subtable *_subtable),
+                                   otl_lookup *lookup, caryll_buffer *buf,
+                                   uint32_t **subtableOffsets, uint32_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtableOffsets, lookup->subtableCount);
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
@@ -592,7 +618,8 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 	uint32_t lastOffset = 0;
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
 		subtableOffsets[j] = NULL;
-		lookupWritten[j] = _write_subtable(table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
+		lookupWritten[j] =
+		    _write_subtable(table->lookups[j], bufsts, &(subtableOffsets[j]), &lastOffset);
 	}
 	// estimate the length of headers
 	size_t headerSize = 2 + 2 * table->lookupCount;
@@ -619,19 +646,23 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 		otl_lookup *lookup = table->lookups[j];
 		size_t lookupOffset = bufl->cursor;
 		if (lookupOffset > 0xFFFF) {
-			fprintf(stderr, "[OTFCC-fea] Warning, Lookup %s Written at 0x%llX, this lookup is corrupted.\n",
+			fprintf(stderr, "[OTFCC-fea] Warning, Lookup %s Written at 0x%llX, "
+			                "this lookup is corrupted.\n",
 			        table->lookups[j]->name, lookupOffset);
 		}
 		// lookup type
 		if (useExtended) {
-			bufwrite16b(
-			    bufl, (lookup->type > otl_type_gpos_unknown
-			               ? otl_type_gpos_extend - otl_type_gpos_unknown
-			               : lookup->type > otl_type_gsub_unknown ? otl_type_gsub_extend - otl_type_gsub_unknown : 0));
+			bufwrite16b(bufl, (lookup->type > otl_type_gpos_unknown
+			                       ? otl_type_gpos_extend - otl_type_gpos_unknown
+			                       : lookup->type > otl_type_gsub_unknown
+			                             ? otl_type_gsub_extend - otl_type_gsub_unknown
+			                             : 0));
 		} else {
 			bufwrite16b(bufl, (lookup->type > otl_type_gpos_unknown
 			                       ? lookup->type - otl_type_gpos_unknown
-			                       : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0));
+			                       : lookup->type > otl_type_gsub_unknown
+			                             ? lookup->type - otl_type_gsub_unknown
+			                             : 0));
 		}
 		// lookup flags
 		bufwrite16b(bufl, lookup->flags);
@@ -643,10 +674,11 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 			for (uint16_t k = 0; k < lookup->subtableCount; k++) { // extension subtables
 				size_t subtableStart = bufl->cursor;
 				bufwrite16b(bufl, 1);
-				bufwrite16b(bufl,
-				            (lookup->type > otl_type_gpos_unknown
-				                 ? lookup->type - otl_type_gpos_unknown
-				                 : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0));
+				bufwrite16b(bufl, (lookup->type > otl_type_gpos_unknown
+				                       ? lookup->type - otl_type_gpos_unknown
+				                       : lookup->type > otl_type_gsub_unknown
+				                             ? lookup->type - otl_type_gsub_unknown
+				                             : 0));
 				bufwrite32b(bufl, subtableOffsets[j][k] + headerSize - subtableStart);
 			}
 		} else {
@@ -856,21 +888,24 @@ caryll_buffer *caryll_write_otl(table_otl *table) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//                                    CONFIG PART                                     //
+//                                    CONFIG PART //
 ////////////////////////////////////////////////////////////////////////////////////////
 
-#define DELETE_TYPE(type, fn)                                                                                          \
-	case type:                                                                                                         \
-		fn(lookup);                                                                                                    \
+#define DELETE_TYPE(type, fn)                                                                      \
+	case type:                                                                                     \
+		fn(lookup);                                                                                \
 		break;
-#define LOOKUP_READER(llt, fn)                                                                                         \
-	case llt:                                                                                                          \
+#define LOOKUP_READER(llt, fn)                                                                     \
+	case llt:                                                                                      \
 		return fn(data, tableLength, subtableOffset);
 #define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
-#define LOOKUP_PARSER(llt, parser)                                                                                     \
-	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, lh); }
-#define LOOKUP_WRITER(type, fn)                                                                                        \
-	if (!written) written = _declare_lookup_writer(type, fn, lookup, buf, subtableOffsets, lastOffset);
+#define LOOKUP_PARSER(llt, parser)                                                                 \
+	if (!parsed) {                                                                                 \
+		parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, lh);       \
+	}
+#define LOOKUP_WRITER(type, fn)                                                                    \
+	if (!written)                                                                                  \
+		written = _declare_lookup_writer(type, fn, lookup, buf, subtableOffsets, lastOffset);
 static const char *tableNames[] = {[otl_type_unknown] = "unknown",
                                    [otl_type_gsub_unknown] = "gsub_unknown",
                                    [otl_type_gsub_single] = "gsub_single",
@@ -913,8 +948,8 @@ void caryll_delete_lookup(otl_lookup *lookup) {
 	}
 }
 
-otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                       otl_lookup_type lookupType) {
+otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength,
+                                       uint32_t subtableOffset, otl_lookup_type lookupType) {
 	switch (lookupType) {
 		LOOKUP_READER(otl_type_gsub_single, caryll_read_gsub_single);
 		LOOKUP_READER(otl_type_gsub_multiple, caryll_read_gsub_multi);
@@ -970,8 +1005,8 @@ static INLINE bool _parse_lookup(json_value *lookup, char *lookupName, lookup_ha
 	return parsed;
 }
 
-static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf, uint32_t **subtableOffsets,
-                                   uint32_t *lastOffset) {
+static INLINE bool _write_subtable(otl_lookup *lookup, caryll_buffer *buf,
+                                   uint32_t **subtableOffsets, uint32_t *lastOffset) {
 	bool written = false;
 	LOOKUP_WRITER(otl_type_gsub_single, caryll_write_gsub_single_subtable);
 	LOOKUP_WRITER(otl_type_gsub_multiple, caryll_write_gsub_multi_subtable);

@@ -121,8 +121,10 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_option
 	json_object_push(os_2, "usDefaultChar", json_integer_new(table->usDefaultChar));
 	json_object_push(os_2, "usBreakChar", json_integer_new(table->usBreakChar));
 	json_object_push(os_2, "usMaxContext", json_integer_new(table->usMaxContext));
-	json_object_push(os_2, "usLowerOpticalPointSize", json_integer_new(table->usLowerOpticalPointSize));
-	json_object_push(os_2, "usUpperOpticalPointSize", json_integer_new(table->usUpperOpticalPointSize));
+	json_object_push(os_2, "usLowerOpticalPointSize",
+	                 json_integer_new(table->usLowerOpticalPointSize));
+	json_object_push(os_2, "usUpperOpticalPointSize",
+	                 json_integer_new(table->usUpperOpticalPointSize));
 	json_object_push(root, "OS_2", os_2);
 }
 
@@ -161,8 +163,10 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options *dumpopt
 		os_2->usDefaultChar = json_obj_getnum_fallback(table, "usDefaultChar", 0);
 		os_2->usBreakChar = json_obj_getnum_fallback(table, "usBreakChar", 0);
 		os_2->usMaxContext = json_obj_getnum_fallback(table, "usMaxContext", 0);
-		os_2->usLowerOpticalPointSize = json_obj_getnum_fallback(table, "usLowerOpticalPointSize", 0);
-		os_2->usUpperOpticalPointSize = json_obj_getnum_fallback(table, "usUpperOpticalPointSize", 0);
+		os_2->usLowerOpticalPointSize =
+		    json_obj_getnum_fallback(table, "usLowerOpticalPointSize", 0);
+		os_2->usUpperOpticalPointSize =
+		    json_obj_getnum_fallback(table, "usUpperOpticalPointSize", 0);
 		// panose
 		json_value *panose = NULL;
 		if ((panose = json_obj_get_type(table, "panose", json_array))) {

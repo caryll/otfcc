@@ -14,7 +14,8 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 				r->glyph.name = entry->name;
 				nReferencesConsolidated += 1;
 			} else {
-				fprintf(stderr, "[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
+				fprintf(stderr, "[Consolidate] Ignored absent glyph component "
+				                "reference /%s within /%s.\n",
 				        r->glyph.name, g->name);
 				r->glyph.gid = 0;
 				sdsfree(r->glyph.name);
@@ -31,7 +32,8 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 			g->references = NULL;
 			g->numberOfReferences = 0;
 		} else {
-			glyf_reference *consolidatedReferences = calloc(nReferencesConsolidated, sizeof(glyf_reference));
+			glyf_reference *consolidatedReferences =
+			    calloc(nReferencesConsolidated, sizeof(glyf_reference));
 			for (uint16_t j = 0, k = 0; j < g->numberOfReferences; j++) {
 				if (g->references[j].glyph.name) { consolidatedReferences[k++] = g->references[j]; }
 			}
@@ -64,8 +66,9 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 				sdsfree(item->glyph.name);
 				item->glyph.name = ordentry->name;
 			} else {
-				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
-				        item->glyph.name);
+				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
+				                "non-existent glyph /%s.\n",
+				        item->unicode, item->glyph.name);
 				item->glyph.gid = 0;
 				sdsfree(item->glyph.name);
 				item->glyph.name = NULL;
@@ -78,7 +81,8 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 	}
 }
 
-void declare_consolidate_type(otl_lookup_type type, bool (*fn)(caryll_font *, table_otl *, otl_subtable *, sds),
+void declare_consolidate_type(otl_lookup_type type,
+                              bool (*fn)(caryll_font *, table_otl *, otl_subtable *, sds),
                               caryll_font *font, table_otl *table, otl_lookup *lookup) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
@@ -108,15 +112,19 @@ void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *
 	declare_consolidate_type(otl_type_gsub_single, consolidate_gsub_single, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_multiple, consolidate_gsub_multi, font, table, lookup);
 	declare_consolidate_type(otl_type_gsub_alternate, consolidate_gsub_multi, font, table, lookup);
-	declare_consolidate_type(otl_type_gsub_ligature, consolidate_gsub_ligature, font, table, lookup);
+	declare_consolidate_type(otl_type_gsub_ligature, consolidate_gsub_ligature, font, table,
+	                         lookup);
 	declare_consolidate_type(otl_type_gsub_chaining, consolidate_chaining, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_single, consolidate_gpos_single, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_pair, consolidate_gpos_pair, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_cursive, consolidate_gpos_cursive, font, table, lookup);
 	declare_consolidate_type(otl_type_gpos_chaining, consolidate_chaining, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_mark_to_base, consolidate_mark_to_single, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_mark_to_mark, consolidate_mark_to_single, font, table, lookup);
-	declare_consolidate_type(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature, font, table, lookup);
+	declare_consolidate_type(otl_type_gpos_mark_to_base, consolidate_mark_to_single, font, table,
+	                         lookup);
+	declare_consolidate_type(otl_type_gpos_mark_to_mark, consolidate_mark_to_single, font, table,
+	                         lookup);
+	declare_consolidate_type(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature, font,
+	                         table, lookup);
 }
 
 void caryll_font_consolidate_otl(caryll_font *font) {

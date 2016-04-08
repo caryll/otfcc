@@ -67,9 +67,7 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 			bits = 12;
 		}
 
-		for (; bits >= 0; bits -= 6) {
-			*out++ = ((c >> bits) & 0x3F) | 0x80;
-		}
+		for (; bits >= 0; bits -= 6) { *out++ = ((c >> bits) & 0x3F) | 0x80; }
 	}
 	return out0;
 }
@@ -162,9 +160,7 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 			bits = 12;
 		}
 
-		for (; bits >= 0; bits -= 6) {
-			*out++ = ((c >> bits) & 0x3F) | 0x80;
-		}
+		for (; bits >= 0; bits -= 6) { *out++ = ((c >> bits) & 0x3F) | 0x80; }
 	}
 	return out0;
 }

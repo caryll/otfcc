@@ -33,7 +33,8 @@ static INLINE glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint1
 	return &contours[*cc].points[(*cp)++];
 }
 
-static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t numberOfContours) {
+static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start,
+                                                   uint16_t numberOfContours) {
 	glyf_glyph *g = caryll_new_glyf_glhph();
 	g->numberOfContours = numberOfContours;
 	g->numberOfReferences = 0;
@@ -58,7 +59,8 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 
 	// read flags
 	uint16_t pointsInGlyph = lastPointIndex;
-	// There are repeating entries in the flags list, we will fill out the result
+	// There are repeating entries in the flags list, we will fill out the
+	// result
 	font_file_pointer flags = (uint8_t *)malloc(sizeof(uint8_t) * pointsInGlyph);
 	font_file_pointer flagStart = start + 2 * numberOfContours + 2 + instructionLength;
 	uint16_t flagsReadSofar = 0;
@@ -71,13 +73,15 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 		flags[flagsReadSofar] = flag;
 		flagBytesReadSofar += 1;
 		flagsReadSofar += 1;
-		next_point(contours, &currentContour, &currentContourPointIndex)->onCurve = (flag & GLYF_FLAG_ON_CURVE);
+		next_point(contours, &currentContour, &currentContourPointIndex)->onCurve =
+		    (flag & GLYF_FLAG_ON_CURVE);
 		if (flag & GLYF_FLAG_REPEAT) { // repeating flag
 			uint8_t repeat = flagStart[flagBytesReadSofar];
 			flagBytesReadSofar += 1;
 			for (uint8_t j = 0; j < repeat; j++) {
 				flags[flagsReadSofar + j] = flag;
-				next_point(contours, &currentContour, &currentContourPointIndex)->onCurve = (flag & GLYF_FLAG_ON_CURVE);
+				next_point(contours, &currentContour, &currentContourPointIndex)->onCurve =
+				    (flag & GLYF_FLAG_ON_CURVE);
 			}
 			flagsReadSofar += repeat;
 		}
@@ -93,7 +97,8 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 		uint8_t flag = flags[coordinatesRead];
 		int16_t x;
 		if (flag & GLYF_FLAG_X_SHORT) {
-			x = (flag & GLYF_FLAG_POSITIVE_X ? 1 : -1) * read_8u(coordinatesStart + coordinatesOffset);
+			x = (flag & GLYF_FLAG_POSITIVE_X ? 1 : -1) *
+			    read_8u(coordinatesStart + coordinatesOffset);
 			coordinatesOffset += 1;
 		} else {
 			if (flag & GLYF_FLAG_SAME_X) {
@@ -114,7 +119,8 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start, uint
 		uint8_t flag = flags[coordinatesRead];
 		int16_t y;
 		if (flag & GLYF_FLAG_Y_SHORT) {
-			y = (flag & GLYF_FLAG_POSITIVE_Y ? 1 : -1) * read_8u(coordinatesStart + coordinatesOffset);
+			y = (flag & GLYF_FLAG_POSITIVE_Y ? 1 : -1) *
+			    read_8u(coordinatesStart + coordinatesOffset);
 			coordinatesOffset += 1;
 		} else {
 			if (flag & GLYF_FLAG_SAME_Y) {
@@ -351,7 +357,8 @@ static INLINE json_value *coord_to_json(float z) {
 		return json_double_new(z);
 	}
 }
-static INLINE json_value *glyf_glyph_contours_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
+static INLINE json_value *glyf_glyph_contours_to_json(glyf_glyph *g,
+                                                      caryll_dump_options *dumpopts) {
 	json_value *contours = json_array_new(g->numberOfContours);
 	for (uint16_t k = 0; k < g->numberOfContours; k++) {
 		glyf_contour c = g->contours[k];
@@ -367,7 +374,8 @@ static INLINE json_value *glyf_glyph_contours_to_json(glyf_glyph *g, caryll_dump
 	}
 	return contours;
 }
-static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
+static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g,
+                                                        caryll_dump_options *dumpopts) {
 	json_value *references = json_array_new(g->numberOfReferences);
 	for (uint16_t k = 0; k < g->numberOfReferences; k++) {
 		glyf_reference r = g->references[k];
@@ -383,7 +391,8 @@ static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g, caryll_du
 	}
 	return references;
 }
-static INLINE json_value *glyf_glyph_instructions_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
+static INLINE json_value *glyf_glyph_instructions_to_json(glyf_glyph *g,
+                                                          caryll_dump_options *dumpopts) {
 	json_value *instructions = json_array_new(g->instructionsLength);
 	for (uint16_t j = 0; j < g->instructionsLength; j++) {
 		json_array_push(instructions, json_integer_new(g->instructions[j]));
@@ -401,7 +410,8 @@ static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options 
 	json_object_push(glyph, "contours", preserialize(glyf_glyph_contours_to_json(g, dumpopts)));
 	json_object_push(glyph, "references", preserialize(glyf_glyph_references_to_json(g, dumpopts)));
 	if (!dumpopts->ignore_hints) {
-		json_object_push(glyph, "instructions", preserialize(glyf_glyph_instructions_to_json(g, dumpopts)));
+		json_object_push(glyph, "instructions",
+		                 preserialize(glyf_glyph_instructions_to_json(g, dumpopts)));
 	}
 	return glyph;
 }
@@ -409,7 +419,8 @@ void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
 	if (!table) return;
 	json_value *order = json_array_new(table->numberGlyphs);
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-		json_array_push(order, json_string_new_length(sdslen(table->glyphs[j]->name), table->glyphs[j]->name));
+		json_array_push(
+		    order, json_string_new_length(sdslen(table->glyphs[j]->name), table->glyphs[j]->name));
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
@@ -502,7 +513,8 @@ static INLINE void glyf_instructions_from_json(json_value *col, glyf_glyph *g) {
 			g->instructions[j] = byte->u.dbl;
 	}
 }
-static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_order_entry *order_entry,
+static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
+                                                      glyph_order_entry *order_entry,
                                                       caryll_dump_options *dumpopts) {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->name = order_entry->name;
@@ -520,7 +532,8 @@ static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, gly
 	return g;
 }
 
-table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, caryll_dump_options *dumpopts) {
+table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order,
+                                  caryll_dump_options *dumpopts) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -530,12 +543,14 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 		glyf->numberGlyphs = numGlyphs;
 		glyf->glyphs = calloc(numGlyphs, sizeof(glyf_glyph *));
 		for (uint16_t j = 0; j < numGlyphs; j++) {
-			sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+			sds gname =
+			    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 			json_value *glyphdump = table->u.object.values[j].value;
 			glyph_order_entry *order_entry;
 			HASH_FIND_STR(glyph_order, gname, order_entry);
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
-				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump, order_entry, dumpopts);
+				glyf->glyphs[order_entry->gid] =
+				    caryll_glyf_glyph_from_json(glyphdump, order_entry, dumpopts);
 			}
 			sdsfree(gname);
 		}
@@ -658,10 +673,12 @@ static INLINE void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 		glyf_reference *r = &(g->references[rj]);
 		uint16_t flags =
 		    ARGS_ARE_XY_VALUES |
-		    (rj < g->numberOfReferences - 1 ? MORE_COMPONENTS : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
+		    (rj < g->numberOfReferences - 1 ? MORE_COMPONENTS
+		                                    : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
 		int16_t arg1 = r->x;
 		int16_t arg2 = r->y;
-		if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128)) flags |= ARG_1_AND_2_ARE_WORDS;
+		if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128))
+			flags |= ARG_1_AND_2_ARE_WORDS;
 		if (fabsf(r->b) > EPSILON || fabsf(r->c) > EPSILON) {
 			flags |= WE_HAVE_A_TWO_BY_TWO;
 		} else if (fabsf(r->a - 1) > EPSILON || fabsf(r->d - 1) > EPSILON) {
@@ -697,7 +714,8 @@ static INLINE void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca) {
+void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf,
+                       caryll_buffer *bufloca) {
 	caryll_buffer *gbuf = bufnew();
 
 	uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));

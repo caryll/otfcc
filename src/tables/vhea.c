@@ -5,7 +5,8 @@ table_vhea *caryll_new_vhea() {
 	return vhea;
 }
 table_vhea *caryll_read_vhea(caryll_packet packet) {
-	table_vhea *vhea = NULL;;
+	table_vhea *vhea = NULL;
+	;
 	FOR_TABLE('vhea', table) {
 		font_file_pointer data = table.data;
 		size_t length = table.length;

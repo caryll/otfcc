@@ -29,13 +29,15 @@ static const uint8_t bits_in[0x100] = {d(0)};
 #undef b
 #undef a
 
-static INLINE uint8_t position_format_length(uint16_t format) { return bits_in[format & 0xFF] << 1; }
+static INLINE uint8_t position_format_length(uint16_t format) {
+	return bits_in[format & 0xFF] << 1;
+}
 static INLINE otl_position_value position_zero() {
 	otl_position_value v = {0, 0, 0, 0};
 	return v;
 }
-static INLINE otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset,
-                                                   uint16_t format) {
+static INLINE otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength,
+                                                 uint32_t offset, uint16_t format) {
 	otl_position_value v = {0, 0, 0, 0};
 	if (tableLength < offset + position_format_length(format)) return v;
 	if (format & FORMAT_DX) { v.dx = read_16u(data + offset), offset += 2; };
@@ -65,22 +67,26 @@ typedef struct {
 	uint16_t index;
 	UT_hash_handle hh;
 } anchor_aggeration_hash;
-static INLINE int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
-static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) { return a->index - b->index; }
+static INLINE int getPositon(otl_anchor anchor) {
+	return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y);
+}
+static INLINE int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) {
+	return a->index - b->index;
+}
 
-#define ANCHOR_AGGERATOR_PUSH(agh, anchor)                                                                             \
-	if ((anchor).present) {                                                                                            \
-		anchor_aggeration_hash *s;                                                                                     \
-		int position = getPositon(anchor);                                                                             \
-		HASH_FIND_INT((agh), &position, s);                                                                            \
-		if (!s) {                                                                                                      \
-			NEW(s);                                                                                                    \
-			s->position = position;                                                                                    \
-			s->x = (anchor).x;                                                                                         \
-			s->y = (anchor).y;                                                                                         \
-			s->index = HASH_COUNT(agh);                                                                                \
-			HASH_ADD_INT(agh, position, s);                                                                            \
-		}                                                                                                              \
+#define ANCHOR_AGGERATOR_PUSH(agh, anchor)                                                         \
+	if ((anchor).present) {                                                                        \
+		anchor_aggeration_hash *s;                                                                 \
+		int position = getPositon(anchor);                                                         \
+		HASH_FIND_INT((agh), &position, s);                                                        \
+		if (!s) {                                                                                  \
+			NEW(s);                                                                                \
+			s->position = position;                                                                \
+			s->x = (anchor).x;                                                                     \
+			s->y = (anchor).y;                                                                     \
+			s->index = HASH_COUNT(agh);                                                            \
+			HASH_ADD_INT(agh, position, s);                                                        \
+		}                                                                                          \
 	}
 
 #endif

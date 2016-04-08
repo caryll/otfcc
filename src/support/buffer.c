@@ -25,7 +25,9 @@ static void bufbeforewrite(caryll_buffer *buf, size_t towrite) {
 	if (len <= curlen) return;
 	buf->s = sdsMakeRoomFor(buf->s, len - curlen);
 	if (buf->s == NULL) return;
-	if (len - curlen + 1 - towrite > 0) { memset(buf->s + curlen, 0, (len - curlen + 1 - towrite)); }
+	if (len - curlen + 1 - towrite > 0) {
+		memset(buf->s + curlen, 0, (len - curlen + 1 - towrite));
+	}
 	sdssetlen(buf->s, len);
 	return;
 }
@@ -151,7 +153,8 @@ void buflongalign(caryll_buffer *buf) {
 //   ^cp             ^offset
 //                           |
 //                           V
-// [ @^              ######       ] , and the value of [@] equals to the former offset.
+// [ @^              ######       ] , and the value of [@] equals to the former
+// offset.
 //    ^cp                  ^offset
 // Common in writing OpenType features.
 void bufping16b(caryll_buffer *buf, size_t *offset, size_t *cp) {

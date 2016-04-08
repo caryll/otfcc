@@ -8,9 +8,7 @@ static INLINE uint32_t buf_checksum(caryll_buffer *buffer) {
 	{
 		uint32_t *start = (uint32_t *)buffer->s;
 		uint32_t *end = start + ((actualLength + 3) & ~3) / sizeof(uint32_t);
-		while (start < end) {
-			sum += caryll_endian_convert32(*start++);
-		}
+		while (start < end) { sum += caryll_endian_convert32(*start++); }
 	}
 	return sum;
 }
@@ -26,9 +24,7 @@ static INLINE sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buf
 	{
 		uint32_t *start = (uint32_t *)buffer->s;
 		uint32_t *end = start + ((table->length + 3) & ~3) / sizeof(uint32_t);
-		while (start < end) {
-			sum += caryll_endian_convert32(*start++);
-		}
+		while (start < end) { sum += caryll_endian_convert32(*start++); }
 	}
 	table->checksum = sum;
 	return table;
@@ -41,7 +37,7 @@ sfnt_builder *new_sfnt_builder() {
 	return builder;
 }
 void delete_sfnt_builder(sfnt_builder *builder) {
-	if(!builder) return;
+	if (!builder) return;
 	sfnt_builder_entry *item, *tmp;
 	HASH_ITER(hh, builder->tables, item, tmp) {
 		HASH_DEL(builder->tables, item);
@@ -51,7 +47,7 @@ void delete_sfnt_builder(sfnt_builder *builder) {
 	free(builder);
 }
 void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer *buffer) {
-	if(!builder) return;
+	if (!builder) return;
 	sfnt_builder_entry *item;
 	HASH_FIND_INT(builder->tables, &tag, item);
 	if (!item) {
@@ -61,9 +57,7 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 		buffree(buffer);
 	}
 }
-int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) {
-	return (a->tag - b->tag);
-}
+int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) { return (a->tag - b->tag); }
 caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	caryll_buffer *buffer = bufnew();
 	if (!builder) return buffer;

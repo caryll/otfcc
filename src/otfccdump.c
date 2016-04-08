@@ -6,16 +6,15 @@
 #include "support/stopwatch.h"
 #include "version.h"
 
-void printInfo() {
-	fprintf(stdout, "This is otfccdump, version %s.\n", VERSION);
-}
+void printInfo() { fprintf(stdout, "This is otfccdump, version %s.\n", VERSION); }
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
 	                " -h, --help              : Display this help message and exit.\n"
 	                " -v, --version           : Display version information and exit.\n"
 	                " -o <file>               : Set output file path to <file>.\n"
-	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font file.\n"
+	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input "
+	                "font file.\n"
 	                " --pretty                : Prettify the output JSON.\n"
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --time                  : Time each substep.\n"
@@ -50,29 +49,33 @@ int main(int argc, char *argv[]) {
 
 	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
 		switch (c) {
-		case 0:
-			/* If this option set a flag, do nothing else now. */
-			if (longopts[option_index].flag != 0) break;
-			if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
-			if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
-			if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) { dumpopts->ignore_glyph_order = true; }
-			if (strcmp(longopts[option_index].name, "ignore-hints") == 0) { dumpopts->ignore_hints = true; }
-			break;
-		case 'v':
-			show_version = true;
-			break;
-		case 'h':
-			show_help = true;
-			break;
-		case 'p':
-			show_pretty = true;
-			break;
-		case 'o':
-			outputPath = sdsnew(optarg);
-			break;
-		case 'n':
-			ttcindex = atoi(optarg);
-			break;
+			case 0:
+				/* If this option set a flag, do nothing else now. */
+				if (longopts[option_index].flag != 0) break;
+				if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
+				if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
+				if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
+					dumpopts->ignore_glyph_order = true;
+				}
+				if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
+					dumpopts->ignore_hints = true;
+				}
+				break;
+			case 'v':
+				show_version = true;
+				break;
+			case 'h':
+				show_help = true;
+				break;
+			case 'p':
+				show_pretty = true;
+				break;
+			case 'o':
+				outputPath = sdsnew(optarg);
+				break;
+			case 'n':
+				ttcindex = atoi(optarg);
+				break;
 		}
 	}
 	if (show_help) {
@@ -105,8 +108,8 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		if (ttcindex >= sfnt->count) {
-			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
-			        (sfnt->count - 1));
+			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex,
+			        inPath, (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -138,7 +141,9 @@ int main(int argc, char *argv[]) {
 		options.mode = json_serialize_mode_packed;
 		options.opts = 0;
 		options.indent_size = 4;
-		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) { options.mode = json_serialize_mode_multiline; }
+		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) {
+			options.mode = json_serialize_mode_multiline;
+		}
 		if (show_ugly) options.mode = json_serialize_mode_packed;
 		buf = malloc(json_measure_ex(root, options));
 		json_serialize_ex(buf, root, options);

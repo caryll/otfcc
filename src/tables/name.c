@@ -66,7 +66,8 @@ void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_option
 		json_object_push(record, "encodingID", json_integer_new(r->encodingID));
 		json_object_push(record, "languageID", json_integer_new(r->languageID));
 		json_object_push(record, "nameID", json_integer_new(r->nameID));
-		json_object_push(record, "nameString", json_string_new_length(sdslen(r->nameString), r->nameString));
+		json_object_push(record, "nameString",
+		                 json_string_new_length(sdslen(r->nameString), r->nameString));
 		json_array_push(name, record);
 	}
 	json_object_push(root, "name", name);
@@ -107,7 +108,8 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 					name->records[validCount]->nameID = json_obj_getint(record, "nameID");
 
 					json_value *str = json_obj_get_type(record, "nameString", json_string);
-					name->records[validCount]->nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
+					name->records[validCount]->nameString =
+					    sdsnewlen(str->u.string.ptr, str->u.string.length);
 					validCount += 1;
 				}
 			}

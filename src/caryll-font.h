@@ -43,12 +43,12 @@ struct _caryll_font {
 	table_glyf *glyf;
 	cmap_hash *cmap;
 	table_name *name;
-	
+
 	table_fpgm_prep *fpgm;
 	table_fpgm_prep *prep;
 	table_fpgm_prep *cvt_;
 	table_gasp *gasp;
-	
+
 	table_otl *GSUB;
 	table_otl *GPOS;
 

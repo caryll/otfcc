@@ -1,6 +1,8 @@
 #include "common.h"
 
-static int by_gid(const void *a, const void *b) { return ((glyph_handle *)a)->gid - ((glyph_handle *)b)->gid; }
+static int by_gid(const void *a, const void *b) {
+	return ((glyph_handle *)a)->gid - ((glyph_handle *)b)->gid;
+}
 
 void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName) {
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
@@ -11,8 +13,8 @@ void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupN
 			sdsfree(coverage->glyphs[j].name);
 			coverage->glyphs[j].name = ordentry->name;
 		} else {
-			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", coverage->glyphs[j].name,
-			        lookupName);
+			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n",
+			        coverage->glyphs[j].name, lookupName);
 			coverage->glyphs[j].gid = 0;
 			DELETE(sdsfree, coverage->glyphs[j].name);
 		}
@@ -23,9 +25,7 @@ void shrink_coverage(otl_coverage *coverage, bool dosort) {
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
 		if (coverage->glyphs[j].name) coverage->glyphs[k++] = coverage->glyphs[j];
 	}
-	if (dosort) {
-		qsort(coverage->glyphs, k, sizeof(glyph_handle), by_gid);
-	}
+	if (dosort) { qsort(coverage->glyphs, k, sizeof(glyph_handle), by_gid); }
 	coverage->numGlyphs = k;
 }
 
@@ -38,7 +38,8 @@ void consolidate_classdef(caryll_font *font, otl_classdef *cd, sds lookupName) {
 			sdsfree(cd->glyphs[j].name);
 			cd->glyphs[j].name = ordentry->name;
 		} else {
-			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", cd->glyphs[j].name, lookupName);
+			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n",
+			        cd->glyphs[j].name, lookupName);
 			cd->glyphs[j].gid = 0;
 			DELETE(sdsfree, cd->glyphs[j].name);
 		}

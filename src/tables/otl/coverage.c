@@ -118,8 +118,8 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	for (uint16_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
 			c->glyphs[jj].gid = 0;
-			c->glyphs[jj].name =
-			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length);
+			c->glyphs[jj].name = sdsnewlen(cov->u.array.values[j]->u.string.ptr,
+			                               cov->u.array.values[j]->u.string.length);
 			jj++;
 		}
 	}

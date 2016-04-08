@@ -1,6 +1,7 @@
 #include "gsub-ligature.h"
 
-bool consolidate_gsub_ligature(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_gsub_ligature(caryll_font *font, table_otl *table, otl_subtable *_subtable,
+                               sds lookupName) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	consolidate_coverage(font, subtable->to, lookupName);
 	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {

@@ -80,19 +80,24 @@ table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options *dumpopt
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {
 		maxp->version = json_obj_getnum(table, "version");
 		maxp->numGlyphs = json_obj_getnum(table, "numGlyphs");
-//		maxp->maxPoints = json_obj_getnum(table, "maxPoints");
-//		maxp->maxContours = json_obj_getnum(table, "maxContours");
-//		maxp->maxCompositePoints = json_obj_getnum(table, "maxCompositePoints");
-//		maxp->maxCompositeContours = json_obj_getnum(table, "maxCompositeContours");
+		//		maxp->maxPoints = json_obj_getnum(table, "maxPoints");
+		//		maxp->maxContours = json_obj_getnum(table, "maxContours");
+		//		maxp->maxCompositePoints = json_obj_getnum(table,
+		//"maxCompositePoints");
+		//		maxp->maxCompositeContours = json_obj_getnum(table,
+		//"maxCompositeContours");
 		maxp->maxZones = json_obj_getnum(table, "maxZones");
 		maxp->maxTwilightPoints = json_obj_getnum(table, "maxTwilightPoints");
 		maxp->maxStorage = json_obj_getnum(table, "maxStorage");
 		maxp->maxFunctionDefs = json_obj_getnum(table, "maxFunctionDefs");
 		maxp->maxInstructionDefs = json_obj_getnum(table, "maxInstructionDefs");
 		maxp->maxStackElements = json_obj_getnum(table, "maxStackElements");
-//		maxp->maxSizeOfInstructions = json_obj_getnum(table, "maxSizeOfInstructions");
-//		maxp->maxComponentElements = json_obj_getnum(table, "maxComponentElements");
-//		maxp->maxComponentDepth = json_obj_getnum(table, "maxComponentDepth");
+		//		maxp->maxSizeOfInstructions = json_obj_getnum(table,
+		//"maxSizeOfInstructions");
+		//		maxp->maxComponentElements = json_obj_getnum(table,
+		//"maxComponentElements");
+		//		maxp->maxComponentDepth = json_obj_getnum(table,
+		//"maxComponentDepth");
 	}
 	return maxp;
 }

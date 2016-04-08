@@ -6,9 +6,12 @@ typedef struct {
 	otl_position_value v;
 	UT_hash_handle hh;
 } gpos_single_hash;
-static INLINE int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) { return a->fromid - b->fromid; }
+static INLINE int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
+	return a->fromid - b->fromid;
+}
 
-bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *_subtable,
+                             sds lookupName) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	consolidate_coverage(font, subtable->coverage, lookupName);
 	gpos_single_hash *h = NULL;
@@ -18,7 +21,8 @@ bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *
 			int fromid = subtable->coverage->glyphs[k].gid;
 			HASH_FIND_INT(h, &fromid, s);
 			if (s) {
-				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a single substitution /%s.\n",
+				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
+				                "single substitution /%s.\n",
 				        subtable->coverage->glyphs[k].name);
 			} else {
 				NEW(s);

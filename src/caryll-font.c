@@ -144,8 +144,9 @@ caryll_buffer *caryll_write_font(caryll_font *font) {
 	sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
 	sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name));
 	sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
-	sfnt_builder_push_table(builder, 'hmtx', caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
-	                                                           font->maxp->numGlyphs - font->hhea->numberOfMetrics));
+	sfnt_builder_push_table(builder, 'hmtx',
+	                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
+	                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
 	sfnt_builder_push_table(builder, 'loca', bufloca);
 	sfnt_builder_push_table(builder, 'glyf', bufglyf);
 	sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
@@ -156,9 +157,10 @@ caryll_buffer *caryll_write_font(caryll_font *font) {
 
 	if (font->vhea) sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea));
 	if (font->vmtx) {
-		sfnt_builder_push_table(builder, 'vmtx',
-		                        caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
-		                                          font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics));
+		sfnt_builder_push_table(
+		    builder, 'vmtx',
+		    caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
+		                      font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics));
 	}
 	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB));
 	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS));

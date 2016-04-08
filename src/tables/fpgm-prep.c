@@ -23,7 +23,8 @@ void caryll_delete_fpgm_prep(table_fpgm_prep *table) {
 	if (table->bytes) free(table->bytes);
 	free(table);
 }
-void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root, caryll_dump_options *dumpopts, const char *tag) {
+void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root,
+                              caryll_dump_options *dumpopts, const char *tag) {
 	if (!table) return;
 	json_value *t = json_array_new(table->length);
 	for (uint32_t j = 0; j < table->length; j++) {

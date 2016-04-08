@@ -18,11 +18,11 @@
 #define INLINE inline /* use standard inline */
 #endif
 
-#define FOR_TABLE(name, table)                                                                                         \
-	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
-	     keep = !keep, count++)                                                                                        \
-		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
-			if (table.tag == (name))                                                                                   \
+#define FOR_TABLE(name, table)                                                                     \
+	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;  \
+	     keep = !keep, count++)                                                                    \
+		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                      \
+			if (table.tag == (name))                                                               \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
 #define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
@@ -203,9 +203,7 @@ static INLINE uint64_t caryll_get64u(FILE *file) {
 	return caryll_endian_convert64(tmp);
 }
 
-static INLINE uint8_t read_8u(uint8_t *src) {
-	return src[0];
-}
+static INLINE uint8_t read_8u(uint8_t *src) { return src[0]; }
 static INLINE uint16_t read_16u(uint8_t *src) {
 	uint16_t b0 = ((uint16_t)src[0]) << 8;
 	uint16_t b1 = ((uint16_t)src[1]);
@@ -229,25 +227,13 @@ static INLINE uint64_t read_64u(uint8_t *src) {
 	uint64_t b7 = ((uint64_t)src[7]);
 	return (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
 }
-static INLINE int8_t read_8s(uint8_t *src) {
-	return (int8_t)read_8u(src);
-}
-static INLINE int16_t read_16s(uint8_t *src) {
-	return (int16_t)read_16u(src);
-}
-static INLINE int32_t read_32s(uint8_t *src) {
-	return (int32_t)read_32u(src);
-}
-static INLINE int64_t read_64s(uint8_t *src) {
-	return (int64_t)read_64u(src);
-}
+static INLINE int8_t read_8s(uint8_t *src) { return (int8_t)read_8u(src); }
+static INLINE int16_t read_16s(uint8_t *src) { return (int16_t)read_16u(src); }
+static INLINE int32_t read_32s(uint8_t *src) { return (int32_t)read_32u(src); }
+static INLINE int64_t read_64s(uint8_t *src) { return (int64_t)read_64u(src); }
 
-static INLINE float caryll_from_f2dot14(int16_t x) {
-	return x / 16384.0;
-}
-static INLINE int16_t caryll_to_f2dot14(float x) {
-	return x * 16384.0;
-}
+static INLINE float caryll_from_f2dot14(int16_t x) { return x / 16384.0; }
+static INLINE int16_t caryll_to_f2dot14(float x) { return x * 16384.0; }
 
 // glyph reference type
 typedef struct {
