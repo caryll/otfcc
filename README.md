@@ -16,7 +16,7 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
  -h, --help              : Display this help message and exit.
  -v, --version           : Display version information and exit.
  -o <file>               : Set output file path to <file>.
- -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font file.
+ -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.
  --pretty                : Prettify the output JSON.
  --ugly                  : Force uglify the output JSON.
  --time                  : Time each substep.
@@ -37,4 +37,9 @@ otfccbuild [OPTIONS] input.json -o output.[ttf|otf]
  --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input
                              instead of stating the average width of glyphs.
                              Useful when creating a monospaced font.
+ --short-post              : Don't export glyph names in the result font. It
+                             will reduce file size.
+ --dummy-DSIG              : Include an empty DSIG table in the font. For
+                             some Microsoft applications, a DSIG is required
+                             to enable OpenType features.
 ```
