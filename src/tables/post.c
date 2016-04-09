@@ -25,7 +25,8 @@ table_post *caryll_read_post(caryll_packet packet) {
 		post->post_name_map = NULL;
 		// Foamt 2 additional glyph names
 		if (post->version == 0x20000) {
-			glyph_order_hash *map = malloc(sizeof(glyph_order_hash));
+			glyph_order_hash *map;
+			NEW(map);
 			*map = NULL;
 
 			sds pendingNames[0x10000];
@@ -69,11 +70,11 @@ void caryll_delete_post(table_post *table) {
 void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *post = json_object_new(10);
-	json_object_push(post, "version", json_integer_new(table->version));
-	json_object_push(post, "italicAngle", json_integer_new(table->italicAngle));
+	json_object_push(post, "version", json_double_new(caryll_from_fixed(table->version)));
+	json_object_push(post, "italicAngle", json_integer_new(caryll_from_fixed(table->italicAngle)));
 	json_object_push(post, "underlinePosition", json_integer_new(table->underlinePosition));
 	json_object_push(post, "underlineThickness", json_integer_new(table->underlineThickness));
-	json_object_push(post, "isFixedPitch", json_integer_new(table->isFixedPitch));
+	json_object_push(post, "isFixedPitch", json_boolean_new(table->isFixedPitch));
 	json_object_push(post, "minMemType42", json_integer_new(table->minMemType42));
 	json_object_push(post, "maxMemType42", json_integer_new(table->maxMemType42));
 	json_object_push(post, "minMemType1", json_integer_new(table->minMemType1));
@@ -83,19 +84,24 @@ void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_option
 table_post *caryll_post_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	table_post *post = caryll_new_post();
 	json_value *table = NULL;
-	if ((table = json_obj_get_type(root, "head", json_object))) {
-		post->italicAngle = json_obj_getnum(root, "italicAngle");
-		post->underlinePosition = json_obj_getnum(root, "underlinePosition");
-		post->underlineThickness = json_obj_getnum(root, "underlineThickness");
-		post->isFixedPitch = json_obj_getnum(root, "isFixedPitch");
-		post->minMemType42 = json_obj_getnum(root, "minMemType42");
-		post->maxMemType42 = json_obj_getnum(root, "maxMemType42");
-		post->minMemType1 = json_obj_getnum(root, "minMemType1");
-		post->maxMemType1 = json_obj_getnum(root, "maxMemType1");
+	if ((table = json_obj_get_type(root, "post", json_object))) {
+		if(dumpopts->short_post){
+			post->version = 0x30000;
+		} else {
+			post->version = caryll_to_fixed(json_obj_getnum(table, "version"));
+		}
+		post->italicAngle = caryll_to_fixed(json_obj_getnum(table, "italicAngle"));
+		post->underlinePosition = json_obj_getnum(table, "underlinePosition");
+		post->underlineThickness = json_obj_getnum(table, "underlineThickness");
+		post->isFixedPitch = json_obj_getbool(table, "isFixedPitch");
+		post->minMemType42 = json_obj_getnum(table, "minMemType42");
+		post->maxMemType42 = json_obj_getnum(table, "maxMemType42");
+		post->minMemType1 = json_obj_getnum(table, "minMemType1");
+		post->maxMemType1 = json_obj_getnum(table, "maxMemType1");
 	}
 	return post;
 }
-caryll_buffer *caryll_write_post(table_post *post) {
+caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);
@@ -107,5 +113,16 @@ caryll_buffer *caryll_write_post(table_post *post) {
 	bufwrite32b(buf, post->maxMemType42);
 	bufwrite32b(buf, post->minMemType1);
 	bufwrite32b(buf, post->maxMemType1);
+	if (post->version == 0x20000) {
+		bufwrite16b(buf, HASH_COUNT(*glyphorder));
+		// Since the glyphorder is already sorted using the "real" glyph order
+		// we can simply write down the glyph names.
+		glyph_order_entry *s;
+		foreach_hash(s, *glyphorder) { bufwrite16b(buf, 258 + s->gid); }
+		foreach_hash(s, *glyphorder) {
+			bufwrite8(buf, sdslen(s->name));
+			bufwrite_sds(buf, s->name);
+		}
+	}
 	return buf;
 }

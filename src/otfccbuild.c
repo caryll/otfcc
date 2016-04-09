@@ -8,22 +8,24 @@
 
 void printInfo() { fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION); }
 void printHelp() {
-	fprintf(stdout, "\n"
-	                "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
-	                " -h, --help                : Display this help message and exit.\n"
-	                " -v, --version             : Display version information and exit.\n"
-	                " -o <file>                 : Set output file path to <file>.\n"
-	                " --time                    : Time each substep.\n"
-	                " --ignore-glyph-order      : Ignore the glyph order information in "
-	                "the input.\n"
-	                " --ignore-hints            : Ignore the hinting information in the "
-	                "input.\n"
-	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from "
-	                "the input\n"
-	                "                             instead of stating the average width of "
-	                "glyphs.\n"
-	                "                             Useful when creating a monospaced "
-	                "font.\n");
+	fprintf(stdout,
+	        "\n"
+	        "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
+	        " -h, --help                : Display this help message and exit.\n"
+	        " -v, --version             : Display version information and exit.\n"
+	        " -o <file>                 : Set output file path to <file>.\n"
+	        " --time                    : Time each substep.\n"
+	        " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
+	        " --ignore-hints            : Ignore the hinting information in the input.\n"
+	        " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
+	        "                             instead of stating the average width of glyphs. \n"
+	        "                             Useful when creating a monospaced font.\n"
+	        " --short-post              : Don't export glyph names in the result font. It \n"
+			"                             will reduce file size.\n"
+	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
+			"                             some Microsoft applications, a DSIG is required\n"
+			"                             to enable OpenType features."
+	        "\n");
 }
 
 void print_table(sfnt_builder_entry *t) {
@@ -49,6 +51,7 @@ int main(int argc, char *argv[]) {
 	    {"version", no_argument, NULL, 'v'},      {"help", no_argument, NULL, 'h'},
 	    {"time", no_argument, NULL, 0},           {"ignore-glyph-order", no_argument, NULL, 0},
 	    {"ignore-hints", no_argument, NULL, 0},   {"keep-average-char-width", no_argument, NULL, 0},
+	    {"short-post", no_argument, NULL, 0},     {"dummy-dsig", no_argument, NULL, 0},
 	    {"output", required_argument, NULL, 'o'}, {0, 0, 0, 0}};
 
 	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
@@ -65,6 +68,12 @@ int main(int argc, char *argv[]) {
 				}
 				if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
 					dumpopts->keep_average_char_width = true;
+				}
+				if (strcmp(longopts[option_index].name, "short-post") == 0) {
+					dumpopts->short_post = true;
+				}
+				if (strcmp(longopts[option_index].name, "dummy-dsig") == 0) {
+					dumpopts->dummy_DSIG = true;
 				}
 				break;
 			case 'v':
@@ -149,7 +158,7 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Consolidation and Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_write_font(font);
+		caryll_buffer *otf = caryll_write_font(font, dumpopts);
 		FILE *outfile = fopen(outputPath, "wb");
 		fwrite(otf->s, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);

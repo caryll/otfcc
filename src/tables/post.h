@@ -25,6 +25,6 @@ table_post *caryll_read_post(caryll_packet packet);
 void caryll_delete_post(table_post *table);
 void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_options *dumpopts);
 table_post *caryll_post_from_json(json_value *root, caryll_dump_options *dumpopts);
-caryll_buffer *caryll_write_post(table_post *post);
+caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder);
 
 #endif

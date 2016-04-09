@@ -137,7 +137,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpop
 
 	return font;
 }
-caryll_buffer *caryll_write_font(caryll_font *font) {
+caryll_buffer *caryll_write_font(caryll_font *font, caryll_dump_options *dumpopts) {
 	caryll_buffer *bufglyf = bufnew();
 	caryll_buffer *bufloca = bufnew();
 	caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
@@ -148,7 +148,7 @@ caryll_buffer *caryll_write_font(caryll_font *font) {
 	sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2));
 	sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
 	sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name));
-	sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post));
+	sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post, font->glyph_order));
 	sfnt_builder_push_table(builder, 'hmtx',
 	                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
 	                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
@@ -171,6 +171,14 @@ caryll_buffer *caryll_write_font(caryll_font *font) {
 	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB));
 	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS));
 	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF));
+
+	if (dumpopts->dummy_DSIG) {
+		caryll_buffer *dsig = bufnew();
+		bufwrite32b(dsig, 0x00000001);
+		bufwrite16b(dsig, 0);
+		bufwrite16b(dsig, 0);
+		sfnt_builder_push_table(builder, 'DSIG', dsig);
+	}
 
 	caryll_buffer *otf = sfnt_builder_serialize(builder);
 	delete_sfnt_builder(builder);

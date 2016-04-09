@@ -22,7 +22,6 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 		checkLength(12);
 		gdef = caryll_new_GDEF();
 		uint16_t classdefOffset = read_16u(data + 4);
-		fprintf(stderr, "%d\n", classdefOffset);
 		if (classdefOffset) {
 			gdef->glyphClassDef = caryll_raad_classdef(data, tableLength, classdefOffset);
 		}

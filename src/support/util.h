@@ -235,6 +235,9 @@ static INLINE int64_t read_64s(uint8_t *src) { return (int64_t)read_64u(src); }
 static INLINE float caryll_from_f2dot14(int16_t x) { return x / 16384.0; }
 static INLINE int16_t caryll_to_f2dot14(float x) { return x * 16384.0; }
 
+static INLINE float caryll_from_fixed(int32_t x) { return x / 65536.0; }
+static INLINE int32_t caryll_to_fixed(float x) { return x * 65536.0; }
+
 // glyph reference type
 typedef struct {
 	uint16_t gid;
@@ -247,6 +250,8 @@ typedef struct {
 	bool ignore_hints;
 	bool has_vertical_metrics;
 	bool keep_average_char_width;
+	bool short_post;
+	bool dummy_DSIG;
 } caryll_dump_options;
 
 #define MOVE /*move*/
