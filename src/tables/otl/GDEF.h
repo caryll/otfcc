@@ -4,7 +4,23 @@
 #include "otl.h"
 
 typedef struct {
+	int8_t format;
+	int16_t coordiante;
+	int16_t pointIndex;
+} caret_value;
+typedef struct {
+	uint16_t caretCount;
+	caret_value *values;
+} caret_value_record;
+typedef struct {
+	otl_coverage *coverage;
+	caret_value_record *carets;
+} lig_caret_table;
+
+typedef struct {
 	otl_classdef *glyphClassDef;
+	otl_classdef *markAttachClassDef;
+	lig_caret_table *ligCarets;
 } table_GDEF;
 
 void caryll_delete_GDEF(table_GDEF *gdef);

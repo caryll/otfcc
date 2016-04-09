@@ -219,9 +219,13 @@ static void caryll_name_features(caryll_font *font) {
 			name_lookup(font, lookup, font->GPOS);
 		}
 	}
-	if (font->glyph_order && font->GDEF) { name_classdef(font, font->GDEF->glyphClassDef); }
+	if (font->glyph_order && font->GDEF) {
+		name_classdef(font, font->GDEF->glyphClassDef);
+		name_classdef(font, font->GDEF->markAttachClassDef);
+		if (font->GDEF->ligCarets) { name_coverage(font, font->GDEF->ligCarets->coverage); }
+	}
 }
-void caryll_font_unconsolidate(caryll_font *font) {
+static void merge_hmtx(caryll_font *font) {
 	// Merge hmtx table into glyf.
 	if (font->hhea && font->hmtx) {
 		uint32_t count_a = font->hhea->numberOfMetrics;
@@ -230,6 +234,8 @@ void caryll_font_unconsolidate(caryll_font *font) {
 			    font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 		}
 	}
+}
+static void merge_vmtx(caryll_font *font) {
 	// Merge vmtx table into glyf.
 	if (font->vhea && font->vmtx) {
 		uint32_t count_a = font->vhea->numOfLongVerMetrics;
@@ -245,6 +251,11 @@ void caryll_font_unconsolidate(caryll_font *font) {
 			}
 		}
 	}
+}
+void caryll_font_unconsolidate(caryll_font *font) {
+	// Merge metrics
+	merge_hmtx(font);
+	merge_vmtx(font);
 
 	// Name glyphs
 	caryll_name_glyphs(font);

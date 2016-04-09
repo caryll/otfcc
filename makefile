@@ -66,7 +66,7 @@ FONTOP_OTL_OBJECTS = $(TARGETDIR)/fopotl-common.o \
 	$(TARGETDIR)/fopotl-gsub-ligature.o $(TARGETDIR)/fopotl-chaining.o \
 	$(TARGETDIR)/fopotl-gpos-single.o $(TARGETDIR)/fopotl-gpos-pair.o \
 	$(TARGETDIR)/fopotl-gpos-cursive.o $(TARGETDIR)/fopotl-mark.o \
-	$(TARGETDIR)/fopotl-gsub-reverse.o
+	$(TARGETDIR)/fopotl-gsub-reverse.o $(TARGETDIR)/fopotl-GDEF.o
 
 EXTERN_OBJECTS = $(TARGETDIR)/extern-sds.o $(TARGETDIR)/extern-json.o $(TARGETDIR)/extern-json-builder.o
 SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o \

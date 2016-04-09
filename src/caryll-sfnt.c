@@ -83,3 +83,13 @@ void caryll_delete_sfnt(caryll_sfnt *font) {
 	}
 	free(font);
 }
+
+caryll_piece shift_piece(caryll_piece piece, uint32_t delta) {
+	caryll_piece n;
+	n.tag = piece.tag;
+	n.checkSum = 0;
+	n.length = piece.length - delta;
+	n.data = piece.data + delta;
+	n.offset = piece.offset + delta;
+	return n;
+}

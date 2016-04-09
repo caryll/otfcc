@@ -29,5 +29,6 @@ typedef struct {
 
 caryll_sfnt *caryll_read_sfnt(const char *path);
 void caryll_delete_sfnt(caryll_sfnt *font);
+caryll_piece shift_piece(caryll_piece piece, uint32_t delta);
 
 #endif

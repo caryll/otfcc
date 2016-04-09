@@ -11,6 +11,7 @@
 #include "otl/gpos-cursive.h"
 #include "otl/chaining.h"
 #include "otl/mark.h"
+#include "otl/GDEF.h"
 
 void caryll_font_consolidate(caryll_font *font, caryll_dump_options *dumpopts);
 
