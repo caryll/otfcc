@@ -134,6 +134,10 @@ void caryll_font_consolidate_otl(caryll_font *font) {
 		for (uint16_t j = 0; j < font->GPOS->lookupCount; j++) {
 			caryll_consolidate_lookup(font, font->GPOS, font->GPOS->lookups[j]);
 		}
+	if (font->glyph_order && font->GDEF) {
+		if (font->GDEF->glyphClassDef)
+			consolidate_classdef(font, font->GDEF->glyphClassDef, "GDEF");
+	}
 }
 
 void caryll_font_consolidate(caryll_font *font, caryll_dump_options *dumpopts) {

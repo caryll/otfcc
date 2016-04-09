@@ -56,7 +56,7 @@ OTL_OBJECTS = $(TARGETDIR)/otl-otl.o $(TARGETDIR)/otl-coverage.o \
 	$(TARGETDIR)/otl-gpos-common.o $(TARGETDIR)/otl-gpos-single.o \
 	$(TARGETDIR)/otl-gpos-pair.o $(TARGETDIR)/otl-gpos-cursive.o \
 	$(TARGETDIR)/otl-gpos-mark-to-single.o $(TARGETDIR)/otl-gpos-mark-to-ligature.o \
-	$(TARGETDIR)/otl-gsub-reverse.o
+	$(TARGETDIR)/otl-gsub-reverse.o $(TARGETDIR)/otl-GDEF.o
 
 FONTOP_OBJECTS = $(TARGETDIR)/fontop-unconsolidate.o $(TARGETDIR)/fontop-consolidate.o \
 	$(TARGETDIR)/fontop-stat.o

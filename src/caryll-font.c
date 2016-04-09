@@ -27,6 +27,7 @@ caryll_font *caryll_new_font() {
 	font->vmtx = NULL;
 	font->GSUB = NULL;
 	font->GPOS = NULL;
+	font->GDEF = NULL;
 	return font;
 }
 
@@ -48,6 +49,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->cmap) caryll_delete_cmap(font->cmap);
 	if (font->GSUB) caryll_delete_otl(font->GSUB);
 	if (font->GPOS) caryll_delete_otl(font->GPOS);
+	if (font->GDEF) caryll_delete_GDEF(font->GDEF);
 	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font) free(font);
 }
@@ -77,6 +79,8 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 
 		font->GSUB = caryll_read_otl(packet, 'GSUB');
 		font->GPOS = caryll_read_otl(packet, 'GPOS');
+		font->GDEF = caryll_read_GDEF(packet);
+
 		return font;
 	}
 }
@@ -85,7 +89,6 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 	json_value *root = json_object_new(48);
 	dumpopts->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	if (!root) return NULL;
-	///*
 	caryll_head_to_json(font->head, root, dumpopts);
 	caryll_hhea_to_json(font->hhea, root, dumpopts);
 	caryll_maxp_to_json(font->maxp, root, dumpopts);
@@ -101,9 +104,10 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
 		caryll_gasp_to_json(font->gasp, root, dumpopts);
 	}
-	//*/
 	caryll_otl_to_json(font->GSUB, root, dumpopts, "GSUB");
 	caryll_otl_to_json(font->GPOS, root, dumpopts, "GPOS");
+
+	caryll_GDEF_to_json(font->GDEF, root, dumpopts);
 	return root;
 }
 
@@ -129,6 +133,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpop
 
 	font->GSUB = caryll_otl_from_json(root, dumpopts, "GSUB");
 	font->GPOS = caryll_otl_from_json(root, dumpopts, "GPOS");
+	font->GDEF = caryll_GDEF_from_json(root, dumpopts);
 
 	return font;
 }
@@ -162,8 +167,11 @@ caryll_buffer *caryll_write_font(caryll_font *font) {
 		    caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
 		                      font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics));
 	}
+
 	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB));
 	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS));
+	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF));
+
 	caryll_buffer *otf = sfnt_builder_serialize(builder);
 	delete_sfnt_builder(builder);
 	return otf;

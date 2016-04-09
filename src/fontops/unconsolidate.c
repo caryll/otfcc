@@ -73,11 +73,13 @@ static void caryll_name_glyf(caryll_font *font) {
 	}
 }
 static void name_coverage(caryll_font *font, otl_coverage *coverage) {
+	if (!coverage) return;
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
 		lookup_name(font->glyph_order, coverage->glyphs[j].gid, &(coverage->glyphs[j].name));
 	}
 }
 static void name_classdef(caryll_font *font, otl_classdef *cd) {
+	if (!cd) return;
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
 		lookup_name(font->glyph_order, cd->glyphs[j].gid, &(cd->glyphs[j].name));
 	}
@@ -109,9 +111,7 @@ static void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, tabl
 	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 		subtable_chaining *subtable = &(lookup->subtables[j]->chaining);
 		otl_chaining_rule *rule = subtable->rules[0];
-		for (uint16_t k = 0; k < rule->matchCount; k++) {
-			name_coverage(font, rule->match[k]);
-		}
+		for (uint16_t k = 0; k < rule->matchCount; k++) { name_coverage(font, rule->match[k]); }
 		for (uint16_t k = 0; k < rule->applyCount; k++)
 			if (rule->apply[k].lookupIndex < table->lookupCount) {
 				rule->apply[k].lookupName = table->lookups[rule->apply[k].lookupIndex]->name;
@@ -219,6 +219,7 @@ static void caryll_name_features(caryll_font *font) {
 			name_lookup(font, lookup, font->GPOS);
 		}
 	}
+	if (font->glyph_order && font->GDEF) { name_classdef(font, font->GDEF->glyphClassDef); }
 }
 void caryll_font_unconsolidate(caryll_font *font) {
 	// Merge hmtx table into glyf.

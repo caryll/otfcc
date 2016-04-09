@@ -5,6 +5,7 @@ static int by_gid(const void *a, const void *b) {
 }
 
 void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName) {
+	if (!coverage) return;
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
 		glyph_order_entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
@@ -21,6 +22,7 @@ void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupN
 	}
 }
 void shrink_coverage(otl_coverage *coverage, bool dosort) {
+	if (!coverage) return;
 	uint16_t k = 0;
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
 		if (coverage->glyphs[j].name) coverage->glyphs[k++] = coverage->glyphs[j];
@@ -30,6 +32,7 @@ void shrink_coverage(otl_coverage *coverage, bool dosort) {
 }
 
 void consolidate_classdef(caryll_font *font, otl_classdef *cd, sds lookupName) {
+	if (!cd) return;
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
 		glyph_order_entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, cd->glyphs[j].name, ordentry);
