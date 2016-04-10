@@ -634,9 +634,13 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
 
             value = entry->value;
             continue;
+#ifdef CARYLL_USE_PRE_SERIALIZED
+         case json_pre_serialized:
 
+		    total += value->u.string.length;
+			break;
+#endif
          case json_string:
-
             total += 2;  /* `""` */
             total += measure_string (value->u.string.length, value->u.string.ptr);
             break;
@@ -836,7 +840,12 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
 
             value = entry->value;
             continue;
-
+#ifdef CARYLL_USE_PRE_SERIALIZED
+         case json_pre_serialized:
+		 	memcpy(buf, value->u.string.ptr, value->u.string.length);
+		    buf += value->u.string.length;
+		 	break;
+#endif
          case json_string:
 
             *buf ++ = '\"';
@@ -971,7 +980,9 @@ void json_builder_free (json_value * value)
             continue;
 
          case json_string:
-
+#ifdef CARYLL_USE_PRE_SERIALIZED
+		 case json_pre_serialized:
+#endif
             free (value->u.string.ptr);
             break;
 

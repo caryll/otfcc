@@ -138,7 +138,7 @@ static int new_value (json_state * state,
             values_size = sizeof (*value->u.object.values) * value->u.object.length;
 
             if (! (value->u.object.values = (json_object_entry *) json_alloc
-                  (state, values_size + ((unsigned long) value->u.object.values), 0)) )
+                  (state, values_size + ((uintptr_t) value->u.object.values), 0)) )
             {
                return 0;
             }
@@ -988,7 +988,9 @@ void json_value_free_ex (json_settings * settings, json_value * value)
             continue;
 
          case json_string:
-
+#ifdef CARYLL_USE_PRE_SERIALIZED
+         case json_pre_serialized:
+#endif
             settings->mem_free (value->u.string.ptr, settings->user_data);
             break;
 

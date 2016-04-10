@@ -35,7 +35,12 @@
    #define json_char char
 #endif
 
+#ifdef _CARYLL_USE_PRE_SERIALIZED
+   #define CARYLL_USE_PRE_SERIALIZED
+#endif
+
 #ifndef json_int_t
+   #include <stdint.h>
    #ifndef _MSC_VER
       #include <inttypes.h>
       #define json_int_t int64_t
@@ -84,7 +89,10 @@ typedef enum
    json_string,
    json_boolean,
    json_null
-
+#ifdef CARYLL_USE_PRE_SERIALIZED
+,
+   json_pre_serialized
+#endif
 } json_type;
 
 extern const struct _json_value json_value_none;
