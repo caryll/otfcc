@@ -7,6 +7,7 @@
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
 static void caryll_name_glyphs(caryll_font *font) {
+	if (!font->glyf) return;
 	glyph_order_hash *glyph_order = malloc(sizeof(glyph_order_hash));
 	*glyph_order = NULL;
 
@@ -227,7 +228,7 @@ static void caryll_name_features(caryll_font *font) {
 }
 static void merge_hmtx(caryll_font *font) {
 	// Merge hmtx table into glyf.
-	if (font->hhea && font->hmtx) {
+	if (font->hhea && font->hmtx && font->glyf) {
 		uint32_t count_a = font->hhea->numberOfMetrics;
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			font->glyf->glyphs[j]->advanceWidth =
@@ -237,7 +238,7 @@ static void merge_hmtx(caryll_font *font) {
 }
 static void merge_vmtx(caryll_font *font) {
 	// Merge vmtx table into glyf.
-	if (font->vhea && font->vmtx) {
+	if (font->vhea && font->vmtx && font->glyf) {
 		uint32_t count_a = font->vhea->numOfLongVerMetrics;
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			font->glyf->glyphs[j]->advanceHeight =

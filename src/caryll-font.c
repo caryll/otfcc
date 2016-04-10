@@ -76,11 +76,11 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->cvt_ = caryll_read_fpgm_prep(packet, 'cvt ');
 		font->gasp = caryll_read_gasp(packet);
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
-
-		font->GSUB = caryll_read_otl(packet, 'GSUB');
-		font->GPOS = caryll_read_otl(packet, 'GPOS');
-		font->GDEF = caryll_read_GDEF(packet);
-
+		if (font->glyf) {
+			font->GSUB = caryll_read_otl(packet, 'GSUB');
+			font->GPOS = caryll_read_otl(packet, 'GPOS');
+			font->GDEF = caryll_read_GDEF(packet);
+		}
 		return font;
 	}
 }
