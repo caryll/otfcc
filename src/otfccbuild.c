@@ -4,6 +4,7 @@
 
 #include <getopt.h>
 #include "support/stopwatch.h"
+#include "support/platform.h"
 #include "version.h"
 
 void printInfo() { fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION); }
@@ -30,7 +31,7 @@ void printHelp() {
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
 	char *buffer = NULL;
 	long length = 0;
-	FILE *f = fopen(inPath, "rb");
+	FILE *f = u8fopen(inPath, "rb");
 	if (!f) {
 		fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
 		exit(EXIT_FAILURE);
@@ -89,7 +90,14 @@ void print_table(sfnt_builder_entry *t) {
 	        ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
 }
 
+#ifdef WIN32
+int main() {
+	int argc;
+	char **argv;
+	get_argv_utf8(&argc, &argv);
+#else
 int main(int argc, char *argv[]) {
+#endif
 	struct timespec begin;
 	time_now(&begin);
 
@@ -204,7 +212,7 @@ int main(int argc, char *argv[]) {
 	}
 	{
 		caryll_buffer *otf = caryll_write_font(font, dumpopts);
-		FILE *outfile = fopen(outputPath, "wb");
+		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->s, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);

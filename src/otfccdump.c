@@ -4,6 +4,7 @@
 #include <getopt.h>
 
 #include "support/stopwatch.h"
+#include "support/platform.h"
 #include "version.h"
 
 void printInfo() { fprintf(stdout, "This is otfccdump, version %s.\n", VERSION); }
@@ -23,8 +24,15 @@ void printHelp() {
 	                "                           on Windows when redirecting to another program.\n"
 	                "                           Use --no-bom to turn it off.)");
 }
-
+#ifdef WIN32
+int main() {
+	int argc;
+	char **argv;
+	get_argv_utf8(&argc, &argv);
+#else
 int main(int argc, char *argv[]) {
+#endif
+
 	bool show_help = false;
 	bool show_version = false;
 	bool show_pretty = false;
@@ -110,7 +118,8 @@ int main(int argc, char *argv[]) {
 
 	caryll_sfnt *sfnt;
 	{
-		sfnt = caryll_read_sfnt(inPath);
+		FILE *file = u8fopen(inPath, "rb");
+		sfnt = caryll_read_sfnt(file);
 		if (!sfnt || sfnt->count == 0) {
 			fprintf(stderr, "Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -160,7 +169,7 @@ int main(int argc, char *argv[]) {
 
 	{
 		if (outputPath) {
-			FILE *outputFile = fopen(outputPath, "wb");
+			FILE *outputFile = u8fopen(outputPath, "wb");
 			if (!outputFile) {
 				fprintf(stderr, "Cannot write to file \"%s\". Exit.", outputPath);
 				exit(EXIT_FAILURE);
@@ -175,9 +184,8 @@ int main(int argc, char *argv[]) {
 		} else {
 #ifdef WIN32
 			if (isatty(fileno(stdout))) {
-				DWORD dwNum = MultiByteToWideChar(CP_UTF8, 0, buf, -1, NULL, 0);
-				LPWSTR pwStr = malloc(dwNum * sizeof(WCHAR));
-				MultiByteToWideChar(CP_UTF8, 0, buf, -1, pwStr, dwNum);
+				LPWSTR pwStr;
+				DWORD dwNum = widen_utf8(buf, &pwStr);
 				DWORD actual = 0;
 				DWORD written = 0;
 				const DWORD chunk = 0x10000;
