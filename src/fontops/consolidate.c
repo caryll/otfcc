@@ -10,7 +10,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 			HASH_FIND_STR(*font->glyph_order, r->glyph.name, entry);
 			if (entry) {
 				r->glyph.gid = entry->gid;
-				sdsfree(r->glyph.name);
+				if (r->glyph.name != entry->name) sdsfree(r->glyph.name);
 				r->glyph.name = entry->name;
 				nReferencesConsolidated += 1;
 			} else {
@@ -63,7 +63,7 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 			HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
 			if (ordentry) {
 				item->glyph.gid = ordentry->gid;
-				sdsfree(item->glyph.name);
+				if (item->glyph.name != ordentry->name) sdsfree(item->glyph.name);
 				item->glyph.name = ordentry->name;
 			} else {
 				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
@@ -140,5 +140,5 @@ void caryll_font_consolidate_otl(caryll_font *font) {
 void caryll_font_consolidate(caryll_font *font, caryll_dump_options *dumpopts) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
-	if(font -> glyf) caryll_font_consolidate_otl(font);
+	if (font->glyf) caryll_font_consolidate_otl(font);
 }

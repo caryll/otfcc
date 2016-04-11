@@ -11,7 +11,7 @@ void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupN
 		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
 		if (ordentry) {
 			coverage->glyphs[j].gid = ordentry->gid;
-			sdsfree(coverage->glyphs[j].name);
+			if (ordentry->name != coverage->glyphs[j].name) sdsfree(coverage->glyphs[j].name);
 			coverage->glyphs[j].name = ordentry->name;
 		} else {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n",
@@ -38,7 +38,7 @@ void consolidate_classdef(caryll_font *font, otl_classdef *cd, sds lookupName) {
 		HASH_FIND_STR(*font->glyph_order, cd->glyphs[j].name, ordentry);
 		if (ordentry) {
 			cd->glyphs[j].gid = ordentry->gid;
-			sdsfree(cd->glyphs[j].name);
+			if (ordentry->name != cd->glyphs[j].name) sdsfree(cd->glyphs[j].name);
 			cd->glyphs[j].name = ordentry->name;
 		} else {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n",

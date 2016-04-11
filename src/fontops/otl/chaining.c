@@ -19,7 +19,9 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 				if (strcmp(table->lookups[k]->name, rule->apply[j].lookupName) == 0) {
 					foundLookup = true;
 					rule->apply[j].lookupIndex = k;
-					DELETE(sdsfree, rule->apply[j].lookupName);
+					if (rule->apply[j].lookupName != table->lookups[k]->name) {
+						DELETE(sdsfree, rule->apply[j].lookupName);
+					}
 					rule->apply[j].lookupName = table->lookups[k]->name;
 				}
 		}
