@@ -21,11 +21,66 @@ void printHelp() {
 	        "                             instead of stating the average width of glyphs. \n"
 	        "                             Useful when creating a monospaced font.\n"
 	        " --short-post              : Don't export glyph names in the result font. It \n"
-			"                             will reduce file size.\n"
+	        "                             will reduce file size.\n"
 	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
-			"                             some Microsoft applications, a DSIG is required\n"
-			"                             to enable OpenType features."
+	        "                             some Microsoft applications, a DSIG is required\n"
+	        "                             to enable OpenType features."
 	        "\n");
+}
+void readEntireFile(char *inPath, char **_buffer, long *_length) {
+	char *buffer = NULL;
+	long length = 0;
+	FILE *f = fopen(inPath, "rb");
+	if (!f) {
+		fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
+		exit(EXIT_FAILURE);
+	}
+	fseek(f, 0, SEEK_END);
+	length = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	buffer = malloc(length);
+	if (buffer) { fread(buffer, 1, length, f); }
+	fclose(f);
+
+	if (!buffer) {
+		fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
+		exit(EXIT_FAILURE);
+	}
+	*_buffer = buffer;
+	*_length = length;
+}
+
+void readEntireStdin(char **_buffer, long *_length) {
+	static const long BUF_SIZE = 0x400;
+	static const long BUF_GROW = 0x100000;
+	static const long BUF_MIN = 0x100;
+	long size = BUF_SIZE;
+	char *buffer = malloc(size);
+	long length = 0;
+	long remain = size;
+	while (!feof(stdin)) {
+		if (remain <= BUF_MIN) {
+			remain += size;
+			if (size < BUF_GROW) {
+				size *= 2;
+			} else {
+				size += BUF_GROW;
+			}
+			char *p = realloc(buffer, size);
+			if (p == NULL) {
+				free(buffer);
+				exit(EXIT_FAILURE);
+			}
+			buffer = p;
+		}
+
+		fgets(buffer + length, remain, stdin);
+		long n = strlen(buffer + length);
+		length += n;
+		remain -= n;
+	}
+	*_buffer = buffer;
+	*_length = length;
 }
 
 void print_table(sfnt_builder_entry *t) {
@@ -98,9 +153,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (optind >= argc) {
-		fprintf(stderr, "Expected argument after options for input file name. Exit.\n");
-		printHelp();
-		exit(EXIT_FAILURE);
+		inPath = NULL;
 	} else {
 		inPath = sdsnew(argv[optind]);
 	}
@@ -111,26 +164,17 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	char *buffer = NULL;
-	long length = 0;
+	char *buffer;
+	long length;
 	{
-		FILE *f = fopen(inPath, "rb");
-		if (!f) {
-			fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
-			exit(EXIT_FAILURE);
+		if (inPath) {
+			readEntireFile(inPath, &buffer, &length);
+		} else {
+			readEntireStdin(&buffer, &length);
 		}
-		fseek(f, 0, SEEK_END);
-		length = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		buffer = malloc(length);
-		if (buffer) { fread(buffer, 1, length, f); }
-		fclose(f);
 		if (show_time) push_stopwatch("Read file", &begin);
-		if (!buffer) {
-			fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
-			exit(EXIT_FAILURE);
-		}
 	}
+
 	json_value *root;
 	{
 		root = json_parse(buffer, length);
