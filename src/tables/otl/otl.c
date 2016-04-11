@@ -493,18 +493,16 @@ static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, fea
 					s->script->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
-					fprintf(stderr, "[OTFCC-fea] There is no valid featue "
+					fprintf(stderr, "[OTFCC-fea] There is no valid feature "
 					                "assignments for [%s/%s]. This language "
-					                "term will "
-					                "be ignored.\n",
+					                "term will be ignored.\n",
 					        tag, languageName);
 					if (af) { FREE(af); }
 				}
 			} else {
-				fprintf(stderr, "[OTFCC-fea] There is no valid featue "
+				fprintf(stderr, "[OTFCC-fea] There is no valid feature "
 				                "assignments for [%s/%s]. This language term "
-				                "will "
-				                "be ignored.\n",
+				                "will be ignored.\n",
 				        tag, languageName);
 
 				if (af) { FREE(af); }
