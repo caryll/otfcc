@@ -648,7 +648,7 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 		if (lookupOffset > 0xFFFF) {
 			fprintf(stderr, "[OTFCC-fea] Warning, Lookup %s Written at 0x%" PRIx32 ", "
 			                "this lookup may be corrupted.\n",
-			        table->lookups[j]->name, (int32_t)lookupOffset);
+			        table->lookups[j]->name, (uint32_t)lookupOffset);
 		}
 		// lookup type
 		if (useExtended) {
