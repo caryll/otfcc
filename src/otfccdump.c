@@ -18,7 +18,10 @@ void printHelp() {
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --time                  : Time each substep.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
-	                " --ignore-hints          : Do not export hingint information.\n");
+	                " --ignore-hints          : Do not export hingint information.\n"
+	                " --add-bom               : Add BOM mark in the output. (This is default\n"
+	                "                           on Windows when redirecting to another program.\n"
+	                "                           Use --no-bom to turn it off.)");
 }
 
 int main(int argc, char *argv[]) {
@@ -27,6 +30,8 @@ int main(int argc, char *argv[]) {
 	bool show_pretty = false;
 	bool show_ugly = false;
 	bool show_time = false;
+	bool add_bom = false;
+	bool no_bom = false;
 	uint32_t ttcindex = 0;
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -35,6 +40,8 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"add-bom", no_argument, NULL, 0},
+	                            {"no-bom", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
@@ -53,6 +60,8 @@ int main(int argc, char *argv[]) {
 				if (longopts[option_index].flag != 0) break;
 				if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
 				if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
+				if (strcmp(longopts[option_index].name, "add-bom") == 0) { add_bom = true; }
+				if (strcmp(longopts[option_index].name, "no-bom") == 0) { no_bom = true; }
 				if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
 					dumpopts->ignore_glyph_order = true;
 				}
@@ -156,10 +165,46 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Cannot write to file \"%s\". Exit.", outputPath);
 				exit(EXIT_FAILURE);
 			}
+			if (add_bom) {
+				fputc(0xEF, stdout);
+				fputc(0xBB, stdout);
+				fputc(0xBF, stdout);
+			}
 			fputs(buf, outputFile);
 			fclose(outputFile);
 		} else {
+#ifdef WIN32
+			if (isatty(fileno(stdout))) {
+				DWORD dwNum = MultiByteToWideChar(CP_UTF8, 0, buf, -1, NULL, 0);
+				LPWSTR pwStr = malloc(dwNum * sizeof(WCHAR));
+				MultiByteToWideChar(CP_UTF8, 0, buf, -1, pwStr, dwNum);
+				DWORD actual = 0;
+				DWORD written = 0;
+				const DWORD chunk = 0x10000;
+				while (written < dwNum) {
+					DWORD len = dwNum - written;
+					if (len > chunk) len = chunk;
+					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual,
+					              NULL);
+					written += len;
+				}
+				free(pwStr);
+			} else {
+				if (!no_bom) {
+					fputc(0xEF, stdout);
+					fputc(0xBB, stdout);
+					fputc(0xBF, stdout);
+				}
+				fputs(buf, stdout);
+			}
+#else
+			if (add_bom) {
+				fputc(0xEF, stdout);
+				fputc(0xBB, stdout);
+				fputc(0xBF, stdout);
+			}
 			fputs(buf, stdout);
+#endif
 		}
 		if (show_time) push_stopwatch("Write to file", &begin);
 	}

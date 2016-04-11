@@ -153,9 +153,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (optind >= argc) {
-		inPath = NULL;
+		inPath = NULL; // read from STDIN
 	} else {
-		inPath = sdsnew(argv[optind]);
+		inPath = sdsnew(argv[optind]); // read from file
 	}
 	if (!outputPath) {
 		fprintf(stderr, "Unable to build OpenType font tile : output path not "
@@ -198,8 +198,9 @@ int main(int argc, char *argv[]) {
 	}
 	{
 		caryll_font_consolidate(font, dumpopts);
+		if (show_time) push_stopwatch("Consolidation", &begin);
 		caryll_font_stat(font, dumpopts);
-		if (show_time) push_stopwatch("Consolidation and Stating", &begin);
+		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
 		caryll_buffer *otf = caryll_write_font(font, dumpopts);

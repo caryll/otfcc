@@ -130,17 +130,17 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpop
 		font->gasp = caryll_gasp_from_json(root);
 	}
 	font->vhea = caryll_vhea_from_json(root, dumpopts);
-
-	font->GSUB = caryll_otl_from_json(root, dumpopts, "GSUB");
-	font->GPOS = caryll_otl_from_json(root, dumpopts, "GPOS");
-	font->GDEF = caryll_GDEF_from_json(root, dumpopts);
-
+	if (font->glyf) {
+		font->GSUB = caryll_otl_from_json(root, dumpopts, "GSUB");
+		font->GPOS = caryll_otl_from_json(root, dumpopts, "GPOS");
+		font->GDEF = caryll_GDEF_from_json(root, dumpopts);
+	}
 	return font;
 }
 caryll_buffer *caryll_write_font(caryll_font *font, caryll_dump_options *dumpopts) {
 	caryll_buffer *bufglyf = bufnew();
 	caryll_buffer *bufloca = bufnew();
-	caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
+	if (font->glyf && font->head) { caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca); }
 
 	sfnt_builder *builder = new_sfnt_builder();
 	sfnt_builder_push_table(builder, 'head', caryll_write_head(font->head));
