@@ -9,7 +9,8 @@
 
 int main(int argc, char *argv[]) {
 	printf("Testing Payload %s\n", argv[1]);
-	caryll_sfnt *sfnt = caryll_read_sfnt(argv[1]);
+	FILE *inf = fopen(argv[1], "rb");
+	caryll_sfnt *sfnt = caryll_read_sfnt(inf);
 	caryll_font *font = caryll_read_font(sfnt, 0);
 	caryll_font_unconsolidate(font);
 
@@ -25,11 +26,16 @@ int main(int argc, char *argv[]) {
 		assert_equal("Glyph count", font->glyf->numberGlyphs, 15);
 		assert_equal("glyf[14] contour count", font->glyf->glyphs[14]->numberOfContours, 2);
 		assert_equal("glyf[14] instr length", font->glyf->glyphs[14]->instructionsLength, 281);
-		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14]->contours[0].pointsCount, (11 - 0 + 1));
-		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14]->contours[1].pointsCount, (56 - 12 + 1));
-		assert_equal("glyf[14] contour[0] point[0] x", font->glyf->glyphs[14]->contours[0].points[0].x, 28);
-		assert_equal("glyf[14] contour[0] point[0] y", font->glyf->glyphs[14]->contours[0].points[0].y, 63);
-		assert_equal("glyf[14] contour[0] point[0] on", font->glyf->glyphs[14]->contours[0].points[0].onCurve, true);
+		assert_equal("glyf[14] contour[0] pts", font->glyf->glyphs[14]->contours[0].pointsCount,
+		             (11 - 0 + 1));
+		assert_equal("glyf[14] contour[1] pts", font->glyf->glyphs[14]->contours[1].pointsCount,
+		             (56 - 12 + 1));
+		assert_equal("glyf[14] contour[0] point[0] x",
+		             font->glyf->glyphs[14]->contours[0].points[0].x, 28);
+		assert_equal("glyf[14] contour[0] point[0] y",
+		             font->glyf->glyphs[14]->contours[0].points[0].y, 63);
+		assert_equal("glyf[14] contour[0] point[0] on",
+		             font->glyf->glyphs[14]->contours[0].points[0].onCurve, true);
 	}
 
 	{ // Glyph order and naming
@@ -71,10 +77,13 @@ int main(int argc, char *argv[]) {
 		assert_exists("Found cmap entry for U+9DF9", s);
 		if (s != NULL) assert_equal("U+9DF9 Mapping correct", s->glyph.gid, 9);
 	}
-	
+
 	{ // name
 		assert_equal("Should have 34 name records", font->name->count, 34);
-		assert_equal("Name item 13 should be 'http://www.apache.org/licenses/LICENSE-2.0.html'", strcmp(font->name->records[13]->nameString, "http://www.apache.org/licenses/LICENSE-2.0.html"), 0);
+		assert_equal("Name item 13 should be 'http://www.apache.org/licenses/LICENSE-2.0.html'",
+		             strcmp(font->name->records[13]->nameString,
+		                    "http://www.apache.org/licenses/LICENSE-2.0.html"),
+		             0);
 	}
 
 	caryll_delete_font(font);
