@@ -12,7 +12,7 @@ table_vhea *caryll_read_vhea(caryll_packet packet) {
 		size_t length = table.length;
 		if (length >= 36) {
 			vhea = (table_vhea *)malloc(sizeof(table_vhea) * 1);
-			vhea->version = read_32u(data);
+			vhea->version = read_32s(data);
 			vhea->ascent = read_16s(data + 4);
 			vhea->descent = read_16s(data + 6);
 			vhea->lineGap = read_16s(data + 8);

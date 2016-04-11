@@ -13,7 +13,7 @@ table_post *caryll_read_post(caryll_packet packet) {
 		font_file_pointer data = table.data;
 
 		table_post *post = (table_post *)malloc(sizeof(table_post) * 1);
-		post->version = read_32u(data);
+		post->version = read_32s(data);
 		post->italicAngle = read_32u(data + 4);
 		post->underlinePosition = read_16u(data + 8);
 		post->underlineThickness = read_16u(data + 10);

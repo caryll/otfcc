@@ -6,7 +6,7 @@
 
 typedef struct {
 	// Horizontal header
-	uint32_t version;
+	f16dot16 version;
 	int16_t ascender;
 	int16_t descender;
 	int16_t lineGap;

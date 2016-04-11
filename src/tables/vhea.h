@@ -5,7 +5,7 @@
 #include "../caryll-sfnt.h"
 
 typedef struct {
-	uint32_t version;
+	f16dot16 version;
 	int16_t ascent;
 	int16_t descent;
 	int16_t lineGap;

@@ -8,8 +8,8 @@
 
 typedef struct {
 	// PostScript information
-	uint32_t version;
-	uint32_t italicAngle;
+	f16dot16 version;
+	f16dot16 italicAngle;
 	int16_t underlinePosition;
 	int16_t underlineThickness;
 	uint32_t isFixedPitch;

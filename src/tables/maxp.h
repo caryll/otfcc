@@ -6,7 +6,7 @@
 
 typedef struct {
 	// Maximum profile
-	uint32_t version;
+	f16dot16 version;
 	uint16_t numGlyphs;
 	uint16_t maxPoints;
 	uint16_t maxContours;

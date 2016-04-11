@@ -1,6 +1,6 @@
 {
     "head": {
-        "version": 65536,
+        "version": 1.0,
         "fontRevison": 65536,
         "flags": 11,
         "unitsPerEm": 1000,
@@ -17,7 +17,7 @@
         "glyphDataFormat": 0
     },
     "hhea": {
-        "version": 65536,
+        "version": 1.0,
         "ascender": 977,
         "descender": -205,
         "lineGap": 67,
@@ -32,7 +32,7 @@
         "numberOfMetrics": 2692
     },
     "maxp": {
-        "version": 65536,
+        "version": 1.0,
         "numGlyphs": 2780,
         "maxPoints": 192,
         "maxContours": 24,
