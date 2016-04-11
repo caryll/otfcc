@@ -1,3 +1,6 @@
+#ifndef CARYLL_SUPPORT_PLATFORM_H
+#define CARYLL_SUPPORT_PLATFORM_H
+
 #ifdef WIN32
 
 #include <stdio.h>
@@ -41,4 +44,6 @@ FILE *__u8fopen(char *path, char *mode) {
 #define u8fopen __u8fopen
 #else
 #define u8fopen fopen
+#endif
+
 #endif

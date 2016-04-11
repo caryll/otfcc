@@ -71,11 +71,11 @@ FONTOP_OTL_OBJECTS = $(TARGETDIR)/fopotl-common.o \
 EXTERN_OBJECTS = $(TARGETDIR)/extern-sds.o $(TARGETDIR)/extern-json.o $(TARGETDIR)/extern-json-builder.o
 SUPPORT_OBJECTS = $(TARGETDIR)/support-glyphorder.o $(TARGETDIR)/support-aglfn.o \
               $(TARGETDIR)/support-stopwatch.o $(TARGETDIR)/support-unicodeconv.o \
-			  $(TARGETDIR)/support-buffer.o
+			  $(TARGETDIR)/support-buffer.o $(TARGETDIR)/support-base64.o
 EXECUTABLES = $(TARGETDIR)/otfccdump$(SUFFIX) $(TARGETDIR)/otfccbuild$(SUFFIX)
 
 OBJECTS = $(EXTERN_OBJECTS) $(SUPPORT_OBJECTS) $(TABLE_OBJECTS) $(OTL_OBJECTS) \
-	$(FONTOP_OBJECTS) $(FONTOP_OTL_OBJECTS) $(MAIN_OBJECTS_1) 
+	$(FONTOP_OBJECTS) $(FONTOP_OTL_OBJECTS) $(MAIN_OBJECTS_1)
 
 $(EXTERN_OBJECTS) : $(TARGETDIR)/extern-%.o : extern/%.c | $(DIRS)
 	@echo CC "->" $@
@@ -106,7 +106,7 @@ $(FONTOP_OBJECTS) : $(TARGETDIR)/fontop-%.o : src/fontops/%.c src/fontops/%.h $(
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,src/,$(MAIN_OBJECTS_1)))
+MAIN_H = $(subst .o,.h,$(subst $(TARGETDIR)/,src/,$(MAIN_OBJECTS_1))) src/support/platform.h
 $(MAIN_OBJECTS) : $(TARGETDIR)/%.o : src/%.c $(MAIN_H) $(SUPPORT_H) $(TABLES_H) $(OTL_H) $(FONTOPS_H) $(FOPOTL_H) | $(DIRS)
 	@echo CC "->" $@
 	@$(CC) $(CFLAGS) -c $< -o $@

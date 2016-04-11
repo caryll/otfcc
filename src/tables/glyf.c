@@ -393,11 +393,9 @@ static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g,
 }
 static INLINE json_value *glyf_glyph_instructions_to_json(glyf_glyph *g,
                                                           caryll_dump_options *dumpopts) {
-	json_value *instructions = json_array_new(g->instructionsLength);
-	for (uint16_t j = 0; j < g->instructionsLength; j++) {
-		json_array_push(instructions, json_integer_new(g->instructions[j]));
-	}
-	return instructions;
+	size_t len = 0;
+	uint8_t *buf = base64_encode(g->instructions, g->instructionsLength, &len);
+	return json_string_new_nocopy(len, (char *)buf);
 }
 static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
 	json_value *glyph = json_object_new(7);
@@ -503,15 +501,9 @@ static INLINE void glyf_instructions_from_json(json_value *col, glyf_glyph *g) {
 		g->instructions = NULL;
 		return;
 	}
-	g->instructionsLength = col->u.array.length;
-	g->instructions = calloc(g->instructionsLength, sizeof(uint8_t));
-	for (uint16_t j = 0; j < g->instructionsLength; j++) {
-		json_value *byte = col->u.array.values[j];
-		if (byte && byte->type == json_integer)
-			g->instructions[j] = byte->u.integer;
-		else if (byte && byte->type == json_double)
-			g->instructions[j] = byte->u.dbl;
-	}
+	size_t instrlen;
+	g->instructions = base64_decode((uint8_t *)col->u.string.ptr, col->u.string.length, &instrlen);
+	g->instructionsLength = instrlen;
 }
 static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
                                                       glyph_order_entry *order_entry,
@@ -524,7 +516,7 @@ static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
 	glyf_contours_from_json(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_references_from_json(json_obj_get_type(glyphdump, "references", json_array), g);
 	if (!dumpopts->ignore_hints) {
-		glyf_instructions_from_json(json_obj_get_type(glyphdump, "instructions", json_array), g);
+		glyf_instructions_from_json(json_obj_get_type(glyphdump, "instructions", json_string), g);
 	} else {
 		g->instructionsLength = 0;
 		g->instructions = NULL;

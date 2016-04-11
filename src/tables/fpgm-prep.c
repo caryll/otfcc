@@ -26,34 +26,20 @@ void caryll_delete_fpgm_prep(table_fpgm_prep *table) {
 void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root,
                               caryll_dump_options *dumpopts, const char *tag) {
 	if (!table) return;
-	json_value *t = json_array_new(table->length);
-	for (uint32_t j = 0; j < table->length; j++) {
-		json_array_push(t, json_integer_new(table->bytes[j]));
-	}
-	json_object_push(root, tag, preserialize(t));
+	size_t len = 0;
+	uint8_t *buf = base64_encode(table->bytes, table->length, &len);
+	json_object_push(root, tag, json_string_new_nocopy(len, (char *)buf));
 }
 table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, const char *tag) {
 	table_fpgm_prep *t = NULL;
 	json_value *table = NULL;
-	if ((table = json_obj_get_type(root, tag, json_array))) {
-		t = malloc(sizeof(table_fpgm_prep));
-		if (!t) goto FAIL;
-		t->length = table->u.array.length;
-		t->bytes = malloc(sizeof(uint8_t) * t->length);
-		if (!t->bytes) goto FAIL;
-		for (uint32_t j = 0; j < table->u.array.length; j++) {
-			json_value *v = table->u.array.values[j];
-			if (v->type == json_integer) {
-				t->bytes[j] = v->u.integer;
-			} else {
-				t->bytes[j] = 0;
-			}
-		}
+	if ((table = json_obj_get_type(root, tag, json_string))) {
+		NEW(t);
+		size_t len;
+		t->bytes = base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
+		t->length = len;
 	}
 	return t;
-FAIL:
-	if (t) caryll_delete_fpgm_prep(t);
-	return NULL;
 }
 
 caryll_buffer *caryll_write_fpgm_prep(table_fpgm_prep *table) {

@@ -16,6 +16,7 @@
 #include "../../extern/json.h"
 #include "../../extern/json-builder.h"
 #include "buffer.h"
+#include "base64.h"
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
