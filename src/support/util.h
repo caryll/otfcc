@@ -1,9 +1,14 @@
 #ifndef CARYLL_SUPPORT_UTIL_H
 #define CARYLL_SUPPORT_UTIL_H
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 #include "../../extern/sds.h"
