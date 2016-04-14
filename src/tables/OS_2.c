@@ -170,15 +170,14 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options *dumpopt
 		// panose
 		json_value *panose = NULL;
 		if ((panose = json_obj_get_type(table, "panose", json_array))) {
-			for (int j = 0; j < panose->u.array.length; j++)
-				if (j >= 0 && j < 10) {
-					json_value *term = panose->u.array.values[j];
-					if (term->type == json_integer) {
-						os_2->panose[j] = term->u.integer;
-					} else if (term->type == json_double) {
-						os_2->panose[j] = term->u.dbl;
-					}
+			for (uint32_t j = 0; j < panose->u.array.length && j < 10; j++) {
+				json_value *term = panose->u.array.values[j];
+				if (term->type == json_integer) {
+					os_2->panose[j] = term->u.integer;
+				} else if (term->type == json_double) {
+					os_2->panose[j] = term->u.dbl;
 				}
+			}
 		}
 		// achVendID
 		json_value *vendorid = NULL;

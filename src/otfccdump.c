@@ -1,6 +1,5 @@
 #include "caryll-sfnt.h"
 #include "caryll-font.h"
-#include <unistd.h>
 #include <getopt.h>
 
 #include "support/stopwatch.h"

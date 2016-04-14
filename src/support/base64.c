@@ -9,7 +9,7 @@ uint8_t *base64_encode(const uint8_t *src, size_t len, size_t *out_len) {
 
 	olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
 	olen++;                 /* nul termination */
-	out = malloc(olen);
+	out = malloc(sizeof(uint8_t) * olen);
 	if (out == NULL) return NULL;
 
 	end = src + len;
@@ -42,7 +42,7 @@ uint8_t *base64_encode(const uint8_t *src, size_t len, size_t *out_len) {
 
 uint8_t *base64_decode(const uint8_t *src, size_t len, size_t *out_len) {
 	uint8_t dtable[256], *out, *pos, in[4], block[4], tmp;
-	size_t i, count, olen;
+	size_t i, count;
 
 	memset(dtable, 0x80, 256);
 	for (i = 0; i < sizeof(base64_table); i++) dtable[base64_table[i]] = i;
@@ -55,8 +55,7 @@ uint8_t *base64_decode(const uint8_t *src, size_t len, size_t *out_len) {
 
 	if (count % 4) return NULL;
 
-	olen = count / 4 * 3;
-	pos = out = malloc(count);
+	pos = out = malloc(sizeof(uint8_t) * count);
 	if (out == NULL) return NULL;
 
 	count = 0;

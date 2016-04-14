@@ -28,5 +28,6 @@
 *.app
 
 build/
+bin/
 .vscode/
 _test

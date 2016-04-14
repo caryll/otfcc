@@ -15,8 +15,8 @@ typedef struct {
 typedef struct {
 	// Horizontal device metrics
 	uint16_t version;
-	int16_t numRecords;
-	int32_t sizeDeviceRecord;
+	uint16_t numRecords;
+	uint32_t sizeDeviceRecord;
 	device_record *records;
 } table_hdmx;
 
