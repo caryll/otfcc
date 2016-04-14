@@ -1,5 +1,8 @@
 #include "caryll-sfnt-builder.h"
-#include "version.h"
+
+#ifndef VERSION
+#define VERSION "INDEV"
+#endif
 
 static INLINE uint32_t buf_checksum(caryll_buffer *buffer) {
 	uint32_t actualLength = buflen(buffer);

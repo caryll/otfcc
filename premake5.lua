@@ -5,6 +5,7 @@ workspace "otfcc"
 	location "build"
 	
 	defines { '_CARYLL_USE_PRE_SERIALIZED' }
+	defines { 'VERSION="0.1.1"' }
 	
 	filter "action:vs2015"
 		toolset "msc-LLVM-vs2014"

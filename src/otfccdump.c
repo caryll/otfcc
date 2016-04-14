@@ -4,7 +4,10 @@
 
 #include "support/stopwatch.h"
 #include "support/platform.h"
-#include "version.h"
+
+#ifndef VERSION
+#define VERSION "INDEV"
+#endif
 
 void printInfo() { fprintf(stdout, "This is otfccdump, version %s.\n", VERSION); }
 void printHelp() {
