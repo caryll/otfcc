@@ -42,11 +42,15 @@ FILE *__u8fopen(char *path, char *mode) {
 	return f;
 }
 #define u8fopen __u8fopen
+
 #ifdef _MSC_VER
 #include <io.h>
 #define isatty _isatty
 #define fileno _fileno
+#elif __MINGW32__
+#include <unistd.h>
 #endif
+
 #else
 #define u8fopen fopen
 #endif

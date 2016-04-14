@@ -1,16 +1,17 @@
 -- Premake 5 configurations
 workspace "otfcc"
-	configurations {"Debug", "Release"}
-	platforms {"x32", "x64"}
+	configurations { "Debug", "Release" }
+	platforms { "x32", "x64" }
 	location "build"
 	
-	defines {'_CARYLL_USE_PRE_SERIALIZED'}
+	defines { '_CARYLL_USE_PRE_SERIALIZED' }
 	
 	filter "action:vs2015"
 		toolset "msc-LLVM-vs2014"
-		defines {'_CRT_SECURE_NO_WARNINGS'}
+		defines { '_CRT_SECURE_NO_WARNINGS' }
 		buildoptions { '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
+		includedirs { "platformdep-win-msvc" }
 	filter {}
 	
 	filter "action:gmake"
@@ -44,7 +45,7 @@ project "otfccdump"
 	kind "ConsoleApp"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
-	links {"libotfcc"}
+	links { "libotfcc" }
 	files {
 		"src/otfccdump.c"
 	}
@@ -54,7 +55,7 @@ project "otfccbuild"
 	kind "ConsoleApp"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
-	links {"libotfcc"}
+	links { "libotfcc" }
 	files {
 		"src/otfccbuild.c"
 	}
