@@ -49,7 +49,7 @@ otfccbuild [OPTIONS] input.json -o output.[ttf|otf]
 
 ## Building from source
 
-`otfcc` can be built on a number of platforms. It uses the�[premake](http://premake.github.io/)�build system.
+`otfcc` can be built on a number of platforms. It uses the [premake](http://premake.github.io/) build system.
 
 It was developed and optimized for Clang/LLVM, therefore it is *strongly* recommended to compile with Clang/LLVM, but if that's not possible GCC is also supported, GCC version 5.1 or later being the preferred choice for performance.
 
