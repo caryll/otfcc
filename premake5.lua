@@ -10,9 +10,10 @@ workspace "otfcc"
 	filter "action:vs2015"
 		toolset "msc-LLVM-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS' }
-		buildoptions { '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
+		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
 		includedirs { "platformdep-win-msvc" }
+
 	filter {}
 	
 	filter "action:gmake"
