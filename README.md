@@ -77,7 +77,7 @@ On Windows building `otfcc` is tested under the toolchains listed below. The def
 On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
 
 1. Install the latest Clang/LLVM or GCC if you do not have it already.
-2. Download and install�[premake5](http://premake.github.io/)�for Linux and make it available in your path.
+2. Download and install [premake5](http://premake.github.io/) for Linux and make it available in your path.
 3. Run the following from the command line:
 
 ```bash
