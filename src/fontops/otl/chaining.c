@@ -221,7 +221,6 @@ endcheck:
 
 		subtable0->rules[0] = rule0;
 		rewriteRule(rule0, hb, hi, hf);
-
 		// write other rules
 		uint16_t kk = 1;
 		for (uint16_t k = j + 1; k < lookup->subtableCount; k++)
@@ -242,18 +241,26 @@ endcheck:
 	}
 FAIL:;
 	if (compatibility) free(compatibility);
-	classifier_hash *s, *tmp;
-	HASH_ITER(hh, hb, s, tmp) {
-		HASH_DEL(hb, s);
-		free(s);
+	if (hb) {
+		classifier_hash *s, *tmp;
+		HASH_ITER(hh, hb, s, tmp) {
+			HASH_DEL(hb, s);
+			if (s) free(s);
+		}
 	}
-	HASH_ITER(hh, hi, s, tmp) {
-		HASH_DEL(hi, s);
-		free(s);
+	if (hi) {
+		classifier_hash *s, *tmp;
+		HASH_ITER(hh, hi, s, tmp) {
+			HASH_DEL(hi, s);
+			if (s) free(s);
+		}
 	}
-	HASH_ITER(hh, hf, s, tmp) {
-		HASH_DEL(hf, s);
-		free(s);
+	if (hf) {
+		classifier_hash *s, *tmp;
+		HASH_ITER(hh, hf, s, tmp) {
+			HASH_DEL(hf, s);
+			if (s) free(s);
+		}
 	}
 	return;
 }

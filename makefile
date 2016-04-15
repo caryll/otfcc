@@ -9,6 +9,8 @@ mingw-release-x64 : mf-gmake
 mingw-release-x86 : mf-gmake
 	@cd build/gmake && make config=release_x86
 
+# Clang-cl does not support debugging well
+# It is used for release versions only
 clang-cl-release-x64 : mf-vs2015
 	@cmd /c _vcbuild64.bat /property:Configuration=Release
 clang-cl-release-x86 : mf-vs2015
