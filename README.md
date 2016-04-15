@@ -4,10 +4,12 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 
 ## Key features
 
-* Read an OpenType font; (TrueType is supported as well)
-* Write an OpenType font;
+* Read an OpenType font, (TrueType is supported as well)
+* And dump its data into JSON.
+* Or parse a dump of an OpenType font,
+* And build an OpenType font according to it.
 
-## `otfcc` command line tool
+## Usage
 
 ### `otfccdump` : Dump an OpenType font file into JSON
 ```
@@ -47,7 +49,7 @@ otfccbuild [OPTIONS] input.json -o output.[ttf|otf]
                              to enable OpenType features.
 ```
 
-## Building from source
+## Building
 
 `otfcc` can be built on a number of platforms. It uses the [premake](http://premake.github.io/) build system.
 
