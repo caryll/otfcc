@@ -4,8 +4,12 @@ workspace "otfcc"
 	platforms { "x32", "x64" }
 	location "build"
 	
-	defines { '_CARYLL_USE_PRE_SERIALIZED' }
-	defines { 'VERSION="0.1.1"' }
+	defines {
+		'_CARYLL_USE_PRE_SERIALIZED',
+		'MAIN_VER=0',
+		"SECONDARY_VER=1",
+		"PATCH_VER=1"
+	}
 	
 	filter "action:vs2015"
 		toolset "msc-LLVM-vs2014"

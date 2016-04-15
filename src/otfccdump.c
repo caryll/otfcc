@@ -1,15 +1,23 @@
-#include "caryll-sfnt.h"
 #include "caryll-font.h"
+#include "caryll-sfnt.h"
 #include <getopt.h>
 
-#include "support/stopwatch.h"
 #include "support/platform.h"
+#include "support/stopwatch.h"
 
-#ifndef VERSION
-#define VERSION "INDEV"
+#ifndef MAIN_VER
+#define MAIN_VER 0
+#endif
+#ifndef SECONDARY_VER
+#define SECONDARY_VER 0
+#endif
+#ifndef PATCH_VER
+#define PATCH_VER 0
 #endif
 
-void printInfo() { fprintf(stdout, "This is otfccdump, version %s.\n", VERSION); }
+void printInfo() {
+	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+}
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
