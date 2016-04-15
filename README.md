@@ -67,11 +67,11 @@ On Windows building `otfcc` is tested under the toolchains listed below. The def
   make
   ```
 
-* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Run the following from the Visual C++ Command Prompt:
+* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
 
   ```bat
   premake5 vs2015
-  msbuild build\otfcc.sln
+  msbuild build\otfcc.sln /property:Configuration=Release
   ```
 
 ### Linux
