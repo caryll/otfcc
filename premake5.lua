@@ -17,7 +17,6 @@ workspace "otfcc"
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
 		includedirs { "platformdep-win-msvc" }
-
 	filter {}
 	
 	filter "action:gmake"
@@ -27,11 +26,10 @@ workspace "otfcc"
 	filter "configurations:Debug"
 		defines { "DEBUG" }
 		flags { "Symbols" }
-
 	filter "configurations:Release"
 		defines { "NDEBUG" }
 		optimize "Full"
-	
+
 project "libotfcc"
 	kind "StaticLib"
 	language "C"
@@ -56,7 +54,6 @@ project "otfccdump"
 		"src/otfccdump.c"
 	}
 
-
 project "otfccbuild"
 	kind "ConsoleApp"
 	language "C"
@@ -65,4 +62,3 @@ project "otfccbuild"
 	files {
 		"src/otfccbuild.c"
 	}
-
