@@ -2,7 +2,6 @@
 workspace "otfcc"
 	configurations { "Debug", "Release" }
 	platforms { "x32", "x64" }
-	location "build"
 	
 	defines {
 		'_CARYLL_USE_PRE_SERIALIZED',
@@ -11,7 +10,10 @@ workspace "otfcc"
 		"PATCH_VER=1"
 	}
 	
+	location "build"
+	
 	filter "action:vs2015"
+		location "build/vs"
 		toolset "msc-LLVM-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS' }
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
@@ -20,6 +22,7 @@ workspace "otfcc"
 	filter {}
 	
 	filter "action:gmake"
+		location "build/gmake"
 		buildoptions { '-Wall', '-Wno-multichar' }
 	filter {}
 	
@@ -29,6 +32,7 @@ workspace "otfcc"
 	filter "configurations:Release"
 		defines { "NDEBUG" }
 		optimize "Full"
+		
 
 project "libotfcc"
 	kind "StaticLib"
