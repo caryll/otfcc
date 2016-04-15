@@ -11,6 +11,7 @@ workspace "otfcc"
 	}
 	
 	location "build"
+	includedirs { "dep", "src" }
 	
 	filter "action:vs2015"
 		location "build/vs"
@@ -37,8 +38,8 @@ project "externals"
 	kind "StaticLib"
 	language "C"
 	files {
-		"extern/**.h",
-		"extern/**.c"
+		"dep/extern/**.h",
+		"dep/extern/**.c"
 	}
 
 project "extern-msvc"
@@ -53,26 +54,32 @@ project "libotfcc-support"
 	kind "StaticLib"
 	language "C"
 	files {
-		"src-support/**.h",
-		"src-support/**.c"
+		"src/support/**.h",
+		"src/support/**.c"
 	}
 
 project "libotfcc-tables"
 	kind "StaticLib"
 	language "C"
-	links { "libotfcc-support", "externals" }
 	files {
-		"src-tables/**.h",
-		"src-tables/**.c"
+		"src/tables/**.h",
+		"src/tables/**.c"
+	}
+
+project "libotfcc-font"
+	kind "StaticLib"
+	language "C"
+	files {
+		"src/font/**.h",
+		"src/font/**.c"
 	}
 
 project "libotfcc-fontops"
 	kind "StaticLib"
 	language "C"
-	links { "libotfcc-support", "externals" }
 	files {
-		"src-fontop/**.h",
-		"src-fontop/**.c"
+		"src/fontops/**.h",
+		"src/fontops/**.c"
 	}
 
 project "otfccdump"
@@ -80,17 +87,17 @@ project "otfccdump"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc-fontops", "libotfcc-tables", "libotfcc-support", "externals" }
+	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
 	filter "action:vs*"
 		links "extern-msvc"
 	filter {}
 	
 	files {
-		"src-cli/**.c",
-		"src-cli/**.h"
+		"src/cli/**.c",
+		"src/cli/**.h"
 	}
 	removefiles {
-		"src-cli/otfccbuild.c"
+		"src/cli/otfccbuild.c"
 	}
 
 project "otfccbuild"
@@ -98,15 +105,15 @@ project "otfccbuild"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc-fontops", "libotfcc-tables", "libotfcc-support", "externals" }
+	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
 	filter "action:vs*"
 		links "extern-msvc"
 	filter {}
 	
 	files {
-		"src-cli/**.c",
-		"src-cli/**.h"
+		"src/cli/**.c",
+		"src/cli/**.h"
 	}
 	removefiles {
-		"src-cli/otfccdump.c"
+		"src/cli/otfccdump.c"
 	}
