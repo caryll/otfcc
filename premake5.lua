@@ -18,7 +18,7 @@ workspace "otfcc"
 		defines { '_CRT_SECURE_NO_WARNINGS' }
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
-		includedirs { "platformdep-win-msvc" }
+		includedirs { "extern-msvc" }
 	filter {}
 	
 	filter "action:gmake"
@@ -32,37 +32,67 @@ workspace "otfcc"
 	filter "configurations:Release"
 		defines { "NDEBUG" }
 		optimize "Full"
-		
+
+project "externals"
+	kind "StaticLib"
+	language "C"
+	files {
+		"extern/**.h",
+		"extern/**.c"
+	}
+
+project "extern-msvc"
+	kind "StaticLib"
+	language "C"
+	files {
+		"extern-msvc/**.h",
+		"extern-msvc/**.c"
+	}
 
 project "libotfcc"
 	kind "StaticLib"
 	language "C"
 	files {
 		"src/**.h",
-		"src/**.c",
-		"extern/**.h",
-		"extern/**.c"
+		"src/**.c"
 	}
 
 	removefiles {
-		"src/otfccdump.c",
-		"src/otfccbuild.c"
+		"src-cli/**"
 	}
 
 project "otfccdump"
 	kind "ConsoleApp"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
-	links { "libotfcc" }
+	
+	links { "libotfcc", "externals" }
+	filter "action:vs*"
+		links "extern-msvc"
+	filter {}
+	
 	files {
-		"src/otfccdump.c"
+		"src-cli/**.c",
+		"src-cli/**.h"
+	}
+	removefiles {
+		"src-cli/otfccbuild.c"
 	}
 
 project "otfccbuild"
 	kind "ConsoleApp"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
-	links { "libotfcc" }
+	
+	links { "libotfcc", "externals" }
+	filter "action:vs*"
+		links "extern-msvc"
+	filter {}
+	
 	files {
-		"src/otfccbuild.c"
+		"src-cli/**.c",
+		"src-cli/**.h"
+	}
+	removefiles {
+		"src-cli/otfccdump.c"
 	}

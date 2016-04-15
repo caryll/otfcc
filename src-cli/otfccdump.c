@@ -1,9 +1,10 @@
-#include "caryll-font.h"
-#include "caryll-sfnt.h"
-#include <getopt.h>
+#include "../src/caryll-font.h"
+#include "../src/caryll-sfnt.h"
 
-#include "support/platform.h"
-#include "support/stopwatch.h"
+#include "platform.h"
+#include "stopwatch.h"
+
+#include <getopt.h>
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -34,7 +35,7 @@ void printHelp() {
 	                "                           on Windows when redirecting to another program.\n"
 	                "                           Use --no-bom to turn it off.)");
 }
-#ifdef WIN32
+#ifdef _WIN32
 int main() {
 	int argc;
 	char **argv;
