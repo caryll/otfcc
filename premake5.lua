@@ -49,16 +49,30 @@ project "extern-msvc"
 		"extern-msvc/**.c"
 	}
 
-project "libotfcc"
+project "libotfcc-support"
 	kind "StaticLib"
 	language "C"
 	files {
-		"src/**.h",
-		"src/**.c"
+		"src-support/**.h",
+		"src-support/**.c"
 	}
 
-	removefiles {
-		"src-cli/**"
+project "libotfcc-tables"
+	kind "StaticLib"
+	language "C"
+	links { "libotfcc-support", "externals" }
+	files {
+		"src-tables/**.h",
+		"src-tables/**.c"
+	}
+
+project "libotfcc-fontops"
+	kind "StaticLib"
+	language "C"
+	links { "libotfcc-support", "externals" }
+	files {
+		"src-fontop/**.h",
+		"src-fontop/**.c"
 	}
 
 project "otfccdump"
@@ -66,7 +80,7 @@ project "otfccdump"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc", "externals" }
+	links { "libotfcc-fontops", "libotfcc-tables", "libotfcc-support", "externals" }
 	filter "action:vs*"
 		links "extern-msvc"
 	filter {}
@@ -84,7 +98,7 @@ project "otfccbuild"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc", "externals" }
+	links { "libotfcc-fontops", "libotfcc-tables", "libotfcc-support", "externals" }
 	filter "action:vs*"
 		links "extern-msvc"
 	filter {}

@@ -1,6 +1,7 @@
-#include "../src/caryll-font.h"
-#include "../src/caryll-sfnt-builder.h"
-#include "../src/caryll-sfnt.h"
+#include "../src-tables/caryll-font.h"
+#include "../src-tables/caryll-sfnt-builder.h"
+#include "../src-tables/caryll-sfnt.h"
+#include "../src-fontop/fontop.h"
 
 #include "platform.h"
 #include "stopwatch.h"
