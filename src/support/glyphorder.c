@@ -1,6 +1,6 @@
 #include "glyphorder.h"
 
-int try_name_glyph(glyph_order_hash *glyph_order, uint16_t _id, sds name) {
+int try_name_glyph(glyph_order_hash *glyph_order, int _id, sds name) {
 	glyph_order_entry *s;
 	int id = _id;
 	HASH_FIND_INT(*glyph_order, &id, s);
@@ -15,7 +15,7 @@ int try_name_glyph(glyph_order_hash *glyph_order, uint16_t _id, sds name) {
 	}
 }
 
-void lookup_name(glyph_order_hash *glyph_order, uint16_t _gid, sds *field) {
+void lookup_name(glyph_order_hash *glyph_order, int _gid, sds *field) {
 	glyph_order_entry *so;
 	int gid = _gid;
 	HASH_FIND_INT(*glyph_order, &gid, so);

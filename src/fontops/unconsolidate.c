@@ -29,7 +29,7 @@ static void caryll_name_glyphs(caryll_font *font) {
 		cmap_entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.gid > 0) {
 			sds name = NULL;
-			lookup_name(aglfn, s->unicode, &name);
+			if (s->unicode < 0x10000) lookup_name(aglfn, s->unicode, &name);
 			if (name == NULL) {
 				name = sdscatprintf(sdsempty(), "uni%04X", s->unicode);
 			} else {
