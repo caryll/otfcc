@@ -117,7 +117,7 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options
 	json_value *cmap = json_object_new(HASH_COUNT(*table));
 
 	cmap_entry *item;
-	foreach_hash(item, *table) {
+	foreach_hash(item, *table) if(item->glyph.name) {
 		sds key = sdsfromlonglong(item->unicode);
 		json_object_push(cmap, key,
 		                 json_string_new_length(sdslen(item->glyph.name), item->glyph.name));

@@ -1,11 +1,11 @@
 #ifndef CARYLL_TABLES_VHEA_H
 #define CARYLL_TABLES_VHEA_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 typedef struct {
-	uint32_t version;
+	f16dot16 version;
 	int16_t ascent;
 	int16_t descent;
 	int16_t lineGap;

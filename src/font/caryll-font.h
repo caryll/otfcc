@@ -1,33 +1,33 @@
 #ifndef CARYLL_FONT_H
 #define CARYLL_FONT_H
+#include <support/util.h>
 #include "caryll-sfnt.h"
-#include "support/util.h"
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_font;
 
-#include "./support/glyphorder.h"
+#include <support/glyphorder.h>
 
-#include "./tables/head.h"
-#include "./tables/hhea.h"
-#include "./tables/maxp.h"
-#include "./tables/hmtx.h"
-#include "./tables/post.h"
-#include "./tables/OS_2.h"
-#include "./tables/name.h"
-#include "./tables/glyf.h"
-#include "./tables/cmap.h"
-#include "./tables/fpgm-prep.h"
-#include "./tables/gasp.h"
+#include <tables/head.h>
+#include <tables/hhea.h>
+#include <tables/maxp.h>
+#include <tables/hmtx.h>
+#include <tables/post.h>
+#include <tables/OS_2.h>
+#include <tables/name.h>
+#include <tables/glyf.h>
+#include <tables/cmap.h>
+#include <tables/fpgm-prep.h>
+#include <tables/gasp.h>
 
-#include "./tables/hdmx.h"
-#include "./tables/LTSH.h"
-#include "./tables/PCLT.h"
-#include "./tables/vhea.h"
-#include "./tables/vmtx.h"
+#include <tables/hdmx.h>
+#include <tables/LTSH.h>
+#include <tables/PCLT.h>
+#include <tables/vhea.h>
+#include <tables/vmtx.h>
 
-#include "./tables/otl/otl.h"
-#include "./tables/otl/GDEF.h"
+#include <tables/otl/otl.h>
+#include <tables/otl/GDEF.h>
 
 struct _caryll_font {
 	table_head *head;
@@ -63,9 +63,5 @@ void caryll_delete_font(caryll_font *font);
 json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts);
 caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpopts);
 caryll_buffer *caryll_write_font(caryll_font *font, caryll_dump_options *dumpopts);
-
-#include "fontops/unconsolidate.h"
-#include "fontops/consolidate.h"
-#include "fontops/stat.h"
 
 #endif

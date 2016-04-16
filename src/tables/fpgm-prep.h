@@ -1,9 +1,9 @@
 #ifndef CARYLL_TABLES_FPGM_PREP_H
 #define CARYLL_TABLES_FPGM_PREP_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
-#include "../support/glyphorder.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
+#include <support/glyphorder.h>
 
 typedef struct {
 	uint32_t length;

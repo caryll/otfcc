@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLES_OTL_H
 #define CARYLL_TABLES_OTL_H
-#include "../../support/util.h"
-#include "../../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 typedef enum {
 	otl_type_unknown = 0,

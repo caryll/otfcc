@@ -14,7 +14,7 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 			fprintf(stderr, "table 'hhea' corrupted.\n");
 		} else {
 			table_hhea *hhea = (table_hhea *)malloc(sizeof(table_hhea) * 1);
-			hhea->version = read_32u(data);
+			hhea->version = read_32s(data);
 			hhea->ascender = read_16u(data + 4);
 			hhea->descender = read_16u(data + 6);
 			hhea->lineGap = read_16u(data + 8);
@@ -40,7 +40,7 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *hhea = json_object_new(13);
-	json_object_push(hhea, "version", json_integer_new(table->version));
+	json_object_push(hhea, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(hhea, "ascender", json_integer_new(table->ascender));
 	json_object_push(hhea, "descender", json_integer_new(table->descender));
 	json_object_push(hhea, "lineGap", json_integer_new(table->lineGap));
@@ -61,7 +61,7 @@ table_hhea *caryll_hhea_from_json(json_value *root, caryll_dump_options *dumpopt
 	table_hhea *hhea = caryll_new_hhea();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
-		hhea->version = json_obj_getnum_fallback(table, "version", 0);
+		hhea->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
 		hhea->ascender = json_obj_getnum_fallback(table, "ascender", 0);
 		hhea->descender = json_obj_getnum_fallback(table, "descender", 0);
 		hhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);

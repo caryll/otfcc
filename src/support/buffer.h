@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "../../extern/sds.h"
+#include <extern/sds.h>
 typedef struct {
 	size_t cursor;
 	sds s;

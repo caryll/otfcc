@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_HDMX_H
 #define CARYLL_TABLES_HDMX_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 #include "maxp.h"
 
@@ -15,8 +15,8 @@ typedef struct {
 typedef struct {
 	// Horizontal device metrics
 	uint16_t version;
-	int16_t numRecords;
-	int32_t sizeDeviceRecord;
+	uint16_t numRecords;
+	uint32_t sizeDeviceRecord;
 	device_record *records;
 } table_hdmx;
 

@@ -493,18 +493,16 @@ static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, fea
 					s->script->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
-					fprintf(stderr, "[OTFCC-fea] There is no valid featue "
+					fprintf(stderr, "[OTFCC-fea] There is no valid feature "
 					                "assignments for [%s/%s]. This language "
-					                "term will "
-					                "be ignored.\n",
+					                "term will be ignored.\n",
 					        tag, languageName);
 					if (af) { FREE(af); }
 				}
 			} else {
-				fprintf(stderr, "[OTFCC-fea] There is no valid featue "
+				fprintf(stderr, "[OTFCC-fea] There is no valid feature "
 				                "assignments for [%s/%s]. This language term "
-				                "will "
-				                "be ignored.\n",
+				                "will be ignored.\n",
 				        tag, languageName);
 
 				if (af) { FREE(af); }
@@ -646,9 +644,9 @@ static INLINE caryll_buffer *writeOTLLookups(table_otl *table) {
 		otl_lookup *lookup = table->lookups[j];
 		size_t lookupOffset = bufl->cursor;
 		if (lookupOffset > 0xFFFF) {
-			fprintf(stderr, "[OTFCC-fea] Warning, Lookup %s Written at 0x%llX, "
-			                "this lookup is corrupted.\n",
-			        table->lookups[j]->name, lookupOffset);
+			fprintf(stderr, "[OTFCC-fea] Warning, Lookup %s Written at 0x%" PRIx32 ", "
+			                "this lookup may be corrupted.\n",
+			        table->lookups[j]->name, (uint32_t)lookupOffset);
 		}
 		// lookup type
 		if (useExtended) {

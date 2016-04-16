@@ -16,7 +16,7 @@ table_head *caryll_read_head(caryll_packet packet) {
 			fprintf(stderr, "table 'head' corrupted.\n");
 		} else {
 			table_head *head = (table_head *)malloc(sizeof(table_head) * 1);
-			head->version = read_32u(data);
+			head->version = read_32s(data);
 			head->fontRevison = read_32u(data + 4);
 			head->checkSumAdjustment = read_32u(data + 8);
 			head->magicNumber = read_32u(data + 12);
@@ -42,7 +42,7 @@ table_head *caryll_read_head(caryll_packet packet) {
 void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *head = json_object_new(15);
-	json_object_push(head, "version", json_integer_new(table->version));
+	json_object_push(head, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(head, "fontRevison", json_integer_new(table->fontRevison));
 	json_object_push(head, "flags", json_integer_new(table->flags));
 	json_object_push(head, "unitsPerEm", json_integer_new(table->unitsPerEm));
@@ -64,7 +64,7 @@ table_head *caryll_head_from_json(json_value *root, caryll_dump_options *dumpopt
 	table_head *head = caryll_new_head();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
-		head->version = json_obj_getnum_fallback(table, "version", 0);
+		head->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
 		head->fontRevison = json_obj_getnum_fallback(table, "fontRevison", 0);
 		head->flags = json_obj_getnum_fallback(table, "flags", 0);
 		head->unitsPerEm = json_obj_getnum_fallback(table, "unitsPerEm", 0);

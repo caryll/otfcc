@@ -1,7 +1,7 @@
 #ifndef CARYLL_SFNT_BUILDER_H
 #define CARYLL_SFNT_BUILDER_H
 
-#include "support/util.h"
+#include <support/util.h>
 
 typedef struct {
 	int tag;

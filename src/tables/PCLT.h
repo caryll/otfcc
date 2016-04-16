@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_PCLT_H
 #define CARYLL_TABLES_PCLT_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 typedef struct {
 	uint32_t version;

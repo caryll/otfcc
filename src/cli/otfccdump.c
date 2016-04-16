@@ -1,12 +1,25 @@
-#include "caryll-sfnt.h"
-#include "caryll-font.h"
-#include <unistd.h>
+#include <font/caryll-font.h>
+#include <font/caryll-sfnt.h>
+#include <fontops/fontop.h>
+
+#include "platform.h"
+#include "stopwatch.h"
+
 #include <getopt.h>
 
-#include "support/stopwatch.h"
-#include "version.h"
+#ifndef MAIN_VER
+#define MAIN_VER 0
+#endif
+#ifndef SECONDARY_VER
+#define SECONDARY_VER 0
+#endif
+#ifndef PATCH_VER
+#define PATCH_VER 0
+#endif
 
-void printInfo() { fprintf(stdout, "This is otfccdump, version %s.\n", VERSION); }
+void printInfo() {
+	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+}
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
@@ -18,15 +31,27 @@ void printHelp() {
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --time                  : Time each substep.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
-	                " --ignore-hints          : Do not export hingint information.\n");
+	                " --ignore-hints          : Do not export hingint information.\n"
+	                " --add-bom               : Add BOM mark in the output. (This is default\n"
+	                "                           on Windows when redirecting to another program.\n"
+	                "                           Use --no-bom to turn it off.)");
 }
-
+#ifdef _WIN32
+int main() {
+	int argc;
+	char **argv;
+	get_argv_utf8(&argc, &argv);
+#else
 int main(int argc, char *argv[]) {
+#endif
+
 	bool show_help = false;
 	bool show_version = false;
 	bool show_pretty = false;
 	bool show_ugly = false;
 	bool show_time = false;
+	bool add_bom = false;
+	bool no_bom = false;
 	uint32_t ttcindex = 0;
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -35,6 +60,8 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"add-bom", no_argument, NULL, 0},
+	                            {"no-bom", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
@@ -53,6 +80,8 @@ int main(int argc, char *argv[]) {
 				if (longopts[option_index].flag != 0) break;
 				if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
 				if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
+				if (strcmp(longopts[option_index].name, "add-bom") == 0) { add_bom = true; }
+				if (strcmp(longopts[option_index].name, "no-bom") == 0) { no_bom = true; }
 				if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
 					dumpopts->ignore_glyph_order = true;
 				}
@@ -101,7 +130,8 @@ int main(int argc, char *argv[]) {
 
 	caryll_sfnt *sfnt;
 	{
-		sfnt = caryll_read_sfnt(inPath);
+		FILE *file = u8fopen(inPath, "rb");
+		sfnt = caryll_read_sfnt(file);
 		if (!sfnt || sfnt->count == 0) {
 			fprintf(stderr, "Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -151,15 +181,50 @@ int main(int argc, char *argv[]) {
 
 	{
 		if (outputPath) {
-			FILE *outputFile = fopen(outputPath, "wb");
+			FILE *outputFile = u8fopen(outputPath, "wb");
 			if (!outputFile) {
 				fprintf(stderr, "Cannot write to file \"%s\". Exit.", outputPath);
 				exit(EXIT_FAILURE);
 			}
+			if (add_bom) {
+				fputc(0xEF, stdout);
+				fputc(0xBB, stdout);
+				fputc(0xBF, stdout);
+			}
 			fputs(buf, outputFile);
 			fclose(outputFile);
 		} else {
+#ifdef WIN32
+			if (isatty(fileno(stdout))) {
+				LPWSTR pwStr;
+				DWORD dwNum = widen_utf8(buf, &pwStr);
+				DWORD actual = 0;
+				DWORD written = 0;
+				const DWORD chunk = 0x10000;
+				while (written < dwNum) {
+					DWORD len = dwNum - written;
+					if (len > chunk) len = chunk;
+					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual,
+					              NULL);
+					written += len;
+				}
+				free(pwStr);
+			} else {
+				if (!no_bom) {
+					fputc(0xEF, stdout);
+					fputc(0xBB, stdout);
+					fputc(0xBF, stdout);
+				}
+				fputs(buf, stdout);
+			}
+#else
+			if (add_bom) {
+				fputc(0xEF, stdout);
+				fputc(0xBB, stdout);
+				fputc(0xBF, stdout);
+			}
 			fputs(buf, stdout);
+#endif
 		}
 		if (show_time) push_stopwatch("Write to file", &begin);
 	}

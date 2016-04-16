@@ -1,12 +1,26 @@
-#include "caryll-sfnt.h"
-#include "caryll-font.h"
-#include "caryll-sfnt-builder.h"
+#include <font/caryll-font.h>
+#include <font/caryll-sfnt-builder.h>
+#include <font/caryll-sfnt.h>
+#include <fontops/fontop.h>
+
+#include "platform.h"
+#include "stopwatch.h"
 
 #include <getopt.h>
-#include "support/stopwatch.h"
-#include "version.h"
 
-void printInfo() { fprintf(stdout, "This is otfccbuild, version %s.\n", VERSION); }
+#ifndef MAIN_VER
+#define MAIN_VER 0
+#endif
+#ifndef SECONDARY_VER
+#define SECONDARY_VER 0
+#endif
+#ifndef PATCH_VER
+#define PATCH_VER 0
+#endif
+
+void printInfo() {
+	fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+}
 void printHelp() {
 	fprintf(stdout,
 	        "\n"
@@ -21,11 +35,66 @@ void printHelp() {
 	        "                             instead of stating the average width of glyphs. \n"
 	        "                             Useful when creating a monospaced font.\n"
 	        " --short-post              : Don't export glyph names in the result font. It \n"
-			"                             will reduce file size.\n"
+	        "                             will reduce file size.\n"
 	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
-			"                             some Microsoft applications, a DSIG is required\n"
-			"                             to enable OpenType features."
+	        "                             some Microsoft applications, a DSIG is required\n"
+	        "                             to enable OpenType features."
 	        "\n");
+}
+void readEntireFile(char *inPath, char **_buffer, long *_length) {
+	char *buffer = NULL;
+	long length = 0;
+	FILE *f = u8fopen(inPath, "rb");
+	if (!f) {
+		fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
+		exit(EXIT_FAILURE);
+	}
+	fseek(f, 0, SEEK_END);
+	length = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	buffer = malloc(length);
+	if (buffer) { fread(buffer, 1, length, f); }
+	fclose(f);
+
+	if (!buffer) {
+		fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
+		exit(EXIT_FAILURE);
+	}
+	*_buffer = buffer;
+	*_length = length;
+}
+
+void readEntireStdin(char **_buffer, long *_length) {
+	static const long BUF_SIZE = 0x400;
+	static const long BUF_GROW = 0x100000;
+	static const long BUF_MIN = 0x100;
+	long size = BUF_SIZE;
+	char *buffer = malloc(size);
+	long length = 0;
+	long remain = size;
+	while (!feof(stdin)) {
+		if (remain <= BUF_MIN) {
+			remain += size;
+			if (size < BUF_GROW) {
+				size *= 2;
+			} else {
+				size += BUF_GROW;
+			}
+			char *p = realloc(buffer, size);
+			if (p == NULL) {
+				free(buffer);
+				exit(EXIT_FAILURE);
+			}
+			buffer = p;
+		}
+
+		fgets(buffer + length, remain, stdin);
+		long n = strlen(buffer + length);
+		length += n;
+		remain -= n;
+	}
+	*_buffer = buffer;
+	*_length = length;
 }
 
 void print_table(sfnt_builder_entry *t) {
@@ -34,7 +103,14 @@ void print_table(sfnt_builder_entry *t) {
 	        ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
 }
 
+#ifdef _WIN32
+int main() {
+	int argc;
+	char **argv;
+	get_argv_utf8(&argc, &argv);
+#else
 int main(int argc, char *argv[]) {
+#endif
 	struct timespec begin;
 	time_now(&begin);
 
@@ -98,11 +174,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (optind >= argc) {
-		fprintf(stderr, "Expected argument after options for input file name. Exit.\n");
-		printHelp();
-		exit(EXIT_FAILURE);
+		inPath = NULL; // read from STDIN
 	} else {
-		inPath = sdsnew(argv[optind]);
+		inPath = sdsnew(argv[optind]); // read from file
 	}
 	if (!outputPath) {
 		fprintf(stderr, "Unable to build OpenType font tile : output path not "
@@ -111,26 +185,17 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	char *buffer = NULL;
-	long length = 0;
+	char *buffer;
+	long length;
 	{
-		FILE *f = fopen(inPath, "rb");
-		if (!f) {
-			fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
-			exit(EXIT_FAILURE);
+		if (inPath) {
+			readEntireFile(inPath, &buffer, &length);
+		} else {
+			readEntireStdin(&buffer, &length);
 		}
-		fseek(f, 0, SEEK_END);
-		length = ftell(f);
-		fseek(f, 0, SEEK_SET);
-		buffer = malloc(length);
-		if (buffer) { fread(buffer, 1, length, f); }
-		fclose(f);
 		if (show_time) push_stopwatch("Read file", &begin);
-		if (!buffer) {
-			fprintf(stderr, "Cannot read JSON file \"%s\". Exit.\n", inPath);
-			exit(EXIT_FAILURE);
-		}
 	}
+
 	json_value *root;
 	{
 		root = json_parse(buffer, length);
@@ -154,12 +219,13 @@ int main(int argc, char *argv[]) {
 	}
 	{
 		caryll_font_consolidate(font, dumpopts);
+		if (show_time) push_stopwatch("Consolidation", &begin);
 		caryll_font_stat(font, dumpopts);
-		if (show_time) push_stopwatch("Consolidation and Stating", &begin);
+		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
 		caryll_buffer *otf = caryll_write_font(font, dumpopts);
-		FILE *outfile = fopen(outputPath, "wb");
+		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->s, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);

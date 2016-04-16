@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLES_OTL_COVERAGE_H
 #define CARYLL_TABLES_OTL_COVERAGE_H
-#include "../../support/util.h"
-#include "../../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 typedef struct {
 	uint16_t numGlyphs;

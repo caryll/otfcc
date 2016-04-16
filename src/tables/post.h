@@ -1,15 +1,15 @@
 #ifndef CARYLL_TABLES_POST_H
 #define CARYLL_TABLES_POST_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
+#include <support/glyphorder.h>
 
-#include "../support/glyphorder.h"
 
 typedef struct {
 	// PostScript information
-	uint32_t version;
-	uint32_t italicAngle;
+	f16dot16 version;
+	f16dot16 italicAngle;
 	int16_t underlinePosition;
 	int16_t underlineThickness;
 	uint32_t isFixedPitch;

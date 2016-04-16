@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_CMAP_H
 #define CARYLL_TABLES_CMAP_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 // We will support format 0, 4, 12 of CMAP only
 typedef struct {

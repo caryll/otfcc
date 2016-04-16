@@ -1,9 +1,9 @@
 #ifndef CARYLL_TABLES_GLYF_H
 #define CARYLL_TABLES_GLYF_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
-#include "../support/glyphorder.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
+#include <support/glyphorder.h>
 
 #include "head.h"
 #include "maxp.h"
@@ -30,6 +30,9 @@ typedef struct {
 	float d;
 	float x;
 	float y;
+	// flags
+	bool roundToGrid;
+	bool useMyMetrics;
 } glyf_reference;
 
 typedef struct {
@@ -69,24 +72,25 @@ typedef struct {
 	glyf_glyph **glyphs;
 } table_glyf;
 
-#define GLYF_FLAG_ON_CURVE 1
-#define GLYF_FLAG_X_SHORT (1 << 1)
-#define GLYF_FLAG_Y_SHORT (1 << 2)
-#define GLYF_FLAG_REPEAT (1 << 3)
-#define GLYF_FLAG_SAME_X (1 << 4)
-#define GLYF_FLAG_SAME_Y (1 << 5)
-#define GLYF_FLAG_POSITIVE_X (1 << 4)
-#define GLYF_FLAG_POSITIVE_Y (1 << 5)
+static const int GLYF_FLAG_ON_CURVE = 1;
+static const int GLYF_FLAG_X_SHORT = (1 << 1);
+static const int GLYF_FLAG_Y_SHORT = (1 << 2);
+static const int GLYF_FLAG_REPEAT = (1 << 3);
+static const int GLYF_FLAG_SAME_X = (1 << 4);
+static const int GLYF_FLAG_SAME_Y = (1 << 5);
+static const int GLYF_FLAG_POSITIVE_X = (1 << 4);
+static const int GLYF_FLAG_POSITIVE_Y = (1 << 5);
 
-#define ARG_1_AND_2_ARE_WORDS (1 << 0)
-#define ARGS_ARE_XY_VALUES (1 << 1)
-#define MORE_COMPONENTS (1 << 5)
-#define WE_HAVE_A_SCALE (1 << 3)
-#define WE_HAVE_AN_X_AND_Y_SCALE (1 << 6)
-#define WE_HAVE_A_TWO_BY_TWO (1 << 7)
-#define WE_HAVE_INSTRUCTIONS (1 << 8)
-#define USE_MY_METRICS (1 << 9)
-#define OVERLAP_COMPOUND (1 << 10)
+static const int ARG_1_AND_2_ARE_WORDS = (1 << 0);
+static const int ARGS_ARE_XY_VALUES = (1 << 1);
+static const int ROUND_XY_TO_GRID = (1 << 2);
+static const int WE_HAVE_A_SCALE = (1 << 3);
+static const int MORE_COMPONENTS = (1 << 5);
+static const int WE_HAVE_AN_X_AND_Y_SCALE = (1 << 6);
+static const int WE_HAVE_A_TWO_BY_TWO = (1 << 7);
+static const int WE_HAVE_INSTRUCTIONS = (1 << 8);
+static const int USE_MY_METRICS = (1 << 9);
+static const int OVERLAP_COMPOUND = (1 << 10);
 
 glyf_glyph *caryll_new_glyf_glhph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);

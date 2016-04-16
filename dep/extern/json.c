@@ -226,7 +226,21 @@ json_value * json_parse_ex (json_settings * settings,
    json_char error [json_error_max];
    const json_char * end;
    json_value * top, * root, * alloc = 0;
-   json_state state = { 0 };
+   json_state state;
+   state.used_memory = 0;
+   state.uint_max = 0;
+   state.ulong_max = 0;
+   state.settings.max_memory = 0;
+   state.settings.mem_alloc = NULL;
+   state.settings.mem_free = NULL;
+   state.settings.settings = 0;
+   state.settings.user_data = NULL;
+   state.settings.value_extra = 0;
+   state.first_pass = 0;
+   state.ptr = NULL;
+   state.cur_col = 0;
+   state.cur_line = 0;
+   
    long flags;
    long num_digits = 0, num_e = 0;
    json_int_t num_fraction = 0;
@@ -948,7 +962,13 @@ e_failed:
 
 json_value * json_parse (const json_char * json, size_t length)
 {
-   json_settings settings = { 0 };
+   json_settings settings;
+   settings.max_memory = 0;
+   settings.settings = 0;
+   settings.mem_alloc = NULL;
+   settings.mem_free = NULL;
+   settings.user_data = NULL;
+   settings.value_extra = 0;
    return json_parse_ex (&settings, json, length, 0);
 }
 
@@ -1006,7 +1026,13 @@ void json_value_free_ex (json_settings * settings, json_value * value)
 
 void json_value_free (json_value * value)
 {
-   json_settings settings = { 0 };
+   json_settings settings;
+   settings.max_memory = 0;
+   settings.settings = 0;
+   settings.mem_alloc = NULL;
+   settings.mem_free = NULL;
+   settings.user_data = NULL;
+   settings.value_extra = 0;
    settings.mem_free = default_free;
    json_value_free_ex (&settings, value);
 }

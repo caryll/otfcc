@@ -1,5 +1,14 @@
 #include "caryll-sfnt-builder.h"
-#include "version.h"
+
+#ifndef MAIN_VER
+#define MAIN_VER 0
+#endif
+#ifndef SECONDARY_VER
+#define SECONDARY_VER 0
+#endif
+#ifndef PATCH_VER
+#define PATCH_VER 0
+#endif
 
 static INLINE uint32_t buf_checksum(caryll_buffer *buffer) {
 	uint32_t actualLength = buflen(buffer);
@@ -89,7 +98,13 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	}
 	// we are right after the table directory
 	// add copyright information
-	bufwrite_bytes(buffer, 20, (uint8_t *)("-- BY OTFCC " VERSION " --          "));
+	{
+		sds copyright =
+		    sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
+		sdsgrowzero(copyright, 20);
+		bufwrite_bytes(buffer, 20, (uint8_t *)copyright);
+		sdsfree(copyright);
+	}
 	uint32_t wholeChecksum = buf_checksum(buffer);
 	bufseek(buffer, headOffset + 8);
 	bufwrite32b(buffer, 0xB1B0AFBA - wholeChecksum);

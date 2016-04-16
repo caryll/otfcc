@@ -1,5 +1,5 @@
 #include "name.h"
-#include "../support/unicodeconv.h"
+#include <support/unicodeconv.h>
 
 table_name *caryll_read_name(caryll_packet packet) {
 	FOR_TABLE('name', table) {

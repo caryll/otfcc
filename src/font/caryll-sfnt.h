@@ -2,6 +2,7 @@
 #define CARYLL_SFNT_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 typedef struct {
 	uint32_t tag;
@@ -27,7 +28,7 @@ typedef struct {
 	caryll_packet *packets;
 } caryll_sfnt;
 
-caryll_sfnt *caryll_read_sfnt(const char *path);
+caryll_sfnt *caryll_read_sfnt(FILE *file);
 void caryll_delete_sfnt(caryll_sfnt *font);
 caryll_piece shift_piece(caryll_piece piece, uint32_t delta);
 

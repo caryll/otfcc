@@ -1,12 +1,12 @@
 #ifndef CARYLL_TABLES_HHEA_H
 #define CARYLL_TABLES_HHEA_H
 
-#include "../support/util.h"
-#include "../caryll-sfnt.h"
+#include <support/util.h>
+#include <font/caryll-sfnt.h>
 
 typedef struct {
 	// Horizontal header
-	uint32_t version;
+	f16dot16 version;
 	int16_t ascender;
 	int16_t descender;
 	int16_t lineGap;
