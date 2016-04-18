@@ -404,7 +404,6 @@ static INLINE json_value *glyf_glyph_instructions_to_json(glyf_glyph *g,
 }
 static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
 	json_value *glyph = json_object_new(7);
-	json_object_push(glyph, "name", json_string_new_length(sdslen(g->name), g->name));
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
 	if (dumpopts->has_vertical_metrics) {
 		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
