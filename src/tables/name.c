@@ -80,6 +80,16 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 		for (uint32_t j = 0; j < table->u.array.length; j++) {
 			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
 				json_value *record = table->u.array.values[j];
+				if (!json_obj_get_type(record, "platformID", json_integer))
+					fprintf(stderr, "Missing or invalid platformID for name entry %d\n", j);
+				if (!json_obj_get_type(record, "encodingID", json_integer))
+					fprintf(stderr, "Missing or invalid encodingID for name entry %d\n", j);
+				if (!json_obj_get_type(record, "languageID", json_integer))
+					fprintf(stderr, "Missing or invalid languageID for name entry %d\n", j);
+				if (!json_obj_get_type(record, "nameID", json_integer))
+					fprintf(stderr, "Missing or invalid nameID for name entry %d\n", j);
+				if (!json_obj_get_type(record, "nameString", json_string))
+					fprintf(stderr, "Missing or invalid nameString for name entry %d\n", j);
 				if (json_obj_get_type(record, "platformID", json_integer) &&
 				    json_obj_get_type(record, "encodingID", json_integer) &&
 				    json_obj_get_type(record, "languageID", json_integer) &&

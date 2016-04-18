@@ -102,6 +102,10 @@ void caryll_stat_glyf(caryll_font *font) {
 		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
 		if (thatstat.yMax > ymax) ymax = thatstat.yMax;
 	}
+	font->head->xMin = xmin;
+	font->head->xMax = xmax;
+	font->head->yMin = ymin;
+	font->head->yMax = ymax;
 	free(stated);
 }
 
@@ -416,6 +420,8 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 }
 void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 	if (font->glyf && font->head) caryll_stat_glyf(font);
+	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
+	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) caryll_stat_maxp(font);
 	if (font->fpgm && font->maxp && font->fpgm->length > font->maxp->maxSizeOfInstructions) {
 		font->maxp->maxSizeOfInstructions = font->fpgm->length;

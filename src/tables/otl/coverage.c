@@ -38,16 +38,18 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 			}
 			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
-			NEW_N(coverage->glyphs, coverage->numGlyphs);
-			{
-				uint16_t j = 0;
-				coverage_entry *e, *tmp;
-				HASH_ITER(hh, hash, e, tmp) {
-					coverage->glyphs[j].gid = e->gid;
-					coverage->glyphs[j].name = NULL;
-					HASH_DEL(hash, e);
-					free(e);
-					j++;
+			if (coverage->numGlyphs) {
+				NEW_N(coverage->glyphs, coverage->numGlyphs);
+				{
+					uint16_t j = 0;
+					coverage_entry *e, *tmp;
+					HASH_ITER(hh, hash, e, tmp) {
+						coverage->glyphs[j].gid = e->gid;
+						coverage->glyphs[j].name = NULL;
+						HASH_DEL(hash, e);
+						free(e);
+						j++;
+					}
 				}
 			}
 			break;
@@ -73,16 +75,18 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 			}
 			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
-			NEW_N(coverage->glyphs, coverage->numGlyphs);
-			{
-				uint16_t j = 0;
-				coverage_entry *e, *tmp;
-				HASH_ITER(hh, hash, e, tmp) {
-					coverage->glyphs[j].gid = e->gid;
-					coverage->glyphs[j].name = NULL;
-					HASH_DEL(hash, e);
-					free(e);
-					j++;
+			if (coverage->numGlyphs) {
+				NEW_N(coverage->glyphs, coverage->numGlyphs);
+				{
+					uint16_t j = 0;
+					coverage_entry *e, *tmp;
+					HASH_ITER(hh, hash, e, tmp) {
+						coverage->glyphs[j].gid = e->gid;
+						coverage->glyphs[j].name = NULL;
+						HASH_DEL(hash, e);
+						free(e);
+						j++;
+					}
 				}
 			}
 			break;

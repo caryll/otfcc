@@ -2,7 +2,7 @@
 
 table_maxp *caryll_new_maxp() {
 	table_maxp *maxp = calloc(1, sizeof(table_maxp));
-	maxp->version = 0x00001000;
+	maxp->version = 0x00010000;
 	return maxp;
 }
 

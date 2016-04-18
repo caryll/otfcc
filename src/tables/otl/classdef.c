@@ -27,7 +27,7 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 	if (format == 1 && tableLength >= offset + 6) {
 		uint16_t startGID = read_16u(data + offset + 2);
 		uint16_t count = read_16u(data + offset + 4);
-		if (tableLength >= offset + 6 + count * 2) {
+		if (count && tableLength >= offset + 6 + count * 2) {
 			cd->numGlyphs = count;
 			NEW_N(cd->glyphs, count);
 			NEW_N(cd->classes, count);
@@ -64,22 +64,24 @@ otl_classdef *caryll_raad_classdef(font_file_pointer data, uint32_t tableLength,
 		}
 		HASH_SORT(hash, by_covIndex);
 		cd->numGlyphs = HASH_COUNT(hash);
-		NEW_N(cd->glyphs, cd->numGlyphs);
-		NEW_N(cd->classes, cd->numGlyphs);
-		{
-			uint16_t j = 0;
-			uint16_t maxclass = 0;
-			coverage_entry *e, *tmp;
-			HASH_ITER(hh, hash, e, tmp) {
-				cd->glyphs[j].gid = e->gid;
-				cd->glyphs[j].name = NULL;
-				cd->classes[j] = e->covIndex;
-				if (e->covIndex > maxclass) maxclass = e->covIndex;
-				HASH_DEL(hash, e);
-				free(e);
-				j++;
+		if (cd->numGlyphs) {
+			NEW_N(cd->glyphs, cd->numGlyphs);
+			NEW_N(cd->classes, cd->numGlyphs);
+			{
+				uint16_t j = 0;
+				uint16_t maxclass = 0;
+				coverage_entry *e, *tmp;
+				HASH_ITER(hh, hash, e, tmp) {
+					cd->glyphs[j].gid = e->gid;
+					cd->glyphs[j].name = NULL;
+					cd->classes[j] = e->covIndex;
+					if (e->covIndex > maxclass) maxclass = e->covIndex;
+					HASH_DEL(hash, e);
+					free(e);
+					j++;
+				}
+				cd->maxclass = maxclass;
 			}
-			cd->maxclass = maxclass;
 		}
 		return cd;
 	}

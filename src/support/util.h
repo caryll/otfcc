@@ -5,18 +5,19 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <string.h>
+#include "base64.h"
+#include "buffer.h"
+#include <extern/json-builder.h>
+#include <extern/json.h>
 #include <extern/sds.h>
 #include <extern/uthash.h>
-#include <extern/json.h>
-#include <extern/json-builder.h>
-#include "buffer.h"
-#include "base64.h"
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
@@ -284,6 +285,7 @@ static INLINE json_value *preserialize(MOVE json_value *x) {
 }
 
 static INLINE void *__caryll_allocate(size_t n, unsigned long line) {
+	if (!n) return NULL;
 	void *p = malloc(n);
 	if (!p) {
 		fprintf(stderr, "[%ld]Out of memory(%ld bytes)\n", line, (unsigned long)n);
