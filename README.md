@@ -31,7 +31,7 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
 ### `otfccbuild` : Build an OpenType font file from JSON
 ```
-otfccbuild [OPTIONS] input.json -o output.[ttf|otf]
+otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
 
  -h, --help                : Display this help message and exit.
  -v, --version             : Display version information and exit.
