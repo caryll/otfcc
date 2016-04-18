@@ -24,7 +24,9 @@ void printInfo() {
 void printHelp() {
 	fprintf(stdout,
 	        "\n"
-	        "Usage : otfccbuild [OPTIONS] input.json -o output.[ttf|otf]\n\n"
+	        "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
+	        " input.json                : Path to input file. When absent the input will\n"
+	        "                             be read from the STDIN.\n"
 	        " -h, --help                : Display this help message and exit.\n"
 	        " -v, --version             : Display version information and exit.\n"
 	        " -o <file>                 : Set output file path to <file>.\n"

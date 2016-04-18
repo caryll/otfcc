@@ -17,7 +17,8 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
  -h, --help              : Display this help message and exit.
  -v, --version           : Display version information and exit.
- -o <file>               : Set output file path to <file>.
+ -o <file>               : Set output file path to <file>. When abasent
+                           the dump will be written to STDOUT.
  -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.
  --pretty                : Prettify the output JSON.
  --ugly                  : Force uglify the output JSON.
@@ -33,6 +34,8 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 ```
 otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
 
+ input.json                : Path to input file. When absent the input will
+                             be read from the STDIN.
  -h, --help                : Display this help message and exit.
  -v, --version             : Display version information and exit.
  -o <file>                 : Set output file path to <file>.
