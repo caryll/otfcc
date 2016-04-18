@@ -141,6 +141,7 @@ int main(int argc, char *argv[]) {
 			        inPath, (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
+		if (show_time) push_stopwatch("Read Input SFNT", &begin);
 	}
 
 	caryll_font *font;

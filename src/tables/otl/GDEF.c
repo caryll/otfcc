@@ -12,6 +12,7 @@ table_GDEF *caryll_new_GDEF() {
 	NEW(gdef);
 	gdef->glyphClassDef = NULL;
 	gdef->ligCarets = NULL;
+	gdef->markAttachClassDef = NULL;
 	return gdef;
 }
 
@@ -71,13 +72,17 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 			    data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset));
 			if (!cov || cov->numGlyphs != read_16u(data + ligCaretOffset + 2)) goto FAIL;
 			checkLength(ligCaretOffset + 4 + cov->numGlyphs * 2);
-			gdef->ligCarets->coverage = cov;
-
-			NEW_N(gdef->ligCarets->carets, cov->numGlyphs);
-			for (uint16_t j = 0; j < cov->numGlyphs; j++) {
-				gdef->ligCarets->carets[j] = readLigCaretRecord(
-				    data, tableLength,
-				    ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
+			if (cov->numGlyphs) {
+				gdef->ligCarets->coverage = cov;
+				NEW_N(gdef->ligCarets->carets, cov->numGlyphs);
+				for (uint16_t j = 0; j < cov->numGlyphs; j++) {
+					gdef->ligCarets->carets[j] = readLigCaretRecord(
+					    data, tableLength,
+					    ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
+				}
+			} else {
+				caryll_delete_coverage(cov);
+				FREE(gdef->ligCarets);
 			}
 		}
 		uint16_t markAttachDefOffset = read_16u(data + 10);
@@ -172,7 +177,8 @@ table_GDEF *caryll_GDEF_from_json(json_value *root, caryll_dump_options *dumpopt
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
 		gdef = caryll_new_GDEF();
 		gdef->glyphClassDef = caryll_classdef_from_json(json_obj_get(table, "glyphClassDef"));
-		gdef->markAttachClassDef = caryll_classdef_from_json(json_obj_get(table, "markAttachClassDef"));
+		gdef->markAttachClassDef =
+		    caryll_classdef_from_json(json_obj_get(table, "markAttachClassDef"));
 		gdef->ligCarets = ligCaretFromJson(json_obj_get(table, "ligCarets"));
 	}
 	return gdef;

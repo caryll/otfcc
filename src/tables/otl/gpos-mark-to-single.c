@@ -105,7 +105,6 @@ json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st) {
 		}
 		json_object_push(_bases, subtable->bases->glyphs[j].name, preserialize(_base));
 	}
-	json_object_push(_subtable, "classCount", json_integer_new(subtable->classCount));
 	json_object_push(_subtable, "marks", _marks);
 	json_object_push(_subtable, "bases", _bases);
 	return _subtable;
