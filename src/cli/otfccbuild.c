@@ -36,7 +36,7 @@ void printHelp() {
 	        " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	        "                             instead of stating the average width of glyphs. \n"
 	        "                             Useful when creating a monospaced font.\n"
-	        " --keep-modified-time      : Leep the head.modified time in the json, instead\n"
+	        " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
 	        "                             of using current time.\n"
 	        " --short-post              : Don't export glyph names in the result font. It \n"
 	        "                             will reduce file size.\n"
