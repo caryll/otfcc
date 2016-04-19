@@ -36,6 +36,8 @@ void printHelp() {
 	        " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	        "                             instead of stating the average width of glyphs. \n"
 	        "                             Useful when creating a monospaced font.\n"
+	        " --keep-modified-time      : Leep the head.modified time in the json, instead\n"
+	        "                             of using current time.\n"
 	        " --short-post              : Don't export glyph names in the result font. It \n"
 	        "                             will reduce file size.\n"
 	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
@@ -125,12 +127,17 @@ int main(int argc, char *argv[]) {
 	int c;
 	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
 
-	struct option longopts[] = {
-	    {"version", no_argument, NULL, 'v'},      {"help", no_argument, NULL, 'h'},
-	    {"time", no_argument, NULL, 0},           {"ignore-glyph-order", no_argument, NULL, 0},
-	    {"ignore-hints", no_argument, NULL, 0},   {"keep-average-char-width", no_argument, NULL, 0},
-	    {"short-post", no_argument, NULL, 0},     {"dummy-dsig", no_argument, NULL, 0},
-	    {"output", required_argument, NULL, 'o'}, {0, 0, 0, 0}};
+	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
+	                            {"help", no_argument, NULL, 'h'},
+	                            {"time", no_argument, NULL, 0},
+	                            {"ignore-glyph-order", no_argument, NULL, 0},
+	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"keep-average-char-width", no_argument, NULL, 0},
+	                            {"keep-modified-time", no_argument, NULL, 0},
+	                            {"short-post", no_argument, NULL, 0},
+	                            {"dummy-dsig", no_argument, NULL, 0},
+	                            {"output", required_argument, NULL, 'o'},
+	                            {0, 0, 0, 0}};
 
 	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
 		switch (c) {
@@ -146,6 +153,9 @@ int main(int argc, char *argv[]) {
 				}
 				if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
 					dumpopts->keep_average_char_width = true;
+				}
+				if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
+					dumpopts->keep_modified_time = true;
 				}
 				if (strcmp(longopts[option_index].name, "short-post") == 0) {
 					dumpopts->short_post = true;

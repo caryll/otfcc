@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
 #else
@@ -116,6 +115,30 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 		}
 	}
 	return fallback;
+}
+
+// flags reader and writer
+static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) {
+	json_value *v = json_object_new(0);
+	for (uint16_t j = 0; labels[j]; j++)
+		if (flags & (1 << j)) { json_object_push(v, labels[j], json_boolean_new(true)); }
+	return v;
+}
+static INLINE int caryll_flags_from_json(json_value *v, const char *labels[]) {
+	if (!v) return 0;
+	if (v->type == json_integer) {
+		return v->u.integer;
+	} else if (v->type == json_double) {
+		return v->u.dbl;
+	} else if (v->type == json_object) {
+		int flags = 0;
+		for (uint16_t j = 0; labels[j]; j++) {
+			if (json_obj_getbool(v, labels[j])) { flags |= (1 << j); }
+		}
+		return flags;
+	} else {
+		return 0;
+	}
 }
 
 // inline io util functions
@@ -264,6 +287,7 @@ typedef struct {
 	bool keep_average_char_width;
 	bool short_post;
 	bool dummy_DSIG;
+	bool keep_modified_time;
 } caryll_dump_options;
 
 #define MOVE /*move*/

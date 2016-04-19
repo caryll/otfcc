@@ -301,12 +301,15 @@ table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag) {
 	return NULL;
 }
 
+static const char *lookupFlagsLabels[] = {"right_to_left", "ignore_bases", "ignore_ligatures",
+                                          "ignore_marks", NULL};
+
 static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt,
                                           json_value *(*dumper)(otl_subtable *st),
                                           otl_lookup *lookup, json_value *dump) {
 	if (lookup->type == llt) {
 		json_object_push(dump, "type", json_string_new(lt));
-		json_object_push(dump, "flags", json_integer_new(lookup->flags));
+		json_object_push(dump, "flags", caryll_flags_to_json(lookup->flags, lookupFlagsLabels));
 		json_value *subtables = json_array_new(lookup->subtableCount);
 		for (uint16_t j = 0; j < lookup->subtableCount; j++)
 			if (lookup->subtables[j]) { json_array_push(subtables, dumper(lookup->subtables[j])); }
@@ -378,7 +381,7 @@ static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt,
 	otl_lookup *lookup;
 	NEW(lookup);
 	lookup->type = llt;
-	lookup->flags = json_obj_getnum(_lookup, "flags");
+	lookup->flags = caryll_flags_from_json(json_obj_get(_lookup, "flags"), lookupFlagsLabels);
 	lookup->subtableCount = _subtables->u.array.length;
 	NEW_N(lookup->subtables, lookup->subtableCount);
 	uint16_t jj = 0;

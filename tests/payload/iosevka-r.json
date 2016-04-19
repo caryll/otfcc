@@ -1,8 +1,12 @@
 {
     "head": {
         "version": 1.0,
-        "fontRevison": 65536,
-        "flags": 11,
+        "fontRevison": 1.0,
+        "flags": {
+            "baseline_at_y_0": true,
+            "lsb_at_x_0": true,
+            "do_not_use_fraction_size": true
+        },
         "unitsPerEm": 1000,
         "created": 3495449119,
         "modified": 3540560834,
@@ -10,7 +14,7 @@
         "xMax": 1387,
         "yMin": -505,
         "yMax": 1189,
-        "macStyle": 0,
+        "macStyle": {},
         "lowestRecPPEM": 8,
         "fontDirectoryHint": 2,
         "indexToLocFormat": 1,
@@ -47,6 +51,73 @@
         "maxSizeOfInstructions": 3335,
         "maxComponentElements": 1562,
         "maxComponentDepth": 4
+    },
+    "post": {
+        "version": 3.0,
+        "italicAngle": 0,
+        "underlinePosition": 50,
+        "underlineThickness": 0,
+        "isFixedPitch": true,
+        "minMemType42": 0,
+        "maxMemType42": 0,
+        "minMemType1": 0,
+        "maxMemType1": 2780
+    },
+    "OS_2": {
+        "version": 4,
+        "xAvgCharWidth": 500,
+        "usWeightClass": 400,
+        "usWidthClass": 5,
+        "fsType": {},
+        "ySubscriptXSize": 665,
+        "ySubscriptYSize": 716,
+        "ySubscriptXOffset": 0,
+        "ySubscriptYOffset": 143,
+        "ySupscriptXSize": 665,
+        "ySupscriptXOffset": 0,
+        "ySupscriptYOffset": 491,
+        "yStrikeoutSize": 51,
+        "yStrikeoutPosition": 265,
+        "sFamilyClass": 2057,
+        "panose": [
+            2,
+            0,
+            5,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "ulUnicodeRange1": 3758097151,
+        "ulUnicodeRange2": 1342209275,
+        "ulUnicodeRange3": 16,
+        "ulUnicodeRange4": 0,
+        "achVendID": "PfEd",
+        "fsSelection": {
+            "regular": true,
+            "use_typo_metrics": true
+        },
+        "usFirstCharIndex": 0,
+        "usLastCharIndex": 65509,
+        "sTypoAscender": 977,
+        "sTypoDescender": -272,
+        "sTypoLineGap": 0,
+        "usWinAscent": 977,
+        "usWinDescent": 272,
+        "ulCodePageRange1": {
+            "latin1": true
+        },
+        "ulCodePageRange2": {},
+        "sxHeight": 530,
+        "sCapHeight": 735,
+        "usDefaultChar": 0,
+        "usBreakChar": 32,
+        "usMaxContext": 1,
+        "usLowerOpticalPointSize": 0,
+        "usUpperOpticalPointSize": 0
     },
     "name": [
         {
@@ -190,68 +261,6 @@
             "nameString": "Regular"
         }
     ],
-    "post": {
-        "version": 3.0,
-        "italicAngle": 0,
-        "underlinePosition": 50,
-        "underlineThickness": 0,
-        "isFixedPitch": true,
-        "minMemType42": 0,
-        "maxMemType42": 0,
-        "minMemType1": 0,
-        "maxMemType1": 2780
-    },
-    "OS_2": {
-        "version": 4,
-        "xAvgCharWidth": 500,
-        "usWeightClass": 400,
-        "usWidthClass": 5,
-        "fsType": 0,
-        "ySubscriptXSize": 665,
-        "ySubscriptYSize": 716,
-        "ySubscriptXOffset": 0,
-        "ySubscriptYOffset": 143,
-        "ySupscriptXSize": 665,
-        "ySupscriptXOffset": 0,
-        "ySupscriptYOffset": 491,
-        "yStrikeoutSize": 51,
-        "yStrikeoutPosition": 265,
-        "sFamilyClass": 2057,
-        "panose": [
-            2,
-            0,
-            5,
-            9,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        ],
-        "ulUnicodeRange1": 3758097151,
-        "ulUnicodeRange2": 1342209275,
-        "ulUnicodeRange3": 16,
-        "ulUnicodeRange4": 0,
-        "achVendID": "PfEd",
-        "fsSelection": 192,
-        "usFirstCharIndex": 0,
-        "usLastCharIndex": 65509,
-        "sTypoAscender": 977,
-        "sTypoDescender": -272,
-        "sTypoLineGap": 0,
-        "usWinAscent": 977,
-        "usWinDescent": 272,
-        "ulCodePageRange1": 1,
-        "ulCodePageRange2": 0,
-        "sxHeight": 530,
-        "sCapHeight": 735,
-        "usDefaultChar": 0,
-        "usBreakChar": 32,
-        "usMaxContext": 1,
-        "usLowerOpticalPointSize": 0,
-        "usUpperOpticalPointSize": 0
-    },
     "cmap": {
         "0": "glyph0",
         "32": "space",
@@ -19299,7 +19308,7 @@
         "lookups": {
             "lookup_cv03_5": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "dotlessi": "glyph129",
@@ -19327,7 +19336,7 @@
             },
             "lookup_cv04_6": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "dotlessi": "glyph130",
@@ -19355,7 +19364,7 @@
             },
             "lookup_cv05_7": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "dotlessi": "glyph127",
@@ -19383,7 +19392,7 @@
             },
             "lookup_cv06_8": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "dotlessi": "glyph128",
@@ -19411,7 +19420,7 @@
             },
             "lookup_cv07_9": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "l": "glyph166",
@@ -19430,7 +19439,7 @@
             },
             "lookup_cv08_10": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "l": "glyph167",
@@ -19449,7 +19458,7 @@
             },
             "lookup_cv09_11": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "l": "glyph164",
@@ -19468,7 +19477,7 @@
             },
             "lookup_cv10_12": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "l": "glyph165",
@@ -19487,7 +19496,7 @@
             },
             "lookup_cv01_3": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "a": "glyph189",
@@ -19530,7 +19539,7 @@
             },
             "lookup_cv02_4": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "a": "glyph190",
@@ -19573,7 +19582,7 @@
             },
             "lookup_cv11_13": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "g": "glyph319",
@@ -19589,7 +19598,7 @@
             },
             "lookup_cv12_14": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "g": "glyph320",
@@ -19605,7 +19614,7 @@
             },
             "lookup_cv13_15": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "zero": "glyph651"
@@ -19614,7 +19623,7 @@
             },
             "lookup_cv14_16": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "zero": "glyph652"
@@ -19623,7 +19632,7 @@
             },
             "lookup_cv15_17": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "zero": "glyph650"
@@ -19632,7 +19641,7 @@
             },
             "lookup_cv22_24": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "paragraph": "glyph714"
@@ -19641,7 +19650,7 @@
             },
             "lookup_cv23_25": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "paragraph": "glyph715"
@@ -19650,7 +19659,7 @@
             },
             "lookup_cv18_20": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "asterisk": "glyph718"
@@ -19659,7 +19668,7 @@
             },
             "lookup_cv19_21": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "asterisk": "glyph719"
@@ -19668,7 +19677,7 @@
             },
             "lookup_cv20_22": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "underscore": "glyph725"
@@ -19677,7 +19686,7 @@
             },
             "lookup_cv21_23": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "underscore": "glyph726"
@@ -19686,7 +19695,7 @@
             },
             "lookup_cv16_18": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "asciitilde": "glyph16"
@@ -19695,7 +19704,7 @@
             },
             "lookup_cv17_19": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "asciitilde": "glyph778"
@@ -19704,7 +19713,7 @@
             },
             "lookup_11_23": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "uni0345": "glyph48"
@@ -19713,7 +19722,7 @@
             },
             "lookup_11_24": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "uni0328": "glyph46"
@@ -19722,7 +19731,7 @@
             },
             "lookup_ccmp_1": {
                 "type": "gsub_chaining",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "match": [
@@ -19821,7 +19830,7 @@
             },
             "lookup_11_26": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "i": "dotlessi",
@@ -19834,7 +19843,7 @@
             },
             "lookup_ccmp_2": {
                 "type": "gsub_ligature",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "glyph115": ["uni0313","uni0342"],
@@ -19848,7 +19857,7 @@
             },
             "lookup_locl_26": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "uni0431": "glyph490"
@@ -19857,7 +19866,7 @@
             },
             "lookup_11_29": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1086",
@@ -19867,7 +19876,7 @@
             },
             "lookup_11_30": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1087",
@@ -19877,7 +19886,7 @@
             },
             "lookup_11_31": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1091",
@@ -19887,7 +19896,7 @@
             },
             "lookup_11_32": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1092",
@@ -19897,7 +19906,7 @@
             },
             "lookup_11_33": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1088",
@@ -19907,7 +19916,7 @@
             },
             "lookup_11_34": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1089",
@@ -19917,7 +19926,7 @@
             },
             "lookup_11_35": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1090",
@@ -19927,7 +19936,7 @@
             },
             "lookup_11_36": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1099",
@@ -19937,7 +19946,7 @@
             },
             "lookup_11_37": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1100",
@@ -19947,7 +19956,7 @@
             },
             "lookup_11_38": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1101",
@@ -19957,7 +19966,7 @@
             },
             "lookup_11_39": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1102",
@@ -19967,7 +19976,7 @@
             },
             "lookup_11_40": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1105",
@@ -19977,7 +19986,7 @@
             },
             "lookup_11_41": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1106",
@@ -19987,7 +19996,7 @@
             },
             "lookup_11_42": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1103",
@@ -19997,7 +20006,7 @@
             },
             "lookup_11_43": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1104",
@@ -20007,7 +20016,7 @@
             },
             "lookup_11_44": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "hyphen": "glyph1107",
@@ -20017,7 +20026,7 @@
             },
             "lookup_11_45": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "less": "glyph1083"
@@ -20026,7 +20035,7 @@
             },
             "lookup_11_46": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "greater": "glyph1080"
@@ -20035,7 +20044,7 @@
             },
             "lookup_11_47": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "less": "glyph1085"
@@ -20044,7 +20053,7 @@
             },
             "lookup_11_48": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "greater": "glyph1082"
@@ -20053,7 +20062,7 @@
             },
             "lookup_11_49": {
                 "type": "gsub_single",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "exclam": "glyph1132"
@@ -20062,7 +20071,7 @@
             },
             "lookup_calt_0": {
                 "type": "gsub_chaining",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "match": [
@@ -20238,7 +20247,7 @@
         "lookups": {
             "lookup_mark_0": {
                 "type": "gpos_mark_to_base",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "marks": {
@@ -22217,7 +22226,7 @@
             },
             "lookup_mark_1": {
                 "type": "gpos_mark_to_base",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "marks": {
@@ -24102,7 +24111,7 @@
             },
             "lookup_mark_2": {
                 "type": "gpos_mark_to_base",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "marks": {
@@ -25995,7 +26004,7 @@
             },
             "lookup_mkmk_3": {
                 "type": "gpos_mark_to_mark",
-                "flags": 0,
+                "flags": {},
                 "subtables": [
                     {
                         "marks": {
