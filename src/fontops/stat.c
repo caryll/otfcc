@@ -1,4 +1,5 @@
 #include "stat.h"
+#include <time.h>
 
 // Stating
 
@@ -419,7 +420,12 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 	}
 }
 void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
-	if (font->glyf && font->head) caryll_stat_glyf(font);
+	if (font->glyf && font->head) {
+		caryll_stat_glyf(font);
+		if (!dumpopts->keep_modified_time) {
+			font->head->modified = 2082844800 + (int64_t)time(NULL);
+		}
+	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
 	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) caryll_stat_maxp(font);

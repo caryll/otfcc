@@ -72,11 +72,19 @@ void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_option
 	}
 	json_object_push(root, "name", name);
 }
+static int name_record_sort(const void *_a, const void *_b) {
+	const name_record **a = (const name_record **)_a;
+	const name_record **b = (const name_record **)_b;
+	if ((*a)->platformID != (*b)->platformID) return (*a)->platformID - (*b)->platformID;
+	if ((*a)->encodingID != (*b)->encodingID) return (*a)->encodingID - (*b)->encodingID;
+	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
+	return (*a)->nameID - (*b)->nameID;
+}
 table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
-		uint16_t validCount = 0;
+		int validCount = 0;
 		for (uint32_t j = 0; j < table->u.array.length; j++) {
 			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
 				json_value *record = table->u.array.values[j];
@@ -100,8 +108,8 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 			}
 		}
 		name->count = validCount;
-		name->records = calloc(validCount, sizeof(name_record *));
-		validCount = 0;
+		NEW_N(name->records, validCount);
+		int jj = 0;
 		for (uint32_t j = 0; j < table->u.array.length; j++) {
 			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
 				json_value *record = table->u.array.values[j];
@@ -110,20 +118,20 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 				    json_obj_get_type(record, "languageID", json_integer) &&
 				    json_obj_get_type(record, "nameID", json_integer) &&
 				    json_obj_get_type(record, "nameString", json_string)) {
-
-					name->records[validCount] = malloc(sizeof(name_record));
-					name->records[validCount]->platformID = json_obj_getint(record, "platformID");
-					name->records[validCount]->encodingID = json_obj_getint(record, "encodingID");
-					name->records[validCount]->languageID = json_obj_getint(record, "languageID");
-					name->records[validCount]->nameID = json_obj_getint(record, "nameID");
+					NEW(name->records[jj]);
+					name->records[jj]->platformID = json_obj_getint(record, "platformID");
+					name->records[jj]->encodingID = json_obj_getint(record, "encodingID");
+					name->records[jj]->languageID = json_obj_getint(record, "languageID");
+					name->records[jj]->nameID = json_obj_getint(record, "nameID");
 
 					json_value *str = json_obj_get_type(record, "nameString", json_string);
-					name->records[validCount]->nameString =
+					name->records[jj]->nameString =
 					    sdsnewlen(str->u.string.ptr, str->u.string.length);
-					validCount += 1;
+					jj += 1;
 				}
 			}
 		}
+		qsort(name->records, validCount, sizeof(name_record *), name_record_sort);
 	}
 	return name;
 }

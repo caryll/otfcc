@@ -93,9 +93,9 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 	caryll_hhea_to_json(font->hhea, root, dumpopts);
 	caryll_maxp_to_json(font->maxp, root, dumpopts);
 	caryll_vhea_to_json(font->vhea, root, dumpopts);
-	caryll_name_to_json(font->name, root, dumpopts);
 	caryll_post_to_json(font->post, root, dumpopts);
 	caryll_OS_2_to_json(font->OS_2, root, dumpopts);
+	caryll_name_to_json(font->name, root, dumpopts);
 	caryll_cmap_to_json(font->cmap, root, dumpopts);
 	caryll_glyf_to_json(font->glyf, root, dumpopts);
 	if (!dumpopts->ignore_hints) {
