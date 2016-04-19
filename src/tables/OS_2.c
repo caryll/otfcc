@@ -73,18 +73,18 @@ table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
 }
 
 const char *fsTypeLabels[] = {"_reserved1",
-                              "restricted_license",
-                              "preview_print_license",
-                              "editable_embedding",
+                              "restrictedLicense",
+                              "previewPrintLicense",
+                              "editableEmbedding",
                               "_reserved2",
                               "_reserved3",
                               "_reserved4",
                               "_reserved5",
-                              "no_subsetting",
-                              "bitmap_embedding_obly",
+                              "noSubsetting",
+                              "bitmapEmbeddingOnly",
                               NULL};
 const char *fsSelectionLabels[] = {"italic",    "underscore", "negative", "outlined",
-                                   "strikeout", "bold",       "regular",  "use_typo_metrics",
+                                   "strikeout", "bold",       "regular",  "useTypoMetrics",
                                    "wws",       "oblique",    NULL};
 const char *codePageLabels1[] = {
     "latin1",        "latin2",     "cyrillic", "greek",  "turkish", "hebrew", "arabic",

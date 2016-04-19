@@ -301,8 +301,8 @@ table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag) {
 	return NULL;
 }
 
-static const char *lookupFlagsLabels[] = {"right_to_left", "ignore_bases", "ignore_ligatures",
-                                          "ignore_marks", NULL};
+static const char *lookupFlagsLabels[] = {"rightToLeft", "ignoreBases", "ignoreLigatures",
+                                          "ignoreMarks", NULL};
 
 static INLINE void _declare_lookup_dumper(otl_lookup_type llt, const char *lt,
                                           json_value *(*dumper)(otl_subtable *st),

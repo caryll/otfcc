@@ -39,24 +39,23 @@ table_head *caryll_read_head(caryll_packet packet) {
 	return NULL;
 }
 
-static const char *headFlagsLabels[] = {"baseline_at_y_0",
-                                        "lsb_at_x_0",
-                                        "instr_may_depend_on_point_size",
-                                        "do_not_use_fraction_size",
-                                        "instr_may_alter_advance_width",
-                                        "designed_for_vertical",
+static const char *headFlagsLabels[] = {"baselineAtY_0",
+                                        "lsbAtX_0",
+                                        "instrMayDependOnPointSize",
+                                        "alwaysUseIntegerSize",
+                                        "instrMayAlterAdvanceWidth",
+                                        "designedForVertical",
                                         "_reserved1",
-                                        "designed_for_complex_script",
-                                        "has_metamorphosis_effects",
-                                        "contains_strong_rtl",
-                                        "contains_indic_rearrangement",
-                                        "font_is_lossless",
-                                        "font_is_converted",
-                                        "optimized_for_cleartype",
-                                        "last_resort_font"};
-static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow",
-                                       "condensed"
-                                       "extended"};
+                                        "designedForComplexScript",
+                                        "hasMetamorphosisEffects",
+                                        "containsStrongRTL",
+                                        "containsIndicRearrangement",
+                                        "fontIsLossless",
+                                        "fontIsConverted",
+                                        "optimizedForCleartype",
+                                        "lastResortFont"};
+static const char *macStyleLabels[] = {"bold",   "italic",    "underline", "outline",
+                                       "shadow", "condensed", "extended"};
 void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *head = json_object_new(15);
