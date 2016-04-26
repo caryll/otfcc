@@ -21,6 +21,20 @@ typedef struct {
 	glyf_point *points;
 } glyf_contour;
 
+// CFF stems and hint masks
+typedef struct {
+	bool isEdge;
+	float position;
+	float width;
+} hint_stemH, hint_stemV;
+
+typedef struct {
+	uint16_t contour;
+	uint16_t point;
+	bool maskH[0x100];
+	bool maskV[0x100];
+} hint_mask, hint_contour_mask;
+
 typedef struct {
 	glyph_handle glyph;
 	// transformation term
