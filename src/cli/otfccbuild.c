@@ -43,8 +43,10 @@ void printHelp() {
 	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
 	        "                             some Microsoft applications, a DSIG is required\n"
 	        "                             to enable OpenType features.\n"
-	        " --ship                    : Turn on --ignore-glyph-order, --short-post and\n"
-	        "                             --dummy-dsig\n"
+	        " --ship                    : Equalivent to the combination of these options:\n"
+	        "                              *  --ignore-glyph-order\n"
+	        "                              *  --short-post\n"
+	        "                              *  --dummy-dsig\n"
 	        "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {

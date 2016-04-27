@@ -52,6 +52,10 @@ otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
  --dummy-DSIG              : Include an empty DSIG table in the font. For
                              some Microsoft applications, a DSIG is required
                              to enable OpenType features.
+ --ship                    : Equalivent to the combination of these options:
+                              *  --ignore-glyph-order
+                              *  --short-post
+                              *  --dummy-dsig
 ```
 
 ## Building
