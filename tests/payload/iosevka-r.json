@@ -3,9 +3,9 @@
         "version": 1.0,
         "fontRevison": 1.0,
         "flags": {
-            "baseline_at_y_0": true,
-            "lsb_at_x_0": true,
-            "do_not_use_fraction_size": true
+            "baselineAtY_0": true,
+            "lsbAtX_0": true,
+            "alwaysUseIntegerSize": true
         },
         "unitsPerEm": 1000,
         "created": 3495449119,
@@ -98,7 +98,7 @@
         "achVendID": "PfEd",
         "fsSelection": {
             "regular": true,
-            "use_typo_metrics": true
+            "useTypoMetrics": true
         },
         "usFirstCharIndex": 0,
         "usLastCharIndex": 65509,

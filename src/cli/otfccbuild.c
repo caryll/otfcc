@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			readEntireStdin(&buffer, &length);
 		}
-		if (show_time) push_stopwatch("Read file", &begin);
+		if (show_time) push_stopwatch("Read input", &begin);
 	}
 
 	json_value *root;
