@@ -36,13 +36,17 @@ void printHelp() {
 	        " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	        "                             instead of stating the average width of glyphs. \n"
 	        "                             Useful when creating a monospaced font.\n"
-	        " --keep-modified-time      : Leep the head.modified time in the json, instead\n"
+	        " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
 	        "                             of using current time.\n"
 	        " --short-post              : Don't export glyph names in the result font. It \n"
 	        "                             will reduce file size.\n"
 	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
 	        "                             some Microsoft applications, a DSIG is required\n"
-	        "                             to enable OpenType features."
+	        "                             to enable OpenType features.\n"
+	        " --ship                    : Equalivent to the combination of these options:\n"
+	        "                              *  --ignore-glyph-order\n"
+	        "                              *  --short-post\n"
+	        "                              *  --dummy-dsig\n"
 	        "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
@@ -136,6 +140,7 @@ int main(int argc, char *argv[]) {
 	                            {"keep-modified-time", no_argument, NULL, 0},
 	                            {"short-post", no_argument, NULL, 0},
 	                            {"dummy-dsig", no_argument, NULL, 0},
+	                            {"ship", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
 
@@ -143,24 +148,25 @@ int main(int argc, char *argv[]) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
-				if (longopts[option_index].flag != 0) break;
-				if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
-				if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
-					dumpopts->ignore_glyph_order = true;
-				}
-				if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
+				if (longopts[option_index].flag != 0) {
+					break;
+				} else if (strcmp(longopts[option_index].name, "time") == 0) {
+					show_time = true;
+				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					dumpopts->ignore_hints = true;
-				}
-				if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
+				} else if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
 					dumpopts->keep_average_char_width = true;
-				}
-				if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
+				} else if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
 					dumpopts->keep_modified_time = true;
-				}
-				if (strcmp(longopts[option_index].name, "short-post") == 0) {
+				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
+					dumpopts->ignore_glyph_order = true;
+				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
 					dumpopts->short_post = true;
-				}
-				if (strcmp(longopts[option_index].name, "dummy-dsig") == 0) {
+				} else if (strcmp(longopts[option_index].name, "dummy-dsig") == 0) {
+					dumpopts->dummy_DSIG = true;
+				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
+					dumpopts->ignore_glyph_order = true;
+					dumpopts->short_post = true;
 					dumpopts->dummy_DSIG = true;
 				}
 				break;
@@ -205,7 +211,7 @@ int main(int argc, char *argv[]) {
 		} else {
 			readEntireStdin(&buffer, &length);
 		}
-		if (show_time) push_stopwatch("Read file", &begin);
+		if (show_time) push_stopwatch("Read input", &begin);
 	}
 
 	json_value *root;

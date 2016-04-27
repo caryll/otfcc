@@ -13,6 +13,15 @@ glyf_glyph *caryll_new_glyf_glhph() {
 	g->name = NULL;
 	g->advanceHeight = 0;
 	g->verticalOrigin = 0;
+	g->numberOfStemH = 0;
+	g->numberOfStemV = 0;
+	g->numberOfHintMasks = 0;
+	g->numberOfContourMasks = 0;
+	g->stemH = NULL;
+	g->stemV = NULL;
+	g->hintMasks = NULL;
+	g->contourMasks = NULL;
+
 	g->stat.xMin = 0;
 	g->stat.xMax = 0;
 	g->stat.yMin = 0;

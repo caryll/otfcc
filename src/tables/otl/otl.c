@@ -1,5 +1,7 @@
 #include "otl.h"
 
+static const char SCRIPT_LANGUAGE_SEPARATOR = '_';
+
 typedef struct {
 	char *name;
 	otl_lookup *lookup;
@@ -191,9 +193,9 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
 			if (defaultLangSystem) {
 				NEW(languages[currentLang]);
-				languages[currentLang]->name =
-				    sdscatprintf(sdsempty(), "%c%c%c%c_DFLT", (tag >> 24) & 0xFF,
-				                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff);
+				languages[currentLang]->name = sdscatprintf(
+				    sdsempty(), "%c%c%c%c%cDFLT", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+				    (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR);
 				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem,
 				              languages[currentLang], table->featureCount, table->features);
 				currentLang += 1;
@@ -203,10 +205,11 @@ static INLINE table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t
 				uint32_t langTag = read_32u(data + scriptOffset + 4 + 6 * k);
 				uint16_t langSys = read_16u(data + scriptOffset + 4 + 6 * k + 4);
 				NEW(languages[currentLang]);
-				languages[currentLang]->name = sdscatprintf(
-				    sdsempty(), "%c%c%c%c_%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-				    (tag >> 8) & 0xff, tag & 0xff, (langTag >> 24) & 0xFF, (langTag >> 16) & 0xFF,
-				    (langTag >> 8) & 0xff, langTag & 0xff);
+				languages[currentLang]->name =
+				    sdscatprintf(sdsempty(), "%c%c%c%c%c%c%c%c%c", (tag >> 24) & 0xFF,
+				                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff,
+				                 SCRIPT_LANGUAGE_SEPARATOR, (langTag >> 24) & 0xFF,
+				                 (langTag >> 16) & 0xFF, (langTag >> 8) & 0xff, langTag & 0xff);
 				parseLanguage(data, tableLength, scriptOffset + langSys, languages[currentLang],
 				              table->featureCount, table->features);
 				currentLang += 1;
@@ -451,15 +454,18 @@ static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, look
 	}
 	return fh;
 }
+bool isValidLanguageName(const char *name, const size_t length) {
+	return length == 9 && name[4] == SCRIPT_LANGUAGE_SEPARATOR;
+}
 static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh,
                                                       const char *tag) {
 	script_hash *sh = NULL;
 	// languages
 	for (uint32_t j = 0; j < languages->u.object.length; j++) {
 		char *languageName = languages->u.object.values[j].name;
+		size_t languageNameLen = languages->u.object.values[j].name_length;
 		json_value *_language = languages->u.object.values[j].value;
-		if (languages->u.object.values[j].name_length == 9 && languageName[4] == '_' &&
-		    _language->type == json_object) {
+		if (isValidLanguageName(languageName, languageNameLen) && _language->type == json_object) {
 			otl_feature *requiredFeature = NULL;
 			json_value *_rf = json_obj_get_type(_language, "requiredFeature", json_string);
 			if (_rf) {

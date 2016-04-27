@@ -45,11 +45,17 @@ otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
  --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input
                              instead of stating the average width of glyphs.
                              Useful when creating a monospaced font.
+ --keep-modified-time      : Keep the head.modified time in the json, instead
+                             of using current time.
  --short-post              : Don't export glyph names in the result font. It
                              will reduce file size.
  --dummy-DSIG              : Include an empty DSIG table in the font. For
                              some Microsoft applications, a DSIG is required
                              to enable OpenType features.
+ --ship                    : Equalivent to the combination of these options:
+                              *  --ignore-glyph-order
+                              *  --short-post
+                              *  --dummy-dsig
 ```
 
 ## Building

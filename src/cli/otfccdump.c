@@ -35,7 +35,8 @@ void printHelp() {
 	                " --ignore-hints          : Do not export hingint information.\n"
 	                " --add-bom               : Add BOM mark in the output. (This is default\n"
 	                "                           on Windows when redirecting to another program.\n"
-	                "                           Use --no-bom to turn it off.)");
+	                "                           Use --no-bom to turn it off.)\n"
+	                "\n");
 }
 #ifdef _WIN32
 int main() {
@@ -78,15 +79,19 @@ int main(int argc, char *argv[]) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
-				if (longopts[option_index].flag != 0) break;
-				if (strcmp(longopts[option_index].name, "ugly") == 0) { show_ugly = true; }
-				if (strcmp(longopts[option_index].name, "time") == 0) { show_time = true; }
-				if (strcmp(longopts[option_index].name, "add-bom") == 0) { add_bom = true; }
-				if (strcmp(longopts[option_index].name, "no-bom") == 0) { no_bom = true; }
-				if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
+				if (longopts[option_index].flag != 0) {
+					break;
+				} else if (strcmp(longopts[option_index].name, "ugly") == 0) {
+					show_ugly = true;
+				} else if (strcmp(longopts[option_index].name, "time") == 0) {
+					show_time = true;
+				} else if (strcmp(longopts[option_index].name, "add-bom") == 0) {
+					add_bom = true;
+				} else if (strcmp(longopts[option_index].name, "no-bom") == 0) {
+					no_bom = true;
+				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
 					dumpopts->ignore_glyph_order = true;
-				}
-				if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
+				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					dumpopts->ignore_hints = true;
 				}
 				break;
