@@ -63,21 +63,34 @@ typedef struct {
 
 typedef struct {
 	sds name;
+
+	// Metrics
+	uint16_t advanceWidth;
+	uint16_t advanceHeight;
+	float verticalOrigin;
+
+	// Outline
+	// NOTE: SFNT does not support mixed glyphs, but we do.
 	uint16_t numberOfContours;
 	uint16_t numberOfReferences;
-	uint16_t instructionsLength;
-	uint8_t *instructions;
-
-	// horizontal metric
-	uint16_t advanceWidth;
-	// vertical metric
-	float verticalOrigin;
-	uint16_t advanceHeight;
-
-	// NOTE: SFNT does not support mixed glyphs, but we do.
 	glyf_contour *contours;
 	glyf_reference *references;
-
+	
+	// Postscript hints
+	uint16_t numberOfStemH;
+	uint16_t numberOfStemV;
+	uint16_t numberOfHintMasks;
+	uint16_t numberOfContourMasks;
+	hint_stemH *stemH;
+	hint_stemV *stemV;
+	hint_mask *hintMasks;
+	hint_contour_mask *contourMasks;
+	
+	// TTF instructions
+	uint16_t instructionsLength;
+	uint8_t *instructions;
+	
+	// Stats
 	glyf_glyph_stat stat;
 } glyf_glyph;
 
