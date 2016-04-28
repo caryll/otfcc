@@ -9,9 +9,7 @@ os:
   - linux
 
 install:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F599ACE3; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then echo 'deb http://ppa.launchpad.net/pasgui/ppa/ubuntu trusty main' | sudo tee /etc/apt/sources.list.d/premake5.list; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then echo 'deb-src http://ppa.launchpad.net/pasgui/ppa/ubuntu trusty main' | sudo tee /etc/apt/sources.list.d/premake5.list; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository ppa:pasgui/ppa; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update -qq; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y premake5; fi
 
