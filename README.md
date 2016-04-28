@@ -72,7 +72,7 @@ On Windows building `otfcc` is tested under the toolchains listed below. The def
 
   ```bash
   premake5 gmake
-  cd build
+  cd build/gmake
   make
   ```
 
@@ -80,7 +80,7 @@ On Windows building `otfcc` is tested under the toolchains listed below. The def
 
   ```bat
   premake5 vs2015
-  msbuild build\otfcc.sln /property:Configuration=Release
+  msbuild build\vs\otfcc.sln /property:Configuration=Release
   ```
 
 ### Linux
@@ -93,7 +93,7 @@ On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
 
 ```bash
 premake5 gmake
-cd build
+cd build/gmake
 make
 ```
 
