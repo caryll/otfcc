@@ -1,5 +1,6 @@
 language: c
-
+sudo: required
+dist: trusty
 compiler:
   - clang
   - gcc
@@ -8,10 +9,11 @@ os:
   - linux
 
 install:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-key adv --keyserver keys.gnupg.net --recv-keys FFBA9E40; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then echo 'deb http://repo.nofla.me/ jessie main' | sudo tee /etc/apt/sources.list.d/premake5.list; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys F599ACE3; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then echo 'deb http://ppa.launchpad.net/pasgui/ppa/ubuntu trusty main' | sudo tee /etc/apt/sources.list.d/premake5.list; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then echo 'deb-src http://ppa.launchpad.net/pasgui/ppa/ubuntu trusty main' | sudo tee /etc/apt/sources.list.d/premake5.list; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update -qq; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y libc6 libc6 premake5; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y premake5; fi
 
 script:
   - make linux-release-x86
