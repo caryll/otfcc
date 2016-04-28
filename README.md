@@ -4,7 +4,7 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 
 | Linux-x64                                | Windows-x64                              |
 | ---------------------------------------- | ---------------------------------------- |
-| ![](https://travis-ci.org/caryll/otfcc.svg?branch=master) | ![](https://ci.appveyor.com/api/projects/status/github/caryll/otfcc?branch=master&svg=true) |
+| [![](https://travis-ci.org/caryll/otfcc.svg?branch=master)](https://travis-ci.org/caryll/otfcc) | [![](https://ci.appveyor.com/api/projects/status/github/caryll/otfcc?branch=master&svg=true)](https://ci.appveyor.com/project/be5invis/otfcc) |
 
 ## Key features
 
