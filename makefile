@@ -9,20 +9,20 @@ default: mingw-debug-x64
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
 mingw-debug-x86 : mf-gmake
-	@cd build/gmake && make config=debug_x86
+	@cd build/gmake && make config=debug_x32
 mingw-release-x64 : mf-gmake
 	@cd build/gmake && make config=release_x64
 mingw-release-x86 : mf-gmake
-	@cd build/gmake && make config=release_x86
+	@cd build/gmake && make config=release_x32
 
 linux-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
 linux-debug-x86 : mf-gmake
-	@cd build/gmake && make config=debug_x86
+	@cd build/gmake && make config=debug_x32
 linux-release-x64 : mf-gmake
 	@cd build/gmake && make config=release_x64
 linux-release-x86 : mf-gmake
-	@cd build/gmake && make config=release_x86
+	@cd build/gmake && make config=release_x32
 
 # Clang-cl does not support debugging well
 # It is used for release versions only
