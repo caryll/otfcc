@@ -1,5 +1,8 @@
 language: c
 
+sudo: required
+dist: trusty
+
 compiler:
   - clang
   - gcc
@@ -10,12 +13,10 @@ os:
 addons:
   apt:
     sources:
-    - llvm-toolchain-precise-3.8
     - ubuntu-toolchain-r-test
     packages:
     - gcc-5
     - g++-5
-    - clang-3.8
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PREMAKE5=dep/bin-linux/premake5; else export PREMAKE5=dep/bin-osx/premake5; fi
