@@ -12,6 +12,7 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update -qq; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y libc6; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PREMAKE5=dep/bin-linux/premake5; else export PREMAKE5=dep/bin-osx/premake5; fi
+  - chmod +x $PREMAKE5
 
 script:
   - make linux-release-x86
