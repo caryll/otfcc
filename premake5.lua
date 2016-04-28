@@ -19,7 +19,7 @@ workspace "otfcc"
 		defines { '_CRT_SECURE_NO_WARNINGS' }
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
-		includedirs { "extern-msvc" }
+		includedirs { "dep/polyfill-msvc" }
 	filter {}
 	
 	filter "action:gmake"
@@ -41,14 +41,12 @@ project "externals"
 		"dep/extern/**.h",
 		"dep/extern/**.c"
 	}
-
-project "extern-msvc"
-	kind "StaticLib"
-	language "C"
+	filter "action:vs*"
 	files {
-		"extern-msvc/**.h",
-		"extern-msvc/**.c"
+		"dep/polyfill-msvc/**.h",
+		"dep/polyfill-msvc/**.c"
 	}
+	filter {}
 
 project "libotfcc-support"
 	kind "StaticLib"
@@ -89,9 +87,6 @@ project "otfccdump"
 	
 	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
 	
-	filter "action:vs*"
-		links "extern-msvc"
-	filter {}
 	filter "action:gmake"
 		links "m"
 	filter {}
@@ -111,9 +106,6 @@ project "otfccbuild"
 	
 	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
 	
-	filter "action:vs*"
-		links "extern-msvc"
-	filter {}
 	filter "action:gmake"
 		links "m"
 	filter {}
