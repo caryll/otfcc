@@ -8,7 +8,7 @@ os:
   - linux
 
 install:
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then apt-key adv --keyserver keys.gnupg.net --recv-keys FFBA9E40; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-key adv --keyserver keys.gnupg.net --recv-keys FFBA9E40; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then echo 'deb http://repo.nofla.me/ jessie main' >> /etc/apt/sources.list; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update -qq; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -y premake5; fi
