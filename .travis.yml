@@ -1,6 +1,5 @@
 language: c
-sudo: required
-dist: trusty
+
 compiler:
   - clang
   - gcc
@@ -11,7 +10,7 @@ os:
 addons:
   apt:
     sources:
-    - llvm-toolchain-trusty-3.8
+    - llvm-toolchain-precise-3.8
     - ubuntu-toolchain-r-test
     packages:
     - gcc-5
