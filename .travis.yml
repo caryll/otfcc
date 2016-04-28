@@ -11,11 +11,12 @@ os:
 addons:
   apt:
     sources:
+    - llvm-toolchain-trusty-3.8
     - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.8
-    - g++-4.8
-    - libc6
+    - gcc-5
+    - g++-5
+    - clang-3.8
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PREMAKE5=dep/bin-linux/premake5; else export PREMAKE5=dep/bin-osx/premake5; fi
