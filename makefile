@@ -1,5 +1,9 @@
 VERSION=0.1.4
 
+ifndef PREMAKE5
+PREMAKE5=premake5
+endif
+
 default: mingw-debug-x64
 
 mingw-debug-x64 : mf-gmake
@@ -32,6 +36,6 @@ win : clang-cl-release-x86 clang-cl-release-x64
 	cd bin/Release-x32 && 7z a ../otfcc-win32-$(VERSION).zip ./* -y
 
 mf-vs2015 :
-	@premake5 vs2015
+	@$(PREMAKE5) vs2015
 mf-gmake :
-	@premake5 gmake
+	@$(PREMAKE5) gmake
