@@ -1,10 +1,6 @@
-<p align="center"><img src="https://raw.githubusercontent.com/caryll/design/master/caryll-logo-libs-githubreadme.png" width=200></p><h1 align="center">otfcc</h1>
+<p align="center"><img src="https://raw.githubusercontent.com/caryll/design/master/caryll-logo-libs-githubreadme.png" width=200></p><h1 align="center">otfcc</h1><p align="center">[![](https://travis-ci.org/caryll/otfcc.svg?branch=master)](https://travis-ci.org/caryll/otfcc)[![](https://ci.appveyor.com/api/projects/status/github/caryll/otfcc?branch=master&svg=true)](https://ci.appveyor.com/project/be5invis/otfcc)[![](https://img.shields.io/github/license/caryll/otfcc.svg)](https://github.com/caryll/otfcc/blob/master/LICENSE)![Version](https://img.shields.io/github/release/caryll/otfcc.svg) [![Donate](https://img.shields.io/badge/donate-alipay-orange.svg)](http://7xpe0v.com1.z0.glb.clouddn.com/aeqr9bewtqtvpkpl18.png)</p>
 
 The `otfcc` is a C library and utility used for parsing and writing OpenType font files.
-
-| Linux-x64                                | Windows-x64                              |
-| ---------------------------------------- | ---------------------------------------- |
-| [![](https://travis-ci.org/caryll/otfcc.svg?branch=master)](https://travis-ci.org/caryll/otfcc) | [![](https://ci.appveyor.com/api/projects/status/github/caryll/otfcc?branch=master&svg=true)](https://ci.appveyor.com/project/be5invis/otfcc) |
 
 ## Key features
 
