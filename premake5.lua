@@ -24,7 +24,7 @@ workspace "otfcc"
 	
 	filter "action:gmake"
 		location "build/gmake"
-		buildoptions { '-Wall', '-Wno-multichar' }
+		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 		linkoptions { '-lm' }
 	filter {}
 	
