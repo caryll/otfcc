@@ -2,6 +2,10 @@
 
 The `otfcc` is a C library and utility used for parsing and writing OpenType font files.
 
+| Linux-x64                                | Windows-x64                              |
+| ---------------------------------------- | ---------------------------------------- |
+| ![](https://travis-ci.org/caryll/otfcc.svg?branch=master) | ![](https://ci.appveyor.com/api/projects/status/github/caryll/otfcc?branch=master&svg=true) |
+
 ## Key features
 
 * Read an OpenType font, (TrueType is supported as well)
