@@ -25,7 +25,6 @@ workspace "otfcc"
 	filter "action:gmake"
 		location "build/gmake"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
-		linkoptions { '-lm' }
 	filter {}
 	
 	filter "configurations:Debug"
@@ -89,8 +88,12 @@ project "otfccdump"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
+	
 	filter "action:vs*"
 		links "extern-msvc"
+	filter {}
+	filter "action:gmake"
+		links "m"
 	filter {}
 	
 	files {
@@ -107,8 +110,12 @@ project "otfccbuild"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
+	
 	filter "action:vs*"
 		links "extern-msvc"
+	filter {}
+	filter "action:gmake"
+		links "m"
 	filter {}
 	
 	files {
