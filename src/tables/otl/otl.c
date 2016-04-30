@@ -18,7 +18,7 @@ typedef struct {
 	char *name;
 	otl_language_system *script;
 	UT_hash_handle hh;
-} script_hash;
+} language_hash;
 
 void caryll_delete_lookup(otl_lookup *lookup);
 otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength,
@@ -457,9 +457,9 @@ static INLINE feature_hash *figureOutFeaturesFromJSON(json_value *features, look
 bool isValidLanguageName(const char *name, const size_t length) {
 	return length == 9 && name[4] == SCRIPT_LANGUAGE_SEPARATOR;
 }
-static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh,
-                                                      const char *tag) {
-	script_hash *sh = NULL;
+static INLINE language_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh,
+                                                        const char *tag) {
+	language_hash *sh = NULL;
 	// languages
 	for (uint32_t j = 0; j < languages->u.object.length; j++) {
 		char *languageName = languages->u.object.values[j].name;
@@ -490,7 +490,7 @@ static INLINE script_hash *figureOutLanguagesFromJson(json_value *languages, fea
 				}
 			}
 			if (requiredFeature || (af && naf > 0)) {
-				script_hash *s = NULL;
+				language_hash *s = NULL;
 				HASH_FIND_STR(sh, languageName, s);
 				if (!s) {
 					NEW(s);
@@ -535,7 +535,12 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 	}
 	return lh;
 }
-
+static INLINE int by_feature_name(feature_hash *a, feature_hash *b) {
+	return strcmp(a->name, b->name);
+}
+static INLINE int by_language_name(language_hash *a, language_hash *b) {
+	return strcmp(a->name, b->name);
+}
 table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, const char *tag) {
 	table_otl *otl = NULL;
 	NEW(otl);
@@ -548,7 +553,9 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 
 	lookup_hash *lh = figureOutLookupsFromJSON(lookups);
 	feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag);
-	script_hash *sh = figureOutLanguagesFromJson(languages, fh, tag);
+	HASH_SORT(fh, by_feature_name);
+	language_hash *sh = figureOutLanguagesFromJson(languages, fh, tag);
+	HASH_SORT(sh, by_language_name);
 	if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) goto FAIL;
 
 	{
@@ -578,7 +585,7 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 		}
 	}
 	{
-		script_hash *s, *tmp;
+		language_hash *s, *tmp;
 		otl->languageCount = HASH_COUNT(sh);
 		NEW_N(otl->languages, otl->languageCount);
 		uint16_t j = 0;
@@ -806,7 +813,6 @@ static INLINE caryll_buffer *writeScript(script_stat_hash *script, table_otl *ta
 	}
 	return buf;
 }
-
 static INLINE caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
 	caryll_buffer *bufs = bufnew();
 	script_stat_hash *h = NULL;
@@ -974,9 +980,8 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 		LOOKUP_READER(otl_type_gpos_mark_to_base, caryll_read_gpos_mark_to_single);
 		LOOKUP_READER(otl_type_gpos_mark_to_mark, caryll_read_gpos_mark_to_single);
 		LOOKUP_READER(otl_type_gpos_mark_to_ligature, caryll_read_gpos_mark_to_ligature);
-		case otl_type_gsub_extend:
-		case otl_type_gpos_extend:
-			return caryll_read_otl_extend(data, tableLength, subtableOffset, lookupType);
+		LOOKUP_READER(otl_type_gsub_extend, caryll_read_otl_gsub_extend);
+		LOOKUP_READER(otl_type_gpos_extend, caryll_read_otl_gpos_extend);
 		default:
 			return NULL;
 	}
