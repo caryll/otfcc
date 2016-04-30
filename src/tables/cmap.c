@@ -36,22 +36,18 @@ static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, 
 		int16_t idDelta = read_16u(start + 14 + segmentsCount * 4 + 2 + j * 2);
 		uint32_t idRangeOffsetOffset = 14 + segmentsCount * 6 + 2 + j * 2;
 		uint16_t idRangeOffset = read_16u(start + idRangeOffsetOffset);
-		if (startCode < 0xFFFF) {
-			if (idRangeOffset == 0) {
-				for (uint16_t c = startCode; c <= endCode; c++) {
-					uint16_t gid = (c + idDelta) & 0xFFFF;
-					if (c != 0xFFFF) { encode(map, c, gid); }
-				}
-			} else {
-				for (uint16_t c = startCode; c <= endCode; c++) {
-					uint32_t glyphOffset =
-					    idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
-					if (glyphOffset + 2 >= lengthLimit)
-						continue; // ignore this encoding slot when o-o-r
-
-					uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
-					if (c != 0xFFFF) { encode(map, c, gid); }
-				}
+		if (idRangeOffset == 0) {
+			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
+				uint16_t gid = (c + idDelta) & 0xFFFF;
+				encode(map, c, gid);
+			}
+		} else {
+			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
+				uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
+				if (glyphOffset + 2 >= lengthLimit)
+					continue; // ignore this encoding slot when o-o-r
+				uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
+				encode(map, c, gid);
 			}
 		}
 	}
@@ -117,7 +113,7 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options
 	json_value *cmap = json_object_new(HASH_COUNT(*table));
 
 	cmap_entry *item;
-	foreach_hash(item, *table) if(item->glyph.name) {
+	foreach_hash(item, *table) if (item->glyph.name) {
 		sds key = sdsfromlonglong(item->unicode);
 		json_object_push(cmap, key,
 		                 json_string_new_length(sdslen(item->glyph.name), item->glyph.name));
@@ -222,11 +218,14 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 	}
 
 	FLUSH_SEQUENCE_FORMAT_4;
-	bufwrite16b(endCount, 0xFFFF);
-	bufwrite16b(startCount, 0xFFFF);
-	bufwrite16b(idDelta, 0);
-	bufwrite16b(idRangeOffset, 0);
-	segmentsCount += 1;
+	if (lastGIDEnd < 0xFFFF) {
+		// Add a padding segment to end this subtable
+		bufwrite16b(endCount, 0xFFFF);
+		bufwrite16b(startCount, 0xFFFF);
+		bufwrite16b(idDelta, 1);
+		bufwrite16b(idRangeOffset, 0);
+		segmentsCount += 1;
+	}
 
 	for (int j = 0; j < segmentsCount; j++) {
 		// rewrite idRangeOffset
