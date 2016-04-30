@@ -974,9 +974,8 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 		LOOKUP_READER(otl_type_gpos_mark_to_base, caryll_read_gpos_mark_to_single);
 		LOOKUP_READER(otl_type_gpos_mark_to_mark, caryll_read_gpos_mark_to_single);
 		LOOKUP_READER(otl_type_gpos_mark_to_ligature, caryll_read_gpos_mark_to_ligature);
-		case otl_type_gsub_extend:
-		case otl_type_gpos_extend:
-			return caryll_read_otl_extend(data, tableLength, subtableOffset, lookupType);
+		LOOKUP_READER(otl_type_gsub_extend, caryll_read_otl_gsub_extend);
+		LOOKUP_READER(otl_type_gpos_extend, caryll_read_otl_gpos_extend);
 		default:
 			return NULL;
 	}

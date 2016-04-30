@@ -43,6 +43,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		}
 	}
 }
+
 void caryll_font_consolidate_glyf(caryll_font *font) {
 	if (font->glyph_order && *font->glyph_order && font->glyf) {
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
@@ -81,9 +82,11 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 	}
 }
 
-static void __declare_consolidate_type(otl_lookup_type type,
-                                       bool (*fn)(caryll_font *, table_otl *, otl_subtable *, sds),
-                                       caryll_font *font, table_otl *table, otl_lookup *lookup) {
+typedef bool (*otl_consolidation_function)(caryll_font *, table_otl *, otl_subtable *, sds);
+#define LOOKUP_CONSOLIDATOR(llt, fn) __declare_otl_consolidation(llt, fn, font, table, lookup);
+
+static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_function fn,
+                                        caryll_font *font, table_otl *table, otl_lookup *lookup) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 			if (lookup->subtables[j]) {
@@ -108,7 +111,7 @@ static void __declare_consolidate_type(otl_lookup_type type,
 		}
 	}
 }
-#define LOOKUP_CONSOLIDATOR(llt, fn) __declare_consolidate_type(llt, fn, font, table, lookup);
+
 void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *lookup) {
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi);
