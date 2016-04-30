@@ -806,10 +806,15 @@ static INLINE caryll_buffer *writeScript(script_stat_hash *script, table_otl *ta
 	}
 	return buf;
 }
-
+static INLINE int by_language_name(const void *_a, const void *_b) {
+	const otl_language_system **a = (const otl_language_system **)_a;
+	const otl_language_system **b = (const otl_language_system **)_b;
+	return strcmp(a[0]->name, b[0]->name);
+}
 static INLINE caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
 	caryll_buffer *bufs = bufnew();
 	script_stat_hash *h = NULL;
+	qsort(table->languages, table->languageCount, sizeof(otl_language_system*), by_language_name);
 	for (uint16_t j = 0; j < table->languageCount; j++) {
 		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
 		bool isDefault = strncmp(table->languages[j]->name + 5, "DFLT", 4) == 0 ||
