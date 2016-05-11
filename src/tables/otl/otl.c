@@ -2,10 +2,14 @@
 
 static const char SCRIPT_LANGUAGE_SEPARATOR = '_';
 
+typedef enum { LOOKUP_ORDER_FORCE, LOOKUP_ORDER_FILE } lookup_order_type;
+
 typedef struct {
 	char *name;
 	otl_lookup *lookup;
 	UT_hash_handle hh;
+	lookup_order_type orderType;
+	uint16_t orderVal;
 } lookup_hash;
 
 typedef struct {
@@ -360,12 +364,15 @@ void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options 
 	{
 		// dump lookups
 		json_value *lookups = json_object_new(table->lookupCount);
+		json_value *lookupOrder = json_array_new(table->lookupCount);
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
 			json_value *lookup = json_object_new(5);
 			_lookup_to_json(table->lookups[j], lookup);
 			json_object_push(lookups, table->lookups[j]->name, lookup);
+			json_array_push(lookupOrder, json_string_new(table->lookups[j]->name));
 		}
 		json_object_push(otl, "lookups", lookups);
+		json_object_push(otl, "lookupOrder", lookupOrder);
 	}
 	json_object_push(root, tag, otl);
 }
@@ -402,6 +409,8 @@ static INLINE bool _declareLookupParser(const char *lt, otl_lookup_type llt,
 	lookup->name = sdsdup(item->name);
 	item->lookup = lookup;
 	item->lookup->name = sdsdup(item->name);
+	item->orderType = LOOKUP_ORDER_FILE;
+	item->orderVal = HASH_COUNT(*lh);
 	HASH_ADD_STR(*lh, name, item);
 
 	return true;
@@ -535,6 +544,13 @@ static INLINE lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 	}
 	return lh;
 }
+static INLINE int by_lookup_order(lookup_hash *a, lookup_hash *b) {
+	if (a->orderType == b->orderType) {
+		return a->orderVal - b->orderVal;
+	} else {
+		return a->orderType - b->orderType;
+	}
+}
 static INLINE int by_feature_name(feature_hash *a, feature_hash *b) {
 	return strcmp(a->name, b->name);
 }
@@ -552,6 +568,21 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts,
 	if (!languages || !features || !lookups) goto FAIL;
 
 	lookup_hash *lh = figureOutLookupsFromJSON(lookups);
+	json_value *lookupOrder = json_obj_get_type(table, "lookupOrder", json_array);
+	if (lookupOrder) {
+		for (uint16_t j = 0; j < lookupOrder->u.array.length; j++) {
+			json_value *_ln = lookupOrder->u.array.values[j];
+			if (_ln && _ln->type == json_string) {
+				lookup_hash *item = NULL;
+				HASH_FIND_STR(lh, _ln->u.string.ptr, item);
+				if (item) {
+					item->orderType = LOOKUP_ORDER_FORCE;
+					item->orderVal = j;
+				}
+			}
+		}
+	}
+	HASH_SORT(lh, by_lookup_order);
 	feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag);
 	HASH_SORT(fh, by_feature_name);
 	language_hash *sh = figureOutLanguagesFromJson(languages, fh, tag);
