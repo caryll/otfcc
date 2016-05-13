@@ -32,6 +32,7 @@ void printHelp() {
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --time                  : Time each substep.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
+	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hingint information.\n"
 	                " --add-bom               : Add BOM mark in the output. (This is default\n"
 	                "                           on Windows when redirecting to another program.\n"
@@ -62,6 +63,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"add-bom", no_argument, NULL, 0},
 	                            {"no-bom", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
@@ -93,6 +95,8 @@ int main(int argc, char *argv[]) {
 					dumpopts->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					dumpopts->ignore_hints = true;
+				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
+					dumpopts->glyph_name_prefix = sdsnew(optarg);
 				}
 				break;
 			case 'v':
@@ -157,7 +161,7 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		caryll_font_unconsolidate(font);
+		caryll_font_unconsolidate(font, dumpopts);
 		if (show_time) push_stopwatch("Parse SFNT", &begin);
 	}
 
