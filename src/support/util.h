@@ -288,6 +288,7 @@ typedef struct {
 	bool short_post;
 	bool dummy_DSIG;
 	bool keep_modified_time;
+	char *glyph_name_prefix;
 } caryll_dump_options;
 
 #define MOVE /*move*/
