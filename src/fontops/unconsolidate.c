@@ -6,7 +6,7 @@
 //   2. Replace all glyph IDs into glyph names. Note all glyph references with
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
-static void caryll_name_glyphs(caryll_font *font) {
+static void caryll_name_glyphs(caryll_font *font, caryll_dump_options *dumpopts) {
 	if (!font->glyf) return;
 	glyph_order_hash *glyph_order = malloc(sizeof(glyph_order_hash));
 	*glyph_order = NULL;
@@ -42,7 +42,7 @@ static void caryll_name_glyphs(caryll_font *font) {
 	// pass 3: Map to GID
 	for (uint16_t j = 0; j < numGlyphs; j++) {
 		sds name;
-		if(j){
+		if (j) {
 			name = sdscatfmt(sdsempty(), "glyph%u", j);
 		} else {
 			name = sdsnew(".notdef");
@@ -51,8 +51,16 @@ static void caryll_name_glyphs(caryll_font *font) {
 		if (!actuallyNamed) sdsfree(name);
 	}
 
-	delete_glyph_order_map(aglfn);
+	if (dumpopts->glyph_name_prefix) {
+		glyph_order_entry *item;
+		foreach_hash(item, *glyph_order) {
+			sds oldname = item->name;
+			item->name = sdscatprintf(sdsempty(), "%s%s", dumpopts->glyph_name_prefix, oldname);
+			sdsfree(oldname);
+		}
+	}
 
+	delete_glyph_order_map(aglfn);
 	font->glyph_order = glyph_order;
 }
 
@@ -258,13 +266,13 @@ static void merge_vmtx(caryll_font *font) {
 		}
 	}
 }
-void caryll_font_unconsolidate(caryll_font *font) {
+void caryll_font_unconsolidate(caryll_font *font, caryll_dump_options *dumpopts) {
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);
 
 	// Name glyphs
-	caryll_name_glyphs(font);
+	caryll_name_glyphs(font, dumpopts);
 	caryll_name_cmap_entries(font);
 	caryll_name_glyf(font);
 	caryll_name_features(font);
