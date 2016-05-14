@@ -23,6 +23,7 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
  --pretty                : Prettify the output JSON.
  --ugly                  : Force uglify the output JSON.
  --time                  : Time each substep.
+ --glyph-name-prefix pfx : Add a prefix to the glyph names.
  --ignore-glyph-order    : Do not export glyph order information.
  --ignore-hints          : Do not export hingint information.
  --add-bom               : Add BOM mark in the output. (This is default
