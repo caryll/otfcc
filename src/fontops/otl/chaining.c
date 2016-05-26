@@ -31,13 +31,17 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 			DELETE(sdsfree, rule->apply[j].lookupName);
 		}
 	}
-	uint16_t k = 0;
-	for (uint16_t j = 0; j < rule->applyCount; j++)
-		if (rule->apply[j].lookupName) { rule->apply[k++] = rule->apply[j]; }
-	rule->applyCount = k;
-	if (!rule->applyCount) {
-		delete_otl_chaining_subtable(_subtable);
-		return true;
+	// If a rule is designed to have no lookup application, it may be a ignoration
+	// otfcc will keep them.
+	if (rule->applyCount) {
+		uint16_t k = 0;
+		for (uint16_t j = 0; j < rule->applyCount; j++)
+			if (rule->apply[j].lookupName) { rule->apply[k++] = rule->apply[j]; }
+		rule->applyCount = k;
+		if (!rule->applyCount) {
+			delete_otl_chaining_subtable(_subtable);
+			return true;
+		}
 	}
 	return false;
 }
