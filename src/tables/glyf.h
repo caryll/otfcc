@@ -1,9 +1,9 @@
 #ifndef CARYLL_TABLES_GLYF_H
 #define CARYLL_TABLES_GLYF_H
 
-#include <support/util.h>
 #include <font/caryll-sfnt.h>
 #include <support/glyphorder.h>
+#include <support/util.h>
 
 #include "head.h"
 #include "maxp.h"
@@ -75,7 +75,7 @@ typedef struct {
 	uint16_t numberOfReferences;
 	glyf_contour *contours;
 	glyf_reference *references;
-	
+
 	// Postscript hints
 	uint16_t numberOfStemH;
 	uint16_t numberOfStemV;
@@ -85,11 +85,11 @@ typedef struct {
 	hint_stemV *stemV;
 	hint_mask *hintMasks;
 	hint_contour_mask *contourMasks;
-	
+
 	// TTF instructions
 	uint16_t instructionsLength;
 	uint8_t *instructions;
-	
+
 	// Stats
 	glyf_glyph_stat stat;
 } glyf_glyph;
@@ -99,25 +99,29 @@ typedef struct {
 	glyf_glyph **glyphs;
 } table_glyf;
 
-static const int GLYF_FLAG_ON_CURVE = 1;
-static const int GLYF_FLAG_X_SHORT = (1 << 1);
-static const int GLYF_FLAG_Y_SHORT = (1 << 2);
-static const int GLYF_FLAG_REPEAT = (1 << 3);
-static const int GLYF_FLAG_SAME_X = (1 << 4);
-static const int GLYF_FLAG_SAME_Y = (1 << 5);
-static const int GLYF_FLAG_POSITIVE_X = (1 << 4);
-static const int GLYF_FLAG_POSITIVE_Y = (1 << 5);
+typedef enum {
+	GLYF_FLAG_ON_CURVE = 1,
+	GLYF_FLAG_X_SHORT = (1 << 1),
+	GLYF_FLAG_Y_SHORT = (1 << 2),
+	GLYF_FLAG_REPEAT = (1 << 3),
+	GLYF_FLAG_SAME_X = (1 << 4),
+	GLYF_FLAG_SAME_Y = (1 << 5),
+	GLYF_FLAG_POSITIVE_X = (1 << 4),
+	GLYF_FLAG_POSITIVE_Y = (1 << 5)
+} glyf_point_flag;
 
-static const int ARG_1_AND_2_ARE_WORDS = (1 << 0);
-static const int ARGS_ARE_XY_VALUES = (1 << 1);
-static const int ROUND_XY_TO_GRID = (1 << 2);
-static const int WE_HAVE_A_SCALE = (1 << 3);
-static const int MORE_COMPONENTS = (1 << 5);
-static const int WE_HAVE_AN_X_AND_Y_SCALE = (1 << 6);
-static const int WE_HAVE_A_TWO_BY_TWO = (1 << 7);
-static const int WE_HAVE_INSTRUCTIONS = (1 << 8);
-static const int USE_MY_METRICS = (1 << 9);
-static const int OVERLAP_COMPOUND = (1 << 10);
+typedef enum {
+	ARG_1_AND_2_ARE_WORDS = (1 << 0),
+	ARGS_ARE_XY_VALUES = (1 << 1),
+	ROUND_XY_TO_GRID = (1 << 2),
+	WE_HAVE_A_SCALE = (1 << 3),
+	MORE_COMPONENTS = (1 << 5),
+	WE_HAVE_AN_X_AND_Y_SCALE = (1 << 6),
+	WE_HAVE_A_TWO_BY_TWO = (1 << 7),
+	WE_HAVE_INSTRUCTIONS = (1 << 8),
+	USE_MY_METRICS = (1 << 9),
+	OVERLAP_COMPOUND = (1 << 10)
+} glyf_reference_flag;
 
 glyf_glyph *caryll_new_glyf_glhph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
