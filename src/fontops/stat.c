@@ -224,8 +224,9 @@ void caryll_font_stat_vmtx(caryll_font *font) {
 		if (advanceHeight > maxHeight) maxHeight = advanceHeight;
 		if (tsb < minTSB) minTSB = tsb;
 		if (bsb < minBSB) minBSB = bsb;
-		if (g->verticalOrigin - g->stat.yMin > maxExtent)
+		if (g->verticalOrigin - g->stat.yMin > maxExtent) {
 			maxExtent = g->verticalOrigin - g->stat.yMin;
+		}
 	}
 	font->vhea->numOfLongVerMetrics = count_a;
 	font->vhea->minTop = minTSB;
@@ -241,8 +242,8 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 	uint32_t u2 = 0;
 	uint32_t u3 = 0;
 	uint32_t u4 = 0;
-	uint32_t minUnicode = 0xFFFF;
-	uint32_t maxUnicode = 0;
+	int minUnicode = 0xFFFF;
+	int maxUnicode = 0;
 	foreach_hash(item, *font->cmap) {
 		int u = item->unicode;
 		// Stat for minimium and maximium unicode
