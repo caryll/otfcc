@@ -1,6 +1,8 @@
 #include "glyf.h"
 #include <math.h>
 
+typedef enum { MASK_ON_CURVE = 1 } glyf_oncurve_mask;
+
 glyf_glyph *caryll_new_glyf_glhph() {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->numberOfContours = 0;
@@ -378,7 +380,7 @@ static INLINE json_value *glyf_glyph_contours_to_json(glyf_glyph *g,
 			json_value *point = json_object_new(3);
 			json_object_push(point, "x", coord_to_json(c.points[m].x));
 			json_object_push(point, "y", coord_to_json(c.points[m].y));
-			json_object_push(point, "on", json_boolean_new(c.points[m].onCurve));
+			json_object_push(point, "on", json_boolean_new(c.points[m].onCurve & MASK_ON_CURVE));
 			json_array_push(contour, point);
 		}
 		json_array_push(contours, contour);
@@ -451,7 +453,8 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_option
 static INLINE void glyf_point_from_json(glyf_point *point, json_value *pointdump) {
 	point->x = json_obj_getnum(pointdump, "x");
 	point->y = json_obj_getnum(pointdump, "y");
-	point->onCurve = json_obj_getbool(pointdump, "on");
+	point->onCurve = 0;
+	if (json_obj_getbool(pointdump, "on")) { point->onCurve |= MASK_ON_CURVE; }
 }
 static INLINE void glyf_reference_from_json(glyf_reference *ref, json_value *refdump) {
 	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
@@ -628,7 +631,7 @@ static INLINE void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
 	for (uint16_t cj = 0; cj < g->numberOfContours; cj++) {
 		for (uint16_t k = 0; k < g->contours[cj].pointsCount; k++) {
 			glyf_point *p = &(g->contours[cj].points[k]);
-			uint8_t flag = p->onCurve ? GLYF_FLAG_ON_CURVE : 0;
+			uint8_t flag = (p->onCurve & MASK_ON_CURVE) ? GLYF_FLAG_ON_CURVE : 0;
 			int16_t dx = p->x - cx;
 			int16_t dy = p->y - cy;
 			if (dx == 0) {
