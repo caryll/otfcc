@@ -13,7 +13,10 @@ enum GlyphType { SIMPLE, COMPOSITE };
 typedef struct {
 	float x;
 	float y;
-	int8_t onCurve;
+	int8_t onCurve;        // a mask indicates whether a point is on-curve or off-curve
+	                       // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
+	                       // bit 1 - 7 : unused, set to 0
+	                       // in JSON, they are separated into several boolean fields.
 } glyf_point;
 
 typedef struct {
