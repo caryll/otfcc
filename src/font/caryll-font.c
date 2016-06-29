@@ -43,7 +43,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->vhea) free(font->vhea);
 	if (font->fpgm) caryll_delete_fpgm_prep(font->fpgm);
 	if (font->prep) caryll_delete_fpgm_prep(font->prep);
-	if (font->cvt_) caryll_delete_fpgm_prep(font->cvt_);
+	if (font->cvt_) caryll_delete_cvt(font->cvt_);
 	if (font->gasp) caryll_delete_gasp(font->gasp);
 	if (font->glyf) caryll_delete_glyf(font->glyf);
 	if (font->cmap) caryll_delete_cmap(font->cmap);
@@ -73,7 +73,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->cmap = caryll_read_cmap(packet);
 		font->fpgm = caryll_read_fpgm_prep(packet, 'fpgm');
 		font->prep = caryll_read_fpgm_prep(packet, 'prep');
-		font->cvt_ = caryll_read_fpgm_prep(packet, 'cvt ');
+		font->cvt_ = caryll_read_cvt(packet, 'cvt ');
 		font->gasp = caryll_read_gasp(packet);
 		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
 		if (font->glyf) {
@@ -101,7 +101,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 	if (!dumpopts->ignore_hints) {
 		caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
 		caryll_fpgm_prep_to_json(font->prep, root, dumpopts, "prep");
-		caryll_fpgm_prep_to_json(font->cvt_, root, dumpopts, "cvt_");
+		caryll_cvt_to_json(font->cvt_, root, dumpopts, "cvt_");
 		caryll_gasp_to_json(font->gasp, root, dumpopts);
 	}
 	caryll_otl_to_json(font->GSUB, root, dumpopts, "GSUB");
@@ -126,7 +126,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpop
 	if (!dumpopts->ignore_hints) {
 		font->fpgm = caryll_fpgm_prep_from_json(root, "fpgm");
 		font->prep = caryll_fpgm_prep_from_json(root, "prep");
-		font->cvt_ = caryll_fpgm_prep_from_json(root, "cvt_");
+		font->cvt_ = caryll_cvt_from_json(root, "cvt_");
 		font->gasp = caryll_gasp_from_json(root);
 	}
 	font->vhea = caryll_vhea_from_json(root, dumpopts);
@@ -158,7 +158,7 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_dump_options *dumpopt
 	sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
 	if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm));
 	if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
-	if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_fpgm_prep(font->cvt_));
+	if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_cvt(font->cvt_));
 	if (font->gasp) sfnt_builder_push_table(builder, 'gasp', caryll_write_gasp(font->gasp));
 
 	if (font->vhea) sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea));

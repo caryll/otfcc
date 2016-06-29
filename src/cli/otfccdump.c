@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"add-bom", no_argument, NULL, 0},
 	                            {"no-bom", no_argument, NULL, 0},
@@ -95,6 +96,8 @@ int main(int argc, char *argv[]) {
 					dumpopts->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					dumpopts->ignore_hints = true;
+				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
+					dumpopts->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
 					dumpopts->glyph_name_prefix = sdsnew(optarg);
 				}
