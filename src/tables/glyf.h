@@ -4,6 +4,7 @@
 #include <font/caryll-sfnt.h>
 #include <support/glyphorder.h>
 #include <support/util.h>
+#include <support/ttinstr.h>
 
 #include "head.h"
 #include "maxp.h"

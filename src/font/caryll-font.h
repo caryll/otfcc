@@ -18,6 +18,7 @@ typedef struct _caryll_font caryll_font;
 #include <tables/glyf.h>
 #include <tables/cmap.h>
 #include <tables/fpgm-prep.h>
+#include <tables/cvt.h>
 #include <tables/gasp.h>
 
 #include <tables/hdmx.h>
@@ -47,7 +48,7 @@ struct _caryll_font {
 
 	table_fpgm_prep *fpgm;
 	table_fpgm_prep *prep;
-	table_fpgm_prep *cvt_;
+	table_cvt *cvt_;
 	table_gasp *gasp;
 
 	table_otl *GSUB;

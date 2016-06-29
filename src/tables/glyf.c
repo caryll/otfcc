@@ -407,12 +407,7 @@ static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g,
 	}
 	return references;
 }
-static INLINE json_value *glyf_glyph_instructions_to_json(glyf_glyph *g,
-                                                          caryll_dump_options *dumpopts) {
-	size_t len = 0;
-	uint8_t *buf = base64_encode(g->instructions, g->instructionsLength, &len);
-	return json_string_new_nocopy(len, (char *)buf);
-}
+
 static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
 	json_value *glyph = json_object_new(7);
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
@@ -422,9 +417,9 @@ static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options 
 	}
 	json_object_push(glyph, "contours", preserialize(glyf_glyph_contours_to_json(g, dumpopts)));
 	json_object_push(glyph, "references", preserialize(glyf_glyph_references_to_json(g, dumpopts)));
-	if (!dumpopts->ignore_hints) {
+	if (!dumpopts->ignore_hints && g->instructionsLength) {
 		json_object_push(glyph, "instructions",
-		                 preserialize(glyf_glyph_instructions_to_json(g, dumpopts)));
+		                 instr_to_json(g->instructions, g->instructionsLength, dumpopts));
 	}
 	return glyph;
 }
@@ -515,16 +510,18 @@ static INLINE void glyf_references_from_json(json_value *col, glyf_glyph *g) {
 		glyf_reference_from_json(&(g->references[j]), col->u.array.values[j]);
 	}
 }
-static INLINE void glyf_instructions_from_json(json_value *col, glyf_glyph *g) {
-	if (!col) {
-		g->instructionsLength = 0;
-		g->instructions = NULL;
-		return;
-	}
-	size_t instrlen;
-	g->instructions = base64_decode((uint8_t *)col->u.string.ptr, col->u.string.length, &instrlen);
-	g->instructionsLength = instrlen;
+
+static INLINE void makeInstrsForGlyph(void *_g, uint8_t *instrs, uint32_t len) {
+	glyf_glyph *g = (glyf_glyph *)_g;
+	g->instructionsLength = len;
+	g->instructions = instrs;
 }
+static INLINE void wrongInstrsForGlyph(void *_g, char *reason, int pos) {
+	glyf_glyph *g = (glyf_glyph *)_g;
+	fprintf(stderr, "[OTFCC] TrueType instructions parse error : %s, at %d in /%s\n", reason, pos,
+	        g->name);
+}
+
 static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
                                                       glyph_order_entry *order_entry,
                                                       caryll_dump_options *dumpopts) {
@@ -536,7 +533,8 @@ static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
 	glyf_contours_from_json(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_references_from_json(json_obj_get_type(glyphdump, "references", json_array), g);
 	if (!dumpopts->ignore_hints) {
-		glyf_instructions_from_json(json_obj_get_type(glyphdump, "instructions", json_string), g);
+		instr_from_json(json_obj_get(glyphdump, "instructions"), g, makeInstrsForGlyph,
+		                wrongInstrsForGlyph);
 	} else {
 		g->instructionsLength = 0;
 		g->instructions = NULL;
