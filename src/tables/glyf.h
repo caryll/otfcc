@@ -94,6 +94,9 @@ typedef struct {
 	uint16_t instructionsLength;
 	uint8_t *instructions;
 
+	// CID FDSelect
+	uint16_t fdIndex;
+
 	// Stats
 	glyf_glyph_stat stat;
 } glyf_glyph;
