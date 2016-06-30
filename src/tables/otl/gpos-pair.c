@@ -152,11 +152,11 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 		otl_coverage *cov =
 		    caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
 		subtable->first =
-		    caryll_raad_classdef(data, tableLength, offset + read_16u(data + offset + 8));
+		    caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 8));
 		subtable->first = caryll_expand_classdef(cov, subtable->first);
 		caryll_delete_coverage(cov);
 		subtable->second =
-		    caryll_raad_classdef(data, tableLength, offset + read_16u(data + offset + 10));
+		    caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 10));
 		if (!subtable->first || !subtable->second) goto FAIL;
 		uint16_t class1Count = read_16u(data + offset + 12);
 		uint16_t class2Count = read_16u(data + offset + 14);

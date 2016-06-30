@@ -187,7 +187,7 @@ otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLengt
 		classdefs *cds;
 		NEW(cds);
 		cds->bc = NULL;
-		cds->ic = caryll_raad_classdef(data, tableLength, offset + read_16u(data + offset + 4));
+		cds->ic = caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 4));
 		cds->fc = NULL;
 
 		uint16_t chainSubClassSetCnt = read_16u(data + offset + 6);
@@ -347,9 +347,9 @@ otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength,
 
 		classdefs *cds;
 		NEW(cds);
-		cds->bc = caryll_raad_classdef(data, tableLength, offset + read_16u(data + offset + 4));
-		cds->ic = caryll_raad_classdef(data, tableLength, offset + read_16u(data + offset + 6));
-		cds->fc = caryll_raad_classdef(data, tableLength, offset + read_16u(data + offset + 8));
+		cds->bc = caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 4));
+		cds->ic = caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 6));
+		cds->fc = caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 8));
 
 		uint16_t chainSubClassSetCnt = read_16u(data + offset + 10);
 		checkLength(offset + 12 + 2 * chainSubClassSetCnt);

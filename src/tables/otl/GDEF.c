@@ -60,7 +60,7 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 		gdef = caryll_new_GDEF();
 		uint16_t classdefOffset = read_16u(data + 4);
 		if (classdefOffset) {
-			gdef->glyphClassDef = caryll_raad_classdef(data, tableLength, classdefOffset);
+			gdef->glyphClassDef = caryll_read_classdef(data, tableLength, classdefOffset);
 		}
 		uint16_t ligCaretOffset = read_16u(data + 8);
 		if (ligCaretOffset) {
@@ -87,7 +87,7 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 		}
 		uint16_t markAttachDefOffset = read_16u(data + 10);
 		if (markAttachDefOffset) {
-			gdef->markAttachClassDef = caryll_raad_classdef(data, tableLength, markAttachDefOffset);
+			gdef->markAttachClassDef = caryll_read_classdef(data, tableLength, markAttachDefOffset);
 		}
 		return gdef;
 
