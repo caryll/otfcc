@@ -42,6 +42,7 @@ typedef struct {
 typedef struct _table_cff table_cff;
 
 struct _table_cff {
+	bool isCID;
 	sds version;
 	sds notice;
 	sds copyright;
