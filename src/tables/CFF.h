@@ -5,6 +5,10 @@
 #include <font/caryll-sfnt.h>
 #include <support/util.h>
 
+// The result of parsing CFF table contains both CFF metadata and glyph outline.
+// To simplify code and storage, the glyph outlines are stored inside glyf table.
+// and the CFF table contains CFF metadata only.
+
 typedef struct {
 	float a;
 	float b;
@@ -79,8 +83,9 @@ struct _table_CFF {
 	table_CFF *fdArray;
 };
 
+// CFF and glyf
 typedef struct {
-	table_CFF *cffMeta;
+	table_CFF *meta;
 	table_glyf *glyphs;
 } caryll_cff_parse_result;
 
