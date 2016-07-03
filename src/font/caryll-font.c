@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "caryll-sfnt.h"
 #include "caryll-font.h"
 #include "caryll-sfnt-builder.h"
+#include "caryll-sfnt.h"
 
 caryll_font *caryll_new_font() {
 	caryll_font *font = calloc(1, sizeof(caryll_font));
@@ -54,12 +54,19 @@ void caryll_delete_font(caryll_font *font) {
 	if (font) free(font);
 }
 
+caryll_font_subtype caryll_decide_font_subtype(caryll_sfnt *sfnt, uint32_t index) {
+	caryll_packet packet = sfnt->packets[index];
+	FOR_TABLE('CFF ', table) { return FONTTYPE_CFF; }
+	return FONTTYPE_TTF;
+}
+
 caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 	if (sfnt->count - 1 < index)
 		return NULL;
 	else {
 		caryll_font *font = caryll_new_font();
 		caryll_packet packet = sfnt->packets[index];
+		font->subtype = caryll_decide_font_subtype(sfnt, index);
 		font->head = caryll_read_head(packet);
 		font->maxp = caryll_read_maxp(packet);
 		font->name = caryll_read_name(packet);

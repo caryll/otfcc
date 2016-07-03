@@ -1,36 +1,40 @@
 #ifndef CARYLL_FONT_H
 #define CARYLL_FONT_H
-#include <support/util.h>
 #include "caryll-sfnt.h"
+#include <support/util.h>
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_font;
 
 #include <support/glyphorder.h>
 
+#include <tables/OS_2.h>
+#include <tables/cmap.h>
+#include <tables/cvt.h>
+#include <tables/fpgm-prep.h>
+#include <tables/gasp.h>
+#include <tables/glyf.h>
 #include <tables/head.h>
 #include <tables/hhea.h>
-#include <tables/maxp.h>
 #include <tables/hmtx.h>
-#include <tables/post.h>
-#include <tables/OS_2.h>
+#include <tables/maxp.h>
 #include <tables/name.h>
-#include <tables/glyf.h>
-#include <tables/cmap.h>
-#include <tables/fpgm-prep.h>
-#include <tables/cvt.h>
-#include <tables/gasp.h>
+#include <tables/post.h>
 
-#include <tables/hdmx.h>
 #include <tables/LTSH.h>
 #include <tables/PCLT.h>
+#include <tables/hdmx.h>
 #include <tables/vhea.h>
 #include <tables/vmtx.h>
 
-#include <tables/otl/otl.h>
 #include <tables/otl/GDEF.h>
+#include <tables/otl/otl.h>
+
+typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } caryll_font_subtype;
 
 struct _caryll_font {
+	caryll_font_subtype subtype;
+
 	table_head *head;
 	table_hhea *hhea;
 	table_maxp *maxp;
@@ -58,6 +62,7 @@ struct _caryll_font {
 	glyph_order_hash *glyph_order;
 };
 
+caryll_font_subtype caryll_decide_font_subtype(caryll_sfnt *sfnt, uint32_t index);
 caryll_font *caryll_new_font();
 caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index);
 void caryll_delete_font(caryll_font *font);
