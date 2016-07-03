@@ -1,6 +1,7 @@
 #ifndef CARYLL_TABLES_CFF_H
 #define CARYLL_TABLES_CFF_H
 
+#include "glyf.h"
 #include <font/caryll-sfnt.h>
 #include <support/util.h>
 
@@ -39,9 +40,9 @@ typedef struct {
 	float nominalWidthX;
 } cff_private;
 
-typedef struct _table_cff table_cff;
+typedef struct _table_CFF table_CFF;
 
-struct _table_cff {
+struct _table_CFF {
 	bool isCID;
 	sds version;
 	sds notice;
@@ -75,7 +76,20 @@ struct _table_cff {
 	float UIDBase;
 	// CID FDArray
 	uint16_t fdArrayCount;
-	table_cff *fdArray;
+	table_CFF *fdArray;
 };
+
+typedef struct {
+	table_CFF *cffMeta;
+	table_glyf *glyphs;
+} caryll_cff_parse_result;
+
+table_CFF *caryll_new_cff();
+void caryll_delete_CFF(table_CFF *table);
+caryll_cff_parse_result *caryll_read_CFF_and_glyf(caryll_packet, uint32_t tag);
+void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts,
+                        const char *tag);
+table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts);
+caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf);
 
 #endif
