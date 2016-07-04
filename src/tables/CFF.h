@@ -4,7 +4,7 @@
 #include "glyf.h"
 #include <font/caryll-sfnt.h>
 #include <support/util.h>
-#include "cff/cff_io.h"
+#include "CFF/cff_io.h"
 
 // The result of parsing CFF table contains both CFF metadata and glyph outline.
 // To simplify code and storage, the glyph outlines are stored inside glyf table.
