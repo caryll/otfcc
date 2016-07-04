@@ -557,6 +557,9 @@ cff_blob *compile_charstring(CFF_File *f) {
 	}
 }
 
+// TODO: Apply peephole optimization
+static cff_blob *cff_peephole_optimization(cff_blob *blob) { return blob; }
+
 cff_blob *compile_outline(CFF_Outline *outline) {
 	cff_blob *blob = calloc(1, sizeof(cff_blob));
 
@@ -602,7 +605,7 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 		blob_free(endchar);
 	}
 
-	return blob;
+	return cff_peephole_optimization(blob);
 }
 
 /*
