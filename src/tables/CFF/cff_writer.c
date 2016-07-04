@@ -258,11 +258,13 @@ cff_blob *compile_pubdict(uint8_t *data, int32_t len) {
 				for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
 					cff_blob *blob_val;
 
-					if (dict->ents[i].vals[j].t == CFF_INTEGER)
+					if (dict->ents[i].vals[j].t == CFF_INTEGER) {
 						blob_val = encode_cff_number(dict->ents[i].vals[j].i);
-
-					if (dict->ents[i].vals[j].t == CFF_DOUBLE)
+					} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
 						blob_val = encode_cff_real(dict->ents[i].vals[j].d);
+					} else {
+						blob_val = encode_cff_number(0);
+					}
 
 					blob_merge(blob, blob_val);
 					blob_free(blob_val);
@@ -349,10 +351,13 @@ cff_blob *compile_private(CFF_File *f) {
 					for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
 						cff_blob *blob_val;
 
-						if (dict->ents[i].vals[j].t == CFF_INTEGER)
+						if (dict->ents[i].vals[j].t == CFF_INTEGER) {
 							blob_val = encode_cff_number(dict->ents[i].vals[j].i);
-						if (dict->ents[i].vals[j].t == CFF_DOUBLE)
+						} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
 							blob_val = encode_cff_real(dict->ents[i].vals[j].d);
+						} else {
+							blob_val = encode_cff_number(0);
+						}
 
 						blob_merge(blob, blob_val);
 						blob_free(blob_val);

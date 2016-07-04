@@ -21,6 +21,8 @@ typedef struct _caryll_font caryll_font;
 #include <tables/name.h>
 #include <tables/post.h>
 
+#include <tables/CFF.h>
+
 #include <tables/LTSH.h>
 #include <tables/PCLT.h>
 #include <tables/hdmx.h>
@@ -46,6 +48,7 @@ struct _caryll_font {
 	table_vhea *vhea;
 	table_vmtx *vmtx;
 
+	table_CFF  *CFF_;
 	table_glyf *glyf;
 	cmap_hash *cmap;
 	table_name *name;

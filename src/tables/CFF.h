@@ -4,6 +4,7 @@
 #include "glyf.h"
 #include <font/caryll-sfnt.h>
 #include <support/util.h>
+#include "cff/cff_io.h"
 
 // The result of parsing CFF table contains both CFF metadata and glyph outline.
 // To simplify code and storage, the glyph outlines are stored inside glyf table.
@@ -51,11 +52,10 @@ struct _table_CFF {
 	sds version;
 	sds notice;
 	sds copyright;
-	sds fontName;
 	sds fullName;
 	sds familyName;
 	sds weight;
-	uint32_t isFixedPitch;
+	bool isFixedPitch;
 	float italicAngle;
 	float underlinePosition;
 	float underlineThickness;
@@ -67,12 +67,12 @@ struct _table_CFF {
 	float strokeWidth;
 	uint32_t fsType;
 	cff_private *privateDict;
-	cff_fontmatrix fontMatrix;
+	cff_fontmatrix *fontMatrix;
 
 	// CID-only operators
-	sds cidFontName;
+	sds fontName;
 	sds cidRegistry;
-	uint32_t cidOrdering;
+	sds cidOrdering;
 	float cidSupplement;
 	float cidFontVersion;
 	float cidFontRevision;
@@ -80,7 +80,7 @@ struct _table_CFF {
 	float UIDBase;
 	// CID FDArray
 	uint16_t fdArrayCount;
-	table_CFF *fdArray;
+	table_CFF **fdArray;
 };
 
 // CFF and glyf
@@ -89,11 +89,11 @@ typedef struct {
 	table_glyf *glyphs;
 } caryll_cff_parse_result;
 
-table_CFF *caryll_new_cff();
+table_CFF *caryll_new_CFF();
 void caryll_delete_CFF(table_CFF *table);
-caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet, uint32_t tag);
-void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts,
-                        const char *tag);
+caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet);
+void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts
+                        );
 table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts);
 caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf);
 

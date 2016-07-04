@@ -5,11 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifdef _WIN32
-#define _CRT_SECURE_NO_WARNINGS 1
-#pragma warning(disable : 4996)
-#endif
+#include <support/util.h>
 
 // clang-format off
 // CFF DICT Operators
@@ -270,10 +266,7 @@ enum {
 	CFF_DOUBLE,
 };
 
-enum {
-	CFF_LIMIT_STACK = 48,
-	CFF_LIMIT_TRANSIENT = 32
-};
+enum { CFF_LIMIT_STACK = 48, CFF_LIMIT_TRANSIENT = 32 };
 
 typedef struct {
 	uint32_t t;
@@ -359,6 +352,14 @@ typedef struct {
 	CFF_INDEX local_subr;   // offset
 } CFF_File;
 
+// Outline builder method table
+typedef struct {
+	void (*setWidth)(void *context, float width);
+	void (*newContour)(void *context);
+	void (*lineTo)(void *context, float x1, float y1);
+	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3);
+} cff_outline_builder_interface;
+
 /*
   CFF -> Compact Font Format
   CS2 -> Type2 CharString
@@ -404,6 +405,7 @@ extern void empty_index(CFF_INDEX *in);
 extern void print_index(CFF_INDEX in);
 
 extern char *get_cff_sid(uint16_t idx, CFF_INDEX str);
+sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str);
 
 extern CFF_File *CFF_stream_open(uint8_t *data, uint32_t len);
 extern CFF_File *CFF_file_open(const char *fname);
@@ -417,6 +419,7 @@ extern CFF_Dict *parse_dict(uint8_t *data, uint32_t len);
 extern void esrap_dict(CFF_Dict *d);
 extern void print_dict(uint8_t *data, uint32_t len);
 extern CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx);
+extern CFF_Value lookup_dict(CFF_Dict *d, uint32_t op, uint32_t idx);
 
 extern void print_glyph(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
                         CFF_Stack *stack);
@@ -427,4 +430,10 @@ extern CFF_Outline *cff_outline_init(void);
 extern void cff_outline_fini(CFF_Outline *out);
 extern CFF_INDEX *cff_index_init(void);
 extern void cff_index_fini(CFF_INDEX *out);
+
+void cff_dict_callback(uint8_t *data, uint32_t len, void *context,
+                       void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack, void *context));
+
+extern double cffnum(CFF_Value v);
+
 #endif

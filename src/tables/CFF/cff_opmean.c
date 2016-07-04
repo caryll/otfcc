@@ -12,7 +12,7 @@
 char *op_cff_name(uint32_t op) {
 	switch (op) {
 		case op_version:
-			return "version";
+			return "Version";
 		case op_Notice:
 			return "Notice";
 		case op_FullName:

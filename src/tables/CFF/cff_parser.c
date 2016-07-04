@@ -90,9 +90,14 @@ static void parse_index(uint8_t *data, uint32_t pos, CFF_INDEX *in) {
 }
 
 static void printf_cff_val(CFF_Value val) {
-	if (val.t == CFF_INTEGER) printf("%d", val.i);
+	if (val.t == CFF_INTEGER) fprintf(stderr, "%d", val.i);
+	if (val.t == CFF_DOUBLE) fprintf(stderr, "%f", val.d);
+}
 
-	if (val.t == CFF_DOUBLE) printf("%f", val.d);
+double cffnum(CFF_Value val) {
+	if (val.t == CFF_INTEGER) return val.i;
+	if (val.t == CFF_DOUBLE) return val.d;
+	return 0;
 }
 
 void esrap_dict(CFF_Dict *d) {
@@ -139,9 +144,12 @@ CFF_Dict *parse_dict(uint8_t *data, uint32_t len) {
 	return dict;
 }
 
-void print_dict(uint8_t *data, uint32_t len) {
-	uint32_t index = 0, advance;
-	CFF_Value val, stack[48];
+void cff_dict_callback(uint8_t *data, uint32_t len, void *context,
+                       void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack,
+                                        void *context)) {
+	uint8_t index = 0;
+	uint32_t advance;
+	CFF_Value val, stack[256];
 	uint8_t *temp = data;
 
 	while (temp < data + len) {
@@ -149,8 +157,7 @@ void print_dict(uint8_t *data, uint32_t len) {
 
 		switch (val.t) {
 			case CFF_OPERATOR:
-				for (uint32_t i = 0; i < index; i++) printf_cff_val(stack[i]), printf(" ");
-				printf("%s\n", op_cff_name(val.i));
+				callback(val.i, index, stack, context);
 				index = 0;
 				break;
 
@@ -164,35 +171,41 @@ void print_dict(uint8_t *data, uint32_t len) {
 	}
 }
 
-CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx) {
-	uint32_t index = 0, advance;
-	CFF_Value val, res, stack[48];
-	uint8_t *temp = data;
+static void callback_print_dict(uint32_t op, uint8_t top, CFF_Value *stack, void *context) {
+	for (uint32_t i = 0; i < top; i++) printf_cff_val(stack[i]), fprintf(stderr, " ");
+	fprintf(stderr, "%s\n", op_cff_name(op));
+}
 
-	res.t = 0;
-	res.i = -1;
+void print_dict(uint8_t *data, uint32_t len) {
+	return cff_dict_callback(data, len, NULL, callback_print_dict);
+}
 
-	if (data == NULL) return res;
+typedef struct {
+	bool found;
+	CFF_Value res;
+	uint32_t op;
+	uint32_t idx;
+} cff_get_key_context;
 
-	while (temp < data + len) {
-		advance = decode_cff_token(temp, &val);
-
-		switch (val.t) {
-			case CFF_OPERATOR:
-				if (val.i == (int32_t)op && idx <= index) res = stack[idx];
-				index = 0;
-				break;
-
-			case CFF_INTEGER:
-			case CFF_DOUBLE:
-				stack[index++] = val;
-				break;
-		}
-
-		temp += advance;
+static void callback_get_key(uint32_t op, uint8_t top, CFF_Value *stack, void *_context) {
+	cff_get_key_context *context = (cff_get_key_context *)_context;
+	if (op == context->op && context->idx <= top) {
+		context->found = true;
+		context->res = stack[context->idx];
 	}
+}
 
-	return res;
+CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx) {
+	cff_get_key_context context;
+	context.found = false;
+	context.idx = idx;
+	context.op = op;
+	context.res.t = 0;
+	context.res.i = -1;
+
+	cff_dict_callback(data, len, &context, callback_get_key);
+
+	return context.res;
 }
 
 static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
@@ -244,7 +257,6 @@ static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 
 static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) {
 	uint32_t i;
-
 	if (offset == CFF_CHARSET_ISOADOBE)
 		charsets->t = CFF_CHARSET_ISOADOBE;
 	else if (offset == CFF_CHARSET_EXPERT)
@@ -267,40 +279,36 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 				charsets->t = CFF_CHARSET_FORMAT1;
 				{
 					uint32_t size;
-
-					for (i = 0;; i++)
-						if (gu2(cff->raw_data, offset + 1 + i * 3) +
-						        gu1(cff->raw_data, offset + 3 + i * 3) ==
-						    cff->char_strings.count - 1)
-							break;
+					uint16_t glyphsEncodedSofar = 0;
+					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
+						glyphsEncodedSofar += 1 + gu1(cff->raw_data, offset + 3 + i * 3);
+					}
 
 					size = i + 1;
 					charsets->s = size;
 					charsets->f1.range1 = calloc(i + 1, sizeof(charset_range1));
-
-					for (i = 0; i < size; i++)
-						charsets->f1.range1[i].first = gu2(cff->raw_data, offset + 1 + i * 3),
+					for (i = 0; i < size; i++) {
+						charsets->f1.range1[i].first = gu2(cff->raw_data, offset + 1 + i * 3);
 						charsets->f1.range1[i].nleft = gu1(cff->raw_data, offset + 3 + i * 3);
+					}
 				}
 				break;
 			case 2:
 				charsets->t = CFF_CHARSET_FORMAT2;
 				{
 					uint32_t size;
-
-					for (i = 0;; i++)
-						if (gu2(cff->raw_data, offset + 1 + i * 4) +
-						        gu2(cff->raw_data, offset + 3 + i * 4) ==
-						    cff->char_strings.count - 1)
-							break;
+					uint16_t glyphsEncodedSofar = 0;
+					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
+						glyphsEncodedSofar += 1 + gu2(cff->raw_data, offset + 3 + i * 4);
+					}
 
 					size = i + 1;
 					charsets->s = size;
 					charsets->f2.range2 = calloc(i + 1, sizeof(charset_range2));
 
 					for (i = 0; i < size; i++) {
-						charsets->f1.range1[i].first = gu2(cff->raw_data, offset + 1 + i * 4);
-						charsets->f1.range1[i].nleft = gu2(cff->raw_data, offset + 3 + i * 4);
+						charsets->f2.range2[i].first = gu2(cff->raw_data, offset + 1 + i * 4);
+						charsets->f2.range2[i].nleft = gu2(cff->raw_data, offset + 3 + i * 4);
 					}
 				}
 				break;
@@ -362,7 +370,8 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 	/** LINT CFF FONTSET **/
 	if (cff->name.count != cff->top_dict.count)
-		printf("Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count, cff->top_dict.count);
+		fprintf(stderr, "[libcff] Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count,
+		        cff->top_dict.count);
 
 	/* String INDEX */
 	pos = 4 + count_index(cff->name) + count_index(cff->top_dict);
@@ -379,7 +388,7 @@ static void parse_cff_bytecode(CFF_File *cff) {
 		// cff->topdict.dict = parse_dict(cff->top_dict.data, cff->top_dict.offset[1] -
 		// cff->top_dict.offset[0]);
 
-		/* CharString INDEX */
+		/* CharStrings INDEX */
 		offset =
 		    parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0],
 		                   op_CharStrings, 0)
@@ -388,13 +397,9 @@ static void parse_cff_bytecode(CFF_File *cff) {
 		if (offset != -1) {
 			parse_index(cff->raw_data, offset, &cff->char_strings);
 			cff->cnt_glyph = cff->char_strings.count;
-
-			// cff->topdict.charstrings = calloc(1, sizeof(CFF_INDEX));
-			// parse_index(cff->raw_data, offset, cff->topdict.charstrings);
 		} else {
 			empty_index(&cff->char_strings);
-			// cff->topdict.charstrings = NULL;
-			printf("Bad CFF font: no any glyph data.\n");
+			fprintf(stderr, "[libcff] Bad CFF font: no any glyph data.\n");
 		}
 
 		/* Encodings */
@@ -404,12 +409,8 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 		if (offset != -1) {
 			parse_encoding(cff, offset, &cff->encodings);
-
-			// cff->topdict.encoding = calloc(sizeof(CFF_Encoding), 1);
-			// parse_encoding(cff, offset, cff->topdict.encoding);
 		} else {
 			cff->encodings.t = CFF_ENC_UNSPECED;
-			// cff->topdict.encoding = NULL;
 		}
 
 		/* Charsets */
@@ -419,12 +420,8 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 		if (offset != -1) {
 			parse_charset(cff, offset, &cff->charsets);
-
-			// cff->topdict.charset = calloc(1, sizeof(CFF_Charset));
-			// parse_charset(cff, offset, cff->topdict.charset);
 		} else {
 			cff->charsets.t = CFF_CHARSET_UNSPECED;
-			// cff->topdict.charset = NULL;
 		}
 
 		/* FDSelect */
@@ -434,12 +431,8 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 		if (offset != -1) {
 			parse_fdselect(cff, offset, &cff->fdselect);
-
-			// cff->topdict.fdselect = calloc(1, sizeof(CFF_FDSelect));
-			// parse_fdselect(cff, offset, cff->topdict.fdselect);
 		} else {
 			cff->fdselect.t = CFF_FDSELECT_UNSPECED;
-			// cff->topdict.fdselect = NULL;
 		}
 
 		/* Font Dict INDEX */
@@ -449,12 +442,8 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 		if (offset != -1) {
 			parse_index(cff->raw_data, offset, &cff->font_dict);
-
-			// cff->topdict.fdarray = calloc(1, sizeof(CFF_INDEX));
-			// parse_index(cff->raw_data, offset, cff->topdict.fdarray);
 		} else {
 			empty_index(&cff->font_dict);
-			// cff->topdict.fdarray = NULL;
 		}
 	}
 
@@ -463,15 +452,16 @@ static void parse_cff_bytecode(CFF_File *cff) {
 		int32_t private_len = -1;
 		int32_t private_off = -1;
 
-		if (cff->top_dict.data != NULL)
+		if (cff->top_dict.data != NULL) {
 			private_len =
 			    parse_dict_key(cff->top_dict.data,
 			                   cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0)
-			        .i,
+			        .i;
 			private_off =
 			    parse_dict_key(cff->top_dict.data,
 			                   cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1)
 			        .i;
+		}
 
 		if (private_off != -1 && private_len != -1) {
 			offset = parse_dict_key(cff->raw_data + private_off, private_len, op_Subrs, 0).i;
@@ -599,7 +589,7 @@ void CFF_close(CFF_File *file) {
 
 void parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
                 CFF_INDEX *subr) {
-	uint8_t fd;
+	uint8_t fd = 0;
 	int32_t off_private, len_private;
 	int32_t off_subr;
 
@@ -879,35 +869,6 @@ void print_glyph(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr, 
 	}
 }
 
-static void outline_put_contour(CFF_Outline *outline, uint16_t off) {
-	outline->cnt_contour += 1;
-	outline->c = realloc(outline->c, sizeof(uint16_t) * (outline->cnt_contour));
-	outline->c[outline->cnt_contour - 1] = off;
-}
-
-static void outline_put_point(CFF_Outline *outline, double x, double y, uint8_t t) {
-	outline->cnt_point += 1;
-	outline->x = realloc(outline->x, sizeof(double) * (outline->cnt_point));
-	outline->y = realloc(outline->y, sizeof(double) * (outline->cnt_point));
-	outline->t = realloc(outline->t, sizeof(uint8_t) * (outline->cnt_point));
-
-	if (outline->cnt_point == 1)
-		outline->x[outline->cnt_point - 1] = x, outline->y[outline->cnt_point - 1] = y;
-	else
-		outline->x[outline->cnt_point - 1] = outline->x[outline->cnt_point - 2] + x,
-		                                outline->y[outline->cnt_point - 1] =
-		                                    outline->y[outline->cnt_point - 2] + y;
-
-	outline->t[outline->cnt_point - 1] = t;
-}
-
-static void outline_put_bezier(CFF_Outline *outline, double x1, double y1, double x2, double y2,
-                               double x3, double y3) {
-	outline_put_point(outline, x1, y1, 0);
-	outline_put_point(outline, x2, y2, 0);
-	outline_put_point(outline, x3, y3, 1);
-}
-
 CFF_INDEX *cff_index_init(void) {
 	CFF_INDEX *out = calloc(1, sizeof(CFF_INDEX));
 	return out;
@@ -949,13 +910,20 @@ void cff_outline_fini(CFF_Outline *out) {
 			break;                                                                                 \
 		}                                                                                          \
 	}
-void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr, CFF_Stack *stack,
-                   CFF_Outline *outline) {
+void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
+                            CFF_Stack *stack, void *outline,
+                            cff_outline_builder_interface methods) {
 	uint16_t gsubr_bias = compute_subr_bias(gsubr.count);
 	uint16_t lsubr_bias = compute_subr_bias(lsubr.count);
 	uint8_t *start = data;
 	uint32_t advance, i, cnt_bezier;
 	CFF_Value val;
+
+	void (*setWidth)(void *context, float width) = methods.setWidth;
+	void (*newContour)(void *context) = methods.newContour;
+	void (*lineTo)(void *context, float x1, float y1) = methods.lineTo;
+	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3) =
+	    methods.curveTo;
 
 	while (start < data + len) {
 		advance = decode_cs2_token(start, &val);
@@ -967,13 +935,13 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					case op_vstem:
 					case op_hstemhm:
 					case op_vstemhm:
-						if (stack->index % 2) outline->width = stack->stack[0].d;
+						if (stack->index % 2) setWidth(outline, stack->stack[0].d);
 						stack->stem += stack->index / 2;
 						stack->index = 0;
 						break;
 					case op_hintmask:
 					case op_cntrmask: {
-						if (stack->index % 2) outline->width = stack->stack[0].d;
+						if (stack->index % 2) setWidth(outline, stack->stack[0].d);
 						stack->stem += stack->index >> 1;
 						uint32_t hint = (stack->stem + 7) >> 3;
 						advance += hint;
@@ -983,50 +951,50 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 
 					case op_vmoveto: {
 						CHECK_STACK_TOP(op_vmoveto, 1);
-						if (stack->index > 1) outline->width = stack->stack[0].d;
-						outline_put_contour(outline, outline->cnt_point);
-						outline_put_point(outline, 0.0, stack->stack[stack->index - 1].d, 1);
+						if (stack->index > 1) setWidth(outline, stack->stack[0].d);
+						newContour(outline);
+						lineTo(outline, 0.0, stack->stack[stack->index - 1].d);
 						stack->index = 0;
 						break;
 					}
 					case op_rmoveto: {
 						CHECK_STACK_TOP(op_rmoveto, 2);
-						if (stack->index > 2) outline->width = stack->stack[0].d;
-						outline_put_contour(outline, outline->cnt_point);
-						outline_put_point(outline, stack->stack[stack->index - 2].d,
-						                  stack->stack[stack->index - 1].d, 1);
+						if (stack->index > 2) setWidth(outline, stack->stack[0].d);
+						newContour(outline);
+						lineTo(outline, stack->stack[stack->index - 2].d,
+						       stack->stack[stack->index - 1].d);
 						stack->index = 0;
 						break;
 					}
 					case op_hmoveto: {
 						CHECK_STACK_TOP(op_hmoveto, 1);
-						if (stack->index > 1) outline->width = stack->stack[0].d;
-						outline_put_contour(outline, outline->cnt_point);
-						outline_put_point(outline, stack->stack[stack->index - 1].d, 0.0, 1);
+						if (stack->index > 1) setWidth(outline, stack->stack[0].d);
+						newContour(outline);
+						lineTo(outline, stack->stack[stack->index - 1].d, 0.0);
 						stack->index = 0;
 						break;
 					}
 					case op_endchar: {
-						if (stack->index > 0) outline->width = stack->stack[0].d;
+						if (stack->index > 0) setWidth(outline, stack->stack[0].d);
 						break;
 					}
 					case op_rlineto: {
 						for (i = 0; i < stack->index; i += 2)
-							outline_put_point(outline, stack->stack[i].d, stack->stack[i + 1].d, 1);
+							lineTo(outline, stack->stack[i].d, stack->stack[i + 1].d);
 						stack->index = 0;
 						break;
 					}
 					case op_vlineto: {
 						if (stack->index % 2 == 1) {
-							outline_put_point(outline, 0.0, stack->stack[0].d, 1);
+							lineTo(outline, 0.0, stack->stack[0].d);
 							for (i = 1; i < stack->index; i += 2) {
-								outline_put_point(outline, stack->stack[i].d, 0.0, 1);
-								outline_put_point(outline, 0.0, stack->stack[i + 1].d, 1);
+								lineTo(outline, stack->stack[i].d, 0.0);
+								lineTo(outline, 0.0, stack->stack[i + 1].d);
 							}
 						} else {
 							for (i = 0; i < stack->index; i += 2) {
-								outline_put_point(outline, 0.0, stack->stack[i].d, 1);
-								outline_put_point(outline, stack->stack[i + 1].d, 0.0, 1);
+								lineTo(outline, 0.0, stack->stack[i].d);
+								lineTo(outline, stack->stack[i + 1].d, 0.0);
 							}
 						}
 						stack->index = 0;
@@ -1034,15 +1002,15 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					}
 					case op_hlineto: {
 						if (stack->index % 2 == 1) {
-							outline_put_point(outline, stack->stack[0].d, 0.0, 1);
+							lineTo(outline, stack->stack[0].d, 0.0);
 							for (i = 1; i < stack->index; i += 2) {
-								outline_put_point(outline, 0.0, stack->stack[i].d, 1);
-								outline_put_point(outline, stack->stack[i + 1].d, 0.0, 1);
+								lineTo(outline, 0.0, stack->stack[i].d);
+								lineTo(outline, stack->stack[i + 1].d, 0.0);
 							}
 						} else {
 							for (i = 0; i < stack->index; i += 2) {
-								outline_put_point(outline, stack->stack[i].d, 0.0, 1);
-								outline_put_point(outline, 0.0, stack->stack[i + 1].d, 1);
+								lineTo(outline, stack->stack[i].d, 0.0);
+								lineTo(outline, 0.0, stack->stack[i + 1].d);
 							}
 						}
 						stack->index = 0;
@@ -1050,65 +1018,58 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					}
 					case op_rrcurveto: {
 						for (i = 0; i < stack->index; i += 6)
-							outline_put_bezier(outline, stack->stack[i].d, stack->stack[i + 1].d,
-							                   stack->stack[i + 2].d, stack->stack[i + 3].d,
-							                   stack->stack[i + 4].d, stack->stack[i + 5].d);
+							curveTo(outline, stack->stack[i].d, stack->stack[i + 1].d,
+							        stack->stack[i + 2].d, stack->stack[i + 3].d,
+							        stack->stack[i + 4].d, stack->stack[i + 5].d);
 						stack->index = 0;
 						break;
 					}
 					case op_rcurveline: {
 						for (i = 0; i < stack->index - 2; i += 6)
-							outline_put_bezier(outline, stack->stack[i].d, stack->stack[i + 1].d,
-							                   stack->stack[i + 2].d, stack->stack[i + 3].d,
-							                   stack->stack[i + 4].d, stack->stack[i + 5].d);
-						outline_put_point(outline, stack->stack[stack->index - 2].d,
-						                  stack->stack[stack->index - 1].d, 1);
+							curveTo(outline, stack->stack[i].d, stack->stack[i + 1].d,
+							        stack->stack[i + 2].d, stack->stack[i + 3].d,
+							        stack->stack[i + 4].d, stack->stack[i + 5].d);
+						lineTo(outline, stack->stack[stack->index - 2].d,
+						       stack->stack[stack->index - 1].d);
 						stack->index = 0;
 						break;
 					}
 					case op_rlinecurve: {
 						for (i = 0; i < stack->index - 6; i += 2)
-							outline_put_point(outline, stack->stack[i].d, stack->stack[i + 1].d, 1);
-						outline_put_bezier(
-						    outline, stack->stack[stack->index - 6].d,
-						    stack->stack[stack->index - 5].d, stack->stack[stack->index - 4].d,
-						    stack->stack[stack->index - 3].d, stack->stack[stack->index - 2].d,
-						    stack->stack[stack->index - 1].d);
+							lineTo(outline, stack->stack[i].d, stack->stack[i + 1].d);
+						curveTo(outline, stack->stack[stack->index - 6].d,
+						        stack->stack[stack->index - 5].d, stack->stack[stack->index - 4].d,
+						        stack->stack[stack->index - 3].d, stack->stack[stack->index - 2].d,
+						        stack->stack[stack->index - 1].d);
 						stack->index = 0;
 						break;
 					}
 					case op_vvcurveto: {
 						if (stack->index % 4 == 1) {
-							outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
-							                   stack->stack[2].d, stack->stack[3].d, 0.0,
-							                   stack->stack[4].d);
+							curveTo(outline, stack->stack[0].d, stack->stack[1].d,
+							        stack->stack[2].d, stack->stack[3].d, 0.0, stack->stack[4].d);
 							for (i = 5; i < stack->index; i += 4)
-								outline_put_bezier(outline, 0.0, stack->stack[i].d,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   0.0, stack->stack[i + 3].d);
+								curveTo(outline, 0.0, stack->stack[i].d, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, 0.0, stack->stack[i + 3].d);
 						} else {
 							for (i = 0; i < stack->index; i += 4)
-								outline_put_bezier(outline, 0.0, stack->stack[i].d,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   0.0, stack->stack[i + 3].d);
+								curveTo(outline, 0.0, stack->stack[i].d, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, 0.0, stack->stack[i + 3].d);
 						}
 						stack->index = 0;
 						break;
 					}
 					case op_hhcurveto: {
 						if (stack->index % 4 == 1) {
-							outline_put_bezier(outline, stack->stack[1].d, stack->stack[0].d,
-							                   stack->stack[2].d, stack->stack[3].d,
-							                   stack->stack[4].d, 0.0);
+							curveTo(outline, stack->stack[1].d, stack->stack[0].d,
+							        stack->stack[2].d, stack->stack[3].d, stack->stack[4].d, 0.0);
 							for (i = 5; i < stack->index; i += 4)
-								outline_put_bezier(outline, stack->stack[i].d, 0.0,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   stack->stack[i + 3].d, 0.0);
+								curveTo(outline, stack->stack[i].d, 0.0, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, stack->stack[i + 3].d, 0.0);
 						} else {
 							for (i = 0; i < stack->index; i += 4)
-								outline_put_bezier(outline, stack->stack[i].d, 0.0,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   stack->stack[i + 3].d, 0.0);
+								curveTo(outline, stack->stack[i].d, 0.0, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, stack->stack[i + 3].d, 0.0);
 						}
 						stack->index = 0;
 						break;
@@ -1121,22 +1082,20 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 
 						for (i = 0; i < 4 * cnt_bezier; i += 4) {
 							if ((i / 4) % 2 == 0)
-								outline_put_bezier(outline, 0.0, stack->stack[i].d,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   stack->stack[i + 3].d, 0.0);
+								curveTo(outline, 0.0, stack->stack[i].d, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, stack->stack[i + 3].d, 0.0);
 							else
-								outline_put_bezier(outline, stack->stack[i].d, 0.0,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   0.0, stack->stack[i + 3].d);
+								curveTo(outline, stack->stack[i].d, 0.0, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, 0.0, stack->stack[i + 3].d);
 						}
 						if (stack->index % 8 == 5) {
-							outline_put_bezier(
+							curveTo(
 							    outline, 0.0, stack->stack[stack->index - 5].d,
 							    stack->stack[stack->index - 4].d, stack->stack[stack->index - 3].d,
 							    stack->stack[stack->index - 2].d, stack->stack[stack->index - 1].d);
 						}
 						if (stack->index % 8 == 1) {
-							outline_put_bezier(
+							curveTo(
 							    outline, stack->stack[stack->index - 5].d, 0.0,
 							    stack->stack[stack->index - 4].d, stack->stack[stack->index - 3].d,
 							    stack->stack[stack->index - 1].d, stack->stack[stack->index - 2].d);
@@ -1152,23 +1111,21 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 
 						for (i = 0; i < 4 * cnt_bezier; i += 4) {
 							if ((i / 4) % 2 == 0)
-								outline_put_bezier(outline, stack->stack[i].d, 0.0,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   0.0, stack->stack[i + 3].d);
+								curveTo(outline, stack->stack[i].d, 0.0, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, 0.0, stack->stack[i + 3].d);
 							else
-								outline_put_bezier(outline, 0.0, stack->stack[i].d,
-								                   stack->stack[i + 1].d, stack->stack[i + 2].d,
-								                   stack->stack[i + 3].d, 0.0);
+								curveTo(outline, 0.0, stack->stack[i].d, stack->stack[i + 1].d,
+								        stack->stack[i + 2].d, stack->stack[i + 3].d, 0.0);
 						}
 
 						if (stack->index % 8 == 5) {
-							outline_put_bezier(
+							curveTo(
 							    outline, stack->stack[stack->index - 5].d, 0.0,
 							    stack->stack[stack->index - 4].d, stack->stack[stack->index - 3].d,
 							    stack->stack[stack->index - 1].d, stack->stack[stack->index - 2].d);
 						}
 						if (stack->index % 8 == 1) {
-							outline_put_bezier(
+							curveTo(
 							    outline, 0.0, stack->stack[stack->index - 5].d,
 							    stack->stack[stack->index - 4].d, stack->stack[stack->index - 3].d,
 							    stack->stack[stack->index - 2].d, stack->stack[stack->index - 1].d);
@@ -1178,33 +1135,29 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					}
 					case op_hflex: {
 						CHECK_STACK_TOP(op_hflex, 7);
-						outline_put_bezier(outline, stack->stack[0].d, 0.0, stack->stack[1].d,
-						                   stack->stack[2].d, stack->stack[3].d, 0.0);
-						outline_put_bezier(outline, stack->stack[4].d, 0.0, stack->stack[5].d,
-						                   -stack->stack[2].d, stack->stack[6].d, 0.0);
+						curveTo(outline, stack->stack[0].d, 0.0, stack->stack[1].d,
+						        stack->stack[2].d, stack->stack[3].d, 0.0);
+						curveTo(outline, stack->stack[4].d, 0.0, stack->stack[5].d,
+						        -stack->stack[2].d, stack->stack[6].d, 0.0);
 						stack->index = 0;
 						break;
 					}
 					case op_flex: {
 						CHECK_STACK_TOP(op_flex, 12);
-						outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
-						                   stack->stack[2].d, stack->stack[3].d, stack->stack[4].d,
-						                   stack->stack[5].d);
-						outline_put_bezier(outline, stack->stack[6].d, stack->stack[7].d,
-						                   stack->stack[8].d, stack->stack[9].d, stack->stack[10].d,
-						                   stack->stack[11].d);
+						curveTo(outline, stack->stack[0].d, stack->stack[1].d, stack->stack[2].d,
+						        stack->stack[3].d, stack->stack[4].d, stack->stack[5].d);
+						curveTo(outline, stack->stack[6].d, stack->stack[7].d, stack->stack[8].d,
+						        stack->stack[9].d, stack->stack[10].d, stack->stack[11].d);
 						stack->index = 0;
 						break;
 					}
 					case op_hflex1: {
 						CHECK_STACK_TOP(op_hflex1, 9);
-						outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
-						                   stack->stack[2].d, stack->stack[3].d, stack->stack[4].d,
-						                   0.0);
-						outline_put_bezier(
-						    outline, stack->stack[5].d, 0.0, stack->stack[6].d, stack->stack[7].d,
-						    stack->stack[8].d,
-						    -(stack->stack[1].d + stack->stack[3].d + stack->stack[7].d));
+						curveTo(outline, stack->stack[0].d, stack->stack[1].d, stack->stack[2].d,
+						        stack->stack[3].d, stack->stack[4].d, 0.0);
+						curveTo(outline, stack->stack[5].d, 0.0, stack->stack[6].d,
+						        stack->stack[7].d, stack->stack[8].d,
+						        -(stack->stack[1].d + stack->stack[3].d + stack->stack[7].d));
 						stack->index = 0;
 						break;
 					}
@@ -1221,11 +1174,10 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 							dx = -dx;
 							dy = stack->stack[10].d;
 						}
-						outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
-						                   stack->stack[2].d, stack->stack[3].d, stack->stack[4].d,
-						                   stack->stack[5].d);
-						outline_put_bezier(outline, stack->stack[6].d, stack->stack[7].d,
-						                   stack->stack[8].d, stack->stack[9].d, dx, dy);
+						curveTo(outline, stack->stack[0].d, stack->stack[1].d, stack->stack[2].d,
+						        stack->stack[3].d, stack->stack[4].d, stack->stack[5].d);
+						curveTo(outline, stack->stack[6].d, stack->stack[7].d, stack->stack[8].d,
+						        stack->stack[9].d, dx, dy);
 						stack->index = 0;
 						break;
 					}
@@ -1364,19 +1316,19 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					case op_callsubr: {
 						CHECK_STACK_TOP(op_callsubr, 1);
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
-						parse_outline(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
-						              lsubr.offset[lsubr_bias + subr + 1] -
-						                  lsubr.offset[lsubr_bias + subr],
-						              gsubr, lsubr, stack, outline);
+						parse_outline_callback(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
+						                       lsubr.offset[lsubr_bias + subr + 1] -
+						                           lsubr.offset[lsubr_bias + subr],
+						                       gsubr, lsubr, stack, outline, methods);
 						break;
 					}
 					case op_callgsubr: {
 						CHECK_STACK_TOP(op_callgsubr, 1);
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
-						parse_outline(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
-						              gsubr.offset[gsubr_bias + subr + 1] -
-						                  gsubr.offset[gsubr_bias + subr],
-						              gsubr, lsubr, stack, outline);
+						parse_outline_callback(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
+						                       gsubr.offset[gsubr_bias + subr + 1] -
+						                           gsubr.offset[gsubr_bias + subr],
+						                       gsubr, lsubr, stack, outline, methods);
 						break;
 					}
 				}
@@ -1389,4 +1341,54 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 
 		start += advance;
 	}
+}
+
+// Standard callbacks for outline building
+static void outline_put_point(CFF_Outline *outline, double x, double y, uint8_t t) {
+	outline->cnt_point += 1;
+	outline->x = realloc(outline->x, sizeof(double) * (outline->cnt_point));
+	outline->y = realloc(outline->y, sizeof(double) * (outline->cnt_point));
+	outline->t = realloc(outline->t, sizeof(uint8_t) * (outline->cnt_point));
+
+	if (outline->cnt_point == 1)
+		outline->x[outline->cnt_point - 1] = x, outline->y[outline->cnt_point - 1] = y;
+	else
+		outline->x[outline->cnt_point - 1] = outline->x[outline->cnt_point - 2] + x,
+		                                outline->y[outline->cnt_point - 1] =
+		                                    outline->y[outline->cnt_point - 2] + y;
+
+	outline->t[outline->cnt_point - 1] = t;
+}
+static void outline_put_bezier(CFF_Outline *outline, double x1, double y1, double x2, double y2,
+                               double x3, double y3) {
+	outline_put_point(outline, x1, y1, 0);
+	outline_put_point(outline, x2, y2, 0);
+	outline_put_point(outline, x3, y3, 1);
+}
+
+void callback_stdSetWidth(void *context, float width) {
+	CFF_Outline *outline = (CFF_Outline *)context;
+	outline->width = width;
+}
+void callback_stdNewContour(void *context) {
+	CFF_Outline *outline = (CFF_Outline *)context;
+	outline->cnt_contour += 1;
+	outline->c = realloc(outline->c, sizeof(uint16_t) * (outline->cnt_contour));
+	outline->c[outline->cnt_contour - 1] = outline->cnt_point;
+}
+void callback_stdLineTo(void *context, float x1, float y1) {
+	CFF_Outline *outline = (CFF_Outline *)context;
+	outline_put_point(outline, x1, y1, 1);
+}
+void callback_stdCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
+                         float y3) {
+	CFF_Outline *outline = (CFF_Outline *)context;
+	outline_put_bezier(outline, x1, y1, x2, y2, x3, y3);
+}
+
+void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr, CFF_Stack *stack,
+                   CFF_Outline *outline) {
+	cff_outline_builder_interface methods = {callback_stdSetWidth, callback_stdNewContour,
+	                                         callback_stdLineTo, callback_stdCurveTo};
+	parse_outline_callback(data, len, gsubr, lsubr, stack, outline, methods);
 }

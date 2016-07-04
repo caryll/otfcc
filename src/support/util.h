@@ -117,6 +117,10 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 	return fallback;
 }
 
+static INLINE json_value *json_from_sds(sds str) {
+	return json_string_new_length(sdslen(str), str);
+}
+
 // flags reader and writer
 static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) {
 	json_value *v = json_object_new(0);
@@ -319,13 +323,25 @@ static INLINE void *__caryll_allocate(size_t n, unsigned long line) {
 	}
 	return p;
 }
+static INLINE void *__caryll_allocate_clean(size_t n, unsigned long line) {
+	if (!n) return NULL;
+	void *p = calloc(n, 1);
+	if (!p) {
+		fprintf(stderr, "[%ld]Out of memory(%ld bytes)\n", line, (unsigned long)n);
+		exit(EXIT_FAILURE);
+	}
+	return p;
+}
 #ifdef __cplusplus
 #define NEW(ptr) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_CLEAN(ptr)                                                                             \
+	ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
 #define NEW_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = nullptr)
 #define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)
 #else
 #define NEW(ptr) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)), __LINE__)
+#define NEW_CLEAN(ptr) ptr = __caryll_allocate_clean(sizeof(__typeof__(*ptr)), __LINE__)
 #define NEW_N(ptr, n) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = NULL)
 #define DELETE(fn, ptr) (fn(ptr), ptr = NULL)

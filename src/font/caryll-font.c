@@ -45,6 +45,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->prep) caryll_delete_fpgm_prep(font->prep);
 	if (font->cvt_) caryll_delete_cvt(font->cvt_);
 	if (font->gasp) caryll_delete_gasp(font->gasp);
+	if (font->CFF_) caryll_delete_CFF(font->CFF_);
 	if (font->glyf) caryll_delete_glyf(font->glyf);
 	if (font->cmap) caryll_delete_cmap(font->cmap);
 	if (font->GSUB) caryll_delete_otl(font->GSUB);
@@ -73,16 +74,23 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 		font->OS_2 = caryll_read_OS_2(packet);
 		font->post = caryll_read_post(packet);
 		font->hhea = caryll_read_hhea(packet);
-		font->hmtx = caryll_read_hmtx(packet, font->hhea, font->maxp);
-		font->hdmx = caryll_read_hdmx(packet, font->maxp);
-		font->vhea = caryll_read_vhea(packet);
-		if (font->vhea) font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
 		font->cmap = caryll_read_cmap(packet);
-		font->fpgm = caryll_read_fpgm_prep(packet, 'fpgm');
-		font->prep = caryll_read_fpgm_prep(packet, 'prep');
-		font->cvt_ = caryll_read_cvt(packet, 'cvt ');
-		font->gasp = caryll_read_gasp(packet);
-		font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
+		if (font->subtype == FONTTYPE_TTF) {
+			font->hmtx = caryll_read_hmtx(packet, font->hhea, font->maxp);
+			font->vhea = caryll_read_vhea(packet);
+			if (font->vhea) font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
+			font->fpgm = caryll_read_fpgm_prep(packet, 'fpgm');
+			font->prep = caryll_read_fpgm_prep(packet, 'prep');
+			font->cvt_ = caryll_read_cvt(packet, 'cvt ');
+			font->gasp = caryll_read_gasp(packet);
+			font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
+		} else {
+			caryll_cff_parse_result cffpr = caryll_read_CFF_and_glyf(packet);
+			font->CFF_ = cffpr.meta;
+			font->glyf = cffpr.glyphs;
+			font->vhea = caryll_read_vhea(packet);
+			if (font->vhea) font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
+		}
 		if (font->glyf) {
 			font->GSUB = caryll_read_otl(packet, 'GSUB');
 			font->GPOS = caryll_read_otl(packet, 'GPOS');
@@ -104,6 +112,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 	caryll_OS_2_to_json(font->OS_2, root, dumpopts);
 	caryll_name_to_json(font->name, root, dumpopts);
 	caryll_cmap_to_json(font->cmap, root, dumpopts);
+	caryll_CFF_to_json(font->CFF_, root, dumpopts);
 	caryll_glyf_to_json(font->glyf, root, dumpopts);
 	if (!dumpopts->ignore_hints) {
 		caryll_fpgm_prep_to_json(font->fpgm, root, dumpopts, "fpgm");
