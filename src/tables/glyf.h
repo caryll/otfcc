@@ -130,7 +130,7 @@ typedef enum {
 	OVERLAP_COMPOUND = (1 << 10)
 } glyf_reference_flag;
 
-glyf_glyph *caryll_new_glyf_glhph();
+glyf_glyph *caryll_new_glyf_glyph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options *dumpopts);

@@ -37,7 +37,7 @@ typedef struct {
 	float *stemSnapH;
 	uint16_t stemSnapVCount;
 	float *stemSnapV;
-	uint32_t forceBold;
+	bool forceBold;
 	uint32_t languageGroup;
 	float expansionFactor;
 	float initialRandomSeed;

@@ -587,7 +587,7 @@ void CFF_close(CFF_File *file) {
 	}
 }
 
-void parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
+uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
                 CFF_INDEX *subr) {
 	uint8_t fd = 0;
 	int32_t off_private, len_private;
@@ -625,6 +625,8 @@ void parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect sele
 			empty_index(subr);
 	} else
 		empty_index(subr);
+	
+	return fd;
 }
 
 /*
@@ -901,6 +903,11 @@ void cff_outline_fini(CFF_Outline *out) {
   CharString program:
     w? {hs* vs* cm* hm* mt subpath}? {mt subpath}* endchar
 */
+void callback_nopSetWidth(void *context, float width) {}
+void callback_nopNewContour(void *context) {}
+void callback_nopLineTo(void *context, float x1, float y1) {}
+void callback_nopCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
+                         float y3) {}
 #define CHECK_STACK_TOP(op, n)                                                                     \
 	{                                                                                              \
 		if (stack->index < n) {                                                                    \
@@ -924,6 +931,11 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 	void (*lineTo)(void *context, float x1, float y1) = methods.lineTo;
 	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3) =
 	    methods.curveTo;
+
+	if (!setWidth) setWidth = callback_nopSetWidth;
+	if (!newContour) newContour = callback_nopNewContour;
+	if (!lineTo) lineTo = callback_nopLineTo;
+	if (!curveTo) curveTo = callback_nopCurveTo;
 
 	while (start < data + len) {
 		advance = decode_cs2_token(start, &val);

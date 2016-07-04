@@ -50,7 +50,7 @@ void caryll_font_consolidate_glyf(caryll_font *font) {
 			if (font->glyf->glyphs[j]) {
 				caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
 			} else {
-				font->glyf->glyphs[j] = caryll_new_glyf_glhph();
+				font->glyf->glyphs[j] = caryll_new_glyf_glyph();
 			}
 		}
 	}

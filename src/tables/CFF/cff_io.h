@@ -317,22 +317,6 @@ typedef struct {
 } cff_blob;
 
 typedef struct {
-	CFF_Dict *dict;
-	CFF_INDEX *subr;
-} CFF_Private;
-
-typedef struct {
-	CFF_Dict *dict;
-	CFF_Charset *charset;
-	CFF_Encoding *encoding;
-	CFF_INDEX *charstrings;
-	CFF_Private *private_dict;
-	CFF_FDSelect *fdselect;
-	CFF_INDEX *fdarray;
-	CFF_FDSelect *select;
-} CFF_DICT;
-
-typedef struct {
 	uint8_t *raw_data;
 	uint32_t raw_length;
 	uint16_t cnt_glyph;
@@ -342,7 +326,6 @@ typedef struct {
 	CFF_INDEX top_dict;
 	CFF_INDEX string;
 	CFF_INDEX global_subr;
-	// CFF_DICT    topdict;
 
 	CFF_Encoding encodings; // offset
 	CFF_Charset charsets;   // offset
@@ -412,7 +395,7 @@ extern CFF_File *CFF_file_open(const char *fname);
 extern CFF_File *CFF_sfnt_open(const char *fname, uint32_t offset, uint32_t len);
 extern void CFF_close(CFF_File *file);
 
-extern void parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
+extern uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
                        CFF_INDEX *subr);
 
 extern CFF_Dict *parse_dict(uint8_t *data, uint32_t len);
@@ -425,6 +408,9 @@ extern void print_glyph(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX 
                         CFF_Stack *stack);
 extern void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
                           CFF_Stack *stack, CFF_Outline *outline);
+void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
+                            CFF_Stack *stack, void *outline,
+                            cff_outline_builder_interface methods);
 
 extern CFF_Outline *cff_outline_init(void);
 extern void cff_outline_fini(CFF_Outline *out);

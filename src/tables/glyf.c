@@ -3,7 +3,7 @@
 
 typedef enum { MASK_ON_CURVE = 1 } glyf_oncurve_mask;
 
-glyf_glyph *caryll_new_glyf_glhph() {
+glyf_glyph *caryll_new_glyf_glyph() {
 	glyf_glyph *g = malloc(sizeof(glyf_glyph));
 	g->numberOfContours = 0;
 	g->numberOfReferences = 0;
@@ -46,7 +46,7 @@ static INLINE glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint1
 
 static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start,
                                                    uint16_t numberOfContours) {
-	glyf_glyph *g = caryll_new_glyf_glhph();
+	glyf_glyph *g = caryll_new_glyf_glyph();
 	g->numberOfContours = numberOfContours;
 	g->numberOfReferences = 0;
 
@@ -146,8 +146,8 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start,
 	}
 	free(flags);
 	// turn deltas to absolute coordiantes
-	int16_t cx = 0;
-	int16_t cy = 0;
+	float cx = 0;
+	float cy = 0;
 	for (uint16_t j = 0; j < numberOfContours; j++) {
 		for (uint16_t k = 0; k < contours[j].pointsCount; k++) {
 			cx += contours[j].points[k].x;
@@ -161,7 +161,7 @@ static INLINE glyf_glyph *caryll_read_simple_glyph(font_file_pointer start,
 }
 
 static INLINE glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
-	glyf_glyph *g = caryll_new_glyf_glhph();
+	glyf_glyph *g = caryll_new_glyf_glyph();
 	g->numberOfContours = 0;
 	// pass 1, read references quantity
 	uint16_t flags;
@@ -315,7 +315,7 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
 				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
 			} else { // space glyph
-				glyf->glyphs[j] = caryll_new_glyf_glhph();
+				glyf->glyphs[j] = caryll_new_glyf_glyph();
 			}
 		}
 		goto PRESENT;
