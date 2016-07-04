@@ -1269,8 +1269,10 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						stack->index -= 1;
 						break;
 					}
-					case op_drop:
+					case op_drop: {
+						stack->index -= 1;
 						break;
+					}
 					case op_put: {
 						double val = stack->stack[stack->index - 2].d;
 						int32_t i = (int32_t)stack->stack[stack->index - 1].d;
@@ -1306,8 +1308,11 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						stack->stack[stack->index - 1].d = sqrt(num);
 						break;
 					}
-					case op_dup:
+					case op_dup: {
+						stack->stack[stack->index] = stack->stack[stack->index - 1];
+						stack->index += 1;
 						break;
+					}
 					case op_exch: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
