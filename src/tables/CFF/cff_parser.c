@@ -179,7 +179,7 @@ CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx)
 
 		switch (val.t) {
 			case CFF_OPERATOR:
-				if (val.i == (int32_t) op && idx <= index) res = stack[idx];
+				if (val.i == (int32_t)op && idx <= index) res = stack[idx];
 				index = 0;
 				break;
 
@@ -969,37 +969,41 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						uint32_t hint = (stack->stem + 7) / 8;
 						advance += hint;
 						stack->index = 0;
-					} break;
+						break;
+					}
 
-					case op_vmoveto:
+					case op_vmoveto: {
 						if (stack->index != 1) outline->width = stack->stack[0].d;
 						outline_put_contour(outline, outline->cnt_point);
 						outline_put_point(outline, 0.0, stack->stack[stack->index - 1].d, 1);
 						stack->index = 0;
 						break;
-					case op_rmoveto:
+					}
+					case op_rmoveto: {
 						if (stack->index != 2) outline->width = stack->stack[0].d;
 						outline_put_contour(outline, outline->cnt_point);
 						outline_put_point(outline, stack->stack[stack->index - 2].d,
 						                  stack->stack[stack->index - 1].d, 1);
 						stack->index = 0;
 						break;
-					case op_hmoveto:
+					}
+					case op_hmoveto: {
 						if (stack->index != 1) outline->width = stack->stack[0].d;
 						outline_put_contour(outline, outline->cnt_point);
 						outline_put_point(outline, stack->stack[stack->index - 1].d, 0.0, 1);
 						stack->index = 0;
 						break;
-
-					case op_endchar:
+					}
+					case op_endchar: {
 						break;
-
-					case op_rlineto:
+					}
+					case op_rlineto: {
 						for (i = 0; i < stack->index; i += 2)
 							outline_put_point(outline, stack->stack[i].d, stack->stack[i + 1].d, 1);
 						stack->index = 0;
 						break;
-					case op_vlineto:
+					}
+					case op_vlineto: {
 						if (stack->index % 2 == 1) {
 							outline_put_point(outline, 0.0, stack->stack[0].d, 1);
 							for (i = 1; i < stack->index; i += 2) {
@@ -1014,7 +1018,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						}
 						stack->index = 0;
 						break;
-					case op_hlineto:
+					}
+					case op_hlineto: {
 						if (stack->index % 2 == 1) {
 							outline_put_point(outline, stack->stack[0].d, 0.0, 1);
 							for (i = 1; i < stack->index; i += 2) {
@@ -1029,15 +1034,16 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						}
 						stack->index = 0;
 						break;
-
-					case op_rrcurveto:
+					}
+					case op_rrcurveto: {
 						for (i = 0; i < stack->index; i += 6)
 							outline_put_bezier(outline, stack->stack[i].d, stack->stack[i + 1].d,
 							                   stack->stack[i + 2].d, stack->stack[i + 3].d,
 							                   stack->stack[i + 4].d, stack->stack[i + 5].d);
 						stack->index = 0;
 						break;
-					case op_rcurveline:
+					}
+					case op_rcurveline: {
 						for (i = 0; i < stack->index - 2; i += 6)
 							outline_put_bezier(outline, stack->stack[i].d, stack->stack[i + 1].d,
 							                   stack->stack[i + 2].d, stack->stack[i + 3].d,
@@ -1046,7 +1052,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						                  stack->stack[stack->index - 1].d, 1);
 						stack->index = 0;
 						break;
-					case op_rlinecurve:
+					}
+					case op_rlinecurve: {
 						for (i = 0; i < stack->index - 6; i += 2)
 							outline_put_point(outline, stack->stack[i].d, stack->stack[i + 1].d, 1);
 						outline_put_bezier(
@@ -1056,7 +1063,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						    stack->stack[stack->index - 1].d);
 						stack->index = 0;
 						break;
-					case op_vvcurveto:
+					}
+					case op_vvcurveto: {
 						if (stack->index % 4 == 1) {
 							outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
 							                   stack->stack[2].d, stack->stack[3].d, 0.0,
@@ -1073,7 +1081,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						}
 						stack->index = 0;
 						break;
-					case op_hhcurveto:
+					}
+					case op_hhcurveto: {
 						if (stack->index % 4 == 1) {
 							outline_put_bezier(outline, stack->stack[1].d, stack->stack[0].d,
 							                   stack->stack[2].d, stack->stack[3].d,
@@ -1090,7 +1099,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						}
 						stack->index = 0;
 						break;
-					case op_vhcurveto:
+					}
+					case op_vhcurveto: {
 						if (stack->index % 4 == 1)
 							cnt_bezier = (stack->index - 5) / 4;
 						else
@@ -1120,7 +1130,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						}
 						stack->index = 0;
 						break;
-					case op_hvcurveto:
+					}
+					case op_hvcurveto: {
 						if (stack->index % 4 == 1)
 							cnt_bezier = (stack->index - 5) / 4;
 						else
@@ -1151,14 +1162,16 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						}
 						stack->index = 0;
 						break;
-					case op_hflex:
+					}
+					case op_hflex: {
 						outline_put_bezier(outline, stack->stack[0].d, 0.0, stack->stack[1].d,
 						                   stack->stack[2].d, stack->stack[3].d, 0.0);
 						outline_put_bezier(outline, stack->stack[4].d, 0.0, stack->stack[5].d,
 						                   -stack->stack[2].d, stack->stack[6].d, 0.0);
 						stack->index = 0;
 						break;
-					case op_flex:
+					}
+					case op_flex: {
 						outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
 						                   stack->stack[2].d, stack->stack[3].d, stack->stack[4].d,
 						                   stack->stack[5].d);
@@ -1167,7 +1180,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						                   stack->stack[11].d);
 						stack->index = 0;
 						break;
-					case op_hflex1:
+					}
+					case op_hflex1: {
 						outline_put_bezier(outline, stack->stack[0].d, stack->stack[1].d,
 						                   stack->stack[2].d, stack->stack[3].d, stack->stack[4].d,
 						                   0.0);
@@ -1177,6 +1191,7 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						    -(stack->stack[1].d + stack->stack[3].d + stack->stack[7].d));
 						stack->index = 0;
 						break;
+					}
 					case op_flex1: {
 						double dx = stack->stack[0].d + stack->stack[2].d + stack->stack[4].d +
 						            stack->stack[6].d + stack->stack[8].d;
@@ -1194,57 +1209,66 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						                   stack->stack[5].d);
 						outline_put_bezier(outline, stack->stack[6].d, stack->stack[7].d,
 						                   stack->stack[8].d, stack->stack[9].d, dx, dy);
-					}
 						stack->index = 0;
 						break;
+					}
 					case op_and: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = (num1 && num2) ? 1.0 : 0.0;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_or: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = (num1 || num2) ? 1.0 : 0.0;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_not: {
 						double num = stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 1].d = num ? 0.0 : 1.0;
-					} break;
+						break;
+					}
 					case op_abs: {
 						double num = stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 1].d = (num < 0.0) ? -num : num;
-					} break;
+						break;
+					}
 					case op_add: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = num1 + num2;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_sub: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = num1 - num2;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_div: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = num1 / num2;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_neg: {
 						double num = stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 1].d = -num;
-					} break;
+						break;
+					}
 					case op_eq: {
 						double num1 = stack->stack[stack->index - 1].d;
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = (num1 == num2) ? 1.0 : 0.0;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_drop:
 						break;
 					case op_put: {
@@ -1252,11 +1276,13 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						int32_t i = (int32_t)stack->stack[stack->index - 1].d;
 						stack->transient[i].d = val;
 						stack->index -= 2;
-					} break;
+						break;
+					}
 					case op_get: {
 						int32_t i = (int32_t)stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 1].d = stack->transient[i].d;
-					} break;
+						break;
+					}
 					case op_ifelse: {
 						double v2 = stack->stack[stack->index - 1].d;
 						double v1 = stack->stack[stack->index - 2].d;
@@ -1264,7 +1290,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						double s1 = stack->stack[stack->index - 4].d;
 						stack->stack[stack->index - 4].d = (v1 <= v2) ? s1 : s2;
 						stack->index -= 3;
-					} break;
+						break;
+					}
 					case op_random:
 						break;
 					case op_mul: {
@@ -1272,11 +1299,13 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 2].d = num1 * num2;
 						stack->index -= 1;
-					} break;
+						break;
+					}
 					case op_sqrt: {
 						double num = stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 1].d = sqrt(num);
-					} break;
+						break;
+					}
 					case op_dup:
 						break;
 					case op_exch: {
@@ -1284,7 +1313,8 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						double num2 = stack->stack[stack->index - 2].d;
 						stack->stack[stack->index - 1].d = num2;
 						stack->stack[stack->index - 2].d = num1;
-					} break;
+						break;
+					}
 					case op_index:
 						break;
 					case op_roll:
@@ -1297,14 +1327,16 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						              lsubr.offset[lsubr_bias + subr + 1] -
 						                  lsubr.offset[lsubr_bias + subr],
 						              gsubr, lsubr, stack, outline);
-					} break;
+						break;
+					}
 					case op_callgsubr: {
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						parse_outline(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
 						              gsubr.offset[gsubr_bias + subr + 1] -
 						                  gsubr.offset[gsubr_bias + subr],
 						              gsubr, lsubr, stack, outline);
-					} break;
+						break;
+					}
 				}
 				break;
 			case CS2_OPERAND:
