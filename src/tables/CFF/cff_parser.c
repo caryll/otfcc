@@ -95,13 +95,6 @@ static void printf_cff_val(CFF_Value val) {
 	if (val.t == CFF_DOUBLE) printf("%f", val.d);
 }
 
-static void printf_type2_val(CFF_Value val) {
-	if (val.t != CS2_FRACTION)
-		printf("%d", val.i);
-	else
-		printf("%f", val.d);
-}
-
 void esrap_dict(CFF_Dict *d) {
 	uint32_t i;
 
@@ -349,10 +342,8 @@ static void parse_fdselect(CFF_File *cff, int32_t offset, CFF_FDSelect *fdselect
 	}
 }
 
-static void parse_private(CFF_File *cff, int32_t offset, CFF_Private *dict) {}
-
 static void parse_cff_bytecode(CFF_File *cff) {
-	uint32_t pos, i;
+	uint32_t pos;
 	int32_t offset;
 
 	/* Header */

@@ -399,20 +399,10 @@ static const char *const string_standard[391] = {
     "Semibold",
 };
 
-// key: val
-static void print_dict_val(uint32_t op, CFF_Value *stack, uint32_t index) {
-	printf("%s: ", op_cff_name(op));
-
-	for (uint32_t i = 0; i < index; i++)
-		stack[i].t == CFF_INTEGER ? printf("%d ", stack[i].i) : printf("%f ", stack[i].d);
-
-	printf("\n");
-}
-
 // substring in name/string INDEX
-static void print_segment(char *data, uint32_t pos, uint32_t len) {
+static void print_segment(uint8_t *data, uint32_t pos, uint32_t len) {
 	char *str = calloc(len + 1, sizeof(uint8_t));
-	strncpy(str, data + pos, len);
+	strncpy(str, (const char *) data + pos, len);
 	printf("%s", str);
 	free(str);
 }
@@ -426,7 +416,7 @@ char *get_cff_sid(uint16_t idx, CFF_INDEX str) {
 	if (idx >= 0 && idx <= 390) return strdup(string_standard[idx]);
 	if (str.count > 0 && idx - 391 < str.count) {
 		char *dup = calloc(str.offset[idx - 390] - str.offset[idx - 391] + 1, sizeof(uint8_t));
-		strncpy(dup, str.data + str.offset[idx - 391] - 1,
+		strncpy(dup, (const char *) str.data + str.offset[idx - 391] - 1,
 		        str.offset[idx - 390] - str.offset[idx - 391]);
 		return dup;
 	} else

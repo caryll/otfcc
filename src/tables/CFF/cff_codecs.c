@@ -84,9 +84,9 @@ cff_blob *encode_cff_real(double val) {
 	} else {
 		uint32_t niblen = 0;
 		uint8_t *array;
-		sprintf(temp, "%.13g", val);
+		sprintf((char *) temp, "%.13g", val);
 
-		for (i = 0; i < strlen(temp);) {
+		for (i = 0; i < strlen((char *) temp);) {
 			if (temp[i] == '.')
 				niblen++, i++;
 			else if (temp[i] >= '0' && temp[i] <= '9')
@@ -112,7 +112,7 @@ cff_blob *encode_cff_real(double val) {
 			array[niblen] = 0x0f;
 		}
 
-		for (i = 0; i < strlen(temp);) {
+		for (i = 0; i < strlen((char *) temp);) {
 			if (temp[i] == '.')
 				array[j++] = 0x0a, i++;
 			else if (temp[i] >= '0' && temp[i] <= '9')
@@ -334,19 +334,19 @@ static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
 		b = *nibst % 16;
 
 		if (a != 0x0f)
-			strcat(restr, nibble_symb[a]);
+			strcat((char *) restr, nibble_symb[a]);
 		else
 			break;
 
 		if (b != 0x0f)
-			strcat(restr, nibble_symb[b]);
+			strcat((char *) restr, nibble_symb[b]);
 		else
 			break;
 
 		nibst++;
 	}
 
-	val->d = atof(restr);
+	val->d = atof((char *) restr);
 	val->t = CFF_DOUBLE;
 
 	return len;

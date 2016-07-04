@@ -559,7 +559,6 @@ cff_blob *compile_charstring(CFF_File *f) {
 
 cff_blob *compile_outline(CFF_Outline *outline) {
 	cff_blob *blob = calloc(1, sizeof(cff_blob));
-	uint16_t *len_countour = calloc(outline->cnt_contour, sizeof(uint16_t));
 
 	// glyph width (delta)
 	if (outline->width != 0.0) {
@@ -624,7 +623,7 @@ static cff_blob *__rmoveto(CFF_Outline *outline, uint16_t i) {
 		sprintf(buf, "Z\nM %g %g\n", outline->x[i], outline->y[i]);
 
 	blob->size = strlen(buf);
-	blob->data = strdup(buf);
+	blob->data = (uint8_t *) strdup(buf);
 	return blob;
 }
 
@@ -639,7 +638,7 @@ static cff_blob *__rlineto(CFF_Outline *outline, uint16_t i) {
 	sprintf(buf, "L %g %g\n", outline->x[i], outline->y[i]);
 
 	blob->size = strlen(buf);
-	blob->data = strdup(buf);
+	blob->data = (uint8_t *) strdup(buf);
 	return blob;
 }
 
@@ -655,7 +654,7 @@ static cff_blob *__rrcurveto(CFF_Outline *outline, uint16_t i) {
 	        outline->y[i + 1], outline->x[i + 2], outline->y[i + 2]);
 
 	blob->size = strlen(buf);
-	blob->data = strdup(buf);
+	blob->data = (uint8_t *) strdup(buf);
 	return blob;
 }
 
