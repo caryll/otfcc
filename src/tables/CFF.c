@@ -312,11 +312,11 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	glyf_glyph *g = caryll_new_glyf_glyph();
 	context->glyphs->glyphs[i] = g;
 
-	CFF_INDEX temp_subr;
-	CFF_Stack temp_stack;
+	CFF_INDEX localSubrs;
+	CFF_Stack stack;
 
-	temp_stack.index = 0;
-	temp_stack.stem = 0;
+	stack.index = 0;
+	stack.stem = 0;
 
 	outline_builder_context bc = {g, 0, 0, 0.0, 0.0};
 	cff_outline_builder_interface pass1 = {NULL, callback_count_contour, NULL, NULL};
@@ -327,9 +327,9 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != CFF_FDSELECT_UNSPECED)
-		fd = parse_subr(i, f->raw_data, f->font_dict, f->fdselect, &temp_subr);
+		fd = parse_subr(i, f->raw_data, f->font_dict, f->fdselect, &localSubrs);
 	else
-		fd = parse_subr(i, f->raw_data, f->top_dict, f->fdselect, &temp_subr);
+		fd = parse_subr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
 	g->fdIndex = fd;
 	if (context->meta->fdArray && fd >= 0 && fd < context->meta->fdArrayCount &&
@@ -346,26 +346,26 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	uint32_t charStringLength = f->char_strings.offset[i + 1] - f->char_strings.offset[i];
 
 	// PASS 1 : Count contours
-	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, temp_subr, &temp_stack,
-	                       &bc, pass1);
+	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
+	                       pass1);
 	NEW_N(g->contours, g->numberOfContours);
 
 	// PASS 2 : Count points
-	temp_stack.index = 0;
-	temp_stack.stem = 0;
-	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, temp_subr, &temp_stack,
-	                       &bc, pass2);
+	stack.index = 0;
+	stack.stem = 0;
+	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
+	                       pass2);
 	for (uint16_t j = 0; j < g->numberOfContours; j++) {
 		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
 	}
 
 	// PASS 3 : Draw points
-	temp_stack.index = 0;
-	temp_stack.stem = 0;
+	stack.index = 0;
+	stack.stem = 0;
 	bc.jContour = 0;
 	bc.jPoint = 0;
-	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, temp_subr, &temp_stack,
-	                       &bc, pass3);
+	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
+	                       pass3);
 
 	// PASS 4 : Turn deltas into absolute coordinates
 	float cx = 0;
@@ -378,7 +378,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 			g->contours[j].points[k].y = cy;
 		}
 	}
-	esrap_index(temp_subr);
+	esrap_index(localSubrs);
 }
 
 caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
