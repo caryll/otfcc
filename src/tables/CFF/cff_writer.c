@@ -141,7 +141,7 @@ cff_blob *compile_charset(CFF_Charset cset) {
 			blob->size = 1 + cset.s * 2;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 0;
-			for (int i = 0; i < cset.s; i++)
+			for (uint32_t i = 0; i < cset.s; i++)
 				blob->data[1 + 2 * i] = cset.f0.glyph[i] / 256,
 				                   blob->data[2 + 2 * i] = cset.f0.glyph[i] % 256;
 			return blob;
@@ -151,7 +151,7 @@ cff_blob *compile_charset(CFF_Charset cset) {
 			blob->size = 1 + cset.s * 3;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 1;
-			for (int i = 0; i < cset.s; i++)
+			for (uint32_t i = 0; i < cset.s; i++)
 				blob->data[1 + 3 * i] = cset.f1.range1[i].first / 256,
 				                   blob->data[2 + 3 * i] = cset.f1.range1[i].first % 256,
 				                   blob->data[3 + 3 * i] = cset.f1.range1[i].nleft;
@@ -162,7 +162,7 @@ cff_blob *compile_charset(CFF_Charset cset) {
 			blob->size = 1 + cset.s * 4;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 2;
-			for (int i = 0; i < cset.s; i++)
+			for (uint32_t i = 0; i < cset.s; i++)
 				blob->data[1 + 4 * i] = cset.f2.range2[i].first / 256,
 				                   blob->data[2 + 4 * i] = cset.f2.range2[i].first % 256,
 				                   blob->data[3 + 4 * i] = cset.f2.range2[i].nleft / 256,
@@ -225,7 +225,7 @@ cff_blob *compile_pubdict(uint8_t *data, int32_t len) {
 	CFF_Dict *dict = parse_dict(data, len);
 	blob->size = 0;
 
-	for (int i = 0; i < dict->count; i++) {
+	for (uint32_t i = 0; i < dict->count; i++) {
 		switch (dict->ents[i].op) {
 			case op_version:
 			case op_Notice:
@@ -255,7 +255,7 @@ cff_blob *compile_pubdict(uint8_t *data, int32_t len) {
 			case op_CIDCount:
 			case op_UIDBase:
 			case op_FontName:
-				for (int j = 0; j < dict->ents[i].cnt; j++) {
+				for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
 					cff_blob *blob_val;
 
 					if (dict->ents[i].vals[j].t == CFF_INTEGER)
@@ -327,7 +327,7 @@ cff_blob *compile_private(CFF_File *f) {
 		CFF_Dict *dict = parse_dict(f->raw_data + private_off, private_len);
 		blob->size = 0;
 
-		for (int i = 0; i < dict->count; i++) {
+		for (uint32_t i = 0; i < dict->count; i++) {
 			switch (dict->ents[i].op) {
 				case op_BlueValues:
 				case op_OtherBlues:
@@ -346,7 +346,7 @@ cff_blob *compile_private(CFF_File *f) {
 				case op_initialRandomSeed:
 				case op_defaultWidthX:
 				case op_nominalWidthX:
-					for (int j = 0; j < dict->ents[i].cnt; j++) {
+					for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
 						cff_blob *blob_val;
 
 						if (dict->ents[i].vals[j].t == CFF_INTEGER)
@@ -623,7 +623,7 @@ static cff_blob *__rmoveto(CFF_Outline *outline, uint16_t i) {
 		sprintf(buf, "Z\nM %g %g\n", outline->x[i], outline->y[i]);
 
 	blob->size = strlen(buf);
-	blob->data = (uint8_t *) strdup(buf);
+	blob->data = (uint8_t *)strdup(buf);
 	return blob;
 }
 
@@ -638,7 +638,7 @@ static cff_blob *__rlineto(CFF_Outline *outline, uint16_t i) {
 	sprintf(buf, "L %g %g\n", outline->x[i], outline->y[i]);
 
 	blob->size = strlen(buf);
-	blob->data = (uint8_t *) strdup(buf);
+	blob->data = (uint8_t *)strdup(buf);
 	return blob;
 }
 
@@ -654,7 +654,7 @@ static cff_blob *__rrcurveto(CFF_Outline *outline, uint16_t i) {
 	        outline->y[i + 1], outline->x[i + 2], outline->y[i + 2]);
 
 	blob->size = strlen(buf);
-	blob->data = (uint8_t *) strdup(buf);
+	blob->data = (uint8_t *)strdup(buf);
 	return blob;
 }
 

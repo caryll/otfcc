@@ -281,8 +281,8 @@ typedef struct {
 typedef struct {
 	CFF_Value stack[48];
 	CFF_Value transient[32];
-	int8_t index;
-	int8_t stem;
+	uint8_t index;
+	uint8_t stem;
 } CFF_Stack;
 
 typedef struct {

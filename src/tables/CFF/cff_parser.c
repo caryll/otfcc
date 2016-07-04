@@ -179,7 +179,7 @@ CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx)
 
 		switch (val.t) {
 			case CFF_OPERATOR:
-				if (val.i == op && idx <= index) res = stack[idx];
+				if (val.i == (int32_t) op && idx <= index) res = stack[idx];
 				index = 0;
 				break;
 
@@ -730,7 +730,7 @@ void print_glyph(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr, 
 						uint32_t hint = (stack->stem + 7) / 8;
 						print_charstring(val.i, stack->stack, stack->index);
 
-						for (int i = 0; i < hint; i++) print_hintmask(*(start + advance + i));
+						for (uint32_t i = 0; i < hint; i++) print_hintmask(*(start + advance + i));
 
 						printf("\n");
 

@@ -91,7 +91,7 @@ typedef struct {
 
 table_CFF *caryll_new_cff();
 void caryll_delete_CFF(table_CFF *table);
-caryll_cff_parse_result *caryll_read_CFF_and_glyf(caryll_packet packet, uint32_t tag);
+caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet, uint32_t tag);
 void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts,
                         const char *tag);
 table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts);

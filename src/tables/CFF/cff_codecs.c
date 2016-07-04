@@ -208,7 +208,7 @@ cff_blob *encode_cs2_real(double val) {
 }
 
 uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val) {
-	uint32_t advance;
+	uint32_t advance = 0;
 
 	if (*start >= 0 && *start <= 27) {
 		val->t = CS2_OPERATOR;
@@ -265,7 +265,7 @@ uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val) {
 // decode integer
 static uint32_t cff_dec_i(uint8_t *start, CFF_Value *val) {
 	uint8_t b0 = *start, b1, b2, b3, b4;
-	uint32_t len;
+	uint32_t len = 0;
 
 	if (b0 >= 32 && b0 <= 246) {
 		val->i = b0 - 139;
@@ -355,7 +355,7 @@ static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
 // decode operator
 static uint32_t cff_dec_o(uint8_t *start, CFF_Value *val) {
 	uint8_t b0 = *start, b1;
-	uint32_t len;
+	uint32_t len = 0;
 
 	if (b0 >= 0 && b0 <= 21) {
 		if (b0 != 12) {
