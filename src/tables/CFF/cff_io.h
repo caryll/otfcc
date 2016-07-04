@@ -270,6 +270,11 @@ enum {
 	CFF_DOUBLE,
 };
 
+enum {
+	CFF_LIMIT_STACK = 48,
+	CFF_LIMIT_TRANSIENT = 32
+};
+
 typedef struct {
 	uint32_t t;
 	union {
@@ -279,7 +284,7 @@ typedef struct {
 } CFF_Value;
 
 typedef struct {
-	CFF_Value stack[48];
+	CFF_Value stack[256];
 	CFF_Value transient[32];
 	uint8_t index;
 	uint8_t stem;
