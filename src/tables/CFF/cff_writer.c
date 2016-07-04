@@ -570,7 +570,7 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 	// rmoveto/rlineto/rrcurveto
 	for (int i = 0; i < outline->cnt_point; /**/) {
 		switch (outline->t[i]) {
-			case 1:
+			case 1: {
 				if (check_contour(outline, i)) {
 					cff_blob *rmoveto = _rmoveto(outline, i);
 					blob_merge(blob, rmoveto);
@@ -583,14 +583,15 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 
 				i += 1;
 				break;
+			}
 			case 0: {
 				cff_blob *rrcurveto = _rrcurveto(outline, i);
 				blob_merge(blob, rrcurveto);
 				blob_free(rrcurveto);
-			}
 
 				i += 3;
 				break;
+			}
 		}
 	}
 
