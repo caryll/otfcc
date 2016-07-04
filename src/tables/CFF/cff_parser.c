@@ -967,13 +967,14 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					case op_vstem:
 					case op_hstemhm:
 					case op_vstemhm:
-						if (stack->index % 2 == 1) outline->width = stack->stack[0].d;
+						if (stack->index % 2) outline->width = stack->stack[0].d;
 						stack->stem += stack->index / 2;
 						stack->index = 0;
 						break;
 					case op_hintmask:
 					case op_cntrmask: {
-						stack->stem += stack->index / 2;
+						if (stack->index % 2) outline->width = stack->stack[0].d;
+						stack->stem += stack->index >> 1;
 						uint32_t hint = (stack->stem + 7) >> 3;
 						advance += hint;
 						stack->index = 0;
@@ -981,14 +982,16 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 					}
 
 					case op_vmoveto: {
-						if (stack->index != 1) outline->width = stack->stack[0].d;
+						CHECK_STACK_TOP(op_vmoveto, 1);
+						if (stack->index > 1) outline->width = stack->stack[0].d;
 						outline_put_contour(outline, outline->cnt_point);
 						outline_put_point(outline, 0.0, stack->stack[stack->index - 1].d, 1);
 						stack->index = 0;
 						break;
 					}
 					case op_rmoveto: {
-						if (stack->index != 2) outline->width = stack->stack[0].d;
+						CHECK_STACK_TOP(op_rmoveto, 2);
+						if (stack->index > 2) outline->width = stack->stack[0].d;
 						outline_put_contour(outline, outline->cnt_point);
 						outline_put_point(outline, stack->stack[stack->index - 2].d,
 						                  stack->stack[stack->index - 1].d, 1);
@@ -996,13 +999,15 @@ void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr
 						break;
 					}
 					case op_hmoveto: {
-						if (stack->index != 1) outline->width = stack->stack[0].d;
+						CHECK_STACK_TOP(op_hmoveto, 1);
+						if (stack->index > 1) outline->width = stack->stack[0].d;
 						outline_put_contour(outline, outline->cnt_point);
 						outline_put_point(outline, stack->stack[stack->index - 1].d, 0.0, 1);
 						stack->index = 0;
 						break;
 					}
 					case op_endchar: {
+						if (stack->index > 0) outline->width = stack->stack[0].d;
 						break;
 					}
 					case op_rlineto: {
