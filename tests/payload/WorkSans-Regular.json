@@ -6184,10 +6184,12 @@
                 "flags": {},
                 "subtables": [
                     {
-                        "IJ": ["I","J"],
-                        "glyph118": ["Iacute","J"],
-                        "ij": ["i","j"],
-                        "glyph284": ["iacute","j"]
+                        "substitutions": [
+                            {"from":["I","J"],"to":"IJ"},
+                            {"from":["Iacute","J"],"to":"glyph118"},
+                            {"from":["i","j"],"to":"ij"},
+                            {"from":["iacute","j"],"to":"glyph284"}
+                        ]
                     }
                 ]
             },
@@ -7241,56 +7243,58 @@
                 "flags": {},
                 "subtables": [
                     {
-                        "glyph311": ["c","t"],
-                        "glyph314": ["s","t"],
-                        "glyph315": ["longs","i"],
-                        "glyph316": ["longs","l"],
-                        "glyph317": ["longs","s"],
-                        "uni2780": ["parenleft","one","parenright"],
-                        "uni2781": ["parenleft","two","parenright"],
-                        "uni2782": ["parenleft","three","parenright"],
-                        "uni2783": ["parenleft","four","parenright"],
-                        "uni2784": ["parenleft","five","parenright"],
-                        "uni2785": ["parenleft","six","parenright"],
-                        "uni2786": ["parenleft","seven","parenright"],
-                        "uni2787": ["parenleft","eight","parenright"],
-                        "uni2788": ["parenleft","nine","parenright"],
-                        "uni2780": ["parenleft","glyph457","parenright"],
-                        "uni2781": ["parenleft","glyph458","parenright"],
-                        "uni2782": ["parenleft","glyph459","parenright"],
-                        "uni2783": ["parenleft","glyph460","parenright"],
-                        "uni2784": ["parenleft","glyph461","parenright"],
-                        "uni2785": ["parenleft","glyph462","parenright"],
-                        "uni2786": ["parenleft","glyph463","parenright"],
-                        "uni2787": ["parenleft","glyph464","parenright"],
-                        "uni2788": ["parenleft","glyph465","parenright"],
-                        "uni2780": ["parenleft","glyph467","parenright"],
-                        "uni2781": ["parenleft","glyph468","parenright"],
-                        "uni2782": ["parenleft","glyph469","parenright"],
-                        "uni2783": ["parenleft","glyph470","parenright"],
-                        "uni2784": ["parenleft","glyph471","parenright"],
-                        "uni2785": ["parenleft","glyph472","parenright"],
-                        "uni2786": ["parenleft","glyph473","parenright"],
-                        "uni2787": ["parenleft","glyph474","parenright"],
-                        "uni2788": ["parenleft","glyph475","parenright"],
-                        "uni2780": ["parenleft","glyph477","parenright"],
-                        "uni2781": ["parenleft","glyph478","parenright"],
-                        "uni2782": ["parenleft","glyph479","parenright"],
-                        "uni2783": ["parenleft","glyph480","parenright"],
-                        "uni2784": ["parenleft","glyph481","parenright"],
-                        "uni2785": ["parenleft","glyph482","parenright"],
-                        "uni2786": ["parenleft","glyph483","parenright"],
-                        "uni2787": ["parenleft","glyph484","parenright"],
-                        "uni2788": ["parenleft","glyph485","parenright"],
-                        "uni2780": ["glyph587","one","glyph588"],
-                        "uni2781": ["glyph587","two","glyph588"],
-                        "uni2782": ["glyph587","three","glyph588"],
-                        "uni2783": ["glyph587","four","glyph588"],
-                        "uni2784": ["glyph587","five","glyph588"],
-                        "uni2785": ["glyph587","six","glyph588"],
-                        "uni2786": ["glyph587","seven","glyph588"],
-                        "uni2787": ["glyph587","eight","glyph588"],
-                        "uni2788": ["glyph587","nine","glyph588"]
+                        "substitutions": [
+                            {"from":["c","t"],"to":"glyph311"},
+                            {"from":["s","t"],"to":"glyph314"},
+                            {"from":["longs","i"],"to":"glyph315"},
+                            {"from":["longs","l"],"to":"glyph316"},
+                            {"from":["longs","s"],"to":"glyph317"},
+                            {"from":["parenleft","one","parenright"],"to":"uni2780"},
+                            {"from":["parenleft","two","parenright"],"to":"uni2781"},
+                            {"from":["parenleft","three","parenright"],"to":"uni2782"},
+                            {"from":["parenleft","four","parenright"],"to":"uni2783"},
+                            {"from":["parenleft","five","parenright"],"to":"uni2784"},
+                            {"from":["parenleft","six","parenright"],"to":"uni2785"},
+                            {"from":["parenleft","seven","parenright"],"to":"uni2786"},
+                            {"from":["parenleft","eight","parenright"],"to":"uni2787"},
+                            {"from":["parenleft","nine","parenright"],"to":"uni2788"},
+                            {"from":["parenleft","glyph457","parenright"],"to":"uni2780"},
+                            {"from":["parenleft","glyph458","parenright"],"to":"uni2781"},
+                            {"from":["parenleft","glyph459","parenright"],"to":"uni2782"},
+                            {"from":["parenleft","glyph460","parenright"],"to":"uni2783"},
+                            {"from":["parenleft","glyph461","parenright"],"to":"uni2784"},
+                            {"from":["parenleft","glyph462","parenright"],"to":"uni2785"},
+                            {"from":["parenleft","glyph463","parenright"],"to":"uni2786"},
+                            {"from":["parenleft","glyph464","parenright"],"to":"uni2787"},
+                            {"from":["parenleft","glyph465","parenright"],"to":"uni2788"},
+                            {"from":["parenleft","glyph467","parenright"],"to":"uni2780"},
+                            {"from":["parenleft","glyph468","parenright"],"to":"uni2781"},
+                            {"from":["parenleft","glyph469","parenright"],"to":"uni2782"},
+                            {"from":["parenleft","glyph470","parenright"],"to":"uni2783"},
+                            {"from":["parenleft","glyph471","parenright"],"to":"uni2784"},
+                            {"from":["parenleft","glyph472","parenright"],"to":"uni2785"},
+                            {"from":["parenleft","glyph473","parenright"],"to":"uni2786"},
+                            {"from":["parenleft","glyph474","parenright"],"to":"uni2787"},
+                            {"from":["parenleft","glyph475","parenright"],"to":"uni2788"},
+                            {"from":["parenleft","glyph477","parenright"],"to":"uni2780"},
+                            {"from":["parenleft","glyph478","parenright"],"to":"uni2781"},
+                            {"from":["parenleft","glyph479","parenright"],"to":"uni2782"},
+                            {"from":["parenleft","glyph480","parenright"],"to":"uni2783"},
+                            {"from":["parenleft","glyph481","parenright"],"to":"uni2784"},
+                            {"from":["parenleft","glyph482","parenright"],"to":"uni2785"},
+                            {"from":["parenleft","glyph483","parenright"],"to":"uni2786"},
+                            {"from":["parenleft","glyph484","parenright"],"to":"uni2787"},
+                            {"from":["parenleft","glyph485","parenright"],"to":"uni2788"},
+                            {"from":["glyph587","one","glyph588"],"to":"uni2780"},
+                            {"from":["glyph587","two","glyph588"],"to":"uni2781"},
+                            {"from":["glyph587","three","glyph588"],"to":"uni2782"},
+                            {"from":["glyph587","four","glyph588"],"to":"uni2783"},
+                            {"from":["glyph587","five","glyph588"],"to":"uni2784"},
+                            {"from":["glyph587","six","glyph588"],"to":"uni2785"},
+                            {"from":["glyph587","seven","glyph588"],"to":"uni2786"},
+                            {"from":["glyph587","eight","glyph588"],"to":"uni2787"},
+                            {"from":["glyph587","nine","glyph588"],"to":"uni2788"}
+                        ]
                     }
                 ]
             },
@@ -7299,9 +7303,11 @@
                 "flags": {},
                 "subtables": [
                     {
-                        "glyph315": ["longs","i"],
-                        "glyph316": ["longs","l"],
-                        "glyph317": ["longs","s"]
+                        "substitutions": [
+                            {"from":["longs","i"],"to":"glyph315"},
+                            {"from":["longs","l"],"to":"glyph316"},
+                            {"from":["longs","s"],"to":"glyph317"}
+                        ]
                     }
                 ]
             },
@@ -7380,8 +7386,10 @@
                 "flags": {},
                 "subtables": [
                     {
-                        "uniFB01": ["f","i"],
-                        "glyph313": ["f","l"]
+                        "substitutions": [
+                            {"from":["f","i"],"to":"uniFB01"},
+                            {"from":["f","l"],"to":"glyph313"}
+                        ]
                     }
                 ]
             },
