@@ -669,9 +669,6 @@ size_t json_measure_ex (json_value * value, json_serialize_opts opts)
 
             total += snprintf (NULL, 0, "%g", value->u.dbl);
 
-            if (value->u.dbl - floor (value->u.dbl) < 0.001)
-                total += 2;
-
             break;
 
          case json_boolean:
@@ -894,12 +891,7 @@ void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts
             {
                *dot = '.';
             }
-            else if (!strchr (ptr, '.'))
-            {
-               *buf ++ = '.';
-               *buf ++ = '0';
-            }
-
+            
             break;
 
          case json_boolean:

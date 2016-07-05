@@ -373,25 +373,25 @@ static INLINE json_value *coord_to_json(float z) {
 		return json_double_new(z);
 	}
 }
-static INLINE json_value *glyf_glyph_contours_to_json(glyf_glyph *g,
-                                                      caryll_dump_options *dumpopts) {
+static INLINE void glyf_glyph_contours_to_json(glyf_glyph *g, json_value *target) {
+	if(!g->numberOfContours || !g->contours) return;
 	json_value *contours = json_array_new(g->numberOfContours);
 	for (uint16_t k = 0; k < g->numberOfContours; k++) {
-		glyf_contour c = g->contours[k];
-		json_value *contour = json_array_new(c.pointsCount);
-		for (uint16_t m = 0; m < c.pointsCount; m++) {
-			json_value *point = json_object_new(3);
-			json_object_push(point, "x", coord_to_json(c.points[m].x));
-			json_object_push(point, "y", coord_to_json(c.points[m].y));
-			json_object_push(point, "on", json_boolean_new(c.points[m].onCurve & MASK_ON_CURVE));
+		glyf_contour *c = &(g->contours[k]);
+		json_value *contour = json_array_new(c->pointsCount);
+		for (uint16_t m = 0; m < c->pointsCount; m++) {
+			json_value *point = json_object_new(4);
+			json_object_push(point, "x", coord_to_json(c->points[m].x));
+			json_object_push(point, "y", coord_to_json(c->points[m].y));
+			json_object_push(point, "on", json_boolean_new(c->points[m].onCurve & MASK_ON_CURVE));
 			json_array_push(contour, point);
 		}
 		json_array_push(contours, contour);
 	}
-	return contours;
+	json_object_push(target, "contours", preserialize(contours));
 }
-static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g,
-                                                        caryll_dump_options *dumpopts) {
+static INLINE void glyf_glyph_references_to_json(glyf_glyph *g, json_value *target) {
+	if(!g->numberOfReferences || !g->references) return;
 	json_value *references = json_array_new(g->numberOfReferences);
 	for (uint16_t k = 0; k < g->numberOfReferences; k++) {
 		glyf_reference *r = &(g->references[k]);
@@ -408,7 +408,7 @@ static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g,
 		if (r->useMyMetrics) { json_object_push(ref, "useMyMetrics", json_boolean_new(true)); }
 		json_array_push(references, ref);
 	}
-	return references;
+	json_object_push(target, "references", preserialize(references));
 }
 static INLINE json_value *glyf_glyph_stemdefs_to_json(glyf_postscript_hint_stemdef *stems,
                                                       uint16_t count) {
@@ -444,37 +444,32 @@ static INLINE json_value *glyf_glyph_maskdefs_to_json(glyf_postscript_hint_mask 
 }
 
 static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
-	json_value *glyph = json_object_new(7);
+	json_value *glyph = json_object_new(10);
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
 	if (dumpopts->has_vertical_metrics) {
 		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
 		json_object_push(glyph, "verticalOrigin", json_integer_new(g->verticalOrigin));
 	}
-	if (g->contours) {
-		json_object_push(glyph, "contours", preserialize(glyf_glyph_contours_to_json(g, dumpopts)));
-	}
-	if (g->references) {
-		json_object_push(glyph, "references",
-		                 preserialize(glyf_glyph_references_to_json(g, dumpopts)));
-	}
-	if (!dumpopts->ignore_hints && g->instructionsLength) {
+	glyf_glyph_contours_to_json(g, glyph);
+	glyf_glyph_references_to_json(g, glyph);
+	if (!dumpopts->ignore_hints && g->instructions && g->instructionsLength) {
 		json_object_push(glyph, "instructions",
 		                 instr_to_json(g->instructions, g->instructionsLength, dumpopts));
 	}
-	if (!dumpopts->ignore_hints && g->stemH) {
+	if (!dumpopts->ignore_hints && g->stemH && g->numberOfStemH) {
 		json_object_push(glyph, "stemH",
 		                 preserialize(glyf_glyph_stemdefs_to_json(g->stemH, g->numberOfStemH)));
 	}
-	if (!dumpopts->ignore_hints && g->stemV) {
+	if (!dumpopts->ignore_hints && g->stemV && g->numberOfStemV) {
 		json_object_push(glyph, "stemV",
 		                 preserialize(glyf_glyph_stemdefs_to_json(g->stemV, g->numberOfStemV)));
 	}
-	if (!dumpopts->ignore_hints && g->hintMasks) {
+	if (!dumpopts->ignore_hints && g->hintMasks && g->numberOfHintMasks) {
 		json_object_push(glyph, "hintMasks", preserialize(glyf_glyph_maskdefs_to_json(
 		                                         g->hintMasks, g->numberOfHintMasks,
 		                                         g->numberOfStemH, g->numberOfStemV)));
 	}
-	if (!dumpopts->ignore_hints && g->contourMasks) {
+	if (!dumpopts->ignore_hints && g->contourMasks && g->numberOfContourMasks) {
 		json_object_push(glyph, "contourMasks", preserialize(glyf_glyph_maskdefs_to_json(
 		                                            g->contourMasks, g->numberOfContourMasks,
 		                                            g->numberOfStemH, g->numberOfStemV)));
