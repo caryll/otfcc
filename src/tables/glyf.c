@@ -335,27 +335,30 @@ ABSENT:
 	return NULL;
 }
 
+static void caryll_delete_glyf_glyph(glyf_glyph *g) {
+	if (!g) return;
+	if (g->numberOfContours > 0 && g->contours != NULL) {
+		for (uint16_t k = 0; k < g->numberOfContours; k++) {
+			if (g->contours[k].points) free(g->contours[k].points);
+		}
+		free(g->contours);
+	}
+	if (g->numberOfReferences > 0 && g->references != NULL) {
+		for (uint16_t k = 0; k < g->numberOfReferences; k++) { g->references[k].glyph.name = NULL; }
+		free(g->references);
+	}
+	if (g->instructions) { free(g->instructions); }
+	if (g->stemH) FREE(g->stemH);
+	if (g->stemV) FREE(g->stemV);
+	if (g->hintMasks) FREE(g->hintMasks);
+	if (g->contourMasks) FREE(g->contourMasks);
+	g->name = NULL;
+	free(g);
+}
 void caryll_delete_glyf(table_glyf *table) {
 	if (table->glyphs) {
 		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-			glyf_glyph *g = table->glyphs[j];
-			if (g) {
-				if (g->numberOfContours > 0 && g->contours != NULL) {
-					for (uint16_t k = 0; k < g->numberOfContours; k++) {
-						if (g->contours[k].points) free(g->contours[k].points);
-					}
-					free(g->contours);
-				}
-				if (g->numberOfReferences > 0 && g->references != NULL) {
-					for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-						g->references[k].glyph.name = NULL;
-					}
-					free(g->references);
-				}
-				if (g->instructions) { free(g->instructions); }
-				g->name = NULL;
-				free(g);
-			}
+			caryll_delete_glyf_glyph(table->glyphs[j]);
 		}
 		free(table->glyphs);
 	}
@@ -407,6 +410,38 @@ static INLINE json_value *glyf_glyph_references_to_json(glyf_glyph *g,
 	}
 	return references;
 }
+static INLINE json_value *glyf_glyph_stemdefs_to_json(glyf_postscript_hint_stemdef *stems,
+                                                      uint16_t count) {
+	json_value *a = json_array_new(count);
+	for (uint16_t j = 0; j < count; j++) {
+		json_value *stem = json_object_new(3);
+		json_object_push(stem, "position", coord_to_json(stems[j].position));
+		json_object_push(stem, "width", coord_to_json(stems[j].width));
+		json_object_push(stem, "isEdge", json_boolean_new(stems[j].isEdge));
+		json_array_push(a, stem);
+	}
+	return a;
+}
+static INLINE json_value *glyf_glyph_maskdefs_to_json(glyf_postscript_hint_mask *masks,
+                                                      uint16_t count, uint16_t nh, uint16_t nv) {
+	json_value *a = json_array_new(count);
+	for (uint16_t j = 0; j < count; j++) {
+		json_value *mask = json_object_new(3);
+		json_object_push(mask, "pointsBefore", json_integer_new(masks[j].pointsBefore));
+		json_value *h = json_array_new(nh);
+		for (uint16_t k = 0; k < nh; k++) {
+			json_array_push(h, json_boolean_new(masks[j].maskH[k]));
+		}
+		json_object_push(mask, "maskH", h);
+		json_value *v = json_array_new(nv);
+		for (uint16_t k = 0; k < nv; k++) {
+			json_array_push(v, json_boolean_new(masks[j].maskV[k]));
+		}
+		json_object_push(mask, "maskV", v);
+		json_array_push(a, mask);
+	}
+	return a;
+}
 
 static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
 	json_value *glyph = json_object_new(7);
@@ -415,11 +450,34 @@ static INLINE json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options 
 		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
 		json_object_push(glyph, "verticalOrigin", json_integer_new(g->verticalOrigin));
 	}
-	json_object_push(glyph, "contours", preserialize(glyf_glyph_contours_to_json(g, dumpopts)));
-	json_object_push(glyph, "references", preserialize(glyf_glyph_references_to_json(g, dumpopts)));
+	if (g->contours) {
+		json_object_push(glyph, "contours", preserialize(glyf_glyph_contours_to_json(g, dumpopts)));
+	}
+	if (g->references) {
+		json_object_push(glyph, "references",
+		                 preserialize(glyf_glyph_references_to_json(g, dumpopts)));
+	}
 	if (!dumpopts->ignore_hints && g->instructionsLength) {
 		json_object_push(glyph, "instructions",
 		                 instr_to_json(g->instructions, g->instructionsLength, dumpopts));
+	}
+	if (!dumpopts->ignore_hints && g->stemH) {
+		json_object_push(glyph, "stemH",
+		                 preserialize(glyf_glyph_stemdefs_to_json(g->stemH, g->numberOfStemH)));
+	}
+	if (!dumpopts->ignore_hints && g->stemV) {
+		json_object_push(glyph, "stemV",
+		                 preserialize(glyf_glyph_stemdefs_to_json(g->stemV, g->numberOfStemV)));
+	}
+	if (!dumpopts->ignore_hints && g->hintMasks) {
+		json_object_push(glyph, "hintMasks", preserialize(glyf_glyph_maskdefs_to_json(
+		                                         g->hintMasks, g->numberOfHintMasks,
+		                                         g->numberOfStemH, g->numberOfStemV)));
+	}
+	if (!dumpopts->ignore_hints && g->contourMasks) {
+		json_object_push(glyph, "contourMasks", preserialize(glyf_glyph_maskdefs_to_json(
+		                                            g->contourMasks, g->numberOfContourMasks,
+		                                            g->numberOfStemH, g->numberOfStemV)));
 	}
 	return glyph;
 }
@@ -525,7 +583,7 @@ static INLINE void wrongInstrsForGlyph(void *_g, char *reason, int pos) {
 static INLINE glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
                                                       glyph_order_entry *order_entry,
                                                       caryll_dump_options *dumpopts) {
-	glyf_glyph *g = malloc(sizeof(glyf_glyph));
+	glyf_glyph *g = caryll_new_glyf_glyph();
 	g->name = order_entry->name;
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");

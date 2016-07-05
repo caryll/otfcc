@@ -3,8 +3,9 @@
 
 #include <font/caryll-sfnt.h>
 #include <support/glyphorder.h>
-#include <support/util.h>
 #include <support/ttinstr.h>
+#include <support/util.h>
+
 
 #include "head.h"
 #include "maxp.h"
@@ -14,10 +15,10 @@ enum GlyphType { SIMPLE, COMPOSITE };
 typedef struct {
 	float x;
 	float y;
-	int8_t onCurve;        // a mask indicates whether a point is on-curve or off-curve
-	                       // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
-	                       // bit 1 - 7 : unused, set to 0
-	                       // in JSON, they are separated into several boolean fields.
+	int8_t onCurve; // a mask indicates whether a point is on-curve or off-curve
+	                // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
+	                // bit 1 - 7 : unused, set to 0
+	                // in JSON, they are separated into several boolean fields.
 } glyf_point;
 
 typedef struct {
@@ -30,14 +31,13 @@ typedef struct {
 	bool isEdge;
 	float position;
 	float width;
-} hint_stemH, hint_stemV;
+} glyf_postscript_hint_stemdef;
 
 typedef struct {
-	uint16_t contour;
-	uint16_t point;
+	uint16_t pointsBefore;
 	bool maskH[0x100];
 	bool maskV[0x100];
-} hint_mask, hint_contour_mask;
+} glyf_postscript_hint_mask;
 
 typedef struct {
 	glyph_handle glyph;
@@ -85,10 +85,10 @@ typedef struct {
 	uint16_t numberOfStemV;
 	uint16_t numberOfHintMasks;
 	uint16_t numberOfContourMasks;
-	hint_stemH *stemH;
-	hint_stemV *stemV;
-	hint_mask *hintMasks;
-	hint_contour_mask *contourMasks;
+	glyf_postscript_hint_stemdef *stemH;
+	glyf_postscript_hint_stemdef *stemV;
+	glyf_postscript_hint_mask *hintMasks;
+	glyf_postscript_hint_mask *contourMasks;
 
 	// TTF instructions
 	uint16_t instructionsLength;

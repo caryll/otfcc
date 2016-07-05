@@ -588,7 +588,7 @@ void CFF_close(CFF_File *file) {
 }
 
 uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
-                CFF_INDEX *subr) {
+                   CFF_INDEX *subr) {
 	uint8_t fd = 0;
 	int32_t off_private, len_private;
 	int32_t off_subr;
@@ -625,7 +625,7 @@ uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect s
 			empty_index(subr);
 	} else
 		empty_index(subr);
-	
+
 	return fd;
 }
 
@@ -908,6 +908,8 @@ void callback_nopNewContour(void *context) {}
 void callback_nopLineTo(void *context, float x1, float y1) {}
 void callback_nopCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
                          float y3) {}
+void callback_nopsetHint(void *context, bool isVertical, float position, float width) {}
+void callback_nopsetMask(void *context, bool isContourMask, bool *mask) { FREE(mask); }
 #define CHECK_STACK_TOP(op, n)                                                                     \
 	{                                                                                              \
 		if (stack->index < n) {                                                                    \
@@ -931,11 +933,15 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 	void (*lineTo)(void *context, float x1, float y1) = methods.lineTo;
 	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3) =
 	    methods.curveTo;
+	void (*setHint)(void *context, bool isVertical, float position, float width) = methods.setHint;
+	void (*setMask)(void *context, bool isContourMask, bool *mask) = methods.setMask;
 
 	if (!setWidth) setWidth = callback_nopSetWidth;
 	if (!newContour) newContour = callback_nopNewContour;
 	if (!lineTo) lineTo = callback_nopLineTo;
 	if (!curveTo) curveTo = callback_nopCurveTo;
+	if (!setHint) setHint = callback_nopsetHint;
+	if (!setMask) setMask = callback_nopsetMask;
 
 	while (start < data + len) {
 		advance = decode_cs2_token(start, &val);
@@ -948,15 +954,45 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 					case op_hstemhm:
 					case op_vstemhm:
 						if (stack->index % 2) setWidth(outline, stack->stack[0].d);
-						stack->stem += stack->index / 2;
+						stack->stem += stack->index >> 1;
+						float hintBase = 0;
+						for (uint16_t j = stack->index % 2; j < stack->index; j += 2) {
+							float pos = stack->stack[j].d;
+							float width = stack->stack[j + 1].d;
+							setHint(outline, (val.i == op_vstem || val.i == op_vstemhm),
+							        pos + hintBase, width);
+							hintBase += pos + width;
+						}
 						stack->index = 0;
 						break;
 					case op_hintmask:
 					case op_cntrmask: {
 						if (stack->index % 2) setWidth(outline, stack->stack[0].d);
+						bool isVertical = stack->stem > 0;
 						stack->stem += stack->index >> 1;
-						uint32_t hint = (stack->stem + 7) >> 3;
-						advance += hint;
+						float hintBase = 0;
+						for (uint16_t j = stack->index % 2; j < stack->index; j += 2) {
+							float pos = stack->stack[j].d;
+							float width = stack->stack[j + 1].d;
+							setHint(outline, isVertical, pos + hintBase, width);
+							hintBase += pos + width;
+						}
+						uint32_t maskLength = (stack->stem + 7) >> 3;
+						bool *mask;
+						NEW_N(mask, stack->stem + 7);
+						for (uint32_t byte = 0; byte < maskLength; byte++) {
+							uint8_t maskByte = start[advance + byte];
+							mask[(byte << 3) + 0] = maskByte >> 7 & 1;
+							mask[(byte << 3) + 1] = maskByte >> 6 & 1;
+							mask[(byte << 3) + 2] = maskByte >> 5 & 1;
+							mask[(byte << 3) + 3] = maskByte >> 4 & 1;
+							mask[(byte << 3) + 4] = maskByte >> 3 & 1;
+							mask[(byte << 3) + 5] = maskByte >> 2 & 1;
+							mask[(byte << 3) + 6] = maskByte >> 1 & 1;
+							mask[(byte << 3) + 7] = maskByte >> 0 & 1;
+						}
+						setMask(outline, (val.i == op_cntrmask), mask);
+						advance += maskLength;
 						stack->index = 0;
 						break;
 					}
@@ -1400,7 +1436,11 @@ void callback_stdCurveTo(void *context, float x1, float y1, float x2, float y2, 
 
 void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr, CFF_Stack *stack,
                    CFF_Outline *outline) {
-	cff_outline_builder_interface methods = {callback_stdSetWidth, callback_stdNewContour,
-	                                         callback_stdLineTo, callback_stdCurveTo};
+	cff_outline_builder_interface methods = {callback_stdSetWidth,
+	                                         callback_stdNewContour,
+	                                         callback_stdLineTo,
+	                                         callback_stdCurveTo,
+	                                         NULL,
+	                                         NULL};
 	parse_outline_callback(data, len, gsubr, lsubr, stack, outline, methods);
 }

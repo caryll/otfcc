@@ -341,6 +341,8 @@ typedef struct {
 	void (*newContour)(void *context);
 	void (*lineTo)(void *context, float x1, float y1);
 	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3);
+	void (*setHint)(void *context, bool isVertical, float position, float width);
+	void (*setMask)(void *context, bool isContourMask, bool *mask);
 } cff_outline_builder_interface;
 
 /*

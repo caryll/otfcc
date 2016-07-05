@@ -245,6 +245,11 @@ typedef struct {
 	uint16_t jPoint;
 	float defaultWidthX;
 	float nominalWidthX;
+	uint16_t pointsDefined;
+	uint8_t definedHStems;
+	uint8_t definedVStems;
+	uint8_t definedHintMasks;
+	uint8_t definedContourMasks;
 } outline_builder_context;
 
 static void callback_count_contour(void *context) {
@@ -271,6 +276,24 @@ static void callback_countpoint_curveto(void *_context, float x1, float y1, floa
 		context->jPoint += 3;
 	}
 }
+static void callback_countpoint_sethint(void *_context, bool isVertical, float position,
+                                        float width) {
+	outline_builder_context *context = (outline_builder_context *)_context;
+	if (isVertical) {
+		context->g->numberOfStemV += 1;
+	} else {
+		context->g->numberOfStemH += 1;
+	}
+}
+static void callback_countpoint_setmask(void *_context, bool isContourMask, bool *mask) {
+	outline_builder_context *context = (outline_builder_context *)_context;
+	if (isContourMask) {
+		context->g->numberOfContourMasks += 1;
+	} else {
+		context->g->numberOfHintMasks += 1;
+	}
+	free(mask);
+}
 
 static void callback_draw_setwidth(void *_context, float width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
@@ -288,6 +311,7 @@ static void callback_draw_lineto(void *_context, float x1, float y1) {
 		context->g->contours[context->jContour - 1].points[context->jPoint].x = x1;
 		context->g->contours[context->jContour - 1].points[context->jPoint].y = y1;
 		context->jPoint += 1;
+		context->pointsDefined += 1;
 	}
 }
 static void callback_draw_curveto(void *_context, float x1, float y1, float x2, float y2, float x3,
@@ -304,6 +328,41 @@ static void callback_draw_curveto(void *_context, float x1, float y1, float x2, 
 		context->g->contours[context->jContour - 1].points[context->jPoint + 2].x = x3;
 		context->g->contours[context->jContour - 1].points[context->jPoint + 2].y = y3;
 		context->jPoint += 3;
+		context->pointsDefined += 3;
+	}
+}
+static void callback_draw_sethint(void *_context, bool isVertical, float position, float width) {
+	outline_builder_context *context = (outline_builder_context *)_context;
+	if (isVertical) {
+		context->g->stemV[context->definedVStems].position = position;
+		context->g->stemV[context->definedVStems].width = width;
+		context->g->stemV[context->definedVStems].isEdge = width < 0;
+		context->definedVStems += 1;
+	} else {
+		context->g->stemH[context->definedHStems].position = position;
+		context->g->stemH[context->definedHStems].width = width;
+		context->g->stemH[context->definedHStems].isEdge = width < 0;
+		context->definedHStems += 1;
+	}
+}
+static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
+	outline_builder_context *context = (outline_builder_context *)_context;
+	glyf_postscript_hint_mask *mask =
+	    &(isContourMask ? context->g->contourMasks
+	                    : context->g->hintMasks)[isContourMask ? context->definedContourMasks
+	                                                           : context->definedHintMasks];
+	mask->pointsBefore = context->pointsDefined;
+	for (uint16_t j = 0; j < 0x100; j++) {
+		mask->maskH[j] = j < context->g->numberOfStemH ? maskArray[j] : 0;
+		mask->maskV[j] =
+		    j < context->g->numberOfStemV ? maskArray[j + context->g->numberOfStemH] : 0;
+	}
+
+	free(maskArray);
+	if (isContourMask) {
+		context->definedContourMasks += 1;
+	} else {
+		context->definedHintMasks += 1;
 	}
 }
 
@@ -318,12 +377,17 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	stack.index = 0;
 	stack.stem = 0;
 
-	outline_builder_context bc = {g, 0, 0, 0.0, 0.0};
-	cff_outline_builder_interface pass1 = {NULL, callback_count_contour, NULL, NULL};
-	cff_outline_builder_interface pass2 = {NULL, callback_countpoint_next_contour,
-	                                       callback_countpoint_lineto, callback_countpoint_curveto};
+	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0};
+	cff_outline_builder_interface pass1 = {NULL, callback_count_contour, NULL, NULL, NULL, NULL};
+	cff_outline_builder_interface pass2 = {NULL,
+	                                       callback_countpoint_next_contour,
+	                                       callback_countpoint_lineto,
+	                                       callback_countpoint_curveto,
+	                                       callback_countpoint_sethint,
+	                                       callback_countpoint_setmask};
 	cff_outline_builder_interface pass3 = {callback_draw_setwidth, callback_draw_next_contour,
-	                                       callback_draw_lineto, callback_draw_curveto};
+	                                       callback_draw_lineto,   callback_draw_curveto,
+	                                       callback_draw_sethint,  callback_draw_setmask};
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != CFF_FDSELECT_UNSPECED)
@@ -358,6 +422,10 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	for (uint16_t j = 0; j < g->numberOfContours; j++) {
 		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
 	}
+	NEW_N(g->stemH, g->numberOfStemH);
+	NEW_N(g->stemV, g->numberOfStemV);
+	NEW_N(g->hintMasks, g->numberOfHintMasks);
+	NEW_N(g->contourMasks, g->numberOfContourMasks);
 
 	// PASS 3 : Draw points
 	stack.index = 0;
