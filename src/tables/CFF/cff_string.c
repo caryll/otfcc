@@ -429,6 +429,7 @@ sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str) {
 	} else if (str.count > 0 && idx - 391 < str.count) {
 		return sdsnewlen(str.data + str.offset[idx - 391] - 1,
 		                 str.offset[idx - 390] - str.offset[idx - 391]);
-	} else
-		return sdsnew("Unknown");
+	} else {
+		return NULL;
+	}
 }

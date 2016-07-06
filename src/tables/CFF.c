@@ -449,6 +449,62 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	esrap_index(localSubrs);
 }
 
+static void nameGlyphsAccordingToCFF(cff_parse_context *context) {
+	if (context->meta->isCID) return;
+	CFF_File *cffFile = context->cffFile;
+	table_glyf *glyphs = context->glyphs;
+	switch (cffFile->charsets.t) {
+		case CFF_CHARSET_FORMAT0: {
+			for (uint16_t j = 0; j < cffFile->charsets.s; j++) {
+				uint16_t sid = cffFile->charsets.f0.glyph[j];
+				sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+				if (glyphname) { glyphs->glyphs[j + 1]->name = glyphname; }
+			}
+			break;
+		}
+		case CFF_CHARSET_FORMAT1: {
+			uint32_t glyphsNamedSofar = 1;
+			for (uint16_t j = 0; j < cffFile->charsets.s; j++) {
+				uint16_t first = cffFile->charsets.f1.range1[j].first;
+				sds glyphname = sdsget_cff_sid(first, cffFile->string);
+				if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
+					glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+				}
+				glyphsNamedSofar++;
+				for (uint16_t k = 0; k < cffFile->charsets.f1.range1[j].nleft; k++) {
+					uint16_t sid = first + k + 1;
+					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+					if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
+						glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+					}
+					glyphsNamedSofar++;
+				}
+			}
+			break;
+		}
+		case CFF_CHARSET_FORMAT2: {
+			uint32_t glyphsNamedSofar = 1;
+			for (uint16_t j = 0; j < cffFile->charsets.s; j++) {
+				uint16_t first = cffFile->charsets.f2.range2[j].first;
+				sds glyphname = sdsget_cff_sid(first, cffFile->string);
+				if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
+					glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+				}
+				glyphsNamedSofar++;
+				for (uint16_t k = 0; k < cffFile->charsets.f2.range2[j].nleft; k++) {
+					uint16_t sid = first + k + 1;
+					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+					if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
+						glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+					}
+					glyphsNamedSofar++;
+				}
+			}
+			break;
+		}
+	}
+}
+
 caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 	caryll_cff_parse_result ret;
 	ret.meta = NULL;
@@ -492,6 +548,9 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 		glyphs->numberGlyphs = cffFile->char_strings.count;
 		NEW_N(glyphs->glyphs, glyphs->numberGlyphs);
 		for (uint16_t j = 0; j < glyphs->numberGlyphs; j++) { buildOutline(j, &context); }
+
+		// Name glyphs according charset
+		nameGlyphsAccordingToCFF(&context);
 
 		ret.glyphs = context.glyphs;
 		CFF_close(cffFile);

@@ -264,6 +264,7 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 	else if (offset == CFF_CHARSET_EXPERTSUBSET)
 		charsets->t = CFF_CHARSET_EXPERTSUBSET;
 	else {
+		// NOTE: gid 1 will always be named as .notdef
 		switch (cff->raw_data[offset]) {
 			case 0:
 				charsets->t = CFF_CHARSET_FORMAT0;
@@ -271,7 +272,7 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 					charsets->s = cff->char_strings.count - 1;
 					charsets->f0.glyph = calloc(cff->char_strings.count - 1, sizeof(uint16_t));
 
-					for (i = 0; i < cff->char_strings.count - 1; i++)
+					for (i = 0; i < charsets->s; i++)
 						charsets->f0.glyph[i] = gu2(cff->raw_data, offset + 1 + i * 2);
 				}
 				break;
@@ -279,7 +280,7 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 				charsets->t = CFF_CHARSET_FORMAT1;
 				{
 					uint32_t size;
-					uint32_t glyphsEncodedSofar = 0;
+					uint32_t glyphsEncodedSofar = 1;
 					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
 						glyphsEncodedSofar += 1 + gu1(cff->raw_data, offset + 3 + i * 3);
 					}
@@ -297,7 +298,7 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 				charsets->t = CFF_CHARSET_FORMAT2;
 				{
 					uint32_t size;
-					uint32_t glyphsEncodedSofar = 0;
+					uint32_t glyphsEncodedSofar = 1;
 					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
 						glyphsEncodedSofar += 1 + gu2(cff->raw_data, offset + 3 + i * 4);
 					}
@@ -559,7 +560,6 @@ void CFF_close(CFF_File *file) {
 			case CFF_CHARSET_EXPERT:
 			case CFF_CHARSET_EXPERTSUBSET:
 			case CFF_CHARSET_ISOADOBE:
-			case CFF_CHARSET_UNSPECED:
 				break;
 			case CFF_CHARSET_FORMAT0:
 				if (file->charsets.f0.glyph != NULL) free(file->charsets.f0.glyph);

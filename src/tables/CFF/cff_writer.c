@@ -131,8 +131,7 @@ cff_blob *compile_charset(CFF_Charset cset) {
 	switch (cset.t) {
 		case CFF_CHARSET_ISOADOBE:
 		case CFF_CHARSET_EXPERT:
-		case CFF_CHARSET_EXPERTSUBSET:
-		case CFF_CHARSET_UNSPECED: {
+		case CFF_CHARSET_EXPERTSUBSET: {
 			cff_blob *blob = calloc(1, sizeof(cff_blob));
 			return blob;
 		}
