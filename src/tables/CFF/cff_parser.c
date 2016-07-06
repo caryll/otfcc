@@ -1373,7 +1373,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						break;
 					}
 					case op_index: {
-						CHECK_STACK_TOP(op_index, 1);
+						CHECK_STACK_TOP(op_index, 2);
 						uint8_t n = stack->index - 1;
 						uint8_t j = n - 1 - (uint8_t)(stack->stack[n].d) % n;
 						stack->stack[n] = stack->stack[j];
