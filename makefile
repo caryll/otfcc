@@ -4,7 +4,7 @@ ifndef PREMAKE5
 PREMAKE5=premake5
 endif
 
-default: mingw-debug-x64
+default: linux-release-x64
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
@@ -39,3 +39,25 @@ mf-vs2015 :
 	@$(PREMAKE5) vs2015
 mf-gmake :
 	@$(PREMAKE5) gmake
+
+
+cffopcodetest : linux-release-x64
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.abs.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.add.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.div.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.drop.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.dup.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.eq.(mul).otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.exch.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.ifelse.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.index.(roll,drop).otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.mul.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.neg.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.not.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.or.(mul).otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.put.get.otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.roll.(drop).otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.sqrt.(mul).otf' | node tests/cffdump-opcode-check
+	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.sub.otf' | node tests/cffdump-opcode-check
+
+test: cffopcodetest

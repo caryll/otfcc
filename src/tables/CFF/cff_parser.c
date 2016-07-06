@@ -1278,16 +1278,16 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 					}
 					case op_sub: {
 						CHECK_STACK_TOP(op_sub, 2);
-						double num1 = stack->stack[stack->index - 1].d;
-						double num2 = stack->stack[stack->index - 2].d;
+						double num1 = stack->stack[stack->index - 2].d;
+						double num2 = stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 2].d = num1 - num2;
 						stack->index -= 1;
 						break;
 					}
 					case op_div: {
 						CHECK_STACK_TOP(op_div, 2);
-						double num1 = stack->stack[stack->index - 1].d;
-						double num2 = stack->stack[stack->index - 2].d;
+						double num1 = stack->stack[stack->index - 2].d;
+						double num2 = stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 2].d = num1 / num2;
 						stack->index -= 1;
 						break;
@@ -1389,7 +1389,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						if (!j) break;
 						uint8_t last = stack->index - 3;
 						uint8_t first = stack->index - 2 - n;
-						
+
 						reverseStack(stack, first, last);
 						reverseStack(stack, last - j + 1, last);
 						reverseStack(stack, first, last - j);
@@ -1466,7 +1466,7 @@ static void callback_stdLineTo(void *context, float x1, float y1) {
 	outline_put_point(outline, x1, y1, 1);
 }
 static void callback_stdCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
-                         float y3) {
+                                float y3) {
 	CFF_Outline *outline = (CFF_Outline *)context;
 	outline_put_bezier(outline, x1, y1, x2, y2, x3, y3);
 }
