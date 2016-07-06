@@ -60,4 +60,26 @@ cffopcodetest : linux-release-x64
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.sqrt.(mul).otf' | node tests/cffdump-opcode-check
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.sub.otf' | node tests/cffdump-opcode-check
 
-test: cffopcodetest
+ttfroundtriptest : linux-release-x64
+	@bin/Release-x64/otfccdump tests/payload/iosevka-r.ttf -o build/roundtrip-iosevka-r-1.json
+	@bin/Release-x64/otfccbuild build/roundtrip-iosevka-r-1.json -o build/roundtrip-iosevka-r-2.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-iosevka-r-2.ttf -o build/roundtrip-iosevka-r-3.json
+	@bin/Release-x64/otfccbuild build/roundtrip-iosevka-r-3.json -o build/roundtrip-iosevka-r-4.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-iosevka-r-4.ttf -o build/roundtrip-iosevka-r-5.json
+	@node tests/ttf-roundtrip-test.js build/roundtrip-iosevka-r-3.json build/roundtrip-iosevka-r-5.json
+
+	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.ttf -o build/roundtrip-WorkSans-Regular-1.json
+	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-2.ttf -o build/roundtrip-WorkSans-Regular-3.json
+	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-3.json -o build/roundtrip-WorkSans-Regular-4.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-4.ttf -o build/roundtrip-WorkSans-Regular-5.json
+	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-3.json build/roundtrip-WorkSans-Regular-5.json
+
+	@bin/Release-x64/otfccdump tests/payload/NotoNastaliqUrdu-Regular.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-1.json
+	@bin/Release-x64/otfccbuild build/roundtrip-NotoNastaliqUrdu-Regular-1.json -o build/roundtrip-NotoNastaliqUrdu-Regular-2.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-2.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-3.json
+	@bin/Release-x64/otfccbuild build/roundtrip-NotoNastaliqUrdu-Regular-3.json -o build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-5.json
+	@node tests/ttf-roundtrip-test.js build/roundtrip-NotoNastaliqUrdu-Regular-3.json build/roundtrip-NotoNastaliqUrdu-Regular-5.json
+
+test: cffopcodetest ttfroundtriptest

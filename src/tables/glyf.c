@@ -751,6 +751,8 @@ static INLINE void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 				flags |= WE_HAVE_A_SCALE;
 			}
 		}
+		if(r->roundToGrid) flags |= ROUND_XY_TO_GRID;
+		if(r->useMyMetrics) flags |= USE_MY_METRICS;
 		bufwrite16b(gbuf, flags);
 		bufwrite16b(gbuf, r->glyph.gid);
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
