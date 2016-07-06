@@ -903,13 +903,24 @@ void cff_outline_fini(CFF_Outline *out) {
   CharString program:
     w? {hs* vs* cm* hm* mt subpath}? {mt subpath}* endchar
 */
-void callback_nopSetWidth(void *context, float width) {}
-void callback_nopNewContour(void *context) {}
-void callback_nopLineTo(void *context, float x1, float y1) {}
-void callback_nopCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
-                         float y3) {}
-void callback_nopsetHint(void *context, bool isVertical, float position, float width) {}
-void callback_nopsetMask(void *context, bool isContourMask, bool *mask) { FREE(mask); }
+static void reverseStack(CFF_Stack *stack, uint8_t left, uint8_t right) {
+	CFF_Value *p1 = stack->stack + left;
+	CFF_Value *p2 = stack->stack + right;
+	while (p1 < p2) {
+		CFF_Value temp = *p1;
+		*p1 = *p2;
+		*p2 = temp;
+		p1++;
+		p2--;
+	}
+}
+static void callback_nopSetWidth(void *context, float width) {}
+static void callback_nopNewContour(void *context) {}
+static void callback_nopLineTo(void *context, float x1, float y1) {}
+static void callback_nopCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
+                                float y3) {}
+static void callback_nopsetHint(void *context, bool isVertical, float position, float width) {}
+static void callback_nopsetMask(void *context, bool isContourMask, bool *mask) { FREE(mask); }
 #define CHECK_STACK_TOP(op, n)                                                                     \
 	{                                                                                              \
 		if (stack->index < n) {                                                                    \
@@ -1325,8 +1336,14 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						stack->index -= 3;
 						break;
 					}
-					case op_random:
+					case op_random: {
+						// Chosen from a fair dice
+						// TODO: use a real randomizer
+						stack->stack[stack->index].t = CFF_DOUBLE;
+						stack->stack[stack->index].d = 0;
+						stack->index += 1;
 						break;
+					}
 					case op_mul: {
 						CHECK_STACK_TOP(op_mul, 2);
 						double num1 = stack->stack[stack->index - 1].d;
@@ -1355,10 +1372,30 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						stack->stack[stack->index - 2].d = num1;
 						break;
 					}
-					case op_index:
+					case op_index: {
+						CHECK_STACK_TOP(op_index, 1);
+						uint8_t n = stack->index - 1;
+						uint8_t j = n - 1 - (uint8_t)(stack->stack[n].d) % n;
+						stack->stack[n] = stack->stack[j];
 						break;
-					case op_roll:
+					}
+					case op_roll: {
+						CHECK_STACK_TOP(op_roll, 2);
+						int j = stack->stack[stack->index - 1].d;
+						int n = stack->stack[stack->index - 2].d;
+						CHECK_STACK_TOP(op_roll, 2 + n);
+						j = -j % n;
+						if (j < 0) j += n;
+						if (!j) break;
+						uint8_t last = stack->index - 3;
+						uint8_t first = stack->index - 2 - n;
+				
+						reverseStack(stack, first, last);
+						reverseStack(stack, last - j + 1, last);
+						reverseStack(stack, first, last - j);
+						stack->index -= 2;
 						break;
+					}
 					case op_return:
 						return;
 					case op_callsubr: {
