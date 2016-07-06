@@ -1389,7 +1389,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						if (!j) break;
 						uint8_t last = stack->index - 3;
 						uint8_t first = stack->index - 2 - n;
-				
+						
 						reverseStack(stack, first, last);
 						reverseStack(stack, last - j + 1, last);
 						reverseStack(stack, first, last - j);
@@ -1451,21 +1451,21 @@ static void outline_put_bezier(CFF_Outline *outline, double x1, double y1, doubl
 	outline_put_point(outline, x3, y3, 1);
 }
 
-void callback_stdSetWidth(void *context, float width) {
+static void callback_stdSetWidth(void *context, float width) {
 	CFF_Outline *outline = (CFF_Outline *)context;
 	outline->width = width;
 }
-void callback_stdNewContour(void *context) {
+static void callback_stdNewContour(void *context) {
 	CFF_Outline *outline = (CFF_Outline *)context;
 	outline->cnt_contour += 1;
 	outline->c = realloc(outline->c, sizeof(uint16_t) * (outline->cnt_contour));
 	outline->c[outline->cnt_contour - 1] = outline->cnt_point;
 }
-void callback_stdLineTo(void *context, float x1, float y1) {
+static void callback_stdLineTo(void *context, float x1, float y1) {
 	CFF_Outline *outline = (CFF_Outline *)context;
 	outline_put_point(outline, x1, y1, 1);
 }
-void callback_stdCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
+static void callback_stdCurveTo(void *context, float x1, float y1, float x2, float y2, float x3,
                          float y3) {
 	CFF_Outline *outline = (CFF_Outline *)context;
 	outline_put_bezier(outline, x1, y1, x2, y2, x3, y3);
