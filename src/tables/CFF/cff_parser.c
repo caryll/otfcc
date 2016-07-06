@@ -279,12 +279,12 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 				charsets->t = CFF_CHARSET_FORMAT1;
 				{
 					uint32_t size;
-					uint16_t glyphsEncodedSofar = 0;
+					uint32_t glyphsEncodedSofar = 0;
 					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
 						glyphsEncodedSofar += 1 + gu1(cff->raw_data, offset + 3 + i * 3);
 					}
 
-					size = i + 1;
+					size = i;
 					charsets->s = size;
 					charsets->f1.range1 = calloc(i + 1, sizeof(charset_range1));
 					for (i = 0; i < size; i++) {
@@ -297,12 +297,12 @@ static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) 
 				charsets->t = CFF_CHARSET_FORMAT2;
 				{
 					uint32_t size;
-					uint16_t glyphsEncodedSofar = 0;
+					uint32_t glyphsEncodedSofar = 0;
 					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
 						glyphsEncodedSofar += 1 + gu2(cff->raw_data, offset + 3 + i * 4);
 					}
 
-					size = i + 1;
+					size = i;
 					charsets->s = size;
 					charsets->f2.range2 = calloc(i + 1, sizeof(charset_range2));
 
