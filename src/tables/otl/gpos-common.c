@@ -66,6 +66,39 @@ FAIL:
 	return NULL;
 }
 
+// GPOS position value constants
+const uint8_t FORMAT_DX = 1;
+const uint8_t FORMAT_DY = 2;
+const uint8_t FORMAT_DWIDTH = 4;
+const uint8_t FORMAT_DHEIGHT = 8;
+
+#define a(n) n + 0, n + 1, n + 1, n + 2             // 2 bits
+#define b(n) a(n + 0), a(n + 1), a(n + 1), a(n + 2) // 4 bits
+#define c(n) b(n + 0), b(n + 1), b(n + 1), b(n + 2) // 6 bits
+#define d(n) c(n + 0), c(n + 1), c(n + 1), c(n + 2) // 8 bits
+const uint8_t bits_in[0x100] = {d(0)};
+#undef d
+#undef c
+#undef b
+#undef a
+
+// Length of a position value in bytes
+uint8_t position_format_length(uint16_t format) { return bits_in[format & 0xFF] << 1; }
+otl_position_value position_zero() {
+	otl_position_value v = {0, 0, 0, 0};
+	return v;
+}
+// Read a position value from SFNT
+otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                   uint16_t format) {
+	otl_position_value v = {0, 0, 0, 0};
+	if (tableLength < offset + position_format_length(format)) return v;
+	if (format & FORMAT_DX) { v.dx = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DY) { v.dy = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DWIDTH) { v.dWidth = read_16u(data + offset), offset += 2; };
+	if (format & FORMAT_DHEIGHT) { v.dHeight = read_16u(data + offset), offset += 2; };
+	return v;
+}
 json_value *gpos_value_to_json(otl_position_value value) {
 	json_value *v = json_object_new(4);
 	if (value.dx) json_object_push(v, "dx", json_integer_new(value.dx));
@@ -82,4 +115,22 @@ otl_position_value gpos_value_from_json(json_value *pos) {
 	v.dWidth = json_obj_getnum(pos, "dWidth");
 	v.dHeight = json_obj_getnum(pos, "dHeight");
 	return v;
+}
+// The required format of a position value
+uint8_t required_position_format(otl_position_value v) {
+	return (v.dx ? FORMAT_DX : 0) | (v.dy ? FORMAT_DY : 0) | (v.dWidth ? FORMAT_DWIDTH : 0) |
+	       (v.dHeight ? FORMAT_DHEIGHT : 0);
+}
+// Write gpos position value
+void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format) {
+	if (format & FORMAT_DX) bufwrite16b(buf, v.dx);
+	if (format & FORMAT_DY) bufwrite16b(buf, v.dy);
+	if (format & FORMAT_DWIDTH) bufwrite16b(buf, v.dWidth);
+	if (format & FORMAT_DHEIGHT) bufwrite16b(buf, v.dHeight);
+}
+
+// Anchor functions
+int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
+int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) {
+	return a->index - b->index;
 }

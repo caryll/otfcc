@@ -395,7 +395,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	else
 		fd = parse_subr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
-	g->fdIndex = fd;
+	g->fdSelectIndex = fd;
 	if (context->meta->fdArray && fd >= 0 && fd < context->meta->fdArrayCount &&
 	    context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
@@ -659,6 +659,38 @@ void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options 
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
-table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts) { return NULL; }
+
+static table_CFF *fdFromJson(json_value *dump) {
+	if (!dump) return NULL;
+	table_CFF *table = caryll_new_CFF();
+	// Names
+	table->version = json_obj_getsds(dump, "version");
+	table->notice = json_obj_getsds(dump, "notice");
+	table->copyright = json_obj_getsds(dump, "copyright");
+	table->fontName = json_obj_getsds(dump, "fontName");
+	table->fullName = json_obj_getsds(dump, "fullName");
+	table->familyName = json_obj_getsds(dump, "familyName");
+	table->weight = json_obj_getsds(dump, "weight");
+
+	// Metrics
+	table->isFixedPitch = json_obj_getbool(dump, "isFixedPitch");
+	table->italicAngle = json_obj_getnum(dump, "italicAngle");
+	table->underlinePosition = json_obj_getnum_fallback(dump, "underlinePosition", -100.0);
+	table->underlineThickness = json_obj_getnum_fallback(dump, "underlineThickness", 50.0);
+	table->strokeWidth = json_obj_getnum(dump, "strokeWidth");
+	table->fontBBoxLeft = json_obj_getnum(dump, "fontBBoxLeft");
+	table->fontBBoxBottom = json_obj_getnum(dump, "fontBBoxBottom");
+	table->fontBBoxRight = json_obj_getnum(dump, "fontBBoxRight");
+	table->fontBBoxTop = json_obj_getnum(dump, "fontBBoxTop");
+
+	// CID
+	table->cidRegistry = json_obj_getsds(dump, "cidRegistry");
+	table->cidOrdering = json_obj_getsds(dump, "cidOrdering");
+	table->cidSupplement = json_obj_getint(dump, "cidSupplement");
+	return table;
+}
+table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts) {
+	return fdFromJson(json_obj_get_type(root, "CFF_", json_object));
+}
 
 caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) { return NULL; }

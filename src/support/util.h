@@ -46,6 +46,13 @@ static INLINE json_value *json_obj_get_type(json_value *obj, const char *key, js
 	if (v && v->type == type) return v;
 	return NULL;
 }
+static INLINE sds json_obj_getsds(json_value *obj, const char *key) {
+	json_value *v = json_obj_get_type(obj, key, json_string);
+	if (!v)
+		return NULL;
+	else
+		return sdsnewlen(v->u.string.ptr, v->u.string.length);
+}
 static INLINE double json_obj_getnum(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
@@ -288,6 +295,7 @@ typedef struct {
 	bool ignore_glyph_order;
 	bool ignore_hints;
 	bool has_vertical_metrics;
+	bool export_fdselect;
 	bool keep_average_char_width;
 	bool short_post;
 	bool dummy_DSIG;

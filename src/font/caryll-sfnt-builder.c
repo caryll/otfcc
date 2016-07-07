@@ -10,7 +10,7 @@
 #define PATCH_VER 0
 #endif
 
-static INLINE uint32_t buf_checksum(caryll_buffer *buffer) {
+static uint32_t buf_checksum(caryll_buffer *buffer) {
 	uint32_t actualLength = buflen(buffer);
 	buflongalign(buffer);
 	uint32_t sum = 0;
@@ -22,7 +22,7 @@ static INLINE uint32_t buf_checksum(caryll_buffer *buffer) {
 	return sum;
 }
 
-static INLINE sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
+static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	sfnt_builder_entry *table = malloc(sizeof(sfnt_builder_entry));
 	table->tag = tag;
 	table->length = buflen(buffer);
@@ -69,7 +69,7 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 	}
 }
 
-static INLINE int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) { return (a->tag - b->tag); }
+static int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) { return (a->tag - b->tag); }
 
 caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	caryll_buffer *buffer = bufnew();

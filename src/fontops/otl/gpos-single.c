@@ -6,7 +6,7 @@ typedef struct {
 	otl_position_value v;
 	UT_hash_handle hh;
 } gpos_single_hash;
-static INLINE int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
+static int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
 	return a->fromid - b->fromid;
 }
 

@@ -31,7 +31,7 @@ void caryll_delete_chaining(otl_lookup *lookup) {
 	}
 }
 
-static INLINE void reverseBacktracks(otl_chaining_rule *rule) {
+static void reverseBacktracks(otl_chaining_rule *rule) {
 	if (rule->inputBegins > 0) {
 		uint16_t start = 0;
 		uint16_t end = rule->inputBegins - 1;

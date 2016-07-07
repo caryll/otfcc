@@ -103,6 +103,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts) {
 	json_value *root = json_object_new(48);
 	dumpopts->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
+	dumpopts->export_fdselect = font->CFF_ && font->CFF_->isCID;
 	if (!root) return NULL;
 	caryll_head_to_json(font->head, root, dumpopts);
 	caryll_hhea_to_json(font->hhea, root, dumpopts);

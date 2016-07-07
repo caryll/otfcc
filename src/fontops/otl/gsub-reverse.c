@@ -7,7 +7,7 @@ typedef struct {
 	sds toname;
 	UT_hash_handle hh;
 } gsub_single_map_hash;
-static INLINE int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
+static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
 	return a->fromid - b->fromid;
 }
 

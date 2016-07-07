@@ -7,7 +7,7 @@ typedef struct {
 	otl_anchor exit;
 	UT_hash_handle hh;
 } gpos_cursive_hash;
-static INLINE int gpos_cursive_by_from_id(gpos_cursive_hash *a, gpos_cursive_hash *b) {
+static int gpos_cursive_by_from_id(gpos_cursive_hash *a, gpos_cursive_hash *b) {
 	return a->fromid - b->fromid;
 }
 bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable *_subtable,
