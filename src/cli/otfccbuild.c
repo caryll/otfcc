@@ -43,7 +43,7 @@ void printHelp() {
 	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
 	        "                             some Microsoft applications, a DSIG is required\n"
 	        "                             to enable OpenType features.\n"
-	        " --ship                    : Equalivent to the combination of these options:\n"
+	        " --ship                    : Equivalent to the combination of these options:\n"
 	        "                              *  --ignore-glyph-order\n"
 	        "                              *  --short-post\n"
 	        "                              *  --dummy-dsig\n"

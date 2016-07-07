@@ -17,15 +17,15 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
  -h, --help              : Display this help message and exit.
  -v, --version           : Display version information and exit.
- -o <file>               : Set output file path to <file>. When abasent
+ -o <file>               : Set output file path to <file>. When absent,
                            the dump will be written to STDOUT.
  -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.
  --pretty                : Prettify the output JSON.
  --ugly                  : Force uglify the output JSON.
- --time                  : Time each substep.
+ --time                  : Time each sub-step.
  --glyph-name-prefix pfx : Add a prefix to the glyph names.
  --ignore-glyph-order    : Do not export glyph order information.
- --ignore-hints          : Do not export hingint information.
+ --ignore-hints          : Do not export hinting information.
  --add-bom               : Add BOM mark in the output. (This is default
                            on Windows when redirecting to another program.
                            Use --no-bom to turn it off.)
@@ -53,7 +53,7 @@ otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
  --dummy-DSIG              : Include an empty DSIG table in the font. For
                              some Microsoft applications, a DSIG is required
                              to enable OpenType features.
- --ship                    : Equalivent to the combination of these options:
+ --ship                    : Equivalent to the combination of these options:
                               *  --ignore-glyph-order
                               *  --short-post
                               *  --dummy-dsig
