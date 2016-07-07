@@ -53,6 +53,11 @@ static INLINE sds json_obj_getsds(json_value *obj, const char *key) {
 	else
 		return sdsnewlen(v->u.string.ptr, v->u.string.length);
 }
+static INLINE double json_numof(json_value *cv) {
+	if (cv && cv->type == json_integer) return cv->u.integer;
+	if (cv && cv->type == json_double) return cv->u.dbl;
+	return 0;
+}
 static INLINE double json_obj_getnum(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {

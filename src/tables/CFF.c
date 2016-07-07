@@ -193,6 +193,7 @@ static void callback_extract_fd(uint32_t op, uint8_t top, CFF_Value *stack, void
 			break;
 		case op_FontMatrix:
 			if (top >= 6) {
+				NEW(meta->fontMatrix);
 				meta->fontMatrix->a = cffnum(stack[top - 6]);
 				meta->fontMatrix->b = cffnum(stack[top - 5]);
 				meta->fontMatrix->c = cffnum(stack[top - 4]);
@@ -655,14 +656,44 @@ static json_value *fdToJson(table_CFF *table) {
 
 void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
-
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
+static void pdDeltaFromJson(json_value *dump, uint16_t *count, float **array) {
+	if (!dump || dump->type != json_array) return;
+	*count = dump->u.array.length;
+	NEW_N(*array, *count);
+	for (uint16_t j = 0; j < *count; j++) { (*array)[j] = json_numof(dump->u.array.values[j]); }
+}
+static cff_private *pdFromJson(json_value *dump) {
+	if (!dump || dump->type != json_object) return NULL;
+	cff_private *pd = caryll_new_CFF_private();
+	pdDeltaFromJson(json_obj_get(dump, "blueValues"), &(pd->blueValuesCount), &(pd->blueValues));
+	pdDeltaFromJson(json_obj_get(dump, "otherBlues"), &(pd->otherBluesCount), &(pd->otherBlues));
+	pdDeltaFromJson(json_obj_get(dump, "familyBlues"), &(pd->familyBluesCount), &(pd->familyBlues));
+	pdDeltaFromJson(json_obj_get(dump, "familyOtherBlues"), &(pd->familyOtherBluesCount),
+	                &(pd->familyOtherBlues));
+	pdDeltaFromJson(json_obj_get(dump, "stemSnapH"), &(pd->stemSnapHCount), &(pd->stemSnapH));
+	pdDeltaFromJson(json_obj_get(dump, "stemSnapV"), &(pd->stemSnapVCount), &(pd->stemSnapV));
 
+	pd->blueScale = json_obj_getnum_fallback(dump, "blueScale", DEFAULT_BLUE_SCALE);
+	pd->blueShift = json_obj_getnum_fallback(dump, "blueShift", DEFAULT_BLUE_SHIFT);
+	pd->blueFuzz = json_obj_getnum_fallback(dump, "blueFuzz", DEFAULT_BLUE_FUZZ);
+	pd->stdHW = json_obj_getnum(dump, "stdHW");
+	pd->stdVW = json_obj_getnum(dump, "stdVW");
+	pd->forceBold = json_obj_getbool(dump, "forceBold");
+	pd->languageGroup = json_obj_getnum(dump, "languageGroup");
+	pd->expansionFactor =
+	    json_obj_getnum_fallback(dump, "expansionFactor", DEFAULT_EXPANSION_FACTOR);
+	pd->initialRandomSeed = json_obj_getnum(dump, "initialRandomSeed");
+	pd->defaultWidthX = json_obj_getnum(dump, "defaultWidthX");
+	pd->nominalWidthX = json_obj_getnum(dump, "nominalWidthX");
+
+	return pd;
+}
 static table_CFF *fdFromJson(json_value *dump) {
-	if (!dump) return NULL;
 	table_CFF *table = caryll_new_CFF();
+	if (!dump || dump->type != json_object) return table;
 	// Names
 	table->version = json_obj_getsds(dump, "version");
 	table->notice = json_obj_getsds(dump, "notice");
@@ -683,14 +714,44 @@ static table_CFF *fdFromJson(json_value *dump) {
 	table->fontBBoxRight = json_obj_getnum(dump, "fontBBoxRight");
 	table->fontBBoxTop = json_obj_getnum(dump, "fontBBoxTop");
 
+	// fontMatrix
+	json_value *fmatdump = json_obj_get_type(dump, "fontMatrix", json_object);
+	if (fmatdump) {
+		NEW(table->fontMatrix);
+		table->fontMatrix->a = json_obj_getnum(fmatdump, "a");
+		table->fontMatrix->b = json_obj_getnum(fmatdump, "b");
+		table->fontMatrix->c = json_obj_getnum(fmatdump, "c");
+		table->fontMatrix->d = json_obj_getnum(fmatdump, "d");
+		table->fontMatrix->x = json_obj_getnum(fmatdump, "x");
+		table->fontMatrix->y = json_obj_getnum(fmatdump, "y");
+	}
+
+	// privates
+	table->privateDict = pdFromJson(json_obj_get_type(dump, "privates", json_object));
+
 	// CID
 	table->cidRegistry = json_obj_getsds(dump, "cidRegistry");
 	table->cidOrdering = json_obj_getsds(dump, "cidOrdering");
 	table->cidSupplement = json_obj_getint(dump, "cidSupplement");
+
+	// fdArray
+	json_value *fdarraydump = json_obj_get_type(dump, "fdArray", json_array);
+	if (fdarraydump && table->cidRegistry && table->cidOrdering) {
+		table->isCID = true;
+		table->fdArrayCount = fdarraydump->u.array.length;
+		NEW_N(table->fdArray, table->fdArrayCount);
+		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+			table->fdArray[j] = fdFromJson(fdarraydump->u.array.values[j]);
+		}
+	}
 	return table;
 }
 table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts) {
-	return fdFromJson(json_obj_get_type(root, "CFF_", json_object));
+	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
+	if (!dump)
+		return NULL;
+	else
+		return fdFromJson(dump);
 }
 
 caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) { return NULL; }
