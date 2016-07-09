@@ -297,16 +297,6 @@ typedef struct {
 	CFF_Dict *fprivate;
 } CFF_Font_Dict;
 
-typedef struct {
-	double width;
-	uint16_t cnt_contour;
-	uint16_t cnt_point;
-	uint16_t *c; // contour offset
-	double *x;   // x position
-	double *y;   // y position
-	uint8_t *t;  // on or off
-} CFF_Outline;
-
 // blob and bloc of this CFF writer
 typedef struct {
 	uint32_t size;
@@ -374,17 +364,10 @@ extern void blob_merge_raw(cff_blob *dst, cff_blob *src);
 extern void blob_free(cff_blob *b);
 
 extern cff_blob *compile_header(void);
-extern cff_blob *compile_name(const char *name);
 extern cff_blob *compile_index(CFF_INDEX index);
 extern cff_blob *compile_encoding(CFF_Encoding enc);
 extern cff_blob *compile_charset(CFF_Charset cset);
 extern cff_blob *compile_fdselect(CFF_FDSelect fd);
-extern cff_blob *compile_topdict(CFF_INDEX top);
-extern cff_blob *compile_private(CFF_File *f);
-extern cff_blob *compile_fdarray(CFF_INDEX fdarray);
-extern cff_blob *compile_outline(CFF_Outline *outline);
-extern cff_blob *compile_outline_to_svg(CFF_Outline *outline);
-extern cff_blob *compile_charstring(CFF_File *f);
 
 extern void esrap_index(CFF_INDEX in);
 extern void empty_index(CFF_INDEX *in);
@@ -393,32 +376,16 @@ extern void print_index(CFF_INDEX in);
 cff_blob *compile_type2_value(double val);
 cff_blob *compile_offset(int32_t val);
 
-extern char *get_cff_sid(uint16_t idx, CFF_INDEX str);
 sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str);
 
 extern CFF_File *CFF_stream_open(uint8_t *data, uint32_t len);
-extern CFF_File *CFF_file_open(const char *fname);
-extern CFF_File *CFF_sfnt_open(const char *fname, uint32_t offset, uint32_t len);
 extern void CFF_close(CFF_File *file);
 
 extern uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
                           CFF_INDEX *subr);
-
-extern CFF_Dict *parse_dict(uint8_t *data, uint32_t len);
-extern void esrap_dict(CFF_Dict *d);
-extern void print_dict(uint8_t *data, uint32_t len);
-extern CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx);
-extern CFF_Value lookup_dict(CFF_Dict *d, uint32_t op, uint32_t idx);
-
-extern void print_glyph(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
-                        CFF_Stack *stack);
-extern void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
-                          CFF_Stack *stack, CFF_Outline *outline);
 void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
                             CFF_Stack *stack, void *outline, cff_outline_builder_interface methods);
 
-extern CFF_Outline *cff_outline_init(void);
-extern void cff_outline_fini(CFF_Outline *out);
 extern CFF_INDEX *cff_index_init(void);
 extern void cff_index_fini(CFF_INDEX *out);
 

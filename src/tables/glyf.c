@@ -445,7 +445,7 @@ static json_value *glyf_glyph_maskdefs_to_json(glyf_postscript_hint_mask *masks,
 
 static json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_dump_options *dumpopts) {
 	json_value *glyph = json_object_new(10);
-	if(dumpopts->export_fdselect){
+	if (dumpopts->export_fdselect) {
 		json_object_push(glyph, "fdSelectIndex", json_integer_new(g->fdSelectIndex));
 	}
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
@@ -586,6 +586,7 @@ static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");
 	g->verticalOrigin = json_obj_getint(glyphdump, "verticalOrigin");
+	g->fdSelectIndex = json_obj_getint(glyphdump, "fdSelectIndex");
 	glyf_contours_from_json(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_references_from_json(json_obj_get_type(glyphdump, "references", json_array), g);
 	if (!dumpopts->ignore_hints) {
