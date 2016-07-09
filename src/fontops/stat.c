@@ -442,6 +442,12 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 			font->head->modified = 2082844800 + (int64_t)time(NULL);
 		}
 	}
+	if (font->head && font->CFF_) {
+		font->CFF_->fontBBoxBottom = font->head->yMin;
+		font->CFF_->fontBBoxTop = font->head->yMax;
+		font->CFF_->fontBBoxLeft = font->head->xMin;
+		font->CFF_->fontBBoxRight = font->head->xMax;
+	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
 	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) caryll_stat_maxp(font);
@@ -452,6 +458,11 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 		font->maxp->maxSizeOfInstructions = font->prep->length;
 	}
 	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, dumpopts);
-	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
+	if (font->subtype == FONTTYPE_TTF) {
+		if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
+		if (font->maxp) font->maxp->version = 0x00010000;
+	} else {
+		if (font->maxp) font->maxp->version = 0x00005000;
+	}
 	if (font->glyf && font->vhea) caryll_font_stat_vmtx(font);
 }

@@ -131,6 +131,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_dump_options *dumpopts
 caryll_font *caryll_font_from_json(json_value *root, caryll_dump_options *dumpopts) {
 	caryll_font *font = caryll_new_font();
 	if (!font) return NULL;
+	font->subtype = json_obj_get_type(root, "CFF", json_object) != NULL;
 	font->glyph_order = caryll_glyphorder_from_json(root, dumpopts);
 	font->head = caryll_head_from_json(root, dumpopts);
 	font->hhea = caryll_hhea_from_json(root, dumpopts);

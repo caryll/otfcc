@@ -754,4 +754,167 @@ table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts)
 		return fdFromJson(dump);
 }
 
+typedef enum { IL_ITEM_OPERAND, IL_ITEM_OPERATOR, IL_ITEM_SPECIAL, IL_ITEM_PHANTOM } il_type;
+
+typedef struct {
+	il_type type;
+	union {
+		int32_t i;
+		double d;
+	};
+} charstring_instruction;
+
+typedef struct {
+	uint16_t length;
+	uint16_t free;
+	charstring_instruction *instr;
+} charstring_il;
+
+static void ensureThereIsSpace(charstring_il *il) {
+	if (il->free) return;
+	il->free = 0x20;
+	if (il->instr) {
+		il->instr = realloc(il->instr, sizeof(charstring_instruction) * (il->length + il->free));
+	} else {
+		il->instr = malloc(sizeof(charstring_instruction) * (il->length + il->free));
+	}
+}
+
+static void il_push_operand(charstring_il *il, float x) {
+	ensureThereIsSpace(il);
+	il->instr[il->length].type = IL_ITEM_OPERAND;
+	il->instr[il->length].d = x;
+	il->length++;
+	il->free--;
+}
+static void il_push_special(charstring_il *il, int32_t s) {
+	ensureThereIsSpace(il);
+	il->instr[il->length].type = IL_ITEM_SPECIAL;
+	il->instr[il->length].i = s;
+	il->length++;
+	il->free--;
+}
+static void il_push_op(charstring_il *il, int32_t op) {
+	ensureThereIsSpace(il);
+	il->instr[il->length].type = IL_ITEM_OPERATOR;
+	il->instr[il->length].i = op;
+	il->length++;
+	il->free--;
+}
+
+static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
+	charstring_il *il;
+	NEW(il);
+	// Convert absolute positions to deltas
+	float x = 0;
+	float y = 0;
+	for (uint16_t c = 0; c < g->numberOfContours; c++) {
+		glyf_contour *contour = &(g->contours[c]);
+		uint16_t n = contour->pointsCount;
+		for (uint16_t j = 0; j < n; j++) {
+			float dx = contour->points[j].x - x;
+			float dy = contour->points[j].y - y;
+			x = contour->points[j].x, y = contour->points[j].y;
+			contour->points[j].x = dx;
+			contour->points[j].y = dy;
+		}
+	}
+
+	// Write IL
+	if (g->advanceWidth != 0) { il_push_operand(il, g->advanceWidth); }
+	for (uint16_t c = 0; c < g->numberOfContours; c++) {
+		glyf_contour *contour = &(g->contours[c]);
+		uint16_t n = contour->pointsCount;
+		if (n == 0) continue;
+		il_push_operand(il, contour->points[0].x);
+		il_push_operand(il, contour->points[0].y);
+		il_push_op(il, op_rmoveto);
+		for (uint16_t j = 1; j < n; j++) {
+			if (contour->points[j].onCurve) {
+				il_push_operand(il, contour->points[j].x);
+				il_push_operand(il, contour->points[j].y);
+				il_push_op(il, op_rlineto);
+			} else {
+				if (j < n - 2 && !contour->points[j - 1].onCurve &&
+				    contour->points[j + 2].onCurve) {
+					il_push_operand(il, contour->points[j].x);
+					il_push_operand(il, contour->points[j].y);
+					il_push_operand(il, contour->points[j + 1].x);
+					il_push_operand(il, contour->points[j + 1].y);
+					il_push_operand(il, contour->points[j + 2].x);
+					il_push_operand(il, contour->points[j + 2].y);
+					il_push_op(il, op_rlineto);
+					j += 2;
+				} else {
+					il_push_operand(il, contour->points[j].x);
+					il_push_operand(il, contour->points[j].y);
+					il_push_op(il, op_rlineto);
+				}
+			}
+		}
+	}
+	return il;
+}
+static void glyph_il_peephole_optimization(charstring_il *il) {
+	// TODO: Optimization
+}
+
+static cff_blob *il2blob(charstring_il *il) {
+	cff_blob *blob = calloc(1, sizeof(cff_blob));
+	for (uint16_t j = 0; j < il->length; j++) {
+		switch (il->instr[j].type) {
+			case IL_ITEM_OPERAND: {
+				blob_merge(blob, compile_type2_value(il->instr[j].d));
+				break;
+			}
+			case IL_ITEM_OPERATOR: {
+				blob_merge(blob, encode_cs2_operator(il->instr[j].i));
+				break;
+			}
+			case IL_ITEM_SPECIAL: {
+				cff_blob *b;
+				NEW_CLEAN(b);
+				b->size = 1;
+				NEW(b->data);
+				b->data[0] = il->instr[j].i;
+				blob_merge(blob, b);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	return blob;
+}
+
+static cff_blob *compile_glyph(glyf_glyph *g) {
+	charstring_il *il = compile_glyph_to_il(g);
+	glyph_il_peephole_optimization(il);
+	cff_blob *blob = il2blob(il);
+	free(il->instr);
+	free(il);
+	return blob;
+}
+
+static cff_blob *compile_glyf_to_charstring(table_glyf *glyf) {
+	if (glyf->numberGlyphs == 0) return calloc(1, sizeof(cff_blob));
+	CFF_INDEX *charstring;
+	NEW(charstring);
+	charstring->count = glyf->numberGlyphs;
+	charstring->offSize = 4;
+	NEW_N(charstring->offset, charstring->count + 1);
+	charstring->offset[0] = 1;
+	charstring->data = NULL;
+	for (uint32_t j = 0; j < glyf->numberGlyphs; j++) {
+		cff_blob *blob = compile_glyph(glyf->glyphs[j]);
+		charstring->offset[j + 1] = blob->size + charstring->offset[j];
+		charstring->data = realloc(charstring->data, charstring->offset[j + 1] - 1);
+		memcpy(charstring->data + charstring->offset[j] - 1, blob->data, blob->size);
+		blob_free(blob);
+	}
+	cff_blob *final_blob = compile_index(*charstring);
+	cff_index_fini(charstring);
+	return final_blob;
+}
+
 caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) { return NULL; }

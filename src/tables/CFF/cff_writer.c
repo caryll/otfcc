@@ -12,10 +12,25 @@
 
 #include "cff_io.h"
 
-void blob_merge(cff_blob *dst, cff_blob *src) {
-	dst->data = realloc(dst->data, dst->size + src->size);
+static void prepareSpaceForBlobMerge(cff_blob *dst, cff_blob *src) {
+	if (dst->free >= src->size) {
+		dst->free -= src->size;
+		return;
+	} else {
+		dst->rank = dst->rank << 1;
+		if (dst->rank > 0x1000000) dst->rank = 0x1000000;
+		dst->free = dst->rank;
+		dst->data = realloc(dst->data, dst->size + src->size + dst->free);
+	}
+}
+static void blob_merge_raw(cff_blob *dst, cff_blob *src) {
+	prepareSpaceForBlobMerge(dst, src);
 	memcpy(dst->data + dst->size, src->data, src->size);
 	dst->size += src->size;
+}
+void blob_merge(cff_blob *dst, cff_blob *src) {
+	blob_merge_raw(dst, src);
+	blob_free(src);
 }
 
 void blob_free(cff_blob *b) {
@@ -266,13 +281,11 @@ cff_blob *compile_pubdict(uint8_t *data, int32_t len) {
 					}
 
 					blob_merge(blob, blob_val);
-					blob_free(blob_val);
 				}
 
 				{
 					cff_blob *blob_op = encode_cff_operator(dict->ents[i].op);
 					blob_merge(blob, blob_op);
-					free(blob_op->data);
 				}
 				break;
 			case op_charset: {
@@ -282,8 +295,6 @@ cff_blob *compile_pubdict(uint8_t *data, int32_t len) {
 					cff_blob *blob_op = encode_cff_operator(dict->ents[i].op);
 					blob_merge(blob, blob_val);
 					blob_merge(blob, blob_op);
-					blob_free(blob_val);
-					blob_free(blob_op);
 				}
 			} break;
 			case op_Encoding: {
@@ -293,8 +304,6 @@ cff_blob *compile_pubdict(uint8_t *data, int32_t len) {
 					cff_blob *blob_op = encode_cff_operator(dict->ents[i].op);
 					blob_merge(blob, blob_val);
 					blob_merge(blob, blob_op);
-					blob_free(blob_val);
-					blob_free(blob_op);
 				}
 			} break;
 			case op_CharStrings:
@@ -359,13 +368,11 @@ cff_blob *compile_private(CFF_File *f) {
 						}
 
 						blob_merge(blob, blob_val);
-						blob_free(blob_val);
 					}
 
 					{
 						cff_blob *blob_op = encode_cff_operator(dict->ents[i].op);
 						blob_merge(blob, blob_op);
-						blob_free(blob_op);
 					}
 					break;
 				case op_Subrs:
@@ -402,7 +409,7 @@ cff_blob *compile_fdarray(CFF_INDEX fdarray) {
 	return final_blob;
 }
 
-static cff_blob *compile_type2_value(double val) {
+cff_blob *compile_type2_value(double val) {
 	double intpart;
 
 	if (modf(val, &intpart) == 0.0)
@@ -420,10 +427,6 @@ static cff_blob *compile_rmoveto(double x, double y) {
 	blob_merge(blob, blob_x);
 	blob_merge(blob, blob_y);
 	blob_merge(blob, blob_o);
-
-	blob_free(blob_x);
-	blob_free(blob_y);
-	blob_free(blob_o);
 
 	return blob;
 }
@@ -445,10 +448,6 @@ static cff_blob *compile_rlineto(double x, double y) {
 	blob_merge(blob, blob_x);
 	blob_merge(blob, blob_y);
 	blob_merge(blob, blob_o);
-
-	blob_free(blob_x);
-	blob_free(blob_y);
-	blob_free(blob_o);
 
 	return blob;
 }
@@ -479,14 +478,6 @@ static cff_blob *compile_rrcurveto(double x1, double y1, double x2, double y2, d
 	blob_merge(blob, blob_x3);
 	blob_merge(blob, blob_y3);
 	blob_merge(blob, blob_o);
-
-	blob_free(blob_x1);
-	blob_free(blob_y1);
-	blob_free(blob_x2);
-	blob_free(blob_y2);
-	blob_free(blob_x3);
-	blob_free(blob_y3);
-	blob_free(blob_o);
 
 	return blob;
 }
@@ -562,8 +553,6 @@ cff_blob *compile_charstring(CFF_File *f) {
 }
 
 // TODO: Apply peephole optimization
-static cff_blob *cff_peephole_optimization(cff_blob *blob) { return blob; }
-
 cff_blob *compile_outline(CFF_Outline *outline) {
 	cff_blob *blob = calloc(1, sizeof(cff_blob));
 
@@ -571,7 +560,6 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 	if (outline->width != 0.0) {
 		cff_blob *width = compile_type2_value(outline->width);
 		blob_merge(blob, width);
-		blob_free(width);
 	}
 
 	// rmoveto/rlineto/rrcurveto
@@ -581,11 +569,9 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 				if (check_contour(outline, i)) {
 					cff_blob *rmoveto = _rmoveto(outline, i);
 					blob_merge(blob, rmoveto);
-					blob_free(rmoveto);
 				} else {
 					cff_blob *rlineto = _rlineto(outline, i);
 					blob_merge(blob, rlineto);
-					blob_free(rlineto);
 				}
 
 				i += 1;
@@ -594,7 +580,6 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 			case 0: {
 				cff_blob *rrcurveto = _rrcurveto(outline, i);
 				blob_merge(blob, rrcurveto);
-				blob_free(rrcurveto);
 
 				i += 3;
 				break;
@@ -609,7 +594,7 @@ cff_blob *compile_outline(CFF_Outline *outline) {
 		blob_free(endchar);
 	}
 
-	return cff_peephole_optimization(blob);
+	return blob;
 }
 
 /*
@@ -674,18 +659,15 @@ cff_blob *compile_outline_to_svg(CFF_Outline *outline) {
 			if (check_contour(outline, i)) {
 				cff_blob *rmoveto = __rmoveto(outline, i);
 				blob_merge(blob, rmoveto);
-				blob_free(rmoveto);
 			} else {
 				cff_blob *rlineto = __rlineto(outline, i);
 				blob_merge(blob, rlineto);
-				blob_free(rlineto);
 			}
 
 			i += 1;
 		} else if (outline->t[i] == 0) {
 			cff_blob *rrcurveto = __rrcurveto(outline, i);
 			blob_merge(blob, rrcurveto);
-			blob_free(rrcurveto);
 
 			i += 3;
 		}
@@ -743,8 +725,7 @@ cff_blob *compile_cff(CFF_File *f) {
 			delta_blob.data[8] = (delta_size >> 16) & 0xff;
 			delta_blob.data[9] = (delta_size >> 8) & 0xff;
 			delta_blob.data[10] = (delta_size)&0xff;
-			blob_merge(blob, &delta_blob);
-			free(delta_blob.data);
+			blob_merge_raw(blob, &delta_blob);
 		}
 		blob_merge(blob, t);
 		if (e->size != 0) {
@@ -753,8 +734,6 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_Encoding);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		if (c->size != 0) {
 			int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3 + e->size;
@@ -762,8 +741,6 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_charset);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		if (s->size != 0) {
 			int32_t off =
@@ -772,8 +749,6 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_CharStrings);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		if (p->size != 0) {
 			int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3 + e->size +
@@ -784,29 +759,18 @@ cff_blob *compile_cff(CFF_File *f) {
 			blob_merge(blob, len);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(len);
-			blob_free(val);
-			blob_free(op);
 		}
 		blob_merge(blob, i);
 		{
 			cff_blob gsubr;
 			gsubr.size = 3;
 			gsubr.data = calloc(gsubr.size, sizeof(uint8_t));
-			blob_merge(blob, &gsubr);
+			blob_merge_raw(blob, &gsubr);
 		}
 		blob_merge(blob, e);
 		blob_merge(blob, c);
 		blob_merge(blob, s);
 		blob_merge(blob, p);
-		blob_free(h);
-		blob_free(n);
-		blob_free(t);
-		blob_free(i);
-		blob_free(e);
-		blob_free(c);
-		blob_free(s);
-		blob_free(p);
 	} else {
 		int32_t delta = 0;
 		cff_blob *h = compile_header();
@@ -836,8 +800,7 @@ cff_blob *compile_cff(CFF_File *f) {
 			delta_blob.data[8] = (delta_size >> 16) & 0xff;
 			delta_blob.data[9] = (delta_size >> 8) & 0xff;
 			delta_blob.data[10] = (delta_size)&0xff;
-			blob_merge(blob, &delta_blob);
-			free(delta_blob.data);
+			blob_merge_raw(blob, &delta_blob);
 		}
 		blob_merge(blob, t);
 		if (c->size != 0) {
@@ -846,8 +809,6 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_charset);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		if (e->size != 0) {
 			int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3 + c->size;
@@ -855,8 +816,6 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_FDSelect);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		if (s->size != 0) {
 			int32_t off =
@@ -865,8 +824,6 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_CharStrings);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		if (r->size != 0) {
 			int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3 + c->size +
@@ -875,28 +832,18 @@ cff_blob *compile_cff(CFF_File *f) {
 			cff_blob *op = encode_cff_operator(op_FDArray);
 			blob_merge(blob, val);
 			blob_merge(blob, op);
-			blob_free(val);
-			blob_free(op);
 		}
 		blob_merge(blob, i);
 		{
 			cff_blob gsubr;
 			gsubr.size = 3;
 			gsubr.data = calloc(gsubr.size, sizeof(uint8_t));
-			blob_merge(blob, &gsubr);
+			blob_merge_raw(blob, &gsubr);
 		}
 		blob_merge(blob, c);
 		blob_merge(blob, e);
 		blob_merge(blob, s);
 		blob_merge(blob, r);
-		blob_free(h);
-		blob_free(n);
-		blob_free(t);
-		blob_free(i);
-		blob_free(c);
-		blob_free(e);
-		blob_free(s);
-		blob_free(r);
 	}
 
 	return blob;

@@ -313,6 +313,8 @@ typedef struct {
 // blob and bloc of this CFF writer
 typedef struct {
 	uint32_t size;
+	uint32_t free;
+	uint32_t rank;
 	uint8_t *data;
 } cff_blob;
 
@@ -389,6 +391,8 @@ extern void esrap_index(CFF_INDEX in);
 extern void empty_index(CFF_INDEX *in);
 extern void print_index(CFF_INDEX in);
 
+cff_blob *compile_type2_value(double val);
+
 extern char *get_cff_sid(uint16_t idx, CFF_INDEX str);
 sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str);
 
@@ -398,7 +402,7 @@ extern CFF_File *CFF_sfnt_open(const char *fname, uint32_t offset, uint32_t len)
 extern void CFF_close(CFF_File *file);
 
 extern uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
-                       CFF_INDEX *subr);
+                          CFF_INDEX *subr);
 
 extern CFF_Dict *parse_dict(uint8_t *data, uint32_t len);
 extern void esrap_dict(CFF_Dict *d);
@@ -411,8 +415,7 @@ extern void print_glyph(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX 
 extern void parse_outline(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
                           CFF_Stack *stack, CFF_Outline *outline);
 void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
-                            CFF_Stack *stack, void *outline,
-                            cff_outline_builder_interface methods);
+                            CFF_Stack *stack, void *outline, cff_outline_builder_interface methods);
 
 extern CFF_Outline *cff_outline_init(void);
 extern void cff_outline_fini(CFF_Outline *out);
