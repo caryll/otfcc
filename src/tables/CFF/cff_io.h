@@ -254,22 +254,19 @@ enum {
 	CFF_FDSELECT_UNSPECED,
 };
 
-enum {
-	CS2_OPERATOR,
-	CS2_OPERAND,
-	CS2_FRACTION,
-};
-
-enum {
-	CFF_OPERATOR,
-	CFF_INTEGER,
-	CFF_DOUBLE,
-};
+typedef enum {
+	CFF_OPERATOR = 1,
+	CS2_OPERATOR = 1,
+	CFF_INTEGER = 2,
+	CS2_OPERAND = 2,
+	CFF_DOUBLE = 3,
+	CS2_FRACTION = 3
+} CFF_Value_Type;
 
 enum { CFF_LIMIT_STACK = 48, CFF_LIMIT_TRANSIENT = 32 };
 
 typedef struct {
-	uint32_t t;
+	CFF_Value_Type t;
 	union {
 		int32_t i;
 		double d;
@@ -345,6 +342,7 @@ typedef struct {
 	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3);
 	void (*setHint)(void *context, bool isVertical, float position, float width);
 	void (*setMask)(void *context, bool isContourMask, bool *mask);
+	double (*getrand)(void *context);
 } cff_outline_builder_interface;
 
 /*

@@ -696,7 +696,7 @@ cff_blob *compile_offset(int32_t val) {
 cff_blob *compile_cff(CFF_File *f) {
 	cff_blob *blob = calloc(1, sizeof(cff_blob));
 
-	if (f->font_dict.count != 0 && f->fdselect.t != CFF_FDSELECT_UNSPECED) {
+	if (f->font_dict.count == 0 || f->fdselect.t == CFF_FDSELECT_UNSPECED) {
 		int32_t delta = 0;
 		cff_blob *h = compile_header();
 		cff_blob *n = compile_index(f->name);

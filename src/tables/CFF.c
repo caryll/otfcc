@@ -59,6 +59,7 @@ typedef struct {
 	table_CFF *meta;
 	table_glyf *glyphs;
 	CFF_File *cffFile;
+	uint64_t seed;
 } cff_parse_context;
 static void callback_extract_private(uint32_t op, uint8_t top, CFF_Value *stack, void *_context) {
 	cff_parse_context *context = (cff_parse_context *)_context;
@@ -251,6 +252,7 @@ typedef struct {
 	uint8_t definedVStems;
 	uint8_t definedHintMasks;
 	uint8_t definedContourMasks;
+	uint64_t randx;
 } outline_builder_context;
 
 static void callback_count_contour(void *context) {
@@ -367,10 +369,29 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	}
 }
 
+static double callback_draw_getrand(void *_context) {
+	// xorshift64* PRNG to double53
+	outline_builder_context *context = (outline_builder_context *)_context;
+	uint64_t x = context->randx;
+	x ^= x >> 12;
+	x ^= x << 25;
+	x ^= x >> 27;
+	context->randx = x;
+	union {
+		uint64_t u;
+		double d;
+	} a;
+	a.u = x * UINT64_C(2685821657736338717);
+	a.u = (a.u >> 12) | UINT64_C(0x3FF0000000000000);
+	double q = (a.u & 2048) ? (1.0 - (2.2204460492503131E-16 / 2.0)) : 1.0;
+	return a.d - q;
+}
+
 static void buildOutline(uint16_t i, cff_parse_context *context) {
 	CFF_File *f = context->cffFile;
 	glyf_glyph *g = caryll_new_glyf_glyph();
 	context->glyphs->glyphs[i] = g;
+	uint64_t seed = context->seed;
 
 	CFF_INDEX localSubrs;
 	CFF_Stack stack;
@@ -378,17 +399,20 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	stack.index = 0;
 	stack.stem = 0;
 
-	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0};
-	cff_outline_builder_interface pass1 = {NULL, callback_count_contour, NULL, NULL, NULL, NULL};
+	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0};
+	cff_outline_builder_interface pass1 = {NULL, callback_count_contour, NULL, NULL, NULL, NULL,
+	                                       NULL};
 	cff_outline_builder_interface pass2 = {NULL,
 	                                       callback_countpoint_next_contour,
 	                                       callback_countpoint_lineto,
 	                                       callback_countpoint_curveto,
 	                                       callback_countpoint_sethint,
-	                                       callback_countpoint_setmask};
+	                                       callback_countpoint_setmask,
+	                                       NULL};
 	cff_outline_builder_interface pass3 = {callback_draw_setwidth, callback_draw_next_contour,
 	                                       callback_draw_lineto,   callback_draw_curveto,
-	                                       callback_draw_sethint,  callback_draw_setmask};
+	                                       callback_draw_sethint,  callback_draw_setmask,
+	                                       callback_draw_getrand};
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != CFF_FDSELECT_UNSPECED)
@@ -411,6 +435,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	uint32_t charStringLength = f->char_strings.offset[i + 1] - f->char_strings.offset[i];
 
 	// PASS 1 : Count contours
+	bc.randx = seed;
 	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                       pass1);
 	NEW_N(g->contours, g->numberOfContours);
@@ -418,6 +443,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	// PASS 2 : Count points
 	stack.index = 0;
 	stack.stem = 0;
+	bc.randx = seed;
 	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                       pass2);
 	for (uint16_t j = 0; j < g->numberOfContours; j++) {
@@ -433,6 +459,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	stack.stem = 0;
 	bc.jContour = 0;
 	bc.jPoint = 0;
+	bc.randx = seed;
 	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                       pass3);
 
@@ -448,6 +475,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 		}
 	}
 	esrap_index(localSubrs);
+	context->seed = bc.randx;
 }
 
 static void nameGlyphsAccordingToCFF(cff_parse_context *context) {
@@ -543,6 +571,11 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 		ret.meta = context.meta;
 
 		// Extract data of outlines
+		context.seed = 0x1234567887654321;
+		if (context.meta->privateDict) {
+			context.seed =
+			    (uint64_t)context.meta->privateDict->initialRandomSeed ^ 0x1234567887654321;
+		}
 		table_glyf *glyphs;
 		NEW(glyphs);
 		context.glyphs = glyphs;
@@ -915,6 +948,144 @@ static cff_blob *compile_glyf_to_charstring(table_glyf *glyf) {
 	cff_blob *final_blob = compile_index(*charstring);
 	cff_index_fini(charstring);
 	return final_blob;
+}
+
+// String table management
+typedef struct {
+	int sid;
+	char *str;
+	UT_hash_handle hh;
+} cff_sid_entry;
+
+static int sidof(cff_sid_entry **h, sds s) {
+	cff_sid_entry *item;
+	HASH_FIND_STR(*h, s, item);
+	if (item) {
+		return item->sid;
+	} else {
+		NEW(item);
+		item->sid = HASH_COUNT(*h);
+		item->str = sdsdup(s);
+		HASH_ADD_STR(*h, str, item);
+		return item->sid;
+	}
+}
+
+static CFF_Dict_Entry *cffdict_givemeablank(CFF_Dict *dict) {
+	dict->count++;
+	if (dict->ents) {
+		dict->ents = realloc(dict->ents, dict->count * sizeof(CFF_Dict_Entry));
+	} else {
+		dict->ents = calloc(dict->count, sizeof(CFF_Dict_Entry));
+	}
+	return &(dict->ents[dict->count - 1]);
+}
+static void cffdict_input(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_t arity, ...) {
+	CFF_Dict_Entry *last = cffdict_givemeablank(dict);
+	last->op = op;
+	last->cnt = arity;
+	NEW_N(last->vals, arity);
+
+	va_list ap;
+	va_start(ap, arity);
+	for (uint16_t j = 0; j < arity; j++) {
+		last->vals[j].t = t;
+		if (t == CFF_DOUBLE) {
+			double x = va_arg(ap, double);
+			last->vals[j].d = x;
+		} else {
+			double x = va_arg(ap, int);
+			last->vals[j].i = x;
+		}
+	}
+	va_end(ap);
+}
+static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_t arity,
+                               float *arr) {
+	if (!arity || !arr) return;
+	CFF_Dict_Entry *last = cffdict_givemeablank(dict);
+	last->op = op;
+	last->cnt = arity;
+	NEW_N(last->vals, arity);
+	for (uint16_t j = 0; j < arity; j++) {
+		last->vals[j].t = t;
+		if (t == CFF_DOUBLE) {
+			last->vals[j].d = arr[j];
+		} else {
+			last->vals[j].i = (int)arr[j];
+		}
+	}
+}
+
+static CFF_Dict *cff_make_fd_dict(cff_sid_entry **h, table_CFF *fd) {
+	CFF_Dict *dict;
+	NEW(dict);
+
+	// CFF Names
+	if (fd->version) cffdict_input(dict, op_version, CFF_INTEGER, 1, sidof(h, fd->version));
+	if (fd->notice) cffdict_input(dict, op_Notice, CFF_INTEGER, 1, sidof(h, fd->notice));
+	if (fd->copyright) cffdict_input(dict, op_Copyright, CFF_INTEGER, 1, sidof(h, fd->copyright));
+	if (fd->fullName) cffdict_input(dict, op_FullName, CFF_INTEGER, 1, sidof(h, fd->fullName));
+	if (fd->familyName)
+		cffdict_input(dict, op_FamilyName, CFF_INTEGER, 1, sidof(h, fd->familyName));
+	if (fd->weight) cffdict_input(dict, op_Weight, CFF_INTEGER, 1, sidof(h, fd->weight));
+
+	// CFF Metrics
+	cffdict_input(dict, op_FontBBox, CFF_DOUBLE, 4, fd->fontBBoxLeft, fd->fontBBoxBottom,
+	              fd->fontBBoxRight, fd->fontBBoxTop);
+	cffdict_input(dict, op_isFixedPitch, CFF_INTEGER, 1, (int)fd->isFixedPitch);
+	cffdict_input(dict, op_ItalicAngle, CFF_DOUBLE, 1, fd->italicAngle);
+	cffdict_input(dict, op_UnderlinePosition, CFF_DOUBLE, 1, fd->underlinePosition);
+	cffdict_input(dict, op_UnderlineThickness, CFF_DOUBLE, 1, fd->underlineThickness);
+	cffdict_input(dict, op_StrokeWidth, CFF_DOUBLE, 1, fd->strokeWidth);
+	if (fd->fontMatrix) {
+		cffdict_input(dict, op_FontMatrix, CFF_DOUBLE, 6, fd->fontMatrix->a, fd->fontMatrix->b,
+		              fd->fontMatrix->c, fd->fontMatrix->d, fd->fontMatrix->x, fd->fontMatrix->y);
+	}
+
+	// CID specific
+	if (fd->fontName) cffdict_input(dict, op_FontName, CFF_INTEGER, 1, sidof(h, fd->fontName));
+	if (fd->cidRegistry && fd->cidOrdering) {
+		cffdict_input(dict, op_ROS, CFF_INTEGER, 3, sidof(h, fd->cidRegistry),
+		              sidof(h, fd->cidOrdering), fd->cidSupplement);
+	}
+	if (fd->cidFontVersion)
+		cffdict_input(dict, op_CIDFontVersion, CFF_DOUBLE, 1, fd->cidFontVersion);
+	if (fd->cidFontRevision)
+		cffdict_input(dict, op_CIDFontRevision, CFF_DOUBLE, 1, fd->cidFontRevision);
+	if (fd->cidCount) cffdict_input(dict, op_CIDCount, CFF_INTEGER, 1, fd->cidCount);
+	if (fd->UIDBase) cffdict_input(dict, op_UIDBase, CFF_INTEGER, 1, fd->UIDBase);
+	return dict;
+}
+
+static CFF_Dict *cff_make_private_dict(cff_private *pd) {
+	CFF_Dict *dict;
+	NEW(dict);
+	// DELTA arrays
+	cffdict_input_aray(dict, op_BlueValues, CFF_DOUBLE, pd->blueValuesCount, pd->blueValues);
+	cffdict_input_aray(dict, op_OtherBlues, CFF_DOUBLE, pd->otherBluesCount, pd->otherBlues);
+	cffdict_input_aray(dict, op_FamilyBlues, CFF_DOUBLE, pd->familyBluesCount, pd->familyBlues);
+	cffdict_input_aray(dict, op_FamilyOtherBlues, CFF_DOUBLE, pd->familyOtherBluesCount,
+	                   pd->familyOtherBlues);
+	cffdict_input_aray(dict, op_StemSnapH, CFF_DOUBLE, pd->stemSnapHCount, pd->stemSnapH);
+	cffdict_input_aray(dict, op_StemSnapV, CFF_DOUBLE, pd->stemSnapVCount, pd->stemSnapV);
+
+	// Private scalars
+	cffdict_input(dict, op_BlueScale, CFF_DOUBLE, 1, pd->blueScale);
+	cffdict_input(dict, op_BlueShift, CFF_DOUBLE, 1, pd->blueShift);
+	cffdict_input(dict, op_BlueFuzz, CFF_DOUBLE, 1, pd->blueFuzz);
+	cffdict_input(dict, op_StdHW, CFF_DOUBLE, 1, pd->stdHW);
+	cffdict_input(dict, op_StdVW, CFF_DOUBLE, 1, pd->stdVW);
+	cffdict_input(dict, op_ForceBold, CFF_INTEGER, 1, (int)pd->forceBold);
+	cffdict_input(dict, op_LanguageGroup, CFF_INTEGER, 1, pd->languageGroup);
+	cffdict_input(dict, op_ExpansionFactor, CFF_DOUBLE, 1, pd->expansionFactor);
+	cffdict_input(dict, op_initialRandomSeed, CFF_DOUBLE, 1, pd->initialRandomSeed);
+
+	// op_defaultWidthX and op_nominalWidthX are currently not used
+	// Explicitly set them to zero
+	cffdict_input(dict, op_defaultWidthX, CFF_DOUBLE, 1, 0);
+	cffdict_input(dict, op_nominalWidthX, CFF_DOUBLE, 1, 0);
+	return dict;
 }
 
 caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) { return NULL; }

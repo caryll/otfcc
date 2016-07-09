@@ -921,6 +921,7 @@ static void callback_nopCurveTo(void *context, float x1, float y1, float x2, flo
                                 float y3) {}
 static void callback_nopsetHint(void *context, bool isVertical, float position, float width) {}
 static void callback_nopsetMask(void *context, bool isContourMask, bool *mask) { FREE(mask); }
+static double callback_nopgetrand(void *context) { return 0; }
 #define CHECK_STACK_TOP(op, n)                                                                     \
 	{                                                                                              \
 		if (stack->index < n) {                                                                    \
@@ -946,6 +947,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 	    methods.curveTo;
 	void (*setHint)(void *context, bool isVertical, float position, float width) = methods.setHint;
 	void (*setMask)(void *context, bool isContourMask, bool *mask) = methods.setMask;
+	double (*getrand)(void *context) = methods.getrand;
 
 	if (!setWidth) setWidth = callback_nopSetWidth;
 	if (!newContour) newContour = callback_nopNewContour;
@@ -953,6 +955,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 	if (!curveTo) curveTo = callback_nopCurveTo;
 	if (!setHint) setHint = callback_nopsetHint;
 	if (!setMask) setMask = callback_nopsetMask;
+	if (!getrand) getrand = callback_nopgetrand;
 
 	while (start < data + len) {
 		advance = decode_cs2_token(start, &val);
@@ -1340,7 +1343,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						// Chosen from a fair dice
 						// TODO: use a real randomizer
 						stack->stack[stack->index].t = CFF_DOUBLE;
-						stack->stack[stack->index].d = 0;
+						stack->stack[stack->index].d = getrand(outline);
 						stack->index += 1;
 						break;
 					}
