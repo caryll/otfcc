@@ -39,9 +39,10 @@ static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	return table;
 }
 
-sfnt_builder *new_sfnt_builder() {
+sfnt_builder *new_sfnt_builder(uint32_t header) {
 	sfnt_builder *builder = malloc(sizeof(sfnt_builder));
 	builder->count = 0;
+	builder->header = header;
 	builder->tables = NULL;
 	return builder;
 }
@@ -76,7 +77,7 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	if (!builder) return buffer;
 	uint16_t nTables = HASH_COUNT(builder->tables);
 	uint16_t searchRange = (nTables < 16 ? 8 : nTables < 32 ? 16 : nTables < 64 ? 32 : 64) * 16;
-	bufwrite32b(buffer, 0x00010000);
+	bufwrite32b(buffer, builder->header);
 	bufwrite16b(buffer, nTables);
 	bufwrite16b(buffer, searchRange);
 	bufwrite16b(buffer, (nTables < 16 ? 3 : nTables < 32 ? 4 : nTables < 64 ? 5 : 6));

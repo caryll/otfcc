@@ -370,6 +370,7 @@ extern cff_blob *encode_cs2_real(double val);
   Writer
 */
 extern void blob_merge(cff_blob *dst, cff_blob *src);
+extern void blob_merge_raw(cff_blob *dst, cff_blob *src);
 extern void blob_free(cff_blob *b);
 
 extern cff_blob *compile_header(void);
@@ -390,6 +391,7 @@ extern void empty_index(CFF_INDEX *in);
 extern void print_index(CFF_INDEX in);
 
 cff_blob *compile_type2_value(double val);
+cff_blob *compile_offset(int32_t val);
 
 extern char *get_cff_sid(uint16_t idx, CFF_INDEX str);
 sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str);

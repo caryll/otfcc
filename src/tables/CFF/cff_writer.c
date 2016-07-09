@@ -23,7 +23,7 @@ static void prepareSpaceForBlobMerge(cff_blob *dst, cff_blob *src) {
 		dst->data = realloc(dst->data, dst->size + src->size + dst->free);
 	}
 }
-static void blob_merge_raw(cff_blob *dst, cff_blob *src) {
+void blob_merge_raw(cff_blob *dst, cff_blob *src) {
 	prepareSpaceForBlobMerge(dst, src);
 	memcpy(dst->data + dst->size, src->data, src->size);
 	dst->size += src->size;

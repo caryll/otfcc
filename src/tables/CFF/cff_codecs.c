@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "cff_io.h"
 
 /*
@@ -36,34 +35,36 @@ cff_blob *encode_cff_operator(int32_t val) {
 cff_blob *encode_cff_number(int32_t val) {
 	cff_blob *blob = calloc(1, sizeof(cff_blob));
 
-	if (val >= -1131 && val <= -108) {
-		blob->size = 2;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
-		blob->data[0] = (uint8_t)((-108 - val) / 256 + 251);
-		blob->data[1] = (uint8_t)((-108 - val) % 256);
-	} else if (val >= -107 && val <= 107) {
+	if (val >= -107 && val <= 107) {
 		blob->size = 1;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
-		blob->data[0] = (uint8_t)(val + 139);
+		NEW_N(blob->data, blob->size);
+		blob->data[0] = val + 139;
 	} else if (val >= 108 && val <= 1131) {
 		blob->size = 2;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
-		blob->data[0] = (uint8_t)((val + 108) / 256 + 247);
-		blob->data[1] = (uint8_t)((val + 108) % 256);
-	} else if (val >= -32768 && val <= 32767) {
+		NEW_N(blob->data, blob->size);
+		val -= 108;
+		blob->data[0] = (val >> 8) + 247;
+		blob->data[1] = val & 0xff;
+	} else if (val >= -1131 && val <= -108) {
+		blob->size = 2;
+		NEW_N(blob->data, blob->size);
+		val -= 108;
+		blob->data[0] = (val >> 8) + 251;
+		blob->data[1] = val & 0xff;
+	} else if (val >= -32768 && val < 32768) {
 		blob->size = 3;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
+		NEW_N(blob->data, blob->size);
 		blob->data[0] = 28;
-		blob->data[1] = (uint8_t)(val >> 8);
-		blob->data[2] = (uint8_t)((val << 8) >> 8);
-	} else if (val >= -2147483648 && val <= 2147483647) {
+		blob->data[1] = val >> 8;
+		blob->data[2] = val & 0xff;
+	} else { /* In dict data we have 4 byte ints, in type2 strings we don't */
 		blob->size = 5;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
+		NEW_N(blob->data, blob->size);
 		blob->data[0] = 29;
-		blob->data[1] = (uint8_t)((val >> 16) / 256);
-		blob->data[2] = (uint8_t)((val >> 16) % 256);
-		blob->data[3] = (uint8_t)(((val << 16) >> 16) / 256);
-		blob->data[4] = (uint8_t)(((val << 16) >> 16) % 256);
+		blob->data[1] = (val >> 24) & 0xff;
+		blob->data[2] = (val >> 16) & 0xff;
+		blob->data[3] = (val >> 8) & 0xff;
+		blob->data[4] = val & 0xff;
 	}
 
 	return blob;
@@ -84,9 +85,9 @@ cff_blob *encode_cff_real(double val) {
 	} else {
 		uint32_t niblen = 0;
 		uint8_t *array;
-		sprintf((char *) temp, "%.13g", val);
+		sprintf((char *)temp, "%.13g", val);
 
-		for (i = 0; i < strlen((char *) temp);) {
+		for (i = 0; i < strlen((char *)temp);) {
 			if (temp[i] == '.')
 				niblen++, i++;
 			else if (temp[i] >= '0' && temp[i] <= '9')
@@ -112,7 +113,7 @@ cff_blob *encode_cff_real(double val) {
 			array[niblen] = 0x0f;
 		}
 
-		for (i = 0; i < strlen((char *) temp);) {
+		for (i = 0; i < strlen((char *)temp);) {
 			if (temp[i] == '.')
 				array[j++] = 0x0a, i++;
 			else if (temp[i] >= '0' && temp[i] <= '9')
@@ -334,19 +335,19 @@ static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
 		b = *nibst % 16;
 
 		if (a != 0x0f)
-			strcat((char *) restr, nibble_symb[a]);
+			strcat((char *)restr, nibble_symb[a]);
 		else
 			break;
 
 		if (b != 0x0f)
-			strcat((char *) restr, nibble_symb[b]);
+			strcat((char *)restr, nibble_symb[b]);
 		else
 			break;
 
 		nibst++;
 	}
 
-	val->d = atof((char *) restr);
+	val->d = atof((char *)restr);
 	val->t = CFF_DOUBLE;
 
 	return len;

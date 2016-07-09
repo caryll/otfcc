@@ -556,6 +556,10 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 		                  cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0], &context,
 		                  callback_extract_fd);
 
+		if (!context.meta->fontName) {
+			context.meta->fontName = sdsget_cff_sid(391, cffFile->name);
+		}
+
 		// We have FDArray
 		if (cffFile->font_dict.count) {
 			context.meta->fdArrayCount = cffFile->font_dict.count;
@@ -837,7 +841,7 @@ static void il_push_op(charstring_il *il, int32_t op) {
 
 static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 	charstring_il *il;
-	NEW(il);
+	NEW_CLEAN(il);
 	// Convert absolute positions to deltas
 	float x = 0;
 	float y = 0;
@@ -868,7 +872,7 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 				il_push_operand(il, contour->points[j].y);
 				il_push_op(il, op_rlineto);
 			} else {
-				if (j < n - 2 && !contour->points[j - 1].onCurve &&
+				if (j < n - 2 && !contour->points[j + 1].onCurve &&
 				    contour->points[j + 2].onCurve) {
 					il_push_operand(il, contour->points[j].x);
 					il_push_operand(il, contour->points[j].y);
@@ -876,7 +880,7 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 					il_push_operand(il, contour->points[j + 1].y);
 					il_push_operand(il, contour->points[j + 2].x);
 					il_push_operand(il, contour->points[j + 2].y);
-					il_push_op(il, op_rlineto);
+					il_push_op(il, op_rrcurveto);
 					j += 2;
 				} else {
 					il_push_operand(il, contour->points[j].x);
@@ -924,6 +928,7 @@ static cff_blob *compile_glyph(glyf_glyph *g) {
 	charstring_il *il = compile_glyph_to_il(g);
 	glyph_il_peephole_optimization(il);
 	cff_blob *blob = il2blob(il);
+	blob_merge(blob, encode_cs2_operator(op_endchar));
 	free(il->instr);
 	free(il);
 	return blob;
@@ -931,8 +936,7 @@ static cff_blob *compile_glyph(glyf_glyph *g) {
 
 static cff_blob *compile_glyf_to_charstring(table_glyf *glyf) {
 	if (glyf->numberGlyphs == 0) return calloc(1, sizeof(cff_blob));
-	CFF_INDEX *charstring;
-	NEW(charstring);
+	CFF_INDEX *charstring = cff_index_init();
 	charstring->count = glyf->numberGlyphs;
 	charstring->offSize = 4;
 	NEW_N(charstring->offset, charstring->count + 1);
@@ -958,16 +962,16 @@ typedef struct {
 } cff_sid_entry;
 
 static int sidof(cff_sid_entry **h, sds s) {
-	cff_sid_entry *item;
+	cff_sid_entry *item = NULL;
 	HASH_FIND_STR(*h, s, item);
 	if (item) {
-		return item->sid;
+		return 391 + item->sid;
 	} else {
 		NEW(item);
 		item->sid = HASH_COUNT(*h);
 		item->str = sdsdup(s);
 		HASH_ADD_STR(*h, str, item);
-		return item->sid;
+		return 391 + item->sid;
 	}
 }
 
@@ -994,7 +998,7 @@ static void cffdict_input(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_
 			double x = va_arg(ap, double);
 			last->vals[j].d = x;
 		} else {
-			double x = va_arg(ap, int);
+			int x = va_arg(ap, int);
 			last->vals[j].i = x;
 		}
 	}
@@ -1017,9 +1021,9 @@ static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, ui
 	}
 }
 
-static CFF_Dict *cff_make_fd_dict(cff_sid_entry **h, table_CFF *fd) {
+static CFF_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	CFF_Dict *dict;
-	NEW(dict);
+	NEW_CLEAN(dict);
 
 	// CFF Names
 	if (fd->version) cffdict_input(dict, op_version, CFF_INTEGER, 1, sidof(h, fd->version));
@@ -1060,7 +1064,8 @@ static CFF_Dict *cff_make_fd_dict(cff_sid_entry **h, table_CFF *fd) {
 
 static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	CFF_Dict *dict;
-	NEW(dict);
+	NEW_CLEAN(dict);
+	if (!pd) return dict;
 	// DELTA arrays
 	cffdict_input_aray(dict, op_BlueValues, CFF_DOUBLE, pd->blueValuesCount, pd->blueValues);
 	cffdict_input_aray(dict, op_OtherBlues, CFF_DOUBLE, pd->otherBluesCount, pd->otherBlues);
@@ -1088,4 +1093,174 @@ static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	return dict;
 }
 
-caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) { return NULL; }
+static cff_blob *cff_compileDict(CFF_Dict *dict) {
+	cff_blob *blob = calloc(1, sizeof(cff_blob));
+	for (uint32_t i = 0; i < dict->count; i++) {
+		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
+			cff_blob *blob_val;
+			if (dict->ents[i].vals[j].t == CFF_INTEGER) {
+				blob_val = encode_cff_number(dict->ents[i].vals[j].i);
+			} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
+				blob_val = encode_cff_real(dict->ents[i].vals[j].d);
+			} else {
+				blob_val = encode_cff_number(0);
+			}
+			blob_merge(blob, blob_val);
+		}
+		blob_merge(blob, encode_cff_operator(dict->ents[i].op));
+	}
+	return blob;
+}
+
+static int by_sid(cff_sid_entry *a, cff_sid_entry *b) { return a->sid - b->sid; }
+static cff_blob *cffstrings_to_indexblob(cff_sid_entry **h) {
+	HASH_SORT(*h, by_sid);
+	CFF_INDEX *strings = cff_index_init();
+	strings->count = HASH_COUNT(*h);
+	strings->offSize = 4;
+	NEW_N(strings->offset, strings->count + 1);
+	strings->offset[0] = 1;
+	strings->data = NULL;
+
+	cff_sid_entry *item, *tmp;
+	uint32_t j = 0;
+	HASH_ITER(hh, *h, item, tmp) {
+		strings->offset[j + 1] = sdslen(item->str) + strings->offset[j];
+		strings->data = realloc(strings->data, strings->offset[j + 1] - 1);
+		memcpy(strings->data + strings->offset[j] - 1, item->str, sdslen(item->str));
+		sdsfree(item->str);
+		HASH_DEL(*h, item);
+		free(item);
+		j++;
+	}
+	cff_blob *final_blob = compile_index(*strings);
+	cff_index_fini(strings);
+	return final_blob;
+}
+
+static cff_blob *cff_compile_nameindex(table_CFF *cff) {
+	CFF_INDEX *nameIndex = cff_index_init();
+	nameIndex->count = 1;
+	nameIndex->offSize = 4;
+	NEW_N(nameIndex->offset, 2);
+	if (!cff->fontName) { cff->fontName = sdsnew("Caryll-CFF-FONT"); }
+	nameIndex->offset[0] = 1;
+	nameIndex->offset[1] = 1 + sdslen(cff->fontName);
+	NEW_N(nameIndex->data, 1 + sdslen(cff->fontName));
+	memcpy(nameIndex->data, cff->fontName, sdslen(cff->fontName));
+	// CFF Name INDEX
+	cff_blob *n = compile_index(*nameIndex);
+	cff_index_fini(nameIndex);
+	if (cff->fontName) sdsfree(cff->fontName);
+	cff->fontName = NULL;
+	return n;
+}
+
+static cff_blob *writeCFF_NameKeyed(table_CFF *cff, table_glyf *glyf) {
+	cff_blob *blob = calloc(1, sizeof(cff_blob));
+
+	// CFF Header
+	cff_blob *h = compile_header();
+	cff_blob *n = cff_compile_nameindex(cff);
+
+	// The Strings hashtable
+	cff_sid_entry *stringHash;
+
+	// cff top DICT
+	CFF_Dict *top = cff_make_fd_dict(cff, &stringHash);
+	cff_blob *t = cff_compileDict(top);
+	// cff top PRIVATEs
+	CFF_Dict *top_pd = cff_make_private_dict(cff->privateDict);
+	cff_blob *p = cff_compileDict(top_pd);
+
+	// cff charset : Allocate string index terms for glyph names
+
+	CFF_Charset *charset;
+	NEW(charset);
+	if (glyf->numberGlyphs > 1) { // At least two glyphs
+		charset->t = CFF_CHARSET_FORMAT2;
+		charset->s = 1; // One segment only
+		for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+			sidof(&stringHash, glyf->glyphs[j]->name);
+		}
+		charset->f2.format = 2;
+		NEW(charset->f2.range2);
+		charset->f2.range2[0].first = sidof(&stringHash, glyf->glyphs[1]->name);
+		charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+	} else {
+		charset->t = CFF_CHARSET_ISOADOBE;
+	}
+	cff_blob *c = compile_charset(*charset);
+
+	cff_blob *i = cffstrings_to_indexblob(&stringHash);
+	cff_blob *s = compile_glyf_to_charstring(glyf);
+
+	int32_t delta = 0;
+	if (c->size != 0) delta += 6;
+	if (s->size != 0) delta += 6;
+	if (p->size != 0) delta += 11;
+	blob_merge(blob, h);
+	blob_merge(blob, n);
+	{
+		cff_blob delta_blob;
+		int32_t delta_size = t->size + delta + 1;
+		delta_blob.size = 11;
+		delta_blob.data = calloc(delta_blob.size, sizeof(uint8_t));
+		delta_blob.data[0] = 0;
+		delta_blob.data[1] = 1;
+		delta_blob.data[2] = 4;
+		delta_blob.data[6] = 1;
+		delta_blob.data[7] = (delta_size >> 24) & 0xff;
+		delta_blob.data[8] = (delta_size >> 16) & 0xff;
+		delta_blob.data[9] = (delta_size >> 8) & 0xff;
+		delta_blob.data[10] = (delta_size)&0xff;
+		blob_merge_raw(blob, &delta_blob);
+	}
+	blob_merge(blob, t);
+	if (c->size != 0) {
+		int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3;
+		cff_blob *val = compile_offset(off);
+		cff_blob *op = encode_cff_operator(op_charset);
+		blob_merge(blob, val);
+		blob_merge(blob, op);
+	}
+	if (s->size != 0) {
+		int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3 + c->size;
+		cff_blob *val = compile_offset(off);
+		cff_blob *op = encode_cff_operator(op_CharStrings);
+		blob_merge(blob, val);
+		blob_merge(blob, op);
+	}
+	if (p->size != 0) {
+		int32_t off = h->size + n->size + 11 + t->size + i->size + delta + 3 + c->size + s->size;
+		cff_blob *len = compile_offset(p->size);
+		cff_blob *val = compile_offset(off);
+		cff_blob *op = encode_cff_operator(op_Private);
+		blob_merge(blob, len);
+		blob_merge(blob, val);
+		blob_merge(blob, op);
+	}
+	blob_merge(blob, i);
+	{
+		cff_blob gsubr;
+		gsubr.size = 3;
+		gsubr.data = calloc(gsubr.size, sizeof(uint8_t));
+		blob_merge_raw(blob, &gsubr);
+	}
+	blob_merge(blob, c);
+	blob_merge(blob, s);
+	blob_merge(blob, p);
+
+	if (charset->t == CFF_CHARSET_FORMAT2) { FREE(charset->f2.range2); }
+	FREE(charset);
+
+	return blob;
+}
+
+caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) {
+	caryll_buffer *buf = bufnew();
+	cff_blob *blob = writeCFF_NameKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs);
+	bufwrite_bytes(buf, blob->size, blob->data);
+	blob_free(blob);
+	return buf;
+}

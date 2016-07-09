@@ -459,10 +459,10 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 	}
 	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, dumpopts);
 	if (font->subtype == FONTTYPE_TTF) {
-		if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
 		if (font->maxp) font->maxp->version = 0x00010000;
 	} else {
 		if (font->maxp) font->maxp->version = 0x00005000;
 	}
+	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
 	if (font->glyf && font->vhea) caryll_font_stat_vmtx(font);
 }
