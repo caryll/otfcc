@@ -199,11 +199,11 @@ cff_blob *encode_cs2_real(double val) {
 
 	blob->size = 5;
 	blob->data = calloc(5, sizeof(uint8_t));
-	blob->data[1] = 255;
-	blob->data[2] = ((int32_t)val1 / 65536) / 256;
-	blob->data[3] = ((int32_t)val1 / 65536) % 256;
-	blob->data[4] = ((int32_t)val1 % 65536) / 256;
-	blob->data[5] = ((int32_t)val1 % 65536) % 256;
+	blob->data[0] = 255;
+	blob->data[1] = ((int32_t)val1 / 65536) / 256;
+	blob->data[2] = ((int32_t)val1 / 65536) % 256;
+	blob->data[3] = ((int32_t)val1 % 65536) / 256;
+	blob->data[4] = ((int32_t)val1 % 65536) % 256;
 
 	return blob;
 }

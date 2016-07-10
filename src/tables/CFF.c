@@ -339,12 +339,10 @@ static void callback_draw_sethint(void *_context, bool isVertical, float positio
 	if (isVertical) {
 		context->g->stemV[context->definedVStems].position = position;
 		context->g->stemV[context->definedVStems].width = width;
-		context->g->stemV[context->definedVStems].isEdge = width < 0;
 		context->definedVStems += 1;
 	} else {
 		context->g->stemH[context->definedHStems].position = position;
 		context->g->stemH[context->definedHStems].width = width;
-		context->g->stemH[context->definedHStems].isEdge = width < 0;
 		context->definedHStems += 1;
 	}
 }
@@ -806,10 +804,8 @@ typedef enum { IL_ITEM_OPERAND, IL_ITEM_OPERATOR, IL_ITEM_SPECIAL, IL_ITEM_PHANT
 
 typedef struct {
 	il_type type;
-	union {
-		int32_t i;
-		double d;
-	};
+	double d;
+	int32_t i;
 } charstring_instruction;
 
 typedef struct {
@@ -850,6 +846,62 @@ static void il_push_op(charstring_il *il, int32_t op) {
 	il->free--;
 }
 
+static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
+                      uint16_t *jm) {
+	while (*jm < g->numberOfContourMasks && g->contourMasks[*jm].pointsBefore <= points) {
+		il_push_op(il, op_cntrmask);
+		uint8_t maskByte = 0;
+		uint8_t bits = 0;
+		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
+			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskH[j] & 1);
+			bits += 1;
+			if (bits == 8) {
+				il_push_special(il, maskByte);
+				bits = 0;
+			}
+		}
+		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
+			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskV[j] & 1);
+			bits += 1;
+			if (bits == 8) {
+				il_push_special(il, maskByte);
+				bits = 0;
+			}
+		}
+		if (bits) {
+			maskByte = maskByte << (8 - bits);
+			il_push_special(il, maskByte);
+		}
+		*jm += 1;
+	}
+	while (*jh < g->numberOfHintMasks && g->hintMasks[*jh].pointsBefore <= points) {
+		il_push_op(il, op_hintmask);
+		uint8_t maskByte = 0;
+		uint8_t bits = 0;
+		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
+			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskH[j] & 1);
+			bits += 1;
+			if (bits == 8) {
+				il_push_special(il, maskByte);
+				bits = 0;
+			}
+		}
+		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
+			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskV[j] & 1);
+			bits += 1;
+			if (bits == 8) {
+				il_push_special(il, maskByte);
+				bits = 0;
+			}
+		}
+		if (bits) {
+			maskByte = maskByte << (8 - bits);
+			il_push_special(il, maskByte);
+		}
+		*jh += 1;
+	}
+}
+
 static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 	charstring_il *il;
 	NEW_CLEAN(il);
@@ -870,6 +922,38 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 
 	// Write IL
 	if (g->advanceWidth != 0) { il_push_operand(il, g->advanceWidth); }
+	bool hasmask =
+	    (g->hintMasks && g->numberOfHintMasks) || (g->contourMasks && g->numberOfContourMasks);
+	if (g->stemH && g->numberOfStemH) {
+		float ref = 0;
+		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
+			il_push_operand(il, g->stemH[j].position - ref);
+			il_push_operand(il, g->stemH[j].width);
+			ref = g->stemH[j].position + g->stemH[j].width;
+		}
+		if (hasmask) {
+			il_push_op(il, op_hstemhm);
+		} else {
+			il_push_op(il, op_hstem);
+		}
+	}
+	if (g->stemV && g->numberOfStemV) {
+		float ref = 0;
+		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
+			il_push_operand(il, g->stemV[j].position - ref);
+			il_push_operand(il, g->stemV[j].width);
+			ref = g->stemV[j].position + g->stemV[j].width;
+		}
+		if (hasmask) {
+			il_push_op(il, op_vstemhm);
+		} else {
+			il_push_op(il, op_vstem);
+		}
+	}
+	uint16_t pointsSofar = 0;
+	uint16_t jh = 0;
+	uint16_t jm = 0;
+	if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
@@ -877,11 +961,14 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 		il_push_operand(il, contour->points[0].x);
 		il_push_operand(il, contour->points[0].y);
 		il_push_op(il, op_rmoveto);
+		pointsSofar++;
+		if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
 		for (uint16_t j = 1; j < n; j++) {
 			if (contour->points[j].onCurve) {
 				il_push_operand(il, contour->points[j].x);
 				il_push_operand(il, contour->points[j].y);
 				il_push_op(il, op_rlineto);
+				pointsSofar++;
 			} else {
 				if (j < n - 2 && !contour->points[j + 1].onCurve &&
 				    contour->points[j + 2].onCurve) {
@@ -892,13 +979,16 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 					il_push_operand(il, contour->points[j + 2].x);
 					il_push_operand(il, contour->points[j + 2].y);
 					il_push_op(il, op_rrcurveto);
+					pointsSofar += 3;
 					j += 2;
 				} else {
 					il_push_operand(il, contour->points[j].x);
 					il_push_operand(il, contour->points[j].y);
 					il_push_op(il, op_rlineto);
+					pointsSofar++;
 				}
 			}
+			if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
 		}
 	}
 	return il;
@@ -1305,6 +1395,7 @@ static cff_blob *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 
 	// Merge these data
 	uint32_t delta = 0;
+	uint32_t off = h->size + n->size + 11 + t->size;
 	if (c->size != 0) delta += 6;
 	if (e->size != 0) delta += 7;
 	if (s->size != 0) delta += 6;
@@ -1330,7 +1421,7 @@ static cff_blob *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 	blob_merge(blob, t);
 
 	// Compile offsets
-	uint32_t off = h->size + n->size + 11 + t->size + delta + i->size + 3;
+	off += delta + i->size + 3;
 	if (c->size != 0) {
 		cff_blob *val = compile_offset(off);
 		cff_blob *op = encode_cff_operator(op_charset);

@@ -6,7 +6,6 @@
 #include <support/ttinstr.h>
 #include <support/util.h>
 
-
 #include "head.h"
 #include "maxp.h"
 
@@ -28,7 +27,6 @@ typedef struct {
 
 // CFF stems and hint masks
 typedef struct {
-	bool isEdge;
 	float position;
 	float width;
 } glyf_postscript_hint_stemdef;

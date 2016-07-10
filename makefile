@@ -82,4 +82,12 @@ ttfroundtriptest : linux-release-x64
 	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-5.json
 	@node tests/ttf-roundtrip-test.js build/roundtrip-NotoNastaliqUrdu-Regular-3.json build/roundtrip-NotoNastaliqUrdu-Regular-5.json
 
-test: cffopcodetest ttfroundtriptest
+cffroundtriptest : linux-release-x64
+	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.otf -o build/roundtrip-WorkSans-Regular-1.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-2.otf -o build/roundtrip-WorkSans-Regular-3.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-3.json -o build/roundtrip-WorkSans-Regular-4.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-4.otf -o build/roundtrip-WorkSans-Regular-5.json --pretty
+	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-3.json build/roundtrip-WorkSans-Regular-5.json
+
+test: cffopcodetest ttfroundtriptest cffroundtriptest

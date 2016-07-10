@@ -417,7 +417,6 @@ static json_value *glyf_glyph_stemdefs_to_json(glyf_postscript_hint_stemdef *ste
 		json_value *stem = json_object_new(3);
 		json_object_push(stem, "position", coord_to_json(stems[j].position));
 		json_object_push(stem, "width", coord_to_json(stems[j].width));
-		json_object_push(stem, "isEdge", json_boolean_new(stems[j].isEdge));
 		json_array_push(a, stem);
 	}
 	return a;
@@ -578,6 +577,68 @@ static void wrongInstrsForGlyph(void *_g, char *reason, int pos) {
 	        g->name);
 }
 
+static void stems_from_json(json_value *sd, uint16_t *count, glyf_postscript_hint_stemdef **arr) {
+	if (!sd) {
+		*arr = NULL;
+		*count = 0;
+	} else {
+		*count = sd->u.array.length;
+		NEW_N(*arr, *count);
+		uint16_t jj = 0;
+		for (uint16_t j = 0; j < *count; j++) {
+			json_value *s = sd->u.array.values[j];
+			if (s->type == json_object) {
+				(*arr)[jj].position = json_obj_getnum(s, "position");
+				(*arr)[jj].width = json_obj_getnum(s, "width");
+				jj++;
+			}
+		}
+		*count = jj;
+	}
+}
+static void parse_maskbits(bool *arr, json_value *bits) {
+	if (!bits) {
+		for (uint16_t j = 0; j < 0x100; j++) { arr[j] = false; }
+	} else {
+		for (uint16_t j = 0; j < 0x100 && j < bits->u.array.length; j++) {
+			json_value *b = bits->u.array.values[j];
+			switch (b->type) {
+				case json_boolean:
+					arr[j] = b->u.boolean;
+					break;
+				case json_integer:
+					arr[j] = b->u.integer;
+					break;
+				case json_double:
+					arr[j] = b->u.dbl;
+					break;
+				default:
+					arr[j] = false;
+			}
+		}
+	}
+}
+static void masks_from_json(json_value *md, uint16_t *count, glyf_postscript_hint_mask **arr) {
+	if (!md) {
+		*arr = NULL;
+		*count = 0;
+	} else {
+		*count = md->u.array.length;
+		NEW_N(*arr, *count);
+		uint16_t jj = 0;
+		for (uint16_t j = 0; j < *count; j++) {
+			json_value *m = md->u.array.values[j];
+			if (m->type == json_object) {
+				(*arr)[jj].pointsBefore = json_obj_getint(m, "pointsBefore");
+				parse_maskbits(&((*arr)[jj].maskH[0]), json_obj_get_type(m, "maskH", json_array));
+				parse_maskbits(&((*arr)[jj].maskV[0]), json_obj_get_type(m, "maskV", json_array));
+				jj++;
+			}
+		}
+		*count = jj;
+	}
+}
+
 static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
                                                glyph_order_entry *order_entry,
                                                caryll_dump_options *dumpopts) {
@@ -592,6 +653,14 @@ static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump,
 	if (!dumpopts->ignore_hints) {
 		instr_from_json(json_obj_get(glyphdump, "instructions"), g, makeInstrsForGlyph,
 		                wrongInstrsForGlyph);
+		stems_from_json(json_obj_get_type(glyphdump, "stemH", json_array), &g->numberOfStemH,
+		                &(g->stemH));
+		stems_from_json(json_obj_get_type(glyphdump, "stemV", json_array), &g->numberOfStemV,
+		                &(g->stemV));
+		masks_from_json(json_obj_get_type(glyphdump, "hintMasks", json_array),
+		                &(g->numberOfHintMasks), &(g->hintMasks));
+		masks_from_json(json_obj_get_type(glyphdump, "contourMasks", json_array),
+		                &(g->numberOfContourMasks), &(g->contourMasks));
 	} else {
 		g->instructionsLength = 0;
 		g->instructions = NULL;
