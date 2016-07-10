@@ -229,6 +229,11 @@ uint8_t cs2_op_standard_arity(uint32_t op) {
 		case op_hlineto:
 		case op_vlineto:
 			return 1;
+		case op_hhcurveto:
+		case op_vvcurveto:
+		case op_hvcurveto:
+		case op_vhcurveto:
+			return 4;
 		case op_rrcurveto:
 			return 6;
 		default:

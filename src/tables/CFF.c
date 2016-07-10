@@ -348,11 +348,25 @@ static void callback_draw_sethint(void *_context, bool isVertical, float positio
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	glyf_postscript_hint_mask *mask =
-	    &(isContourMask ? context->g->contourMasks
-	                    : context->g->hintMasks)[isContourMask ? context->definedContourMasks
-	                                                           : context->definedHintMasks];
+	uint16_t maskIndex = isContourMask ? context->definedContourMasks : context->definedHintMasks;
+	glyf_postscript_hint_mask *maskList =
+	    isContourMask ? context->g->contourMasks : context->g->hintMasks;
+	glyf_postscript_hint_mask *mask;
+	bool duplicateMask = false;
+
+	if (maskIndex > 0) {
+		glyf_postscript_hint_mask *lastMask = &(maskList)[maskIndex - 1];
+		if (lastMask->pointsBefore == context->pointsDefined) {
+			mask = lastMask;
+			duplicateMask = true;
+		} else {
+			mask = &(maskList)[maskIndex];
+		}
+	} else {
+		mask = &(maskList)[maskIndex];
+	}
 	mask->pointsBefore = context->pointsDefined;
+
 	for (uint16_t j = 0; j < 0x100; j++) {
 		mask->maskH[j] = j < context->g->numberOfStemH ? maskArray[j] : 0;
 		mask->maskV[j] =
@@ -360,6 +374,7 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	}
 
 	free(maskArray);
+	if (duplicateMask) return;
 	if (isContourMask) {
 		context->definedContourMasks += 1;
 	} else {
@@ -460,6 +475,8 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	bc.randx = seed;
 	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                       pass3);
+	g->numberOfContourMasks = bc.definedContourMasks;
+	g->numberOfHintMasks = bc.definedHintMasks;
 
 	// PASS 4 : Turn deltas into absolute coordinates
 	float cx = 0;
@@ -916,18 +933,57 @@ static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_
 
 static void il_lineto(charstring_il *il, float dx, float dy) {
 	if (dx == 0) {
-		phantomize(il, op_vlineto);
 		il_push_operand(il, dy);
 		il_push_op(il, op_vlineto);
 	} else if (dy == 0) {
-		phantomize(il, op_hlineto);
 		il_push_operand(il, dx);
 		il_push_op(il, op_hlineto);
 	} else {
 		phantomize(il, op_rlineto);
+		// phantomize(il, op_hlineto);
+		// phantomize(il, op_vlineto);
 		il_push_operand(il, dx);
 		il_push_operand(il, dy);
 		il_push_op(il, op_rlineto);
+	}
+}
+static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3,
+                       float dy3) {
+	if (dy1 == 0 && dy3 == 0) {
+		phantomize(il, op_hhcurveto);
+		il_push_operand(il, dx1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dx3);
+		il_push_op(il, op_hhcurveto);
+	} else if (dx1 == 0 && dx3 == 0) {
+		phantomize(il, op_vvcurveto);
+		il_push_operand(il, dy1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dy3);
+		il_push_op(il, op_vvcurveto);
+	} else if (dy1 == 0 && dx3 == 0) {
+		il_push_operand(il, dx1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dy3);
+		il_push_op(il, op_hvcurveto);
+	} else if (dx1 == 0 && dy3 == 0) {
+		il_push_operand(il, dy1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dx3);
+		il_push_op(il, op_vhcurveto);
+	} else {
+		phantomize(il, op_rrcurveto);
+		il_push_operand(il, dx1);
+		il_push_operand(il, dy1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dx3);
+		il_push_operand(il, dy3);
+		il_push_op(il, op_rrcurveto);
 	}
 }
 
@@ -999,14 +1055,9 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 			} else {
 				if (j < n - 2 && !contour->points[j + 1].onCurve &&
 				    contour->points[j + 2].onCurve) {
-					phantomize(il, op_rrcurveto);
-					il_push_operand(il, contour->points[j].x);
-					il_push_operand(il, contour->points[j].y);
-					il_push_operand(il, contour->points[j + 1].x);
-					il_push_operand(il, contour->points[j + 1].y);
-					il_push_operand(il, contour->points[j + 2].x);
-					il_push_operand(il, contour->points[j + 2].y);
-					il_push_op(il, op_rrcurveto);
+					il_curveto(il, contour->points[j].x, contour->points[j].y,
+					           contour->points[j + 1].x, contour->points[j + 1].y,
+					           contour->points[j + 2].x, contour->points[j + 2].y);
 					pointsSofar += 3;
 					j += 2;
 				} else {

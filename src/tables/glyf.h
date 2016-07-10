@@ -27,6 +27,7 @@ typedef struct {
 
 // CFF stems and hint masks
 typedef struct {
+	uint16_t map;
 	float position;
 	float width;
 } glyf_postscript_hint_stemdef;

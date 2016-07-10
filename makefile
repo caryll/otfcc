@@ -40,7 +40,6 @@ mf-vs2015 :
 mf-gmake :
 	@$(PREMAKE5) gmake
 
-
 cffopcodetest : linux-release-x64
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.abs.otf' | node tests/cffdump-opcode-check
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.add.otf' | node tests/cffdump-opcode-check
