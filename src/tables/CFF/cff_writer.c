@@ -12,18 +12,21 @@
 
 #include "cff_io.h"
 
-static void prepareSpaceForBlobMerge(cff_blob *dst, cff_blob *src) {
-	if (dst->free >= src->size) {
-		dst->free -= src->size;
+static void prepareSpaceForBlobMerge(cff_blob *dst, size_t size) {
+	if (dst->free >= size) {
+		dst->free -= size;
 	} else {
-		dst->rank = dst->rank << 1;
-		if (dst->rank > 0x1000000) dst->rank = 0x1000000;
+		if (!dst->rank) {
+			dst->rank = 0x10;
+		} else {
+			dst->rank = (dst->rank & 0xFFFFFF) << 1;
+		}
 		dst->free = dst->rank;
-		dst->data = realloc(dst->data, dst->size + src->size + dst->free);
+		dst->data = realloc(dst->data, dst->size + size + dst->free);
 	}
 }
 void blob_merge_raw(cff_blob *dst, cff_blob *src) {
-	prepareSpaceForBlobMerge(dst, src);
+	prepareSpaceForBlobMerge(dst, src->size);
 	memcpy(dst->data + dst->size, src->data, src->size);
 	dst->size += src->size;
 }
@@ -153,9 +156,6 @@ cff_blob *compile_fdselect(CFF_FDSelect fd) {
 			cff_blob *blob = calloc(1, sizeof(cff_blob));
 			blob->size = 1 + fd.s;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
-			blob->data[0] = 0;
-			memcpy(blob->data + 1, fd.f0.fds, fd.s);
-			return blob;
 		}
 		case CFF_FDSELECT_FORMAT3: {
 			cff_blob *blob = calloc(1, sizeof(cff_blob));
@@ -176,13 +176,68 @@ cff_blob *compile_fdselect(CFF_FDSelect fd) {
 	return NULL;
 }
 
-cff_blob *compile_type2_value(double val) {
+void merge_cs2_operator(cff_blob *blob, int32_t val) {
+	if (val >= 0x100) {
+		prepareSpaceForBlobMerge(blob, 2);
+		blob->data[blob->size] = val >> 8;
+		blob->data[blob->size + 1] = val & 0xFF;
+		blob->size += 2;
+	} else {
+		prepareSpaceForBlobMerge(blob, 1);
+		blob->data[blob->size] = val;
+		blob->size += 1;
+	}
+}
+static void merge_cs2_int(cff_blob *blob, int32_t val) {
+	if (val >= -1131 && val <= -108) {
+		prepareSpaceForBlobMerge(blob, 2);
+		blob->data[blob->size + 0] = (uint8_t)((-108 - val) / 256 + 251);
+		blob->data[blob->size + 1] = (uint8_t)((-108 - val) % 256);
+		blob->size += 2;
+	} else if (val >= -107 && val <= 107) {
+		prepareSpaceForBlobMerge(blob, 1);
+		blob->data[blob->size + 0] = (uint8_t)(val + 139);
+		blob->size += 1;
+	} else if (val >= 108 && val <= 1131) {
+		prepareSpaceForBlobMerge(blob, 2);
+		blob->data[blob->size + 0] = (uint8_t)((val - 108) / 256 + 247);
+		blob->data[blob->size + 1] = (uint8_t)((val - 108) % 256);
+		blob->size += 2;
+	} else {
+		if (val >= -32768 && val <= 32767) {
+			prepareSpaceForBlobMerge(blob, 3);
+			blob->data[blob->size + 0] = 28;
+			blob->data[blob->size + 1] = (uint8_t)(val >> 8);
+			blob->data[blob->size + 2] = (uint8_t)((val << 8) >> 8);
+			blob->size += 3;
+		} else {
+			fprintf(stderr, "Error: Illegal Number (%d) in Type2 CharString.\n", val);
+			merge_cs2_int(blob, 0);
+		}
+	}
+}
+static void merge_cs2_real(cff_blob *blob, double val) {
+	double val1 = val * 65536.0;
+	prepareSpaceForBlobMerge(blob, 5);
+	blob->data[blob->size + 0] = 255;
+	blob->data[blob->size + 1] = ((int32_t)val1 / 65536) / 256;
+	blob->data[blob->size + 2] = ((int32_t)val1 / 65536) % 256;
+	blob->data[blob->size + 3] = ((int32_t)val1 % 65536) / 256;
+	blob->data[blob->size + 4] = ((int32_t)val1 % 65536) % 256;
+	blob->size += 5;
+}
+void merge_cs2_operand(cff_blob *blob, double val) {
 	double intpart;
-
-	if (modf(val, &intpart) == 0.0)
-		return encode_cs2_number(intpart);
-	else
-		return encode_cs2_real(val);
+	if (modf(val, &intpart) == 0.0) {
+		merge_cs2_int(blob, intpart);
+	} else {
+		merge_cs2_real(blob, val);
+	}
+}
+void merge_cs2_special(cff_blob *blob, uint8_t val) {
+	prepareSpaceForBlobMerge(blob, 1);
+	blob->data[blob->size + 0] = val;
+	blob->size += 1;
 }
 
 cff_blob *compile_offset(int32_t val) {

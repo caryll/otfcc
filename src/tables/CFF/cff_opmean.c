@@ -220,3 +220,18 @@ char *op_cs2_name(uint32_t op) {
 			return "Unknown";
 	}
 }
+
+uint8_t cs2_op_standard_arity(uint32_t op) {
+	switch (op) {
+		case op_rlineto:
+		case op_rmoveto:
+			return 2;
+		case op_hlineto:
+		case op_vlineto:
+			return 1;
+		case op_rrcurveto:
+			return 6;
+		default:
+			return 2;
+	}
+}
