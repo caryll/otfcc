@@ -1,6 +1,14 @@
 #include "consolidate.h"
 // Consolidation
 // Replace name entries in json to gid and do some check
+static int by_stem_pos(const void *a, const void *b) {
+	return ((glyf_postscript_hint_stemdef *)a)->position -
+	       ((glyf_postscript_hint_stemdef *)b)->position;
+}
+static int by_mask_pointindex(const void *a, const void *b) {
+	return ((glyf_postscript_hint_mask *)a)->pointsBefore -
+	       ((glyf_postscript_hint_mask *)b)->pointsBefore;
+}
 void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 	uint16_t nReferencesConsolidated = 0;
 	for (uint16_t j = 0; j < g->numberOfReferences; j++) {
@@ -41,6 +49,23 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 			g->references = consolidatedReferences;
 			g->numberOfReferences = nReferencesConsolidated;
 		}
+	}
+
+	// Sort stems
+	if (g->stemH) {
+		qsort(g->stemH, g->numberOfStemH, sizeof(glyf_postscript_hint_stemdef), by_stem_pos);
+	}
+	if (g->stemV) {
+		qsort(g->stemV, g->numberOfStemV, sizeof(glyf_postscript_hint_stemdef), by_stem_pos);
+	}
+	// sort masks
+	if (g->hintMasks) {
+		qsort(g->hintMasks, g->numberOfHintMasks, sizeof(glyf_postscript_hint_mask),
+		      by_mask_pointindex);
+	}
+	if (g->contourMasks) {
+		qsort(g->contourMasks, g->numberOfContourMasks, sizeof(glyf_postscript_hint_mask),
+		      by_mask_pointindex);
 	}
 }
 

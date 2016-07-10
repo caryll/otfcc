@@ -187,7 +187,7 @@ cff_blob *encode_cs2_number(int32_t val) {
 			blob->data[1] = (uint8_t)(val >> 8);
 			blob->data[2] = (uint8_t)((val << 8) >> 8);
 		} else
-			printf("Error: Ilegal Number (%d) in Type2 CharString.\n", val);
+			printf("Error: Illegal Number (%d) in Type2 CharString.\n", val);
 	}
 
 	return blob;
@@ -253,8 +253,9 @@ uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val) {
 		}
 	} else if (*start == 255) {
 		val->t = CS2_FRACTION;
-		val->d = (double)((*(start + 1) << 8 | *(start + 2)) +
-		                  (*(start + 3) << 8 | *(start + 4)) / 65536.0);
+		int16_t integerPart = start[1] << 8 | start[2];
+		uint16_t fractionPart = start[3] << 8 | start[4];
+		val->d = (double)(integerPart + fractionPart / 65536.0);
 		advance = 5;
 	}
 
