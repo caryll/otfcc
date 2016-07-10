@@ -28,6 +28,7 @@ caryll_font *caryll_new_font() {
 	font->GSUB = NULL;
 	font->GPOS = NULL;
 	font->GDEF = NULL;
+	font->VORG = NULL;
 	return font;
 }
 
@@ -51,6 +52,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->GSUB) caryll_delete_otl(font->GSUB);
 	if (font->GPOS) caryll_delete_otl(font->GPOS);
 	if (font->GDEF) caryll_delete_GDEF(font->GDEF);
+	if (font->VORG) caryll_delete_VORG(font->VORG);
 	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font) free(font);
 }
@@ -89,7 +91,10 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 			font->CFF_ = cffpr.meta;
 			font->glyf = cffpr.glyphs;
 			font->vhea = caryll_read_vhea(packet);
-			if (font->vhea) font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
+			if (font->vhea) {
+				font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
+				font->VORG = caryll_read_VORG(packet);
+			}
 		}
 		if (font->glyf) {
 			font->GSUB = caryll_read_otl(packet, 'GSUB');

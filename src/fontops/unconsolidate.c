@@ -272,6 +272,16 @@ static void merge_vmtx(caryll_font *font) {
 				    font->vmtx->topSideBearing[j - count_a] + font->glyf->glyphs[j]->stat.yMax;
 			}
 		}
+		if (font->VORG) {
+			for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+				font->glyf->glyphs[j]->verticalOrigin = font->VORG->defaultVerticalOrigin;
+			}
+			for (uint16_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
+				if (font->VORG->entries[j].gid < font->glyf->numberGlyphs) {
+					font->glyf->glyphs[j]->verticalOrigin = font->VORG->entries[j].verticalOrigin;
+				}
+			}
+		}
 	}
 }
 void caryll_font_unconsolidate(caryll_font *font, caryll_dump_options *dumpopts) {
