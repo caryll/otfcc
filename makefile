@@ -67,12 +67,12 @@ ttfroundtriptest : linux-release-x64
 	@bin/Release-x64/otfccdump build/roundtrip-iosevka-r-4.ttf -o build/roundtrip-iosevka-r-5.json
 	@node tests/ttf-roundtrip-test.js build/roundtrip-iosevka-r-3.json build/roundtrip-iosevka-r-5.json
 
-	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.ttf -o build/roundtrip-WorkSans-Regular-1.json
-	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.ttf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-2.ttf -o build/roundtrip-WorkSans-Regular-3.json
-	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-3.json -o build/roundtrip-WorkSans-Regular-4.ttf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-4.ttf -o build/roundtrip-WorkSans-Regular-5.json
-	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-3.json build/roundtrip-WorkSans-Regular-5.json
+	@bin/Release-x64/otfccdump tests/payload/NotoNastaliqUrdu-Regular.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-1.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-NotoNastaliqUrdu-Regular-1.json -o build/roundtrip-NotoNastaliqUrdu-Regular-2.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-2.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-3.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-NotoNastaliqUrdu-Regular-3.json -o build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-5.json --pretty
+	@node tests/ttf-roundtrip-test.js build/roundtrip-NotoNastaliqUrdu-Regular-3.json build/roundtrip-NotoNastaliqUrdu-Regular-5.json
 
 cffroundtriptest : linux-release-x64
 	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.otf -o build/roundtrip-WorkSans-Regular-1.json --pretty
@@ -87,5 +87,12 @@ cffroundtriptest : linux-release-x64
 	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-7.json -o build/roundtrip-WorkSans-Regular-8.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-8.otf -o build/roundtrip-WorkSans-Regular-9.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-7.json build/roundtrip-WorkSans-Regular-9.json
+
+	@bin/Release-x64/otfccdump tests/payload/Cormorant-Medium.otf -o build/roundtrip-Cormorant-Medium-1.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-Cormorant-Medium-1.json -o build/roundtrip-Cormorant-Medium-2.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-2.otf -o build/roundtrip-Cormorant-Medium-3.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-Cormorant-Medium-3.json -o build/roundtrip-Cormorant-Medium-4.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-4.otf -o build/roundtrip-Cormorant-Medium-5.json --pretty
+	@node tests/ttf-roundtrip-test.js build/roundtrip-Cormorant-Medium-3.json build/roundtrip-Cormorant-Medium-5.json
 
 test: cffopcodetest ttfroundtriptest cffroundtriptest

@@ -36,57 +36,49 @@
 #include <math.h>
 
 #ifdef _MSC_VER
-    #define snprintf _snprintf
+#define snprintf _snprintf
 #endif
 
-const static json_serialize_opts default_opts =
-{
-   json_serialize_mode_single_line,
-   0,
-   3  /* indent_size */
+const static json_serialize_opts default_opts = {
+    json_serialize_mode_single_line, 0, 3 /* indent_size */
 };
 
-typedef struct json_builder_value
-{
-   json_value value;
+typedef struct json_builder_value {
+	json_value value;
 
-   int is_builder_value;
+	int is_builder_value;
 
-   size_t additional_length_allocated;
-   size_t length_iterated;
+	size_t additional_length_allocated;
+	size_t length_iterated;
 
 } json_builder_value;
 
-static int builderize (json_value * value)
-{
-   if (((json_builder_value *) value)->is_builder_value)
-      return 1;
-   
-   if (value->type == json_object)
-   {
-      unsigned int i;
+static int builderize(json_value *value) {
+	if (((json_builder_value *)value)->is_builder_value) return 1;
 
-      /* Values straight out of the parser have the names of object entries
-       * allocated in the same allocation as the values array itself.  This is
-       * not desirable when manipulating values because the names would be easy
-       * to clobber.
-       */
-      for (i = 0; i < value->u.object.length; ++ i)
-      {
-         json_char * name_copy;
-         json_object_entry * entry = &value->u.object.values [i];
+	if (value->type == json_object) {
+		unsigned int i;
 
-         if (! (name_copy = (json_char *) malloc ((entry->name_length + 1) * sizeof (json_char))))
-            return 0;
+		/* Values straight out of the parser have the names of object entries
+		 * allocated in the same allocation as the values array itself.  This is
+		 * not desirable when manipulating values because the names would be easy
+		 * to clobber.
+		 */
+		for (i = 0; i < value->u.object.length; ++i) {
+			json_char *name_copy;
+			json_object_entry *entry = &value->u.object.values[i];
 
-         memcpy (name_copy, entry->name, entry->name_length + 1);
-         entry->name = name_copy;
-      }
-   }
+			if (!(name_copy = (json_char *)malloc((entry->name_length + 1) * sizeof(json_char))))
+				return 0;
 
-   ((json_builder_value *) value)->is_builder_value = 1;
+			memcpy(name_copy, entry->name, entry->name_length + 1);
+			entry->name = name_copy;
+		}
+	}
 
-   return 1;
+	((json_builder_value *)value)->is_builder_value = 1;
+
+	return 1;
 }
 
 const size_t json_builder_extra = sizeof(json_builder_value) - sizeof(json_value);
@@ -95,901 +87,783 @@ const size_t json_builder_extra = sizeof(json_builder_value) - sizeof(json_value
  * serializer conditions simpler.
  */
 const int f_spaces_around_brackets = (1 << 0);
-const int f_spaces_after_commas    = (1 << 1);
-const int f_spaces_after_colons    = (1 << 2);
-const int f_tabs                   = (1 << 3);
+const int f_spaces_after_commas = (1 << 1);
+const int f_spaces_after_colons = (1 << 2);
+const int f_tabs = (1 << 3);
 
-int get_serialize_flags (json_serialize_opts opts)
-{
-   int flags = 0;
+int get_serialize_flags(json_serialize_opts opts) {
+	int flags = 0;
 
-   if (opts.mode == json_serialize_mode_packed)
-      return 0;
+	if (opts.mode == json_serialize_mode_packed) return 0;
 
-   if (opts.mode == json_serialize_mode_multiline)
-   {
-      if (opts.opts & json_serialize_opt_use_tabs)
-         flags |= f_tabs;
-   }
-   else
-   {
-      if (! (opts.opts & json_serialize_opt_pack_brackets))
-         flags |= f_spaces_around_brackets;
+	if (opts.mode == json_serialize_mode_multiline) {
+		if (opts.opts & json_serialize_opt_use_tabs) flags |= f_tabs;
+	} else {
+		if (!(opts.opts & json_serialize_opt_pack_brackets)) flags |= f_spaces_around_brackets;
 
-      if (! (opts.opts & json_serialize_opt_no_space_after_comma))
-         flags |= f_spaces_after_commas;
-   }
+		if (!(opts.opts & json_serialize_opt_no_space_after_comma)) flags |= f_spaces_after_commas;
+	}
 
-   if (! (opts.opts & json_serialize_opt_no_space_after_colon))
-      flags |= f_spaces_after_colons;
+	if (!(opts.opts & json_serialize_opt_no_space_after_colon)) flags |= f_spaces_after_colons;
 
-   return flags;
+	return flags;
 }
 
-json_value * json_array_new (size_t length)
-{
-    json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
+json_value *json_array_new(size_t length) {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-    if (!value)
-       return NULL;
+	if (!value) return NULL;
 
-    ((json_builder_value *) value)->is_builder_value = 1;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-    value->type = json_array;
+	value->type = json_array;
 
-    if (! (value->u.array.values = (json_value **) malloc (length * sizeof (json_value *))))
-    {
-       free (value);
-       return NULL;
-    }
+	if (!(value->u.array.values = (json_value **)malloc(length * sizeof(json_value *)))) {
+		free(value);
+		return NULL;
+	}
 
-    ((json_builder_value *) value)->additional_length_allocated = length;
+	((json_builder_value *)value)->additional_length_allocated = length;
 
-    return value;
+	return value;
 }
 
-json_value * json_array_push (json_value * array, json_value * value)
-{
-   assert (array->type == json_array);
+json_value *json_array_push(json_value *array, json_value *value) {
+	assert(array->type == json_array);
 
-   if (!builderize (array) || !builderize (value))
-      return NULL;
+	if (!builderize(array) || !builderize(value)) return NULL;
 
-   if (((json_builder_value *) array)->additional_length_allocated > 0)
-   {
-      -- ((json_builder_value *) array)->additional_length_allocated;
-   }
-   else
-   {
-      json_value ** values_new = (json_value **) realloc
-            (array->u.array.values, sizeof (json_value *) * (array->u.array.length + 1));
+	if (((json_builder_value *)array)->additional_length_allocated > 0) {
+		--((json_builder_value *)array)->additional_length_allocated;
+	} else {
+		json_value **values_new = (json_value **)realloc(
+		    array->u.array.values, sizeof(json_value *) * (array->u.array.length + 1));
 
-      if (!values_new)
-         return NULL;
+		if (!values_new) return NULL;
 
-      array->u.array.values = values_new;
-   }
+		array->u.array.values = values_new;
+	}
 
-   array->u.array.values [array->u.array.length] = value;
-   ++ array->u.array.length;
+	array->u.array.values[array->u.array.length] = value;
+	++array->u.array.length;
 
-   value->parent = array;
+	value->parent = array;
 
-   return value;
+	return value;
 }
 
-json_value * json_object_new (size_t length)
-{
-    json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
+json_value *json_object_new(size_t length) {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-    if (!value)
-       return NULL;
+	if (!value) return NULL;
 
-    ((json_builder_value *) value)->is_builder_value = 1;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-    value->type = json_object;
+	value->type = json_object;
 
-    if (! (value->u.object.values = (json_object_entry *) calloc
-           (length, sizeof (*value->u.object.values))))
-    {
-       free (value);
-       return NULL;
-    }
+	if (!(value->u.object.values =
+	          (json_object_entry *)calloc(length, sizeof(*value->u.object.values)))) {
+		free(value);
+		return NULL;
+	}
 
-    ((json_builder_value *) value)->additional_length_allocated = length;
+	((json_builder_value *)value)->additional_length_allocated = length;
 
-    return value;
+	return value;
 }
 
-json_value * json_object_push (json_value * object,
-                               const json_char * name,
-                               json_value * value)
-{
-   return json_object_push_length (object, strlen (name), name, value);
+json_value *json_object_push(json_value *object, const json_char *name, json_value *value) {
+	return json_object_push_length(object, strlen(name), name, value);
 }
 
-json_value * json_object_push_length (json_value * object,
-                                      unsigned int name_length, const json_char * name,
-                                      json_value * value)
-{
-   json_char * name_copy;
+json_value *json_object_push_length(json_value *object, unsigned int name_length,
+                                    const json_char *name, json_value *value) {
+	json_char *name_copy;
 
-   assert (object->type == json_object);
+	assert(object->type == json_object);
 
-   if (! (name_copy = (json_char *) malloc ((name_length + 1) * sizeof (json_char))))
-      return NULL;
-   
-   memcpy (name_copy, name, name_length * sizeof (json_char));
-   name_copy [name_length] = 0;
+	if (!(name_copy = (json_char *)malloc((name_length + 1) * sizeof(json_char)))) return NULL;
 
-   if (!json_object_push_nocopy (object, name_length, name_copy, value))
-   {
-      free (name_copy);
-      return NULL;
-   }
+	memcpy(name_copy, name, name_length * sizeof(json_char));
+	name_copy[name_length] = 0;
 
-   return value;
+	if (!json_object_push_nocopy(object, name_length, name_copy, value)) {
+		free(name_copy);
+		return NULL;
+	}
+
+	return value;
 }
 
-json_value * json_object_push_nocopy (json_value * object,
-                                      unsigned int name_length, json_char * name,
-                                      json_value * value)
-{
-   json_object_entry * entry;
+json_value *json_object_push_nocopy(json_value *object, unsigned int name_length, json_char *name,
+                                    json_value *value) {
+	json_object_entry *entry;
 
-   assert (object->type == json_object);
+	assert(object->type == json_object);
 
-   if (!builderize (object) || !builderize (value))
-      return NULL;
+	if (!builderize(object) || !builderize(value)) return NULL;
 
-   if (((json_builder_value *) object)->additional_length_allocated > 0)
-   {
-      -- ((json_builder_value *) object)->additional_length_allocated;
-   }
-   else
-   {
-      json_object_entry * values_new = (json_object_entry *)
-            realloc (object->u.object.values, sizeof (*object->u.object.values)
-                            * (object->u.object.length + 1));
+	if (((json_builder_value *)object)->additional_length_allocated > 0) {
+		--((json_builder_value *)object)->additional_length_allocated;
+	} else {
+		json_object_entry *values_new = (json_object_entry *)realloc(
+		    object->u.object.values,
+		    sizeof(*object->u.object.values) * (object->u.object.length + 1));
 
-      if (!values_new)
-         return NULL;
+		if (!values_new) return NULL;
 
-      object->u.object.values = values_new;
-   }
+		object->u.object.values = values_new;
+	}
 
-   entry = object->u.object.values + object->u.object.length;
+	entry = object->u.object.values + object->u.object.length;
 
-   entry->name_length = name_length;
-   entry->name = name;
-   entry->value = value;
+	entry->name_length = name_length;
+	entry->name = name;
+	entry->value = value;
 
-   ++ object->u.object.length;
+	++object->u.object.length;
 
-   value->parent = object;
+	value->parent = object;
 
-   return value;
+	return value;
 }
 
-json_value * json_string_new (const json_char * buf)
-{
-   return json_string_new_length (strlen (buf), buf);
+json_value *json_string_new(const json_char *buf) {
+	return json_string_new_length(strlen(buf), buf);
 }
 
-json_value * json_string_new_length (unsigned int length, const json_char * buf)
-{
-   json_value * value;
-   json_char * copy = (json_char *) malloc ((length + 1) * sizeof (json_char));
+json_value *json_string_new_length(unsigned int length, const json_char *buf) {
+	json_value *value;
+	json_char *copy = (json_char *)malloc((length + 1) * sizeof(json_char));
 
-   if (!copy)
-      return NULL;
-   
-   memcpy (copy, buf, length * sizeof (json_char));
-   copy [length] = 0;
+	if (!copy) return NULL;
 
-   if (! (value = json_string_new_nocopy (length, copy)))
-   {
-      free (copy);
-      return NULL;
-   }
+	memcpy(copy, buf, length * sizeof(json_char));
+	copy[length] = 0;
 
-   return value;
+	if (!(value = json_string_new_nocopy(length, copy))) {
+		free(copy);
+		return NULL;
+	}
+
+	return value;
 }
 
-json_value * json_string_new_nocopy (unsigned int length, json_char * buf)
-{
-   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
-   
-   if (!value)
-      return NULL;
+json_value *json_string_new_nocopy(unsigned int length, json_char *buf) {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-   ((json_builder_value *) value)->is_builder_value = 1;
+	if (!value) return NULL;
 
-   value->type = json_string;
-   value->u.string.length = length;
-   value->u.string.ptr = buf;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-   return value;
+	value->type = json_string;
+	value->u.string.length = length;
+	value->u.string.ptr = buf;
+
+	return value;
 }
 
-json_value * json_integer_new (json_int_t integer)
-{
-   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
-   
-   if (!value)
-      return NULL;
+json_value *json_integer_new(json_int_t integer) {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-   ((json_builder_value *) value)->is_builder_value = 1;
+	if (!value) return NULL;
 
-   value->type = json_integer;
-   value->u.integer = integer;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-   return value;
+	value->type = json_integer;
+	value->u.integer = integer;
+
+	return value;
 }
 
-json_value * json_double_new (double dbl)
-{
-   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
-   
-   if (!value)
-      return NULL;
+json_value *json_double_new(double dbl) {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-   ((json_builder_value *) value)->is_builder_value = 1;
+	if (!value) return NULL;
 
-   value->type = json_double;
-   value->u.dbl = dbl;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-   return value;
+	value->type = json_double;
+	value->u.dbl = dbl;
+
+	return value;
 }
 
-json_value * json_boolean_new (int b)
-{
-   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
-   
-   if (!value)
-      return NULL;
+json_value *json_boolean_new(int b) {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-   ((json_builder_value *) value)->is_builder_value = 1;
+	if (!value) return NULL;
 
-   value->type = json_boolean;
-   value->u.boolean = b;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-   return value;
+	value->type = json_boolean;
+	value->u.boolean = b;
+
+	return value;
 }
 
-json_value * json_null_new ()
-{
-   json_value * value = (json_value *) calloc (1, sizeof (json_builder_value));
-   
-   if (!value)
-      return NULL;
+json_value *json_null_new() {
+	json_value *value = (json_value *)calloc(1, sizeof(json_builder_value));
 
-   ((json_builder_value *) value)->is_builder_value = 1;
+	if (!value) return NULL;
 
-   value->type = json_null;
+	((json_builder_value *)value)->is_builder_value = 1;
 
-   return value;
+	value->type = json_null;
+
+	return value;
 }
 
-void json_object_sort (json_value * object, json_value * proto)
-{
-   unsigned int i, out_index = 0;
+void json_object_sort(json_value *object, json_value *proto) {
+	unsigned int i, out_index = 0;
 
-   if (!builderize (object))
-      return;  /* TODO error */
+	if (!builderize(object)) return; /* TODO error */
 
-   assert (object->type == json_object);
-   assert (proto->type == json_object);
+	assert(object->type == json_object);
+	assert(proto->type == json_object);
 
-   for (i = 0; i < proto->u.object.length; ++ i)
-   {
-      unsigned int j;
-      json_object_entry proto_entry = proto->u.object.values [i];
+	for (i = 0; i < proto->u.object.length; ++i) {
+		unsigned int j;
+		json_object_entry proto_entry = proto->u.object.values[i];
 
-      for (j = 0; j < object->u.object.length; ++ j)
-      {
-         json_object_entry entry = object->u.object.values [j];
+		for (j = 0; j < object->u.object.length; ++j) {
+			json_object_entry entry = object->u.object.values[j];
 
-         if (entry.name_length != proto_entry.name_length)
-            continue;
+			if (entry.name_length != proto_entry.name_length) continue;
 
-         if (memcmp (entry.name, proto_entry.name, entry.name_length) != 0)
-            continue;
+			if (memcmp(entry.name, proto_entry.name, entry.name_length) != 0) continue;
 
-         object->u.object.values [j] = object->u.object.values [out_index];
-         object->u.object.values [out_index] = entry;
+			object->u.object.values[j] = object->u.object.values[out_index];
+			object->u.object.values[out_index] = entry;
 
-         ++ out_index;
-      }
-   }
+			++out_index;
+		}
+	}
 }
 
-json_value * json_object_merge (json_value * objectA, json_value * objectB)
-{
-   unsigned int i;
+json_value *json_object_merge(json_value *objectA, json_value *objectB) {
+	unsigned int i;
 
-   assert (objectA->type == json_object);
-   assert (objectB->type == json_object);
-   assert (objectA != objectB);
+	assert(objectA->type == json_object);
+	assert(objectB->type == json_object);
+	assert(objectA != objectB);
 
-   if (!builderize (objectA) || !builderize (objectB))
-      return NULL;
+	if (!builderize(objectA) || !builderize(objectB)) return NULL;
 
-   if (objectB->u.object.length <=
-        ((json_builder_value *) objectA)->additional_length_allocated)
-   {
-      ((json_builder_value *) objectA)->additional_length_allocated
-          -= objectB->u.object.length;
-   }
-   else
-   {
-      json_object_entry * values_new;
+	if (objectB->u.object.length <= ((json_builder_value *)objectA)->additional_length_allocated) {
+		((json_builder_value *)objectA)->additional_length_allocated -= objectB->u.object.length;
+	} else {
+		json_object_entry *values_new;
 
-      unsigned int alloc =
-          objectA->u.object.length
-              + ((json_builder_value *) objectA)->additional_length_allocated
-              + objectB->u.object.length;
+		unsigned int alloc = objectA->u.object.length +
+		                     ((json_builder_value *)objectA)->additional_length_allocated +
+		                     objectB->u.object.length;
 
-      if (! (values_new = (json_object_entry *)
-            realloc (objectA->u.object.values, sizeof (json_object_entry) * alloc)))
-      {
-          return NULL;
-      }
+		if (!(values_new = (json_object_entry *)realloc(objectA->u.object.values,
+		                                                sizeof(json_object_entry) * alloc))) {
+			return NULL;
+		}
 
-      objectA->u.object.values = values_new;
-   }
+		objectA->u.object.values = values_new;
+	}
 
-   for (i = 0; i < objectB->u.object.length; ++ i)
-   {
-      json_object_entry * entry = &objectA->u.object.values[objectA->u.object.length + i];
+	for (i = 0; i < objectB->u.object.length; ++i) {
+		json_object_entry *entry = &objectA->u.object.values[objectA->u.object.length + i];
 
-      *entry = objectB->u.object.values[i];
-      entry->value->parent = objectA;
-   }
+		*entry = objectB->u.object.values[i];
+		entry->value->parent = objectA;
+	}
 
-   objectA->u.object.length += objectB->u.object.length;
+	objectA->u.object.length += objectB->u.object.length;
 
-   free (objectB->u.object.values);
-   free (objectB);
+	free(objectB->u.object.values);
+	free(objectB);
 
-   return objectA;
+	return objectA;
 }
 
-static size_t measure_string (unsigned int length,
-                              const json_char * str)
-{
-   unsigned int i;
-   size_t measured_length = 0;
+static size_t measure_string(unsigned int length, const json_char *str) {
+	unsigned int i;
+	size_t measured_length = 0;
 
-   for(i = 0; i < length; ++ i)
-   {
-      json_char c = str [i];
+	for (i = 0; i < length; ++i) {
+		json_char c = str[i];
 
-      switch (c)
-      {
-      case '"':
-      case '\\':
-      case '\b':
-      case '\f':
-      case '\n':
-      case '\r':
-      case '\t':
+		switch (c) {
+			case '"':
+			case '\\':
+			case '\b':
+			case '\f':
+			case '\n':
+			case '\r':
+			case '\t':
 
-         measured_length += 2;
-         break;
+				measured_length += 2;
+				break;
 
-      default:
+			default:
 
-         ++ measured_length;
-         break;
-      };
-   };
+				++measured_length;
+				break;
+		};
+	};
 
-   return measured_length;
+	return measured_length;
 }
 
-#define PRINT_ESCAPED(c) do {  \
-   *buf ++ = '\\';             \
-   *buf ++ = (c);              \
-} while(0);                    \
+#define PRINT_ESCAPED(c)                                                                           \
+	do {                                                                                           \
+		*buf++ = '\\';                                                                             \
+		*buf++ = (c);                                                                              \
+	} while (0);
 
-static size_t serialize_string (json_char * buf,
-                                unsigned int length,
-                                const json_char * str)
-{
-   json_char * orig_buf = buf;
-   unsigned int i;
+static size_t serialize_string(json_char *buf, unsigned int length, const json_char *str) {
+	json_char *orig_buf = buf;
+	unsigned int i;
 
-   for(i = 0; i < length; ++ i)
-   {
-      json_char c = str [i];
+	for (i = 0; i < length; ++i) {
+		json_char c = str[i];
 
-      switch (c)
-      {
-      case '"':   PRINT_ESCAPED ('\"');  continue;
-      case '\\':  PRINT_ESCAPED ('\\');  continue;
-      case '\b':  PRINT_ESCAPED ('b');   continue;
-      case '\f':  PRINT_ESCAPED ('f');   continue;
-      case '\n':  PRINT_ESCAPED ('n');   continue;
-      case '\r':  PRINT_ESCAPED ('r');   continue;
-      case '\t':  PRINT_ESCAPED ('t');   continue;
+		switch (c) {
+			case '"':
+				PRINT_ESCAPED('\"');
+				continue;
+			case '\\':
+				PRINT_ESCAPED('\\');
+				continue;
+			case '\b':
+				PRINT_ESCAPED('b');
+				continue;
+			case '\f':
+				PRINT_ESCAPED('f');
+				continue;
+			case '\n':
+				PRINT_ESCAPED('n');
+				continue;
+			case '\r':
+				PRINT_ESCAPED('r');
+				continue;
+			case '\t':
+				PRINT_ESCAPED('t');
+				continue;
 
-      default:
+			default:
 
-         *buf ++ = c;
-         break;
-      };
-   };
+				*buf++ = c;
+				break;
+		};
+	};
 
-   return buf - orig_buf;
+	return buf - orig_buf;
 }
 
-size_t json_measure (json_value * value)
-{
-   return json_measure_ex (value, default_opts);
-}
+size_t json_measure(json_value *value) { return json_measure_ex(value, default_opts); }
 
-#define MEASURE_NEWLINE() do {                     \
-   ++ newlines;                                    \
-   indents += depth;                               \
-} while(0);                                        \
+#define MEASURE_NEWLINE()                                                                          \
+	do {                                                                                           \
+		++newlines;                                                                                \
+		indents += depth;                                                                          \
+	} while (0);
 
-size_t json_measure_ex (json_value * value, json_serialize_opts opts)
-{
-   size_t total = 1;  /* null terminator */
-   size_t newlines = 0;
-   size_t depth = 0;
-   size_t indents = 0;
-   int flags;
-   int bracket_size, comma_size, colon_size;
+size_t json_measure_ex(json_value *value, json_serialize_opts opts) {
+	size_t total = 1; /* null terminator */
+	size_t newlines = 0;
+	size_t depth = 0;
+	size_t indents = 0;
+	int flags;
+	int bracket_size, comma_size, colon_size;
 
-   flags = get_serialize_flags (opts);
+	flags = get_serialize_flags(opts);
 
-   /* to reduce branching
-    */
-   bracket_size = flags & f_spaces_around_brackets ? 2 : 1;
-   comma_size = flags & f_spaces_after_commas ? 2 : 1;
-   colon_size = flags & f_spaces_after_colons ? 2 : 1;
+	/* to reduce branching
+	 */
+	bracket_size = flags & f_spaces_around_brackets ? 2 : 1;
+	comma_size = flags & f_spaces_after_commas ? 2 : 1;
+	colon_size = flags & f_spaces_after_colons ? 2 : 1;
 
-   while (value)
-   {
-      json_int_t integer;
-      json_object_entry * entry;
+	while (value) {
+		json_int_t integer;
+		json_object_entry *entry;
 
-      switch (value->type)
-      {
-         case json_array:
+		switch (value->type) {
+			case json_array:
 
-            if (((json_builder_value *) value)->length_iterated == 0)
-            {
-               if (value->u.array.length == 0)
-               {
-                  total += 2;  /* `[]` */
-                  break;
-               }
+				if (((json_builder_value *)value)->length_iterated == 0) {
+					if (value->u.array.length == 0) {
+						total += 2; /* `[]` */
+						break;
+					}
 
-               total += bracket_size;  /* `[` */
+					total += bracket_size; /* `[` */
 
-               ++ depth;
-               MEASURE_NEWLINE(); /* \n after [ */
-            }
+					++depth;
+					MEASURE_NEWLINE(); /* \n after [ */
+				}
 
-            if (((json_builder_value *) value)->length_iterated == value->u.array.length)
-            {
-               -- depth;
-               MEASURE_NEWLINE();
-               total += bracket_size;  /* `]` */
+				if (((json_builder_value *)value)->length_iterated == value->u.array.length) {
+					--depth;
+					MEASURE_NEWLINE();
+					total += bracket_size; /* `]` */
 
-               ((json_builder_value *) value)->length_iterated = 0;
-               break;
-            }
+					((json_builder_value *)value)->length_iterated = 0;
+					break;
+				}
 
-            if (((json_builder_value *) value)->length_iterated > 0)
-            {
-               total += comma_size;  /* `, ` */
+				if (((json_builder_value *)value)->length_iterated > 0) {
+					total += comma_size; /* `, ` */
 
-               MEASURE_NEWLINE();
-            }
+					MEASURE_NEWLINE();
+				}
 
-            ((json_builder_value *) value)->length_iterated++;
-            value = value->u.array.values [((json_builder_value *) value)->length_iterated - 1];
-            continue;
+				((json_builder_value *)value)->length_iterated++;
+				value = value->u.array.values[((json_builder_value *)value)->length_iterated - 1];
+				continue;
 
-         case json_object:
+			case json_object:
 
-            if (((json_builder_value *) value)->length_iterated == 0)
-            {
-               if (value->u.object.length == 0)
-               {
-                  total += 2;  /* `{}` */
-                  break;
-               }
+				if (((json_builder_value *)value)->length_iterated == 0) {
+					if (value->u.object.length == 0) {
+						total += 2; /* `{}` */
+						break;
+					}
 
-               total += bracket_size;  /* `{` */
+					total += bracket_size; /* `{` */
 
-               ++ depth;
-               MEASURE_NEWLINE(); /* \n after { */
-            }
+					++depth;
+					MEASURE_NEWLINE(); /* \n after { */
+				}
 
-            if (((json_builder_value *) value)->length_iterated == value->u.object.length)
-            {
-               -- depth;
-               MEASURE_NEWLINE();
-               total += bracket_size;  /* `}` */
+				if (((json_builder_value *)value)->length_iterated == value->u.object.length) {
+					--depth;
+					MEASURE_NEWLINE();
+					total += bracket_size; /* `}` */
 
-               ((json_builder_value *) value)->length_iterated = 0;
-               break;
-            }
+					((json_builder_value *)value)->length_iterated = 0;
+					break;
+				}
 
-            if (((json_builder_value *) value)->length_iterated > 0)
-            {
-               total += comma_size;  /* `, ` */
-               MEASURE_NEWLINE();
-            }
+				if (((json_builder_value *)value)->length_iterated > 0) {
+					total += comma_size; /* `, ` */
+					MEASURE_NEWLINE();
+				}
 
-            entry = value->u.object.values + (((json_builder_value *) value)->length_iterated ++);
+				entry = value->u.object.values + (((json_builder_value *)value)->length_iterated++);
 
-            total += 2 + colon_size;  /* `"": ` */
-            total += measure_string (entry->name_length, entry->name);
+				total += 2 + colon_size; /* `"": ` */
+				total += measure_string(entry->name_length, entry->name);
 
-            value = entry->value;
-            continue;
+				value = entry->value;
+				continue;
 #ifdef CARYLL_USE_PRE_SERIALIZED
-         case json_pre_serialized:
+			case json_pre_serialized:
 
-		    total += value->u.string.length;
-			break;
+				total += value->u.string.length;
+				break;
 #endif
-         case json_string:
-            total += 2;  /* `""` */
-            total += measure_string (value->u.string.length, value->u.string.ptr);
-            break;
+			case json_string:
+				total += 2; /* `""` */
+				total += measure_string(value->u.string.length, value->u.string.ptr);
+				break;
 
-         case json_integer:
+			case json_integer:
 
-            integer = value->u.integer;
+				integer = value->u.integer;
 
-            if (integer < 0)
-            {
-               total += 1;  /* `-` */
-               integer = - integer;
-            }
+				if (integer < 0) {
+					total += 1; /* `-` */
+					integer = -integer;
+				}
 
-            ++ total;  /* first digit */
+				++total; /* first digit */
 
-            while (integer >= 10)
-            {
-               ++ total;  /* another digit */
-               integer /= 10;
-            }
+				while (integer >= 10) {
+					++total; /* another digit */
+					integer /= 10;
+				}
 
-            break;
+				break;
 
-         case json_double:
+			case json_double: {
+				char buffer[256];
+				emyg_dtoa(value->u.dbl, buffer);
+				total += strlen(buffer);
+				break;
+			}
 
-            total += snprintf (NULL, 0, "%g", value->u.dbl);
+			case json_boolean:
 
-            break;
+				total += value->u.boolean ? 4 : /* `true` */
+				             5;                 /* `false` */
 
-         case json_boolean:
+				break;
 
-            total += value->u.boolean ? 
-               4:  /* `true` */
-               5;  /* `false` */
+			case json_null:
 
-            break;
+				total += 4; /* `null` */
+				break;
 
-         case json_null:
+			default:
+				break;
+		};
 
-            total += 4;  /* `null` */
-            break;
+		value = value->parent;
+	}
 
-         default:
-            break;
-      };
+	if (opts.mode == json_serialize_mode_multiline) {
+		total += newlines * (((opts.opts & json_serialize_opt_CRLF) ? 2 : 1) + opts.indent_size);
+		total += indents * opts.indent_size;
+	}
 
-      value = value->parent;
-   }
-
-   if (opts.mode == json_serialize_mode_multiline)
-   {
-      total += newlines * (((opts.opts & json_serialize_opt_CRLF) ? 2 : 1) + opts.indent_size);
-      total += indents * opts.indent_size;
-   }
-
-   return total;
+	return total;
 }
 
-void json_serialize (json_char * buf, json_value * value)
-{
-   json_serialize_ex (buf, value, default_opts);
+void json_serialize(json_char *buf, json_value *value) {
+	json_serialize_ex(buf, value, default_opts);
 }
 
-#define PRINT_NEWLINE() do {                          \
-   if (opts.mode == json_serialize_mode_multiline) {  \
-      if (opts.opts & json_serialize_opt_CRLF)        \
-         *buf ++ = '\r';                              \
-      *buf ++ = '\n';                                 \
-      for(i = 0; i < indent; ++ i)                    \
-         *buf ++ = indent_char;                       \
-   }                                                  \
-} while(0);                                           \
+#define PRINT_NEWLINE()                                                                            \
+	do {                                                                                           \
+		if (opts.mode == json_serialize_mode_multiline) {                                          \
+			if (opts.opts & json_serialize_opt_CRLF) *buf++ = '\r';                                \
+			*buf++ = '\n';                                                                         \
+			for (i = 0; i < indent; ++i) *buf++ = indent_char;                                     \
+		}                                                                                          \
+	} while (0);
 
-#define PRINT_OPENING_BRACKET(c) do {                 \
-   *buf ++ = (c);                                     \
-   if (flags & f_spaces_around_brackets)              \
-      *buf ++ = ' ';                                  \
-} while(0);                                           \
+#define PRINT_OPENING_BRACKET(c)                                                                   \
+	do {                                                                                           \
+		*buf++ = (c);                                                                              \
+		if (flags & f_spaces_around_brackets) *buf++ = ' ';                                        \
+	} while (0);
 
-#define PRINT_CLOSING_BRACKET(c) do {                 \
-   if (flags & f_spaces_around_brackets)              \
-      *buf ++ = ' ';                                  \
-   *buf ++ = (c);                                     \
-} while(0);                                           \
+#define PRINT_CLOSING_BRACKET(c)                                                                   \
+	do {                                                                                           \
+		if (flags & f_spaces_around_brackets) *buf++ = ' ';                                        \
+		*buf++ = (c);                                                                              \
+	} while (0);
 
-void json_serialize_ex (json_char * buf, json_value * value, json_serialize_opts opts)
-{
-   json_int_t integer, orig_integer;
-   json_object_entry * entry;
-   json_char * ptr, * dot;
-   int indent = 0;
-   char indent_char;
-   int i;
-   int flags;
+void json_serialize_ex(json_char *buf, json_value *value, json_serialize_opts opts) {
+	json_int_t integer, orig_integer;
+	json_object_entry *entry;
+	json_char *ptr;
+	int indent = 0;
+	char indent_char;
+	int i;
+	int flags;
 
-   flags = get_serialize_flags (opts);
+	flags = get_serialize_flags(opts);
 
-   indent_char = flags & f_tabs ? '\t' : ' ';
+	indent_char = flags & f_tabs ? '\t' : ' ';
 
-   while (value)
-   {
-      switch (value->type)
-      {
-         case json_array:
+	while (value) {
+		switch (value->type) {
+			case json_array:
 
-            if (((json_builder_value *) value)->length_iterated == 0)
-            {
-               if (value->u.array.length == 0)
-               {
-                  *buf ++ = '[';
-                  *buf ++ = ']';
+				if (((json_builder_value *)value)->length_iterated == 0) {
+					if (value->u.array.length == 0) {
+						*buf++ = '[';
+						*buf++ = ']';
 
-                  break;
-               }
+						break;
+					}
 
-               PRINT_OPENING_BRACKET ('[');
+					PRINT_OPENING_BRACKET('[');
 
-               indent += opts.indent_size;
-               PRINT_NEWLINE();
-            }
+					indent += opts.indent_size;
+					PRINT_NEWLINE();
+				}
 
-            if (((json_builder_value *) value)->length_iterated == value->u.array.length)
-            {
-               indent -= opts.indent_size;
-               PRINT_NEWLINE();
-               PRINT_CLOSING_BRACKET (']');
+				if (((json_builder_value *)value)->length_iterated == value->u.array.length) {
+					indent -= opts.indent_size;
+					PRINT_NEWLINE();
+					PRINT_CLOSING_BRACKET(']');
 
-               ((json_builder_value *) value)->length_iterated = 0;
-               break;
-            }
+					((json_builder_value *)value)->length_iterated = 0;
+					break;
+				}
 
-            if (((json_builder_value *) value)->length_iterated > 0)
-            {
-               *buf ++ = ',';
+				if (((json_builder_value *)value)->length_iterated > 0) {
+					*buf++ = ',';
 
-               if (flags & f_spaces_after_commas)
-                  *buf ++ = ' ';
+					if (flags & f_spaces_after_commas) *buf++ = ' ';
 
-               PRINT_NEWLINE();
-            }
+					PRINT_NEWLINE();
+				}
 
-            ((json_builder_value *) value)->length_iterated++;
-            value = value->u.array.values [((json_builder_value *) value)->length_iterated - 1];
-            continue;
+				((json_builder_value *)value)->length_iterated++;
+				value = value->u.array.values[((json_builder_value *)value)->length_iterated - 1];
+				continue;
 
-         case json_object:
+			case json_object:
 
-            if (((json_builder_value *) value)->length_iterated == 0)
-            {
-               if (value->u.object.length == 0)
-               {
-                  *buf ++ = '{';
-                  *buf ++ = '}';
+				if (((json_builder_value *)value)->length_iterated == 0) {
+					if (value->u.object.length == 0) {
+						*buf++ = '{';
+						*buf++ = '}';
 
-                  break;
-               }
+						break;
+					}
 
-               PRINT_OPENING_BRACKET ('{');
+					PRINT_OPENING_BRACKET('{');
 
-               indent += opts.indent_size;
-               PRINT_NEWLINE();
-            }
+					indent += opts.indent_size;
+					PRINT_NEWLINE();
+				}
 
-            if (((json_builder_value *) value)->length_iterated == value->u.object.length)
-            {
-               indent -= opts.indent_size;
-               PRINT_NEWLINE();
-               PRINT_CLOSING_BRACKET ('}');
+				if (((json_builder_value *)value)->length_iterated == value->u.object.length) {
+					indent -= opts.indent_size;
+					PRINT_NEWLINE();
+					PRINT_CLOSING_BRACKET('}');
 
-               ((json_builder_value *) value)->length_iterated = 0;
-               break;
-            }
+					((json_builder_value *)value)->length_iterated = 0;
+					break;
+				}
 
-            if (((json_builder_value *) value)->length_iterated > 0)
-            {
-               *buf ++ = ',';
+				if (((json_builder_value *)value)->length_iterated > 0) {
+					*buf++ = ',';
 
-               if (flags & f_spaces_after_commas)
-                  *buf ++ = ' ';
+					if (flags & f_spaces_after_commas) *buf++ = ' ';
 
-               PRINT_NEWLINE();
-            }
+					PRINT_NEWLINE();
+				}
 
-            entry = value->u.object.values + (((json_builder_value *) value)->length_iterated ++);
+				entry = value->u.object.values + (((json_builder_value *)value)->length_iterated++);
 
-            *buf ++ = '\"';
-            buf += serialize_string (buf, entry->name_length, entry->name);
-            *buf ++ = '\"';
-            *buf ++ = ':';
+				*buf++ = '\"';
+				buf += serialize_string(buf, entry->name_length, entry->name);
+				*buf++ = '\"';
+				*buf++ = ':';
 
-            if (flags & f_spaces_after_colons)
-               *buf ++ = ' ';
+				if (flags & f_spaces_after_colons) *buf++ = ' ';
 
-            value = entry->value;
-            continue;
+				value = entry->value;
+				continue;
 #ifdef CARYLL_USE_PRE_SERIALIZED
-         case json_pre_serialized:
-		 	memcpy(buf, value->u.string.ptr, value->u.string.length);
-		    buf += value->u.string.length;
-		 	break;
+			case json_pre_serialized:
+				memcpy(buf, value->u.string.ptr, value->u.string.length);
+				buf += value->u.string.length;
+				break;
 #endif
-         case json_string:
+			case json_string:
 
-            *buf ++ = '\"';
-            buf += serialize_string (buf, value->u.string.length, value->u.string.ptr);
-            *buf ++ = '\"';
-            break;
+				*buf++ = '\"';
+				buf += serialize_string(buf, value->u.string.length, value->u.string.ptr);
+				*buf++ = '\"';
+				break;
 
-         case json_integer:
+			case json_integer:
 
-            integer = value->u.integer;
+				integer = value->u.integer;
 
-            if (integer < 0)
-            {
-               *buf ++ = '-';
-               integer = - integer;
-            }
+				if (integer < 0) {
+					*buf++ = '-';
+					integer = -integer;
+				}
 
-            orig_integer = integer;
+				orig_integer = integer;
 
-            ++ buf;
+				++buf;
 
-            while (integer >= 10)
-            {
-               ++ buf;
-               integer /= 10;
-            }
+				while (integer >= 10) {
+					++buf;
+					integer /= 10;
+				}
 
-            integer = orig_integer;
-            ptr = buf;
+				integer = orig_integer;
+				ptr = buf;
 
-            do
-            {
-               *-- ptr = "0123456789"[integer % 10];
+				do { *--ptr = "0123456789"[integer % 10]; } while ((integer /= 10) > 0);
 
-            } while ((integer /= 10) > 0);
+				break;
 
-            break;
+			case json_double: {
+				char tmp[256];
+				emyg_dtoa(value->u.dbl, tmp);
+				memcpy(buf, tmp, strlen(tmp));
+				buf += strlen(tmp);
+				break;
+			}
 
-         case json_double:
+			case json_boolean:
 
-            ptr = buf;
+				if (value->u.boolean) {
+					memcpy(buf, "true", 4);
+					buf += 4;
+				} else {
+					memcpy(buf, "false", 5);
+					buf += 5;
+				}
 
-            buf += sprintf (buf, "%g", value->u.dbl);
+				break;
 
-            if ((dot = strchr (ptr, ',')))
-            {
-               *dot = '.';
-            }
-            
-            break;
+			case json_null:
 
-         case json_boolean:
+				memcpy(buf, "null", 4);
+				buf += 4;
+				break;
 
-            if (value->u.boolean)
-            {
-               memcpy (buf, "true", 4);
-               buf += 4;
-            }
-            else
-            {
-               memcpy (buf, "false", 5);
-               buf += 5;
-            }
+			default:
+				break;
+		};
 
-            break;
+		value = value->parent;
+	}
 
-         case json_null:
-
-            memcpy (buf, "null", 4);
-            buf += 4;
-            break;
-
-         default:
-            break;
-      };
-
-      value = value->parent;
-   }
-
-   *buf = 0;
+	*buf = 0;
 }
 
-void json_builder_free (json_value * value)
-{
-   json_value * cur_value;
+void json_builder_free(json_value *value) {
+	json_value *cur_value;
 
-   if (!value)
-      return;
+	if (!value) return;
 
-   value->parent = 0;
+	value->parent = 0;
 
-   while (value)
-   {
-      switch (value->type)
-      {
-         case json_array:
+	while (value) {
+		switch (value->type) {
+			case json_array:
 
-            if (!value->u.array.length)
-            {
-               free (value->u.array.values);
-               break;
-            }
+				if (!value->u.array.length) {
+					free(value->u.array.values);
+					break;
+				}
 
-            value = value->u.array.values [-- value->u.array.length];
-            continue;
+				value = value->u.array.values[--value->u.array.length];
+				continue;
 
-         case json_object:
+			case json_object:
 
-            if (!value->u.object.length)
-            {
-               free (value->u.object.values);
-               break;
-            }
+				if (!value->u.object.length) {
+					free(value->u.object.values);
+					break;
+				}
 
-            -- value->u.object.length;
+				--value->u.object.length;
 
-            if (((json_builder_value *) value)->is_builder_value)
-            {
-               /* Names are allocated separately for builder values.  In parser
-                * values, they are part of the same allocation as the values array
-                * itself.
-                */
-               free (value->u.object.values [value->u.object.length].name);
-            }
+				if (((json_builder_value *)value)->is_builder_value) {
+					/* Names are allocated separately for builder values.  In parser
+					 * values, they are part of the same allocation as the values array
+					 * itself.
+					 */
+					free(value->u.object.values[value->u.object.length].name);
+				}
 
-            value = value->u.object.values [value->u.object.length].value;
-            continue;
+				value = value->u.object.values[value->u.object.length].value;
+				continue;
 
-         case json_string:
+			case json_string:
 #ifdef CARYLL_USE_PRE_SERIALIZED
-		 case json_pre_serialized:
+			case json_pre_serialized:
 #endif
-            free (value->u.string.ptr);
-            break;
+				free(value->u.string.ptr);
+				break;
 
-         default:
-            break;
-      };
+			default:
+				break;
+		};
 
-      cur_value = value;
-      value = value->parent;
-      free (cur_value);
-   }
+		cur_value = value;
+		value = value->parent;
+		free(cur_value);
+	}
 }
-
-
-
-
-
-

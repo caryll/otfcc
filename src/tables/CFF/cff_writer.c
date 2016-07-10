@@ -212,13 +212,14 @@ static void merge_cs2_int(cff_blob *blob, int32_t val) {
 	}
 }
 static void merge_cs2_real(cff_blob *blob, double val) {
-	double val1 = val * 65536.0;
 	prepareSpaceForBlobMerge(blob, 5);
+	int16_t integerPart = floor(val);
+	uint16_t fractionPart = (val - integerPart) * 65536.0;
 	blob->data[blob->size + 0] = 255;
-	blob->data[blob->size + 1] = ((int32_t)val1 / 65536) / 256;
-	blob->data[blob->size + 2] = ((int32_t)val1 / 65536) % 256;
-	blob->data[blob->size + 3] = ((int32_t)val1 % 65536) / 256;
-	blob->data[blob->size + 4] = ((int32_t)val1 % 65536) % 256;
+	blob->data[blob->size + 1] = integerPart >> 8;
+	blob->data[blob->size + 2] = integerPart & 0xFF;
+	blob->data[blob->size + 3] = fractionPart >> 8;
+	blob->data[blob->size + 4] = fractionPart & 0xFF;
 	blob->size += 5;
 }
 void merge_cs2_operand(cff_blob *blob, double val) {

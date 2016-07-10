@@ -6,8 +6,10 @@ static int by_stem_pos(const void *_a, const void *_b) {
 	const glyf_postscript_hint_stemdef *b = _b;
 	if (a->position == b->position) {
 		return (int)a->map - (int)b->map;
+	} else if (a->position > b->position) {
+		return 1;
 	} else {
-		return a->position - b->position;
+		return -1;
 	}
 }
 static int by_mask_pointindex(const void *a, const void *b) {

@@ -46,6 +46,7 @@ project "externals"
 		"dep/polyfill-msvc/**.h",
 		"dep/polyfill-msvc/**.c"
 	}
+	buildoptions { '-Wno-unused-const-variable' }
 	filter {}
 
 project "libotfcc-support"
