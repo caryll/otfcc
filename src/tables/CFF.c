@@ -348,11 +348,25 @@ static void callback_draw_sethint(void *_context, bool isVertical, float positio
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	glyf_postscript_hint_mask *mask =
-	    &(isContourMask ? context->g->contourMasks
-	                    : context->g->hintMasks)[isContourMask ? context->definedContourMasks
-	                                                           : context->definedHintMasks];
+	uint16_t maskIndex = isContourMask ? context->definedContourMasks : context->definedHintMasks;
+	glyf_postscript_hint_mask *maskList =
+	    isContourMask ? context->g->contourMasks : context->g->hintMasks;
+	glyf_postscript_hint_mask *mask;
+	bool duplicateMask = false;
+
+	if (maskIndex > 0) {
+		glyf_postscript_hint_mask *lastMask = &(maskList)[maskIndex - 1];
+		if (lastMask->pointsBefore == context->pointsDefined) {
+			mask = lastMask;
+			duplicateMask = true;
+		} else {
+			mask = &(maskList)[maskIndex];
+		}
+	} else {
+		mask = &(maskList)[maskIndex];
+	}
 	mask->pointsBefore = context->pointsDefined;
+
 	for (uint16_t j = 0; j < 0x100; j++) {
 		mask->maskH[j] = j < context->g->numberOfStemH ? maskArray[j] : 0;
 		mask->maskV[j] =
@@ -360,6 +374,7 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	}
 
 	free(maskArray);
+	if (duplicateMask) return;
 	if (isContourMask) {
 		context->definedContourMasks += 1;
 	} else {
@@ -460,6 +475,8 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	bc.randx = seed;
 	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                       pass3);
+	g->numberOfContourMasks = bc.definedContourMasks;
+	g->numberOfHintMasks = bc.definedHintMasks;
 
 	// PASS 4 : Turn deltas into absolute coordinates
 	float cx = 0;
@@ -800,7 +817,13 @@ static void cff_delete_dict(CFF_Dict *dict) {
 	free(dict);
 }
 
-typedef enum { IL_ITEM_OPERAND, IL_ITEM_OPERATOR, IL_ITEM_SPECIAL, IL_ITEM_PHANTOM } il_type;
+typedef enum {
+	IL_ITEM_OPERAND,
+	IL_ITEM_OPERATOR,
+	IL_ITEM_SPECIAL,
+	IL_ITEM_PHANTOM_OPERATOR,
+	IL_ITEM_PHANTOM_OPERAND
+} il_type;
 
 typedef struct {
 	il_type type;
@@ -816,7 +839,7 @@ typedef struct {
 
 static void ensureThereIsSpace(charstring_il *il) {
 	if (il->free) return;
-	il->free = 0x20;
+	il->free = 0x100;
 	if (il->instr) {
 		il->instr = realloc(il->instr, sizeof(charstring_instruction) * (il->length + il->free));
 	} else {
@@ -844,6 +867,12 @@ static void il_push_op(charstring_il *il, int32_t op) {
 	il->instr[il->length].i = op;
 	il->length++;
 	il->free--;
+}
+static void phantomize(charstring_il *il, int32_t op) {
+	if (il->instr && il->length && il->instr[il->length - 1].type == IL_ITEM_OPERATOR &&
+	    il->instr[il->length - 1].i == op) {
+		il->instr[il->length - 1].type = IL_ITEM_PHANTOM_OPERATOR;
+	}
 }
 
 static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
@@ -899,6 +928,62 @@ static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_
 			il_push_special(il, maskByte);
 		}
 		*jh += 1;
+	}
+}
+
+static void il_lineto(charstring_il *il, float dx, float dy) {
+	if (dx == 0) {
+		il_push_operand(il, dy);
+		il_push_op(il, op_vlineto);
+	} else if (dy == 0) {
+		il_push_operand(il, dx);
+		il_push_op(il, op_hlineto);
+	} else {
+		phantomize(il, op_rlineto);
+		// phantomize(il, op_hlineto);
+		// phantomize(il, op_vlineto);
+		il_push_operand(il, dx);
+		il_push_operand(il, dy);
+		il_push_op(il, op_rlineto);
+	}
+}
+static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3,
+                       float dy3) {
+	if (dy1 == 0 && dy3 == 0) {
+		phantomize(il, op_hhcurveto);
+		il_push_operand(il, dx1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dx3);
+		il_push_op(il, op_hhcurveto);
+	} else if (dx1 == 0 && dx3 == 0) {
+		phantomize(il, op_vvcurveto);
+		il_push_operand(il, dy1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dy3);
+		il_push_op(il, op_vvcurveto);
+	} else if (dy1 == 0 && dx3 == 0) {
+		il_push_operand(il, dx1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dy3);
+		il_push_op(il, op_hvcurveto);
+	} else if (dx1 == 0 && dy3 == 0) {
+		il_push_operand(il, dy1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dx3);
+		il_push_op(il, op_vhcurveto);
+	} else {
+		phantomize(il, op_rrcurveto);
+		il_push_operand(il, dx1);
+		il_push_operand(il, dy1);
+		il_push_operand(il, dx2);
+		il_push_operand(il, dy2);
+		il_push_operand(il, dx3);
+		il_push_operand(il, dy3);
+		il_push_op(il, op_rrcurveto);
 	}
 }
 
@@ -965,32 +1050,25 @@ static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
 		if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
 		for (uint16_t j = 1; j < n; j++) {
 			if (contour->points[j].onCurve) {
-				il_push_operand(il, contour->points[j].x);
-				il_push_operand(il, contour->points[j].y);
-				il_push_op(il, op_rlineto);
+				il_lineto(il, contour->points[j].x, contour->points[j].y);
 				pointsSofar++;
 			} else {
 				if (j < n - 2 && !contour->points[j + 1].onCurve &&
 				    contour->points[j + 2].onCurve) {
-					il_push_operand(il, contour->points[j].x);
-					il_push_operand(il, contour->points[j].y);
-					il_push_operand(il, contour->points[j + 1].x);
-					il_push_operand(il, contour->points[j + 1].y);
-					il_push_operand(il, contour->points[j + 2].x);
-					il_push_operand(il, contour->points[j + 2].y);
-					il_push_op(il, op_rrcurveto);
+					il_curveto(il, contour->points[j].x, contour->points[j].y,
+					           contour->points[j + 1].x, contour->points[j + 1].y,
+					           contour->points[j + 2].x, contour->points[j + 2].y);
 					pointsSofar += 3;
 					j += 2;
 				} else {
-					il_push_operand(il, contour->points[j].x);
-					il_push_operand(il, contour->points[j].y);
-					il_push_op(il, op_rlineto);
+					il_lineto(il, contour->points[j].x, contour->points[j].y);
 					pointsSofar++;
 				}
 			}
 			if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
 		}
 	}
+	il_push_op(il, op_endchar);
 	return il;
 }
 static void glyph_il_peephole_optimization(charstring_il *il) {
@@ -999,23 +1077,32 @@ static void glyph_il_peephole_optimization(charstring_il *il) {
 
 static cff_blob *il2blob(charstring_il *il) {
 	cff_blob *blob = calloc(1, sizeof(cff_blob));
+
+	uint16_t stackDepth = 0;
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {
-				blob_merge(blob, compile_type2_value(il->instr[j].d));
+				merge_cs2_operand(blob, il->instr[j].d);
+				// fprintf(stderr, "%g ", il->instr[j].d);
+				stackDepth++;
 				break;
 			}
 			case IL_ITEM_OPERATOR: {
-				blob_merge(blob, encode_cs2_operator(il->instr[j].i));
+				merge_cs2_operator(blob, il->instr[j].i);
+				// fprintf(stderr, "%s\n", op_cs2_name(il->instr[j].i));
+				stackDepth = 0;
 				break;
 			}
 			case IL_ITEM_SPECIAL: {
-				cff_blob *b;
-				NEW_CLEAN(b);
-				b->size = 1;
-				NEW(b->data);
-				b->data[0] = il->instr[j].i;
-				blob_merge(blob, b);
+				merge_cs2_special(blob, il->instr[j].i);
+				break;
+			}
+			case IL_ITEM_PHANTOM_OPERATOR: {
+				if (stackDepth > type2_argument_stack - cs2_op_standard_arity(il->instr[j].i)) {
+					// fprintf(stderr, "%s\n", op_cs2_name(il->instr[j].i));
+					merge_cs2_operator(blob, il->instr[j].i);
+					stackDepth = 0;
+				}
 				break;
 			}
 			default:
@@ -1029,7 +1116,6 @@ static cff_blob *compile_glyph(glyf_glyph *g) {
 	charstring_il *il = compile_glyph_to_il(g);
 	glyph_il_peephole_optimization(il);
 	cff_blob *blob = il2blob(il);
-	blob_merge(blob, encode_cs2_operator(op_endchar));
 	free(il->instr);
 	free(il);
 	return blob;
@@ -1043,10 +1129,20 @@ static cff_blob *compile_glyf_to_charstring(table_glyf *glyf) {
 	NEW_N(charstring->offset, charstring->count + 1);
 	charstring->offset[0] = 1;
 	charstring->data = NULL;
+
+	size_t used = 0;
+	size_t blank = 0;
 	for (uint32_t j = 0; j < glyf->numberGlyphs; j++) {
 		cff_blob *blob = compile_glyph(glyf->glyphs[j]);
+		if (blank < blob->size) {
+			used += blob->size;
+			blank = (used >> 1) & 0xFFFFFF;
+			charstring->data = realloc(charstring->data, sizeof(uint8_t) * (used + blank));
+		} else {
+			used += blob->size;
+			blank -= blob->size;
+		}
 		charstring->offset[j + 1] = blob->size + charstring->offset[j];
-		charstring->data = realloc(charstring->data, charstring->offset[j + 1] - 1);
 		memcpy(charstring->data + charstring->offset[j] - 1, blob->data, blob->size);
 		blob_free(blob);
 	}
@@ -1227,9 +1323,20 @@ static cff_blob *cffstrings_to_indexblob(cff_sid_entry **h) {
 
 	cff_sid_entry *item, *tmp;
 	uint32_t j = 0;
+
+	size_t used = 0;
+	size_t blanks = 0;
+
 	HASH_ITER(hh, *h, item, tmp) {
 		strings->offset[j + 1] = sdslen(item->str) + strings->offset[j];
-		strings->data = realloc(strings->data, strings->offset[j + 1] - 1);
+		if (blanks < sdslen(item->str)) {
+			used += sdslen(item->str);
+			blanks = (used >> 1) & 0xFFFFFF;
+			strings->data = realloc(strings->data, sizeof(uint8_t) * used + blanks);
+		} else {
+			blanks -= sdslen(item->str);
+			used += sdslen(item->str);
+		}
 		memcpy(strings->data + strings->offset[j] - 1, item->str, sdslen(item->str));
 		sdsfree(item->str);
 		HASH_DEL(*h, item);

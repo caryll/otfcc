@@ -7,7 +7,7 @@ workspace "otfcc"
 		'_CARYLL_USE_PRE_SERIALIZED',
 		'MAIN_VER=0',
 		"SECONDARY_VER=2",
-		"PATCH_VER=0"
+		"PATCH_VER=1"
 	}
 	
 	location "build"
@@ -46,6 +46,7 @@ project "externals"
 		"dep/polyfill-msvc/**.h",
 		"dep/polyfill-msvc/**.c"
 	}
+	buildoptions { '-Wno-unused-const-variable' }
 	filter {}
 
 project "libotfcc-support"

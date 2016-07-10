@@ -143,7 +143,7 @@ static table_otl *caryll_read_otl_common(font_file_pointer data, uint32_t tableL
 			NEW(feature);
 			features[j] = feature;
 			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
-			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%d", (tag >> 24) & 0xFF,
+			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%05d", (tag >> 24) & 0xFF,
 			                                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, j);
 			uint32_t featureOffset =
 			    featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
@@ -446,9 +446,8 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 					s->feature->lookups = al;
 					HASH_ADD_STR(fh, name, s);
 				} else {
-					fprintf(stderr, "[OTFCC-fea] There is no valid lookup "
-					                "assignments for [%s/%s]. This feature "
-					                "will be ignored.\n",
+					fprintf(stderr, "[OTFCC-fea] Duplicate feature for [%s/%s]. This feature will "
+					                "be ignored.\n",
 					        tag, featureName);
 					FREE(al);
 				}
@@ -511,8 +510,7 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 					s->script->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
-					fprintf(stderr, "[OTFCC-fea] There is no valid feature "
-					                "assignments for [%s/%s]. This language "
+					fprintf(stderr, "[OTFCC-fea] Duplicate language item [%s/%s]. This language "
 					                "term will be ignored.\n",
 					        tag, languageName);
 					if (af) { FREE(af); }
