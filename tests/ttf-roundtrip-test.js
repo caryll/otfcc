@@ -1,14 +1,18 @@
 var path = require('path');
 var fs = require('fs');
 
-var ROUNDING_ERROR = 0.001;
+var ROUNDING_ERROR = 0.01;
 var pSlice = Array.prototype.slice;
 var objectKeys = Object.keys;
 var deepEqual = function (actual, expected, opts) {
 	if (actual === expected) {
 		return true;
 	} else if (typeof actual == 'number' && typeof expected == 'number') {
-		return Math.abs(actual - expected) < ROUNDING_ERROR;
+		var pass = Math.abs(actual - expected) < ROUNDING_ERROR;
+		if (!pass) {
+			process.stderr.write("Numbers Mismatch " + actual + " <> " + expected + " (difference = " + Math.abs(actual - expected) + ")");
+		}
+		return pass;
 	} else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
 		return actual === expected;
 	} else {
@@ -66,4 +70,4 @@ function check(fn, desc) {
 
 var c1 = fs.readFileSync(process.argv[2], 'utf-8');
 var c2 = fs.readFileSync(process.argv[3], 'utf-8');
-check(deepEqual(JSON.parse(c1), JSON.parse(c2)), "Roundtrip passed.");
+check(deepEqual(JSON.parse(c1), JSON.parse(c2)), "Roundtrip test for " + process.argv[2] + " and " + process.argv[3]);
