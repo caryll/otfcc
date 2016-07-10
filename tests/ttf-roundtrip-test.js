@@ -1,7 +1,7 @@
 var path = require('path');
 var fs = require('fs');
 
-var ROUNDING_ERROR = 0.01;
+var ROUNDING_ERROR = 0.001;
 var pSlice = Array.prototype.slice;
 var objectKeys = Object.keys;
 var deepEqual = function (actual, expected, opts) {
@@ -10,7 +10,7 @@ var deepEqual = function (actual, expected, opts) {
 	} else if (typeof actual == 'number' && typeof expected == 'number') {
 		var pass = Math.abs(actual - expected) < ROUNDING_ERROR;
 		if (!pass) {
-			process.stderr.write("Numbers Mismatch " + actual + " <> " + expected + " (difference = " + Math.abs(actual - expected) + ")");
+			process.stderr.write("Numbers Mismatch " + actual + " <> " + expected + " (difference = " + Math.abs(actual - expected) + ")\n");
 		}
 		return pass;
 	} else if (!actual || !expected || typeof actual != 'object' && typeof expected != 'object') {
@@ -54,7 +54,10 @@ function objEquiv(a, b, opts) {
 	}
 	for (i = ka.length - 1; i >= 0; i--) {
 		key = ka[i];
-		if (!deepEqual(a[key], b[key], opts)) return false;
+		if (!deepEqual(a[key], b[key], opts)) {
+			process.stderr.write("Object mismatch within " + key + "\n");
+			return false;
+		}
 	}
 	return typeof a === typeof b;
 }
