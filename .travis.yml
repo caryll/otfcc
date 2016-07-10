@@ -27,4 +27,4 @@ script:
   - make test
 
 cache:
-  - build
+  build: true
