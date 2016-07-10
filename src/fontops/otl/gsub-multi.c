@@ -6,7 +6,7 @@ typedef struct {
 	otl_coverage *to;
 	UT_hash_handle hh;
 } gsub_multi_hash;
-static INLINE int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
+static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 

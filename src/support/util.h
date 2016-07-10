@@ -46,6 +46,18 @@ static INLINE json_value *json_obj_get_type(json_value *obj, const char *key, js
 	if (v && v->type == type) return v;
 	return NULL;
 }
+static INLINE sds json_obj_getsds(json_value *obj, const char *key) {
+	json_value *v = json_obj_get_type(obj, key, json_string);
+	if (!v)
+		return NULL;
+	else
+		return sdsnewlen(v->u.string.ptr, v->u.string.length);
+}
+static INLINE double json_numof(json_value *cv) {
+	if (cv && cv->type == json_integer) return cv->u.integer;
+	if (cv && cv->type == json_double) return cv->u.dbl;
+	return 0;
+}
 static INLINE double json_obj_getnum(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
@@ -115,6 +127,10 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 		}
 	}
 	return fallback;
+}
+
+static INLINE json_value *json_from_sds(sds str) {
+	return json_string_new_length(sdslen(str), str);
 }
 
 // flags reader and writer
@@ -284,6 +300,7 @@ typedef struct {
 	bool ignore_glyph_order;
 	bool ignore_hints;
 	bool has_vertical_metrics;
+	bool export_fdselect;
 	bool keep_average_char_width;
 	bool short_post;
 	bool dummy_DSIG;
@@ -319,13 +336,25 @@ static INLINE void *__caryll_allocate(size_t n, unsigned long line) {
 	}
 	return p;
 }
+static INLINE void *__caryll_allocate_clean(size_t n, unsigned long line) {
+	if (!n) return NULL;
+	void *p = calloc(n, 1);
+	if (!p) {
+		fprintf(stderr, "[%ld]Out of memory(%ld bytes)\n", line, (unsigned long)n);
+		exit(EXIT_FAILURE);
+	}
+	return p;
+}
 #ifdef __cplusplus
 #define NEW(ptr) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_CLEAN(ptr)                                                                             \
+	ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
 #define NEW_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = nullptr)
 #define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)
 #else
 #define NEW(ptr) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)), __LINE__)
+#define NEW_CLEAN(ptr) ptr = __caryll_allocate_clean(sizeof(__typeof__(*ptr)), __LINE__)
 #define NEW_N(ptr, n) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = NULL)
 #define DELETE(fn, ptr) (fn(ptr), ptr = NULL)

@@ -10,8 +10,10 @@ typedef struct {
 	caryll_buffer *buffer;
 	UT_hash_handle hh;
 } sfnt_builder_entry;
+
 typedef struct {
 	uint32_t count;
+	uint32_t header;
 	sfnt_builder_entry *tables;
 } sfnt_builder;
 

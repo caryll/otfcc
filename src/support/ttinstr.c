@@ -287,7 +287,7 @@ const char *ff_ttf_instrnames[] = {"SVTCA[y-axis]",
                                    "MIRP[rp0,min,rnd,white]",
                                    "MIRP1f"};
 
-static INLINE int strnmatch(const char *str1, const char *str2, int n) {
+static int strnmatch(const char *str1, const char *str2, int n) {
 	int ch1, ch2;
 	for (; n-- > 0;) {
 		ch1 = *str1++;
@@ -299,7 +299,7 @@ static INLINE int strnmatch(const char *str1, const char *str2, int n) {
 	return (0);
 }
 
-static INLINE uint8_t *parse_instrs(char *text, int *len, void *context,
+static uint8_t *parse_instrs(char *text, int *len, void *context,
                       void (*IVError)(void *context, char *, int)) {
 	short numberstack[256];
 	int npos = 0, nread, i;
@@ -432,7 +432,7 @@ static INLINE uint8_t *parse_instrs(char *text, int *len, void *context,
 	return (realloc(instrs, icnt == 0 ? 1 : icnt)); /* some versions of realloc abort on 0 */
 }
 
-static INLINE int instr_typify(struct instrdata *id) {
+static int instr_typify(struct instrdata *id) {
 	int i, len = id->instr_cnt, cnt, j, lh;
 	uint8_t *instrs = id->instrs;
 	uint8_t *bts;

@@ -44,8 +44,7 @@ static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, 
 		} else {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
-				if (glyphOffset + 2 >= lengthLimit)
-					continue; // ignore this encoding slot when o-o-r
+				if (glyphOffset + 2 > lengthLimit) continue; // ignore this encoding slot when o-o-r
 				uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
 				encode(map, c, gid);
 			}

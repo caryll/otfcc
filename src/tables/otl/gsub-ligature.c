@@ -148,7 +148,7 @@ typedef struct {
 	int ligid;
 	UT_hash_handle hh;
 } ligature_aggerator;
-static INLINE int by_gid(ligature_aggerator *a, ligature_aggerator *b) { return a->gid - b->gid; }
+static int by_gid(ligature_aggerator *a, ligature_aggerator *b) { return a->gid - b->gid; }
 
 caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 	caryll_buffer *buf = bufnew();
