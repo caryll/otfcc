@@ -765,7 +765,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 
 					case op_vmoveto: {
 						CHECK_STACK_TOP(op_vmoveto, 1);
-						if (stack->index > 1) setWidth(outline, stack->stack[0].d);
+						if (stack->index > 1) setWidth(outline, stack->stack[stack->index - 2].d);
 						newContour(outline);
 						lineTo(outline, 0.0, stack->stack[stack->index - 1].d);
 						stack->index = 0;
@@ -773,7 +773,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 					}
 					case op_rmoveto: {
 						CHECK_STACK_TOP(op_rmoveto, 2);
-						if (stack->index > 2) setWidth(outline, stack->stack[0].d);
+						if (stack->index > 2) setWidth(outline, stack->stack[stack->index - 3].d);
 						newContour(outline);
 						lineTo(outline, stack->stack[stack->index - 2].d,
 						       stack->stack[stack->index - 1].d);
@@ -782,14 +782,14 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 					}
 					case op_hmoveto: {
 						CHECK_STACK_TOP(op_hmoveto, 1);
-						if (stack->index > 1) setWidth(outline, stack->stack[0].d);
+						if (stack->index > 1) setWidth(outline, stack->stack[stack->index - 2].d);
 						newContour(outline);
 						lineTo(outline, stack->stack[stack->index - 1].d, 0.0);
 						stack->index = 0;
 						break;
 					}
 					case op_endchar: {
-						if (stack->index > 0) setWidth(outline, stack->stack[0].d);
+						if (stack->index > 0) setWidth(outline, stack->stack[stack->index - 1].d);
 						break;
 					}
 					case op_rlineto: {
