@@ -84,33 +84,62 @@ FAIL:
 
 json_value *caryll_gsub_ligature_to_json(otl_subtable *_subtable) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
-	json_value *st = json_object_new(subtable->to->numGlyphs);
+	json_value *st = json_array_new(subtable->to->numGlyphs);
 	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
-		json_object_push(st, subtable->to->glyphs[j].name,
-		                 caryll_coverage_to_json(subtable->from[j]));
+		json_value *entry = json_object_new(2);
+		json_object_push(entry, "from", caryll_coverage_to_json(subtable->from[j]));
+		json_object_push(entry, "to", json_string_new_length(sdslen(subtable->to->glyphs[j].name),
+		                                                     subtable->to->glyphs[j].name));
+		json_array_push(st, preserialize(entry));
 	}
-	return st;
+	json_value *ret = json_object_new(1);
+	json_object_push(ret, "substitutions", st);
+	return ret;
 }
 
 otl_subtable *caryll_gsub_ligature_from_json(json_value *_subtable) {
 	otl_subtable *_st;
-	NEW(_st);
-	subtable_gsub_ligature *st = &(_st->gsub_ligature);
-	NEW(st->to);
-	st->to->numGlyphs = _subtable->u.object.length;
-	NEW_N(st->to->glyphs, st->to->numGlyphs);
-	NEW_N(st->from, st->to->numGlyphs);
+	if (json_obj_get_type(_subtable, "substitutions", json_array)) {
+		_subtable = json_obj_get_type(_subtable, "substitutions", json_array);
 
-	uint16_t jj = 0;
-	for (uint16_t k = 0; k < st->to->numGlyphs; k++) {
-		json_value *_from = _subtable->u.object.values[k].value;
-		if (!_from || _from->type != json_array) continue;
-		st->to->glyphs[jj].name = sdsnewlen(_subtable->u.object.values[k].name,
-		                                    _subtable->u.object.values[k].name_length);
-		st->from[jj] = caryll_coverage_from_json(_from);
-		jj += 1;
+		NEW(_st);
+		subtable_gsub_ligature *st = &(_st->gsub_ligature);
+		NEW(st->to);
+		st->to->numGlyphs = _subtable->u.array.length;
+		NEW_N(st->to->glyphs, st->to->numGlyphs);
+		NEW_N(st->from, st->to->numGlyphs);
+
+		uint16_t jj = 0;
+		for (uint16_t k = 0; k < st->to->numGlyphs; k++) {
+			json_value *entry = _subtable->u.array.values[k];
+			json_value *_from = json_obj_get_type(entry, "from", json_array);
+			json_value *_to = json_obj_get_type(entry, "to", json_string);
+			if (!_from || !_to) continue;
+			st->to->glyphs[jj].name = sdsnewlen(_to->u.string.ptr, _to->u.string.length);
+			st->from[jj] = caryll_coverage_from_json(_from);
+			jj += 1;
+		}
+		st->to->numGlyphs = jj;
+
+	} else {
+		NEW(_st);
+		subtable_gsub_ligature *st = &(_st->gsub_ligature);
+		NEW(st->to);
+		st->to->numGlyphs = _subtable->u.object.length;
+		NEW_N(st->to->glyphs, st->to->numGlyphs);
+		NEW_N(st->from, st->to->numGlyphs);
+
+		uint16_t jj = 0;
+		for (uint16_t k = 0; k < st->to->numGlyphs; k++) {
+			json_value *_from = _subtable->u.object.values[k].value;
+			if (!_from || _from->type != json_array) continue;
+			st->to->glyphs[jj].name = sdsnewlen(_subtable->u.object.values[k].name,
+			                                    _subtable->u.object.values[k].name_length);
+			st->from[jj] = caryll_coverage_from_json(_from);
+			jj += 1;
+		}
+		st->to->numGlyphs = jj;
 	}
-	st->to->numGlyphs = jj;
 	return _st;
 }
 
@@ -119,7 +148,7 @@ typedef struct {
 	int ligid;
 	UT_hash_handle hh;
 } ligature_aggerator;
-static INLINE int by_gid(ligature_aggerator *a, ligature_aggerator *b) { return a->gid - b->gid; }
+static int by_gid(ligature_aggerator *a, ligature_aggerator *b) { return a->gid - b->gid; }
 
 caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 	caryll_buffer *buf = bufnew();

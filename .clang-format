@@ -11,3 +11,4 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IndentCaseLabels: true
 AlignOperands: true
 AlignAfterOpenBracket: true
+SortIncludes: false

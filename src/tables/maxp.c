@@ -95,18 +95,20 @@ caryll_buffer *caryll_write_maxp(table_maxp *maxp) {
 	if (!maxp) return buf;
 	bufwrite32b(buf, maxp->version);
 	bufwrite16b(buf, maxp->numGlyphs);
-	bufwrite16b(buf, maxp->maxPoints);
-	bufwrite16b(buf, maxp->maxContours);
-	bufwrite16b(buf, maxp->maxCompositePoints);
-	bufwrite16b(buf, maxp->maxCompositeContours);
-	bufwrite16b(buf, maxp->maxZones);
-	bufwrite16b(buf, maxp->maxTwilightPoints);
-	bufwrite16b(buf, maxp->maxStorage);
-	bufwrite16b(buf, maxp->maxFunctionDefs);
-	bufwrite16b(buf, maxp->maxInstructionDefs);
-	bufwrite16b(buf, maxp->maxStackElements);
-	bufwrite16b(buf, maxp->maxSizeOfInstructions);
-	bufwrite16b(buf, maxp->maxComponentElements);
-	bufwrite16b(buf, maxp->maxComponentDepth);
+	if (maxp->version > 0x00005000) {
+		bufwrite16b(buf, maxp->maxPoints);
+		bufwrite16b(buf, maxp->maxContours);
+		bufwrite16b(buf, maxp->maxCompositePoints);
+		bufwrite16b(buf, maxp->maxCompositeContours);
+		bufwrite16b(buf, maxp->maxZones);
+		bufwrite16b(buf, maxp->maxTwilightPoints);
+		bufwrite16b(buf, maxp->maxStorage);
+		bufwrite16b(buf, maxp->maxFunctionDefs);
+		bufwrite16b(buf, maxp->maxInstructionDefs);
+		bufwrite16b(buf, maxp->maxStackElements);
+		bufwrite16b(buf, maxp->maxSizeOfInstructions);
+		bufwrite16b(buf, maxp->maxComponentElements);
+		bufwrite16b(buf, maxp->maxComponentDepth);
+	}
 	return buf;
 }

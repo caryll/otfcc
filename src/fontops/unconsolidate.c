@@ -17,14 +17,22 @@ static void caryll_name_glyphs(caryll_font *font, caryll_dump_options *dumpopts)
 
 	uint16_t numGlyphs = font->glyf->numberGlyphs;
 
-	// pass 1: Map to `post` names
+	// pass 1: Map to existing glyph names
+	for (uint16_t j = 0; j < numGlyphs; j++) {
+		if (font->glyf->glyphs[j]->name) {
+			try_name_glyph(glyph_order, j, font->glyf->glyphs[j]->name);
+			font->glyf->glyphs[j]->name = NULL;
+		}
+	}
+
+	// pass 2: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
 		glyph_order_entry *s;
 		foreach_hash(s, *font->post->post_name_map) {
 			try_name_glyph(glyph_order, s->gid, sdsdup(s->name));
 		}
 	}
-	// pass 2: Map to AGLFN & Unicode
+	// pass 3: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
 		cmap_entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.gid > 0) {
@@ -39,7 +47,7 @@ static void caryll_name_glyphs(caryll_font *font, caryll_dump_options *dumpopts)
 			if (!actuallyNamed) sdsfree(name);
 		}
 	}
-	// pass 3: Map to GID
+	// pass 4 : Map to GID
 	for (uint16_t j = 0; j < numGlyphs; j++) {
 		sds name;
 		if (j) {
@@ -262,6 +270,16 @@ static void merge_vmtx(caryll_font *font) {
 			} else {
 				font->glyf->glyphs[j]->verticalOrigin =
 				    font->vmtx->topSideBearing[j - count_a] + font->glyf->glyphs[j]->stat.yMax;
+			}
+		}
+		if (font->VORG) {
+			for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+				font->glyf->glyphs[j]->verticalOrigin = font->VORG->defaultVerticalOrigin;
+			}
+			for (uint16_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
+				if (font->VORG->entries[j].gid < font->glyf->numberGlyphs) {
+					font->glyf->glyphs[j]->verticalOrigin = font->VORG->entries[j].verticalOrigin;
+				}
 			}
 		}
 	}

@@ -3,6 +3,7 @@
 
 #include <font/caryll-sfnt.h>
 #include <support/glyphorder.h>
+#include <support/ttinstr.h>
 #include <support/util.h>
 
 #include "head.h"
@@ -13,7 +14,10 @@ enum GlyphType { SIMPLE, COMPOSITE };
 typedef struct {
 	float x;
 	float y;
-	int8_t onCurve;
+	int8_t onCurve; // a mask indicates whether a point is on-curve or off-curve
+	                // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
+	                // bit 1 - 7 : unused, set to 0
+	                // in JSON, they are separated into several boolean fields.
 } glyf_point;
 
 typedef struct {
@@ -23,17 +27,15 @@ typedef struct {
 
 // CFF stems and hint masks
 typedef struct {
-	bool isEdge;
 	float position;
 	float width;
-} hint_stemH, hint_stemV;
+} glyf_postscript_hint_stemdef;
 
 typedef struct {
-	uint16_t contour;
-	uint16_t point;
+	uint16_t pointsBefore;
 	bool maskH[0x100];
 	bool maskV[0x100];
-} hint_mask, hint_contour_mask;
+} glyf_postscript_hint_mask;
 
 typedef struct {
 	glyph_handle glyph;
@@ -81,14 +83,17 @@ typedef struct {
 	uint16_t numberOfStemV;
 	uint16_t numberOfHintMasks;
 	uint16_t numberOfContourMasks;
-	hint_stemH *stemH;
-	hint_stemV *stemV;
-	hint_mask *hintMasks;
-	hint_contour_mask *contourMasks;
+	glyf_postscript_hint_stemdef *stemH;
+	glyf_postscript_hint_stemdef *stemV;
+	glyf_postscript_hint_mask *hintMasks;
+	glyf_postscript_hint_mask *contourMasks;
 
 	// TTF instructions
 	uint16_t instructionsLength;
 	uint8_t *instructions;
+
+	// CID FDSelect
+	uint16_t fdSelectIndex;
 
 	// Stats
 	glyf_glyph_stat stat;
@@ -123,7 +128,7 @@ typedef enum {
 	OVERLAP_COMPOUND = (1 << 10)
 } glyf_reference_flag;
 
-glyf_glyph *caryll_new_glyf_glhph();
+glyf_glyph *caryll_new_glyf_glyph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options *dumpopts);

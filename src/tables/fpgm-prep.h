@@ -4,8 +4,10 @@
 #include <support/util.h>
 #include <font/caryll-sfnt.h>
 #include <support/glyphorder.h>
+#include <support/ttinstr.h>
 
 typedef struct {
+	sds tag;
 	uint32_t length;
 	uint8_t *bytes;
 } table_fpgm_prep;

@@ -24,3 +24,4 @@ install:
 
 script:
   - make linux-release-x64
+  - make test

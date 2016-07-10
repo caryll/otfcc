@@ -25,7 +25,7 @@ void printHelp() {
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
 	                " -h, --help              : Display this help message and exit.\n"
 	                " -v, --version           : Display version information and exit.\n"
-	                " -o <file>               : Set output file path to <file>. When abasent\n"
+	                " -o <file>               : Set output file path to <file>. When absent\n"
 	                "                           the dump will be written to STDOUT.\n"
 	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.\n"
 	                " --pretty                : Prettify the output JSON.\n"
@@ -33,7 +33,7 @@ void printHelp() {
 	                " --time                  : Time each substep.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
-	                " --ignore-hints          : Do not export hingint information.\n"
+	                " --ignore-hints          : Do not export hinting information.\n"
 	                " --add-bom               : Add BOM mark in the output. (This is default\n"
 	                "                           on Windows when redirecting to another program.\n"
 	                "                           Use --no-bom to turn it off.)\n"
@@ -63,6 +63,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"add-bom", no_argument, NULL, 0},
 	                            {"no-bom", no_argument, NULL, 0},
@@ -95,6 +96,8 @@ int main(int argc, char *argv[]) {
 					dumpopts->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					dumpopts->ignore_hints = true;
+				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
+					dumpopts->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
 					dumpopts->glyph_name_prefix = sdsnew(optarg);
 				}

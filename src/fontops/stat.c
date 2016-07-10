@@ -224,8 +224,9 @@ void caryll_font_stat_vmtx(caryll_font *font) {
 		if (advanceHeight > maxHeight) maxHeight = advanceHeight;
 		if (tsb < minTSB) minTSB = tsb;
 		if (bsb < minBSB) minBSB = bsb;
-		if (g->verticalOrigin - g->stat.yMin > maxExtent)
+		if (g->verticalOrigin - g->stat.yMin > maxExtent) {
 			maxExtent = g->verticalOrigin - g->stat.yMin;
+		}
 	}
 	font->vhea->numOfLongVerMetrics = count_a;
 	font->vhea->minTop = minTSB;
@@ -241,8 +242,13 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 	uint32_t u2 = 0;
 	uint32_t u3 = 0;
 	uint32_t u4 = 0;
+	int minUnicode = 0xFFFF;
+	int maxUnicode = 0;
 	foreach_hash(item, *font->cmap) {
 		int u = item->unicode;
+		// Stat for minimium and maximium unicode
+		if (u < minUnicode) minUnicode = u;
+		if (u > maxUnicode) maxUnicode = u;
 		// Reference: https://www.microsoft.com/typography/otspec/os2.htm#ur
 		if ((u >= 0x0000 && u <= 0x007F)) { u1 |= (1 << 0); }
 		if ((u >= 0x0080 && u <= 0x00FF)) { u1 |= (1 << 1); }
@@ -410,6 +416,16 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 	font->OS_2->ulUnicodeRange2 = u2;
 	font->OS_2->ulUnicodeRange3 = u3;
 	font->OS_2->ulUnicodeRange4 = u4;
+	if (minUnicode < 0x10000) {
+		font->OS_2->usFirstCharIndex = minUnicode;
+	} else {
+		font->OS_2->usFirstCharIndex = 0xFFFF;
+	}
+	if (maxUnicode < 0x10000) {
+		font->OS_2->usLastCharIndex = maxUnicode;
+	} else {
+		font->OS_2->usLastCharIndex = 0xFFFF;
+	}
 
 	if (!dumpopts->keep_average_char_width) {
 		uint32_t totalWidth = 0;
@@ -426,6 +442,13 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 			font->head->modified = 2082844800 + (int64_t)time(NULL);
 		}
 	}
+	if (font->head && font->CFF_) {
+		font->CFF_->fontBBoxBottom = font->head->yMin;
+		font->CFF_->fontBBoxTop = font->head->yMax;
+		font->CFF_->fontBBoxLeft = font->head->xMin;
+		font->CFF_->fontBBoxRight = font->head->xMax;
+		if (font->glyf && font->CFF_->isCID) { font->CFF_->cidCount = font->glyf->numberGlyphs; }
+	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
 	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) caryll_stat_maxp(font);
@@ -436,6 +459,11 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 		font->maxp->maxSizeOfInstructions = font->prep->length;
 	}
 	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, dumpopts);
+	if (font->subtype == FONTTYPE_TTF) {
+		if (font->maxp) font->maxp->version = 0x00010000;
+	} else {
+		if (font->maxp) font->maxp->version = 0x00005000;
+	}
 	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
 	if (font->glyf && font->vhea) caryll_font_stat_vmtx(font);
 }

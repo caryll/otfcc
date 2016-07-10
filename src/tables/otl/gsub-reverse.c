@@ -24,7 +24,7 @@ void caryll_delete_gsub_reverse(otl_lookup *lookup) {
 	}
 }
 
-static INLINE void reverseBacktracks(subtable_gsub_reverse *subtable) {
+static void reverseBacktracks(subtable_gsub_reverse *subtable) {
 	if (subtable->inputIndex > 0) {
 		uint16_t start = 0;
 		uint16_t end = subtable->inputIndex - 1;

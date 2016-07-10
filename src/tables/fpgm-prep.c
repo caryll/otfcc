@@ -5,8 +5,8 @@ table_fpgm_prep *caryll_read_fpgm_prep(caryll_packet packet, uint32_t tag) {
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		t = malloc(sizeof(table_fpgm_prep));
-		if (!t) goto FAIL;
+		NEW(t);
+		t->tag = NULL;
 		t->length = length;
 		t->bytes = malloc(sizeof(uint8_t) * length);
 		if (!t->bytes) goto FAIL;
@@ -18,26 +18,38 @@ table_fpgm_prep *caryll_read_fpgm_prep(caryll_packet packet, uint32_t tag) {
 	}
 	return NULL;
 }
+
 void caryll_delete_fpgm_prep(table_fpgm_prep *table) {
 	if (!table) return;
+	if (table->tag) sdsfree(table->tag);
 	if (table->bytes) free(table->bytes);
 	free(table);
 }
+
 void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root,
                               caryll_dump_options *dumpopts, const char *tag) {
 	if (!table) return;
-	size_t len = 0;
-	uint8_t *buf = base64_encode(table->bytes, table->length, &len);
-	json_object_push(root, tag, json_string_new_nocopy(len, (char *)buf));
+	json_object_push(root, tag, instr_to_json(table->bytes, table->length, dumpopts));
 }
+
+void makeFpgmPrepInstr(void *_t, uint8_t *instrs, uint32_t length) {
+	table_fpgm_prep *t = (table_fpgm_prep *)_t;
+	t->length = length;
+	t->bytes = instrs;
+}
+void wrongFpgmPrepInstr(void *_t, char *reason, int pos) {
+	table_fpgm_prep *t = (table_fpgm_prep *)_t;
+	fprintf(stderr, "[OTFCC] TrueType instructions parse error : %s, at %d in /%s\n", reason, pos,
+	        t->tag);
+}
+
 table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, const char *tag) {
 	table_fpgm_prep *t = NULL;
 	json_value *table = NULL;
-	if ((table = json_obj_get_type(root, tag, json_string))) {
+	if ((table = json_obj_get(root, tag))) {
 		NEW(t);
-		size_t len;
-		t->bytes = base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
-		t->length = len;
+		t->tag = sdsnew(tag);
+		instr_from_json(table, t, makeFpgmPrepInstr, wrongFpgmPrepInstr);
 	}
 	return t;
 }
