@@ -4,6 +4,7 @@ var fs = require('fs');
 var ROUNDING_ERROR = 0.001;
 var pSlice = Array.prototype.slice;
 var objectKeys = Object.keys;
+var shownDiff = false;
 var deepEqual = function (actual, expected, opts) {
 	if (actual === expected) {
 		return true;
@@ -56,6 +57,11 @@ function objEquiv(a, b, opts) {
 		key = ka[i];
 		if (!deepEqual(a[key], b[key], opts)) {
 			process.stderr.write("Object mismatch within " + key + "\n");
+			if (!shownDiff) {
+				process.stderr.write("<<< " + JSON.stringify(a[key]) + "\n");
+				process.stderr.write(">>> " + JSON.stringify(b[key]) + "\n");
+				shownDiff = true;
+			}
 			return false;
 		}
 	}
