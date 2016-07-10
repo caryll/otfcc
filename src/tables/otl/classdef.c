@@ -181,23 +181,26 @@ static int by_gid(const void *a, const void *b) {
 caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
 	caryll_buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
-	if (!cd->numGlyphs) {
-		bufwrite16b(buf, 1);
+	if (!cd->numGlyphs) { // no glyphs, return a blank classdef
 		bufwrite16b(buf, 0);
-		bufwrite16b(buf, 0);
-		bufwrite16b(buf, 1);
 		return buf;
 	}
 
 	classdef_sortrecord *r;
 	NEW_N(r, cd->numGlyphs);
 	uint16_t jj = 0;
-	for (uint16_t j = 0; j < cd->numGlyphs; j++)
+	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j]) {
 			r[jj].gid = cd->glyphs[j].gid;
 			r[jj].cid = cd->classes[j];
 			jj++;
 		}
+	}
+	if (!jj) { // The classdef has only class 0
+		free(r);
+		bufwrite16b(buf, 0);
+		return buf;
+	}
 	qsort(r, jj, sizeof(classdef_sortrecord), by_gid);
 
 	uint16_t startGID = r[0].gid;

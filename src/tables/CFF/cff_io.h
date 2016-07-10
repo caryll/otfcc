@@ -301,7 +301,6 @@ typedef struct {
 typedef struct {
 	uint32_t size;
 	uint32_t free;
-	uint32_t rank;
 	uint8_t *data;
 } cff_blob;
 
@@ -342,6 +341,7 @@ typedef struct {
 
 extern char *op_cff_name(uint32_t op);
 extern char *op_cs2_name(uint32_t op);
+uint8_t cs2_op_standard_arity(uint32_t op);
 
 extern uint32_t decode_cff_token(uint8_t *start, CFF_Value *val);
 extern uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val);
@@ -350,11 +350,6 @@ extern uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val);
 extern cff_blob *encode_cff_operator(int32_t val);
 extern cff_blob *encode_cff_number(int32_t val);
 extern cff_blob *encode_cff_real(double val);
-
-// number, number, 16.16
-extern cff_blob *encode_cs2_operator(int32_t val);
-extern cff_blob *encode_cs2_number(int32_t val);
-extern cff_blob *encode_cs2_real(double val);
 
 /*
   Writer
@@ -373,8 +368,11 @@ extern void esrap_index(CFF_INDEX in);
 extern void empty_index(CFF_INDEX *in);
 extern void print_index(CFF_INDEX in);
 
-cff_blob *compile_type2_value(double val);
 cff_blob *compile_offset(int32_t val);
+
+void merge_cs2_operator(cff_blob *blob, int32_t val);
+void merge_cs2_operand(cff_blob *blob, double val);
+void merge_cs2_special(cff_blob *blob, uint8_t val);
 
 sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str);
 
