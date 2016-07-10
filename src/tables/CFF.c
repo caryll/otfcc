@@ -1271,9 +1271,20 @@ static cff_blob *cffstrings_to_indexblob(cff_sid_entry **h) {
 
 	cff_sid_entry *item, *tmp;
 	uint32_t j = 0;
+
+	size_t used = 0;
+	size_t blanks = 0;
+
 	HASH_ITER(hh, *h, item, tmp) {
 		strings->offset[j + 1] = sdslen(item->str) + strings->offset[j];
-		strings->data = realloc(strings->data, strings->offset[j + 1] - 1);
+		if (blanks < sdslen(item->str)) {
+			used += sdslen(item->str);
+			blanks = (blanks + used) & 0xFFFFFF;
+			strings->data = realloc(strings->data, used + blanks);
+		} else {
+			blanks -= sdslen(item->str);
+			used += sdslen(item->str);
+		}
 		memcpy(strings->data + strings->offset[j] - 1, item->str, sdslen(item->str));
 		sdsfree(item->str);
 		HASH_DEL(*h, item);
