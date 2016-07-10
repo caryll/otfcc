@@ -89,4 +89,10 @@ cffroundtriptest : linux-release-x64
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-4.otf -o build/roundtrip-WorkSans-Regular-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-3.json build/roundtrip-WorkSans-Regular-5.json
 
+	@bin/Release-x64/otfccbuild tests/payload/WorkSans-Regular.json -o build/roundtrip-WorkSans-Regular-6.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-6.otf -o build/roundtrip-WorkSans-Regular-7.json --pretty
+	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-7.json -o build/roundtrip-WorkSans-Regular-8.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-8.otf -o build/roundtrip-WorkSans-Regular-9.json --pretty
+	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-7.json build/roundtrip-WorkSans-Regular-9.json
+
 test: cffopcodetest ttfroundtriptest cffroundtriptest
