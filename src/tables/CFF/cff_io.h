@@ -301,7 +301,6 @@ typedef struct {
 typedef struct {
 	uint32_t size;
 	uint32_t free;
-	uint32_t rank;
 	uint8_t *data;
 } cff_blob;
 

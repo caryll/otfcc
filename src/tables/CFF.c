@@ -1079,21 +1079,22 @@ static cff_blob *compile_glyf_to_charstring(table_glyf *glyf) {
 	charstring->offset[0] = 1;
 	charstring->data = NULL;
 
-	cff_blob **blobs;
-	size_t totalSize = 0;
-	NEW_N(blobs, glyf->numberGlyphs);
+	size_t used = 0;
+	size_t blank = 0;
 	for (uint32_t j = 0; j < glyf->numberGlyphs; j++) {
-		blobs[j] = compile_glyph(glyf->glyphs[j]);
-		totalSize += blobs[j]->size;
-	}
-	NEW_N(charstring->data, totalSize + 1);
-	for (uint32_t j = 0; j < glyf->numberGlyphs; j++) {
-		cff_blob *blob = blobs[j];
+		cff_blob *blob = compile_glyph(glyf->glyphs[j]);
+		if (blank < blob->size) {
+			used += blob->size;
+			blank = (used >> 1) & 0xFFFFFF;
+			charstring->data = realloc(charstring->data, sizeof(uint8_t) * (used + blank));
+		} else {
+			used += blob->size;
+			blank -= blob->size;
+		}
 		charstring->offset[j + 1] = blob->size + charstring->offset[j];
 		memcpy(charstring->data + charstring->offset[j] - 1, blob->data, blob->size);
 		blob_free(blob);
 	}
-	free(blobs);
 	cff_blob *final_blob = compile_index(*charstring);
 	cff_index_fini(charstring);
 	return final_blob;
@@ -1279,8 +1280,8 @@ static cff_blob *cffstrings_to_indexblob(cff_sid_entry **h) {
 		strings->offset[j + 1] = sdslen(item->str) + strings->offset[j];
 		if (blanks < sdslen(item->str)) {
 			used += sdslen(item->str);
-			blanks = (blanks + used) & 0xFFFFFF;
-			strings->data = realloc(strings->data, used + blanks);
+			blanks = (used >> 1) & 0xFFFFFF;
+			strings->data = realloc(strings->data, sizeof(uint8_t) * used + blanks);
 		} else {
 			blanks -= sdslen(item->str);
 			used += sdslen(item->str);

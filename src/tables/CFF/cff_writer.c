@@ -16,12 +16,7 @@ static void prepareSpaceForBlobMerge(cff_blob *dst, size_t size) {
 	if (dst->free >= size) {
 		dst->free -= size;
 	} else {
-		if (!dst->rank) {
-			dst->rank = 0x10;
-		} else {
-			dst->rank = (dst->rank & 0xFFFFFF) << 1;
-		}
-		dst->free = dst->rank;
+		dst->free = (((dst->size + size) >> 1) + 0x10) & 0xFFFFFF;
 		dst->data = realloc(dst->data, dst->size + size + dst->free);
 	}
 }
