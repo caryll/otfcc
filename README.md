@@ -4,10 +4,10 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 
 ## Key features
 
-* Read an OpenType font, (TrueType is supported as well)
-* And dump its data into JSON.
-* Or parse a dump of an OpenType font,
-* And build an OpenType font according to it.
+* JSON serialization of TrueType and CFF OpenType fonts.
+* Building OpenType fonts from JSON.
+* Full support for OpenType features (`GSUB`, `GPOS` and `GDEF`), CID-keyed CFF, vertical metrics, and more.
+* **4× faster than `ttx` on CFF OTF, and 40× on TTF.**
 
 ## Usage
 
@@ -65,25 +65,6 @@ otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
 
 It was developed and optimized for Clang/LLVM, therefore it is *strongly* recommended to compile with Clang/LLVM, but if that's not possible GCC is also supported, GCC version 5.1 or later being the preferred choice for performance.
 
-### Windows
-
-On Windows building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
-
-* GCC 5.1 included in `TDM-GCC`. Run the following from the command line:
-
-  ```bash
-  premake5 gmake
-  cd build/gmake
-  make
-  ```
-
-* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
-
-  ```bat
-  premake5 vs2015
-  msbuild build\vs\otfcc.sln /property:Configuration=Release
-  ```
-
 ### Linux
 
 On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
@@ -97,4 +78,22 @@ premake5 gmake
 cd build/gmake
 make
 ```
+
+### Windows
+
+On Windows building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
+
+* GCC 5.1 included in `TDM-GCC`. Run the following from the command line:
+
+  ```bash
+  premake5 gmake
+  cd build/gmake
+  make
+  ```
+* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
+
+  ```bat
+  premake5 vs2015
+  msbuild build\vs\otfcc.sln /property:Configuration=Release
+  ```
 
