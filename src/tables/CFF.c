@@ -1328,7 +1328,7 @@ static cff_blob *cffstrings_to_indexblob(cff_sid_entry **h) {
 	size_t blanks = 0;
 
 	HASH_ITER(hh, *h, item, tmp) {
-		strings->offset[j + 1] = sdslen(item->str) + strings->offset[j];
+		strings->offset[j + 1] = (uint32_t)(sdslen(item->str) + strings->offset[j]);
 		if (blanks < sdslen(item->str)) {
 			used += sdslen(item->str);
 			blanks = (used >> 1) & 0xFFFFFF;
@@ -1355,7 +1355,7 @@ static cff_blob *cff_compile_nameindex(table_CFF *cff) {
 	NEW_N(nameIndex->offset, 2);
 	if (!cff->fontName) { cff->fontName = sdsnew("Caryll-CFF-FONT"); }
 	nameIndex->offset[0] = 1;
-	nameIndex->offset[1] = 1 + sdslen(cff->fontName);
+	nameIndex->offset[1] = (uint32_t)(sdslen(cff->fontName) + 1);
 	NEW_N(nameIndex->data, 1 + sdslen(cff->fontName));
 	memcpy(nameIndex->data, cff->fontName, sdslen(cff->fontName));
 	// CFF Name INDEX

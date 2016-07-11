@@ -636,8 +636,8 @@ static bool _declare_lookup_writer(otl_lookup_type type,
 	if (lookup->type == type) {
 		NEW_N(*subtableOffsets, lookup->subtableCount);
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-			(*subtableOffsets)[j] = buf->cursor;
-			*lastOffset = buf->cursor;
+			(*subtableOffsets)[j] = (uint32_t)buf->cursor;
+			*lastOffset = (uint32_t)buf->cursor;
 			bufwrite_bufdel(buf, fn(lookup->subtables[j]));
 		}
 		return true;
@@ -718,7 +718,7 @@ static caryll_buffer *writeOTLLookups(table_otl *table) {
 				                       : lookup->type > otl_type_gsub_unknown
 				                             ? lookup->type - otl_type_gsub_unknown
 				                             : 0));
-				bufwrite32b(bufl, subtableOffsets[j][k] + headerSize - subtableStart);
+				bufwrite32b(bufl, (uint32_t)(subtableOffsets[j][k] + headerSize - subtableStart));
 			}
 		} else {
 			for (uint16_t k = 0; k < lookup->subtableCount; k++) { // subtable offsets

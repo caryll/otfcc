@@ -17,7 +17,7 @@ workspace "otfcc"
 		location "build/vs"
 		toolset "msc-LLVM-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
-		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
+		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Wshorten-64-to-32', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
 	filter {}
@@ -46,7 +46,7 @@ project "externals"
 		"dep/polyfill-msvc/**.h",
 		"dep/polyfill-msvc/**.c"
 	}
-	buildoptions { '-Wno-unused-const-variable' }
+	buildoptions { '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter {}
 
 project "libotfcc-support"
