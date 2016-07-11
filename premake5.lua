@@ -38,8 +38,8 @@ project "externals"
 	kind "StaticLib"
 	language "C"
 	files {
-		"dep/extern/**.h",
-		"dep/extern/**.c"
+		"src/extern/**.h",
+		"src/extern/**.c"
 	}
 	filter "action:vs*"
 	files {
