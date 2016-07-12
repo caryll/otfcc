@@ -29,6 +29,7 @@ workspace "otfcc"
 
 	filter "action:xcode4"
 		location "build/xcode"
+		includedirs { "dep/extern", "dep/extern/**", "src/**" }
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter {}
 	
