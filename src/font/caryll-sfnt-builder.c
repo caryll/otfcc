@@ -11,7 +11,7 @@
 #endif
 
 static uint32_t buf_checksum(caryll_buffer *buffer) {
-	uint32_t actualLength = buflen(buffer);
+	uint32_t actualLength = (uint32_t)buflen(buffer);
 	buflongalign(buffer);
 	uint32_t sum = 0;
 	{
@@ -25,7 +25,7 @@ static uint32_t buf_checksum(caryll_buffer *buffer) {
 static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	sfnt_builder_entry *table = malloc(sizeof(sfnt_builder_entry));
 	table->tag = tag;
-	table->length = buflen(buffer);
+	table->length = (uint32_t)buflen(buffer);
 	buflongalign(buffer);
 	table->buffer = buffer;
 
@@ -91,7 +91,7 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 		// write table directory
 		bufwrite32b(buffer, table->tag);
 		bufwrite32b(buffer, table->checksum);
-		bufwrite32b(buffer, offset);
+		bufwrite32b(buffer, (uint32_t)offset);
 		bufwrite32b(buffer, table->length);
 		size_t cp = buffer->cursor;
 		bufseek(buffer, offset);

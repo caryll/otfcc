@@ -4,17 +4,17 @@
 /*
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  * Redistributions of source code must retain the above copyright notice, this
  * list of conditions and the following disclaimer.
- * 
+ *
  * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- * 
+ *
  * The name of the author may not be used to endorse or promote products
  * derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
@@ -300,13 +300,13 @@ static int strnmatch(const char *str1, const char *str2, int n) {
 }
 
 static uint8_t *parse_instrs(char *text, int *len, void *context,
-                      void (*IVError)(void *context, char *, int)) {
+                             void (*IVError)(void *context, char *, int)) {
 	short numberstack[256];
 	int npos = 0, nread, i;
 	int push_left = 0, push_size = 0;
 	char *pt;
 	char *end, *bend, *brack;
-	int icnt = 0, imax = strlen(text) / 2, val;
+	int icnt = 0, imax = (int)(strlen(text) / 2), val;
 	uint8_t *instrs = malloc(imax);
 
 	for (pt = text; *pt; ++pt) {
@@ -316,7 +316,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 			if (isdigit(*pt) || *pt == '-') {
 				val = strtol(pt, &end, 0);
 				if (val > 32767 || val < -32768) {
-					IVError(context, "A value must be between [-32768,32767]", pt - text);
+					IVError(context, "A value must be between [-32768,32767]", (int)(pt - text));
 					return (NULL);
 				}
 				pt = end;
@@ -330,9 +330,10 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 		if (push_left == -1) {
 			/* we need a push count */
 			if (npos == 0)
-				IVError(context, "Expected a number for a push count", pt - text);
+				IVError(context, "Expected a number for a push count", (int)(pt - text));
 			else if (numberstack[0] > 255 || numberstack[0] <= 0) {
-				IVError(context, "The push count must be a number between 0 and 255", pt - text);
+				IVError(context, "The push count must be a number between 0 and 255",
+				        (int)(pt - text));
 				return (NULL);
 			} else {
 				nread = 1;
@@ -342,7 +343,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 		}
 		if (push_left != 0 && push_left < npos - nread &&
 		    (*pt == '\r' || *pt == '\n' || *pt == '\0')) {
-			IVError(context, "More pushes specified than needed", pt - text);
+			IVError(context, "More pushes specified than needed", (int)(pt - text));
 			return (NULL);
 		}
 		while (push_left > 0 && nread < npos) {
@@ -351,19 +352,19 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 				instrs[icnt++] = numberstack[nread++] & 0xff;
 			} else if (numberstack[0] > 255 || numberstack[0] < 0) {
 				IVError(context, "A value to be pushed by a byte push must be between 0 and 255",
-				        pt - text);
+				        (int)(pt - text));
 				return (NULL);
 			} else
 				instrs[icnt++] = numberstack[nread++];
 			--push_left;
 		}
 		if (nread < npos && push_left == 0 && (*pt == '\r' || *pt == '\n' || *pt == '\0')) {
-			IVError(context, "Unexpected number", pt - text);
+			IVError(context, "Unexpected number", (int)(pt - text));
 			return (NULL);
 		}
 		if (*pt == '\r' || *pt == '\n' || *pt == '\0') continue;
 		if (push_left > 0) {
-			IVError(context, "Missing pushes", pt - text);
+			IVError(context, "Missing pushes", (int)(pt - text));
 			return (NULL);
 		}
 		while (nread < npos) {
@@ -395,22 +396,22 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 		for (end = pt; *end != '\r' && *end != '\n' && *end != ' ' && *end != '\0'; ++end)
 			if (*end == '[' || *end == '_') brack = end;
 		for (i = 0; i < 256; ++i)
-			if (strnmatch(pt, ff_ttf_instrnames[i], end - pt) == 0 &&
+			if (strnmatch(pt, ff_ttf_instrnames[i], (int)(end - pt)) == 0 &&
 			    sizeof(char) * (end - pt) == strlen(ff_ttf_instrnames[i]))
 				break;
 		if (i == 256 && brack != NULL) {
 			for (i = 0; i < 256; ++i)
-				if (strnmatch(pt, ff_ttf_instrnames[i], brack - pt + 1) == 0) break;
+				if (strnmatch(pt, ff_ttf_instrnames[i], (int)(brack - pt + 1)) == 0) break;
 			val = strtol(brack + 1, &bend, 2); /* Stuff in brackets should be in binary */
 			while (*bend == ' ' || *bend == '\t') ++bend;
 			if (*bend != ']') {
 				IVError(context,
 				        "Missing right bracket in command (or bad binary value in bracket)",
-				        pt - text);
+				        (int)(pt - text));
 				return (NULL);
 			}
 			if (val >= 32) {
-				IVError(context, "Bracketted value is too large", pt - text);
+				IVError(context, "Bracketted value is too large", (int)(pt - text));
 				return (NULL);
 			}
 			i += val;
@@ -481,7 +482,7 @@ json_value *instr_to_json(uint8_t *instructions, uint32_t length, caryll_dump_op
 	if (dumpopts->instr_as_bytes) {
 		size_t len = 0;
 		uint8_t *buf = base64_encode(instructions, length, &len);
-		return json_string_new_nocopy(len, (char *)buf);
+		return json_string_new_nocopy((uint32_t)len, (char *)buf);
 	} else {
 		struct instrdata id;
 
@@ -514,7 +515,7 @@ void instr_from_json(json_value *col, void *context, void (*Make)(void *, uint8_
 		size_t instrlen;
 		uint8_t *instructions =
 		    base64_decode((uint8_t *)col->u.string.ptr, col->u.string.length, &instrlen);
-		Make(context, instructions, instrlen);
+		Make(context, instructions, (uint32_t)instrlen);
 	} else if (col->type == json_array) {
 		size_t istrlen = 0;
 		for (uint32_t j = 0; j < col->u.array.length; j++) {

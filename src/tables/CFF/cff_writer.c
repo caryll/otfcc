@@ -151,6 +151,8 @@ cff_blob *compile_fdselect(CFF_FDSelect fd) {
 			cff_blob *blob = calloc(1, sizeof(cff_blob));
 			blob->size = 1 + fd.s;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
+			for (uint16_t j = 0; j < fd.s; j++) { blob->data[j] = fd.f0.fds[j]; }
+			return blob;
 		}
 		case CFF_FDSELECT_FORMAT3: {
 			cff_blob *blob = calloc(1, sizeof(cff_blob));

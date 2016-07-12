@@ -97,7 +97,7 @@ void readEntireStdin(char **_buffer, long *_length) {
 		}
 
 		fgets(buffer + length, remain, stdin);
-		long n = strlen(buffer + length);
+		long n = (long)strlen(buffer + length);
 		length += n;
 		remain -= n;
 	}

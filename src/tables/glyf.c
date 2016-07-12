@@ -397,7 +397,7 @@ static void glyf_glyph_references_to_json(glyf_glyph *g, json_value *target) {
 		glyf_reference *r = &(g->references[k]);
 		json_value *ref = json_object_new(9);
 		json_object_push(ref, "glyph",
-		                 json_string_new_length(sdslen(r->glyph.name), r->glyph.name));
+		                 json_string_new_length((uint32_t)sdslen(r->glyph.name), r->glyph.name));
 		json_object_push(ref, "x", coord_to_json(r->x));
 		json_object_push(ref, "y", coord_to_json(r->y));
 		json_object_push(ref, "a", coord_to_json(r->a));
@@ -482,8 +482,8 @@ void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
 	if (!table) return;
 	json_value *order = json_array_new(table->numberGlyphs);
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-		json_array_push(
-		    order, json_string_new_length(sdslen(table->glyphs[j]->name), table->glyphs[j]->name));
+		json_array_push(order, json_string_new_length((uint32_t)sdslen(table->glyphs[j]->name),
+		                                              table->glyphs[j]->name));
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
@@ -858,7 +858,7 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 
 	uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-		loca[j] = bufglyf->cursor;
+		loca[j] = (uint32_t)bufglyf->cursor;
 		glyf_glyph *g = table->glyphs[j];
 		bufclear(gbuf);
 		if (g->numberOfContours > 0) {
@@ -870,7 +870,7 @@ void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufgl
 		buflongalign(gbuf);
 		bufwrite_buf(bufglyf, gbuf);
 	}
-	loca[table->numberGlyphs] = bufglyf->cursor;
+	loca[table->numberGlyphs] = (uint32_t)bufglyf->cursor;
 	if (bufglyf->cursor >= 0x20000) {
 		head->indexToLocFormat = 1;
 	} else {

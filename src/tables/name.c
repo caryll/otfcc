@@ -67,7 +67,7 @@ void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_option
 		json_object_push(record, "languageID", json_integer_new(r->languageID));
 		json_object_push(record, "nameID", json_integer_new(r->nameID));
 		json_object_push(record, "nameString",
-		                 json_string_new_length(sdslen(r->nameString), r->nameString));
+		                 json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
 		json_array_push(name, record);
 	}
 	json_object_push(root, "name", name);
