@@ -11,7 +11,7 @@ workspace "otfcc"
 	}
 	
 	location "build"
-	includedirs { "dep", "src" }
+	includedirs { "dep", "lib" }
 	
 	filter "action:vs2015"
 		location "build/vs"
@@ -40,7 +40,7 @@ workspace "otfcc"
 		defines { "NDEBUG" }
 		optimize "Full"
 
-project "externals"
+project "deps"
 	kind "StaticLib"
 	language "C"
 	files {
@@ -55,36 +55,12 @@ project "externals"
 	buildoptions { '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter {}
 
-project "libotfcc-support"
+project "libotfcc"
 	kind "StaticLib"
 	language "C"
 	files {
-		"src/support/**.h",
-		"src/support/**.c"
-	}
-
-project "libotfcc-tables"
-	kind "StaticLib"
-	language "C"
-	files {
-		"src/tables/**.h",
-		"src/tables/**.c"
-	}
-
-project "libotfcc-font"
-	kind "StaticLib"
-	language "C"
-	files {
-		"src/font/**.h",
-		"src/font/**.c"
-	}
-
-project "libotfcc-fontops"
-	kind "StaticLib"
-	language "C"
-	files {
-		"src/fontops/**.h",
-		"src/fontops/**.c"
+		"lib/**.h",
+		"lib/**.c"
 	}
 
 project "otfccdump"
@@ -92,7 +68,7 @@ project "otfccdump"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
+	links { "libotfcc", "deps" }
 	
 	filter "action:gmake"
 		links "m"
@@ -103,11 +79,11 @@ project "otfccdump"
 	filter {}
 	
 	files {
-		"src/cli/**.c",
-		"src/cli/**.h"
+		"src/**.c",
+		"src/**.h"
 	}
 	removefiles {
-		"src/cli/otfccbuild.c"
+		"src/otfccbuild.c"
 	}
 
 project "otfccbuild"
@@ -115,7 +91,7 @@ project "otfccbuild"
 	language "C"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
+	links { "libotfcc", "deps" }
 	
 	filter "action:gmake"
 		links "m"
@@ -126,9 +102,9 @@ project "otfccbuild"
 	filter {}
 	
 	files {
-		"src/cli/**.c",
-		"src/cli/**.h"
+		"src/**.c",
+		"src/**.h"
 	}
 	removefiles {
-		"src/cli/otfccdump.c"
+		"src/otfccdump.c"
 	}
