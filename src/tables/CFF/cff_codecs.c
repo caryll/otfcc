@@ -256,7 +256,7 @@ static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
 		nibst++;
 	}
 
-	len = nibst - start + 1;
+	len = (uint32_t)(nibst - start + 1);
 	nibst = start + 1;
 
 	while (1) {

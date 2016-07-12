@@ -88,8 +88,9 @@ json_value *caryll_gsub_ligature_to_json(otl_subtable *_subtable) {
 	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
 		json_value *entry = json_object_new(2);
 		json_object_push(entry, "from", caryll_coverage_to_json(subtable->from[j]));
-		json_object_push(entry, "to", json_string_new_length(sdslen(subtable->to->glyphs[j].name),
-		                                                     subtable->to->glyphs[j].name));
+		json_object_push(entry, "to",
+		                 json_string_new_length((uint32_t)sdslen(subtable->to->glyphs[j].name),
+		                                        subtable->to->glyphs[j].name));
 		json_array_push(st, preserialize(entry));
 	}
 	json_value *ret = json_object_new(1);

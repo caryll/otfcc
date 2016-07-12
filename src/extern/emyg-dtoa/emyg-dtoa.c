@@ -70,7 +70,7 @@ DiyFp DiyFp_from_double(double d) {
 	} u = {d};
 	DiyFp res;
 
-	int biased_e = (u.u64 & kDpExponentMask) >> kDpSignificandSize;
+	int biased_e = (int)((u.u64 & kDpExponentMask) >> kDpSignificandSize);
 	uint64_t significand = (u.u64 & kDpSignificandMask);
 	if (biased_e != 0) {
 		res.f = significand + kDpHiddenBit;

@@ -106,7 +106,7 @@ json_value *caryll_gpos_mark_to_ligature_to_json(otl_subtable *st) {
 		sds markClassName =
 		    sdscatfmt(sdsempty(), "ac_%i", subtable->markArray->records[j].markClass);
 		json_object_push(_mark, "class",
-		                 json_string_new_length(sdslen(markClassName), markClassName));
+		                 json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
 		json_object_push(_mark, "x", json_integer_new(subtable->markArray->records[j].anchor.x));
 		json_object_push(_mark, "y", json_integer_new(subtable->markArray->records[j].anchor.y));
@@ -123,7 +123,8 @@ json_value *caryll_gpos_mark_to_ligature_to_json(otl_subtable *st) {
 					json_object_push(_anchor, "x", json_integer_new(base->anchors[k][m].x));
 					json_object_push(_anchor, "y", json_integer_new(base->anchors[k][m].y));
 					sds markClassName = sdscatfmt(sdsempty(), "ac_%i", m);
-					json_object_push_length(_bk, sdslen(markClassName), markClassName, _anchor);
+					json_object_push_length(_bk, (uint32_t)sdslen(markClassName), markClassName,
+					                        _anchor);
 					sdsfree(markClassName);
 				}
 			}

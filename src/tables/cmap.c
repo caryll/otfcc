@@ -114,8 +114,8 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options
 	cmap_entry *item;
 	foreach_hash(item, *table) if (item->glyph.name) {
 		sds key = sdsfromlonglong(item->unicode);
-		json_object_push(cmap, key,
-		                 json_string_new_length(sdslen(item->glyph.name), item->glyph.name));
+		json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name),
+		                                                   item->glyph.name));
 		sdsfree(key);
 	}
 	json_object_push(root, "cmap", cmap);
@@ -302,7 +302,7 @@ caryll_buffer *caryll_write_cmap_format12(cmap_hash *cmap) {
 	nGroups += 1;
 
 	bufseek(buf, 4);
-	bufwrite32b(buf, buflen(buf));
+	bufwrite32b(buf, (uint32_t)buflen(buf));
 	bufseek(buf, 12);
 	bufwrite32b(buf, nGroups);
 	return buf;

@@ -50,7 +50,7 @@ table_cvt *caryll_cvt_from_json(json_value *root, const char *tag) {
 		NEW(t);
 		size_t len;
 		uint8_t *raw = base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
-		t->length = len >> 1;
+		t->length = (uint32_t)(len >> 1);
 		NEW_N(t->words, (t->length + 1));
 		for (uint16_t j = 0; j < t->length; j++) { t->words[j] = read_16u(raw + 2 * j); }
 		FREE(raw);

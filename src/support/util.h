@@ -76,7 +76,7 @@ static INLINE int32_t json_obj_getint(json_value *obj, const char *key) {
 		char *ck = obj->u.object.values[_k].name;
 		json_value *cv = obj->u.object.values[_k].value;
 		if (strcmp(ck, key) == 0) {
-			if (cv && cv->type == json_integer) return cv->u.integer;
+			if (cv && cv->type == json_integer) return (int32_t)cv->u.integer;
 			if (cv && cv->type == json_double) return cv->u.dbl;
 		}
 	}
@@ -100,7 +100,7 @@ static INLINE int32_t json_obj_getint_fallback(json_value *obj, const char *key,
 		char *ck = obj->u.object.values[_k].name;
 		json_value *cv = obj->u.object.values[_k].value;
 		if (strcmp(ck, key) == 0) {
-			if (cv && cv->type == json_integer) return cv->u.integer;
+			if (cv && cv->type == json_integer) return (int32_t)cv->u.integer;
 			if (cv && cv->type == json_double) return cv->u.dbl;
 		}
 	}
@@ -130,7 +130,7 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 }
 
 static INLINE json_value *json_from_sds(sds str) {
-	return json_string_new_length(sdslen(str), str);
+	return json_string_new_length((uint32_t)sdslen(str), str);
 }
 
 // flags reader and writer
@@ -143,7 +143,7 @@ static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) 
 static INLINE int caryll_flags_from_json(json_value *v, const char *labels[]) {
 	if (!v) return 0;
 	if (v->type == json_integer) {
-		return v->u.integer;
+		return (int)v->u.integer;
 	} else if (v->type == json_double) {
 		return v->u.dbl;
 	} else if (v->type == json_object) {
@@ -319,7 +319,7 @@ static INLINE json_value *preserialize(MOVE json_value *x) {
 	json_serialize_ex(buf, x, opts);
 	json_builder_free(x);
 
-	json_value *xx = json_string_new_length(preserialize_len - 1, buf);
+	json_value *xx = json_string_new_length((uint32_t)(preserialize_len - 1), buf);
 	xx->type = json_pre_serialized;
 	return xx;
 #else
