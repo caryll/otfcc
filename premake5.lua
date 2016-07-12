@@ -26,6 +26,11 @@ workspace "otfcc"
 		location "build/gmake"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter {}
+
+	filter "action:xcode4"
+		location "build/xcode"
+		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+	filter {}
 	
 	filter "configurations:Debug"
 		defines { "DEBUG" }
@@ -91,6 +96,10 @@ project "otfccdump"
 	filter "action:gmake"
 		links "m"
 	filter {}
+
+	filter "action:xcode4"
+		links "m"
+	filter {}
 	
 	files {
 		"src/cli/**.c",
@@ -108,6 +117,10 @@ project "otfccbuild"
 	links { "libotfcc-fontops", "libotfcc-font", "libotfcc-tables", "libotfcc-support", "externals" }
 	
 	filter "action:gmake"
+		links "m"
+	filter {}
+
+	filter "action:xcode4"
 		links "m"
 	filter {}
 	
