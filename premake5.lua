@@ -1,3 +1,5 @@
+require "dep/premake-modules/xcode-alt"
+
 -- Premake 5 configurations
 workspace "otfcc"
 	configurations { "Debug", "Release" }
@@ -31,9 +33,6 @@ workspace "otfcc"
 		location "build/xcode"
 		includedirs { "dep/extern", "dep/extern/**", "lib/**" }
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
-		xcodebuildsettings {
-			['ALWAYS_SEARCH_USER_PATHS'] = 'YES'
-		}
 	filter {}
 	
 	filter "configurations:Debug"
