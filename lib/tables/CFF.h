@@ -1,6 +1,7 @@
 #ifndef CARYLL_TABLES_CFF_H
 #define CARYLL_TABLES_CFF_H
 
+#include <math.h>
 #include <stdarg.h>
 #include <support/util.h>
 #include <libcff/libcff.h>
