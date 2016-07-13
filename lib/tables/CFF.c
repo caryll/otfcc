@@ -872,12 +872,6 @@ static void il_push_op(charstring_il *il, int32_t op) {
 	il->length++;
 	il->free--;
 }
-static void phantomize(charstring_il *il, int32_t op) {
-	if (il->instr && il->length && il->instr[il->length - 1].type == IL_ITEM_OPERATOR &&
-	    il->instr[il->length - 1].i == op) {
-		il->instr[il->length - 1].type = IL_ITEM_PHANTOM_OPERATOR;
-	}
-}
 
 static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
                       uint16_t *jm) {
@@ -1251,16 +1245,17 @@ static void cffdict_input(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_
 	va_list ap;
 	va_start(ap, arity);
 	for (uint16_t j = 0; j < arity; j++) {
-		double x = va_arg(ap, double);
 		if (t == CFF_DOUBLE) {
+			double x = va_arg(ap, double);
 			if (x == round(x)) {
 				last->vals[j].t = CFF_INTEGER;
-				last->vals[j].i = x;
+				last->vals[j].i = round(x);
 			} else {
 				last->vals[j].t = CFF_DOUBLE;
 				last->vals[j].d = x;
 			}
 		} else {
+			int x = va_arg(ap, int);
 			last->vals[j].t = t;
 			last->vals[j].i = x;
 		}
@@ -1279,14 +1274,14 @@ static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, ui
 		if (t == CFF_DOUBLE) {
 			if (x == round(x)) {
 				last->vals[j].t = CFF_INTEGER;
-				last->vals[j].i = x;
+				last->vals[j].i = round(x);
 			} else {
 				last->vals[j].t = CFF_DOUBLE;
 				last->vals[j].d = x;
 			}
 		} else {
 			last->vals[j].t = t;
-			last->vals[j].i = x;
+			last->vals[j].i = round(x);
 		}
 	}
 }
