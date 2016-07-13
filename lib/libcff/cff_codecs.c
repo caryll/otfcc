@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cff_io.h"
+#include "libcff.h"
 
 /*
   Number in Type2
@@ -19,61 +19,36 @@
   * 30 (double)
 */
 
-cff_blob *encode_cff_operator(int32_t val) {
-	cff_blob *blob = calloc(1, sizeof(cff_blob));
-	blob->size = (val > 256) ? 2 : 1;
-	blob->data = calloc(blob->size, sizeof(uint8_t));
-
-	if (val > 256)
-		blob->data[0] = val / 256, blob->data[1] = val % 256;
-	else
-		blob->data[0] = val;
-
-	return blob;
+caryll_buffer *encode_cff_operator(int32_t val) {
+	if (val > 256) {
+		return bufninit(2, val / 256, val % 256);
+	} else {
+		return bufninit(1, val);
+	}
 }
 
-cff_blob *encode_cff_number(int32_t val) {
-	cff_blob *blob = calloc(1, sizeof(cff_blob));
-
+caryll_buffer *encode_cff_number(int32_t val) {
 	if (val >= -107 && val <= 107) {
-		blob->size = 1;
-		NEW_N(blob->data, blob->size);
-		blob->data[0] = val + 139;
+		return bufninit(1, val + 139);
 	} else if (val >= 108 && val <= 1131) {
-		blob->size = 2;
-		NEW_N(blob->data, blob->size);
 		val -= 108;
-		blob->data[0] = (val >> 8) + 247;
-		blob->data[1] = val & 0xff;
+		return bufninit(2, (val >> 8) + 247, val & 0xff);
 	} else if (val >= -1131 && val <= -108) {
-		blob->size = 2;
-		NEW_N(blob->data, blob->size);
-		val -= 108;
-		blob->data[0] = (val >> 8) + 251;
-		blob->data[1] = val & 0xff;
+		val = -108 - val;
+		return bufninit(2, (val >> 8) + 251, val & 0xff);
 	} else if (val >= -32768 && val < 32768) {
-		blob->size = 3;
-		NEW_N(blob->data, blob->size);
-		blob->data[0] = 28;
-		blob->data[1] = val >> 8;
-		blob->data[2] = val & 0xff;
-	} else { /* In dict data we have 4 byte ints, in type2 strings we don't */
-		blob->size = 5;
-		NEW_N(blob->data, blob->size);
-		blob->data[0] = 29;
-		blob->data[1] = (val >> 24) & 0xff;
-		blob->data[2] = (val >> 16) & 0xff;
-		blob->data[3] = (val >> 8) & 0xff;
-		blob->data[4] = val & 0xff;
+		return bufninit(3, 28, val >> 8, val & 0xff);
+	} else {
+		/* In dict data we have 4 byte ints, in type2 strings we don't */
+		return bufninit(5, 29, (val >> 24) & 0xff, (val >> 16) & 0xff, (val >> 8) & 0xff,
+		                val & 0xff);
 	}
-
-	return blob;
 }
 
 // -2.25       -> 1e e2 a2 5f
 // 0.140541E-3 -> 1e 0a 14 05 41 c3 ff
-cff_blob *encode_cff_real(double val) {
-	cff_blob *blob = calloc(1, sizeof(cff_blob));
+caryll_buffer *encode_cff_real(double val) {
+	caryll_buffer *blob = bufnew();
 	uint32_t i, j = 0;
 	uint8_t temp[32] = {0};
 

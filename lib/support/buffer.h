@@ -4,13 +4,17 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 #include <extern/sds.h>
 typedef struct {
 	size_t cursor;
-	sds s;
+	size_t size;
+	size_t free;
+	uint8_t *data;
 } caryll_buffer;
 
 caryll_buffer *bufnew();
+caryll_buffer *bufninit(uint32_t n, ...);
 void buffree(caryll_buffer *buf);
 size_t buflen(caryll_buffer *buf);
 size_t bufpos(caryll_buffer *buf);
@@ -24,6 +28,8 @@ void bufwrite32l(caryll_buffer *buf, uint32_t x);
 void bufwrite32b(caryll_buffer *buf, uint32_t x);
 void bufwrite64l(caryll_buffer *buf, uint64_t x);
 void bufwrite64b(caryll_buffer *buf, uint64_t x);
+
+void bufnwrite8(caryll_buffer *buf, uint32_t n, ...);
 
 void bufwrite_sds(caryll_buffer *buf, sds str);
 void bufwrite_str(caryll_buffer *buf, const char *str);

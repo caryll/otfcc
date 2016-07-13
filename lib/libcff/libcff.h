@@ -297,13 +297,6 @@ typedef struct {
 	CFF_Dict *fprivate;
 } CFF_Font_Dict;
 
-// blob and bloc of this CFF writer
-typedef struct {
-	uint32_t size;
-	uint32_t free;
-	uint8_t *data;
-} cff_blob;
-
 typedef struct {
 	uint8_t *raw_data;
 	uint32_t raw_length;
@@ -347,32 +340,29 @@ extern uint32_t decode_cff_token(uint8_t *start, CFF_Value *val);
 extern uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val);
 
 // number, number, float
-extern cff_blob *encode_cff_operator(int32_t val);
-extern cff_blob *encode_cff_number(int32_t val);
-extern cff_blob *encode_cff_real(double val);
+extern caryll_buffer *encode_cff_operator(int32_t val);
+extern caryll_buffer *encode_cff_number(int32_t val);
+extern caryll_buffer *encode_cff_real(double val);
 
 /*
   Writer
 */
-extern void blob_merge(cff_blob *dst, cff_blob *src);
-extern void blob_merge_raw(cff_blob *dst, cff_blob *src);
-extern void blob_free(cff_blob *b);
 
-extern cff_blob *compile_header(void);
-extern cff_blob *compile_index(CFF_INDEX index);
-extern cff_blob *compile_encoding(CFF_Encoding enc);
-extern cff_blob *compile_charset(CFF_Charset cset);
-extern cff_blob *compile_fdselect(CFF_FDSelect fd);
+extern caryll_buffer *compile_header(void);
+extern caryll_buffer *compile_index(CFF_INDEX index);
+extern caryll_buffer *compile_encoding(CFF_Encoding enc);
+extern caryll_buffer *compile_charset(CFF_Charset cset);
+extern caryll_buffer *compile_fdselect(CFF_FDSelect fd);
 
 extern void esrap_index(CFF_INDEX in);
 extern void empty_index(CFF_INDEX *in);
 extern void print_index(CFF_INDEX in);
 
-cff_blob *compile_offset(int32_t val);
+caryll_buffer *compile_offset(int32_t val);
 
-void merge_cs2_operator(cff_blob *blob, int32_t val);
-void merge_cs2_operand(cff_blob *blob, double val);
-void merge_cs2_special(cff_blob *blob, uint8_t val);
+void merge_cs2_operator(caryll_buffer *blob, int32_t val);
+void merge_cs2_operand(caryll_buffer *blob, double val);
+void merge_cs2_special(caryll_buffer *blob, uint8_t val);
 
 sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str);
 

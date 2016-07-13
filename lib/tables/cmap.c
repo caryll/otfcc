@@ -228,7 +228,7 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 
 	for (int j = 0; j < segmentsCount; j++) {
 		// rewrite idRangeOffset
-		uint16_t ro = read_16u((uint8_t *)idRangeOffset->s + j * 2);
+		uint16_t ro = read_16u((uint8_t *)idRangeOffset->data + j * 2);
 		if (ro) {
 			ro -= 1;
 			ro += 2 * (segmentsCount - j);

@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cff_io.h"
+#include "libcff.h"
 
 static inline uint32_t gu1(uint8_t *s, uint32_t p) {
 	uint32_t b0 = *(s + p);

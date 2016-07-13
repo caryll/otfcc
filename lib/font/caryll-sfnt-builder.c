@@ -15,7 +15,7 @@ static uint32_t buf_checksum(caryll_buffer *buffer) {
 	buflongalign(buffer);
 	uint32_t sum = 0;
 	{
-		uint32_t *start = (uint32_t *)buffer->s;
+		uint32_t *start = (uint32_t *)buffer->data;
 		uint32_t *end = start + ((actualLength + 3) & ~3) / sizeof(uint32_t);
 		while (start < end) { sum += caryll_endian_convert32(*start++); }
 	}
@@ -31,7 +31,7 @@ static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 
 	uint32_t sum = 0;
 	{
-		uint32_t *start = (uint32_t *)buffer->s;
+		uint32_t *start = (uint32_t *)buffer->data;
 		uint32_t *end = start + ((table->length + 3) & ~3) / sizeof(uint32_t);
 		while (start < end) { sum += caryll_endian_convert32(*start++); }
 	}

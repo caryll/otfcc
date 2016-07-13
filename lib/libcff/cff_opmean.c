@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cff_io.h"
+#include "libcff.h"
 
 char *op_cff_name(uint32_t op) {
 	switch (op) {

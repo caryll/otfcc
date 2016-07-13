@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include <support/util.h>
-#include <libcff/cff_io.h>
+#include <libcff/libcff.h>
 #include <font/caryll-sfnt.h>
 #include "glyf.h"
 
