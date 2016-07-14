@@ -40,7 +40,7 @@ mf-vs2015 :
 mf-gmake :
 	@$(PREMAKE5) gmake
 
-cffopcodetest : linux-release-x64
+cffopcodetest :
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.abs.otf' | node tests/cffdump-opcode-check
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.add.otf' | node tests/cffdump-opcode-check
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.div.otf' | node tests/cffdump-opcode-check
@@ -59,7 +59,7 @@ cffopcodetest : linux-release-x64
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.sqrt.(mul).otf' | node tests/cffdump-opcode-check
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.sub.otf' | node tests/cffdump-opcode-check
 
-ttfroundtriptest : linux-release-x64
+ttfroundtriptest :
 	@bin/Release-x64/otfccdump tests/payload/iosevka-r.ttf -o build/roundtrip-iosevka-r-1.json
 	@bin/Release-x64/otfccbuild build/roundtrip-iosevka-r-1.json -o build/roundtrip-iosevka-r-2.ttf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-iosevka-r-2.ttf -o build/roundtrip-iosevka-r-3.json
@@ -74,7 +74,7 @@ ttfroundtriptest : linux-release-x64
 	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-NotoNastaliqUrdu-Regular-3.json build/roundtrip-NotoNastaliqUrdu-Regular-5.json
 
-cffroundtriptest : linux-release-x64
+cffroundtriptest :
 	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.otf -o build/roundtrip-WorkSans-Regular-1.json --pretty
 	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-2.otf -o build/roundtrip-WorkSans-Regular-3.json --pretty
