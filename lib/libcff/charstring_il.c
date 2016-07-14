@@ -49,23 +49,26 @@ static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float
 	il_push_op(il, op_rrcurveto);
 }
 
-static void il_push_masks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
-                          uint16_t *jm) {
-	if (!g->numberOfStemH && !g->numberOfStemV) return;
-	while (*jm < g->numberOfContourMasks && g->contourMasks[*jm].pointsBefore <= points) {
-		il_push_op(il, op_cntrmask);
+static void _il_push_maskgroup(charstring_il *il,                            // il seq
+                               uint16_t n, glyf_postscript_hint_mask *masks, // masks array
+                               uint16_t points,                              // points drawn
+                               uint16_t nh, uint16_t nv,                     // quantity of stems
+                               uint16_t *jm,                                 // index of cur mask
+                               int32_t op) {                                 // mask operator
+	while (*jm < n && masks[*jm].pointsBefore <= points) {
+		il_push_op(il, op);
 		uint8_t maskByte = 0;
 		uint8_t bits = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskH[j] & 1);
+		for (uint16_t j = 0; j < nh; j++) {
+			maskByte = maskByte << 1 | (masks[*jm].maskH[j] & 1);
 			bits += 1;
 			if (bits == 8) {
 				il_push_special(il, maskByte);
 				bits = 0;
 			}
 		}
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskV[j] & 1);
+		for (uint16_t j = 0; j < nv; j++) {
+			maskByte = maskByte << 1 | (masks[*jm].maskV[j] & 1);
 			bits += 1;
 			if (bits == 8) {
 				il_push_special(il, maskByte);
@@ -78,85 +81,50 @@ static void il_push_masks(charstring_il *il, glyf_glyph *g, uint16_t points, uin
 		}
 		*jm += 1;
 	}
-	while (*jh < g->numberOfHintMasks && g->hintMasks[*jh].pointsBefore <= points) {
-		il_push_op(il, op_hintmask);
-		uint8_t maskByte = 0;
-		uint8_t bits = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskH[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskV[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		if (bits) {
-			maskByte = maskByte << (8 - bits);
-			il_push_special(il, maskByte);
-		}
-		*jh += 1;
-	}
 }
-static bool il_push_stems(charstring_il *il, glyf_glyph *g, bool hasmask, bool haswidth) {
-	if (g->stemH && g->numberOfStemH) {
-		float ref = 0;
-		uint16_t nn = haswidth ? 1 : 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			il_push_operand(il, g->stemH[j].position - ref);
-			il_push_operand(il, g->stemH[j].width);
-			ref = g->stemH[j].position + g->stemH[j].width;
-			nn++;
-			if (nn >= type2_argument_stack) {
-				if (hasmask) {
-					il_push_op(il, op_hstemhm);
-				} else {
-					il_push_op(il, op_hstem);
-				}
-				il->instr[il->length - 1].arity = nn;
-				nn = 0;
+static void il_push_masks(charstring_il *il, glyf_glyph *g, // meta
+                          uint16_t points,                  // points sofar
+                          uint16_t *jh,                     // index of pushed cmasks
+                          uint16_t *jm                      // index of pushed hmasks
+                          ) {
+	if (!g->numberOfStemH && !g->numberOfStemV) return;
+	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH,
+	                   g->numberOfStemV, jh, op_cntrmask);
+	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, points, g->numberOfStemH,
+	                   g->numberOfStemV, jm, op_hintmask);
+}
+
+static void _il_push_stemgroup(charstring_il *il,                               // il seq
+                               uint16_t n, glyf_postscript_hint_stemdef *stems, // stem array
+                               bool hasmask, bool haswidth, int32_t ophm, int32_t oph) {
+	if (!stems || !n) return;
+	float ref = 0;
+	uint16_t nn = haswidth ? 1 : 0;
+	for (uint16_t j = 0; j < n; j++) {
+		il_push_operand(il, stems[j].position - ref);
+		il_push_operand(il, stems[j].width);
+		ref = stems[j].position + stems[j].width;
+		nn++;
+		if (nn >= type2_argument_stack) {
+			if (hasmask) {
+				il_push_op(il, op_hstemhm);
+			} else {
+				il_push_op(il, op_hstem);
 			}
+			il->instr[il->length - 1].arity = nn;
+			nn = 0;
 		}
-		if (hasmask) {
-			il_push_op(il, op_hstemhm);
-		} else {
-			il_push_op(il, op_hstem);
-		}
-		il->instr[il->length - 1].arity = nn;
 	}
-	if (g->stemV && g->numberOfStemV) {
-		float ref = 0;
-		uint16_t nn = haswidth ? 1 : 0;
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			il_push_operand(il, g->stemV[j].position - ref);
-			il_push_operand(il, g->stemV[j].width);
-			ref = g->stemV[j].position + g->stemV[j].width;
-			nn++;
-			if (nn >= type2_argument_stack) {
-				if (hasmask) {
-					il_push_op(il, op_vstemhm);
-				} else {
-					il_push_op(il, op_vstem);
-				}
-				il->instr[il->length - 1].arity = nn;
-				nn = 0;
-			}
-		}
-		if (hasmask) {
-			il_push_op(il, op_vstemhm);
-		} else {
-			il_push_op(il, op_vstem);
-		}
-		il->instr[il->length - 1].arity = nn;
+	if (hasmask) {
+		il_push_op(il, ophm);
+	} else {
+		il_push_op(il, oph);
 	}
-	return hasmask;
+	il->instr[il->length - 1].arity = nn;
+}
+static void il_push_stems(charstring_il *il, glyf_glyph *g, bool hasmask, bool haswidth) {
+	_il_push_stemgroup(il, g->numberOfStemH, g->stemH, hasmask, haswidth, op_hstemhm, op_hstem);
+	_il_push_stemgroup(il, g->numberOfStemV, g->stemV, hasmask, haswidth, op_vstemhm, op_vstem);
 }
 charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
 	charstring_il *il;
@@ -176,10 +144,11 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 		}
 	}
 
-	// Write IL
 	bool hasmask = (g->hintMasks && g->numberOfHintMasks)           // we have hint masks
 	               || (g->contourMasks && g->numberOfContourMasks); // or contour masks
 	bool haswidth = g->advanceWidth != defaultWidth;                // we have width operand here
+
+	// Write IL
 	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
 	// Write contour
@@ -196,22 +165,23 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 		il_push_op(il, op_rmoveto);
 		pointsSofar++;
 		if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+
 		for (uint16_t j = 1; j < n; j++) {
-			if (contour->points[j].onCurve) {
+			if (contour->points[j].onCurve) { // A line-to
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
 				pointsSofar++;
-			} else {
-				if (j < n - 2 && !contour->points[j + 1].onCurve &&
-				    contour->points[j + 2].onCurve) {
-					il_curveto(il, contour->points[j].x, contour->points[j].y,
-					           contour->points[j + 1].x, contour->points[j + 1].y,
-					           contour->points[j + 2].x, contour->points[j + 2].y);
-					pointsSofar += 3;
-					j += 2;
-				} else {
-					il_lineto(il, contour->points[j].x, contour->points[j].y);
-					pointsSofar++;
-				}
+			} else if (j < n - 2                          // have enough points
+			           && !contour->points[j + 1].onCurve // next is offcurve
+			           && contour->points[j + 2].onCurve  // and next is oncurve
+			           ) {                                // means this is an bezier curve strand
+				il_curveto(il, contour->points[j].x, contour->points[j].y,      // dz1
+				           contour->points[j + 1].x, contour->points[j + 1].y,  // dz2
+				           contour->points[j + 2].x, contour->points[j + 2].y); // dz3
+				pointsSofar += 3;
+				j += 2;
+			} else { // invalid offcurve, treat as oncurve
+				il_lineto(il, contour->points[j].x, contour->points[j].y);
+				pointsSofar++;
 			}
 			if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 		}
