@@ -105,9 +105,7 @@ static void il_push_masks(charstring_il *il, glyf_glyph *g, uint16_t points, uin
 		*jh += 1;
 	}
 }
-static bool il_push_stems(charstring_il *il, glyf_glyph *g, bool haswidth) {
-	bool hasmask =
-	    (g->hintMasks && g->numberOfHintMasks) || (g->contourMasks && g->numberOfContourMasks);
+static bool il_push_stems(charstring_il *il, glyf_glyph *g, bool hasmask, bool haswidth) {
 	if (g->stemH && g->numberOfStemH) {
 		float ref = 0;
 		uint16_t nn = haswidth ? 1 : 0;
@@ -179,10 +177,12 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 	}
 
 	// Write IL
-	if (g->advanceWidth != defaultWidth) {
-		il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth));
-	}
-	bool hasmask = il_push_stems(il, g, g->advanceWidth != defaultWidth);
+	bool hasmask = (g->hintMasks && g->numberOfHintMasks)           // we have hint masks
+	               || (g->contourMasks && g->numberOfContourMasks); // or contour masks
+	bool haswidth = g->advanceWidth != defaultWidth;                // we have width operand here
+	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
+	il_push_stems(il, g, hasmask, haswidth);
+	// Write contour
 	uint16_t pointsSofar = 0;
 	uint16_t jh = 0;
 	uint16_t jm = 0;
