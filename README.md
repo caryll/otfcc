@@ -97,3 +97,13 @@ On Windows building `otfcc` is tested under the toolchains listed below. The def
   msbuild build\vs\otfcc.sln /property:Configuration=Release
   ```
 
+
+### Mac OS
+
+premake5 provides ability to produce XCode projects. Simply type
+
+```bash
+premake5 xcode4
+```
+
+And you can find XCode project files under `build/xcode`.
