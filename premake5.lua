@@ -19,9 +19,11 @@ workspace "otfcc"
 		location "build/vs"
 		toolset "msc-LLVM-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
-		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Wshorten-64-to-32', '-Qunused-arguments' }
+		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
+	filter { "action:vs2015", "platforms:x64" }
+		buildoptions {'-Wshorten-64-to-32'}
 	filter {}
 	
 	filter "action:gmake"
@@ -31,7 +33,6 @@ workspace "otfcc"
 
 	filter "action:xcode4"
 		location "build/xcode"
-		--includedirs { "dep/extern", "dep/extern/**", "lib/**" }
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter {}
 	
