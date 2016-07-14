@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cff_io.h"
+#include "libcff.h"
 
 static inline uint32_t gu1(uint8_t *s, uint32_t p) {
 	uint32_t b0 = *(s + p);
@@ -89,11 +89,6 @@ static void parse_index(uint8_t *data, uint32_t pos, CFF_INDEX *in) {
 	}
 }
 
-static void printf_cff_val(CFF_Value val) {
-	if (val.t == CFF_INTEGER) fprintf(stderr, "%d", val.i);
-	if (val.t == CFF_DOUBLE) fprintf(stderr, "%f", val.d);
-}
-
 double cffnum(CFF_Value val) {
 	if (val.t == CFF_INTEGER) return val.i;
 	if (val.t == CFF_DOUBLE) return val.d;
@@ -169,15 +164,6 @@ void cff_dict_callback(uint8_t *data, uint32_t len, void *context,
 
 		temp += advance;
 	}
-}
-
-static void callback_print_dict(uint32_t op, uint8_t top, CFF_Value *stack, void *context) {
-	for (uint32_t i = 0; i < top; i++) printf_cff_val(stack[i]), fprintf(stderr, " ");
-	fprintf(stderr, "%s\n", op_cff_name(op));
-}
-
-void print_dict(uint8_t *data, uint32_t len) {
-	return cff_dict_callback(data, len, NULL, callback_print_dict);
 }
 
 typedef struct {
@@ -638,19 +624,6 @@ static inline uint16_t compute_subr_bias(uint16_t cnt) {
 		return 32768;
 }
 
-CFF_INDEX *cff_index_init(void) {
-	CFF_INDEX *out = calloc(1, sizeof(CFF_INDEX));
-	return out;
-}
-
-void cff_index_fini(CFF_INDEX *out) {
-	if (out != NULL) {
-		if (out->offset != NULL) free(out->offset);
-		if (out->data != NULL) free(out->data);
-		free(out);
-	}
-}
-
 /*
   CharString program:
     w? {hs* vs* cm* hm* mt subpath}? {mt subpath}* endchar
@@ -1070,7 +1043,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						CHECK_STACK_TOP(op_put, 2);
 						double val = stack->stack[stack->index - 2].d;
 						int32_t i = (int32_t)stack->stack[stack->index - 1].d;
-						stack->transient[i % CFF_LIMIT_TRANSIENT].d = val;
+						stack->transient[i % type2_transient_array].d = val;
 						stack->index -= 2;
 						break;
 					}
@@ -1078,7 +1051,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 						CHECK_STACK_TOP(op_get, 1);
 						int32_t i = (int32_t)stack->stack[stack->index - 1].d;
 						stack->stack[stack->index - 1].d =
-						    stack->transient[i % CFF_LIMIT_TRANSIENT].d;
+						    stack->transient[i % type2_transient_array].d;
 						break;
 					}
 					case op_ifelse: {

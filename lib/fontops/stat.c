@@ -435,6 +435,43 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 		font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
 	}
 }
+static void caryll_stat_cff_widths(caryll_font *font) {
+	if (!font->glyf || !font->CFF_) return;
+	// Stat the most frequent character width
+	uint32_t *frequency = calloc(2000, sizeof(uint32_t));
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]->advanceWidth < 2000) {
+			frequency[font->glyf->glyphs[j]->advanceWidth] += 1;
+		}
+	}
+	uint16_t maxfreq = 0;
+	uint16_t maxj = 0;
+	for (uint16_t j = 0; j < 2000; j++) {
+		if (frequency[j] > maxfreq) {
+			maxfreq = frequency[j];
+			maxj = j;
+		}
+	}
+	// stat nominalWidthX
+	uint16_t nn = 0;
+	uint32_t nnsum = 0;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]->advanceWidth != maxj) {
+			nn += 1;
+			nnsum += font->glyf->glyphs[j]->advanceWidth;
+		}
+	}
+	font->CFF_->privateDict->defaultWidthX = maxj;
+	if (nn != 0) { font->CFF_->privateDict->nominalWidthX = nnsum / nn; }
+	if (font->CFF_->fdArray) {
+		for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
+			font->CFF_->fdArray[j]->privateDict->defaultWidthX = maxj;
+			font->CFF_->fdArray[j]->privateDict->nominalWidthX =
+			    font->CFF_->privateDict->nominalWidthX;
+		}
+	}
+}
+
 void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font);
@@ -448,6 +485,7 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 		font->CFF_->fontBBoxLeft = font->head->xMin;
 		font->CFF_->fontBBoxRight = font->head->xMax;
 		if (font->glyf && font->CFF_->isCID) { font->CFF_->cidCount = font->glyf->numberGlyphs; }
+		caryll_stat_cff_widths(font);
 	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
 	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }

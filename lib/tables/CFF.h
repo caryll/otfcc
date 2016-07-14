@@ -1,9 +1,11 @@
 #ifndef CARYLL_TABLES_CFF_H
 #define CARYLL_TABLES_CFF_H
 
+#include <math.h>
 #include <stdarg.h>
 #include <support/util.h>
-#include <libcff/cff_io.h>
+#include <libcff/libcff.h>
+#include <libcff/charstring_il.h>
 #include <font/caryll-sfnt.h>
 #include "glyf.h"
 

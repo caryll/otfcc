@@ -611,7 +611,7 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 	return ret;
 }
 
-void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
+static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
 	if (!count || !values) return;
 	json_value *a = json_array_new(count);
 	for (uint16_t j = 0; j < count; j++) { json_array_push(a, json_double_new(values[j])); }
@@ -738,8 +738,9 @@ static cff_private *pdFromJson(json_value *dump) {
 	pd->expansionFactor =
 	    json_obj_getnum_fallback(dump, "expansionFactor", DEFAULT_EXPANSION_FACTOR);
 	pd->initialRandomSeed = json_obj_getnum(dump, "initialRandomSeed");
-	pd->defaultWidthX = json_obj_getnum(dump, "defaultWidthX");
-	pd->nominalWidthX = json_obj_getnum(dump, "nominalWidthX");
+	// Not used -- they will be automatically calculated
+	// pd->defaultWidthX = json_obj_getnum(dump, "defaultWidthX");
+	// pd->nominalWidthX = json_obj_getnum(dump, "nominalWidthX");
 
 	return pd;
 }
@@ -800,6 +801,7 @@ static table_CFF *fdFromJson(json_value *dump) {
 			table->fdArray[j] = fdFromJson(fdarraydump->u.array.values[j]);
 		}
 	}
+	if (!table->privateDict) table->privateDict = caryll_new_CFF_private();
 	return table;
 }
 table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts) {
@@ -810,343 +812,29 @@ table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts)
 		return fdFromJson(dump);
 }
 
-static void cff_delete_dict(CFF_Dict *dict) {
-	if (!dict) return;
-	for (uint32_t j = 0; j < dict->count; j++) { free(dict->ents[j].vals); }
-	free(dict->ents);
-	free(dict);
-}
-
-typedef enum {
-	IL_ITEM_OPERAND,
-	IL_ITEM_OPERATOR,
-	IL_ITEM_SPECIAL,
-	IL_ITEM_PHANTOM_OPERATOR,
-	IL_ITEM_PHANTOM_OPERAND
-} il_type;
-
-typedef struct {
-	il_type type;
-	double d;
-	int32_t i;
-} charstring_instruction;
-
-typedef struct {
-	uint16_t length;
-	uint16_t free;
-	charstring_instruction *instr;
-} charstring_il;
-
-static void ensureThereIsSpace(charstring_il *il) {
-	if (il->free) return;
-	il->free = 0x100;
-	if (il->instr) {
-		il->instr = realloc(il->instr, sizeof(charstring_instruction) * (il->length + il->free));
-	} else {
-		il->instr = malloc(sizeof(charstring_instruction) * (il->length + il->free));
-	}
-}
-
-static void il_push_operand(charstring_il *il, float x) {
-	ensureThereIsSpace(il);
-	il->instr[il->length].type = IL_ITEM_OPERAND;
-	il->instr[il->length].d = x;
-	il->length++;
-	il->free--;
-}
-static void il_push_special(charstring_il *il, int32_t s) {
-	ensureThereIsSpace(il);
-	il->instr[il->length].type = IL_ITEM_SPECIAL;
-	il->instr[il->length].i = s;
-	il->length++;
-	il->free--;
-}
-static void il_push_op(charstring_il *il, int32_t op) {
-	ensureThereIsSpace(il);
-	il->instr[il->length].type = IL_ITEM_OPERATOR;
-	il->instr[il->length].i = op;
-	il->length++;
-	il->free--;
-}
-static void phantomize(charstring_il *il, int32_t op) {
-	if (il->instr && il->length && il->instr[il->length - 1].type == IL_ITEM_OPERATOR &&
-	    il->instr[il->length - 1].i == op) {
-		il->instr[il->length - 1].type = IL_ITEM_PHANTOM_OPERATOR;
-	}
-}
-
-static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
-                      uint16_t *jm) {
-	while (*jm < g->numberOfContourMasks && g->contourMasks[*jm].pointsBefore <= points) {
-		il_push_op(il, op_cntrmask);
-		uint8_t maskByte = 0;
-		uint8_t bits = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskH[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskV[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		if (bits) {
-			maskByte = maskByte << (8 - bits);
-			il_push_special(il, maskByte);
-		}
-		*jm += 1;
-	}
-	while (*jh < g->numberOfHintMasks && g->hintMasks[*jh].pointsBefore <= points) {
-		il_push_op(il, op_hintmask);
-		uint8_t maskByte = 0;
-		uint8_t bits = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskH[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskV[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		if (bits) {
-			maskByte = maskByte << (8 - bits);
-			il_push_special(il, maskByte);
-		}
-		*jh += 1;
-	}
-}
-
-static void il_lineto(charstring_il *il, float dx, float dy) {
-	if (dx == 0) {
-		il_push_operand(il, dy);
-		il_push_op(il, op_vlineto);
-	} else if (dy == 0) {
-		il_push_operand(il, dx);
-		il_push_op(il, op_hlineto);
-	} else {
-		phantomize(il, op_rlineto);
-		// phantomize(il, op_hlineto);
-		// phantomize(il, op_vlineto);
-		il_push_operand(il, dx);
-		il_push_operand(il, dy);
-		il_push_op(il, op_rlineto);
-	}
-}
-static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3,
-                       float dy3) {
-	if (dy1 == 0 && dy3 == 0) {
-		phantomize(il, op_hhcurveto);
-		il_push_operand(il, dx1);
-		il_push_operand(il, dx2);
-		il_push_operand(il, dy2);
-		il_push_operand(il, dx3);
-		il_push_op(il, op_hhcurveto);
-	} else if (dx1 == 0 && dx3 == 0) {
-		phantomize(il, op_vvcurveto);
-		il_push_operand(il, dy1);
-		il_push_operand(il, dx2);
-		il_push_operand(il, dy2);
-		il_push_operand(il, dy3);
-		il_push_op(il, op_vvcurveto);
-	} else if (dy1 == 0 && dx3 == 0) {
-		il_push_operand(il, dx1);
-		il_push_operand(il, dx2);
-		il_push_operand(il, dy2);
-		il_push_operand(il, dy3);
-		il_push_op(il, op_hvcurveto);
-	} else if (dx1 == 0 && dy3 == 0) {
-		il_push_operand(il, dy1);
-		il_push_operand(il, dx2);
-		il_push_operand(il, dy2);
-		il_push_operand(il, dx3);
-		il_push_op(il, op_vhcurveto);
-	} else {
-		phantomize(il, op_rrcurveto);
-		il_push_operand(il, dx1);
-		il_push_operand(il, dy1);
-		il_push_operand(il, dx2);
-		il_push_operand(il, dy2);
-		il_push_operand(il, dx3);
-		il_push_operand(il, dy3);
-		il_push_op(il, op_rrcurveto);
-	}
-}
-
-static charstring_il *compile_glyph_to_il(glyf_glyph *g) {
-	charstring_il *il;
-	NEW_CLEAN(il);
-	// Convert absolute positions to deltas
-	float x = 0;
-	float y = 0;
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_contour *contour = &(g->contours[c]);
-		uint16_t n = contour->pointsCount;
-		for (uint16_t j = 0; j < n; j++) {
-			float dx = contour->points[j].x - x;
-			float dy = contour->points[j].y - y;
-			x = contour->points[j].x, y = contour->points[j].y;
-			contour->points[j].x = dx;
-			contour->points[j].y = dy;
-		}
-	}
-
-	// Write IL
-	if (g->advanceWidth != 0) { il_push_operand(il, g->advanceWidth); }
-	bool hasmask =
-	    (g->hintMasks && g->numberOfHintMasks) || (g->contourMasks && g->numberOfContourMasks);
-	if (g->stemH && g->numberOfStemH) {
-		float ref = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			il_push_operand(il, g->stemH[j].position - ref);
-			il_push_operand(il, g->stemH[j].width);
-			ref = g->stemH[j].position + g->stemH[j].width;
-		}
-		if (hasmask) {
-			il_push_op(il, op_hstemhm);
-		} else {
-			il_push_op(il, op_hstem);
-		}
-	}
-	if (g->stemV && g->numberOfStemV) {
-		float ref = 0;
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			il_push_operand(il, g->stemV[j].position - ref);
-			il_push_operand(il, g->stemV[j].width);
-			ref = g->stemV[j].position + g->stemV[j].width;
-		}
-		if (hasmask) {
-			il_push_op(il, op_vstemhm);
-		} else {
-			il_push_op(il, op_vstem);
-		}
-	}
-	uint16_t pointsSofar = 0;
-	uint16_t jh = 0;
-	uint16_t jm = 0;
-	if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_contour *contour = &(g->contours[c]);
-		uint16_t n = contour->pointsCount;
-		if (n == 0) continue;
-		il_push_operand(il, contour->points[0].x);
-		il_push_operand(il, contour->points[0].y);
-		il_push_op(il, op_rmoveto);
-		pointsSofar++;
-		if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
-		for (uint16_t j = 1; j < n; j++) {
-			if (contour->points[j].onCurve) {
-				il_lineto(il, contour->points[j].x, contour->points[j].y);
-				pointsSofar++;
-			} else {
-				if (j < n - 2 && !contour->points[j + 1].onCurve &&
-				    contour->points[j + 2].onCurve) {
-					il_curveto(il, contour->points[j].x, contour->points[j].y,
-					           contour->points[j + 1].x, contour->points[j + 1].y,
-					           contour->points[j + 2].x, contour->points[j + 2].y);
-					pointsSofar += 3;
-					j += 2;
-				} else {
-					il_lineto(il, contour->points[j].x, contour->points[j].y);
-					pointsSofar++;
-				}
-			}
-			if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
-		}
-	}
-	il_push_op(il, op_endchar);
-	return il;
-}
-static void glyph_il_peephole_optimization(charstring_il *il) {
-	// TODO: Optimization
-}
-
-static cff_blob *il2blob(charstring_il *il) {
-	cff_blob *blob = calloc(1, sizeof(cff_blob));
-
-	uint16_t stackDepth = 0;
-	for (uint16_t j = 0; j < il->length; j++) {
-		switch (il->instr[j].type) {
-			case IL_ITEM_OPERAND: {
-				merge_cs2_operand(blob, il->instr[j].d);
-				// fprintf(stderr, "%g ", il->instr[j].d);
-				stackDepth++;
-				break;
-			}
-			case IL_ITEM_OPERATOR: {
-				merge_cs2_operator(blob, il->instr[j].i);
-				// fprintf(stderr, "%s\n", op_cs2_name(il->instr[j].i));
-				stackDepth = 0;
-				break;
-			}
-			case IL_ITEM_SPECIAL: {
-				merge_cs2_special(blob, il->instr[j].i);
-				break;
-			}
-			case IL_ITEM_PHANTOM_OPERATOR: {
-				if (stackDepth > type2_argument_stack - cs2_op_standard_arity(il->instr[j].i)) {
-					// fprintf(stderr, "%s\n", op_cs2_name(il->instr[j].i));
-					merge_cs2_operator(blob, il->instr[j].i);
-					stackDepth = 0;
-				}
-				break;
-			}
-			default:
-				break;
-		}
-	}
-	return blob;
-}
-
-static cff_blob *compile_glyph(glyf_glyph *g) {
-	charstring_il *il = compile_glyph_to_il(g);
+static caryll_buffer *compile_glyph(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidthX) {
+	charstring_il *il = compile_glyph_to_il(g, defaultWidth, nominalWidthX);
 	glyph_il_peephole_optimization(il);
-	cff_blob *blob = il2blob(il);
+	caryll_buffer *blob = il2blob(il);
 	free(il->instr);
 	free(il);
 	return blob;
 }
 
-static cff_blob *compile_glyf_to_charstring(table_glyf *glyf) {
-	if (glyf->numberGlyphs == 0) return calloc(1, sizeof(cff_blob));
-	CFF_INDEX *charstring = cff_index_init();
-	charstring->count = glyf->numberGlyphs;
-	charstring->offSize = 4;
-	NEW_N(charstring->offset, charstring->count + 1);
-	charstring->offset[0] = 1;
-	charstring->data = NULL;
-
-	size_t used = 0;
-	size_t blank = 0;
-	for (uint32_t j = 0; j < glyf->numberGlyphs; j++) {
-		cff_blob *blob = compile_glyph(glyf->glyphs[j]);
-		if (blank < blob->size) {
-			used += blob->size;
-			blank = (used >> 1) & 0xFFFFFF;
-			charstring->data = realloc(charstring->data, sizeof(uint8_t) * (used + blank));
-		} else {
-			used += blob->size;
-			blank -= blob->size;
-		}
-		charstring->offset[j + 1] = blob->size + charstring->offset[j];
-		memcpy(charstring->data + charstring->offset[j] - 1, blob->data, blob->size);
-		blob_free(blob);
-	}
-	cff_blob *final_blob = compile_index(*charstring);
+typedef struct {
+	table_glyf *glyf;
+	uint16_t defaultWidth;
+	uint16_t nominalWidthX;
+} cff_charstring_builder_context;
+static caryll_buffer *callback_makeglyph(void *_context, uint32_t j) {
+	cff_charstring_builder_context *context = (cff_charstring_builder_context *)_context;
+	return compile_glyph(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
+}
+static caryll_buffer *cff_make_charstrings(cff_charstring_builder_context *context) {
+	if (context->glyf->numberGlyphs == 0) return bufnew();
+	CFF_INDEX *charstring =
+	    cff_buildindex_callback(context, context->glyf->numberGlyphs, callback_makeglyph);
+	caryll_buffer *final_blob = compile_index(*charstring);
 	cff_index_fini(charstring);
 	return final_blob;
 }
@@ -1190,30 +878,43 @@ static void cffdict_input(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_
 	va_list ap;
 	va_start(ap, arity);
 	for (uint16_t j = 0; j < arity; j++) {
-		last->vals[j].t = t;
 		if (t == CFF_DOUBLE) {
 			double x = va_arg(ap, double);
-			last->vals[j].d = x;
+			if (x == round(x)) {
+				last->vals[j].t = CFF_INTEGER;
+				last->vals[j].i = round(x);
+			} else {
+				last->vals[j].t = CFF_DOUBLE;
+				last->vals[j].d = x;
+			}
 		} else {
 			int x = va_arg(ap, int);
+			last->vals[j].t = t;
 			last->vals[j].i = x;
 		}
 	}
 	va_end(ap);
 }
-static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_t arity,
-                               float *arr) {
+static void cffdict_input_array(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_t arity,
+                                float *arr) {
 	if (!arity || !arr) return;
 	CFF_Dict_Entry *last = cffdict_givemeablank(dict);
 	last->op = op;
 	last->cnt = arity;
 	NEW_N(last->vals, arity);
 	for (uint16_t j = 0; j < arity; j++) {
-		last->vals[j].t = t;
+		double x = arr[j];
 		if (t == CFF_DOUBLE) {
-			last->vals[j].d = arr[j];
+			if (x == round(x)) {
+				last->vals[j].t = CFF_INTEGER;
+				last->vals[j].i = round(x);
+			} else {
+				last->vals[j].t = CFF_DOUBLE;
+				last->vals[j].d = x;
+			}
 		} else {
-			last->vals[j].i = (int)arr[j];
+			last->vals[j].t = t;
+			last->vals[j].i = round(x);
 		}
 	}
 }
@@ -1221,7 +922,6 @@ static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, ui
 static CFF_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	CFF_Dict *dict;
 	NEW_CLEAN(dict);
-
 	// ROS
 	if (fd->cidRegistry && fd->cidOrdering) {
 		cffdict_input(dict, op_ROS, CFF_INTEGER, 3, sidof(h, fd->cidRegistry),
@@ -1266,13 +966,13 @@ static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	NEW_CLEAN(dict);
 	if (!pd) return dict;
 	// DELTA arrays
-	cffdict_input_aray(dict, op_BlueValues, CFF_DOUBLE, pd->blueValuesCount, pd->blueValues);
-	cffdict_input_aray(dict, op_OtherBlues, CFF_DOUBLE, pd->otherBluesCount, pd->otherBlues);
-	cffdict_input_aray(dict, op_FamilyBlues, CFF_DOUBLE, pd->familyBluesCount, pd->familyBlues);
-	cffdict_input_aray(dict, op_FamilyOtherBlues, CFF_DOUBLE, pd->familyOtherBluesCount,
-	                   pd->familyOtherBlues);
-	cffdict_input_aray(dict, op_StemSnapH, CFF_DOUBLE, pd->stemSnapHCount, pd->stemSnapH);
-	cffdict_input_aray(dict, op_StemSnapV, CFF_DOUBLE, pd->stemSnapVCount, pd->stemSnapV);
+	cffdict_input_array(dict, op_BlueValues, CFF_DOUBLE, pd->blueValuesCount, pd->blueValues);
+	cffdict_input_array(dict, op_OtherBlues, CFF_DOUBLE, pd->otherBluesCount, pd->otherBlues);
+	cffdict_input_array(dict, op_FamilyBlues, CFF_DOUBLE, pd->familyBluesCount, pd->familyBlues);
+	cffdict_input_array(dict, op_FamilyOtherBlues, CFF_DOUBLE, pd->familyOtherBluesCount,
+	                    pd->familyOtherBlues);
+	cffdict_input_array(dict, op_StemSnapH, CFF_DOUBLE, pd->stemSnapHCount, pd->stemSnapH);
+	cffdict_input_array(dict, op_StemSnapV, CFF_DOUBLE, pd->stemSnapVCount, pd->stemSnapV);
 
 	// Private scalars
 	cffdict_input(dict, op_BlueScale, CFF_DOUBLE, 1, pd->blueScale);
@@ -1285,70 +985,42 @@ static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	cffdict_input(dict, op_ExpansionFactor, CFF_DOUBLE, 1, pd->expansionFactor);
 	cffdict_input(dict, op_initialRandomSeed, CFF_DOUBLE, 1, pd->initialRandomSeed);
 
-	// op_defaultWidthX and op_nominalWidthX are currently not used
-	// Explicitly set them to zero
-	cffdict_input(dict, op_defaultWidthX, CFF_DOUBLE, 1, 0);
-	cffdict_input(dict, op_nominalWidthX, CFF_DOUBLE, 1, 0);
+	// op_nominalWidthX are currently not used
+	cffdict_input(dict, op_defaultWidthX, CFF_DOUBLE, 1, pd->defaultWidthX);
+	cffdict_input(dict, op_nominalWidthX, CFF_DOUBLE, 1, pd->nominalWidthX);
 	return dict;
 }
 
-static cff_blob *cff_compileDict(CFF_Dict *dict) {
-	cff_blob *blob = calloc(1, sizeof(cff_blob));
-	for (uint32_t i = 0; i < dict->count; i++) {
-		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
-			cff_blob *blob_val;
-			if (dict->ents[i].vals[j].t == CFF_INTEGER) {
-				blob_val = encode_cff_number(dict->ents[i].vals[j].i);
-			} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
-				blob_val = encode_cff_real(dict->ents[i].vals[j].d);
-			} else {
-				blob_val = encode_cff_number(0);
-			}
-			blob_merge(blob, blob_val);
-		}
-		blob_merge(blob, encode_cff_operator(dict->ents[i].op));
-	}
-	return blob;
-}
-
 static int by_sid(cff_sid_entry *a, cff_sid_entry *b) { return a->sid - b->sid; }
-static cff_blob *cffstrings_to_indexblob(cff_sid_entry **h) {
+static caryll_buffer *callback_makestringindex(void *context, uint32_t i) {
+	caryll_buffer **blobs = context;
+	return blobs[i];
+}
+static caryll_buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 	HASH_SORT(*h, by_sid);
-	CFF_INDEX *strings = cff_index_init();
-	strings->count = HASH_COUNT(*h);
-	strings->offSize = 4;
-	NEW_N(strings->offset, strings->count + 1);
-	strings->offset[0] = 1;
-	strings->data = NULL;
-
-	cff_sid_entry *item, *tmp;
+	caryll_buffer **blobs;
+	uint32_t n = HASH_COUNT(*h);
+	NEW_N(blobs, n);
 	uint32_t j = 0;
-
-	size_t used = 0;
-	size_t blanks = 0;
-
+	cff_sid_entry *item, *tmp;
 	HASH_ITER(hh, *h, item, tmp) {
-		strings->offset[j + 1] = (uint32_t)(sdslen(item->str) + strings->offset[j]);
-		if (blanks < sdslen(item->str)) {
-			used += sdslen(item->str);
-			blanks = (used >> 1) & 0xFFFFFF;
-			strings->data = realloc(strings->data, sizeof(uint8_t) * used + blanks);
-		} else {
-			blanks -= sdslen(item->str);
-			used += sdslen(item->str);
-		}
-		memcpy(strings->data + strings->offset[j] - 1, item->str, sdslen(item->str));
-		sdsfree(item->str);
+		blobs[j] = bufnew();
+		bufwrite_sds(blobs[j], item->str);
 		HASH_DEL(*h, item);
+		sdsfree(item->str);
 		free(item);
 		j++;
 	}
-	cff_blob *final_blob = compile_index(*strings);
+
+	CFF_INDEX *strings = cff_buildindex_callback(blobs, n, callback_makestringindex);
+	free(blobs);
+	caryll_buffer *final_blob = compile_index(*strings);
 	cff_index_fini(strings);
+	final_blob->cursor = final_blob->size;
 	return final_blob;
 }
 
-static cff_blob *cff_compile_nameindex(table_CFF *cff) {
+static caryll_buffer *cff_compile_nameindex(table_CFF *cff) {
 	CFF_INDEX *nameIndex = cff_index_init();
 	nameIndex->count = 1;
 	nameIndex->offSize = 4;
@@ -1359,21 +1031,52 @@ static cff_blob *cff_compile_nameindex(table_CFF *cff) {
 	NEW_N(nameIndex->data, 1 + sdslen(cff->fontName));
 	memcpy(nameIndex->data, cff->fontName, sdslen(cff->fontName));
 	// CFF Name INDEX
-	cff_blob *n = compile_index(*nameIndex);
+	caryll_buffer *buf = compile_index(*nameIndex);
 	cff_index_fini(nameIndex);
-	if (cff->fontName) sdsfree(cff->fontName);
-	cff->fontName = NULL;
-	return n;
+	if (cff->fontName) {
+		sdsfree(cff->fontName);
+		cff->fontName = NULL;
+	}
+	return buf;
 }
 
-CFF_FDSelect *figureOutFDSelect(table_CFF *cff, table_glyf *glyf) {
+static caryll_buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf,
+                                       cff_sid_entry **stringHash) {
+	CFF_Charset *charset;
+	NEW_CLEAN(charset);
+	if (glyf->numberGlyphs > 1) { // At least two glyphs
+		charset->t = CFF_CHARSET_FORMAT2;
+		charset->s = 1; // One segment only
+		charset->f2.format = 2;
+		NEW(charset->f2.range2);
+		if (cff->isCID) {
+			charset->f2.range2[0].first = 1;
+			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+		} else {
+			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+				sidof(stringHash, glyf->glyphs[j]->name);
+			}
+			charset->f2.range2[0].first = sidof(stringHash, glyf->glyphs[1]->name);
+			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+		}
+	} else {
+		charset->t = CFF_CHARSET_ISOADOBE;
+	}
+	caryll_buffer *c = compile_charset(*charset);
+	if (charset->t == CFF_CHARSET_FORMAT2) { FREE(charset->f2.range2); }
+	FREE(charset);
+	return c;
+}
+
+static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
+	if (!cff->isCID) return bufnew();
 	// We choose format 3 here
 	uint32_t ranges = 1;
 	uint8_t current = 0;
 	CFF_FDSelect *fds;
 	NEW_CLEAN(fds);
 	fds->t = CFF_FDSELECT_UNSPECED;
-	if (!glyf->numberGlyphs) return fds;
+	if (!glyf->numberGlyphs) goto done;
 	uint8_t fdi0 = glyf->glyphs[0]->fdSelectIndex;
 	if (fdi0 > cff->fdArrayCount) fdi0 = 0;
 	current = fdi0;
@@ -1403,185 +1106,148 @@ CFF_FDSelect *figureOutFDSelect(table_CFF *cff, table_glyf *glyf) {
 	fds->f3.format = 3;
 	fds->f3.nranges = ranges;
 	fds->f3.sentinel = glyf->numberGlyphs;
-	return fds;
+done:;
+	caryll_buffer *e = compile_fdselect(*fds);
+	if (fds->t == CFF_FDSELECT_FORMAT3) FREE(fds->f3.range3);
+	free(fds);
+	return e;
 }
 
-CFF_INDEX *cff_compile_fdarray(uint16_t fdArrayCount, table_CFF **fdArray,
-                               cff_sid_entry **stringHash) {
-	CFF_INDEX *newfd = cff_index_init();
+typedef struct {
+	table_CFF **fdArray;
+	cff_sid_entry **stringHash;
+} fdarray_compile_context;
+static caryll_buffer *callback_makefd(void *_context, uint32_t i) {
+	fdarray_compile_context *context = (fdarray_compile_context *)_context;
+	CFF_Dict *fd = cff_make_fd_dict(context->fdArray[i], context->stringHash);
+	caryll_buffer *blob = compile_dict(fd);
+	bufwrite_bufdel(blob, compile_offset(0xEEEEEEEE));
+	bufwrite_bufdel(blob, compile_offset(0xFFFFFFFF));
+	bufwrite_bufdel(blob, encode_cff_operator(op_Private));
+	cff_delete_dict(fd);
+	return blob;
+}
+static CFF_INDEX *cff_make_fdarray(uint16_t fdArrayCount, table_CFF **fdArray,
+                                   cff_sid_entry **stringHash) {
+	fdarray_compile_context context;
+	context.fdArray = fdArray;
+	context.stringHash = stringHash;
 
-	for (uint32_t i = 0; i < fdArrayCount; i++) {
-		CFF_Dict *fd = cff_make_fd_dict(fdArray[i], stringHash);
-		cff_blob *blob = cff_compileDict(fd);
-		blob_merge(blob, compile_offset(0xEEEEEEEE));
-		blob_merge(blob, compile_offset(0xFFFFFFFF));
-		blob_merge(blob, encode_cff_operator(op_Private));
-		cff_delete_dict(fd);
-		newfd->count += 1;
-		newfd->offset = realloc(newfd->offset, (newfd->count + 1) * sizeof(uint32_t));
-		if (newfd->count == 1) newfd->offset[0] = 1;
-		newfd->offset[newfd->count] = blob->size + newfd->offset[newfd->count - 1];
-		newfd->data = realloc(newfd->data, newfd->offset[newfd->count] - 1);
-		memcpy(newfd->data + newfd->offset[newfd->count - 1] - 1, blob->data, blob->size);
-		blob_free(blob);
-	}
-
-	newfd->offSize = 4;
-	return newfd;
+	return cff_buildindex_callback(&context, fdArrayCount, callback_makefd);
 }
 
-static cff_blob *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
-	cff_blob *blob = calloc(1, sizeof(cff_blob));
+static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
+	caryll_buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;
 
 	// CFF Header
-	cff_blob *h = compile_header();
-	cff_blob *n = cff_compile_nameindex(cff);
+	caryll_buffer *h = compile_header();
+	caryll_buffer *n = cff_compile_nameindex(cff);
 
 	// cff top DICT
 	CFF_Dict *top = cff_make_fd_dict(cff, &stringHash);
-	cff_blob *t = cff_compileDict(top);
+	caryll_buffer *t = compile_dict(top);
 	cff_delete_dict(top);
-	// cff top PRIVATEs
+	// cff top PRIVATE
 	CFF_Dict *top_pd = cff_make_private_dict(cff->privateDict);
-	cff_blob *p = cff_compileDict(top_pd);
+	caryll_buffer *p = compile_dict(top_pd);
 	cff_delete_dict(top_pd);
 
 	// FDSelect
-	cff_blob *e;
-	if (cff->isCID) {
-		CFF_FDSelect *fds = figureOutFDSelect(cff, glyf);
-		e = compile_fdselect(*fds);
-		if (fds->t == CFF_FDSELECT_FORMAT3) FREE(fds->f3.range3);
-		free(fds);
-	} else {
-		NEW_CLEAN(e);
-	}
+	caryll_buffer *e = cff_make_fdselect(cff, glyf);
 
 	// FDArray
 	CFF_INDEX *fdArrayIndex = NULL;
-	cff_blob *r;
+	caryll_buffer *r;
 	if (cff->isCID) {
-		fdArrayIndex = cff_compile_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
+		fdArrayIndex = cff_make_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
 		r = compile_index(*fdArrayIndex);
 	} else {
 		NEW_CLEAN(r);
 	}
 
 	// cff charset : Allocate string index terms for glyph names
-	CFF_Charset *charset;
-	NEW_CLEAN(charset);
-	if (glyf->numberGlyphs > 1) { // At least two glyphs
-		charset->t = CFF_CHARSET_FORMAT2;
-		charset->s = 1; // One segment only
-		charset->f2.format = 2;
-		NEW(charset->f2.range2);
-		if (cff->isCID) {
-			charset->f2.range2[0].first = 1;
-			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
-		} else {
-			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
-				sidof(&stringHash, glyf->glyphs[j]->name);
-			}
-			charset->f2.range2[0].first = sidof(&stringHash, glyf->glyphs[1]->name);
-			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
-		}
-	} else {
-		charset->t = CFF_CHARSET_ISOADOBE;
-	}
-	cff_blob *c = compile_charset(*charset);
-	if (charset->t == CFF_CHARSET_FORMAT2) { FREE(charset->f2.range2); }
-	FREE(charset);
+	caryll_buffer *c = cff_make_charset(cff, glyf, &stringHash);
 
 	// CFF String Index
-	cff_blob *i = cffstrings_to_indexblob(&stringHash);
+	caryll_buffer *i = cffstrings_to_indexblob(&stringHash);
 
 	// CFF Charstrings
-	cff_blob *s = compile_glyf_to_charstring(glyf);
+	caryll_buffer *s;
+	{
+		cff_charstring_builder_context g2cContext;
+		g2cContext.glyf = glyf;
+		g2cContext.defaultWidth = cff->privateDict->defaultWidthX;
+		g2cContext.nominalWidthX = cff->privateDict->nominalWidthX;
+		s = cff_make_charstrings(&g2cContext);
+	}
 
 	// Merge these data
 	uint32_t delta = 0;
-	uint32_t off = h->size + n->size + 11 + t->size;
+	uint32_t off = (uint32_t)(h->size + n->size + 11 + t->size);
 	if (c->size != 0) delta += 6;
 	if (e->size != 0) delta += 7;
 	if (s->size != 0) delta += 6;
 	if (p->size != 0) delta += 11;
 	if (r->size != 0) delta += 7;
-	blob_merge(blob, h);
-	blob_merge(blob, n);
-	{
-		cff_blob delta_blob;
-		int32_t delta_size = t->size + delta + 1;
-		delta_blob.size = 11;
-		delta_blob.data = calloc(delta_blob.size, sizeof(uint8_t));
-		delta_blob.data[0] = 0;
-		delta_blob.data[1] = 1;
-		delta_blob.data[2] = 4;
-		delta_blob.data[6] = 1;
-		delta_blob.data[7] = (delta_size >> 24) & 0xff;
-		delta_blob.data[8] = (delta_size >> 16) & 0xff;
-		delta_blob.data[9] = (delta_size >> 8) & 0xff;
-		delta_blob.data[10] = (delta_size)&0xff;
-		blob_merge_raw(blob, &delta_blob);
-	}
-	blob_merge(blob, t);
 
-	// Compile offsets
+	// Start building CFF table
+	bufwrite_bufdel(blob, h); // header
+	bufwrite_bufdel(blob, n); // name index
+	int32_t delta_size = (uint32_t)(t->size + delta + 1);
+	bufwrite_bufdel(blob, bufninit(11, 0, 1,   // top dict index headerone item
+	                               4,          // four bytes per offset
+	                               0, 0, 0, 1, // offset 1
+	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff,
+	                               (delta_size >> 8) & 0xff,
+	                               delta_size & 0xff) // offset 2
+	                );
+
+	bufwrite_bufdel(blob, t); // top dict body
+
+	// top dict offsets
 	off += delta + i->size + 3;
 	if (c->size != 0) {
-		cff_blob *val = compile_offset(off);
-		cff_blob *op = encode_cff_operator(op_charset);
-		blob_merge(blob, val);
-		blob_merge(blob, op);
+		bufwrite_bufdel(blob, compile_offset(off));
+		bufwrite_bufdel(blob, encode_cff_operator(op_charset));
 		off += c->size;
 	}
 	if (e->size != 0) {
-		cff_blob *val = compile_offset(off);
-		cff_blob *op = encode_cff_operator(op_FDSelect);
-		blob_merge(blob, val);
-		blob_merge(blob, op);
+		bufwrite_bufdel(blob, compile_offset(off));
+		bufwrite_bufdel(blob, encode_cff_operator(op_FDSelect));
 		off += e->size;
 	}
 	if (s->size != 0) {
-		cff_blob *val = compile_offset(off);
-		cff_blob *op = encode_cff_operator(op_CharStrings);
-		blob_merge(blob, val);
-		blob_merge(blob, op);
+		bufwrite_bufdel(blob, compile_offset(off));
+		bufwrite_bufdel(blob, encode_cff_operator(op_CharStrings));
 		off += s->size;
 	}
 	if (p->size != 0) {
-		blob_merge(blob, compile_offset(p->size));
-		blob_merge(blob, compile_offset(off));
-		blob_merge(blob, encode_cff_operator(op_Private));
+		bufwrite_bufdel(blob, compile_offset((uint32_t)(p->size)));
+		bufwrite_bufdel(blob, compile_offset(off));
+		bufwrite_bufdel(blob, encode_cff_operator(op_Private));
 		off += p->size;
 	}
 	if (r->size != 0) {
-		cff_blob *val = compile_offset(off);
-		cff_blob *op = encode_cff_operator(op_FDArray);
-		blob_merge(blob, val);
-		blob_merge(blob, op);
+		bufwrite_bufdel(blob, compile_offset(off));
+		bufwrite_bufdel(blob, encode_cff_operator(op_FDArray));
 		off += r->size;
 	}
 
-	blob_merge(blob, i);
-	{
-		cff_blob gsubr;
-		gsubr.size = 3;
-		gsubr.data = calloc(gsubr.size, sizeof(uint8_t));
-		blob_merge_raw(blob, &gsubr);
-	}
-	blob_merge(blob, c);
-	blob_merge(blob, e);
-	blob_merge(blob, s);
-	blob_merge(blob, p);
-	if (cff->isCID) {
+	bufwrite_bufdel(blob, i);                    // string index
+	bufwrite_bufdel(blob, bufninit(3, 0, 0, 0)); // gsubr
+	bufwrite_bufdel(blob, c);                    // charset
+	bufwrite_bufdel(blob, e);                    // fdselect
+	bufwrite_bufdel(blob, s);                    // charstring
+	bufwrite_bufdel(blob, p);                    // top private
+	if (cff->isCID) {                            // fdarray and fdarray privates
 		uint32_t fdArrayPrivatesStartOffset = off;
-		cff_blob **fdArrayPrivates;
+		caryll_buffer **fdArrayPrivates;
 		NEW_N(fdArrayPrivates, cff->fdArrayCount);
 		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
 			CFF_Dict *pd = cff_make_private_dict(cff->fdArray[j]->privateDict);
-			cff_blob *p = cff_compileDict(pd);
+			caryll_buffer *p = compile_dict(pd);
 			cff_delete_dict(pd);
 			fdArrayPrivates[j] = p;
 			uint8_t *privateLengthPtr = &(fdArrayIndex->data[fdArrayIndex->offset[j + 1] - 11]);
@@ -1596,23 +1262,21 @@ static cff_blob *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 			privateOffsetPtr[3] = (fdArrayPrivatesStartOffset >> 0) & 0xFF;
 			fdArrayPrivatesStartOffset += p->size;
 		}
-		blob_free(r);
+		buffree(r); // fdarray
 		r = compile_index(*fdArrayIndex);
 		cff_index_fini(fdArrayIndex);
-		blob_merge(blob, r);
-		for (uint16_t j = 0; j < cff->fdArrayCount; j++) { blob_merge(blob, fdArrayPrivates[j]); }
+		bufwrite_bufdel(blob, r);
+		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+			bufwrite_bufdel(blob, fdArrayPrivates[j]);
+		}
 		free(fdArrayPrivates);
 	} else {
-		blob_merge(blob, r);
+		bufwrite_bufdel(blob, r);
 	}
-
+	// finish
 	return blob;
 }
 
 caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf) {
-	caryll_buffer *buf = bufnew();
-	cff_blob *blob = writeCFF_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs);
-	bufwrite_bytes(buf, blob->size, blob->data);
-	blob_free(blob);
-	return buf;
+	return writeCFF_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs);
 }

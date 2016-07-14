@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
 	{
 		caryll_buffer *otf = caryll_write_font(font, dumpopts);
 		FILE *outfile = u8fopen(outputPath, "wb");
-		fwrite(otf->s, sizeof(uint8_t), buflen(otf), outfile);
+		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);
 

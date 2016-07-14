@@ -2,99 +2,123 @@
 
 caryll_buffer *bufnew() {
 	caryll_buffer *buf = malloc(sizeof(caryll_buffer));
-	buf->s = sdsempty();
+	buf->size = 0;
+	buf->free = 0;
 	buf->cursor = 0;
+	buf->data = NULL;
 	return buf;
 }
 void buffree(caryll_buffer *buf) {
 	if (!buf) return;
-	if (buf->s) sdsfree(buf->s);
+	if (buf->data) free(buf->data);
 	free(buf);
 }
-size_t buflen(caryll_buffer *buf) { return sdslen(buf->s); }
+size_t buflen(caryll_buffer *buf) { return buf->size; }
 size_t bufpos(caryll_buffer *buf) { return buf->cursor; }
 void bufseek(caryll_buffer *buf, size_t pos) { buf->cursor = pos; }
 void bufclear(caryll_buffer *buf) {
-	sdsclear(buf->s);
 	buf->cursor = 0;
+	buf->free = buf->size + buf->free;
+	buf->size = 0;
 }
 
 static void bufbeforewrite(caryll_buffer *buf, size_t towrite) {
-	size_t curlen = sdslen(buf->s);
-	size_t len = buf->cursor + towrite;
-	if (len <= curlen) return;
-	buf->s = sdsMakeRoomFor(buf->s, len - curlen);
-	if (buf->s == NULL) return;
-	if (len - curlen + 1 - towrite > 0) {
-		memset(buf->s + curlen, 0, (len - curlen + 1 - towrite));
+	size_t currentSize = buf->size;
+	size_t allocated = buf->size + buf->free;
+	size_t required = buf->cursor + towrite;
+	if (required < currentSize) {
+		// Completely overlap.
+		return;
+	} else if (required <= allocated) {
+		// Within range without reallocation
+		buf->size = required;
+		buf->free = allocated - buf->size;
+	} else {
+		// Needs realloc
+		buf->size = required;
+		buf->free = required; // Double growth
+		if (buf->free > 0x1000000) { buf->free = 0x1000000; }
+		if (buf->data) {
+			buf->data = realloc(buf->data, sizeof(uint8_t) * (buf->size + buf->free));
+		} else {
+			buf->data = calloc(buf->size + buf->free, sizeof(uint8_t));
+		}
 	}
-	sdssetlen(buf->s, len);
-	return;
 }
 void bufwrite8(caryll_buffer *buf, uint8_t byte) {
 	bufbeforewrite(buf, 1);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = byte;
+	buf->data[buf->cursor++] = byte;
 }
 void bufwrite16l(caryll_buffer *buf, uint16_t x) {
 	bufbeforewrite(buf, 2);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = x & 0xFF;
-	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
 }
 void bufwrite16b(caryll_buffer *buf, uint16_t x) {
 	bufbeforewrite(buf, 2);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
-	buf->s[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
 }
 void bufwrite32l(caryll_buffer *buf, uint32_t x) {
 	bufbeforewrite(buf, 4);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = x & 0xFF;
-	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 24) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 16) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 24) & 0xFF;
 }
 void bufwrite32b(caryll_buffer *buf, uint32_t x) {
 	bufbeforewrite(buf, 4);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = (x >> 24) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
-	buf->s[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 24) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 16) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
 }
 void bufwrite64l(caryll_buffer *buf, uint64_t x) {
 	bufbeforewrite(buf, 8);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = x & 0xFF;
-	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 24) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 32) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 40) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 48) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 56) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 16) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 24) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 32) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 40) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 48) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 56) & 0xFF;
 }
 void bufwrite64b(caryll_buffer *buf, uint64_t x) {
 	bufbeforewrite(buf, 8);
-	if (!buf->s) return;
-	buf->s[buf->cursor++] = (x >> 56) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 48) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 40) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 32) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 24) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 16) & 0xFF;
-	buf->s[buf->cursor++] = (x >> 8) & 0xFF;
-	buf->s[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 56) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 48) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 40) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 32) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 24) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 16) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
 }
+
+caryll_buffer *bufninit(uint32_t n, ...) {
+	caryll_buffer *buf = bufnew();
+	bufbeforewrite(buf, n);
+	va_list ap;
+	va_start(ap, n);
+	for (uint16_t j = 0; j < n; j++) { bufwrite8(buf, (uint8_t)va_arg(ap, int)); }
+	va_end(ap);
+	return buf;
+}
+void bufnwrite8(caryll_buffer *buf, uint32_t n, ...) {
+	bufbeforewrite(buf, n);
+	va_list ap;
+	va_start(ap, n);
+	for (uint16_t j = 0; j < n; j++) { bufwrite8(buf, (uint8_t)va_arg(ap, int)); }
+	va_end(ap);
+}
+
 void bufwrite_sds(caryll_buffer *buf, sds str) {
 	if (!str) return;
 	size_t len = sdslen(str);
 	if (!len) return;
 	bufbeforewrite(buf, len);
-	if (!buf->s) return;
-	memcpy(buf->s + buf->cursor, str, len);
+	memcpy(buf->data + buf->cursor, str, len);
 	buf->cursor += len;
 }
 void bufwrite_str(caryll_buffer *buf, const char *str) {
@@ -102,32 +126,28 @@ void bufwrite_str(caryll_buffer *buf, const char *str) {
 	size_t len = strlen(str);
 	if (!len) return;
 	bufbeforewrite(buf, len);
-	if (!buf->s) return;
-	memcpy(buf->s + buf->cursor, str, len);
+	memcpy(buf->data + buf->cursor, str, len);
 	buf->cursor += len;
 }
 void bufwrite_bytes(caryll_buffer *buf, size_t len, uint8_t *str) {
 	if (!str) return;
 	if (!len) return;
 	bufbeforewrite(buf, len);
-	if (!buf->s) return;
-	memcpy(buf->s + buf->cursor, str, len);
+	memcpy(buf->data + buf->cursor, str, len);
 	buf->cursor += len;
 }
 void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that) {
-	if (!that || !that->s) return;
+	if (!that || !that->data) return;
 	size_t len = buflen(that);
 	bufbeforewrite(buf, len);
-	if (!buf->s) return;
-	memcpy(buf->s + buf->cursor, that->s, len);
+	memcpy(buf->data + buf->cursor, that->data, len);
 	buf->cursor += len;
 }
 void bufwrite_bufdel(caryll_buffer *buf, caryll_buffer *that) {
-	if (!that || !that->s) return;
+	if (!that || !that->data) return;
 	size_t len = buflen(that);
 	bufbeforewrite(buf, len);
-	if (!buf->s) return;
-	memcpy(buf->s + buf->cursor, that->s, len);
+	memcpy(buf->data + buf->cursor, that->data, len);
 	buffree(that);
 	buf->cursor += len;
 }

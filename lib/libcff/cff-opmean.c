@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cff_io.h"
+#include "libcff.h"
 
 char *op_cff_name(uint32_t op) {
 	switch (op) {
@@ -236,6 +236,9 @@ uint8_t cs2_op_standard_arity(uint32_t op) {
 			return 4;
 		case op_rrcurveto:
 			return 6;
+		case op_hintmask:
+		case op_cntrmask:
+			return 0;
 		default:
 			return 2;
 	}
