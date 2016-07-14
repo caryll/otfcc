@@ -1048,7 +1048,7 @@ static bool il_matchop(charstring_il *il, uint32_t j, int32_t op) {
 }
 static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...) {
 	uint8_t arity = cs2_op_standard_arity(op);
-	if (j + arity >= il->length) return 0;
+	if (arity > 16 || j + arity >= il->length) return 0;
 	if ((j == 0 || // We are at the beginning of charstring
 	     !il_matchtype(il, j - 1, j,
 	                   IL_ITEM_PHANTOM_OPERATOR)) // .. or we are right after a solid operator
@@ -1058,22 +1058,25 @@ static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...
 		va_list ap;
 		uint8_t check = true;
 		uint8_t resultArity = arity;
+		bool mask[16];
 		va_start(ap, op2);
 		for (uint32_t m = 0; m < arity; m++) {
 			int checkzero = va_arg(ap, int);
+			mask[m] = checkzero;
 			if (checkzero) {
 				resultArity -= 1;
 				check = check && il->instr[j + m].d == 0;
-				il->instr[j + m].type = IL_ITEM_PHANTOM_OPERAND;
 			}
 		}
 		va_end(ap);
 		if (check) {
+			for (uint32_t m = 0; m < arity; m++) {
+				if (mask[m]) { il->instr[j + m].type = IL_ITEM_PHANTOM_OPERAND; }
+			}
 			il->instr[j + arity].i = op2;
 			il->instr[j + arity].arity = resultArity;
 			return arity;
 		} else {
-			for (uint32_t m = 0; m < arity; m++) { il->instr[j + m].type = IL_ITEM_OPERAND; }
 			return 0;
 		}
 	} else {
