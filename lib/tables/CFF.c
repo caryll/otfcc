@@ -611,7 +611,7 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 	return ret;
 }
 
-void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
+static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
 	if (!count || !values) return;
 	json_value *a = json_array_new(count);
 	for (uint16_t j = 0; j < count; j++) { json_array_push(a, json_double_new(values[j])); }
@@ -812,443 +812,6 @@ table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts)
 		return fdFromJson(dump);
 }
 
-static void cff_delete_dict(CFF_Dict *dict) {
-	if (!dict) return;
-	for (uint32_t j = 0; j < dict->count; j++) { free(dict->ents[j].vals); }
-	free(dict->ents);
-	free(dict);
-}
-
-typedef enum {
-	IL_ITEM_OPERAND,
-	IL_ITEM_OPERATOR,
-	IL_ITEM_SPECIAL,
-	IL_ITEM_PHANTOM_OPERATOR,
-	IL_ITEM_PHANTOM_OPERAND
-} il_type;
-
-typedef struct {
-	il_type type;
-	double d;
-	int32_t i;
-	uint16_t arity;
-} charstring_instruction;
-
-typedef struct {
-	uint32_t length;
-	uint32_t free;
-	charstring_instruction *instr;
-} charstring_il;
-
-static void ensureThereIsSpace(charstring_il *il) {
-	if (il->free) return;
-	il->free = 0x100;
-	if (il->instr) {
-		il->instr = realloc(il->instr, sizeof(charstring_instruction) * (il->length + il->free));
-	} else {
-		il->instr = malloc(sizeof(charstring_instruction) * (il->length + il->free));
-	}
-}
-
-static void il_push_operand(charstring_il *il, float x) {
-	ensureThereIsSpace(il);
-	il->instr[il->length].type = IL_ITEM_OPERAND;
-	il->instr[il->length].d = x;
-	il->length++;
-	il->free--;
-}
-static void il_push_special(charstring_il *il, int32_t s) {
-	ensureThereIsSpace(il);
-	il->instr[il->length].type = IL_ITEM_SPECIAL;
-	il->instr[il->length].i = s;
-	il->length++;
-	il->free--;
-}
-static void il_push_op(charstring_il *il, int32_t op) {
-	ensureThereIsSpace(il);
-	il->instr[il->length].type = IL_ITEM_OPERATOR;
-	il->instr[il->length].i = op;
-	il->instr[il->length].arity = cs2_op_standard_arity(op);
-	il->length++;
-	il->free--;
-}
-
-static void pushMarks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
-                      uint16_t *jm) {
-	while (*jm < g->numberOfContourMasks && g->contourMasks[*jm].pointsBefore <= points) {
-		il_push_op(il, op_cntrmask);
-		uint8_t maskByte = 0;
-		uint8_t bits = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskH[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			maskByte = maskByte << 1 | (g->contourMasks[*jm].maskV[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		if (bits) {
-			maskByte = maskByte << (8 - bits);
-			il_push_special(il, maskByte);
-		}
-		*jm += 1;
-	}
-	while (*jh < g->numberOfHintMasks && g->hintMasks[*jh].pointsBefore <= points) {
-		il_push_op(il, op_hintmask);
-		uint8_t maskByte = 0;
-		uint8_t bits = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskH[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			maskByte = maskByte << 1 | (g->hintMasks[*jh].maskV[j] & 1);
-			bits += 1;
-			if (bits == 8) {
-				il_push_special(il, maskByte);
-				bits = 0;
-			}
-		}
-		if (bits) {
-			maskByte = maskByte << (8 - bits);
-			il_push_special(il, maskByte);
-		}
-		*jh += 1;
-	}
-}
-
-static void il_lineto(charstring_il *il, float dx, float dy) {
-	il_push_operand(il, dx);
-	il_push_operand(il, dy);
-	il_push_op(il, op_rlineto);
-}
-static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3,
-                       float dy3) {
-	il_push_operand(il, dx1);
-	il_push_operand(il, dy1);
-	il_push_operand(il, dx2);
-	il_push_operand(il, dy2);
-	il_push_operand(il, dx3);
-	il_push_operand(il, dy3);
-	il_push_op(il, op_rrcurveto);
-}
-
-static charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth,
-                                          uint16_t nominalWidth) {
-	charstring_il *il;
-	NEW_CLEAN(il);
-	// Convert absolute positions to deltas
-	float x = 0;
-	float y = 0;
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_contour *contour = &(g->contours[c]);
-		uint16_t n = contour->pointsCount;
-		for (uint16_t j = 0; j < n; j++) {
-			float dx = contour->points[j].x - x;
-			float dy = contour->points[j].y - y;
-			x = contour->points[j].x, y = contour->points[j].y;
-			contour->points[j].x = dx;
-			contour->points[j].y = dy;
-		}
-	}
-
-	// Write IL
-	if (g->advanceWidth != defaultWidth) {
-		il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth));
-	}
-	bool hasmask =
-	    (g->hintMasks && g->numberOfHintMasks) || (g->contourMasks && g->numberOfContourMasks);
-	if (g->stemH && g->numberOfStemH) {
-		float ref = 0;
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
-			il_push_operand(il, g->stemH[j].position - ref);
-			il_push_operand(il, g->stemH[j].width);
-			ref = g->stemH[j].position + g->stemH[j].width;
-		}
-		if (hasmask) {
-			il_push_op(il, op_hstemhm);
-		} else {
-			il_push_op(il, op_hstem);
-		}
-	}
-	if (g->stemV && g->numberOfStemV) {
-		float ref = 0;
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
-			il_push_operand(il, g->stemV[j].position - ref);
-			il_push_operand(il, g->stemV[j].width);
-			ref = g->stemV[j].position + g->stemV[j].width;
-		}
-		if (hasmask) {
-			il_push_op(il, op_vstemhm);
-		} else {
-			il_push_op(il, op_vstem);
-		}
-	}
-	uint16_t pointsSofar = 0;
-	uint16_t jh = 0;
-	uint16_t jm = 0;
-	if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_contour *contour = &(g->contours[c]);
-		uint16_t n = contour->pointsCount;
-		if (n == 0) continue;
-		il_push_operand(il, contour->points[0].x);
-		il_push_operand(il, contour->points[0].y);
-		il_push_op(il, op_rmoveto);
-		pointsSofar++;
-		if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
-		for (uint16_t j = 1; j < n; j++) {
-			if (contour->points[j].onCurve) {
-				il_lineto(il, contour->points[j].x, contour->points[j].y);
-				pointsSofar++;
-			} else {
-				if (j < n - 2 && !contour->points[j + 1].onCurve &&
-				    contour->points[j + 2].onCurve) {
-					il_curveto(il, contour->points[j].x, contour->points[j].y,
-					           contour->points[j + 1].x, contour->points[j + 1].y,
-					           contour->points[j + 2].x, contour->points[j + 2].y);
-					pointsSofar += 3;
-					j += 2;
-				} else {
-					il_lineto(il, contour->points[j].x, contour->points[j].y);
-					pointsSofar++;
-				}
-			}
-			if (hasmask) pushMarks(il, g, pointsSofar, &jh, &jm);
-		}
-	}
-	il_push_op(il, op_endchar);
-	return il;
-}
-
-// Pattern-based peephole optimization
-static bool il_matchtype(charstring_il *il, uint32_t j, uint32_t k, il_type t) {
-	if (k >= il->length) return false;
-	for (uint32_t m = j; m < k; m++) {
-		if (il->instr[m].type != t) return false;
-	}
-	return true;
-}
-static bool il_matchop(charstring_il *il, uint32_t j, int32_t op) {
-	if (il->instr[j].type != IL_ITEM_OPERATOR) return false;
-	if (il->instr[j].i != op) return false;
-	return true;
-}
-static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...) {
-	uint8_t arity = cs2_op_standard_arity(op);
-	if (arity > 16 || j + arity >= il->length) return 0;
-	if ((j == 0 || // We are at the beginning of charstring
-	     !il_matchtype(il, j - 1, j,
-	                   IL_ITEM_PHANTOM_OPERATOR)) // .. or we are right after a solid operator
-	    && il_matchop(il, j + arity, op)          // The next operator is <op>
-	    && il_matchtype(il, j, j + arity, IL_ITEM_OPERAND) // And we have correct number of operands
-	    ) {
-		va_list ap;
-		uint8_t check = true;
-		uint8_t resultArity = arity;
-		bool mask[16];
-		va_start(ap, op2);
-		for (uint32_t m = 0; m < arity; m++) {
-			int checkzero = va_arg(ap, int);
-			mask[m] = checkzero;
-			if (checkzero) {
-				resultArity -= 1;
-				check = check && il->instr[j + m].d == 0;
-			}
-		}
-		va_end(ap);
-		if (check) {
-			for (uint32_t m = 0; m < arity; m++) {
-				if (mask[m]) { il->instr[j + m].type = IL_ITEM_PHANTOM_OPERAND; }
-			}
-			il->instr[j + arity].i = op2;
-			il->instr[j + arity].arity = resultArity;
-			return arity;
-		} else {
-			return 0;
-		}
-	} else {
-		return 0;
-	}
-}
-static uint8_t opop_roll(charstring_il *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2,
-                         int32_t resultop) {
-	if (j + 1 + arity >= il->length) return 0;
-	charstring_instruction *current = &(il->instr[j]);
-	charstring_instruction *nextop = &(il->instr[j + 1 + arity]);
-	if (il_matchop(il, j, op1)                                     // match this operator
-	    && il_matchtype(il, j + 1, j + 1 + arity, IL_ITEM_OPERAND) // match operands
-	    && il_matchop(il, j + 1 + arity, op2)                      // match next operator
-	    && current->arity + nextop->arity <= type2_argument_stack  // stack is not full
-	    ) {
-		current->type = IL_ITEM_PHANTOM_OPERATOR;
-		nextop->i = resultop;
-		nextop->arity += current->arity;
-		return arity + 1;
-	} else {
-		return 0;
-	}
-}
-static uint8_t hvlineto_roll(charstring_il *il, uint32_t j) {
-	if (j + 3 >= il->length) return 0;
-	charstring_instruction *current = &(il->instr[j]);
-	// We will check whether operand <checkdelta> is zero
-	//          ODD     EVEN -- current arity
-	// hlineto   X       Y
-	// vlineto   Y       X
-	uint32_t checkdelta = ((bool)(current->arity & 1) ^ (bool)(current->i == op_vlineto) ? 1 : 2);
-	if ((il_matchop(il, j, op_hlineto) || il_matchop(il, j, op_vlineto)) // a hlineto/vlineto
-	    && il_matchop(il, j + 3, op_rlineto)                             // followed by a lineto
-	    && il_matchtype(il, j + 1, j + 3, IL_ITEM_OPERAND)               // have enough operands
-	    && il->instr[j + checkdelta].d == 0                              // and it is a h/v
-	    && current->arity + 1 <= type2_argument_stack // we have enough stack space
-	    ) {
-		il->instr[j + checkdelta].type = IL_ITEM_PHANTOM_OPERAND;
-		il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
-		il->instr[j + 3].i = current->i;
-		il->instr[j + 3].arity = current->arity + 1;
-		return 3;
-	} else {
-		return 0;
-	}
-}
-static uint8_t hvvhcurve_roll(charstring_il *il, uint32_t j) {
-	if (!il_matchop(il, j, op_hvcurveto) && !il_matchop(il, j, op_vhcurveto)) return 0;
-	charstring_instruction *current = &(il->instr[j]);
-	// Exit in case of array not long enough or we have already ended
-	if (j + 7 >= il->length || current->arity & 1) return 0;
-	bool hvcase = (bool)((current->arity >> 2) & 1) ^ (bool)(current->i == op_hvcurveto);
-	// We will check whether operand <checkdelta> is zero
-	//            ODD     EVEN -- current arity divided by 4
-	// hvcurveto   X       Y
-	// vhcurveto   Y       X
-	uint32_t checkdelta1 = hvcase ? 2 : 1;
-	uint32_t checkdelta2 = hvcase ? 5 : 6;
-	if (il_matchop(il, j + 7, op_rrcurveto)                // followed by a curveto
-	    && il_matchtype(il, j + 1, j + 7, IL_ITEM_OPERAND) // have enough operands
-	    && il->instr[j + checkdelta1].d == 0               // and it is a h/v
-	    ) {
-		if (il->instr[j + checkdelta2].d == 0 && current->arity + 4 <= type2_argument_stack) {
-			// The Standard case
-			il->instr[j + checkdelta1].type = IL_ITEM_PHANTOM_OPERAND;
-			il->instr[j + checkdelta2].type = IL_ITEM_PHANTOM_OPERAND;
-			il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
-			il->instr[j + 7].i = current->i;
-			il->instr[j + 7].arity = current->arity + 4;
-			return 7;
-		} else if (current->arity + 5 <= type2_argument_stack) {
-			// The trailing case
-			il->instr[j + checkdelta1].type = IL_ITEM_PHANTOM_OPERAND;
-			il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
-			il->instr[j + 7].i = current->i;
-			il->instr[j + 7].arity = current->arity + 5;
-			if (hvcase) {
-				// Swap the last two operands because hvcurveto's trailing operand is in y-x order
-				double t = il->instr[j + 5].d;
-				il->instr[j + 5].d = il->instr[j + 6].d;
-				il->instr[j + 6].d = t;
-			}
-			return 7;
-		} else {
-			return 0;
-		}
-	} else {
-		return 0;
-	}
-}
-static uint8_t hhvvcurve_roll(charstring_il *il, uint32_t j) {
-	if (!il_matchop(il, j, op_hhcurveto) && !il_matchop(il, j, op_vvcurveto)) return 0;
-	charstring_instruction *current = &(il->instr[j]);
-	// Exit in case of array not long enough or we have already ended
-	if (j + 7 >= il->length) return 0;
-	bool hh = current->i == op_hhcurveto;
-	uint32_t checkdelta1 = hh ? 2 : 1;
-	uint32_t checkdelta2 = hh ? 6 : 5;
-	if (il_matchop(il, j + 7, op_rrcurveto)                // followed by a curveto
-	    && il_matchtype(il, j + 1, j + 7, IL_ITEM_OPERAND) // have enough operands
-	    && il->instr[j + checkdelta1].d == 0               // and it is a h/v
-	    && il->instr[j + checkdelta2].d == 0               // and it is a h/v
-	    && current->arity + 4 <= type2_argument_stack) {
-		il->instr[j + checkdelta1].type = IL_ITEM_PHANTOM_OPERAND;
-		il->instr[j + checkdelta2].type = IL_ITEM_PHANTOM_OPERAND;
-		il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
-		il->instr[j + 7].i = current->i;
-		il->instr[j + 7].arity = current->arity + 4;
-		return 7;
-	} else {
-		return 0;
-	}
-}
-static uint32_t nextstop(charstring_il *il, uint32_t j) {
-	uint32_t delta = 0;
-	for (uint32_t k = 0; k < il->length && il->instr[k].type == IL_ITEM_OPERAND; k++) {
-		delta += 1;
-	}
-	return delta;
-}
-
-static void glyph_il_peephole_optimization(charstring_il *il) {
-	uint32_t j = 0;
-	while (j < il->length) {
-		j += zroll(il, j, op_rlineto, op_hlineto, 0, 1)                    // rlineto -> hlineto
-		     || zroll(il, j, op_rlineto, op_vlineto, 1, 0)                 // rlineto -> vlineto
-		     || zroll(il, j, op_rmoveto, op_hmoveto, 0, 1)                 // rmoveto -> hmoveto
-		     || zroll(il, j, op_rmoveto, op_vmoveto, 1, 0)                 // rmoveto -> vmoveto
-		     || zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0) // rrcurveto->hvcurveto
-		     || zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1) // rrcurveto->vhcurveto
-		     || zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1) // rrcurveto->hhcurveto
-		     || zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0) // rrcurveto->vvcurveto
-		     || opop_roll(il, j, op_rrcurveto, 6, op_rrcurveto, op_rrcurveto) // rrcurveto roll
-		     || opop_roll(il, j, op_rrcurveto, 2, op_rlineto, op_rcurveline)  // rcurveline roll
-		     || opop_roll(il, j, op_rlineto, 6, op_rrcurveto, op_rlinecurve)  // rlinecurve roll
-		     || opop_roll(il, j, op_rlineto, 2, op_rlineto, op_rlineto)       // rlineto roll
-		     || hvlineto_roll(il, j)  // hlineto-vlineto roll
-		     || hhvvcurve_roll(il, j) // hhcurveto-vvcurveto roll
-		     || hvvhcurve_roll(il, j) // hvcurveto-vhcurveto roll
-		     || nextstop(il, j)       // move to next stop
-		     || 1;                    // nothing match
-	}
-}
-
-static caryll_buffer *il2blob(charstring_il *il) {
-	caryll_buffer *blob = bufnew();
-
-	uint16_t stackDepth = 0;
-	for (uint16_t j = 0; j < il->length; j++) {
-		switch (il->instr[j].type) {
-			case IL_ITEM_OPERAND: {
-				merge_cs2_operand(blob, il->instr[j].d);
-				stackDepth++;
-				break;
-			}
-			case IL_ITEM_OPERATOR: {
-				merge_cs2_operator(blob, il->instr[j].i);
-				stackDepth = 0;
-				break;
-			}
-			case IL_ITEM_SPECIAL: {
-				merge_cs2_special(blob, il->instr[j].i);
-				break;
-			}
-			default:
-				break;
-		}
-	}
-	return blob;
-}
-
 static caryll_buffer *compile_glyph(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidthX) {
 	charstring_il *il = compile_glyph_to_il(g, defaultWidth, nominalWidthX);
 	glyph_il_peephole_optimization(il);
@@ -1258,32 +821,19 @@ static caryll_buffer *compile_glyph(glyf_glyph *g, uint16_t defaultWidth, uint16
 	return blob;
 }
 
-static caryll_buffer *compile_glyf_to_charstring(table_glyf *glyf, uint16_t defaultWidth,
-                                                 uint16_t nominalWidthX) {
-	if (glyf->numberGlyphs == 0) return bufnew();
-	CFF_INDEX *charstring = cff_index_init();
-	charstring->count = glyf->numberGlyphs;
-	charstring->offSize = 4;
-	NEW_N(charstring->offset, charstring->count + 1);
-	charstring->offset[0] = 1;
-	charstring->data = NULL;
-
-	size_t used = 0;
-	size_t blank = 0;
-	for (uint32_t j = 0; j < glyf->numberGlyphs; j++) {
-		caryll_buffer *blob = compile_glyph(glyf->glyphs[j], defaultWidth, nominalWidthX);
-		if (blank < blob->size) {
-			used += blob->size;
-			blank = (used >> 1) & 0xFFFFFF;
-			charstring->data = realloc(charstring->data, sizeof(uint8_t) * (used + blank));
-		} else {
-			used += blob->size;
-			blank -= blob->size;
-		}
-		charstring->offset[j + 1] = (uint32_t)(blob->size + charstring->offset[j]);
-		memcpy(charstring->data + charstring->offset[j] - 1, blob->data, blob->size);
-		buffree(blob);
-	}
+typedef struct {
+	table_glyf *glyf;
+	uint16_t defaultWidth;
+	uint16_t nominalWidthX;
+} cff_charstring_builder_context;
+static caryll_buffer *callback_makeglyph(void *_context, uint32_t j) {
+	cff_charstring_builder_context *context = (cff_charstring_builder_context *)_context;
+	return compile_glyph(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
+}
+static caryll_buffer *cff_make_charstrings(cff_charstring_builder_context *context) {
+	if (context->glyf->numberGlyphs == 0) return bufnew();
+	CFF_INDEX *charstring =
+	    cff_buildindex_callback(context, context->glyf->numberGlyphs, callback_makeglyph);
 	caryll_buffer *final_blob = compile_index(*charstring);
 	cff_index_fini(charstring);
 	return final_blob;
@@ -1345,8 +895,8 @@ static void cffdict_input(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_
 	}
 	va_end(ap);
 }
-static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_t arity,
-                               float *arr) {
+static void cffdict_input_array(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, uint16_t arity,
+                                float *arr) {
 	if (!arity || !arr) return;
 	CFF_Dict_Entry *last = cffdict_givemeablank(dict);
 	last->op = op;
@@ -1372,7 +922,6 @@ static void cffdict_input_aray(CFF_Dict *dict, uint32_t op, CFF_Value_Type t, ui
 static CFF_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	CFF_Dict *dict;
 	NEW_CLEAN(dict);
-
 	// ROS
 	if (fd->cidRegistry && fd->cidOrdering) {
 		cffdict_input(dict, op_ROS, CFF_INTEGER, 3, sidof(h, fd->cidRegistry),
@@ -1417,13 +966,13 @@ static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	NEW_CLEAN(dict);
 	if (!pd) return dict;
 	// DELTA arrays
-	cffdict_input_aray(dict, op_BlueValues, CFF_DOUBLE, pd->blueValuesCount, pd->blueValues);
-	cffdict_input_aray(dict, op_OtherBlues, CFF_DOUBLE, pd->otherBluesCount, pd->otherBlues);
-	cffdict_input_aray(dict, op_FamilyBlues, CFF_DOUBLE, pd->familyBluesCount, pd->familyBlues);
-	cffdict_input_aray(dict, op_FamilyOtherBlues, CFF_DOUBLE, pd->familyOtherBluesCount,
-	                   pd->familyOtherBlues);
-	cffdict_input_aray(dict, op_StemSnapH, CFF_DOUBLE, pd->stemSnapHCount, pd->stemSnapH);
-	cffdict_input_aray(dict, op_StemSnapV, CFF_DOUBLE, pd->stemSnapVCount, pd->stemSnapV);
+	cffdict_input_array(dict, op_BlueValues, CFF_DOUBLE, pd->blueValuesCount, pd->blueValues);
+	cffdict_input_array(dict, op_OtherBlues, CFF_DOUBLE, pd->otherBluesCount, pd->otherBlues);
+	cffdict_input_array(dict, op_FamilyBlues, CFF_DOUBLE, pd->familyBluesCount, pd->familyBlues);
+	cffdict_input_array(dict, op_FamilyOtherBlues, CFF_DOUBLE, pd->familyOtherBluesCount,
+	                    pd->familyOtherBlues);
+	cffdict_input_array(dict, op_StemSnapH, CFF_DOUBLE, pd->stemSnapHCount, pd->stemSnapH);
+	cffdict_input_array(dict, op_StemSnapV, CFF_DOUBLE, pd->stemSnapVCount, pd->stemSnapV);
 
 	// Private scalars
 	cffdict_input(dict, op_BlueScale, CFF_DOUBLE, 1, pd->blueScale);
@@ -1442,57 +991,29 @@ static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	return dict;
 }
 
-static caryll_buffer *cff_compileDict(CFF_Dict *dict) {
-	caryll_buffer *blob = bufnew();
-	for (uint32_t i = 0; i < dict->count; i++) {
-		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
-			caryll_buffer *blob_val;
-			if (dict->ents[i].vals[j].t == CFF_INTEGER) {
-				blob_val = encode_cff_number(dict->ents[i].vals[j].i);
-			} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
-				blob_val = encode_cff_real(dict->ents[i].vals[j].d);
-			} else {
-				blob_val = encode_cff_number(0);
-			}
-			bufwrite_bufdel(blob, blob_val);
-		}
-		bufwrite_bufdel(blob, encode_cff_operator(dict->ents[i].op));
-	}
-	return blob;
-}
-
 static int by_sid(cff_sid_entry *a, cff_sid_entry *b) { return a->sid - b->sid; }
+static caryll_buffer *callback_makestringindex(void *context, uint32_t i) {
+	caryll_buffer **blobs = context;
+	return blobs[i];
+}
 static caryll_buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 	HASH_SORT(*h, by_sid);
-	CFF_INDEX *strings = cff_index_init();
-	strings->count = HASH_COUNT(*h);
-	strings->offSize = 4;
-	NEW_N(strings->offset, strings->count + 1);
-	strings->offset[0] = 1;
-	strings->data = NULL;
-
-	cff_sid_entry *item, *tmp;
+	caryll_buffer **blobs;
+	uint32_t n = HASH_COUNT(*h);
+	NEW_N(blobs, n);
 	uint32_t j = 0;
-
-	size_t used = 0;
-	size_t blanks = 0;
-
+	cff_sid_entry *item, *tmp;
 	HASH_ITER(hh, *h, item, tmp) {
-		strings->offset[j + 1] = (uint32_t)(sdslen(item->str) + strings->offset[j]);
-		if (blanks < sdslen(item->str)) {
-			used += sdslen(item->str);
-			blanks = (used >> 1) & 0xFFFFFF;
-			strings->data = realloc(strings->data, sizeof(uint8_t) * used + blanks);
-		} else {
-			blanks -= sdslen(item->str);
-			used += sdslen(item->str);
-		}
-		memcpy(strings->data + strings->offset[j] - 1, item->str, sdslen(item->str));
-		sdsfree(item->str);
+		blobs[j] = bufnew();
+		bufwrite_sds(blobs[j], item->str);
 		HASH_DEL(*h, item);
+		sdsfree(item->str);
 		free(item);
 		j++;
 	}
+
+	CFF_INDEX *strings = cff_buildindex_callback(blobs, n, callback_makestringindex);
+	free(blobs);
 	caryll_buffer *final_blob = compile_index(*strings);
 	cff_index_fini(strings);
 	final_blob->cursor = final_blob->size;
@@ -1519,14 +1040,43 @@ static caryll_buffer *cff_compile_nameindex(table_CFF *cff) {
 	return buf;
 }
 
-CFF_FDSelect *figureOutFDSelect(table_CFF *cff, table_glyf *glyf) {
+static caryll_buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf,
+                                       cff_sid_entry **stringHash) {
+	CFF_Charset *charset;
+	NEW_CLEAN(charset);
+	if (glyf->numberGlyphs > 1) { // At least two glyphs
+		charset->t = CFF_CHARSET_FORMAT2;
+		charset->s = 1; // One segment only
+		charset->f2.format = 2;
+		NEW(charset->f2.range2);
+		if (cff->isCID) {
+			charset->f2.range2[0].first = 1;
+			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+		} else {
+			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+				sidof(stringHash, glyf->glyphs[j]->name);
+			}
+			charset->f2.range2[0].first = sidof(stringHash, glyf->glyphs[1]->name);
+			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+		}
+	} else {
+		charset->t = CFF_CHARSET_ISOADOBE;
+	}
+	caryll_buffer *c = compile_charset(*charset);
+	if (charset->t == CFF_CHARSET_FORMAT2) { FREE(charset->f2.range2); }
+	FREE(charset);
+	return c;
+}
+
+static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
+	if (!cff->isCID) return bufnew();
 	// We choose format 3 here
 	uint32_t ranges = 1;
 	uint8_t current = 0;
 	CFF_FDSelect *fds;
 	NEW_CLEAN(fds);
 	fds->t = CFF_FDSELECT_UNSPECED;
-	if (!glyf->numberGlyphs) return fds;
+	if (!glyf->numberGlyphs) goto done;
 	uint8_t fdi0 = glyf->glyphs[0]->fdSelectIndex;
 	if (fdi0 > cff->fdArrayCount) fdi0 = 0;
 	current = fdi0;
@@ -1556,31 +1106,34 @@ CFF_FDSelect *figureOutFDSelect(table_CFF *cff, table_glyf *glyf) {
 	fds->f3.format = 3;
 	fds->f3.nranges = ranges;
 	fds->f3.sentinel = glyf->numberGlyphs;
-	return fds;
+done:;
+	caryll_buffer *e = compile_fdselect(*fds);
+	if (fds->t == CFF_FDSELECT_FORMAT3) FREE(fds->f3.range3);
+	free(fds);
+	return e;
 }
 
-CFF_INDEX *cff_compile_fdarray(uint16_t fdArrayCount, table_CFF **fdArray,
-                               cff_sid_entry **stringHash) {
-	CFF_INDEX *newfd = cff_index_init();
+typedef struct {
+	table_CFF **fdArray;
+	cff_sid_entry **stringHash;
+} fdarray_compile_context;
+static caryll_buffer *callback_makefd(void *_context, uint32_t i) {
+	fdarray_compile_context *context = (fdarray_compile_context *)_context;
+	CFF_Dict *fd = cff_make_fd_dict(context->fdArray[i], context->stringHash);
+	caryll_buffer *blob = compile_dict(fd);
+	bufwrite_bufdel(blob, compile_offset(0xEEEEEEEE));
+	bufwrite_bufdel(blob, compile_offset(0xFFFFFFFF));
+	bufwrite_bufdel(blob, encode_cff_operator(op_Private));
+	cff_delete_dict(fd);
+	return blob;
+}
+static CFF_INDEX *cff_make_fdarray(uint16_t fdArrayCount, table_CFF **fdArray,
+                                   cff_sid_entry **stringHash) {
+	fdarray_compile_context context;
+	context.fdArray = fdArray;
+	context.stringHash = stringHash;
 
-	for (uint32_t i = 0; i < fdArrayCount; i++) {
-		CFF_Dict *fd = cff_make_fd_dict(fdArray[i], stringHash);
-		caryll_buffer *blob = cff_compileDict(fd);
-		bufwrite_bufdel(blob, compile_offset(0xEEEEEEEE));
-		bufwrite_bufdel(blob, compile_offset(0xFFFFFFFF));
-		bufwrite_bufdel(blob, encode_cff_operator(op_Private));
-		cff_delete_dict(fd);
-		newfd->count += 1;
-		newfd->offset = realloc(newfd->offset, (newfd->count + 1) * sizeof(uint32_t));
-		if (newfd->count == 1) newfd->offset[0] = 1;
-		newfd->offset[newfd->count] = (uint32_t)(blob->size + newfd->offset[newfd->count - 1]);
-		newfd->data = realloc(newfd->data, newfd->offset[newfd->count] - 1);
-		memcpy(newfd->data + newfd->offset[newfd->count - 1] - 1, blob->data, blob->size);
-		buffree(blob);
-	}
-
-	newfd->offSize = 4;
-	return newfd;
+	return cff_buildindex_callback(&context, fdArrayCount, callback_makefd);
 }
 
 static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
@@ -1594,65 +1147,41 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 
 	// cff top DICT
 	CFF_Dict *top = cff_make_fd_dict(cff, &stringHash);
-	caryll_buffer *t = cff_compileDict(top);
+	caryll_buffer *t = compile_dict(top);
 	cff_delete_dict(top);
-	// cff top PRIVATEs
+	// cff top PRIVATE
 	CFF_Dict *top_pd = cff_make_private_dict(cff->privateDict);
-	caryll_buffer *p = cff_compileDict(top_pd);
+	caryll_buffer *p = compile_dict(top_pd);
 	cff_delete_dict(top_pd);
 
 	// FDSelect
-	caryll_buffer *e;
-	if (cff->isCID) {
-		CFF_FDSelect *fds = figureOutFDSelect(cff, glyf);
-		e = compile_fdselect(*fds);
-		if (fds->t == CFF_FDSELECT_FORMAT3) FREE(fds->f3.range3);
-		free(fds);
-	} else {
-		NEW_CLEAN(e);
-	}
+	caryll_buffer *e = cff_make_fdselect(cff, glyf);
 
 	// FDArray
 	CFF_INDEX *fdArrayIndex = NULL;
 	caryll_buffer *r;
 	if (cff->isCID) {
-		fdArrayIndex = cff_compile_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
+		fdArrayIndex = cff_make_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
 		r = compile_index(*fdArrayIndex);
 	} else {
 		NEW_CLEAN(r);
 	}
 
 	// cff charset : Allocate string index terms for glyph names
-	CFF_Charset *charset;
-	NEW_CLEAN(charset);
-	if (glyf->numberGlyphs > 1) { // At least two glyphs
-		charset->t = CFF_CHARSET_FORMAT2;
-		charset->s = 1; // One segment only
-		charset->f2.format = 2;
-		NEW(charset->f2.range2);
-		if (cff->isCID) {
-			charset->f2.range2[0].first = 1;
-			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
-		} else {
-			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
-				sidof(&stringHash, glyf->glyphs[j]->name);
-			}
-			charset->f2.range2[0].first = sidof(&stringHash, glyf->glyphs[1]->name);
-			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
-		}
-	} else {
-		charset->t = CFF_CHARSET_ISOADOBE;
-	}
-	caryll_buffer *c = compile_charset(*charset);
-	if (charset->t == CFF_CHARSET_FORMAT2) { FREE(charset->f2.range2); }
-	FREE(charset);
+	caryll_buffer *c = cff_make_charset(cff, glyf, &stringHash);
 
 	// CFF String Index
 	caryll_buffer *i = cffstrings_to_indexblob(&stringHash);
 
 	// CFF Charstrings
-	caryll_buffer *s = compile_glyf_to_charstring(glyf, cff->privateDict->defaultWidthX,
-	                                              cff->privateDict->nominalWidthX);
+	caryll_buffer *s;
+	{
+		cff_charstring_builder_context g2cContext;
+		g2cContext.glyf = glyf;
+		g2cContext.defaultWidth = cff->privateDict->defaultWidthX;
+		g2cContext.nominalWidthX = cff->privateDict->nominalWidthX;
+		s = cff_make_charstrings(&g2cContext);
+	}
 
 	// Merge these data
 	uint32_t delta = 0;
@@ -1662,19 +1191,22 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 	if (s->size != 0) delta += 6;
 	if (p->size != 0) delta += 11;
 	if (r->size != 0) delta += 7;
-	bufwrite_bufdel(blob, h);
-	bufwrite_bufdel(blob, n);
+
+	// Start building CFF table
+	bufwrite_bufdel(blob, h); // header
+	bufwrite_bufdel(blob, n); // name index
 	int32_t delta_size = (uint32_t)(t->size + delta + 1);
-	bufwrite_bufdel(blob, bufninit(11, 0, 1,   // one item
+	bufwrite_bufdel(blob, bufninit(11, 0, 1,   // top dict index headerone item
 	                               4,          // four bytes per offset
 	                               0, 0, 0, 1, // offset 1
 	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff,
 	                               (delta_size >> 8) & 0xff,
 	                               delta_size & 0xff) // offset 2
 	                );
-	bufwrite_bufdel(blob, t);
 
-	// Compile offsets
+	bufwrite_bufdel(blob, t); // top dict body
+
+	// top dict offsets
 	off += delta + i->size + 3;
 	if (c->size != 0) {
 		bufwrite_bufdel(blob, compile_offset(off));
@@ -1703,19 +1235,19 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 		off += r->size;
 	}
 
-	bufwrite_bufdel(blob, i);
+	bufwrite_bufdel(blob, i);                    // string index
 	bufwrite_bufdel(blob, bufninit(3, 0, 0, 0)); // gsubr
-	bufwrite_bufdel(blob, c);
-	bufwrite_bufdel(blob, e);
-	bufwrite_bufdel(blob, s);
-	bufwrite_bufdel(blob, p);
-	if (cff->isCID) {
+	bufwrite_bufdel(blob, c);                    // charset
+	bufwrite_bufdel(blob, e);                    // fdselect
+	bufwrite_bufdel(blob, s);                    // charstring
+	bufwrite_bufdel(blob, p);                    // top private
+	if (cff->isCID) {                            // fdarray and fdarray privates
 		uint32_t fdArrayPrivatesStartOffset = off;
 		caryll_buffer **fdArrayPrivates;
 		NEW_N(fdArrayPrivates, cff->fdArrayCount);
 		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
 			CFF_Dict *pd = cff_make_private_dict(cff->fdArray[j]->privateDict);
-			caryll_buffer *p = cff_compileDict(pd);
+			caryll_buffer *p = compile_dict(pd);
 			cff_delete_dict(pd);
 			fdArrayPrivates[j] = p;
 			uint8_t *privateLengthPtr = &(fdArrayIndex->data[fdArrayIndex->offset[j + 1] - 11]);
@@ -1730,7 +1262,7 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 			privateOffsetPtr[3] = (fdArrayPrivatesStartOffset >> 0) & 0xFF;
 			fdArrayPrivatesStartOffset += p->size;
 		}
-		buffree(r);
+		buffree(r); // fdarray
 		r = compile_index(*fdArrayIndex);
 		cff_index_fini(fdArrayIndex);
 		bufwrite_bufdel(blob, r);
@@ -1741,7 +1273,7 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf) {
 	} else {
 		bufwrite_bufdel(blob, r);
 	}
-
+	// finish
 	return blob;
 }
 

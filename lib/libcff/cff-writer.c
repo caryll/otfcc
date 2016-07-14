@@ -14,6 +14,53 @@
 
 caryll_buffer *compile_header(void) { return bufninit(4, 1, 0, 4, 4); }
 
+caryll_buffer *compile_dict(CFF_Dict *dict) {
+	caryll_buffer *blob = bufnew();
+	for (uint32_t i = 0; i < dict->count; i++) {
+		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
+			caryll_buffer *blob_val;
+			if (dict->ents[i].vals[j].t == CFF_INTEGER) {
+				blob_val = encode_cff_number(dict->ents[i].vals[j].i);
+			} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
+				blob_val = encode_cff_real(dict->ents[i].vals[j].d);
+			} else {
+				blob_val = encode_cff_number(0);
+			}
+			bufwrite_bufdel(blob, blob_val);
+		}
+		bufwrite_bufdel(blob, encode_cff_operator(dict->ents[i].op));
+	}
+	return blob;
+}
+
+CFF_INDEX *cff_buildindex_callback(void *context, uint32_t length,
+                                   caryll_buffer *(*fn)(void *, uint32_t)) {
+	CFF_INDEX *idx = cff_index_init();
+	idx->count = length;
+	NEW_N(idx->offset, idx->count + 1);
+	idx->offset[0] = 1;
+	idx->data = NULL;
+
+	size_t used = 0;
+	size_t blank = 0;
+	for (uint32_t i = 0; i < length; i++) {
+		caryll_buffer *blob = fn(context, i);
+		if (blank < blob->size) {
+			used += blob->size;
+			blank = (used >> 1) & 0xFFFFFF;
+			idx->data = realloc(idx->data, sizeof(uint8_t) * (used + blank));
+		} else {
+			used += blob->size;
+			blank -= blob->size;
+		}
+		idx->offset[i + 1] = (uint32_t)(blob->size + idx->offset[i]);
+		memcpy(idx->data + idx->offset[i] - 1, blob->data, blob->size);
+		buffree(blob);
+	}
+	idx->offSize = 4;
+	return idx;
+}
+
 caryll_buffer *compile_index(CFF_INDEX index) {
 	caryll_buffer *blob = bufnew();
 	uint32_t i;

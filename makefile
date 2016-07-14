@@ -95,4 +95,4 @@ cffroundtriptest :
 	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-4.otf -o build/roundtrip-Cormorant-Medium-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-Cormorant-Medium-3.json build/roundtrip-Cormorant-Medium-5.json
 
-test: cffopcodetest ttfroundtriptest cffroundtriptest
+test: cffroundtriptest cffopcodetest ttfroundtriptest

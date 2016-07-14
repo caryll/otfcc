@@ -263,8 +263,6 @@ typedef enum {
 	CS2_FRACTION = 3
 } CFF_Value_Type;
 
-enum { CFF_LIMIT_STACK = 48, CFF_LIMIT_TRANSIENT = 32 };
-
 typedef struct {
 	CFF_Value_Type t;
 	union {
@@ -376,10 +374,15 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_IN
 
 extern CFF_INDEX *cff_index_init(void);
 extern void cff_index_fini(CFF_INDEX *out);
+CFF_INDEX *cff_buildindex_callback(void *context, uint32_t length,
+                                   caryll_buffer *(*fn)(void *, uint32_t));
 
 void cff_dict_callback(uint8_t *data, uint32_t len, void *context,
                        void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack, void *context));
 
 extern double cffnum(CFF_Value v);
+
+void cff_delete_dict(CFF_Dict *dict);
+caryll_buffer *compile_dict(CFF_Dict *dict);
 
 #endif

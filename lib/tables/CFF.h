@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <support/util.h>
 #include <libcff/libcff.h>
+#include <libcff/charstring_il.h>
 #include <font/caryll-sfnt.h>
 #include "glyf.h"
 
