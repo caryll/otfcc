@@ -49,8 +49,9 @@ static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float
 	il_push_op(il, op_rrcurveto);
 }
 
-static void pushMasks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
-                      uint16_t *jm) {
+static void il_push_masks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_t *jh,
+                          uint16_t *jm) {
+	if (!g->numberOfStemH && !g->numberOfStemV) return;
 	while (*jm < g->numberOfContourMasks && g->contourMasks[*jm].pointsBefore <= points) {
 		il_push_op(il, op_cntrmask);
 		uint8_t maskByte = 0;
@@ -104,34 +105,58 @@ static void pushMasks(charstring_il *il, glyf_glyph *g, uint16_t points, uint16_
 		*jh += 1;
 	}
 }
-static bool _pushStems(charstring_il *il, glyf_glyph *g) {
+static bool il_push_stems(charstring_il *il, glyf_glyph *g, bool haswidth) {
 	bool hasmask =
 	    (g->hintMasks && g->numberOfHintMasks) || (g->contourMasks && g->numberOfContourMasks);
 	if (g->stemH && g->numberOfStemH) {
 		float ref = 0;
+		uint16_t nn = haswidth ? 1 : 0;
 		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
 			il_push_operand(il, g->stemH[j].position - ref);
 			il_push_operand(il, g->stemH[j].width);
 			ref = g->stemH[j].position + g->stemH[j].width;
+			nn++;
+			if (nn >= type2_argument_stack) {
+				if (hasmask) {
+					il_push_op(il, op_hstemhm);
+				} else {
+					il_push_op(il, op_hstem);
+				}
+				il->instr[il->length - 1].arity = nn;
+				nn = 0;
+			}
 		}
 		if (hasmask) {
 			il_push_op(il, op_hstemhm);
 		} else {
 			il_push_op(il, op_hstem);
 		}
+		il->instr[il->length - 1].arity = nn;
 	}
 	if (g->stemV && g->numberOfStemV) {
 		float ref = 0;
+		uint16_t nn = haswidth ? 1 : 0;
 		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
 			il_push_operand(il, g->stemV[j].position - ref);
 			il_push_operand(il, g->stemV[j].width);
 			ref = g->stemV[j].position + g->stemV[j].width;
+			nn++;
+			if (nn >= type2_argument_stack) {
+				if (hasmask) {
+					il_push_op(il, op_vstemhm);
+				} else {
+					il_push_op(il, op_vstem);
+				}
+				il->instr[il->length - 1].arity = nn;
+				nn = 0;
+			}
 		}
 		if (hasmask) {
 			il_push_op(il, op_vstemhm);
 		} else {
 			il_push_op(il, op_vstem);
 		}
+		il->instr[il->length - 1].arity = nn;
 	}
 	return hasmask;
 }
@@ -157,11 +182,11 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 	if (g->advanceWidth != defaultWidth) {
 		il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth));
 	}
-	bool hasmask = _pushStems(il, g);
+	bool hasmask = il_push_stems(il, g, g->advanceWidth != defaultWidth);
 	uint16_t pointsSofar = 0;
 	uint16_t jh = 0;
 	uint16_t jm = 0;
-	if (hasmask) pushMasks(il, g, pointsSofar, &jh, &jm);
+	if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
@@ -170,7 +195,7 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 		il_push_operand(il, contour->points[0].y);
 		il_push_op(il, op_rmoveto);
 		pointsSofar++;
-		if (hasmask) pushMasks(il, g, pointsSofar, &jh, &jm);
+		if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 		for (uint16_t j = 1; j < n; j++) {
 			if (contour->points[j].onCurve) {
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
@@ -188,7 +213,7 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 					pointsSofar++;
 				}
 			}
-			if (hasmask) pushMasks(il, g, pointsSofar, &jh, &jm);
+			if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 		}
 	}
 	il_push_op(il, op_endchar);
@@ -376,6 +401,10 @@ void glyph_il_peephole_optimization(charstring_il *il) {
 		     || opop_roll(il, j, op_rrcurveto, 2, op_rlineto, op_rcurveline)  // rcurveline roll
 		     || opop_roll(il, j, op_rlineto, 6, op_rrcurveto, op_rlinecurve)  // rlinecurve roll
 		     || opop_roll(il, j, op_rlineto, 2, op_rlineto, op_rlineto)       // rlineto roll
+		     || opop_roll(il, j, op_hstemhm, 0, op_hintmask, op_hintmask)     // hintmask roll
+		     || opop_roll(il, j, op_vstemhm, 0, op_hintmask, op_hintmask)     // hintmask roll
+		     || opop_roll(il, j, op_hstemhm, 0, op_cntrmask, op_cntrmask)     // cntrmask roll
+		     || opop_roll(il, j, op_vstemhm, 0, op_cntrmask, op_cntrmask)     // cntrmask roll
 		     || hvlineto_roll(il, j)  // hlineto-vlineto roll
 		     || hhvvcurve_roll(il, j) // hhcurveto-vvcurveto roll
 		     || hvvhcurve_roll(il, j) // hvcurveto-vhcurveto roll
