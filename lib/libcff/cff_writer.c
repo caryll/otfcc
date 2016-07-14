@@ -18,6 +18,17 @@ caryll_buffer *compile_index(CFF_INDEX index) {
 	caryll_buffer *blob = bufnew();
 	uint32_t i;
 
+	uint32_t lastOffset = index.offset[index.count];
+	if (lastOffset < 0x100) {
+		index.offSize = 1;
+	} else if (lastOffset < 0x10000) {
+		index.offSize = 2;
+	} else if (lastOffset < 0x1000000) {
+		index.offSize = 3;
+	} else {
+		index.offSize = 4;
+	}
+
 	if (index.count != 0)
 		blob->size = 3 + (index.offset[index.count] - 1) + ((index.count + 1) * index.offSize);
 	else
