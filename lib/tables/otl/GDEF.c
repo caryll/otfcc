@@ -221,7 +221,7 @@ static caryll_buffer *writeLigCarets(lig_caret_table *lc) {
 	return buf;
 }
 
-caryll_buffer *caryll_write_GDEF(table_GDEF *gdef) {
+caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 	size_t offset = 12;

@@ -350,37 +350,41 @@ static uint8_t hhvvcurve_roll(charstring_il *il, uint32_t j) {
 }
 static uint32_t nextstop(charstring_il *il, uint32_t j) {
 	uint32_t delta = 0;
-	for (uint32_t k = 0; k < il->length && il->instr[k].type == IL_ITEM_OPERAND; k++) {
-		delta += 1;
-	}
+	for (; j + delta < il->length && il->instr[j + delta].type == IL_ITEM_OPERAND; delta++)
+		;
 	return delta;
 }
+#define ROLL_FALL(x)                                                                               \
+	if ((r = (x))) return r;
+static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLevel) {
+	uint8_t r = 0;
+	ROLL_FALL(zroll(il, j, op_rlineto, op_hlineto, 0, 1));                 // rlineto -> hlineto
+	ROLL_FALL(zroll(il, j, op_rlineto, op_vlineto, 1, 0));                 // rlineto -> vlineto
+	ROLL_FALL(zroll(il, j, op_rmoveto, op_hmoveto, 0, 1));                 // rmoveto -> hmoveto
+	ROLL_FALL(zroll(il, j, op_rmoveto, op_vmoveto, 1, 0));                 // rmoveto -> vmoveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0)); // rrcurveto->hvcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1)); // rrcurveto->vhcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1)); // rrcurveto->hhcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0)); // rrcurveto->vvcurveto
+	ROLL_FALL(opop_roll(il, j, op_rrcurveto, 6, op_rrcurveto, op_rrcurveto)); // rrcurveto roll
+	ROLL_FALL(opop_roll(il, j, op_rrcurveto, 2, op_rlineto, op_rcurveline));  // rcurveline roll
+	ROLL_FALL(opop_roll(il, j, op_rlineto, 6, op_rrcurveto, op_rlinecurve));  // rlinecurve roll
+	ROLL_FALL(opop_roll(il, j, op_rlineto, 2, op_rlineto, op_rlineto));       // rlineto roll
+	ROLL_FALL(opop_roll(il, j, op_hstemhm, 0, op_hintmask, op_hintmask));     // hintmask roll
+	ROLL_FALL(opop_roll(il, j, op_vstemhm, 0, op_hintmask, op_hintmask));     // hintmask roll
+	ROLL_FALL(opop_roll(il, j, op_hstemhm, 0, op_cntrmask, op_cntrmask));     // cntrmask roll
+	ROLL_FALL(opop_roll(il, j, op_vstemhm, 0, op_cntrmask, op_cntrmask));     // cntrmask roll
+	ROLL_FALL(hvlineto_roll(il, j));  // hlineto-vlineto roll
+	ROLL_FALL(hhvvcurve_roll(il, j)); // hhcurveto-vvcurveto roll
+	ROLL_FALL(hvvhcurve_roll(il, j)); // hvcurveto-vhcurveto roll
+	ROLL_FALL(nextstop(il, j));       // move to next stop for operand match
+	return 1;                         // nothing match
+}
 
-void glyph_il_peephole_optimization(charstring_il *il) {
+void glyph_il_peephole_optimization(charstring_il *il, caryll_dump_options *dumpopts) {
+	if (!dumpopts->optimize_level) return;
 	uint32_t j = 0;
-	while (j < il->length) {
-		j += zroll(il, j, op_rlineto, op_hlineto, 0, 1)                    // rlineto -> hlineto
-		     || zroll(il, j, op_rlineto, op_vlineto, 1, 0)                 // rlineto -> vlineto
-		     || zroll(il, j, op_rmoveto, op_hmoveto, 0, 1)                 // rmoveto -> hmoveto
-		     || zroll(il, j, op_rmoveto, op_vmoveto, 1, 0)                 // rmoveto -> vmoveto
-		     || zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0) // rrcurveto->hvcurveto
-		     || zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1) // rrcurveto->vhcurveto
-		     || zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1) // rrcurveto->hhcurveto
-		     || zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0) // rrcurveto->vvcurveto
-		     || opop_roll(il, j, op_rrcurveto, 6, op_rrcurveto, op_rrcurveto) // rrcurveto roll
-		     || opop_roll(il, j, op_rrcurveto, 2, op_rlineto, op_rcurveline)  // rcurveline roll
-		     || opop_roll(il, j, op_rlineto, 6, op_rrcurveto, op_rlinecurve)  // rlinecurve roll
-		     || opop_roll(il, j, op_rlineto, 2, op_rlineto, op_rlineto)       // rlineto roll
-		     || opop_roll(il, j, op_hstemhm, 0, op_hintmask, op_hintmask)     // hintmask roll
-		     || opop_roll(il, j, op_vstemhm, 0, op_hintmask, op_hintmask)     // hintmask roll
-		     || opop_roll(il, j, op_hstemhm, 0, op_cntrmask, op_cntrmask)     // cntrmask roll
-		     || opop_roll(il, j, op_vstemhm, 0, op_cntrmask, op_cntrmask)     // cntrmask roll
-		     || hvlineto_roll(il, j)  // hlineto-vlineto roll
-		     || hhvvcurve_roll(il, j) // hhcurveto-vvcurveto roll
-		     || hvvhcurve_roll(il, j) // hvcurveto-vhcurveto roll
-		     || nextstop(il, j)       // move to next stop
-		     || 1;                    // nothing match
-	}
+	while (j < il->length) { j += decideAdvance(il, j, dumpopts->optimize_level); }
 }
 
 // IL to buffer conversion

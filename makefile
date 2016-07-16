@@ -76,22 +76,22 @@ ttfroundtriptest :
 
 cffroundtriptest :
 	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.otf -o build/roundtrip-WorkSans-Regular-1.json --pretty
-	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccbuild -O1 build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-2.otf -o build/roundtrip-WorkSans-Regular-3.json --pretty
-	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-3.json -o build/roundtrip-WorkSans-Regular-4.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccbuild -O1 build/roundtrip-WorkSans-Regular-3.json -o build/roundtrip-WorkSans-Regular-4.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-4.otf -o build/roundtrip-WorkSans-Regular-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-3.json build/roundtrip-WorkSans-Regular-5.json
 
-	@bin/Release-x64/otfccbuild tests/payload/WorkSans-Regular.json -o build/roundtrip-WorkSans-Regular-6.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccbuild -O1 tests/payload/WorkSans-Regular.json -o build/roundtrip-WorkSans-Regular-6.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-6.otf -o build/roundtrip-WorkSans-Regular-7.json --pretty
-	@bin/Release-x64/otfccbuild build/roundtrip-WorkSans-Regular-7.json -o build/roundtrip-WorkSans-Regular-8.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccbuild -O1 build/roundtrip-WorkSans-Regular-7.json -o build/roundtrip-WorkSans-Regular-8.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-WorkSans-Regular-8.otf -o build/roundtrip-WorkSans-Regular-9.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-WorkSans-Regular-7.json build/roundtrip-WorkSans-Regular-9.json
 
 	@bin/Release-x64/otfccdump tests/payload/Cormorant-Medium.otf -o build/roundtrip-Cormorant-Medium-1.json --pretty
-	@bin/Release-x64/otfccbuild build/roundtrip-Cormorant-Medium-1.json -o build/roundtrip-Cormorant-Medium-2.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccbuild -O1 build/roundtrip-Cormorant-Medium-1.json -o build/roundtrip-Cormorant-Medium-2.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-2.otf -o build/roundtrip-Cormorant-Medium-3.json --pretty
-	@bin/Release-x64/otfccbuild build/roundtrip-Cormorant-Medium-3.json -o build/roundtrip-Cormorant-Medium-4.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccbuild -O1 build/roundtrip-Cormorant-Medium-3.json -o build/roundtrip-Cormorant-Medium-4.otf --keep-average-char-width --keep-modified-time
 	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-4.otf -o build/roundtrip-Cormorant-Medium-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-Cormorant-Medium-3.json build/roundtrip-Cormorant-Medium-5.json
 

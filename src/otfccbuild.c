@@ -22,32 +22,38 @@ void printInfo() {
 	fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
 }
 void printHelp() {
-	fprintf(stdout,
-	        "\n"
-	        "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
-	        " input.json                : Path to input file. When absent the input will\n"
-	        "                             be read from the STDIN.\n"
-	        " -h, --help                : Display this help message and exit.\n"
-	        " -v, --version             : Display version information and exit.\n"
-	        " -o <file>                 : Set output file path to <file>.\n"
-	        " --time                    : Time each substep.\n"
-	        " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
-	        " --ignore-hints            : Ignore the hinting information in the input.\n"
-	        " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
-	        "                             instead of stating the average width of glyphs. \n"
-	        "                             Useful when creating a monospaced font.\n"
-	        " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
-	        "                             of using current time.\n"
-	        " --short-post              : Don't export glyph names in the result font. It \n"
-	        "                             will reduce file size.\n"
-	        " --dummy-DSIG              : Include an empty DSIG table in the font. For\n"
-	        "                             some Microsoft applications, a DSIG is required\n"
-	        "                             to enable OpenType features.\n"
-	        " --ship                    : Equivalent to the combination of these options:\n"
-	        "                              *  --ignore-glyph-order\n"
-	        "                              *  --short-post\n"
-	        "                              *  --dummy-dsig\n"
-	        "\n");
+	fprintf(
+	    stdout,
+	    "\n"
+	    "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
+	    " input.json                : Path to input file. When absent the input will\n"
+	    "                             be read from the STDIN.\n"
+	    " -h, --help                : Display this help message and exit.\n"
+	    " -v, --version             : Display version information and exit.\n"
+	    " -o <file>                 : Set output file path to <file>.\n"
+	    " --time                    : Time each substep.\n"
+	    " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
+	    " --ignore-hints            : Ignore the hinting information in the input.\n"
+	    " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
+	    "                             instead of stating the average width of glyphs. \n"
+	    "                             Useful when creating a monospaced font.\n"
+	    " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
+	    "                             of using current time.\n"
+	    " --short-post              : Don't export glyph names in the result font. It \n"
+	    "                             will reduce file size.\n"
+	    " --dummy-dsig, -s          : Include an empty DSIG table in the font. For\n"
+	    "                             some Microsoft applications, a DSIG is required\n"
+	    "                             to enable OpenType features.\n"
+	    " -O<n>                     : Specify the level for optimization.\n"
+	    "     -O0                     Turn off any optimization.\n"
+	    "     -O1                     Default optimization.\n"
+	    "     -O2                     More aggressive optimizations for web font. In\n"
+	    "                             this level, the --ignore-glyph-order and\n"
+	    "                             --short-post will be turned on.\n"
+	    //	        "     -O3                     In this level, CFF Subroutinization will be\n"
+	    //	        "                             enabled to compress more. Building font may be\n"
+	    //	        "                             slower than -O2.\n"
+	    "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
 	char *buffer = NULL;
@@ -130,6 +136,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
+	dumpopts->optimize_level = 1;
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -139,12 +146,13 @@ int main(int argc, char *argv[]) {
 	                            {"keep-average-char-width", no_argument, NULL, 0},
 	                            {"keep-modified-time", no_argument, NULL, 0},
 	                            {"short-post", no_argument, NULL, 0},
-	                            {"dummy-dsig", no_argument, NULL, 0},
+	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
+	                            {"optimize", required_argument, NULL, 'O'},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
 
-	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhsO:o:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
@@ -162,8 +170,6 @@ int main(int argc, char *argv[]) {
 					dumpopts->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
 					dumpopts->short_post = true;
-				} else if (strcmp(longopts[option_index].name, "dummy-dsig") == 0) {
-					dumpopts->dummy_DSIG = true;
 				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
 					dumpopts->ignore_glyph_order = true;
 					dumpopts->short_post = true;
@@ -178,6 +184,16 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'o':
 				outputPath = sdsnew(optarg);
+				break;
+			case 's':
+				dumpopts->dummy_DSIG = true;
+				break;
+			case 'O':
+				dumpopts->optimize_level = atoi(optarg);
+				if (dumpopts->optimize_level >= 2) {
+					dumpopts->short_post = true;
+					dumpopts->ignore_glyph_order = true;
+				}
 				break;
 		}
 	}

@@ -307,6 +307,7 @@ typedef struct {
 	bool keep_modified_time;
 	bool instr_as_bytes;
 	char *glyph_name_prefix;
+	uint8_t optimize_level;
 } caryll_dump_options;
 
 #define MOVE /*move*/

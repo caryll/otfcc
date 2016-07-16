@@ -135,7 +135,7 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 	}
 	return name;
 }
-caryll_buffer *caryll_write_name(table_name *name) {
+caryll_buffer *caryll_write_name(table_name *name, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);

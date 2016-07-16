@@ -28,5 +28,5 @@ table_vhea *caryll_new_vhea();
 table_vhea *caryll_read_vhea(caryll_packet packet);
 void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_dump_options *dumpopts);
 table_vhea *caryll_vhea_from_json(json_value *root, caryll_dump_options *dumpopts);
-caryll_buffer *caryll_write_vhea(table_vhea *vhea);
+caryll_buffer *caryll_write_vhea(table_vhea *vhea, caryll_dump_options *dumpopts);
 #endif

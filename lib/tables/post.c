@@ -85,7 +85,7 @@ table_post *caryll_post_from_json(json_value *root, caryll_dump_options *dumpopt
 	table_post *post = caryll_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
-		if(dumpopts->short_post){
+		if (dumpopts->short_post) {
 			post->version = 0x30000;
 		} else {
 			post->version = caryll_to_fixed(json_obj_getnum(table, "version"));
@@ -101,7 +101,8 @@ table_post *caryll_post_from_json(json_value *root, caryll_dump_options *dumpopt
 	}
 	return post;
 }
-caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder) {
+caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder,
+                                 caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);
