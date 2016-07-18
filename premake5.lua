@@ -1,5 +1,37 @@
 require "dep/premake-modules/xcode-alt"
 
+function cbuildoptions()
+	filter "action:vs2015"
+		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
+	filter { "action:vs2015", "platforms:x64" }
+		buildoptions {'-Wshorten-64-to-32'}
+	filter "action:gmake"
+		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+	filter "action:xcode4"
+		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+	filter {}
+end
+
+function externcbuildoptions()
+	filter "action:vs2015"
+		buildoptions { '/MP', '-Qunused-arguments' }
+	filter "action:gmake"
+		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
+	filter "action:xcode4"
+		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
+	filter {}
+end
+
+function cxxbuildoptions()
+	filter "action:vs2015"
+		buildoptions { '/MP', '-Qunused-arguments' }
+	filter "action:gmake"
+		buildoptions { '-std=gnu++11' }
+	filter "action:xcode4"
+		buildoptions { '-std=gnu++11' }
+	filter {}
+end
+
 -- Premake 5 configurations
 workspace "otfcc"
 	configurations { "Debug", "Release" }
@@ -19,21 +51,12 @@ workspace "otfcc"
 		location "build/vs"
 		toolset "msc-LLVM-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
-		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
-	filter { "action:vs2015", "platforms:x64" }
-		buildoptions {'-Wshorten-64-to-32'}
-	filter {}
-	
 	filter "action:gmake"
 		location "build/gmake"
-		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
-	filter {}
-
 	filter "action:xcode4"
 		location "build/xcode"
-		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter {}
 	
 	filter "configurations:Debug"
@@ -46,6 +69,7 @@ workspace "otfcc"
 project "deps"
 	kind "StaticLib"
 	language "C"
+	externcbuildoptions()
 	files {
 		"dep/extern/**.h",
 		"dep/extern/**.c"
@@ -55,12 +79,12 @@ project "deps"
 		"dep/polyfill-msvc/**.h",
 		"dep/polyfill-msvc/**.c"
 	}
-	buildoptions { '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter {}
 
 project "libotfcc"
 	kind "StaticLib"
 	language "C"
+	cbuildoptions()
 	files {
 		"lib/**.h",
 		"lib/**.c"
@@ -69,6 +93,7 @@ project "libotfcc"
 project "otfccdump"
 	kind "ConsoleApp"
 	language "C"
+	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
@@ -92,6 +117,7 @@ project "otfccdump"
 project "otfccbuild"
 	kind "ConsoleApp"
 	language "C"
+	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
