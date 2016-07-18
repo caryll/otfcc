@@ -13,187 +13,6 @@
 
 #include "libcff.h"
 
-static inline uint32_t gu1(uint8_t *s, uint32_t p) {
-	uint32_t b0 = *(s + p);
-	return b0;
-}
-
-static inline uint32_t gu2(uint8_t *s, uint32_t p) {
-	uint32_t b0 = *(s + p) << 8;
-	uint32_t b1 = *(s + p + 1);
-	return b0 | b1;
-}
-
-static inline uint32_t gu3(uint8_t *s, uint32_t p) {
-	uint32_t b0 = *(s + p) << 16;
-	uint32_t b1 = *(s + p + 1) << 8;
-	uint32_t b2 = *(s + p + 2);
-	return b0 | b1 | b2;
-}
-static inline uint32_t gu4(uint8_t *s, uint32_t p) {
-	uint32_t b0 = *(s + p) << 24;
-	uint32_t b1 = *(s + p + 1) << 16;
-	uint32_t b2 = *(s + p + 2) << 8;
-	uint32_t b3 = *(s + p + 3);
-	return b0 | b1 | b2 | b3;
-}
-
-static uint32_t count_index(CFF_INDEX i) {
-	if (i.count != 0)
-		return 3 + (i.offset[i.count] - 1) + ((i.count + 1) * i.offSize);
-	else
-		return 3;
-}
-
-void esrap_index(CFF_INDEX in) {
-	if (in.offset != NULL) free(in.offset);
-	if (in.data != NULL) free(in.data);
-}
-
-void empty_index(CFF_INDEX *in) {
-	in->count = 0;
-	in->offSize = 0;
-	in->offset = NULL;
-	in->data = NULL;
-}
-
-static void parse_index(uint8_t *data, uint32_t pos, CFF_INDEX *in) {
-	in->count = gu2(data, pos);
-	in->offSize = gu1(data, pos + 2);
-
-	if (in->count > 0) {
-		in->offset = calloc(in->count + 1, sizeof(uint32_t));
-
-		for (int i = 0; i <= in->count; i++) {
-			switch (in->offSize) {
-				case 1:
-					in->offset[i] = gu1(data, pos + 3 + (i * in->offSize));
-					break;
-				case 2:
-					in->offset[i] = gu2(data, pos + 3 + (i * in->offSize));
-					break;
-				case 3:
-					in->offset[i] = gu3(data, pos + 3 + (i * in->offSize));
-					break;
-				case 4:
-					in->offset[i] = gu4(data, pos + 3 + (i * in->offSize));
-					break;
-			}
-		}
-
-		in->data = calloc(in->offset[in->count] - 1, sizeof(uint8_t));
-		memcpy(in->data, data + pos + 3 + (in->count + 1) * in->offSize, in->offset[in->count] - 1);
-	} else {
-		in->offset = NULL;
-		in->data = NULL;
-	}
-}
-
-double cffnum(CFF_Value val) {
-	if (val.t == CFF_INTEGER) return val.i;
-	if (val.t == CFF_DOUBLE) return val.d;
-	return 0;
-}
-
-void esrap_dict(CFF_Dict *d) {
-	uint32_t i;
-
-	if (d != NULL) {
-		for (i = 0; i < d->count; i++) {
-			if (d->ents[i].vals != NULL) free(d->ents[i].vals);
-		}
-
-		free(d->ents);
-		free(d);
-	}
-}
-
-CFF_Dict *parse_dict(uint8_t *data, uint32_t len) {
-	CFF_Dict *dict = calloc(1, sizeof(CFF_Dict));
-	uint32_t index = 0, advance;
-	CFF_Value val, stack[48];
-	uint8_t *temp = data;
-
-	while (temp < data + len) {
-		advance = decode_cff_token(temp, &val);
-
-		switch (val.t) {
-			case CFF_OPERATOR:
-				dict->ents = realloc(dict->ents, sizeof(CFF_Dict_Entry) * (dict->count + 1));
-				dict->ents[dict->count].op = val.i;
-				dict->ents[dict->count].cnt = index;
-				dict->ents[dict->count].vals = calloc(index, sizeof(CFF_Value));
-				memcpy(dict->ents[dict->count].vals, stack, sizeof(CFF_Value) * index);
-				dict->count++;
-				index = 0;
-				break;
-			case CFF_INTEGER:
-			case CFF_DOUBLE:
-				stack[index++] = val;
-				break;
-		}
-
-		temp += advance;
-	}
-
-	return dict;
-}
-
-void cff_dict_callback(uint8_t *data, uint32_t len, void *context,
-                       void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack,
-                                        void *context)) {
-	uint8_t index = 0;
-	uint32_t advance;
-	CFF_Value val, stack[256];
-	uint8_t *temp = data;
-
-	while (temp < data + len) {
-		advance = decode_cff_token(temp, &val);
-
-		switch (val.t) {
-			case CFF_OPERATOR:
-				callback(val.i, index, stack, context);
-				index = 0;
-				break;
-
-			case CFF_INTEGER:
-			case CFF_DOUBLE:
-				stack[index++] = val;
-				break;
-		}
-
-		temp += advance;
-	}
-}
-
-typedef struct {
-	bool found;
-	CFF_Value res;
-	uint32_t op;
-	uint32_t idx;
-} cff_get_key_context;
-
-static void callback_get_key(uint32_t op, uint8_t top, CFF_Value *stack, void *_context) {
-	cff_get_key_context *context = (cff_get_key_context *)_context;
-	if (op == context->op && context->idx <= top) {
-		context->found = true;
-		context->res = stack[context->idx];
-	}
-}
-
-CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx) {
-	cff_get_key_context context;
-	context.found = false;
-	context.idx = idx;
-	context.op = op;
-	context.res.t = 0;
-	context.res.i = -1;
-
-	cff_dict_callback(data, len, &context, callback_get_key);
-
-	return context.res;
-}
-
 static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 	uint8_t *data = cff->raw_data;
 
@@ -238,102 +57,6 @@ static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 				}
 				break;
 		}
-	}
-}
-
-static void parse_charset(CFF_File *cff, int32_t offset, CFF_Charset *charsets) {
-	uint32_t i;
-	if (offset == CFF_CHARSET_ISOADOBE)
-		charsets->t = CFF_CHARSET_ISOADOBE;
-	else if (offset == CFF_CHARSET_EXPERT)
-		charsets->t = CFF_CHARSET_EXPERT;
-	else if (offset == CFF_CHARSET_EXPERTSUBSET)
-		charsets->t = CFF_CHARSET_EXPERTSUBSET;
-	else {
-		// NOTE: gid 1 will always be named as .notdef
-		switch (cff->raw_data[offset]) {
-			case 0:
-				charsets->t = CFF_CHARSET_FORMAT0;
-				{
-					charsets->s = cff->char_strings.count - 1;
-					charsets->f0.glyph = calloc(cff->char_strings.count - 1, sizeof(uint16_t));
-
-					for (i = 0; i < charsets->s; i++)
-						charsets->f0.glyph[i] = gu2(cff->raw_data, offset + 1 + i * 2);
-				}
-				break;
-			case 1:
-				charsets->t = CFF_CHARSET_FORMAT1;
-				{
-					uint32_t size;
-					uint32_t glyphsEncodedSofar = 1;
-					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
-						glyphsEncodedSofar += 1 + gu1(cff->raw_data, offset + 3 + i * 3);
-					}
-
-					size = i;
-					charsets->s = size;
-					charsets->f1.range1 = calloc(i + 1, sizeof(charset_range1));
-					for (i = 0; i < size; i++) {
-						charsets->f1.range1[i].first = gu2(cff->raw_data, offset + 1 + i * 3);
-						charsets->f1.range1[i].nleft = gu1(cff->raw_data, offset + 3 + i * 3);
-					}
-				}
-				break;
-			case 2:
-				charsets->t = CFF_CHARSET_FORMAT2;
-				{
-					uint32_t size;
-					uint32_t glyphsEncodedSofar = 1;
-					for (i = 0; glyphsEncodedSofar < cff->char_strings.count; i++) {
-						glyphsEncodedSofar += 1 + gu2(cff->raw_data, offset + 3 + i * 4);
-					}
-
-					size = i;
-					charsets->s = size;
-					charsets->f2.range2 = calloc(i + 1, sizeof(charset_range2));
-
-					for (i = 0; i < size; i++) {
-						charsets->f2.range2[i].first = gu2(cff->raw_data, offset + 1 + i * 4);
-						charsets->f2.range2[i].nleft = gu2(cff->raw_data, offset + 3 + i * 4);
-					}
-				}
-				break;
-		}
-	}
-}
-
-static void parse_fdselect(CFF_File *cff, int32_t offset, CFF_FDSelect *fdselect) {
-	uint8_t *data = cff->raw_data;
-	fdselect->t = data[offset];
-
-	switch (data[offset]) {
-		case 0:
-			fdselect->t = CFF_FDSELECT_FORMAT0;
-			{
-				fdselect->f0.format = 0;
-				fdselect->s = cff->char_strings.count - 1;
-				fdselect->f0.fds = calloc(cff->char_strings.count - 1, sizeof(uint8_t));
-
-				for (uint32_t i = 0; i < cff->char_strings.count - 1; i++)
-					fdselect->f0.fds[i] = gu1(data, offset + 1 + i);
-			}
-			break;
-		case 3:
-			fdselect->t = CFF_FDSELECT_FORMAT3;
-			{
-				fdselect->f3.format = 3;
-				fdselect->f3.nranges = gu2(data, offset + 1);
-				fdselect->f3.range3 = calloc(fdselect->f3.nranges, sizeof(fdselect_range3));
-
-				for (uint32_t i = 0; i < fdselect->f3.nranges; i++) {
-					fdselect->f3.range3[i].first = gu2(data, offset + 3 + i * 3);
-					fdselect->f3.range3[i].fd = gu1(data, offset + 5 + i * 3);
-				}
-
-				fdselect->f3.sentinel = gu2(data, offset + (fdselect->f3.nranges + 1) * 3);
-			}
-			break;
 	}
 }
 
@@ -406,7 +129,7 @@ static void parse_cff_bytecode(CFF_File *cff) {
 		             .i;
 
 		if (offset != -1) {
-			parse_charset(cff, offset, &cff->charsets);
+			parse_charset(cff->raw_data, offset, cff->char_strings.count, &cff->charsets);
 		} else {
 			cff->charsets.t = CFF_CHARSET_UNSPECED;
 		}
@@ -417,7 +140,7 @@ static void parse_cff_bytecode(CFF_File *cff) {
 		             .i;
 
 		if (offset != -1) {
-			parse_fdselect(cff, offset, &cff->fdselect);
+			parse_fdselect(cff->raw_data, offset, cff->char_strings.count, &cff->fdselect);
 		} else {
 			cff->fdselect.t = CFF_FDSELECT_UNSPECED;
 		}
@@ -474,46 +197,6 @@ CFF_File *CFF_stream_open(uint8_t *data, uint32_t len) {
 	return file;
 }
 
-CFF_File *CFF_file_open(const char *fname) {
-	CFF_File *file;
-	FILE *fptr = fopen(fname, "rb");
-
-	if (fptr != NULL) {
-		file = calloc(1, sizeof(CFF_File));
-		fseek(fptr, 0, SEEK_END);
-		file->raw_length = ftell(fptr);
-		file->raw_data = calloc(file->raw_length, sizeof(uint8_t));
-		file->cnt_glyph = 0;
-		fseek(fptr, 0, SEEK_SET);
-		(void)fread(file->raw_data, sizeof(uint8_t), file->raw_length, fptr);
-		parse_cff_bytecode(file);
-		fclose(fptr);
-	} else
-		file = NULL;
-
-	return file;
-}
-
-CFF_File *CFF_sfnt_open(const char *fname, uint32_t offset, uint32_t len) {
-	CFF_File *file;
-	FILE *fptr = fopen(fname, "rb");
-
-	if (fptr != NULL) {
-		file = calloc(1, sizeof(CFF_File));
-		file->raw_data = calloc(len, sizeof(uint8_t));
-		file->raw_length = len;
-		file->cnt_glyph = 0;
-		fseek(fptr, offset, SEEK_SET);
-		(void)fread(file->raw_data, sizeof(uint8_t), len, fptr);
-		parse_cff_bytecode(file);
-		fclose(fptr);
-	} else {
-		file = NULL;
-	}
-
-	return file;
-}
-
 void CFF_close(CFF_File *file) {
 	if (file != NULL) {
 		if (file->raw_data != NULL) free(file->raw_data);
@@ -542,39 +225,15 @@ void CFF_close(CFF_File *file) {
 				break;
 		}
 
-		switch (file->charsets.t) {
-			case CFF_CHARSET_EXPERT:
-			case CFF_CHARSET_EXPERTSUBSET:
-			case CFF_CHARSET_ISOADOBE:
-				break;
-			case CFF_CHARSET_FORMAT0:
-				if (file->charsets.f0.glyph != NULL) free(file->charsets.f0.glyph);
-				break;
-			case CFF_CHARSET_FORMAT1:
-				if (file->charsets.f1.range1 != NULL) free(file->charsets.f1.range1);
-				break;
-			case CFF_CHARSET_FORMAT2:
-				if (file->charsets.f2.range2 != NULL) free(file->charsets.f2.range2);
-				break;
-		}
-
-		switch (file->fdselect.t) {
-			case CFF_FDSELECT_FORMAT0:
-				if (file->fdselect.f0.fds != NULL) free(file->fdselect.f0.fds);
-				break;
-			case CFF_FDSELECT_FORMAT3:
-				if (file->fdselect.f3.range3 != NULL) free(file->fdselect.f3.range3);
-				break;
-			case CFF_FDSELECT_UNSPECED:
-				break;
-		}
+		close_charset(file->charsets);
+		close_fdselect(file->fdselect);
 
 		free(file);
 	}
 }
 
-uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_INDEX fdarray, CFF_FDSelect select,
-                   CFF_INDEX *subr) {
+uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_Index fdarray, CFF_FDSelect select,
+                   CFF_Index *subr) {
 	uint8_t fd = 0;
 	int32_t off_private, len_private;
 	int32_t off_subr;
@@ -656,7 +315,7 @@ static double callback_nopgetrand(void *context) { return 0; }
 			break;                                                                                 \
 		}                                                                                          \
 	}
-void parse_outline_callback(uint8_t *data, uint32_t len, CFF_INDEX gsubr, CFF_INDEX lsubr,
+void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_Index lsubr,
                             CFF_Stack *stack, void *outline,
                             cff_outline_builder_interface methods) {
 	uint16_t gsubr_bias = compute_subr_bias(gsubr.count);

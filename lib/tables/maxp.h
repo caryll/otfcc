@@ -27,5 +27,5 @@ table_maxp *caryll_new_maxp();
 table_maxp *caryll_read_maxp(caryll_packet packet);
 void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_dump_options *dumpopts);
 table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options *dumpopts);
-caryll_buffer *caryll_write_maxp(table_maxp *maxp);
+caryll_buffer *caryll_write_maxp(table_maxp *maxp, caryll_dump_options *dumpopts);
 #endif

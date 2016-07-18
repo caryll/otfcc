@@ -51,6 +51,6 @@ table_OS_2 *caryll_new_OS_2();
 table_OS_2 *caryll_read_OS_2(caryll_packet packet);
 void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_dump_options *dumpopts);
 table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options *dumpopts);
-caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2);
+caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2, caryll_dump_options *dumpopts);
 
 #endif

@@ -400,19 +400,7 @@ static const char *const string_standard[391] = {
 };
 
 // substring in name/string INDEX
-static void print_segment(uint8_t *data, uint32_t pos, uint32_t len) {
-	char *str = calloc(len + 1, sizeof(uint8_t));
-	strncpy(str, (const char *)data + pos, len);
-	printf("%s", str);
-	free(str);
-}
-
-void print_index(CFF_INDEX idx) {
-	for (int i = 0; i < idx.count; i++)
-		print_segment(idx.data, idx.offset[i] - 1, idx.offset[i + 1] - idx.offset[i]), printf("\n");
-}
-
-char *get_cff_sid(uint16_t idx, CFF_INDEX str) {
+char *get_cff_sid(uint16_t idx, CFF_Index str) {
 	if (idx >= 0 && idx <= 390) return strdup(string_standard[idx]);
 	if (str.count > 0 && idx - 391 < str.count) {
 		char *dup = calloc(str.offset[idx - 390] - str.offset[idx - 391] + 1, sizeof(uint8_t));
@@ -423,7 +411,7 @@ char *get_cff_sid(uint16_t idx, CFF_INDEX str) {
 		return strdup("Unknown");
 }
 
-sds sdsget_cff_sid(uint16_t idx, CFF_INDEX str) {
+sds sdsget_cff_sid(uint16_t idx, CFF_Index str) {
 	if (idx >= 0 && idx <= 390) {
 		return sdsnew(string_standard[idx]);
 	} else if (str.count > 0 && idx - 391 < str.count) {

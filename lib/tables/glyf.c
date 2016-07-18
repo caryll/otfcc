@@ -853,7 +853,7 @@ static void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 	}
 }
 void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf,
-                       caryll_buffer *bufloca) {
+                       caryll_buffer *bufloca, caryll_dump_options *dumpopts) {
 	caryll_buffer *gbuf = bufnew();
 
 	uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));

@@ -90,7 +90,7 @@ table_maxp *caryll_maxp_from_json(json_value *root, caryll_dump_options *dumpopt
 	return maxp;
 }
 
-caryll_buffer *caryll_write_maxp(table_maxp *maxp) {
+caryll_buffer *caryll_write_maxp(table_maxp *maxp, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!maxp) return buf;
 	bufwrite32b(buf, maxp->version);

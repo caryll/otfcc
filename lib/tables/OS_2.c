@@ -229,7 +229,7 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_dump_options *dumpopt
 	return os_2;
 }
 
-caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2) {
+caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);

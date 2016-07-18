@@ -73,7 +73,7 @@ table_vhea *caryll_vhea_from_json(json_value *root, caryll_dump_options *dumpopt
 	return vhea;
 }
 
-caryll_buffer *caryll_write_vhea(table_vhea *vhea) {
+caryll_buffer *caryll_write_vhea(table_vhea *vhea, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!vhea) return buf;
 	bufwrite32b(buf, vhea->version);
