@@ -100,7 +100,7 @@ table_head *caryll_head_from_json(json_value *root, caryll_dump_options *dumpopt
 	return head;
 }
 
-caryll_buffer *caryll_write_head(table_head *head) {
+caryll_buffer *caryll_write_head(table_head *head, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);

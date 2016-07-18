@@ -214,10 +214,6 @@ void classify_around(otl_lookup *lookup, uint16_t j) {
 	}
 endcheck:
 	if (compatibleCount > 1) {
-		fprintf(stderr, "[Autoclassifier] %d subtables in %s are "
-		                "class-compatible to subtable %d.",
-		        compatibleCount, lookup->name, j);
-		fprintf(stderr, " Class count : B%d I%d F%d.\n", classno_b, classno_i, classno_f);
 		compatibility[j] = true;
 		free(subtable0->rules);
 		NEW_N(subtable0->rules, compatibleCount + 1);

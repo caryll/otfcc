@@ -79,7 +79,7 @@ table_hhea *caryll_hhea_from_json(json_value *root, caryll_dump_options *dumpopt
 	return hhea;
 }
 
-caryll_buffer *caryll_write_hhea(table_hhea *hhea) {
+caryll_buffer *caryll_write_hhea(table_hhea *hhea, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!hhea) return buf;
 	bufwrite32b(buf, hhea->version);

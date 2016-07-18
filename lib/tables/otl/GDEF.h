@@ -27,6 +27,6 @@ void caryll_delete_GDEF(table_GDEF *gdef);
 table_GDEF *caryll_read_GDEF(caryll_packet packet);
 void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, caryll_dump_options *dumpopts);
 table_GDEF *caryll_GDEF_from_json(json_value *root, caryll_dump_options *dumpopts);
-caryll_buffer *caryll_write_GDEF(table_GDEF *gdef);
+caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, caryll_dump_options *dumpopts);
 
 #endif

@@ -42,7 +42,8 @@ void caryll_delete_hmtx(table_hmtx *table) {
 	free(table);
 }
 
-caryll_buffer *caryll_write_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t count_k) {
+caryll_buffer *caryll_write_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t count_k,
+                                 caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!hmtx) return buf;
 	if (hmtx->metrics) {

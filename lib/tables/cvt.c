@@ -58,7 +58,7 @@ table_cvt *caryll_cvt_from_json(json_value *root, const char *tag) {
 	return t;
 }
 
-caryll_buffer *caryll_write_cvt(table_cvt *table) {
+caryll_buffer *caryll_write_cvt(table_cvt *table, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) { bufwrite16b(buf, table->words[j]); }

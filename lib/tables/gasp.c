@@ -91,7 +91,7 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *caryll_write_gasp(table_gasp *gasp) {
+caryll_buffer *caryll_write_gasp(table_gasp *gasp, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);

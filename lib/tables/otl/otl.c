@@ -889,7 +889,7 @@ static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
 	return bufs;
 }
 
-caryll_buffer *caryll_write_otl(table_otl *table) {
+caryll_buffer *caryll_write_otl(table_otl *table, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 

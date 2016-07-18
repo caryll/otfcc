@@ -27,7 +27,7 @@ typedef struct {
 
 // basic ops
 charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidth);
-void glyph_il_peephole_optimization(charstring_il *il);
+void glyph_il_peephole_optimization(charstring_il *il, caryll_dump_options *dumpopts);
 caryll_buffer *il2blob(charstring_il *il);
 
 #endif

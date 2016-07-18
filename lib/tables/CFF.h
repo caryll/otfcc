@@ -95,6 +95,6 @@ void caryll_delete_CFF(table_CFF *table);
 caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet);
 void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts);
 table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts);
-caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf);
+caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf, caryll_dump_options *dumpopts);
 
 #endif

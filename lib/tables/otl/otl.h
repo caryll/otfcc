@@ -199,7 +199,7 @@ table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag);
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts,
                         const char *tag);
 table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, const char *tag);
-caryll_buffer *caryll_write_otl(table_otl *table);
+caryll_buffer *caryll_write_otl(table_otl *table, caryll_dump_options *dumpopts);
 
 #include "gsub-single.h"
 #include "gsub-multi.h"

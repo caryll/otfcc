@@ -307,7 +307,7 @@ caryll_buffer *caryll_write_cmap_format12(cmap_hash *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_buffer *caryll_write_cmap(cmap_hash *cmap) {
+caryll_buffer *caryll_write_cmap(cmap_hash *cmap, caryll_dump_options *dumpopts) {
 	caryll_buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 

@@ -170,42 +170,52 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_dump_options *dumpopt
 		caryll_buffer *bufglyf = bufnew();
 		caryll_buffer *bufloca = bufnew();
 		if (font->glyf && font->head) {
-			caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca);
+			caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca, dumpopts);
 		}
 		sfnt_builder_push_table(builder, 'loca', bufloca);
 		sfnt_builder_push_table(builder, 'glyf', bufglyf);
 	} else {
 		caryll_cff_parse_result r = {font->CFF_, font->glyf};
-		sfnt_builder_push_table(builder, 'CFF ', caryll_write_CFF(r));
+		sfnt_builder_push_table(builder, 'CFF ', caryll_write_CFF(r, dumpopts));
 	}
 
-	sfnt_builder_push_table(builder, 'head', caryll_write_head(font->head));
-	sfnt_builder_push_table(builder, 'hhea', caryll_write_hhea(font->hhea));
-	sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2));
-	sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp));
-	sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name));
-	sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post, font->glyph_order));
-	sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap));
-	if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm));
-	if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep));
-	if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_cvt(font->cvt_));
-	if (font->gasp) sfnt_builder_push_table(builder, 'gasp', caryll_write_gasp(font->gasp));
+	sfnt_builder_push_table(builder, 'head', caryll_write_head(font->head, dumpopts));
+	sfnt_builder_push_table(builder, 'hhea', caryll_write_hhea(font->hhea, dumpopts));
+	sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2, dumpopts));
+	sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp, dumpopts));
+	sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name, dumpopts));
+	sfnt_builder_push_table(builder, 'post',
+	                        caryll_write_post(font->post, font->glyph_order, dumpopts));
+	sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap, dumpopts));
+	if (font->fpgm)
+		sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm, dumpopts));
+	if (font->prep)
+		sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep, dumpopts));
+	if (font->cvt_)
+		sfnt_builder_push_table(builder, 'cvt ', caryll_write_cvt(font->cvt_, dumpopts));
+	if (font->gasp)
+		sfnt_builder_push_table(builder, 'gasp', caryll_write_gasp(font->gasp, dumpopts));
 
 	sfnt_builder_push_table(builder, 'hmtx',
 	                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
-	                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics));
+	                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics,
+	                                          dumpopts));
 
-	if (font->vhea) sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea));
+	if (font->vhea)
+		sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea, dumpopts));
 	if (font->vmtx) {
 		sfnt_builder_push_table(
 		    builder, 'vmtx',
 		    caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
-		                      font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics));
+		                      font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics, dumpopts));
 	}
 
-	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB));
-	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS));
-	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF));
+	if (font->GSUB)
+		sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB, dumpopts));
+	if (font->GPOS)
+		sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS, dumpopts));
+	if (font->GDEF)
+		sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF, dumpopts));
 
 	if (dumpopts->dummy_DSIG) {
 		caryll_buffer *dsig = bufnew();
