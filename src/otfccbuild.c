@@ -79,27 +79,16 @@ void readEntireFile(char *inPath, char **_buffer, long *_length) {
 }
 
 void readEntireStdin(char **_buffer, long *_length) {
+	freopen(NULL, "rb", stdin);
 	static const long BUF_SIZE = 0x400;
-	static const long BUF_GROW = 0x100000;
 	static const long BUF_MIN = 0x100;
-	long size = BUF_SIZE;
-	char *buffer = malloc(size);
+	char *buffer = malloc(BUF_SIZE);
 	long length = 0;
-	long remain = size;
+	long remain = BUF_SIZE;
 	while (!feof(stdin)) {
 		if (remain <= BUF_MIN) {
-			remain += size;
-			if (size < BUF_GROW) {
-				size *= 2;
-			} else {
-				size += BUF_GROW;
-			}
-			char *p = realloc(buffer, size);
-			if (p == NULL) {
-				free(buffer);
-				exit(EXIT_FAILURE);
-			}
-			buffer = p;
+			remain += (length >> 1) & 0xFFFF;
+			buffer = realloc(buffer, length + remain);
 		}
 
 		fgets(buffer + length, remain, stdin);

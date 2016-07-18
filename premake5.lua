@@ -14,7 +14,7 @@ end
 
 function externcbuildoptions()
 	filter "action:vs2015"
-		buildoptions { '/MP', '-Qunused-arguments' }
+		buildoptions { '/MP', '-Qunused-arguments', '-Wno-unused-const-variable' }
 	filter "action:gmake"
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter "action:xcode4"
@@ -41,7 +41,7 @@ workspace "otfcc"
 		'_CARYLL_USE_PRE_SERIALIZED',
 		'MAIN_VER=0',
 		"SECONDARY_VER=2",
-		"PATCH_VER=2"
+		"PATCH_VER=3"
 	}
 	
 	location "build"
