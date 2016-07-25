@@ -100,14 +100,20 @@ On Windows, building `otfcc` is tested under the toolchains listed below. The de
 
 ### Mac OS
 
-premake5 provides ability to produce XCode projects.
+premake5 provides ability to produce XCode projects. Run
 
 ```bash
 premake5 xcode4
+```
+
+And then you can open `build/xcode/otfcc.xcworkspace` and build with XCode. You can find built binaries in `bin/`.
+
+Please ensure that Xcode’s Developer Mode is enabled.
+
+To build binaries in your terminal, run
+
+```bash
 xcodebuild -workspace build/xcode/otfcc.xcworkspace -scheme otfccbuild -configuration Release
 xcodebuild -workspace build/xcode/otfcc.xcworkspace -scheme otfccdump -configuration Release
 ```
 
-And you can find built binaries in `bin/`.
-
-Please ensure that Xcode’s Developer Mode is enabled.
