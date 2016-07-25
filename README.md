@@ -65,7 +65,7 @@ otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
 
 It was developed and optimized for Clang/LLVM, therefore it is *strongly* recommended to compile with Clang/LLVM, but if that's not possible GCC is also supported, GCC version 5.1 or later being the preferred choice for performance.
 
-### Linux
+### Linux (or other Unix-like)
 
 On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
 
@@ -81,7 +81,7 @@ make
 
 ### Windows
 
-On Windows building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
+On Windows, building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
 
 * GCC 5.1 included in `TDM-GCC`. Run the following from the command line:
 
@@ -104,6 +104,8 @@ premake5 provides ability to produce XCode projects. Simply type
 
 ```bash
 premake5 xcode4
+xcodebuild -workspace build/xcode/otfcc.xcworkspace -scheme otfccbuild -configuration Release
+xcodebuild -workspace build/xcode/otfcc.xcworkspace -scheme otfccdump -configuration Release
 ```
 
-And you can find XCode project files under `build/xcode`.
+And you can find built binaries in `bin/`.
