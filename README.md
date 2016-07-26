@@ -43,7 +43,7 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
 ### `otfccbuild` : Build an OpenType font file from JSON
 ```
-otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
+Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
 
  input.json                : Path to input file. When absent the input will
                              be read from the STDIN.
@@ -60,13 +60,15 @@ otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
                              of using current time.
  --short-post              : Don't export glyph names in the result font. It
                              will reduce file size.
- --dummy-DSIG              : Include an empty DSIG table in the font. For
+ --dummy-dsig, -s          : Include an empty DSIG table in the font. For
                              some Microsoft applications, a DSIG is required
                              to enable OpenType features.
- --ship                    : Equivalent to the combination of these options:
-                              *  --ignore-glyph-order
-                              *  --short-post
-                              *  --dummy-dsig
+ -O<n>                     : Specify the level for optimization.
+     -O0                     Turn off any optimization.
+     -O1                     Default optimization.
+     -O2                     More aggressive optimizations for web font. In
+                             this level, the --ignore-glyph-order and
+                             --short-post will be turned on.
 ```
 
 ## Building
