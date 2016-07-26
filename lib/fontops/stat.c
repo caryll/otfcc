@@ -235,7 +235,7 @@ void caryll_font_stat_vmtx(caryll_font *font) {
 	font->vhea->advanceHeightMax = maxHeight;
 	font->vmtx = vmtx;
 }
-void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
+void caryll_font_stat_OS_2(caryll_font *font, caryll_options *options) {
 	cmap_entry *item;
 	// Stat for OS/2.ulUnicodeRange.
 	uint32_t u1 = 0;
@@ -427,7 +427,7 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 		font->OS_2->usLastCharIndex = 0xFFFF;
 	}
 
-	if (!dumpopts->keep_average_char_width) {
+	if (!options->keep_average_char_width) {
 		uint32_t totalWidth = 0;
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			totalWidth += font->glyf->glyphs[j]->advanceWidth;
@@ -472,10 +472,10 @@ static void caryll_stat_cff_widths(caryll_font *font) {
 	}
 }
 
-void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
+void caryll_font_stat(caryll_font *font, caryll_options *options) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font);
-		if (!dumpopts->keep_modified_time) {
+		if (!options->keep_modified_time) {
 			font->head->modified = 2082844800 + (int64_t)time(NULL);
 		}
 	}
@@ -496,7 +496,7 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 	if (font->prep && font->maxp && font->prep->length > font->maxp->maxSizeOfInstructions) {
 		font->maxp->maxSizeOfInstructions = font->prep->length;
 	}
-	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, dumpopts);
+	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, options);
 	if (font->subtype == FONTTYPE_TTF) {
 		if (font->maxp) font->maxp->version = 0x00010000;
 	} else {

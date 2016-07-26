@@ -18,7 +18,7 @@ void caryll_delete_cvt(table_cvt *table) {
 	if (table->words) free(table->words);
 	free(table);
 }
-void caryll_cvt_to_json(table_cvt *table, json_value *root, caryll_dump_options *dumpopts,
+void caryll_cvt_to_json(table_cvt *table, json_value *root, caryll_options *options,
                         const char *tag) {
 	if (!table) return;
 	json_value *arr = json_array_new(table->length);
@@ -58,7 +58,7 @@ table_cvt *caryll_cvt_from_json(json_value *root, const char *tag) {
 	return t;
 }
 
-caryll_buffer *caryll_write_cvt(table_cvt *table, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_cvt(table_cvt *table, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) { bufwrite16b(buf, table->words[j]); }

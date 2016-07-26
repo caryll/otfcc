@@ -132,10 +132,10 @@ typedef enum {
 glyf_glyph *caryll_new_glyf_glyph();
 table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
 void caryll_delete_glyf(table_glyf *table);
-void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_dump_options *dumpopts);
+void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_options *options);
 table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order,
-                                  caryll_dump_options *dumpopts);
+                                  caryll_options *options);
 void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf,
-                       caryll_buffer *bufloca, caryll_dump_options *dumpopts);
+                       caryll_buffer *bufloca, caryll_options *options);
 
 #endif

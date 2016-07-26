@@ -381,10 +381,10 @@ static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLeve
 	return 1;                         // nothing match
 }
 
-void glyph_il_peephole_optimization(charstring_il *il, caryll_dump_options *dumpopts) {
-	if (!dumpopts->optimize_level) return;
+void glyph_il_peephole_optimization(charstring_il *il, caryll_options *options) {
+	if (!options->optimize_level) return;
 	uint32_t j = 0;
-	while (j < il->length) { j += decideAdvance(il, j, dumpopts->optimize_level); }
+	while (j < il->length) { j += decideAdvance(il, j, options->optimize_level); }
 }
 
 // IL to buffer conversion

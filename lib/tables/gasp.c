@@ -49,7 +49,7 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 	}
 	return NULL;
 }
-void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_dump_options *dumpopts) {
+void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_options *options) {
 	if (!table) return;
 	json_value *t = json_array_new(table->numRanges);
 	for (uint16_t j = 0; j < table->numRanges; j++) {
@@ -91,7 +91,7 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *caryll_write_gasp(table_gasp *gasp, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_gasp(table_gasp *gasp, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);
