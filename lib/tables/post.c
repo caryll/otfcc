@@ -69,6 +69,8 @@ void caryll_delete_post(table_post *table) {
 
 void caryll_post_to_json(table_post *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping post.\n");
+
 	json_value *post = json_object_new(10);
 	json_object_push(post, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(post, "italicAngle", json_integer_new(caryll_from_fixed(table->italicAngle)));
@@ -85,6 +87,7 @@ table_post *caryll_post_from_json(json_value *root, caryll_options *options) {
 	table_post *post = caryll_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing post.\n");
 		if (options->short_post) {
 			post->version = 0x30000;
 		} else {

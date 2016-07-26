@@ -39,6 +39,7 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 
 void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping hhea.\n");
 	json_value *hhea = json_object_new(13);
 	json_object_push(hhea, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(hhea, "ascender", json_integer_new(table->ascender));
@@ -61,6 +62,7 @@ table_hhea *caryll_hhea_from_json(json_value *root, caryll_options *options) {
 	table_hhea *hhea = caryll_new_hhea();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing hhea.\n");
 		hhea->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
 		hhea->ascender = json_obj_getnum_fallback(table, "ascender", 0);
 		hhea->descender = json_obj_getnum_fallback(table, "descender", 0);

@@ -100,6 +100,8 @@ const char *codePageLabels2[] = {"oem8",  "oem9",  "oem10", "oem11", "oem12", "o
 
 void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping OS/2.\n");
+
 	json_value *os_2 = json_object_new(30);
 	json_object_push(os_2, "version", json_integer_new(table->version));
 	json_object_push(os_2, "xAvgCharWidth", json_integer_new(table->xAvgCharWidth));
@@ -162,6 +164,7 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_options *options) {
 	if (!os_2) return NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "OS_2", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing OS/2.\n");
 		os_2->version = json_obj_getnum_fallback(table, "version", 0);
 		os_2->xAvgCharWidth = json_obj_getnum_fallback(table, "xAvgCharWidth", 0);
 		os_2->usWeightClass = json_obj_getnum_fallback(table, "usWeightClass", 0);

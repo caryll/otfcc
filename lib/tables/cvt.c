@@ -21,16 +21,19 @@ void caryll_delete_cvt(table_cvt *table) {
 void caryll_cvt_to_json(table_cvt *table, json_value *root, caryll_options *options,
                         const char *tag) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping cvt.\n");
+
 	json_value *arr = json_array_new(table->length);
 	for (uint16_t j = 0; j < table->length; j++) {
 		json_array_push(arr, json_integer_new(table->words[j]));
 	}
 	json_object_push(root, tag, arr);
 }
-table_cvt *caryll_cvt_from_json(json_value *root, const char *tag) {
+table_cvt *caryll_cvt_from_json(json_value *root, caryll_options *options, const char *tag) {
 	table_cvt *t = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, tag, json_array))) {
+		if (options->verbose) fprintf(stderr, "Parsing cvt.\n");
 		// Meaningful CVT dump
 		NEW(t);
 		t->length = table->u.array.length;
@@ -46,6 +49,7 @@ table_cvt *caryll_cvt_from_json(json_value *root, const char *tag) {
 			}
 		}
 	} else if ((table = json_obj_get_type(root, tag, json_string))) {
+		if (options->verbose) fprintf(stderr, "Parsing cvt.\n");
 		// Bytes CVT dump
 		NEW(t);
 		size_t len;

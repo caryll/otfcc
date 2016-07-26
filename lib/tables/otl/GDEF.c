@@ -99,6 +99,8 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 
 void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, caryll_options *options) {
 	if (!gdef) return;
+	if (options->verbose) fprintf(stderr, "Dumping GDEF.\n");
+
 	json_value *_gdef = json_object_new(4);
 	if (gdef->glyphClassDef) {
 		json_object_push(_gdef, "glyphClassDef", caryll_classdef_to_json(gdef->glyphClassDef));
@@ -175,6 +177,7 @@ table_GDEF *caryll_GDEF_from_json(json_value *root, caryll_options *options) {
 	table_GDEF *gdef = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing GDEF.\n");
 		gdef = caryll_new_GDEF();
 		gdef->glyphClassDef = caryll_classdef_from_json(json_obj_get(table, "glyphClassDef"));
 		gdef->markAttachClassDef =

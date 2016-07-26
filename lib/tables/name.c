@@ -58,6 +58,8 @@ void caryll_delete_name(table_name *table) {
 
 void caryll_name_to_json(table_name *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping name.\n");
+
 	json_value *name = json_array_new(table->count);
 	for (uint16_t j = 0; j < table->count; j++) {
 		name_record *r = table->records[j];
@@ -84,6 +86,7 @@ table_name *caryll_name_from_json(json_value *root, caryll_options *options) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
+		if (options->verbose) fprintf(stderr, "Parsing name.\n");
 		int validCount = 0;
 		for (uint32_t j = 0; j < table->u.array.length; j++) {
 			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {

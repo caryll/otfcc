@@ -54,6 +54,7 @@ table_maxp *caryll_read_maxp(caryll_packet packet) {
 
 void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping maxp.\n");
 	json_value *maxp = json_object_new(15);
 	json_object_push(maxp, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(maxp, "numGlyphs", json_integer_new(table->numGlyphs));
@@ -78,6 +79,7 @@ table_maxp *caryll_maxp_from_json(json_value *root, caryll_options *options) {
 	table_maxp *maxp = caryll_new_maxp();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing maxp.\n");
 		maxp->version = caryll_to_fixed(json_obj_getnum(table, "version"));
 		maxp->numGlyphs = json_obj_getnum(table, "numGlyphs");
 		maxp->maxZones = json_obj_getnum(table, "maxZones");

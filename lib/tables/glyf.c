@@ -489,6 +489,8 @@ void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
 }
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping glyf.\n");
+
 	json_value *glyf = json_object_new(table->numberGlyphs);
 	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
 		glyf_glyph *g = table->glyphs[j];
@@ -674,6 +676,7 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 	table_glyf *glyf = NULL;
 	json_value *table;
 	if ((table = json_obj_get_type(root, "glyf", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing glyf.\n");
 		uint16_t numGlyphs = table->u.object.length;
 		glyf = malloc(sizeof(table_glyf));
 		glyf->numberGlyphs = numGlyphs;

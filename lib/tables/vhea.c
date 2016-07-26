@@ -38,6 +38,8 @@ table_vhea *caryll_read_vhea(caryll_packet packet) {
 void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_options *options) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
+	if (options->verbose) fprintf(stderr, "Dumping vhea.\n");
+
 	json_object_push(vhea, "ascent", json_integer_new(table->ascent));
 	json_object_push(vhea, "descent", json_integer_new(table->descent));
 	json_object_push(vhea, "lineGap", json_integer_new(table->lineGap));
@@ -56,6 +58,7 @@ table_vhea *caryll_vhea_from_json(json_value *root, caryll_options *options) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing vhea.\n");
 		vhea = caryll_new_vhea();
 		if (!vhea) return NULL;
 		vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);

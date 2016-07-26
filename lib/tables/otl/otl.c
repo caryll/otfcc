@@ -327,6 +327,8 @@ static void _declare_lookup_dumper(otl_lookup_type llt, const char *lt,
 void caryll_otl_to_json(table_otl *table, json_value *root, caryll_options *options,
                         const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
+	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
+
 	json_value *otl = json_object_new(3);
 	{
 		// dump script list
@@ -556,6 +558,7 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const
 	NEW(otl);
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
+	if (options->verbose) fprintf(stderr, "Parsing %s.\n", tag);
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);

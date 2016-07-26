@@ -708,6 +708,8 @@ static json_value *fdToJson(table_CFF *table) {
 
 void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
+
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
@@ -806,10 +808,12 @@ static table_CFF *fdFromJson(json_value *dump) {
 }
 table_CFF *caryll_CFF_from_json(json_value *root, caryll_options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
-	if (!dump)
+	if (!dump) {
 		return NULL;
-	else
+	} else {
+		if (options->verbose) fprintf(stderr, "Parsing CFF.\n");
 		return fdFromJson(dump);
+	}
 }
 
 static caryll_buffer *compile_glyph(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidthX,
@@ -1139,8 +1143,7 @@ static CFF_Index *cff_make_fdarray(uint16_t fdArrayCount, table_CFF **fdArray,
 	return cff_buildindex_callback(&context, fdArrayCount, callback_makefd);
 }
 
-static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf,
-                                        caryll_options *options) {
+static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll_options *options) {
 	caryll_buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;

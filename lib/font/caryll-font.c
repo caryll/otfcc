@@ -128,7 +128,6 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_options *options) {
 	}
 	caryll_otl_to_json(font->GSUB, root, options, "GSUB");
 	caryll_otl_to_json(font->GPOS, root, options, "GPOS");
-
 	caryll_GDEF_to_json(font->GDEF, root, options);
 	return root;
 }
@@ -148,10 +147,10 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 	font->CFF_ = caryll_CFF_from_json(root, options);
 	font->glyf = caryll_glyf_from_json(root, *font->glyph_order, options);
 	if (!options->ignore_hints) {
-		font->fpgm = caryll_fpgm_prep_from_json(root, "fpgm");
-		font->prep = caryll_fpgm_prep_from_json(root, "prep");
-		font->cvt_ = caryll_cvt_from_json(root, "cvt_");
-		font->gasp = caryll_gasp_from_json(root);
+		font->fpgm = caryll_fpgm_prep_from_json(root, options, "fpgm");
+		font->prep = caryll_fpgm_prep_from_json(root, options, "prep");
+		font->cvt_ = caryll_cvt_from_json(root, options, "cvt_");
+		font->gasp = caryll_gasp_from_json(root, options);
 	}
 	font->vhea = caryll_vhea_from_json(root, options);
 	if (font->glyf) {
