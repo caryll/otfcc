@@ -147,12 +147,17 @@ void caryll_font_stat_hmtx(caryll_font *font) {
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
 	if (!hmtx) return;
 	uint16_t count_a = font->glyf->numberGlyphs;
-	while (count_a > 2 &&
-	       font->glyf->glyphs[count_a - 1]->advanceWidth ==
-	           font->glyf->glyphs[count_a - 2]->advanceWidth) {
-		count_a--;
+	int16_t count_k = 0;
+	if (font->subtype == FONTTYPE_CFF) {
+		// pass
+	} else {
+		while (count_a > 2 &&
+		       font->glyf->glyphs[count_a - 1]->advanceWidth ==
+		           font->glyf->glyphs[count_a - 2]->advanceWidth) {
+			count_a--;
+		}
+		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	int16_t count_k = font->glyf->numberGlyphs - count_a;
 	hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
 	if (count_k > 0) {
 		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
@@ -193,12 +198,17 @@ void caryll_font_stat_vmtx(caryll_font *font) {
 	table_vmtx *vmtx = malloc(sizeof(table_vmtx) * 1);
 	if (!vmtx) return;
 	uint16_t count_a = font->glyf->numberGlyphs;
-	while (count_a > 2 &&
-	       font->glyf->glyphs[count_a - 1]->advanceHeight ==
-	           font->glyf->glyphs[count_a - 2]->advanceHeight) {
-		count_a--;
+	int16_t count_k = 0;
+	if (font->subtype == FONTTYPE_CFF) {
+		// pass
+	} else {
+		while (count_a > 2 &&
+		       font->glyf->glyphs[count_a - 1]->advanceHeight ==
+		           font->glyf->glyphs[count_a - 2]->advanceHeight) {
+			count_a--;
+		}
+		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	int16_t count_k = font->glyf->numberGlyphs - count_a;
 	vmtx->metrics = malloc(sizeof(vertical_metric) * count_a);
 	if (count_k > 0) {
 		vmtx->topSideBearing = malloc(sizeof(int16_t) * count_k);
