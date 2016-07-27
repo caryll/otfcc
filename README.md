@@ -11,9 +11,9 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 
 ## Prebuilt installations
 
-### Windows
+### Windows & Mac
 
-Click the “Releases” above, and download the files in it.
+Click the “Releases” above, and download the archives in it.
 
 ### Arch Linux
 
