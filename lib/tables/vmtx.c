@@ -38,7 +38,7 @@ void caryll_delete_vmtx(table_vmtx *table) {
 	free(table);
 }
 
-caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {

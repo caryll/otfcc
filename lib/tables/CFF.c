@@ -659,8 +659,10 @@ static json_value *fdToJson(table_CFF *table) {
 	return _CFF_;
 }
 
-void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_dump_options *dumpopts) {
+void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
+
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
@@ -755,18 +757,20 @@ static table_CFF *fdFromJson(json_value *dump) {
 	if (!table->privateDict) table->privateDict = caryll_new_CFF_private();
 	return table;
 }
-table_CFF *caryll_CFF_from_json(json_value *root, caryll_dump_options *dumpopts) {
+table_CFF *caryll_CFF_from_json(json_value *root, caryll_options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
-	if (!dump)
+	if (!dump) {
 		return NULL;
-	else
+	} else {
+		if (options->verbose) fprintf(stderr, "Parsing CFF.\n");
 		return fdFromJson(dump);
+	}
 }
 
 static caryll_buffer *compile_glyph(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidthX,
-                                    caryll_dump_options *dumpopts) {
+                                    caryll_options *options) {
 	charstring_il *il = compile_glyph_to_il(g, defaultWidth, nominalWidthX);
-	glyph_il_peephole_optimization(il, dumpopts);
+	glyph_il_peephole_optimization(il, options);
 	caryll_buffer *blob = il2blob(il);
 	free(il->instr);
 	free(il);
@@ -777,11 +781,11 @@ typedef struct {
 	table_glyf *glyf;
 	uint16_t defaultWidth;
 	uint16_t nominalWidthX;
-	caryll_dump_options *dumpopts;
+	caryll_options *options;
 } cff_charstring_builder_context;
 static caryll_buffer *callback_makeglyph(void *_context, uint32_t j) {
 	cff_charstring_builder_context *context = (cff_charstring_builder_context *)_context;
-	return compile_glyph(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX, context->dumpopts);
+	return compile_glyph(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX, context->options);
 }
 static caryll_buffer *cff_make_charstrings(cff_charstring_builder_context *context) {
 	if (context->glyf->numberGlyphs == 0) return bufnew();
@@ -1079,7 +1083,7 @@ static CFF_Index *cff_make_fdarray(uint16_t fdArrayCount, table_CFF **fdArray, c
 	return cff_buildindex_callback(&context, fdArrayCount, callback_makefd);
 }
 
-static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll_dump_options *dumpopts) {
+static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll_options *options) {
 	caryll_buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;
@@ -1123,7 +1127,7 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll
 		g2cContext.glyf = glyf;
 		g2cContext.defaultWidth = cff->privateDict->defaultWidthX;
 		g2cContext.nominalWidthX = cff->privateDict->nominalWidthX;
-		g2cContext.dumpopts = dumpopts;
+		g2cContext.options = options;
 		s = cff_make_charstrings(&g2cContext);
 	}
 
@@ -1218,6 +1222,6 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll
 	return blob;
 }
 
-caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf, caryll_dump_options *dumpopts) {
-	return writeCFF_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, dumpopts);
+caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf, caryll_options *options) {
+	return writeCFF_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }

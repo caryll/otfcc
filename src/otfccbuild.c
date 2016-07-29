@@ -119,8 +119,8 @@ int main(int argc, char *argv[]) {
 	sds inPath = NULL;
 	int option_index = 0;
 	int c;
-	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
-	dumpopts->optimize_level = 1;
+
+	caryll_options *options = caryll_new_options();
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
 	                            {"short-post", no_argument, NULL, 0},
 	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
+	                            {"verbose", no_argument, NULL, 0},
 	                            {"optimize", required_argument, NULL, 'O'},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
@@ -145,19 +146,22 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(longopts[option_index].name, "time") == 0) {
 					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
-					dumpopts->ignore_hints = true;
+					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
-					dumpopts->keep_average_char_width = true;
+					options->keep_average_char_width = true;
 				} else if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
-					dumpopts->keep_modified_time = true;
+					options->keep_modified_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
-					dumpopts->ignore_glyph_order = true;
+					options->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
-					dumpopts->short_post = true;
+					options->short_post = true;
 				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
-					dumpopts->ignore_glyph_order = true;
-					dumpopts->short_post = true;
-					dumpopts->dummy_DSIG = true;
+					options->ignore_glyph_order = true;
+					options->short_post = true;
+					options->dummy_DSIG = true;
+				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
+					options->verbose = true;
+					show_time = true;
 				}
 				break;
 			case 'v':
@@ -170,13 +174,14 @@ int main(int argc, char *argv[]) {
 				outputPath = sdsnew(optarg);
 				break;
 			case 's':
-				dumpopts->dummy_DSIG = true;
+				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				dumpopts->optimize_level = atoi(optarg);
-				if (dumpopts->optimize_level >= 2) {
-					dumpopts->short_post = true;
-					dumpopts->ignore_glyph_order = true;
+				options->optimize_level = atoi(optarg);
+				if (options->optimize_level >= 2) {
+					options->short_post = true;
+					options->ignore_glyph_order = true;
+					options->cff_short_vmtx = true;
 				}
 				break;
 		}
@@ -207,8 +212,10 @@ int main(int argc, char *argv[]) {
 	long length;
 	{
 		if (inPath) {
+			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", inPath, outputPath); }
 			readEntireFile(inPath, &buffer, &length);
 		} else {
+			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", "[STDIN]", outputPath); }
 			readEntireStdin(&buffer, &length);
 		}
 		if (show_time) push_stopwatch("Read input", &begin);
@@ -227,7 +234,7 @@ int main(int argc, char *argv[]) {
 
 	caryll_font *font;
 	{
-		font = caryll_font_from_json(root, dumpopts);
+		font = caryll_font_from_json(root, options);
 		if (!font) {
 			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -236,13 +243,13 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Convert JSON to font", &begin);
 	}
 	{
-		caryll_font_consolidate(font, dumpopts);
+		caryll_font_consolidate(font, options);
 		if (show_time) push_stopwatch("Consolidation", &begin);
-		caryll_font_stat(font, dumpopts);
+		caryll_font_stat(font, options);
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_write_font(font, dumpopts);
+		caryll_buffer *otf = caryll_write_font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
@@ -250,7 +257,7 @@ int main(int argc, char *argv[]) {
 
 		buffree(otf);
 		caryll_delete_font(font);
-		if (dumpopts) free(dumpopts);
+		caryll_delete_options(options);
 		if (show_time) push_stopwatch("Finalize", &begin);
 	}
 	return 0;

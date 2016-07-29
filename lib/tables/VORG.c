@@ -25,3 +25,17 @@ void caryll_delete_VORG(table_VORG *vorg) {
 	if (vorg) free(vorg->entries);
 	free(vorg);
 }
+
+caryll_buffer *caryll_write_VORG(table_VORG *table, caryll_options *options) {
+	caryll_buffer *buf = bufnew();
+	if (!table) return buf;
+	bufwrite16b(buf, 1);
+	bufwrite16b(buf, 0);
+	bufwrite16b(buf, table->defaultVerticalOrigin);
+	bufwrite16b(buf, table->numVertOriginYMetrics);
+	for (uint16_t j = 0; j < table->numVertOriginYMetrics; j++) {
+		bufwrite16b(buf, table->entries[j].gid);
+		bufwrite16b(buf, table->entries[j].verticalOrigin);
+	}
+	return buf;
+}

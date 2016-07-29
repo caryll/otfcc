@@ -307,8 +307,10 @@ static void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, json_val
 	}
 }
 
-void caryll_otl_to_json(table_otl *table, json_value *root, caryll_dump_options *dumpopts, const char *tag) {
+void caryll_otl_to_json(table_otl *table, json_value *root, caryll_options *options, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
+	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
+
 	json_value *otl = json_object_new(3);
 	{
 		// dump script list
@@ -526,11 +528,12 @@ static int by_lookup_order(lookup_hash *a, lookup_hash *b) {
 }
 static int by_feature_name(feature_hash *a, feature_hash *b) { return strcmp(a->name, b->name); }
 static int by_language_name(language_hash *a, language_hash *b) { return strcmp(a->name, b->name); }
-table_otl *caryll_otl_from_json(json_value *root, caryll_dump_options *dumpopts, const char *tag) {
+table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const char *tag) {
 	table_otl *otl = NULL;
 	NEW(otl);
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
+	if (options->verbose) fprintf(stderr, "Parsing %s.\n", tag);
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
@@ -620,7 +623,7 @@ static bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(ot
 }
 
 // When writing lookups, otfcc will try to maintain everything correctly.
-static caryll_buffer *writeOTLLookups(table_otl *table) {
+static caryll_buffer *writeOTLLookups(table_otl *table, caryll_options *options, const char *tag) {
 	caryll_buffer *bufl = bufnew();
 	caryll_buffer *bufsts = bufnew();
 	uint32_t **subtableOffsets;
@@ -640,7 +643,7 @@ static caryll_buffer *writeOTLLookups(table_otl *table) {
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
-		fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout.\n");
+		if (options->verbose) { fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag); }
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
 			if (lookupWritten[j]) { headerSize += 8 * table->lookups[j]->subtableCount; }
 		}
@@ -717,7 +720,7 @@ static uint32_t featureNameToTag(sds name) {
 	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
 	return tag;
 }
-static caryll_buffer *writeOTLFeatures(table_otl *table) {
+static caryll_buffer *writeOTLFeatures(table_otl *table, caryll_options *options) {
 	caryll_buffer *buff = bufnew();
 	bufwrite16b(buff, table->featureCount);
 	size_t offset = 2 + table->featureCount * 6;
@@ -807,7 +810,7 @@ static caryll_buffer *writeScript(script_stat_hash *script, table_otl *table) {
 	}
 	return buf;
 }
-static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
+static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, caryll_options *options) {
 	caryll_buffer *bufs = bufnew();
 	script_stat_hash *h = NULL;
 	for (uint16_t j = 0; j < table->languageCount; j++) {
@@ -858,13 +861,13 @@ static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table) {
 	return bufs;
 }
 
-caryll_buffer *caryll_write_otl(table_otl *table, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_otl(table_otl *table, caryll_options *options, const char *tag) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 
-	caryll_buffer *bufl = writeOTLLookups(table);
-	caryll_buffer *buff = writeOTLFeatures(table);
-	caryll_buffer *bufs = writeOTLScriptAndLanguages(table);
+	caryll_buffer *bufl = writeOTLLookups(table, options, tag);
+	caryll_buffer *buff = writeOTLFeatures(table, options);
+	caryll_buffer *bufs = writeOTLScriptAndLanguages(table, options);
 
 	size_t rootOffset = 10;
 	{

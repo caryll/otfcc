@@ -7,6 +7,7 @@
 
 #include "base64.h"
 #include "buffer.h"
+#include "options.h"
 #include <extern/json-builder.h>
 #include <extern/json.h>
 #include <extern/sds.h>
@@ -292,21 +293,6 @@ typedef struct {
 	uint16_t gid;
 	sds name;
 } glyph_handle;
-
-// dump options
-typedef struct {
-	bool ignore_glyph_order;
-	bool ignore_hints;
-	bool has_vertical_metrics;
-	bool export_fdselect;
-	bool keep_average_char_width;
-	bool short_post;
-	bool dummy_DSIG;
-	bool keep_modified_time;
-	bool instr_as_bytes;
-	char *glyph_name_prefix;
-	uint8_t optimize_level;
-} caryll_dump_options;
 
 #define MOVE /*move*/
 

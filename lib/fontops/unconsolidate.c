@@ -6,7 +6,7 @@
 //   2. Replace all glyph IDs into glyph names. Note all glyph references with
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
-static void caryll_name_glyphs(caryll_font *font, caryll_dump_options *dumpopts) {
+static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 	if (!font->glyf) return;
 	glyph_order_hash *glyph_order = malloc(sizeof(glyph_order_hash));
 	*glyph_order = NULL;
@@ -57,11 +57,11 @@ static void caryll_name_glyphs(caryll_font *font, caryll_dump_options *dumpopts)
 		if (!actuallyNamed) sdsfree(name);
 	}
 
-	if (dumpopts->glyph_name_prefix) {
+	if (options->glyph_name_prefix) {
 		glyph_order_entry *item;
 		foreach_hash(item, *glyph_order) {
 			sds oldname = item->name;
-			item->name = sdscatprintf(sdsempty(), "%s%s", dumpopts->glyph_name_prefix, oldname);
+			item->name = sdscatprintf(sdsempty(), "%s%s", options->glyph_name_prefix, oldname);
 			sdsfree(oldname);
 		}
 	}
@@ -262,19 +262,28 @@ static void merge_vmtx(caryll_font *font) {
 			}
 			for (uint16_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
 				if (font->VORG->entries[j].gid < font->glyf->numberGlyphs) {
-					font->glyf->glyphs[j]->verticalOrigin = font->VORG->entries[j].verticalOrigin;
+					font->glyf->glyphs[font->VORG->entries[j].gid]->verticalOrigin =
+					    font->VORG->entries[j].verticalOrigin;
 				}
 			}
 		}
 	}
 }
-void caryll_font_unconsolidate(caryll_font *font, caryll_dump_options *dumpopts) {
+static void merge_LTSH(caryll_font *font) {
+	if (font->glyf && font->LTSH) {
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs && j < font->LTSH->numGlyphs; j++) {
+			font->glyf->glyphs[j]->yPel = font->LTSH->yPels[j];
+		}
+	}
+}
+void caryll_font_unconsolidate(caryll_font *font, caryll_options *options) {
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);
+	merge_LTSH(font);
 
 	// Name glyphs
-	caryll_name_glyphs(font, dumpopts);
+	caryll_name_glyphs(font, options);
 	caryll_name_cmap_entries(font);
 	caryll_name_glyf(font);
 	caryll_name_features(font);

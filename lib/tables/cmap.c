@@ -104,8 +104,10 @@ void caryll_delete_cmap(cmap_hash *table) {
 	free(table);
 }
 
-void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options *dumpopts) {
+void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping cmap.\n");
+
 	json_value *cmap = json_object_new(HASH_COUNT(*table));
 
 	cmap_entry *item;
@@ -117,11 +119,12 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_dump_options
 	json_object_push(root, "cmap", cmap);
 }
 
-cmap_hash *caryll_cmap_from_json(json_value *root, caryll_dump_options *dumpopts) {
+cmap_hash *caryll_cmap_from_json(json_value *root, caryll_options *options) {
 	if (root->type != json_object) return NULL;
 	cmap_hash hash = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
+		if (options->verbose) fprintf(stderr, "Parsing cmap.\n");
 		for (uint32_t j = 0; j < table->u.object.length; j++) {
 			sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 			json_value *item = table->u.object.values[j].value;
@@ -299,7 +302,7 @@ caryll_buffer *caryll_write_cmap_format12(cmap_hash *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_buffer *caryll_write_cmap(cmap_hash *cmap, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_cmap(cmap_hash *cmap, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 

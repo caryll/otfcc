@@ -139,16 +139,21 @@ void caryll_stat_maxp(caryll_font *font) {
 	font->maxp->maxSizeOfInstructions = instSize;
 }
 
-void caryll_font_stat_hmtx(caryll_font *font) {
+static void caryll_font_stat_hmtx(caryll_font *font, caryll_options *options) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
 	if (!hmtx) return;
 	uint16_t count_a = font->glyf->numberGlyphs;
-	while (count_a > 2 &&
-	       font->glyf->glyphs[count_a - 1]->advanceWidth == font->glyf->glyphs[count_a - 2]->advanceWidth) {
-		count_a--;
+	int16_t count_k = 0;
+	if (font->subtype == FONTTYPE_CFF) {
+		// pass
+	} else {
+		while (count_a > 2 &&
+		       font->glyf->glyphs[count_a - 1]->advanceWidth == font->glyf->glyphs[count_a - 2]->advanceWidth) {
+			count_a--;
+		}
+		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	int16_t count_k = font->glyf->numberGlyphs - count_a;
 	hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
 	if (count_k > 0) {
 		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
@@ -183,16 +188,21 @@ void caryll_font_stat_hmtx(caryll_font *font) {
 	font->hhea->advanceWithMax = maxWidth;
 	font->hmtx = hmtx;
 }
-void caryll_font_stat_vmtx(caryll_font *font) {
+static void caryll_font_stat_vmtx(caryll_font *font, caryll_options *options) {
 	if (!font->glyf) return;
 	table_vmtx *vmtx = malloc(sizeof(table_vmtx) * 1);
 	if (!vmtx) return;
 	uint16_t count_a = font->glyf->numberGlyphs;
-	while (count_a > 2 &&
-	       font->glyf->glyphs[count_a - 1]->advanceHeight == font->glyf->glyphs[count_a - 2]->advanceHeight) {
-		count_a--;
+	int16_t count_k = 0;
+	if (font->subtype == FONTTYPE_CFF && !options->cff_short_vmtx) {
+		// pass
+	} else {
+		while (count_a > 2 &&
+		       font->glyf->glyphs[count_a - 1]->advanceHeight == font->glyf->glyphs[count_a - 2]->advanceHeight) {
+			count_a--;
+		}
+		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	int16_t count_k = font->glyf->numberGlyphs - count_a;
 	vmtx->metrics = malloc(sizeof(vertical_metric) * count_a);
 	if (count_k > 0) {
 		vmtx->topSideBearing = malloc(sizeof(int16_t) * count_k);
@@ -227,7 +237,7 @@ void caryll_font_stat_vmtx(caryll_font *font) {
 	font->vhea->advanceHeightMax = maxHeight;
 	font->vmtx = vmtx;
 }
-void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
+void caryll_font_stat_OS_2(caryll_font *font, caryll_options *options) {
 	cmap_entry *item;
 	// Stat for OS/2.ulUnicodeRange.
 	uint32_t u1 = 0;
@@ -411,22 +421,26 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_dump_options *dumpopts) {
 		font->OS_2->usLastCharIndex = 0xFFFF;
 	}
 
-	if (!dumpopts->keep_average_char_width) {
+	if (!options->keep_average_char_width) {
 		uint32_t totalWidth = 0;
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) { totalWidth += font->glyf->glyphs[j]->advanceWidth; }
 		font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
 	}
 }
+
+#define MAX_STAT_METRIC 4096
 static void caryll_stat_cff_widths(caryll_font *font) {
 	if (!font->glyf || !font->CFF_) return;
 	// Stat the most frequent character width
-	uint32_t *frequency = calloc(2000, sizeof(uint32_t));
+	uint32_t *frequency = calloc(MAX_STAT_METRIC, sizeof(uint32_t));
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]->advanceWidth < 2000) { frequency[font->glyf->glyphs[j]->advanceWidth] += 1; }
+		if (font->glyf->glyphs[j]->advanceWidth < MAX_STAT_METRIC) {
+			frequency[font->glyf->glyphs[j]->advanceWidth] += 1;
+		}
 	}
 	uint16_t maxfreq = 0;
 	uint16_t maxj = 0;
-	for (uint16_t j = 0; j < 2000; j++) {
+	for (uint16_t j = 0; j < MAX_STAT_METRIC; j++) {
 		if (frequency[j] > maxfreq) {
 			maxfreq = frequency[j];
 			maxj = j;
@@ -451,10 +465,66 @@ static void caryll_stat_cff_widths(caryll_font *font) {
 	}
 }
 
-void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
+static void caryll_stat_cff_vorgs(caryll_font *font) {
+	if (!font->glyf || !font->CFF_ || !font->vhea || !font->vmtx) return;
+	uint32_t *frequency = calloc(MAX_STAT_METRIC, sizeof(uint32_t));
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]->verticalOrigin >= 0 && font->glyf->glyphs[j]->verticalOrigin < MAX_STAT_METRIC) {
+			frequency[(uint16_t)(font->glyf->glyphs[j]->verticalOrigin)] += 1;
+		}
+	}
+	// stat VORG.defaultVerticalOrigin
+	uint16_t maxfreq = 0;
+	uint16_t maxj = 0;
+	for (uint16_t j = 0; j < MAX_STAT_METRIC; j++) {
+		if (frequency[j] > maxfreq) {
+			maxfreq = frequency[j];
+			maxj = j;
+		}
+	}
+
+	table_VORG *vorg;
+	NEW(vorg);
+	vorg->defaultVerticalOrigin = maxj;
+
+	uint16_t nVertOrigs = 0;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]->verticalOrigin != maxj) { nVertOrigs += 1; }
+	}
+	vorg->numVertOriginYMetrics = nVertOrigs;
+	NEW_N(vorg->entries, nVertOrigs);
+
+	uint16_t jj = 0;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]->verticalOrigin != maxj) {
+			vorg->entries[jj].gid = j;
+			vorg->entries[jj].verticalOrigin = font->glyf->glyphs[j]->verticalOrigin;
+			jj += 1;
+		}
+	}
+
+	font->VORG = vorg;
+}
+
+static void caryll_stat_LTSH(caryll_font *font) {
+	if (!font->glyf) return;
+	bool needLTSH = false;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++)
+		if (font->glyf->glyphs[j]->yPel > 1) { needLTSH = true; }
+	if (!needLTSH) return;
+
+	table_LTSH *ltsh;
+	NEW(ltsh);
+	ltsh->numGlyphs = font->glyf->numberGlyphs;
+	NEW_N(ltsh->yPels, ltsh->numGlyphs);
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) { ltsh->yPels[j] = font->glyf->glyphs[j]->yPel; }
+	font->LTSH = ltsh;
+}
+
+void caryll_font_stat(caryll_font *font, caryll_options *options) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font);
-		if (!dumpopts->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
+		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
 	}
 	if (font->head && font->CFF_) {
 		font->CFF_->fontBBoxBottom = font->head->yMin;
@@ -473,12 +543,16 @@ void caryll_font_stat(caryll_font *font, caryll_dump_options *dumpopts) {
 	if (font->prep && font->maxp && font->prep->length > font->maxp->maxSizeOfInstructions) {
 		font->maxp->maxSizeOfInstructions = font->prep->length;
 	}
-	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, dumpopts);
+	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, options);
 	if (font->subtype == FONTTYPE_TTF) {
 		if (font->maxp) font->maxp->version = 0x00010000;
 	} else {
 		if (font->maxp) font->maxp->version = 0x00005000;
 	}
-	if (font->glyf && font->hhea) caryll_font_stat_hmtx(font);
-	if (font->glyf && font->vhea) caryll_font_stat_vmtx(font);
+	if (font->glyf && font->hhea) { caryll_font_stat_hmtx(font, options); }
+	if (font->glyf && font->vhea) {
+		caryll_font_stat_vmtx(font, options);
+		caryll_stat_cff_vorgs(font);
+	}
+	caryll_stat_LTSH(font);
 }

@@ -167,5 +167,6 @@ struct instrdata {
 
 void instr_from_json(json_value *col, void *context, void (*Make)(void *, uint8_t *, uint32_t),
                      void (*Wrong)(void *, char *, int));
-json_value *instr_to_json(uint8_t *instructions, uint32_t length, caryll_dump_options *dumpopts);
+json_value *instr_to_json(uint8_t *instructions, uint32_t length, caryll_options *options);
+
 #endif

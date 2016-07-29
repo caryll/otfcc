@@ -11,5 +11,7 @@ typedef struct {
 } table_LTSH;
 
 table_LTSH *caryll_read_LTSH(caryll_packet packet);
+void caryll_delete_LTSH(table_LTSH *ltsh);
+caryll_buffer *caryll_write_LTSH(table_LTSH *ltsh, caryll_options *options);
 
 #endif

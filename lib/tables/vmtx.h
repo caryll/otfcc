@@ -19,6 +19,6 @@ typedef struct {
 
 table_vmtx *caryll_read_vmtx(caryll_packet packet, table_vhea *vhea, table_maxp *maxp);
 void caryll_delete_vmtx(table_vmtx *table);
-caryll_buffer *caryll_write_vmtx(table_vmtx *table, uint16_t count_a, uint16_t count_k, caryll_dump_options *dumpopts);
+caryll_buffer *caryll_write_vmtx(table_vmtx *table, uint16_t count_a, uint16_t count_k, caryll_options *options);
 
 #endif
