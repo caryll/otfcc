@@ -15,6 +15,7 @@
 	include("xcode_common.lua")
 	include("xcode4_workspace.lua")
 	include("xcode_project.lua")
+	include("xcode_scheme.lua")
 
 	newaction {
 		trigger     = "xcode4",
@@ -41,6 +42,7 @@
 
 		onProject = function(prj)
 			p.generate(prj, ".xcodeproj/project.pbxproj", p.modules.xcode_alt.generateProject)
+			p.generate(prj, ".xcodeproj/xcshareddata/xcschemes/" .. prj.name .. ".xcscheme", p.modules.xcode_alt.scheme.generate)
 		end,
 	}
 
