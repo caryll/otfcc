@@ -64,8 +64,7 @@ void parse_index(uint8_t *data, uint32_t pos, CFF_Index *in) {
 	}
 }
 
-CFF_Index *cff_buildindex_callback(void *context, uint32_t length,
-                                   caryll_buffer *(*fn)(void *, uint32_t)) {
+CFF_Index *cff_buildindex_callback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t)) {
 	CFF_Index *idx = cff_index_init();
 	idx->count = length;
 	NEW_N(idx->offset, idx->count + 1);
@@ -142,8 +141,7 @@ caryll_buffer *compile_index(CFF_Index index) {
 		}
 
 		if (index.data != NULL)
-			memcpy(blob->data + 3 + ((index.count + 1) * index.offSize), index.data,
-			       index.offset[index.count] - 1);
+			memcpy(blob->data + 3 + ((index.count + 1) * index.offSize), index.data, index.offset[index.count] - 1);
 	}
 	blob->cursor = blob->size;
 	return blob;

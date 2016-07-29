@@ -28,9 +28,7 @@ static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 	// pass 2: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
 		glyph_order_entry *s;
-		foreach_hash(s, *font->post->post_name_map) {
-			try_name_glyph(glyph_order, s->gid, sdsdup(s->name));
-		}
+		foreach_hash(s, *font->post->post_name_map) { try_name_glyph(glyph_order, s->gid, sdsdup(s->name)); }
 	}
 	// pass 3: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
@@ -75,9 +73,7 @@ static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 static void caryll_name_cmap_entries(caryll_font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
 		cmap_entry *s;
-		foreach_hash(s, *font->cmap) {
-			lookup_name(font->glyph_order, s->glyph.gid, &s->glyph.name);
-		}
+		foreach_hash(s, *font->cmap) { lookup_name(font->glyph_order, s->glyph.gid, &s->glyph.name); }
 	}
 }
 static void caryll_name_glyf(caryll_font *font) {
@@ -87,8 +83,7 @@ static void caryll_name_glyf(caryll_font *font) {
 			lookup_name(font->glyph_order, j, &g->name);
 			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-					lookup_name(font->glyph_order, g->references[k].glyph.gid,
-					            &g->references[k].glyph.name);
+					lookup_name(font->glyph_order, g->references[k].glyph.gid, &g->references[k].glyph.name);
 				}
 			}
 		}
@@ -145,9 +140,7 @@ static void unconsolidate_gsub_reverse(caryll_font *font, otl_lookup *lookup, ta
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
 		if (lookup->subtables[j]) {
 			subtable_gsub_reverse *subtable = &(lookup->subtables[j]->gsub_reverse);
-			for (uint16_t j = 0; j < subtable->matchCount; j++) {
-				name_coverage(font, subtable->match[j]);
-			}
+			for (uint16_t j = 0; j < subtable->matchCount; j++) { name_coverage(font, subtable->match[j]); }
 			name_coverage(font, subtable->to);
 		}
 }
@@ -166,8 +159,7 @@ static void name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
 				if (lookup->subtables[j]) {
 					name_coverage(font, lookup->subtables[j]->gsub_multi.from);
-					for (uint16_t k = 0; k < lookup->subtables[j]->gsub_multi.from->numGlyphs;
-					     k++) {
+					for (uint16_t k = 0; k < lookup->subtables[j]->gsub_multi.from->numGlyphs; k++) {
 						name_coverage(font, lookup->subtables[j]->gsub_multi.to[k]);
 					}
 				}
@@ -176,8 +168,7 @@ static void name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
 				if (lookup->subtables[j]) {
 					name_coverage(font, lookup->subtables[j]->gsub_ligature.to);
-					for (uint16_t k = 0; k < lookup->subtables[j]->gsub_ligature.to->numGlyphs;
-					     k++) {
+					for (uint16_t k = 0; k < lookup->subtables[j]->gsub_ligature.to->numGlyphs; k++) {
 						name_coverage(font, lookup->subtables[j]->gsub_ligature.from[k]);
 					}
 				}
@@ -191,9 +182,7 @@ static void name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 			break;
 		case otl_type_gpos_single:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					name_coverage(font, lookup->subtables[j]->gpos_single.coverage);
-				}
+				if (lookup->subtables[j]) { name_coverage(font, lookup->subtables[j]->gpos_single.coverage); }
 			break;
 		case otl_type_gpos_pair:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
@@ -204,9 +193,7 @@ static void name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 			break;
 		case otl_type_gpos_cursive:
 			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					name_coverage(font, lookup->subtables[j]->gpos_cursive.coverage);
-				}
+				if (lookup->subtables[j]) { name_coverage(font, lookup->subtables[j]->gpos_cursive.coverage); }
 			break;
 		case otl_type_gpos_mark_to_base:
 		case otl_type_gpos_mark_to_mark:
@@ -252,8 +239,7 @@ static void merge_hmtx(caryll_font *font) {
 	if (font->hhea && font->hmtx && font->glyf) {
 		uint32_t count_a = font->hhea->numberOfMetrics;
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			font->glyf->glyphs[j]->advanceWidth =
-			    font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+			font->glyf->glyphs[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 		}
 	}
 }
@@ -262,11 +248,9 @@ static void merge_vmtx(caryll_font *font) {
 	if (font->vhea && font->vmtx && font->glyf) {
 		uint32_t count_a = font->vhea->numOfLongVerMetrics;
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			font->glyf->glyphs[j]->advanceHeight =
-			    font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
+			font->glyf->glyphs[j]->advanceHeight = font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
 			if (j < count_a) {
-				font->glyf->glyphs[j]->verticalOrigin =
-				    font->vmtx->metrics[j].tsb + font->glyf->glyphs[j]->stat.yMax;
+				font->glyf->glyphs[j]->verticalOrigin = font->vmtx->metrics[j].tsb + font->glyf->glyphs[j]->stat.yMax;
 			} else {
 				font->glyf->glyphs[j]->verticalOrigin =
 				    font->vmtx->topSideBearing[j - count_a] + font->glyf->glyphs[j]->stat.yMax;

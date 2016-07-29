@@ -11,8 +11,7 @@ static otl_coverage *covFromCD(otl_classdef *cd) {
 	}
 	return cov;
 }
-bool consolidate_gpos_pair(caryll_font *font, table_otl *table, otl_subtable *_subtable,
-                           sds lookupName) {
+bool consolidate_gpos_pair(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	consolidate_classdef(font, subtable->first, lookupName);
 	consolidate_classdef(font, subtable->second, lookupName);

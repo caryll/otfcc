@@ -40,8 +40,7 @@ static void merge_cs2_int(caryll_buffer *blob, int32_t val) {
 static void merge_cs2_real(caryll_buffer *blob, double val) {
 	int16_t integerPart = floor(val);
 	uint16_t fractionPart = (val - integerPart) * 65536.0;
-	bufnwrite8(blob, 5, 0xFF, integerPart >> 8, integerPart & 0xFF, fractionPart >> 8,
-	           fractionPart & 0xFF);
+	bufnwrite8(blob, 5, 0xFF, integerPart >> 8, integerPart & 0xFF, fractionPart >> 8, fractionPart & 0xFF);
 }
 void merge_cs2_operand(caryll_buffer *blob, double val) {
 	double intpart;

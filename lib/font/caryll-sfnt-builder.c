@@ -104,8 +104,7 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 
 	// we are right after the table directory
 	// add copyright information
-	sds copyright =
-	    sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
+	sds copyright = sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
 	sdsgrowzero(copyright, 20);
 	bufwrite_bytes(buffer, 20, (uint8_t *)copyright);
 	sdsfree(copyright);

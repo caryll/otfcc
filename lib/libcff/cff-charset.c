@@ -17,8 +17,7 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 					charsets->s = nchars - 1;
 					charsets->f0.glyph = calloc(nchars - 1, sizeof(uint16_t));
 
-					for (i = 0; i < charsets->s; i++)
-						charsets->f0.glyph[i] = gu2(data, offset + 1 + i * 2);
+					for (i = 0; i < charsets->s; i++) charsets->f0.glyph[i] = gu2(data, offset + 1 + i * 2);
 				}
 				break;
 			case 1:
@@ -75,8 +74,7 @@ caryll_buffer *compile_charset(CFF_Charset cset) {
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 0;
 			for (uint32_t i = 0; i < cset.s; i++)
-				blob->data[1 + 2 * i] = cset.f0.glyph[i] / 256,
-				                   blob->data[2 + 2 * i] = cset.f0.glyph[i] % 256;
+				blob->data[1 + 2 * i] = cset.f0.glyph[i] / 256, blob->data[2 + 2 * i] = cset.f0.glyph[i] % 256;
 			blob->cursor = blob->size;
 			return blob;
 		}

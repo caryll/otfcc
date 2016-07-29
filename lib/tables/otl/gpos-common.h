@@ -22,8 +22,7 @@ extern const uint8_t bits_in[0x100];
 
 uint8_t position_format_length(uint16_t format);
 otl_position_value position_zero();
-otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset,
-                                   uint16_t format);
+otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset, uint16_t format);
 uint8_t required_position_format(otl_position_value v);
 void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format);
 json_value *gpos_value_to_json(otl_position_value value);
@@ -40,19 +39,19 @@ typedef struct {
 int getPositon(otl_anchor anchor);
 int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b);
 
-#define ANCHOR_AGGERATOR_PUSH(agh, anchor)                                                         \
-	if ((anchor).present) {                                                                        \
-		anchor_aggeration_hash *s;                                                                 \
-		int position = getPositon(anchor);                                                         \
-		HASH_FIND_INT((agh), &position, s);                                                        \
-		if (!s) {                                                                                  \
-			NEW(s);                                                                                \
-			s->position = position;                                                                \
-			s->x = (anchor).x;                                                                     \
-			s->y = (anchor).y;                                                                     \
-			s->index = HASH_COUNT(agh);                                                            \
-			HASH_ADD_INT(agh, position, s);                                                        \
-		}                                                                                          \
+#define ANCHOR_AGGERATOR_PUSH(agh, anchor)                                                                             \
+	if ((anchor).present) {                                                                                            \
+		anchor_aggeration_hash *s;                                                                                     \
+		int position = getPositon(anchor);                                                                             \
+		HASH_FIND_INT((agh), &position, s);                                                                            \
+		if (!s) {                                                                                                      \
+			NEW(s);                                                                                                    \
+			s->position = position;                                                                                    \
+			s->x = (anchor).x;                                                                                         \
+			s->y = (anchor).y;                                                                                         \
+			s->index = HASH_COUNT(agh);                                                                                \
+			HASH_ADD_INT(agh, position, s);                                                                            \
+		}                                                                                                              \
 	}
 
 #endif

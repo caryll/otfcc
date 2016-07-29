@@ -122,8 +122,8 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	for (uint16_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
 			c->glyphs[jj].gid = 0;
-			c->glyphs[jj].name = sdsnewlen(cov->u.array.values[j]->u.string.ptr,
-			                               cov->u.array.values[j]->u.string.length);
+			c->glyphs[jj].name =
+			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length);
 			jj++;
 		}
 	}
@@ -135,9 +135,7 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 	caryll_buffer *format1 = bufnew();
 	bufwrite16b(format1, 1);
 	bufwrite16b(format1, coverage->numGlyphs);
-	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
-		bufwrite16b(format1, coverage->glyphs[j].gid);
-	}
+	for (uint16_t j = 0; j < coverage->numGlyphs; j++) { bufwrite16b(format1, coverage->glyphs[j].gid); }
 	if (coverage->numGlyphs < 2) return format1;
 
 	caryll_buffer *format2 = bufnew();

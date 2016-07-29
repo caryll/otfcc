@@ -104,8 +104,7 @@ table_post *caryll_post_from_json(json_value *root, caryll_options *options) {
 	}
 	return post;
 }
-caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder,
-                                 caryll_options *options) {
+caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);

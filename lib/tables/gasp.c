@@ -59,10 +59,8 @@ void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_options *op
 		json_object_push(rec, "rangeMaxPPEM", json_integer_new(table->records[j].rangeMaxPPEM));
 		json_object_push(rec, "dogray", json_boolean_new(table->records[j].dogray));
 		json_object_push(rec, "gridfit", json_boolean_new(table->records[j].gridfit));
-		json_object_push(rec, "symmetric_smoothing",
-		                 json_boolean_new(table->records[j].symmetric_smoothing));
-		json_object_push(rec, "symmetric_gridfit",
-		                 json_boolean_new(table->records[j].symmetric_gridfit));
+		json_object_push(rec, "symmetric_smoothing", json_boolean_new(table->records[j].symmetric_smoothing));
+		json_object_push(rec, "symmetric_gridfit", json_boolean_new(table->records[j].symmetric_gridfit));
 		json_array_push(t, rec);
 	}
 	json_object_push(root, "gasp", t);

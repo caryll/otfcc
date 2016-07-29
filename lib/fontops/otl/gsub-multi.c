@@ -6,12 +6,9 @@ typedef struct {
 	otl_coverage *to;
 	UT_hash_handle hh;
 } gsub_multi_hash;
-static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
-	return a->fromid - b->fromid;
-}
+static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) { return a->fromid - b->fromid; }
 
-bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subtable *_subtable,
-                            sds lookupName) {
+bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	consolidate_coverage(font, subtable->from, lookupName);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {

@@ -6,7 +6,7 @@ AllowShortBlocksOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
-ColumnLimit: 100
+ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IndentCaseLabels: true
 AlignOperands: true

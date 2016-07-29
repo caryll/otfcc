@@ -20,9 +20,7 @@ static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit,
 		uint32_t startCode = read_32u(start + 16 + 12 * j);
 		uint32_t endCode = read_32u(start + 16 + 12 * j + 4);
 		uint32_t startGID = read_32u(start + 16 + 12 * j + 8);
-		for (uint32_t c = startCode; c <= endCode; c++) {
-			encode(map, c, (c - startCode) + startGID);
-		}
+		for (uint32_t c = startCode; c <= endCode; c++) { encode(map, c, (c - startCode) + startGID); }
 	}
 }
 
@@ -52,8 +50,7 @@ static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, 
 	}
 }
 
-static void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit,
-                                      cmap_hash *map) {
+static void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, cmap_hash *map) {
 	uint16_t format = read_16u(start);
 	if (format == 4) {
 		caryll_read_format_4(start, lengthLimit, map);
@@ -116,8 +113,7 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_options *opt
 	cmap_entry *item;
 	foreach_hash(item, *table) if (item->glyph.name) {
 		sds key = sdsfromlonglong(item->unicode);
-		json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name),
-		                                                   item->glyph.name));
+		json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
 		sdsfree(key);
 	}
 	json_object_push(root, "cmap", cmap);
@@ -130,8 +126,7 @@ cmap_hash *caryll_cmap_from_json(json_value *root, caryll_options *options) {
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
 		if (options->verbose) fprintf(stderr, "Parsing cmap.\n");
 		for (uint32_t j = 0; j < table->u.object.length; j++) {
-			sds unicodeStr =
-			    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+			sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 			json_value *item = table->u.object.values[j].value;
 			int32_t unicode = atoi(unicodeStr);
 			sdsfree(unicodeStr);
@@ -158,16 +153,16 @@ cmap_hash *caryll_cmap_from_json(json_value *root, caryll_options *options) {
 	return NULL;
 }
 // writing tables
-#define FLUSH_SEQUENCE_FORMAT_4                                                                    \
-	bufwrite16b(endCount, lastUnicodeEnd);                                                         \
-	bufwrite16b(startCount, lastUnicodeStart);                                                     \
-	if (isSequencial) {                                                                            \
-		bufwrite16b(idDelta, lastGIDStart - lastUnicodeStart);                                     \
-		bufwrite16b(idRangeOffset, 0);                                                             \
-	} else {                                                                                       \
-		bufwrite16b(idDelta, 0);                                                                   \
-		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                    \
-	}                                                                                              \
+#define FLUSH_SEQUENCE_FORMAT_4                                                                                        \
+	bufwrite16b(endCount, lastUnicodeEnd);                                                                             \
+	bufwrite16b(startCount, lastUnicodeStart);                                                                         \
+	if (isSequencial) {                                                                                                \
+		bufwrite16b(idDelta, lastGIDStart - lastUnicodeStart);                                                         \
+		bufwrite16b(idRangeOffset, 0);                                                                                 \
+	} else {                                                                                                           \
+		bufwrite16b(idDelta, 0);                                                                                       \
+		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                                        \
+	}                                                                                                                  \
 	segmentsCount += 1;
 caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 	caryll_buffer *buf = bufnew();
@@ -195,14 +190,11 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 			isSequencial = true;
 		} else {
 			if (item->unicode == lastUnicodeEnd + 1 &&
-			    !(item->glyph.gid != lastGIDEnd + 1 && isSequencial &&
-			      lastGIDEnd - lastGIDStart >= 4)) {
+			    !(item->glyph.gid != lastGIDEnd + 1 && isSequencial && lastGIDEnd - lastGIDStart >= 4)) {
 				if (isSequencial && !(item->glyph.gid == lastGIDEnd + 1)) {
 					lastGlyphIdArrayOffset = glyphIdArray->cursor;
 					// oops, sequencial glyphid broken
-					for (int j = lastGIDStart; j <= lastGIDEnd; j++) {
-						bufwrite16b(glyphIdArray, j);
-					}
+					for (int j = lastGIDStart; j <= lastGIDEnd; j++) { bufwrite16b(glyphIdArray, j); }
 				}
 				lastUnicodeEnd = item->unicode;
 				isSequencial = isSequencial && (item->glyph.gid == lastGIDEnd + 1);

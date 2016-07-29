@@ -13,10 +13,8 @@ typedef struct {
 } table_fpgm_prep;
 table_fpgm_prep *caryll_read_fpgm_prep(caryll_packet packet, uint32_t tag);
 void caryll_delete_fpgm_prep(table_fpgm_prep *table);
-void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root, caryll_options *options,
-                              const char *tag);
-table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, caryll_options *options,
-                                            const char *tag);
+void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root, caryll_options *options, const char *tag);
+table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, caryll_options *options, const char *tag);
 caryll_buffer *caryll_write_fpgm_prep(table_fpgm_prep *table, caryll_options *options);
 
 #endif

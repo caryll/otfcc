@@ -6,15 +6,11 @@ void delete_otl_gpos_pair_subtable(otl_subtable *_subtable) {
 		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 		if (subtable->coverage) caryll_delete_coverage(subtable->coverage);
 		if (subtable->firstValues) {
-			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) {
-				free(subtable->firstValues[j]);
-			}
+			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) { free(subtable->firstValues[j]); }
 			free(subtable->firstValues);
 		}
 		if (subtable->secondValues) {
-			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) {
-				free(subtable->secondValues[j]);
-			}
+			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) { free(subtable->secondValues[j]); }
 			free(subtable->secondValues);
 		}
 		caryll_delete_classdef(subtable->first);
@@ -25,8 +21,7 @@ void delete_otl_gpos_pair_subtable(otl_subtable *_subtable) {
 void caryll_delete_gpos_pair(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				delete_otl_gpos_pair_subtable(lookup->subtables[j]);
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) delete_otl_gpos_pair_subtable(lookup->subtables[j]);
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -53,8 +48,7 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 	uint16_t subtableFormat = read_16u(data + offset);
 	if (subtableFormat == 1) {
 		// pair adjustment by individuals
-		otl_coverage *cov =
-		    caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
+		otl_coverage *cov = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
 		NEW(subtable->first);
 		subtable->first->numGlyphs = cov->numGlyphs;
 		subtable->first->maxclass = cov->numGlyphs - 1;
@@ -122,11 +116,10 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 				pair_classifier_hash *s;
 				HASH_FIND_INT(h, &second, s);
 				if (s) {
-					subtable->firstValues[j][s->cid] = read_gpos_value(
-					    data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2, format1);
+					subtable->firstValues[j][s->cid] =
+					    read_gpos_value(data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2, format1);
 					subtable->secondValues[j][s->cid] = read_gpos_value(
-					    data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2 + len1,
-					    format2);
+					    data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2 + len1, format2);
 				}
 			}
 		}
@@ -149,14 +142,11 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 		uint16_t format2 = read_16u(data + offset + 6);
 		uint8_t len1 = position_format_length(format1);
 		uint8_t len2 = position_format_length(format2);
-		otl_coverage *cov =
-		    caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
-		subtable->first =
-		    caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 8));
+		otl_coverage *cov = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
+		subtable->first = caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 8));
 		subtable->first = caryll_expand_classdef(cov, subtable->first);
 		caryll_delete_coverage(cov);
-		subtable->second =
-		    caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 10));
+		subtable->second = caryll_read_classdef(data, tableLength, offset + read_16u(data + offset + 10));
 		if (!subtable->first || !subtable->second) goto FAIL;
 		uint16_t class1Count = read_16u(data + offset + 12);
 		uint16_t class2Count = read_16u(data + offset + 14);
@@ -173,11 +163,9 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 			NEW_N(subtable->secondValues[j], class2Count);
 			for (uint16_t k = 0; k < class2Count; k++) {
 				subtable->firstValues[j][k] =
-				    read_gpos_value(data, tableLength,
-				                    offset + 16 + (j * class2Count + k) * (len1 + len2), format1);
+				    read_gpos_value(data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2), format1);
 				subtable->secondValues[j][k] = read_gpos_value(
-				    data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2) + len1,
-				    format2);
+				    data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2) + len1, format2);
 			}
 		}
 
@@ -206,14 +194,8 @@ json_value *caryll_gpos_pair_to_json(otl_subtable *_subtable) {
 					json_array_push(row, json_integer_new(subtable->firstValues[j][k].dWidth));
 				} else {
 					json_value *pair = json_object_new(2);
-					if (f1) {
-						json_object_push(pair, "first",
-						                 gpos_value_to_json(subtable->firstValues[j][k]));
-					}
-					if (f2) {
-						json_object_push(pair, "second",
-						                 gpos_value_to_json(subtable->secondValues[j][k]));
-					}
+					if (f1) { json_object_push(pair, "first", gpos_value_to_json(subtable->firstValues[j][k])); }
+					if (f2) { json_object_push(pair, "second", gpos_value_to_json(subtable->secondValues[j][k])); }
 					json_array_push(row, pair);
 				}
 			} else {
@@ -237,8 +219,7 @@ otl_subtable *caryll_gpos_pair_from_json(json_value *_subtable) {
 
 	json_value *_mat = json_obj_get_type(_subtable, "matrix", json_array);
 	subtable->first = caryll_classdef_from_json(json_obj_get_type(_subtable, "first", json_object));
-	subtable->second =
-	    caryll_classdef_from_json(json_obj_get_type(_subtable, "second", json_object));
+	subtable->second = caryll_classdef_from_json(json_obj_get_type(_subtable, "second", json_object));
 	if (!_mat || !subtable->first || !subtable->second) goto FAIL;
 
 	uint16_t class1Count = subtable->first->maxclass + 1;

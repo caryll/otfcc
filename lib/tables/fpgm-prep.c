@@ -26,8 +26,7 @@ void caryll_delete_fpgm_prep(table_fpgm_prep *table) {
 	free(table);
 }
 
-void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root, caryll_options *options,
-                              const char *tag) {
+void caryll_fpgm_prep_to_json(table_fpgm_prep *table, json_value *root, caryll_options *options, const char *tag) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
 
@@ -41,12 +40,10 @@ void makeFpgmPrepInstr(void *_t, uint8_t *instrs, uint32_t length) {
 }
 void wrongFpgmPrepInstr(void *_t, char *reason, int pos) {
 	table_fpgm_prep *t = (table_fpgm_prep *)_t;
-	fprintf(stderr, "[OTFCC] TrueType instructions parse error : %s, at %d in /%s\n", reason, pos,
-	        t->tag);
+	fprintf(stderr, "[OTFCC] TrueType instructions parse error : %s, at %d in /%s\n", reason, pos, t->tag);
 }
 
-table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, caryll_options *options,
-                                            const char *tag) {
+table_fpgm_prep *caryll_fpgm_prep_from_json(json_value *root, caryll_options *options, const char *tag) {
 	table_fpgm_prep *t = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get(root, tag))) {

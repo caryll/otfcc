@@ -13,7 +13,18 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 
 ### Windows
 
-Click the “Releases” above, and download the files in it.
+Click the “Releases” above, and download the archives in it.
+
+### Mac
+
+If you have [Homebrew](http://brew.sh/), just run the following in your terminal.
+
+```bash
+brew tap caryll/tap
+brew install otfcc-mac64
+```
+
+Otherwise, you may need to click the “Releases” above, and download the archives in it.
 
 ### Arch Linux
 

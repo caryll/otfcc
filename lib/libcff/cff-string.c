@@ -404,8 +404,7 @@ char *get_cff_sid(uint16_t idx, CFF_Index str) {
 	if (idx >= 0 && idx <= 390) return strdup(string_standard[idx]);
 	if (str.count > 0 && idx - 391 < str.count) {
 		char *dup = calloc(str.offset[idx - 390] - str.offset[idx - 391] + 1, sizeof(uint8_t));
-		strncpy(dup, (const char *)str.data + str.offset[idx - 391] - 1,
-		        str.offset[idx - 390] - str.offset[idx - 391]);
+		strncpy(dup, (const char *)str.data + str.offset[idx - 391] - 1, str.offset[idx - 390] - str.offset[idx - 391]);
 		return dup;
 	} else
 		return strdup("Unknown");
@@ -415,8 +414,7 @@ sds sdsget_cff_sid(uint16_t idx, CFF_Index str) {
 	if (idx >= 0 && idx <= 390) {
 		return sdsnew(string_standard[idx]);
 	} else if (str.count > 0 && idx - 391 < str.count) {
-		return sdsnewlen(str.data + str.offset[idx - 391] - 1,
-		                 str.offset[idx - 390] - str.offset[idx - 391]);
+		return sdsnewlen(str.data + str.offset[idx - 391] - 1, str.offset[idx - 390] - str.offset[idx - 391]);
 	} else {
 		return NULL;
 	}

@@ -3,9 +3,7 @@ static void deleteGSUBLigatureSubtable(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	if (subtable->from && subtable->to) {
-		for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
-			caryll_delete_coverage(subtable->from[j]);
-		}
+		for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) { caryll_delete_coverage(subtable->from[j]); }
 		free(subtable->from);
 	}
 	caryll_delete_coverage(subtable->to);
@@ -21,8 +19,7 @@ void caryll_delete_gsub_ligature(otl_lookup *lookup) {
 		FREE(lookup);
 	}
 }
-otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLength,
-                                        uint32_t offset) {
+otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
@@ -30,8 +27,7 @@ otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLe
 	subtable->to = NULL;
 	checkLength(offset + 6);
 
-	otl_coverage *startCoverage =
-	    caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	otl_coverage *startCoverage = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!startCoverage) goto FAIL;
 	uint16_t setCount = read_16u(data + offset + 4);
 	if (setCount != startCoverage->numGlyphs) goto FAIL;
@@ -88,9 +84,8 @@ json_value *caryll_gsub_ligature_to_json(otl_subtable *_subtable) {
 	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
 		json_value *entry = json_object_new(2);
 		json_object_push(entry, "from", caryll_coverage_to_json(subtable->from[j]));
-		json_object_push(entry, "to",
-		                 json_string_new_length((uint32_t)sdslen(subtable->to->glyphs[j].name),
-		                                        subtable->to->glyphs[j].name));
+		json_object_push(entry, "to", json_string_new_length((uint32_t)sdslen(subtable->to->glyphs[j].name),
+		                                                     subtable->to->glyphs[j].name));
 		json_array_push(st, preserialize(entry));
 	}
 	json_value *ret = json_object_new(1);
@@ -134,8 +129,8 @@ otl_subtable *caryll_gsub_ligature_from_json(json_value *_subtable) {
 		for (uint16_t k = 0; k < st->to->numGlyphs; k++) {
 			json_value *_from = _subtable->u.object.values[k].value;
 			if (!_from || _from->type != json_array) continue;
-			st->to->glyphs[jj].name = sdsnewlen(_subtable->u.object.values[k].name,
-			                                    _subtable->u.object.values[k].name_length);
+			st->to->glyphs[jj].name =
+			    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length);
 			st->from[jj] = caryll_coverage_from_json(_from);
 			jj += 1;
 		}

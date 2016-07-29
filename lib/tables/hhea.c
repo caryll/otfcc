@@ -52,8 +52,7 @@ void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_options *op
 	json_object_push(hhea, "caretSlopeRise", json_integer_new(table->caretSlopeRise));
 	json_object_push(hhea, "yMcaretSlopeRunax", json_integer_new(table->caretSlopeRun));
 	json_object_push(hhea, "caretOffset", json_integer_new(table->caretOffset));
-	json_object_push(hhea, "lowestmetricDataFormatRecPPEM",
-	                 json_integer_new(table->metricDataFormat));
+	json_object_push(hhea, "lowestmetricDataFormatRecPPEM", json_integer_new(table->metricDataFormat));
 	json_object_push(hhea, "numberOfMetrics", json_integer_new(table->numberOfMetrics));
 	json_object_push(root, "hhea", hhea);
 }
@@ -74,8 +73,7 @@ table_hhea *caryll_hhea_from_json(json_value *root, caryll_options *options) {
 		hhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
 		hhea->caretSlopeRun = json_obj_getnum_fallback(table, "yMcaretSlopeRunax", 0);
 		hhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
-		hhea->metricDataFormat =
-		    json_obj_getnum_fallback(table, "lowestmetricDataFormatRecPPEM", 0);
+		hhea->metricDataFormat = json_obj_getnum_fallback(table, "lowestmetricDataFormatRecPPEM", 0);
 		hhea->numberOfMetrics = json_obj_getnum_fallback(table, "numberOfMetrics", 0);
 	}
 	return hhea;
