@@ -60,7 +60,9 @@ void caryll_delete_font(caryll_font *font) {
 
 caryll_font_subtype caryll_decide_font_subtype(caryll_sfnt *sfnt, uint32_t index) {
 	caryll_packet packet = sfnt->packets[index];
-	FOR_TABLE('CFF ', table) { return FONTTYPE_CFF; }
+	FOR_TABLE('CFF ', table) {
+		return FONTTYPE_CFF;
+	}
 	return FONTTYPE_TTF;
 }
 

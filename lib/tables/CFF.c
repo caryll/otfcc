@@ -49,7 +49,9 @@ void caryll_delete_CFF(table_CFF *table) {
 	caryll_delete_privatedict(table->privateDict);
 
 	if (table->fdArray) {
-		for (uint16_t j = 0; j < table->fdArrayCount; j++) { caryll_delete_CFF(table->fdArray[j]); }
+		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+			caryll_delete_CFF(table->fdArray[j]);
+		}
 		free(table->fdArray);
 	}
 }
@@ -73,37 +75,49 @@ static void callback_extract_private(uint32_t op, uint8_t top, CFF_Value *stack,
 		case op_BlueValues: {
 			pd->blueValuesCount = top;
 			NEW_N(pd->blueValues, pd->blueValuesCount);
-			for (uint16_t j = 0; j < pd->blueValuesCount; j++) { pd->blueValues[j] = cffnum(stack[j]); }
+			for (uint16_t j = 0; j < pd->blueValuesCount; j++) {
+				pd->blueValues[j] = cffnum(stack[j]);
+			}
 			break;
 		}
 		case op_OtherBlues: {
 			pd->otherBluesCount = top;
 			NEW_N(pd->otherBlues, pd->otherBluesCount);
-			for (uint16_t j = 0; j < pd->otherBluesCount; j++) { pd->otherBlues[j] = cffnum(stack[j]); }
+			for (uint16_t j = 0; j < pd->otherBluesCount; j++) {
+				pd->otherBlues[j] = cffnum(stack[j]);
+			}
 			break;
 		}
 		case op_FamilyBlues: {
 			pd->familyBluesCount = top;
 			NEW_N(pd->familyBlues, pd->familyBluesCount);
-			for (uint16_t j = 0; j < pd->familyBluesCount; j++) { pd->familyBlues[j] = cffnum(stack[j]); }
+			for (uint16_t j = 0; j < pd->familyBluesCount; j++) {
+				pd->familyBlues[j] = cffnum(stack[j]);
+			}
 			break;
 		}
 		case op_FamilyOtherBlues: {
 			pd->familyOtherBluesCount = top;
 			NEW_N(pd->familyOtherBlues, pd->familyOtherBluesCount);
-			for (uint16_t j = 0; j < pd->familyOtherBluesCount; j++) { pd->familyOtherBlues[j] = cffnum(stack[j]); }
+			for (uint16_t j = 0; j < pd->familyOtherBluesCount; j++) {
+				pd->familyOtherBlues[j] = cffnum(stack[j]);
+			}
 			break;
 		}
 		case op_StemSnapH: {
 			pd->stemSnapHCount = top;
 			NEW_N(pd->stemSnapH, pd->stemSnapHCount);
-			for (uint16_t j = 0; j < pd->stemSnapHCount; j++) { pd->stemSnapH[j] = cffnum(stack[j]); }
+			for (uint16_t j = 0; j < pd->stemSnapHCount; j++) {
+				pd->stemSnapH[j] = cffnum(stack[j]);
+			}
 			break;
 		}
 		case op_StemSnapV: {
 			pd->stemSnapVCount = top;
 			NEW_N(pd->stemSnapV, pd->stemSnapVCount);
-			for (uint16_t j = 0; j < pd->stemSnapVCount; j++) { pd->stemSnapV[j] = cffnum(stack[j]); }
+			for (uint16_t j = 0; j < pd->stemSnapVCount; j++) {
+				pd->stemSnapV[j] = cffnum(stack[j]);
+			}
 			break;
 		}
 		// Numbers
@@ -242,7 +256,9 @@ typedef struct {
 	uint64_t randx;
 } outline_builder_context;
 
-static void callback_count_contour(void *context) { ((outline_builder_context *)context)->g->numberOfContours += 1; }
+static void callback_count_contour(void *context) {
+	((outline_builder_context *)context)->g->numberOfContours += 1;
+}
 static void callback_countpoint_next_contour(void *_context) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	context->jContour += 1;
@@ -435,7 +451,9 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	stack.stem = 0;
 	bc.randx = seed;
 	parse_outline_callback(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, pass2);
-	for (uint16_t j = 0; j < g->numberOfContours; j++) { NEW_N(g->contours[j].points, g->contours[j].pointsCount); }
+	for (uint16_t j = 0; j < g->numberOfContours; j++) {
+		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
+	}
 	NEW_N(g->stemH, g->numberOfStemH);
 	NEW_N(g->stemV, g->numberOfStemV);
 	NEW_N(g->hintMasks, g->numberOfHintMasks);
@@ -569,7 +587,9 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 		context.glyphs = glyphs;
 		glyphs->numberGlyphs = cffFile->char_strings.count;
 		NEW_N(glyphs->glyphs, glyphs->numberGlyphs);
-		for (uint16_t j = 0; j < glyphs->numberGlyphs; j++) { buildOutline(j, &context); }
+		for (uint16_t j = 0; j < glyphs->numberGlyphs; j++) {
+			buildOutline(j, &context);
+		}
 
 		// Name glyphs according charset
 		nameGlyphsAccordingToCFF(&context);
@@ -583,7 +603,9 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
 	if (!count || !values) return;
 	json_value *a = json_array_new(count);
-	for (uint16_t j = 0; j < count; j++) { json_array_push(a, json_double_new(values[j])); }
+	for (uint16_t j = 0; j < count; j++) {
+		json_array_push(a, json_double_new(values[j]));
+	}
 	json_object_push(target, field, a);
 }
 
@@ -653,7 +675,9 @@ static json_value *fdToJson(table_CFF *table) {
 	}
 	if (table->fdArray) {
 		json_value *_fdArray = json_array_new(table->fdArrayCount);
-		for (uint16_t j = 0; j < table->fdArrayCount; j++) { json_array_push(_fdArray, fdToJson(table->fdArray[j])); }
+		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+			json_array_push(_fdArray, fdToJson(table->fdArray[j]));
+		}
 		json_object_push(_CFF_, "fdArray", _fdArray);
 	}
 	return _CFF_;
@@ -670,7 +694,9 @@ static void pdDeltaFromJson(json_value *dump, uint16_t *count, float **array) {
 	if (!dump || dump->type != json_array) return;
 	*count = dump->u.array.length;
 	NEW_N(*array, *count);
-	for (uint16_t j = 0; j < *count; j++) { (*array)[j] = json_numof(dump->u.array.values[j]); }
+	for (uint16_t j = 0; j < *count; j++) {
+		(*array)[j] = json_numof(dump->u.array.values[j]);
+	}
 }
 static cff_private *pdFromJson(json_value *dump) {
 	if (!dump || dump->type != json_object) return NULL;
@@ -942,7 +968,9 @@ static CFF_Dict *cff_make_private_dict(cff_private *pd) {
 	return dict;
 }
 
-static int by_sid(cff_sid_entry *a, cff_sid_entry *b) { return a->sid - b->sid; }
+static int by_sid(cff_sid_entry *a, cff_sid_entry *b) {
+	return a->sid - b->sid;
+}
 static caryll_buffer *callback_makestringindex(void *context, uint32_t i) {
 	caryll_buffer **blobs = context;
 	return blobs[i];
@@ -1003,7 +1031,9 @@ static caryll_buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid
 			charset->f2.range2[0].first = 1;
 			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
 		} else {
-			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) { sidof(stringHash, glyf->glyphs[j]->name); }
+			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+				sidof(stringHash, glyf->glyphs[j]->name);
+			}
 			charset->f2.range2[0].first = sidof(stringHash, glyf->glyphs[1]->name);
 			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
 		}
@@ -1213,7 +1243,9 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll
 		r = compile_index(*fdArrayIndex);
 		cff_index_fini(fdArrayIndex);
 		bufwrite_bufdel(blob, r);
-		for (uint16_t j = 0; j < cff->fdArrayCount; j++) { bufwrite_bufdel(blob, fdArrayPrivates[j]); }
+		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+			bufwrite_bufdel(blob, fdArrayPrivates[j]);
+		}
 		free(fdArrayPrivates);
 	} else {
 		bufwrite_bufdel(blob, r);

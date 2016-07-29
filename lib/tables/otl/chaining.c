@@ -1,7 +1,9 @@
 #include "chaining.h"
 static void deleteRule(otl_chaining_rule *rule) {
 	if (rule && rule->match && rule->matchCount) {
-		for (uint16_t k = 0; k < rule->matchCount; k++) { caryll_delete_coverage(rule->match[k]); }
+		for (uint16_t k = 0; k < rule->matchCount; k++) {
+			caryll_delete_coverage(rule->match[k]);
+		}
 	}
 	if (rule && rule->apply) free(rule->apply);
 	if (rule) free(rule);
@@ -10,7 +12,9 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable) {
 	if (_subtable) {
 		subtable_chaining *subtable = &(_subtable->chaining);
 		if (subtable->rules) {
-			for (uint16_t j = 0; j < subtable->rulesCount; j++) { deleteRule(subtable->rules[j]); }
+			for (uint16_t j = 0; j < subtable->rulesCount; j++) {
+				deleteRule(subtable->rules[j]);
+			}
 			free(subtable->rules);
 		}
 		if (subtable->bc) { caryll_delete_classdef(subtable->bc); }
@@ -22,7 +26,9 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable) {
 void caryll_delete_chaining(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) { delete_otl_chaining_subtable(lookup->subtables[j]); }
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+				delete_otl_chaining_subtable(lookup->subtables[j]);
+			}
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -513,7 +519,9 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 
 	uint16_t *rcpg, totalSets = 0, totalRules = 0;
 	NEW_N(rcpg, subtable->ic->maxclass + 1);
-	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) { rcpg[j] = 0; }
+	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) {
+		rcpg[j] = 0;
+	}
 	for (uint16_t j = 0; j < subtable->rulesCount; j++) {
 		uint16_t ib = subtable->rules[j]->inputBegins;
 		uint16_t startClass = subtable->rules[j]->match[ib]->glyphs[0].gid;

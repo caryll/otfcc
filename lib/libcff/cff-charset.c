@@ -17,7 +17,8 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 					charsets->s = nchars - 1;
 					charsets->f0.glyph = calloc(nchars - 1, sizeof(uint16_t));
 
-					for (i = 0; i < charsets->s; i++) charsets->f0.glyph[i] = gu2(data, offset + 1 + i * 2);
+					for (i = 0; i < charsets->s; i++)
+						charsets->f0.glyph[i] = gu2(data, offset + 1 + i * 2);
 				}
 				break;
 			case 1:

@@ -83,7 +83,9 @@ const uint8_t bits_in[0x100] = {d(0)};
 #undef a
 
 // Length of a position value in bytes
-uint8_t position_format_length(uint16_t format) { return bits_in[format & 0xFF] << 1; }
+uint8_t position_format_length(uint16_t format) {
+	return bits_in[format & 0xFF] << 1;
+}
 otl_position_value position_zero() {
 	otl_position_value v = {0, 0, 0, 0};
 	return v;
@@ -129,5 +131,9 @@ void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format)
 }
 
 // Anchor functions
-int getPositon(otl_anchor anchor) { return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y); }
-int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) { return a->index - b->index; }
+int getPositon(otl_anchor anchor) {
+	return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y);
+}
+int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) {
+	return a->index - b->index;
+}

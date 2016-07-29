@@ -4,7 +4,8 @@
 void delete_lig_attachment(mark_to_ligature_base *att) {
 	if (!att) return;
 	if (att->anchors) {
-		for (uint16_t k = 0; k < att->componentCount; k++) free(att->anchors[k]);
+		for (uint16_t k = 0; k < att->componentCount; k++)
+			free(att->anchors[k]);
 		free(att->anchors);
 	}
 	free(att);
@@ -31,7 +32,8 @@ static void delete_mtl_subtable(otl_subtable *_subtable) {
 void caryll_delete_gpos_mark_to_ligature(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) delete_mtl_subtable(lookup->subtables[j]);
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				delete_mtl_subtable(lookup->subtables[j]);
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -56,7 +58,9 @@ otl_subtable *caryll_read_gpos_mark_to_ligature(font_file_pointer data, uint32_t
 	checkLength(ligArrayOffset + 2 + 2 * subtable->bases->numGlyphs);
 	if (read_16u(data + ligArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
 	NEW_N(subtable->ligArray, subtable->bases->numGlyphs);
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) { subtable->ligArray[j] = NULL; }
+	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+		subtable->ligArray[j] = NULL;
+	}
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		uint32_t ligAttachOffset = ligArrayOffset + read_16u(data + ligArrayOffset + 2 + j * 2);
 		NEW(subtable->ligArray[j]);
@@ -193,7 +197,9 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subta
 		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			json_value *_componentRecord = baseRecord->u.array.values[k];
 			NEW_N(subtable->ligArray[j]->anchors[k], classCount);
-			for (uint16_t m = 0; m < classCount; m++) { subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent(); }
+			for (uint16_t m = 0; m < classCount; m++) {
+				subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent();
+			}
 			if (!_componentRecord || _componentRecord->type != json_object) { continue; }
 			for (uint16_t m = 0; m < _componentRecord->u.object.length; m++) {
 				sds className = sdsnewlen(_componentRecord->u.object.values[m].name,

@@ -340,7 +340,9 @@ static void caryll_delete_glyf_glyph(glyf_glyph *g) {
 		free(g->contours);
 	}
 	if (g->numberOfReferences > 0 && g->references != NULL) {
-		for (uint16_t k = 0; k < g->numberOfReferences; k++) { g->references[k].glyph.name = NULL; }
+		for (uint16_t k = 0; k < g->numberOfReferences; k++) {
+			g->references[k].glyph.name = NULL;
+		}
 		free(g->references);
 	}
 	if (g->instructions) { free(g->instructions); }
@@ -353,7 +355,9 @@ static void caryll_delete_glyf_glyph(glyf_glyph *g) {
 }
 void caryll_delete_glyf(table_glyf *table) {
 	if (table->glyphs) {
-		for (uint16_t j = 0; j < table->numberGlyphs; j++) { caryll_delete_glyf_glyph(table->glyphs[j]); }
+		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+			caryll_delete_glyf_glyph(table->glyphs[j]);
+		}
 		free(table->glyphs);
 	}
 	free(table);
@@ -420,10 +424,14 @@ static json_value *glyf_glyph_maskdefs_to_json(glyf_postscript_hint_mask *masks,
 		json_value *mask = json_object_new(3);
 		json_object_push(mask, "pointsBefore", json_integer_new(masks[j].pointsBefore));
 		json_value *h = json_array_new(nh);
-		for (uint16_t k = 0; k < nh; k++) { json_array_push(h, json_boolean_new(masks[j].maskH[k])); }
+		for (uint16_t k = 0; k < nh; k++) {
+			json_array_push(h, json_boolean_new(masks[j].maskH[k]));
+		}
 		json_object_push(mask, "maskH", h);
 		json_value *v = json_array_new(nv);
-		for (uint16_t k = 0; k < nv; k++) { json_array_push(v, json_boolean_new(masks[j].maskV[k])); }
+		for (uint16_t k = 0; k < nv; k++) {
+			json_array_push(v, json_boolean_new(masks[j].maskV[k]));
+		}
 		json_object_push(mask, "maskV", v);
 		json_array_push(a, mask);
 	}
@@ -583,7 +591,9 @@ static void stems_from_json(json_value *sd, uint16_t *count, glyf_postscript_hin
 }
 static void parse_maskbits(bool *arr, json_value *bits) {
 	if (!bits) {
-		for (uint16_t j = 0; j < 0x100; j++) { arr[j] = false; }
+		for (uint16_t j = 0; j < 0x100; j++) {
+			arr[j] = false;
+		}
 	} else {
 		for (uint16_t j = 0; j < 0x100 && j < bits->u.array.length; j++) {
 			json_value *b = bits->u.array.values[j];

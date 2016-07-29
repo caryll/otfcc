@@ -22,7 +22,8 @@ static void delete_mtb_subtable(otl_subtable *_subtable) {
 void caryll_delete_gpos_mark_to_single(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) delete_mtb_subtable(lookup->subtables[j]);
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				delete_mtb_subtable(lookup->subtables[j]);
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -153,7 +154,9 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 		char *gname = _bases->u.object.values[j].name;
 		subtable->bases->glyphs[j].name = sdsnewlen(gname, _bases->u.object.values[j].name_length);
 		NEW_N(subtable->baseArray[j], classCount);
-		for (uint16_t k = 0; k < classCount; k++) { subtable->baseArray[j][k] = otl_anchor_absent(); }
+		for (uint16_t k = 0; k < classCount; k++) {
+			subtable->baseArray[j][k] = otl_anchor_absent();
+		}
 		json_value *baseRecord = _bases->u.object.values[j].value;
 		if (!baseRecord || baseRecord->type != json_object) continue;
 
@@ -220,7 +223,9 @@ caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
 		ANCHOR_AGGERATOR_PUSH(agh, subtable->markArray->records[j].anchor);
 	}
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		for (uint16_t k = 0; k < subtable->classCount; k++) { ANCHOR_AGGERATOR_PUSH(agh, subtable->baseArray[j][k]); }
+		for (uint16_t k = 0; k < subtable->classCount; k++) {
+			ANCHOR_AGGERATOR_PUSH(agh, subtable->baseArray[j][k]);
+		}
 	}
 	HASH_SORT(agh, byAnchorIndex);
 

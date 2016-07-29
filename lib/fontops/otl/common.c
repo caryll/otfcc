@@ -1,6 +1,8 @@
 #include "common.h"
 
-static int by_gid(const void *a, const void *b) { return ((glyph_handle *)a)->gid - ((glyph_handle *)b)->gid; }
+static int by_gid(const void *a, const void *b) {
+	return ((glyph_handle *)a)->gid - ((glyph_handle *)b)->gid;
+}
 
 void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName) {
 	if (!coverage) return;

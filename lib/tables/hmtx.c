@@ -21,7 +21,9 @@ table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp 
 			hmtx->metrics[ia].lsb = read_16u(data + ia * 4 + 2);
 		}
 
-		for (uint32_t ik = 0; ik < count_k; ik++) { hmtx->leftSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2); }
+		for (uint32_t ik = 0; ik < count_k; ik++) {
+			hmtx->leftSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
+		}
 
 		return hmtx;
 	HMTX_CORRUPTED:
@@ -48,7 +50,9 @@ caryll_buffer *caryll_write_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t co
 		}
 	}
 	if (hmtx->leftSideBearing) {
-		for (uint16_t j = 0; j < count_k; j++) { bufwrite16b(buf, hmtx->leftSideBearing[j]); }
+		for (uint16_t j = 0; j < count_k; j++) {
+			bufwrite16b(buf, hmtx->leftSideBearing[j]);
+		}
 	}
 	return buf;
 }

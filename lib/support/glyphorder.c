@@ -131,7 +131,9 @@ glyph_order_hash *caryll_glyphorder_from_json(json_value *root, caryll_options *
 	HASH_SORT(hash, compare_glyphorder_entry_b);
 	glyph_order_entry *item;
 	uint32_t j = 0;
-	foreach_hash(item, hash) { item->gid = j++; }
+	foreach_hash(item, hash) {
+		item->gid = j++;
+	}
 	glyph_order_hash *go = malloc(sizeof(glyph_order_hash));
 	*go = hash;
 	return go;

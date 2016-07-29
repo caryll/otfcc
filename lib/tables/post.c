@@ -54,7 +54,9 @@ table_post *caryll_read_post(caryll_packet packet) {
 					try_name_glyph(map, j, sdsnew(standardMacNames[nameMap]));
 				}
 			}
-			for (uint32_t j = 0; j < pendingNameIndex; j++) { sdsfree(pendingNames[j]); }
+			for (uint32_t j = 0; j < pendingNameIndex; j++) {
+				sdsfree(pendingNames[j]);
+			}
 			post->post_name_map = map;
 		}
 		return post;
@@ -121,7 +123,9 @@ caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder,
 		// Since the glyphorder is already sorted using the "real" glyph order
 		// we can simply write down the glyph names.
 		glyph_order_entry *s;
-		foreach_hash(s, *glyphorder) { bufwrite16b(buf, 258 + s->gid); }
+		foreach_hash(s, *glyphorder) {
+			bufwrite16b(buf, 258 + s->gid);
+		}
 		foreach_hash(s, *glyphorder) {
 			bufwrite8(buf, sdslen(s->name));
 			bufwrite_sds(buf, s->name);

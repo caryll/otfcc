@@ -4,7 +4,9 @@ static void delete_gsub_reverse_subtable(otl_subtable *_subtable) {
 	if (_subtable) {
 		subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 		if (subtable->match)
-			for (uint16_t j = 0; j < subtable->matchCount; j++) { caryll_delete_coverage(subtable->match[j]); }
+			for (uint16_t j = 0; j < subtable->matchCount; j++) {
+				caryll_delete_coverage(subtable->match[j]);
+			}
 		if (subtable->to) caryll_delete_coverage(subtable->to);
 		free(_subtable);
 	}
@@ -13,7 +15,9 @@ static void delete_gsub_reverse_subtable(otl_subtable *_subtable) {
 void caryll_delete_gsub_reverse(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) { delete_gsub_reverse_subtable(lookup->subtables[j]); }
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+				delete_gsub_reverse_subtable(lookup->subtables[j]);
+			}
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -133,6 +137,8 @@ caryll_buffer *caryll_write_gsub_reverse(otl_subtable *_subtable) {
 		bufpingpong16b(buf, caryll_write_coverage(subtable->match[j]), &offset, &cp);
 	}
 	bufwrite16b(buf, subtable->to->numGlyphs);
-	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) { bufwrite16b(buf, subtable->to->glyphs[j].gid); }
+	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
+		bufwrite16b(buf, subtable->to->glyphs[j].gid);
+	}
 	return buf;
 }

@@ -423,7 +423,9 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_options *options) {
 
 	if (!options->keep_average_char_width) {
 		uint32_t totalWidth = 0;
-		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) { totalWidth += font->glyf->glyphs[j]->advanceWidth; }
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			totalWidth += font->glyf->glyphs[j]->advanceWidth;
+		}
 		font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
 	}
 }
@@ -517,7 +519,9 @@ static void caryll_stat_LTSH(caryll_font *font) {
 	NEW(ltsh);
 	ltsh->numGlyphs = font->glyf->numberGlyphs;
 	NEW_N(ltsh->yPels, ltsh->numGlyphs);
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) { ltsh->yPels[j] = font->glyf->glyphs[j]->yPel; }
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		ltsh->yPels[j] = font->glyf->glyphs[j]->yPel;
+	}
 	font->LTSH = ltsh;
 }
 

@@ -20,7 +20,9 @@ static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit,
 		uint32_t startCode = read_32u(start + 16 + 12 * j);
 		uint32_t endCode = read_32u(start + 16 + 12 * j + 4);
 		uint32_t startGID = read_32u(start + 16 + 12 * j + 8);
-		for (uint32_t c = startCode; c <= endCode; c++) { encode(map, c, (c - startCode) + startGID); }
+		for (uint32_t c = startCode; c <= endCode; c++) {
+			encode(map, c, (c - startCode) + startGID);
+		}
 	}
 }
 
@@ -59,7 +61,9 @@ static void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLi
 	}
 }
 
-static int by_unicode(cmap_entry *a, cmap_entry *b) { return (a->unicode - b->unicode); }
+static int by_unicode(cmap_entry *a, cmap_entry *b) {
+	return (a->unicode - b->unicode);
+}
 
 // OTFCC will not support all `cmap` mappings.
 cmap_hash *caryll_read_cmap(caryll_packet packet) {
@@ -194,7 +198,9 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 				if (isSequencial && !(item->glyph.gid == lastGIDEnd + 1)) {
 					lastGlyphIdArrayOffset = glyphIdArray->cursor;
 					// oops, sequencial glyphid broken
-					for (int j = lastGIDStart; j <= lastGIDEnd; j++) { bufwrite16b(glyphIdArray, j); }
+					for (int j = lastGIDStart; j <= lastGIDEnd; j++) {
+						bufwrite16b(glyphIdArray, j);
+					}
 				}
 				lastUnicodeEnd = item->unicode;
 				isSequencial = isSequencial && (item->glyph.gid == lastGIDEnd + 1);
@@ -238,7 +244,9 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 	bufwrite16b(buf, segmentsCount << 1);
 	uint32_t i;
 	uint32_t j;
-	for (j = 0, i = 1; i <= segmentsCount; ++j) { i <<= 1; }
+	for (j = 0, i = 1; i <= segmentsCount; ++j) {
+		i <<= 1;
+	}
 	bufwrite16b(buf, i);
 	bufwrite16b(buf, j - 1);
 	bufwrite16b(buf, 2 * segmentsCount - i);

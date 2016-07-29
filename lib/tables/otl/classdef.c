@@ -14,7 +14,9 @@ typedef struct {
 	UT_hash_handle hh;
 } coverage_entry;
 
-static int by_covIndex(coverage_entry *a, coverage_entry *b) { return a->covIndex - b->covIndex; }
+static int by_covIndex(coverage_entry *a, coverage_entry *b) {
+	return a->covIndex - b->covIndex;
+}
 
 otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_classdef *cd;

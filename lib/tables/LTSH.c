@@ -23,6 +23,8 @@ caryll_buffer *caryll_write_LTSH(table_LTSH *ltsh, caryll_options *options) {
 	if (!ltsh) return buf;
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, ltsh->numGlyphs);
-	for (uint16_t j = 0; j < ltsh->numGlyphs; j++) { bufwrite8(buf, ltsh->yPels[j]); }
+	for (uint16_t j = 0; j < ltsh->numGlyphs; j++) {
+		bufwrite8(buf, ltsh->yPels[j]);
+	}
 	return buf;
 }

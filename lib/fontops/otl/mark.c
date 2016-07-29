@@ -6,21 +6,27 @@ typedef struct {
 	otl_mark_record markrec;
 	UT_hash_handle hh;
 } mark_hash;
-static int mark_by_gid(mark_hash *a, mark_hash *b) { return a->gid - b->gid; }
+static int mark_by_gid(mark_hash *a, mark_hash *b) {
+	return a->gid - b->gid;
+}
 typedef struct {
 	int gid;
 	sds name;
 	otl_anchor *anchors;
 	UT_hash_handle hh;
 } base_hash;
-static int base_by_gid(base_hash *a, base_hash *b) { return a->gid - b->gid; }
+static int base_by_gid(base_hash *a, base_hash *b) {
+	return a->gid - b->gid;
+}
 typedef struct {
 	int gid;
 	sds name;
 	mark_to_ligature_base *ligAttachment;
 	UT_hash_handle hh;
 } lig_hash;
-static int lig_by_gid(lig_hash *a, lig_hash *b) { return a->gid - b->gid; }
+static int lig_by_gid(lig_hash *a, lig_hash *b) {
+	return a->gid - b->gid;
+}
 
 static void consolidateMarkArray(caryll_font *font, table_otl *table, sds lookupName, otl_coverage *marks,
                                  otl_mark_array *markArray, uint16_t classCount) {

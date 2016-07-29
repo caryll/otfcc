@@ -63,7 +63,9 @@ void caryll_delete_otl(table_otl *table) {
 		free(table->features);
 	}
 	if (table->lookups) {
-		for (uint16_t j = 0; j < table->lookupCount; j++) { caryll_delete_lookup(table->lookups[j]); }
+		for (uint16_t j = 0; j < table->lookupCount; j++) {
+			caryll_delete_lookup(table->lookups[j]);
+		}
 		free(table->lookups);
 	}
 	free(table);
@@ -284,7 +286,9 @@ table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag) {
 		    data, length,
 		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown));
 		if (!otl) goto FAIL;
-		for (uint16_t j = 0; j < otl->lookupCount; j++) { caryll_read_otl_lookup(data, length, otl->lookups[j]); }
+		for (uint16_t j = 0; j < otl->lookupCount; j++) {
+			caryll_read_otl_lookup(data, length, otl->lookups[j]);
+		}
 		return otl;
 	FAIL:
 		if (otl) caryll_delete_otl(otl);
@@ -526,8 +530,12 @@ static int by_lookup_order(lookup_hash *a, lookup_hash *b) {
 		return a->orderType - b->orderType;
 	}
 }
-static int by_feature_name(feature_hash *a, feature_hash *b) { return strcmp(a->name, b->name); }
-static int by_language_name(language_hash *a, language_hash *b) { return strcmp(a->name, b->name); }
+static int by_feature_name(feature_hash *a, feature_hash *b) {
+	return strcmp(a->name, b->name);
+}
+static int by_language_name(language_hash *a, language_hash *b) {
+	return strcmp(a->name, b->name);
+}
 table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const char *tag) {
 	table_otl *otl = NULL;
 	NEW(otl);

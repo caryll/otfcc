@@ -3,7 +3,9 @@ static void deleteGSUBLigatureSubtable(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	if (subtable->from && subtable->to) {
-		for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) { caryll_delete_coverage(subtable->from[j]); }
+		for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
+			caryll_delete_coverage(subtable->from[j]);
+		}
 		free(subtable->from);
 	}
 	caryll_delete_coverage(subtable->to);
@@ -45,7 +47,9 @@ otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLe
 	subtable->to->numGlyphs = ligatureCount;
 	NEW_N(subtable->to->glyphs, ligatureCount);
 	NEW_N(subtable->from, ligatureCount);
-	for (uint16_t j = 0; j < ligatureCount; j++) { subtable->from[j] = NULL; };
+	for (uint16_t j = 0; j < ligatureCount; j++) {
+		subtable->from[j] = NULL;
+	};
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < setCount; j++) {
 		uint32_t setOffset = offset + read_16u(data + offset + 6 + j * 2);
@@ -144,7 +148,9 @@ typedef struct {
 	int ligid;
 	UT_hash_handle hh;
 } ligature_aggerator;
-static int by_gid(ligature_aggerator *a, ligature_aggerator *b) { return a->gid - b->gid; }
+static int by_gid(ligature_aggerator *a, ligature_aggerator *b) {
+	return a->gid - b->gid;
+}
 
 caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 	caryll_buffer *buf = bufnew();

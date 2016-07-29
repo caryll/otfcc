@@ -50,7 +50,9 @@ typedef struct {
 	int cls;
 	UT_hash_handle hh;
 } classifier_hash;
-static int by_gid_clsh(classifier_hash *a, classifier_hash *b) { return a->gid - b->gid; }
+static int by_gid_clsh(classifier_hash *a, classifier_hash *b) {
+	return a->gid - b->gid;
+}
 
 static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
@@ -266,5 +268,7 @@ void classify(otl_lookup *lookup) {
 	// in this procedure we will replace the subtables' content to classes.
 	// This can massively reduce the size of the lookup.
 	// Remember, this process is completely automatic.
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) { classify_around(lookup, j); }
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		classify_around(lookup, j);
+	}
 }

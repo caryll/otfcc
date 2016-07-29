@@ -29,7 +29,8 @@ static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 					enc->f0.ncodes = data[offset + 1];
 					enc->f0.code = calloc(enc->f0.ncodes, sizeof(uint8_t));
 
-					for (uint32_t i = 0; i < enc->f0.ncodes; i++) enc->f0.code[i] = data[offset + 2 + i];
+					for (uint32_t i = 0; i < enc->f0.ncodes; i++)
+						enc->f0.code[i] = data[offset + 2 + i];
 				}
 				break;
 			case 1:
@@ -288,8 +289,12 @@ static void callback_nopNewContour(void *context) {}
 static void callback_nopLineTo(void *context, float x1, float y1) {}
 static void callback_nopCurveTo(void *context, float x1, float y1, float x2, float y2, float x3, float y3) {}
 static void callback_nopsetHint(void *context, bool isVertical, float position, float width) {}
-static void callback_nopsetMask(void *context, bool isContourMask, bool *mask) { FREE(mask); }
-static double callback_nopgetrand(void *context) { return 0; }
+static void callback_nopsetMask(void *context, bool isContourMask, bool *mask) {
+	FREE(mask);
+}
+static double callback_nopgetrand(void *context) {
+	return 0;
+}
 #define CHECK_STACK_TOP(op, n)                                                                                         \
 	{                                                                                                                  \
 		if (stack->index < n) {                                                                                        \
@@ -405,7 +410,8 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_In
 						break;
 					}
 					case op_rlineto: {
-						for (i = 0; i < stack->index; i += 2) lineTo(outline, stack->stack[i].d, stack->stack[i + 1].d);
+						for (i = 0; i < stack->index; i += 2)
+							lineTo(outline, stack->stack[i].d, stack->stack[i + 1].d);
 						stack->index = 0;
 						break;
 					}

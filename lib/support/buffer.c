@@ -13,9 +13,15 @@ void buffree(caryll_buffer *buf) {
 	if (buf->data) free(buf->data);
 	free(buf);
 }
-size_t buflen(caryll_buffer *buf) { return buf->size; }
-size_t bufpos(caryll_buffer *buf) { return buf->cursor; }
-void bufseek(caryll_buffer *buf, size_t pos) { buf->cursor = pos; }
+size_t buflen(caryll_buffer *buf) {
+	return buf->size;
+}
+size_t bufpos(caryll_buffer *buf) {
+	return buf->cursor;
+}
+void bufseek(caryll_buffer *buf, size_t pos) {
+	buf->cursor = pos;
+}
 void bufclear(caryll_buffer *buf) {
 	buf->cursor = 0;
 	buf->free = buf->size + buf->free;
@@ -101,7 +107,9 @@ caryll_buffer *bufninit(uint32_t n, ...) {
 	bufbeforewrite(buf, n);
 	va_list ap;
 	va_start(ap, n);
-	for (uint16_t j = 0; j < n; j++) { bufwrite8(buf, (uint8_t)va_arg(ap, int)); }
+	for (uint16_t j = 0; j < n; j++) {
+		bufwrite8(buf, (uint8_t)va_arg(ap, int));
+	}
 	va_end(ap);
 	return buf;
 }
@@ -109,7 +117,9 @@ void bufnwrite8(caryll_buffer *buf, uint32_t n, ...) {
 	bufbeforewrite(buf, n);
 	va_list ap;
 	va_start(ap, n);
-	for (uint16_t j = 0; j < n; j++) { bufwrite8(buf, (uint8_t)va_arg(ap, int)); }
+	for (uint16_t j = 0; j < n; j++) {
+		bufwrite8(buf, (uint8_t)va_arg(ap, int));
+	}
 	va_end(ap);
 }
 

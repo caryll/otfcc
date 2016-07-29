@@ -17,7 +17,9 @@ static uint32_t buf_checksum(caryll_buffer *buffer) {
 	{
 		uint32_t *start = (uint32_t *)buffer->data;
 		uint32_t *end = start + ((actualLength + 3) & ~3) / sizeof(uint32_t);
-		while (start < end) { sum += caryll_endian_convert32(*start++); }
+		while (start < end) {
+			sum += caryll_endian_convert32(*start++);
+		}
 	}
 	return sum;
 }
@@ -33,7 +35,9 @@ static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	{
 		uint32_t *start = (uint32_t *)buffer->data;
 		uint32_t *end = start + ((table->length + 3) & ~3) / sizeof(uint32_t);
-		while (start < end) { sum += caryll_endian_convert32(*start++); }
+		while (start < end) {
+			sum += caryll_endian_convert32(*start++);
+		}
 	}
 	table->checksum = sum;
 	return table;
@@ -70,7 +74,9 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 	}
 }
 
-static int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) { return (a->tag - b->tag); }
+static int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) {
+	return (a->tag - b->tag);
+}
 
 caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	caryll_buffer *buffer = bufnew();

@@ -100,7 +100,9 @@ caryll_buffer *encode_cff_real(double val) {
 				array[j++] = 0x0e, i++;
 		}
 
-		for (i = 1; i < blob->size; i++) { blob->data[i] = array[(i - 1) * 2] * 16 + array[(i - 1) * 2 + 1]; }
+		for (i = 1; i < blob->size; i++) {
+			blob->data[i] = array[(i - 1) * 2] * 16 + array[(i - 1) * 2 + 1];
+		}
 
 		free(array);
 	}
@@ -310,4 +312,6 @@ static uint32_t (*_de_t2[256])(uint8_t *, CFF_Value *) = {
     cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
     cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_e};
 
-uint32_t decode_cff_token(uint8_t *start, CFF_Value *val) { return _de_t2[*start](start, val); }
+uint32_t decode_cff_token(uint8_t *start, CFF_Value *val) {
+	return _de_t2[*start](start, val);
+}

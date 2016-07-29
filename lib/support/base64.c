@@ -44,7 +44,8 @@ uint8_t *base64_decode(const uint8_t *src, size_t len, size_t *out_len) {
 	size_t i, count;
 
 	memset(dtable, 0x80, 256);
-	for (i = 0; i < sizeof(base64_table); i++) dtable[base64_table[i]] = i;
+	for (i = 0; i < sizeof(base64_table); i++)
+		dtable[base64_table[i]] = i;
 	dtable['='] = 0;
 
 	count = 0;

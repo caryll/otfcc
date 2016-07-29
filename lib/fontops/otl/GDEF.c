@@ -6,7 +6,9 @@ typedef struct {
 	caret_value_record cr;
 	UT_hash_handle hh;
 } GDEF_ligcaret_hash;
-static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) { return a->gid - b->gid; }
+static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) {
+	return a->gid - b->gid;
+}
 void consolidate_GDEF(caryll_font *font, table_GDEF *gdef, char *tableName) {
 	if (!font || !font->glyph_order || !gdef) return;
 	if (gdef->glyphClassDef) consolidate_classdef(font, gdef->glyphClassDef, tableName);

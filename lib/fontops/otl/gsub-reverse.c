@@ -7,11 +7,15 @@ typedef struct {
 	sds toname;
 	UT_hash_handle hh;
 } gsub_single_map_hash;
-static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) { return a->fromid - b->fromid; }
+static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
+	return a->fromid - b->fromid;
+}
 
 bool consolidate_gsub_reverse(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
-	for (uint16_t j = 0; j < subtable->matchCount; j++) { consolidate_coverage(font, subtable->match[j], lookupName); }
+	for (uint16_t j = 0; j < subtable->matchCount; j++) {
+		consolidate_coverage(font, subtable->match[j], lookupName);
+	}
 	consolidate_coverage(font, subtable->to, lookupName);
 	if (subtable->inputIndex >= subtable->matchCount) { subtable->inputIndex = subtable->matchCount - 1; }
 	gsub_single_map_hash *h = NULL;

@@ -311,7 +311,8 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 	for (pt = text; *pt; ++pt) {
 		npos = 0;
 		while (npos < 256) {
-			while (*pt == ' ' || *pt == '\t') ++pt;
+			while (*pt == ' ' || *pt == '\t')
+				++pt;
 			if (isdigit(*pt) || *pt == '-') {
 				val = strtol(pt, &end, 0);
 				if (val > 32767 || val < -32768) {
@@ -323,7 +324,8 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 			} else
 				break;
 		}
-		while (*pt == ' ' || *pt == '\t') ++pt;
+		while (*pt == ' ' || *pt == '\t')
+			++pt;
 		if (npos == 0 && (*pt == '\r' || *pt == '\n' || *pt == '\0')) continue;
 		nread = 0;
 		if (push_left == -1) {
@@ -366,16 +368,19 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 		while (nread < npos) {
 			i = nread;
 			if (numberstack[nread] >= 0 && numberstack[nread] <= 255) {
-				while (i < npos && numberstack[i] >= 0 && numberstack[i] <= 255) ++i;
+				while (i < npos && numberstack[i] >= 0 && numberstack[i] <= 255)
+					++i;
 				if (i - nread <= 8)
 					instrs[icnt++] = ttf_pushb + (i - nread) - 1;
 				else {
 					instrs[icnt++] = ttf_npushb;
 					instrs[icnt++] = i - nread;
 				}
-				while (nread < i) instrs[icnt++] = numberstack[nread++];
+				while (nread < i)
+					instrs[icnt++] = numberstack[nread++];
 			} else {
-				while (i < npos && (numberstack[i] < 0 || numberstack[i] > 255)) ++i;
+				while (i < npos && (numberstack[i] < 0 || numberstack[i] > 255))
+					++i;
 				if (i - nread <= 8)
 					instrs[icnt++] = ttf_pushw + (i - nread) - 1;
 				else {
@@ -399,7 +404,8 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 			for (i = 0; i < 256; ++i)
 				if (strnmatch(pt, ff_ttf_instrnames[i], (int)(brack - pt + 1)) == 0) break;
 			val = strtol(brack + 1, &bend, 2); /* Stuff in brackets should be in binary */
-			while (*bend == ' ' || *bend == '\t') ++bend;
+			while (*bend == ' ' || *bend == '\t')
+				++bend;
 			if (*bend != ']') {
 				IVError(context, "Missing right bracket in command (or bad binary value in bracket)", (int)(pt - text));
 				return (NULL);
@@ -441,7 +447,8 @@ static int instr_typify(struct instrdata *id) {
 			/* NPUSHB */
 			bts[++i] = bt_cnt;
 			cnt = instrs[i];
-			for (j = 0; j < cnt; ++j) bts[++i] = bt_byte;
+			for (j = 0; j < cnt; ++j)
+				bts[++i] = bt_byte;
 			lh += 1 + cnt;
 		} else if (instrs[i] == ttf_npushw) {
 			/* NPUSHW */
@@ -456,7 +463,8 @@ static int instr_typify(struct instrdata *id) {
 		} else if ((instrs[i] & 0xf8) == 0xb0) {
 			/* PUSHB[n] */
 			cnt = (instrs[i] & 7) + 1;
-			for (j = 0; j < cnt; ++j) bts[++i] = bt_byte;
+			for (j = 0; j < cnt; ++j)
+				bts[++i] = bt_byte;
 			lh += cnt;
 		} else if ((instrs[i] & 0xf8) == 0xb8) {
 			/* PUSHW[n] */

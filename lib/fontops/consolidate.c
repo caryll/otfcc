@@ -58,34 +58,50 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 
 	// Sort stems
 	if (g->stemH) {
-		for (uint16_t j = 0; j < g->numberOfStemH; j++) { g->stemH[j].map = j; }
+		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
+			g->stemH[j].map = j;
+		}
 		qsort(g->stemH, g->numberOfStemH, sizeof(glyf_postscript_hint_stemdef), by_stem_pos);
 	}
 	if (g->stemV) {
-		for (uint16_t j = 0; j < g->numberOfStemV; j++) { g->stemV[j].map = j; }
+		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
+			g->stemV[j].map = j;
+		}
 		qsort(g->stemV, g->numberOfStemV, sizeof(glyf_postscript_hint_stemdef), by_stem_pos);
 	}
 	uint16_t *hmap;
 	NEW_N(hmap, g->numberOfStemH);
 	uint16_t *vmap;
 	NEW_N(vmap, g->numberOfStemV);
-	for (uint16_t j = 0; j < g->numberOfStemH; j++) { hmap[g->stemH[j].map] = j; }
-	for (uint16_t j = 0; j < g->numberOfStemV; j++) { vmap[g->stemV[j].map] = j; }
+	for (uint16_t j = 0; j < g->numberOfStemH; j++) {
+		hmap[g->stemH[j].map] = j;
+	}
+	for (uint16_t j = 0; j < g->numberOfStemV; j++) {
+		vmap[g->stemV[j].map] = j;
+	}
 	// sort masks
 	if (g->hintMasks) {
 		qsort(g->hintMasks, g->numberOfHintMasks, sizeof(glyf_postscript_hint_mask), by_mask_pointindex);
 		for (uint16_t j = 0; j < g->numberOfHintMasks; j++) {
 			glyf_postscript_hint_mask oldmask = g->hintMasks[j]; // copy
-			for (uint16_t k = 0; k < g->numberOfStemH; k++) { g->hintMasks[j].maskH[k] = oldmask.maskH[hmap[k]]; }
-			for (uint16_t k = 0; k < g->numberOfStemV; k++) { g->hintMasks[j].maskV[k] = oldmask.maskV[vmap[k]]; }
+			for (uint16_t k = 0; k < g->numberOfStemH; k++) {
+				g->hintMasks[j].maskH[k] = oldmask.maskH[hmap[k]];
+			}
+			for (uint16_t k = 0; k < g->numberOfStemV; k++) {
+				g->hintMasks[j].maskV[k] = oldmask.maskV[vmap[k]];
+			}
 		}
 	}
 	if (g->contourMasks) {
 		qsort(g->contourMasks, g->numberOfContourMasks, sizeof(glyf_postscript_hint_mask), by_mask_pointindex);
 		for (uint16_t j = 0; j < g->numberOfContourMasks; j++) {
 			glyf_postscript_hint_mask oldmask = g->contourMasks[j]; // copy
-			for (uint16_t k = 0; k < g->numberOfStemH; k++) { g->contourMasks[j].maskH[k] = oldmask.maskH[hmap[k]]; }
-			for (uint16_t k = 0; k < g->numberOfStemV; k++) { g->contourMasks[j].maskV[k] = oldmask.maskV[vmap[k]]; }
+			for (uint16_t k = 0; k < g->numberOfStemH; k++) {
+				g->contourMasks[j].maskH[k] = oldmask.maskH[hmap[k]];
+			}
+			for (uint16_t k = 0; k < g->numberOfStemV; k++) {
+				g->contourMasks[j].maskV[k] = oldmask.maskV[vmap[k]];
+			}
 		}
 	}
 	free(hmap);

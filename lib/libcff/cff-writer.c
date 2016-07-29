@@ -12,7 +12,9 @@
 
 #include "libcff.h"
 
-caryll_buffer *compile_header(void) { return bufninit(4, 1, 0, 4, 4); }
+caryll_buffer *compile_header(void) {
+	return bufninit(4, 1, 0, 4, 4);
+}
 
 void merge_cs2_operator(caryll_buffer *blob, int32_t val) {
 	if (val >= 0x100) {
@@ -50,7 +52,9 @@ void merge_cs2_operand(caryll_buffer *blob, double val) {
 		merge_cs2_real(blob, val);
 	}
 }
-void merge_cs2_special(caryll_buffer *blob, uint8_t val) { bufwrite8(blob, val); }
+void merge_cs2_special(caryll_buffer *blob, uint8_t val) {
+	bufwrite8(blob, val);
+}
 
 caryll_buffer *compile_offset(int32_t val) {
 	return bufninit(5, 29, (val >> 24) & 0xff, (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff);

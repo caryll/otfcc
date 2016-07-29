@@ -11,7 +11,9 @@ typedef struct {
 	UT_hash_handle hh;
 } coverage_entry;
 
-static int by_covIndex(coverage_entry *a, coverage_entry *b) { return a->covIndex - b->covIndex; }
+static int by_covIndex(coverage_entry *a, coverage_entry *b) {
+	return a->covIndex - b->covIndex;
+}
 
 otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_coverage *coverage;
@@ -135,7 +137,9 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 	caryll_buffer *format1 = bufnew();
 	bufwrite16b(format1, 1);
 	bufwrite16b(format1, coverage->numGlyphs);
-	for (uint16_t j = 0; j < coverage->numGlyphs; j++) { bufwrite16b(format1, coverage->glyphs[j].gid); }
+	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+		bufwrite16b(format1, coverage->glyphs[j].gid);
+	}
 	if (coverage->numGlyphs < 2) return format1;
 
 	caryll_buffer *format2 = bufnew();

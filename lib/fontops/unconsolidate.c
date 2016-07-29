@@ -28,7 +28,9 @@ static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 	// pass 2: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
 		glyph_order_entry *s;
-		foreach_hash(s, *font->post->post_name_map) { try_name_glyph(glyph_order, s->gid, sdsdup(s->name)); }
+		foreach_hash(s, *font->post->post_name_map) {
+			try_name_glyph(glyph_order, s->gid, sdsdup(s->name));
+		}
 	}
 	// pass 3: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
@@ -73,7 +75,9 @@ static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 static void caryll_name_cmap_entries(caryll_font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
 		cmap_entry *s;
-		foreach_hash(s, *font->cmap) { lookup_name(font->glyph_order, s->glyph.gid, &s->glyph.name); }
+		foreach_hash(s, *font->cmap) {
+			lookup_name(font->glyph_order, s->glyph.gid, &s->glyph.name);
+		}
 	}
 }
 static void caryll_name_glyf(caryll_font *font) {
@@ -128,7 +132,9 @@ static void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, tabl
 	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 		subtable_chaining *subtable = &(lookup->subtables[j]->chaining);
 		otl_chaining_rule *rule = subtable->rules[0];
-		for (uint16_t k = 0; k < rule->matchCount; k++) { name_coverage(font, rule->match[k]); }
+		for (uint16_t k = 0; k < rule->matchCount; k++) {
+			name_coverage(font, rule->match[k]);
+		}
 		for (uint16_t k = 0; k < rule->applyCount; k++)
 			if (rule->apply[k].lookupIndex < table->lookupCount) {
 				rule->apply[k].lookupName = table->lookups[rule->apply[k].lookupIndex]->name;
@@ -140,7 +146,9 @@ static void unconsolidate_gsub_reverse(caryll_font *font, otl_lookup *lookup, ta
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
 		if (lookup->subtables[j]) {
 			subtable_gsub_reverse *subtable = &(lookup->subtables[j]->gsub_reverse);
-			for (uint16_t j = 0; j < subtable->matchCount; j++) { name_coverage(font, subtable->match[j]); }
+			for (uint16_t j = 0; j < subtable->matchCount; j++) {
+				name_coverage(font, subtable->match[j]);
+			}
 			name_coverage(font, subtable->to);
 		}
 }

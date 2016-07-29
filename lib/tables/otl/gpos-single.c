@@ -29,7 +29,9 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 
 	if (subtableFormat == 1) {
 		otl_position_value v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
-		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) { subtable->values[j] = v; }
+		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
+			subtable->values[j] = v;
+		}
 	} else {
 		uint16_t valueFormat = read_16u(data + offset + 4);
 		uint16_t valueCount = read_16u(data + offset + 6);

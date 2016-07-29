@@ -109,7 +109,9 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_options *op
 	json_object_push(os_2, "sFamilyClass", json_integer_new(table->sFamilyClass));
 
 	json_value *panose = json_array_new(10);
-	for (uint8_t j = 0; j < 10; j++) { json_array_push(panose, json_integer_new(table->panose[j])); }
+	for (uint8_t j = 0; j < 10; j++) {
+		json_array_push(panose, json_integer_new(table->panose[j]));
+	}
 	json_object_push(os_2, "panose", panose);
 
 	json_object_push(os_2, "ulUnicodeRange1", json_integer_new(table->ulUnicodeRange1));

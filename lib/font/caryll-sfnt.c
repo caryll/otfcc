@@ -52,7 +52,9 @@ caryll_sfnt *caryll_read_sfnt(FILE *file) {
 			font->offsets = (uint32_t *)malloc(sizeof(uint32_t) * font->count);
 			font->packets = (caryll_packet *)malloc(sizeof(caryll_packet) * font->count);
 
-			for (uint32_t i = 0; i < font->count; i++) { font->offsets[i] = caryll_get32u(file); }
+			for (uint32_t i = 0; i < font->count; i++) {
+				font->offsets[i] = caryll_get32u(file);
+			}
 
 			caryll_read_packets(font, file);
 			break;
@@ -72,7 +74,9 @@ caryll_sfnt *caryll_read_sfnt(FILE *file) {
 void caryll_delete_sfnt(caryll_sfnt *font) {
 	if (font->count > 0) {
 		for (uint32_t count = 0; count < font->count; count++) {
-			for (int i = 0; i < font->packets[count].numTables; i++) { free(font->packets[count].pieces[i].data); }
+			for (int i = 0; i < font->packets[count].numTables; i++) {
+				free(font->packets[count].pieces[i].data);
+			}
 			free(font->packets[count].pieces);
 		}
 	}

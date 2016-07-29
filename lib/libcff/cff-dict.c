@@ -3,7 +3,9 @@
 // DICT util functions
 void cff_delete_dict(CFF_Dict *dict) {
 	if (!dict) return;
-	for (uint32_t j = 0; j < dict->count; j++) { free(dict->ents[j].vals); }
+	for (uint32_t j = 0; j < dict->count; j++) {
+		free(dict->ents[j].vals);
+	}
 	free(dict->ents);
 	free(dict);
 }

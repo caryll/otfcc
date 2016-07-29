@@ -8,7 +8,9 @@ table_cvt *caryll_read_cvt(caryll_packet packet, uint32_t tag) {
 		NEW(t);
 		t->length = length >> 1;
 		NEW_N(t->words, (t->length + 1));
-		for (uint16_t j = 0; j < t->length; j++) { t->words[j] = read_16u(data + 2 * j); }
+		for (uint16_t j = 0; j < t->length; j++) {
+			t->words[j] = read_16u(data + 2 * j);
+		}
 		return t;
 	}
 	return NULL;
@@ -23,7 +25,9 @@ void caryll_cvt_to_json(table_cvt *table, json_value *root, caryll_options *opti
 	if (options->verbose) fprintf(stderr, "Dumping cvt.\n");
 
 	json_value *arr = json_array_new(table->length);
-	for (uint16_t j = 0; j < table->length; j++) { json_array_push(arr, json_integer_new(table->words[j])); }
+	for (uint16_t j = 0; j < table->length; j++) {
+		json_array_push(arr, json_integer_new(table->words[j]));
+	}
 	json_object_push(root, tag, arr);
 }
 table_cvt *caryll_cvt_from_json(json_value *root, caryll_options *options, const char *tag) {
@@ -53,7 +57,9 @@ table_cvt *caryll_cvt_from_json(json_value *root, caryll_options *options, const
 		uint8_t *raw = base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
 		t->length = (uint32_t)(len >> 1);
 		NEW_N(t->words, (t->length + 1));
-		for (uint16_t j = 0; j < t->length; j++) { t->words[j] = read_16u(raw + 2 * j); }
+		for (uint16_t j = 0; j < t->length; j++) {
+			t->words[j] = read_16u(raw + 2 * j);
+		}
 		FREE(raw);
 	}
 	return t;
@@ -62,6 +68,8 @@ table_cvt *caryll_cvt_from_json(json_value *root, caryll_options *options, const
 caryll_buffer *caryll_write_cvt(table_cvt *table, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
-	for (uint16_t j = 0; j < table->length; j++) { bufwrite16b(buf, table->words[j]); }
+	for (uint16_t j = 0; j < table->length; j++) {
+		bufwrite16b(buf, table->words[j]);
+	}
 	return buf;
 }

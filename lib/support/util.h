@@ -130,7 +130,9 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 	return fallback;
 }
 
-static INLINE json_value *json_from_sds(sds str) { return json_string_new_length((uint32_t)sdslen(str), str); }
+static INLINE json_value *json_from_sds(sds str) {
+	return json_string_new_length((uint32_t)sdslen(str), str);
+}
 
 // flags reader and writer
 static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) {
@@ -249,7 +251,9 @@ static INLINE uint64_t caryll_get64u(FILE *file) {
 }
 
 // data reader
-static INLINE uint8_t read_8u(uint8_t *src) { return src[0]; }
+static INLINE uint8_t read_8u(uint8_t *src) {
+	return src[0];
+}
 static INLINE uint16_t read_16u(uint8_t *src) {
 	uint16_t b0 = ((uint16_t)src[0]) << 8;
 	uint16_t b1 = ((uint16_t)src[1]);
@@ -273,20 +277,36 @@ static INLINE uint64_t read_64u(uint8_t *src) {
 	uint64_t b7 = ((uint64_t)src[7]);
 	return (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
 }
-static INLINE int8_t read_8s(uint8_t *src) { return (int8_t)read_8u(src); }
-static INLINE int16_t read_16s(uint8_t *src) { return (int16_t)read_16u(src); }
-static INLINE int32_t read_32s(uint8_t *src) { return (int32_t)read_32u(src); }
-static INLINE int64_t read_64s(uint8_t *src) { return (int64_t)read_64u(src); }
+static INLINE int8_t read_8s(uint8_t *src) {
+	return (int8_t)read_8u(src);
+}
+static INLINE int16_t read_16s(uint8_t *src) {
+	return (int16_t)read_16u(src);
+}
+static INLINE int32_t read_32s(uint8_t *src) {
+	return (int32_t)read_32u(src);
+}
+static INLINE int64_t read_64s(uint8_t *src) {
+	return (int64_t)read_64u(src);
+}
 
 // f2dot14 type
 typedef int16_t f2dot14;
-static INLINE float caryll_from_f2dot14(int16_t x) { return x / 16384.0; }
-static INLINE int16_t caryll_to_f2dot14(float x) { return x * 16384.0; }
+static INLINE float caryll_from_f2dot14(int16_t x) {
+	return x / 16384.0;
+}
+static INLINE int16_t caryll_to_f2dot14(float x) {
+	return x * 16384.0;
+}
 
 // F16.16 (fixed) type
 typedef int32_t f16dot16;
-static INLINE float caryll_from_fixed(f16dot16 x) { return x / 65536.0; }
-static INLINE f16dot16 caryll_to_fixed(float x) { return x * 65536.0; }
+static INLINE float caryll_from_fixed(f16dot16 x) {
+	return x / 65536.0;
+}
+static INLINE f16dot16 caryll_to_fixed(float x) {
+	return x * 65536.0;
+}
 
 // glyph reference type
 typedef struct {

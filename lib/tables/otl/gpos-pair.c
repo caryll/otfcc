@@ -6,11 +6,15 @@ void delete_otl_gpos_pair_subtable(otl_subtable *_subtable) {
 		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 		if (subtable->coverage) caryll_delete_coverage(subtable->coverage);
 		if (subtable->firstValues) {
-			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) { free(subtable->firstValues[j]); }
+			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) {
+				free(subtable->firstValues[j]);
+			}
 			free(subtable->firstValues);
 		}
 		if (subtable->secondValues) {
-			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) { free(subtable->secondValues[j]); }
+			for (uint16_t j = 0; j <= subtable->first->maxclass; j++) {
+				free(subtable->secondValues[j]);
+			}
 			free(subtable->secondValues);
 		}
 		caryll_delete_classdef(subtable->first);
@@ -21,7 +25,8 @@ void delete_otl_gpos_pair_subtable(otl_subtable *_subtable) {
 void caryll_delete_gpos_pair(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) delete_otl_gpos_pair_subtable(lookup->subtables[j]);
+			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+				delete_otl_gpos_pair_subtable(lookup->subtables[j]);
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -54,7 +59,9 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 		subtable->first->maxclass = cov->numGlyphs - 1;
 		subtable->first->glyphs = cov->glyphs;
 		NEW_N(subtable->first->classes, cov->numGlyphs);
-		for (uint16_t j = 0; j < cov->numGlyphs; j++) { subtable->first->classes[j] = j; }
+		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
+			subtable->first->classes[j] = j;
+		}
 		free(cov);
 
 		uint16_t format1 = read_16u(data + offset + 4);

@@ -3,7 +3,9 @@ static void deleteGSUBMultiSubtable(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	if (subtable->from && subtable->to) {
-		for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) { caryll_delete_coverage(subtable->to[j]); }
+		for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
+			caryll_delete_coverage(subtable->to[j]);
+		}
 		free(subtable->to);
 	}
 	caryll_delete_coverage(subtable->from);
@@ -41,7 +43,9 @@ otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLengt
 		NEW(cov);
 		cov->numGlyphs = read_16u(data + seqOffset);
 		NEW_N(cov->glyphs, cov->numGlyphs);
-		for (uint16_t k = 0; k < cov->numGlyphs; k++) { cov->glyphs[k].gid = read_16u(data + seqOffset + 2 + k * 2); }
+		for (uint16_t k = 0; k < cov->numGlyphs; k++) {
+			cov->glyphs[k].gid = read_16u(data + seqOffset + 2 + k * 2);
+		}
 		subtable->to[j] = cov;
 	}
 	return _subtable;
@@ -94,7 +98,9 @@ caryll_buffer *caryll_write_gsub_multi_subtable(otl_subtable *_subtable) {
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
 		bufping16b(buf, &offset, &cp);
 		bufwrite16b(buf, subtable->to[j]->numGlyphs);
-		for (uint16_t k = 0; k < subtable->to[j]->numGlyphs; k++) { bufwrite16b(buf, subtable->to[j]->glyphs[k].gid); }
+		for (uint16_t k = 0; k < subtable->to[j]->numGlyphs; k++) {
+			bufwrite16b(buf, subtable->to[j]->glyphs[k].gid);
+		}
 		bufpong(buf, &offset, &cp);
 	}
 	return buf;

@@ -110,7 +110,9 @@ caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {
 		bufwrite16b(bufst, 2);
 		bufwrite16b(bufst, 6 + subtable->to->numGlyphs * 2);
 		bufwrite16b(bufst, subtable->to->numGlyphs);
-		for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) { bufwrite16b(bufst, subtable->to->glyphs[k].gid); }
+		for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
+			bufwrite16b(bufst, subtable->to->glyphs[k].gid);
+		}
 		bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
 	}
 	return bufst;

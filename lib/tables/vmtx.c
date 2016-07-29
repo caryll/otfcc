@@ -21,7 +21,9 @@ table_vmtx *caryll_read_vmtx(caryll_packet packet, table_vhea *vhea, table_maxp 
 			vmtx->metrics[ia].tsb = read_16u(data + ia * 4 + 2);
 		}
 
-		for (uint32_t ik = 0; ik < count_k; ik++) { vmtx->topSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2); }
+		for (uint32_t ik = 0; ik < count_k; ik++) {
+			vmtx->topSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
+		}
 
 		return vmtx;
 	vmtx_CORRUPTED:
@@ -48,7 +50,9 @@ caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t co
 		}
 	}
 	if (vmtx->topSideBearing) {
-		for (uint16_t j = 0; j < count_k; j++) { bufwrite16b(buf, vmtx->topSideBearing[j]); }
+		for (uint16_t j = 0; j < count_k; j++) {
+			bufwrite16b(buf, vmtx->topSideBearing[j]);
+		}
 	}
 	return buf;
 }
