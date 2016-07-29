@@ -24,6 +24,7 @@ glyf_glyph *caryll_new_glyf_glyph() {
 	g->hintMasks = NULL;
 	g->contourMasks = NULL;
 	g->fdSelectIndex = 0;
+	g->yPel = 0;
 
 	g->stat.xMin = 0;
 	g->stat.xMax = 0;
