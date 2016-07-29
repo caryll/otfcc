@@ -24,11 +24,11 @@
 #define INLINE inline /* use standard inline */
 #endif
 
-#define FOR_TABLE(name, table)                                                                     \
-	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;  \
-	     keep = !keep, count++)                                                                    \
-		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                      \
-			if (table.tag == (name))                                                               \
+#define FOR_TABLE(name, table)                                                                                         \
+	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
+	     keep = !keep, count++)                                                                                        \
+		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
+			if (table.tag == (name))                                                                                   \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
 #define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
@@ -129,9 +129,7 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 	return fallback;
 }
 
-static INLINE json_value *json_from_sds(sds str) {
-	return json_string_new_length((uint32_t)sdslen(str), str);
-}
+static INLINE json_value *json_from_sds(sds str) { return json_string_new_length((uint32_t)sdslen(str), str); }
 
 // flags reader and writer
 static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) {
@@ -348,8 +346,7 @@ static INLINE void *__caryll_allocate_clean(size_t n, unsigned long line) {
 }
 #ifdef __cplusplus
 #define NEW(ptr) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)), __LINE__)
-#define NEW_CLEAN(ptr)                                                                             \
-	ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_CLEAN(ptr) ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
 #define NEW_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = nullptr)
 #define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)

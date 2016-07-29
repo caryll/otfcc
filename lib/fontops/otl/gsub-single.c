@@ -7,17 +7,13 @@ typedef struct {
 	sds toname;
 	UT_hash_handle hh;
 } gsub_single_map_hash;
-static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
-	return a->fromid - b->fromid;
-}
-bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *_subtable,
-                             sds lookupName) {
+static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) { return a->fromid - b->fromid; }
+bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	consolidate_coverage(font, subtable->from, lookupName);
 	consolidate_coverage(font, subtable->to, lookupName);
 	uint16_t len =
-	    (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs
-	                                                         : subtable->from->numGlyphs);
+	    (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs : subtable->from->numGlyphs);
 	gsub_single_map_hash *h = NULL;
 	for (uint16_t k = 0; k < len; k++) {
 		if (subtable->from->glyphs[k].name && subtable->to->glyphs[k].name) {

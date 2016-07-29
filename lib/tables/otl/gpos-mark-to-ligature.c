@@ -31,30 +31,26 @@ static void delete_mtl_subtable(otl_subtable *_subtable) {
 void caryll_delete_gpos_mark_to_ligature(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				delete_mtl_subtable(lookup->subtables[j]);
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) delete_mtl_subtable(lookup->subtables[j]);
 			free(lookup->subtables);
 		}
 		free(lookup);
 	}
 }
 
-otl_subtable *caryll_read_gpos_mark_to_ligature(font_file_pointer data, uint32_t tableLength,
-                                                uint32_t offset) {
+otl_subtable *caryll_read_gpos_mark_to_ligature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
 	if (tableLength < offset + 12) goto FAIL;
 	subtable->marks = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	subtable->bases = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 4));
-	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases ||
-	    subtable->bases->numGlyphs == 0)
+	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
 		goto FAIL;
 	subtable->classCount = read_16u(data + offset + 6);
 	uint32_t markArrayOffset = offset + read_16u(data + offset + 8);
 	subtable->markArray = otl_read_mark_array(data, tableLength, markArrayOffset);
-	if (!subtable->markArray || subtable->markArray->markCount != subtable->marks->numGlyphs)
-		goto FAIL;
+	if (!subtable->markArray || subtable->markArray->markCount != subtable->marks->numGlyphs) goto FAIL;
 
 	uint32_t ligArrayOffset = offset + read_16u(data + offset + 10);
 	checkLength(ligArrayOffset + 2 + 2 * subtable->bases->numGlyphs);
@@ -68,8 +64,7 @@ otl_subtable *caryll_read_gpos_mark_to_ligature(font_file_pointer data, uint32_t
 		checkLength(ligAttachOffset + 2);
 		subtable->ligArray[j]->componentCount = read_16u(data + ligAttachOffset);
 
-		checkLength(ligAttachOffset + 2 +
-		            2 * subtable->ligArray[j]->componentCount * subtable->classCount);
+		checkLength(ligAttachOffset + 2 + 2 * subtable->ligArray[j]->componentCount * subtable->classCount);
 		NEW_N(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
 
 		uint32_t _offset = ligAttachOffset + 2;
@@ -103,10 +98,8 @@ json_value *caryll_gpos_mark_to_ligature_to_json(otl_subtable *st) {
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		json_value *_mark = json_object_new(3);
-		sds markClassName =
-		    sdscatfmt(sdsempty(), "ac_%i", subtable->markArray->records[j].markClass);
-		json_object_push(_mark, "class",
-		                 json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
+		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray->records[j].markClass);
+		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
 		json_object_push(_mark, "x", json_integer_new(subtable->markArray->records[j].anchor.x));
 		json_object_push(_mark, "y", json_integer_new(subtable->markArray->records[j].anchor.y));
@@ -123,8 +116,7 @@ json_value *caryll_gpos_mark_to_ligature_to_json(otl_subtable *st) {
 					json_object_push(_anchor, "x", json_integer_new(base->anchors[k][m].x));
 					json_object_push(_anchor, "y", json_integer_new(base->anchors[k][m].y));
 					sds markClassName = sdscatfmt(sdsempty(), "ac_%i", m);
-					json_object_push_length(_bk, (uint32_t)sdslen(markClassName), markClassName,
-					                        _anchor);
+					json_object_push_length(_bk, (uint32_t)sdslen(markClassName), markClassName, _anchor);
 					sdsfree(markClassName);
 				}
 			}
@@ -143,8 +135,7 @@ typedef struct {
 	uint16_t classID;
 	UT_hash_handle hh;
 } classname_hash;
-static void parseMarks(json_value *_marks, subtable_gpos_mark_to_ligature *subtable,
-                       classname_hash **h) {
+static void parseMarks(json_value *_marks, subtable_gpos_mark_to_ligature *subtable, classname_hash **h) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
 	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
@@ -180,8 +171,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_ligature *subta
 		subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
 	}
 }
-static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subtable,
-                       classname_hash **h) {
+static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subtable, classname_hash **h) {
 	uint16_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
@@ -203,9 +193,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subta
 		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			json_value *_componentRecord = baseRecord->u.array.values[k];
 			NEW_N(subtable->ligArray[j]->anchors[k], classCount);
-			for (uint16_t m = 0; m < classCount; m++) {
-				subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent();
-			}
+			for (uint16_t m = 0; m < classCount; m++) { subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent(); }
 			if (!_componentRecord || _componentRecord->type != json_object) { continue; }
 			for (uint16_t m = 0; m < _componentRecord->u.object.length; m++) {
 				sds className = sdsnewlen(_componentRecord->u.object.values[m].name,

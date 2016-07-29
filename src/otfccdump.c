@@ -17,9 +17,7 @@
 #define PATCH_VER 0
 #endif
 
-void printInfo() {
-	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
-}
+void printInfo() { fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER); }
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
@@ -150,8 +148,8 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		if (ttcindex >= sfnt->count) {
-			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex,
-			        inPath, (sfnt->count - 1));
+			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
+			        (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
 		if (show_time) push_stopwatch("Read Input SFNT", &begin);
@@ -184,9 +182,7 @@ int main(int argc, char *argv[]) {
 		options.mode = json_serialize_mode_packed;
 		options.opts = 0;
 		options.indent_size = 4;
-		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) {
-			options.mode = json_serialize_mode_multiline;
-		}
+		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) { options.mode = json_serialize_mode_multiline; }
 		if (show_ugly) options.mode = json_serialize_mode_packed;
 		buf = malloc(json_measure_ex(root, options));
 		json_serialize_ex(buf, root, options);
@@ -218,8 +214,7 @@ int main(int argc, char *argv[]) {
 				while (written < dwNum) {
 					DWORD len = dwNum - written;
 					if (len > chunk) len = chunk;
-					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual,
-					              NULL);
+					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual, NULL);
 					written += len;
 				}
 				free(pwStr);

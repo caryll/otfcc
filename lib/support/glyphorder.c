@@ -64,12 +64,10 @@ static void caryll_glyphorder_from_json_order_subtable(glyph_order_hash *hash, j
 }
 static void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_value *table) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
-		sds unicodeStr =
-		    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
 		int32_t unicode = atoi(unicodeStr);
-		if (item->type == json_string && unicode > 0 &&
-		    unicode <= 0x10FFFF) { // a valid unicode codepoint
+		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 			glyph_order_entry *item = NULL;
 			HASH_FIND_STR(*hash, gname, item);
@@ -91,8 +89,7 @@ static void caryll_glyphorder_from_json_order_cmap(glyph_order_hash *hash, json_
 }
 static void caryll_glyphorder_from_json_order_glyf(glyph_order_hash *hash, json_value *table) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
-		sds gname =
-		    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		glyph_order_entry *item = NULL;
 		HASH_FIND_STR(*hash, gname, item);
 		if (!item) {

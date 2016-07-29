@@ -1,6 +1,5 @@
 #include "base64.h"
-static const uint8_t base64_table[64] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const uint8_t base64_table[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 uint8_t *base64_encode(const uint8_t *src, size_t len, size_t *out_len) {
 	uint8_t *out, *pos;

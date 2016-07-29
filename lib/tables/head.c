@@ -54,8 +54,7 @@ static const char *headFlagsLabels[] = {"baselineAtY_0",
                                         "fontIsConverted",
                                         "optimizedForCleartype",
                                         "lastResortFont"};
-static const char *macStyleLabels[] = {"bold",   "italic",    "underline", "outline",
-                                       "shadow", "condensed", "extended"};
+static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow", "condensed", "extended"};
 void caryll_head_to_json(table_head *table, json_value *root, caryll_dump_options *dumpopts) {
 	if (!table) return;
 	json_value *head = json_object_new(15);

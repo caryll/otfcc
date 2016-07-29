@@ -32,8 +32,7 @@ static caret_value readCaretValue(font_file_pointer data, uint32_t tableLength, 
 FAIL:
 	return v;
 }
-static caret_value_record readLigCaretRecord(font_file_pointer data, uint32_t tableLength,
-                                             uint32_t offset) {
+static caret_value_record readLigCaretRecord(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	checkLength(offset + 2);
 	caret_value_record g;
 	g.values = NULL;
@@ -42,8 +41,7 @@ static caret_value_record readLigCaretRecord(font_file_pointer data, uint32_t ta
 	NEW_N(g.values, g.caretCount);
 
 	for (uint16_t j = 0; j < g.caretCount; j++) {
-		g.values[j] =
-		    readCaretValue(data, tableLength, offset + read_16u(data + offset + 2 + j * 2));
+		g.values[j] = readCaretValue(data, tableLength, offset + read_16u(data + offset + 2 + j * 2));
 	}
 	return g;
 FAIL:
@@ -59,17 +57,15 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 		checkLength(12);
 		gdef = caryll_new_GDEF();
 		uint16_t classdefOffset = read_16u(data + 4);
-		if (classdefOffset) {
-			gdef->glyphClassDef = caryll_read_classdef(data, tableLength, classdefOffset);
-		}
+		if (classdefOffset) { gdef->glyphClassDef = caryll_read_classdef(data, tableLength, classdefOffset); }
 		uint16_t ligCaretOffset = read_16u(data + 8);
 		if (ligCaretOffset) {
 			checkLength(ligCaretOffset + 4);
 			NEW(gdef->ligCarets);
 			gdef->ligCarets->carets = NULL;
 
-			otl_coverage *cov = caryll_read_coverage(
-			    data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset));
+			otl_coverage *cov =
+			    caryll_read_coverage(data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset));
 			if (!cov || cov->numGlyphs != read_16u(data + ligCaretOffset + 2)) goto FAIL;
 			checkLength(ligCaretOffset + 4 + cov->numGlyphs * 2);
 			if (cov->numGlyphs) {
@@ -77,8 +73,7 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 				NEW_N(gdef->ligCarets->carets, cov->numGlyphs);
 				for (uint16_t j = 0; j < cov->numGlyphs; j++) {
 					gdef->ligCarets->carets[j] = readLigCaretRecord(
-					    data, tableLength,
-					    ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
+					    data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
 				}
 			} else {
 				caryll_delete_coverage(cov);
@@ -100,12 +95,9 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, caryll_dump_options *dumpopts) {
 	if (!gdef) return;
 	json_value *_gdef = json_object_new(4);
-	if (gdef->glyphClassDef) {
-		json_object_push(_gdef, "glyphClassDef", caryll_classdef_to_json(gdef->glyphClassDef));
-	}
+	if (gdef->glyphClassDef) { json_object_push(_gdef, "glyphClassDef", caryll_classdef_to_json(gdef->glyphClassDef)); }
 	if (gdef->markAttachClassDef) {
-		json_object_push(_gdef, "markAttachClassDef",
-		                 caryll_classdef_to_json(gdef->markAttachClassDef));
+		json_object_push(_gdef, "markAttachClassDef", caryll_classdef_to_json(gdef->markAttachClassDef));
 	}
 	if (gdef->ligCarets && gdef->ligCarets->coverage && gdef->ligCarets->coverage->numGlyphs) {
 		json_value *_carets = json_object_new(gdef->ligCarets->coverage->numGlyphs);
@@ -116,13 +108,9 @@ void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, caryll_dump_options
 			for (uint16_t k = 0; k < gdef->ligCarets->carets[j].caretCount; k++) {
 				json_value *_cv = json_object_new(1);
 				if (gdef->ligCarets->carets[j].values[k].format == 2) {
-					json_object_push(
-					    _cv, "atPoint",
-					    json_integer_new(gdef->ligCarets->carets[j].values[k].pointIndex));
+					json_object_push(_cv, "atPoint", json_integer_new(gdef->ligCarets->carets[j].values[k].pointIndex));
 				} else {
-					json_object_push(
-					    _cv, "at",
-					    json_integer_new(gdef->ligCarets->carets[j].values[k].coordiante));
+					json_object_push(_cv, "at", json_integer_new(gdef->ligCarets->carets[j].values[k].coordiante));
 				}
 				json_array_push(_record, _cv);
 			}
@@ -177,8 +165,7 @@ table_GDEF *caryll_GDEF_from_json(json_value *root, caryll_dump_options *dumpopt
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
 		gdef = caryll_new_GDEF();
 		gdef->glyphClassDef = caryll_classdef_from_json(json_obj_get(table, "glyphClassDef"));
-		gdef->markAttachClassDef =
-		    caryll_classdef_from_json(json_obj_get(table, "markAttachClassDef"));
+		gdef->markAttachClassDef = caryll_classdef_from_json(json_obj_get(table, "markAttachClassDef"));
 		gdef->ligCarets = ligCaretFromJson(json_obj_get(table, "ligCarets"));
 	}
 	return gdef;

@@ -22,9 +22,7 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable) {
 void caryll_delete_chaining(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-				delete_otl_chaining_subtable(lookup->subtables[j]);
-			}
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) { delete_otl_chaining_subtable(lookup->subtables[j]); }
 			free(lookup->subtables);
 		}
 		free(lookup);
@@ -50,8 +48,8 @@ typedef struct {
 	otl_classdef *fc;
 } classdefs;
 
-otl_coverage *singleCoverage(font_file_pointer data, uint32_t tableLength, uint16_t gid,
-                             uint32_t _offset, uint16_t kind, void *userdata) {
+otl_coverage *singleCoverage(font_file_pointer data, uint32_t tableLength, uint16_t gid, uint32_t _offset,
+                             uint16_t kind, void *userdata) {
 	otl_coverage *cov;
 	NEW(cov);
 	cov->numGlyphs = 1;
@@ -60,8 +58,8 @@ otl_coverage *singleCoverage(font_file_pointer data, uint32_t tableLength, uint1
 	cov->glyphs[0].name = NULL;
 	return cov;
 }
-otl_coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16_t cls,
-                            uint32_t _offset, uint16_t kind, void *_classdefs) {
+otl_coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16_t cls, uint32_t _offset, uint16_t kind,
+                            void *_classdefs) {
 	classdefs *defs = (classdefs *)_classdefs;
 	otl_classdef *cd = (kind == 1 ? defs->bc : kind == 2 ? defs->ic : defs->fc);
 	otl_coverage *cov;
@@ -79,16 +77,15 @@ otl_coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16
 		if (cd->classes[j] == cls) { cov->glyphs[jj++] = cd->glyphs[j]; }
 	return cov;
 }
-otl_coverage *format3Coverage(font_file_pointer data, uint32_t tableLength, uint16_t shift,
-                              uint32_t _offset, uint16_t kind, void *userdata) {
+otl_coverage *format3Coverage(font_file_pointer data, uint32_t tableLength, uint16_t shift, uint32_t _offset,
+                              uint16_t kind, void *userdata) {
 	return caryll_read_coverage(data, tableLength, _offset + shift - 2);
 }
 
-typedef otl_coverage *(*CoverageReaderHandler)(font_file_pointer, uint32_t, uint16_t, uint32_t,
-                                               uint16_t, void *);
-otl_chaining_rule *GeneralReadContextualRule(font_file_pointer data, uint32_t tableLength,
-                                             uint32_t offset, uint16_t startGID, bool minusOne,
-                                             CoverageReaderHandler fn, void *userdata) {
+typedef otl_coverage *(*CoverageReaderHandler)(font_file_pointer, uint32_t, uint16_t, uint32_t, uint16_t, void *);
+otl_chaining_rule *GeneralReadContextualRule(font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                             uint16_t startGID, bool minusOne, CoverageReaderHandler fn,
+                                             void *userdata) {
 	otl_chaining_rule *rule;
 	NEW(rule);
 	rule->match = NULL;
@@ -116,10 +113,8 @@ otl_chaining_rule *GeneralReadContextualRule(font_file_pointer data, uint32_t ta
 	NEW_N(rule->apply, rule->applyCount);
 	for (uint16_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
-		    rule->inputBegins +
-		    read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
-		rule->apply[j].lookupIndex =
-		    read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
+		    rule->inputBegins + read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
+		rule->apply[j].lookupIndex = read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
 		rule->apply[j].lookupName = NULL;
 	}
 	reverseBacktracks(rule);
@@ -130,8 +125,7 @@ FAIL:
 	return NULL;
 }
 
-otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLength,
-                                     uint32_t offset) {
+otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	uint16_t format = 0;
 	otl_subtable *_subtable;
 	NEW(_subtable);
@@ -171,9 +165,8 @@ otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLengt
 			uint16_t srsCount = read_16u(data + srsOffset);
 			for (uint16_t k = 0; k < srsCount; k++) {
 				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
-				subtable->rules[jj] = GeneralReadContextualRule(data, tableLength, srOffset,
-				                                                firstCoverage->glyphs[j].gid, true,
-				                                                singleCoverage, NULL);
+				subtable->rules[jj] = GeneralReadContextualRule(
+				    data, tableLength, srOffset, firstCoverage->glyphs[j].gid, true, singleCoverage, NULL);
 				jj += 1;
 			}
 		}
@@ -207,10 +200,9 @@ otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLengt
 			if (srcOffset) {
 				uint16_t srsCount = read_16u(data + offset + srcOffset);
 				for (uint16_t k = 0; k < srsCount; k++) {
-					uint32_t srOffset =
-					    offset + srcOffset + read_16u(data + offset + srcOffset + 2 + k * 2);
-					subtable->rules[jj] = GeneralReadContextualRule(data, tableLength, srOffset, j,
-					                                                true, classCoverage, cds);
+					uint32_t srOffset = offset + srcOffset + read_16u(data + offset + srcOffset + 2 + k * 2);
+					subtable->rules[jj] =
+					    GeneralReadContextualRule(data, tableLength, srOffset, j, true, classCoverage, cds);
 					jj += 1;
 				}
 			}
@@ -224,8 +216,7 @@ otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLengt
 		// Contextual Substitution Subtable, Coverage based.
 		subtable->rulesCount = 1;
 		NEW_N(subtable->rules, 1);
-		subtable->rules[0] = GeneralReadContextualRule(data, tableLength, offset + 2, 0, false,
-		                                               format3Coverage, NULL);
+		subtable->rules[0] = GeneralReadContextualRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
 		return _subtable;
 	}
 FAIL:
@@ -234,9 +225,8 @@ FAIL:
 	return NULL;
 }
 
-otl_chaining_rule *GeneralReadChainingRule(font_file_pointer data, uint32_t tableLength,
-                                           uint32_t offset, uint16_t startGID, bool minusOne,
-                                           CoverageReaderHandler fn, void *userdata) {
+otl_chaining_rule *GeneralReadChainingRule(font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                           uint16_t startGID, bool minusOne, CoverageReaderHandler fn, void *userdata) {
 	otl_chaining_rule *rule;
 	NEW(rule);
 	rule->match = NULL;
@@ -277,10 +267,8 @@ otl_chaining_rule *GeneralReadChainingRule(font_file_pointer data, uint32_t tabl
 	NEW_N(rule->apply, rule->applyCount);
 	for (uint16_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
-		    rule->inputBegins +
-		    read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
-		rule->apply[j].lookupIndex =
-		    read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
+		    rule->inputBegins + read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
+		rule->apply[j].lookupIndex = read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
 		rule->apply[j].lookupName = NULL;
 	}
 	reverseBacktracks(rule);
@@ -332,9 +320,8 @@ otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength,
 			uint16_t srsCount = read_16u(data + srsOffset);
 			for (uint16_t k = 0; k < srsCount; k++) {
 				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
-				subtable->rules[jj] = GeneralReadChainingRule(data, tableLength, srOffset,
-				                                              firstCoverage->glyphs[j].gid, true,
-				                                              singleCoverage, NULL);
+				subtable->rules[jj] = GeneralReadChainingRule(data, tableLength, srOffset, firstCoverage->glyphs[j].gid,
+				                                              true, singleCoverage, NULL);
 				jj += 1;
 			}
 		}
@@ -370,8 +357,8 @@ otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength,
 				for (uint16_t k = 0; k < srsCount; k++) {
 					uint16_t dsrOffset = read_16u(data + offset + srcOffset + 2 + k * 2);
 					uint32_t srOffset = offset + srcOffset + dsrOffset;
-					subtable->rules[jj] = GeneralReadChainingRule(data, tableLength, srOffset, j,
-					                                              true, classCoverage, cds);
+					subtable->rules[jj] =
+					    GeneralReadChainingRule(data, tableLength, srOffset, j, true, classCoverage, cds);
 					jj += 1;
 				}
 			}
@@ -388,8 +375,7 @@ otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength,
 		// This table has exactly one rule within it, and i love it.
 		subtable->rulesCount = 1;
 		NEW_N(subtable->rules, 1);
-		subtable->rules[0] =
-		    GeneralReadChainingRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
+		subtable->rules[0] = GeneralReadChainingRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
 		return _subtable;
 	}
 FAIL:
@@ -402,13 +388,13 @@ json_value *caryll_chaining_to_json(otl_subtable *_subtable) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	otl_chaining_rule *rule = subtable->rules[0];
 	json_value *_st = json_object_new(4);
-	
+
 	json_value *_match = json_array_new(rule->matchCount);
 	for (uint16_t j = 0; j < rule->matchCount; j++) {
 		json_array_push(_match, caryll_coverage_to_json(rule->match[j]));
 	}
 	json_object_push(_st, "match", _match);
-	
+
 	json_value *_apply = json_array_new(rule->applyCount);
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		json_value *_application = json_object_new(2);
@@ -417,7 +403,7 @@ json_value *caryll_chaining_to_json(otl_subtable *_subtable) {
 		json_array_push(_apply, _application);
 	}
 	json_object_push(_st, "apply", preserialize(_apply));
-	
+
 	json_object_push(_st, "inputBegins", json_integer_new(rule->inputBegins));
 	json_object_push(_st, "inputEnds", json_integer_new(rule->inputEnds));
 	return _st;
@@ -436,19 +422,19 @@ otl_subtable *caryll_chaining_from_json(json_value *_subtable) {
 	subtable->bc = NULL;
 	subtable->ic = NULL;
 	subtable->fc = NULL;
-	
+
 	NEW(subtable->rules);
 	NEW(subtable->rules[0]);
 	otl_chaining_rule *rule = subtable->rules[0];
-	
+
 	rule->matchCount = _match->u.array.length;
 	NEW_N(rule->match, rule->matchCount);
 	rule->applyCount = _apply->u.array.length;
 	NEW_N(rule->apply, rule->applyCount);
-	
+
 	rule->inputBegins = json_obj_getnum_fallback(_subtable, "inputBegins", 0);
 	rule->inputEnds = json_obj_getnum_fallback(_subtable, "inputEnds", rule->matchCount);
-	
+
 	for (uint16_t j = 0; j < rule->matchCount; j++) {
 		rule->match[j] = caryll_coverage_from_json(_match->u.array.values[j]);
 	}

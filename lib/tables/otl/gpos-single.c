@@ -14,8 +14,7 @@ void caryll_delete_gpos_single(otl_lookup *lookup) {
 		FREE(lookup);
 	}
 }
-otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLength,
-                                      uint32_t offset) {
+otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
@@ -24,14 +23,12 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 	checkLength(offset + 6);
 
 	uint16_t subtableFormat = read_16u(data + offset);
-	subtable->coverage =
-	    caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->coverage = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
 	NEW_N(subtable->values, subtable->coverage->numGlyphs);
 
 	if (subtableFormat == 1) {
-		otl_position_value v =
-		    read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
+		otl_position_value v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) { subtable->values[j] = v; }
 	} else {
 		uint16_t valueFormat = read_16u(data + offset + 4);
@@ -41,8 +38,7 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 			subtable->values[j] =
-			    read_gpos_value(data, tableLength,
-			                    offset + 8 + j * position_format_length(valueFormat), valueFormat);
+			    read_gpos_value(data, tableLength, offset + 8 + j * position_format_length(valueFormat), valueFormat);
 		}
 	}
 	goto OK;
@@ -58,8 +54,7 @@ json_value *caryll_gpos_single_to_json(otl_subtable *_subtable) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	json_value *st = json_object_new(subtable->coverage->numGlyphs);
 	for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-		json_object_push(st, subtable->coverage->glyphs[j].name,
-		                 gpos_value_to_json(subtable->values[j]));
+		json_object_push(st, subtable->coverage->glyphs[j].name, gpos_value_to_json(subtable->values[j]));
 	}
 	return st;
 }
@@ -72,10 +67,8 @@ otl_subtable *caryll_gpos_single_from_json(json_value *_subtable) {
 	NEW_N(subtable->values, _subtable->u.object.length);
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < _subtable->u.object.length; j++) {
-		if (_subtable->u.object.values[j].value &&
-		    _subtable->u.object.values[j].value->type == json_object) {
-			sds gname = sdsnewlen(_subtable->u.object.values[j].name,
-			                      _subtable->u.object.values[j].name_length);
+		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
+			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
 			subtable->coverage->glyphs[jj].name = gname;
 			subtable->values[jj] = gpos_value_from_json(_subtable->u.object.values[j].value);
 			jj++;

@@ -14,8 +14,7 @@ table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp) {
 			hdmx->records[i].pixelSize = *(data + 8 + i * (2 + maxp->numGlyphs));
 			hdmx->records[i].maxWidth = *(data + 8 + i * (2 + maxp->numGlyphs) + 1);
 			hdmx->records[i].widths = (uint8_t *)malloc(sizeof(uint8_t) * maxp->numGlyphs);
-			memcpy(hdmx->records[i].widths, data + 8 + i * (2 + maxp->numGlyphs) + 2,
-			       maxp->numGlyphs);
+			memcpy(hdmx->records[i].widths, data + 8 + i * (2 + maxp->numGlyphs) + 2, maxp->numGlyphs);
 		}
 
 		return hdmx;

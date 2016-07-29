@@ -153,10 +153,9 @@ void merge_cs2_operator(caryll_buffer *blob, int32_t val);
 void merge_cs2_operand(caryll_buffer *blob, double val);
 void merge_cs2_special(caryll_buffer *blob, uint8_t val);
 
-extern uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_Index fdarray, CFF_FDSelect select,
-                          CFF_Index *subr);
-void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_Index lsubr,
-                            CFF_Stack *stack, void *outline, cff_outline_builder_interface methods);
+extern uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_Index fdarray, CFF_FDSelect select, CFF_Index *subr);
+void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_Index lsubr, CFF_Stack *stack,
+                            void *outline, cff_outline_builder_interface methods);
 
 // File
 extern CFF_File *CFF_stream_open(uint8_t *data, uint32_t len);

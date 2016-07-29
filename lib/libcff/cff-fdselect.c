@@ -55,8 +55,7 @@ void parse_fdselect(uint8_t *data, int32_t offset, uint16_t nchars, CFF_FDSelect
 				fdselect->s = nchars - 1;
 				fdselect->f0.fds = calloc(nchars - 1, sizeof(uint8_t));
 
-				for (uint32_t i = 0; i < nchars - 1; i++)
-					fdselect->f0.fds[i] = gu1(data, offset + 1 + i);
+				for (uint32_t i = 0; i < nchars - 1; i++) fdselect->f0.fds[i] = gu1(data, offset + 1 + i);
 			}
 			break;
 		case 3:

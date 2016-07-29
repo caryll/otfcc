@@ -299,8 +299,7 @@ static int strnmatch(const char *str1, const char *str2, int n) {
 	return (0);
 }
 
-static uint8_t *parse_instrs(char *text, int *len, void *context,
-                             void (*IVError)(void *context, char *, int)) {
+static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError)(void *context, char *, int)) {
 	short numberstack[256];
 	int npos = 0, nread, i;
 	int push_left = 0, push_size = 0;
@@ -332,8 +331,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 			if (npos == 0)
 				IVError(context, "Expected a number for a push count", (int)(pt - text));
 			else if (numberstack[0] > 255 || numberstack[0] <= 0) {
-				IVError(context, "The push count must be a number between 0 and 255",
-				        (int)(pt - text));
+				IVError(context, "The push count must be a number between 0 and 255", (int)(pt - text));
 				return (NULL);
 			} else {
 				nread = 1;
@@ -341,8 +339,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 				push_left = numberstack[0];
 			}
 		}
-		if (push_left != 0 && push_left < npos - nread &&
-		    (*pt == '\r' || *pt == '\n' || *pt == '\0')) {
+		if (push_left != 0 && push_left < npos - nread && (*pt == '\r' || *pt == '\n' || *pt == '\0')) {
 			IVError(context, "More pushes specified than needed", (int)(pt - text));
 			return (NULL);
 		}
@@ -351,8 +348,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 				instrs[icnt++] = numberstack[nread] >> 8;
 				instrs[icnt++] = numberstack[nread++] & 0xff;
 			} else if (numberstack[0] > 255 || numberstack[0] < 0) {
-				IVError(context, "A value to be pushed by a byte push must be between 0 and 255",
-				        (int)(pt - text));
+				IVError(context, "A value to be pushed by a byte push must be between 0 and 255", (int)(pt - text));
 				return (NULL);
 			} else
 				instrs[icnt++] = numberstack[nread++];
@@ -405,9 +401,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context,
 			val = strtol(brack + 1, &bend, 2); /* Stuff in brackets should be in binary */
 			while (*bend == ' ' || *bend == '\t') ++bend;
 			if (*bend != ']') {
-				IVError(context,
-				        "Missing right bracket in command (or bad binary value in bracket)",
-				        (int)(pt - text));
+				IVError(context, "Missing right bracket in command (or bad binary value in bracket)", (int)(pt - text));
 				return (NULL);
 			}
 			if (val >= 32) {
@@ -493,8 +487,7 @@ json_value *instr_to_json(uint8_t *instructions, uint32_t length, caryll_dump_op
 		json_value *ret = json_array_new(id.instr_cnt);
 		for (uint32_t i = 0; i < id.instr_cnt; ++i) {
 			if (id.bts[i] == bt_wordhi) {
-				json_array_push(
-				    ret, json_integer_new((int16_t)((id.instrs[i] << 8) | id.instrs[i + 1])));
+				json_array_push(ret, json_integer_new((int16_t)((id.instrs[i] << 8) | id.instrs[i + 1])));
 				++i;
 			} else if (id.bts[i] == bt_cnt || id.bts[i] == bt_byte) {
 				json_array_push(ret, json_integer_new(id.instrs[i]));
@@ -513,8 +506,7 @@ void instr_from_json(json_value *col, void *context, void (*Make)(void *, uint8_
 		Make(context, NULL, 0);
 	} else if (col->type == json_string) {
 		size_t instrlen;
-		uint8_t *instructions =
-		    base64_decode((uint8_t *)col->u.string.ptr, col->u.string.length, &instrlen);
+		uint8_t *instructions = base64_decode((uint8_t *)col->u.string.ptr, col->u.string.length, &instrlen);
 		Make(context, instructions, (uint32_t)instrlen);
 	} else if (col->type == json_array) {
 		size_t istrlen = 0;
