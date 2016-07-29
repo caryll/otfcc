@@ -49,27 +49,28 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 	}
 	return NULL;
 }
-void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_dump_options *dumpopts) {
+void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping gasp.\n");
+
 	json_value *t = json_array_new(table->numRanges);
 	for (uint16_t j = 0; j < table->numRanges; j++) {
 		json_value *rec = json_object_new(5);
 		json_object_push(rec, "rangeMaxPPEM", json_integer_new(table->records[j].rangeMaxPPEM));
 		json_object_push(rec, "dogray", json_boolean_new(table->records[j].dogray));
 		json_object_push(rec, "gridfit", json_boolean_new(table->records[j].gridfit));
-		json_object_push(rec, "symmetric_smoothing",
-		                 json_boolean_new(table->records[j].symmetric_smoothing));
-		json_object_push(rec, "symmetric_gridfit",
-		                 json_boolean_new(table->records[j].symmetric_gridfit));
+		json_object_push(rec, "symmetric_smoothing", json_boolean_new(table->records[j].symmetric_smoothing));
+		json_object_push(rec, "symmetric_gridfit", json_boolean_new(table->records[j].symmetric_gridfit));
 		json_array_push(t, rec);
 	}
 	json_object_push(root, "gasp", t);
 }
 
-table_gasp *caryll_gasp_from_json(json_value *root) {
+table_gasp *caryll_gasp_from_json(json_value *root, caryll_options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
+		if (options->verbose) fprintf(stderr, "Parsing gasp.\n");
 		gasp = caryll_new_gasp();
 		if (!gasp) goto FAIL;
 		gasp->numRanges = table->u.array.length;
@@ -91,7 +92,7 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *caryll_write_gasp(table_gasp *gasp, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_gasp(table_gasp *gasp, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);

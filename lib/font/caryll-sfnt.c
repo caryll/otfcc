@@ -10,8 +10,7 @@ static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
 		font->packets[count].searchRange = caryll_get16u(file);
 		font->packets[count].entrySelector = caryll_get16u(file);
 		font->packets[count].rangeShift = caryll_get16u(file);
-		font->packets[count].pieces =
-		    (caryll_piece *)malloc(sizeof(caryll_piece) * font->packets[count].numTables);
+		font->packets[count].pieces = (caryll_piece *)malloc(sizeof(caryll_piece) * font->packets[count].numTables);
 
 		for (uint32_t i = 0; i < font->packets[count].numTables; i++) {
 			font->packets[count].pieces[i].tag = caryll_get32u(file);
@@ -24,8 +23,7 @@ static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
 
 		for (uint32_t i = 0; i < font->packets[0].numTables; i++) {
 			(void)fseek(file, font->packets[count].pieces[i].offset, SEEK_SET);
-			(void)fread(font->packets[count].pieces[i].data, font->packets[count].pieces[i].length,
-			            1, file);
+			(void)fread(font->packets[count].pieces[i].data, font->packets[count].pieces[i].length, 1, file);
 		}
 	}
 }
@@ -54,7 +52,9 @@ caryll_sfnt *caryll_read_sfnt(FILE *file) {
 			font->offsets = (uint32_t *)malloc(sizeof(uint32_t) * font->count);
 			font->packets = (caryll_packet *)malloc(sizeof(caryll_packet) * font->count);
 
-			for (uint32_t i = 0; i < font->count; i++) { font->offsets[i] = caryll_get32u(file); }
+			for (uint32_t i = 0; i < font->count; i++) {
+				font->offsets[i] = caryll_get32u(file);
+			}
 
 			caryll_read_packets(font, file);
 			break;

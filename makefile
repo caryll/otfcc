@@ -1,4 +1,4 @@
-VERSION=0.2.3
+VERSION=0.2.4
 
 ifndef PREMAKE5
 PREMAKE5=premake5

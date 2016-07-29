@@ -75,8 +75,7 @@ caryll_buffer *compile_charset(CFF_Charset cset) {
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 0;
 			for (uint32_t i = 0; i < cset.s; i++)
-				blob->data[1 + 2 * i] = cset.f0.glyph[i] / 256,
-				                   blob->data[2 + 2 * i] = cset.f0.glyph[i] % 256;
+				blob->data[1 + 2 * i] = cset.f0.glyph[i] / 256, blob->data[2 + 2 * i] = cset.f0.glyph[i] % 256;
 			blob->cursor = blob->size;
 			return blob;
 		}

@@ -12,7 +12,9 @@
 
 #include "libcff.h"
 
-caryll_buffer *compile_header(void) { return bufninit(4, 1, 0, 4, 4); }
+caryll_buffer *compile_header(void) {
+	return bufninit(4, 1, 0, 4, 4);
+}
 
 void merge_cs2_operator(caryll_buffer *blob, int32_t val) {
 	if (val >= 0x100) {
@@ -40,8 +42,7 @@ static void merge_cs2_int(caryll_buffer *blob, int32_t val) {
 static void merge_cs2_real(caryll_buffer *blob, double val) {
 	int16_t integerPart = floor(val);
 	uint16_t fractionPart = (val - integerPart) * 65536.0;
-	bufnwrite8(blob, 5, 0xFF, integerPart >> 8, integerPart & 0xFF, fractionPart >> 8,
-	           fractionPart & 0xFF);
+	bufnwrite8(blob, 5, 0xFF, integerPart >> 8, integerPart & 0xFF, fractionPart >> 8, fractionPart & 0xFF);
 }
 void merge_cs2_operand(caryll_buffer *blob, double val) {
 	double intpart;
@@ -51,7 +52,9 @@ void merge_cs2_operand(caryll_buffer *blob, double val) {
 		merge_cs2_real(blob, val);
 	}
 }
-void merge_cs2_special(caryll_buffer *blob, uint8_t val) { bufwrite8(blob, val); }
+void merge_cs2_special(caryll_buffer *blob, uint8_t val) {
+	bufwrite8(blob, val);
+}
 
 caryll_buffer *compile_offset(int32_t val) {
 	return bufninit(5, 29, (val >> 24) & 0xff, (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff);

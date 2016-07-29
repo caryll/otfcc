@@ -11,7 +11,9 @@ typedef struct {
 	UT_hash_handle hh;
 } coverage_entry;
 
-static int by_covIndex(coverage_entry *a, coverage_entry *b) { return a->covIndex - b->covIndex; }
+static int by_covIndex(coverage_entry *a, coverage_entry *b) {
+	return a->covIndex - b->covIndex;
+}
 
 otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_coverage *coverage;
@@ -122,8 +124,8 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	for (uint16_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
 			c->glyphs[jj].gid = 0;
-			c->glyphs[jj].name = sdsnewlen(cov->u.array.values[j]->u.string.ptr,
-			                               cov->u.array.values[j]->u.string.length);
+			c->glyphs[jj].name =
+			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length);
 			jj++;
 		}
 	}

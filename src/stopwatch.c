@@ -76,7 +76,9 @@ void time_now(struct timespec *tv) {
 	tv->tv_nsec = diff - (tv->tv_sec * ORWL_GIGA);
 }
 #else
-void time_now(struct timespec *tv) { clock_gettime(CLOCK_REALTIME, tv); }
+void time_now(struct timespec *tv) {
+	clock_gettime(CLOCK_REALTIME, tv);
+}
 #endif
 
 #define BILLION 1000000000
@@ -99,5 +101,5 @@ void push_stopwatch(const char *reason, struct timespec *sofar) {
 	struct timespec diff;
 	timespec_diff(sofar, &ends, &diff);
 	*sofar = ends;
-	fprintf(stderr, "%s: %g\n", reason, diff.tv_sec + diff.tv_nsec / (double)BILLION);
+	fprintf(stderr, "Done %s (%gs).\n", reason, diff.tv_sec + diff.tv_nsec / (double)BILLION);
 }

@@ -40,8 +40,7 @@ caryll_buffer *encode_cff_number(int32_t val) {
 		return bufninit(3, 28, val >> 8, val & 0xff);
 	} else {
 		/* In dict data we have 4 byte ints, in type2 strings we don't */
-		return bufninit(5, 29, (val >> 24) & 0xff, (val >> 16) & 0xff, (val >> 8) & 0xff,
-		                val & 0xff);
+		return bufninit(5, 29, (val >> 24) & 0xff, (val >> 16) & 0xff, (val >> 8) & 0xff, val & 0xff);
 	}
 }
 
@@ -202,8 +201,7 @@ static uint32_t cff_dec_i(uint8_t *start, CFF_Value *val) {
 }
 
 static const int nibble_attr[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 1};
-static const char *nibble_symb[15] = {"0", "1", "2", "3", "4",  "5", "6", "7",
-                                      "8", "9", ".", "E", "E-", "",  "-"};
+static const char *nibble_symb[15] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "E", "E-", "", "-"};
 
 // decode double
 static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
@@ -287,37 +285,33 @@ static uint32_t cff_dec_e(uint8_t *start, CFF_Value *val) {
 }
 
 static uint32_t (*_de_t2[256])(uint8_t *, CFF_Value *) = {
-    cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o,
-    cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o,
-    cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_e, cff_dec_e,
-    cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_i, cff_dec_i, cff_dec_r, cff_dec_e,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
-    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_e};
+    cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o,
+    cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o,
+    cff_dec_o, cff_dec_o, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_i, cff_dec_i,
+    cff_dec_r, cff_dec_e, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
+    cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_e};
 
-uint32_t decode_cff_token(uint8_t *start, CFF_Value *val) { return _de_t2[*start](start, val); }
+uint32_t decode_cff_token(uint8_t *start, CFF_Value *val) {
+	return _de_t2[*start](start, val);
+}

@@ -54,7 +54,9 @@ table_post *caryll_read_post(caryll_packet packet) {
 					try_name_glyph(map, j, sdsnew(standardMacNames[nameMap]));
 				}
 			}
-			for (uint32_t j = 0; j < pendingNameIndex; j++) { sdsfree(pendingNames[j]); }
+			for (uint32_t j = 0; j < pendingNameIndex; j++) {
+				sdsfree(pendingNames[j]);
+			}
 			post->post_name_map = map;
 		}
 		return post;
@@ -67,8 +69,10 @@ void caryll_delete_post(table_post *table) {
 	free(table);
 }
 
-void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_options *dumpopts) {
+void caryll_post_to_json(table_post *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping post.\n");
+
 	json_value *post = json_object_new(10);
 	json_object_push(post, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(post, "italicAngle", json_integer_new(caryll_from_fixed(table->italicAngle)));
@@ -81,11 +85,12 @@ void caryll_post_to_json(table_post *table, json_value *root, caryll_dump_option
 	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
 	json_object_push(root, "post", post);
 }
-table_post *caryll_post_from_json(json_value *root, caryll_dump_options *dumpopts) {
+table_post *caryll_post_from_json(json_value *root, caryll_options *options) {
 	table_post *post = caryll_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
-		if (dumpopts->short_post) {
+		if (options->verbose) fprintf(stderr, "Parsing post.\n");
+		if (options->short_post) {
 			post->version = 0x30000;
 		} else {
 			post->version = caryll_to_fixed(json_obj_getnum(table, "version"));
@@ -101,8 +106,7 @@ table_post *caryll_post_from_json(json_value *root, caryll_dump_options *dumpopt
 	}
 	return post;
 }
-caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder,
-                                 caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);
@@ -119,7 +123,9 @@ caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder,
 		// Since the glyphorder is already sorted using the "real" glyph order
 		// we can simply write down the glyph names.
 		glyph_order_entry *s;
-		foreach_hash(s, *glyphorder) { bufwrite16b(buf, 258 + s->gid); }
+		foreach_hash(s, *glyphorder) {
+			bufwrite16b(buf, 258 + s->gid);
+		}
 		foreach_hash(s, *glyphorder) {
 			bufwrite8(buf, sdslen(s->name));
 			bufwrite_sds(buf, s->name);

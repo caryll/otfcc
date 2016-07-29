@@ -18,42 +18,38 @@
 #define PATCH_VER 0
 #endif
 
-void printInfo() {
-	fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
-}
+void printInfo() { fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER); }
 void printHelp() {
-	fprintf(
-	    stdout,
-	    "\n"
-	    "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
-	    " input.json                : Path to input file. When absent the input will\n"
-	    "                             be read from the STDIN.\n"
-	    " -h, --help                : Display this help message and exit.\n"
-	    " -v, --version             : Display version information and exit.\n"
-	    " -o <file>                 : Set output file path to <file>.\n"
-	    " --time                    : Time each substep.\n"
-	    " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
-	    " --ignore-hints            : Ignore the hinting information in the input.\n"
-	    " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
-	    "                             instead of stating the average width of glyphs. \n"
-	    "                             Useful when creating a monospaced font.\n"
-	    " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
-	    "                             of using current time.\n"
-	    " --short-post              : Don't export glyph names in the result font. It \n"
-	    "                             will reduce file size.\n"
-	    " --dummy-dsig, -s          : Include an empty DSIG table in the font. For\n"
-	    "                             some Microsoft applications, a DSIG is required\n"
-	    "                             to enable OpenType features.\n"
-	    " -O<n>                     : Specify the level for optimization.\n"
-	    "     -O0                     Turn off any optimization.\n"
-	    "     -O1                     Default optimization.\n"
-	    "     -O2                     More aggressive optimizations for web font. In\n"
-	    "                             this level, the --ignore-glyph-order and\n"
-	    "                             --short-post will be turned on.\n"
-	    //	        "     -O3                     In this level, CFF Subroutinization will be\n"
-	    //	        "                             enabled to compress more. Building font may be\n"
-	    //	        "                             slower than -O2.\n"
-	    "\n");
+	fprintf(stdout, "\n"
+	                "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
+	                " input.json                : Path to input file. When absent the input will\n"
+	                "                             be read from the STDIN.\n"
+	                " -h, --help                : Display this help message and exit.\n"
+	                " -v, --version             : Display version information and exit.\n"
+	                " -o <file>                 : Set output file path to <file>.\n"
+	                " --time                    : Time each substep.\n"
+	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
+	                " --ignore-hints            : Ignore the hinting information in the input.\n"
+	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
+	                "                             instead of stating the average width of glyphs. \n"
+	                "                             Useful when creating a monospaced font.\n"
+	                " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
+	                "                             of using current time.\n"
+	                " --short-post              : Don't export glyph names in the result font. It \n"
+	                "                             will reduce file size.\n"
+	                " --dummy-dsig, -s          : Include an empty DSIG table in the font. For\n"
+	                "                             some Microsoft applications, a DSIG is required\n"
+	                "                             to enable OpenType features.\n"
+	                " -O<n>                     : Specify the level for optimization.\n"
+	                "     -O0                     Turn off any optimization.\n"
+	                "     -O1                     Default optimization.\n"
+	                "     -O2                     More aggressive optimizations for web font. In\n"
+	                "                             this level, the --ignore-glyph-order and\n"
+	                "                             --short-post will be turned on.\n"
+	                //	        "     -O3                     In this level, CFF Subroutinization will be\n"
+	                //	        "                             enabled to compress more. Building font may be\n"
+	                //	        "                             slower than -O2.\n"
+	                "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
 	char *buffer = NULL;
@@ -101,9 +97,8 @@ void readEntireStdin(char **_buffer, long *_length) {
 }
 
 void print_table(sfnt_builder_entry *t) {
-	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n",
-	        ((uint32_t)(t->tag) >> 24) & 0xff, ((uint32_t)(t->tag) >> 16) & 0xff,
-	        ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
+	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
+	        ((uint32_t)(t->tag) >> 16) & 0xff, ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
 }
 
 #ifdef _WIN32
@@ -124,8 +119,8 @@ int main(int argc, char *argv[]) {
 	sds inPath = NULL;
 	int option_index = 0;
 	int c;
-	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
-	dumpopts->optimize_level = 1;
+
+	caryll_options *options = caryll_new_options();
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -137,6 +132,7 @@ int main(int argc, char *argv[]) {
 	                            {"short-post", no_argument, NULL, 0},
 	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
+	                            {"verbose", no_argument, NULL, 0},
 	                            {"optimize", required_argument, NULL, 'O'},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
@@ -150,19 +146,22 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(longopts[option_index].name, "time") == 0) {
 					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
-					dumpopts->ignore_hints = true;
+					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
-					dumpopts->keep_average_char_width = true;
+					options->keep_average_char_width = true;
 				} else if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
-					dumpopts->keep_modified_time = true;
+					options->keep_modified_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
-					dumpopts->ignore_glyph_order = true;
+					options->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
-					dumpopts->short_post = true;
+					options->short_post = true;
 				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
-					dumpopts->ignore_glyph_order = true;
-					dumpopts->short_post = true;
-					dumpopts->dummy_DSIG = true;
+					options->ignore_glyph_order = true;
+					options->short_post = true;
+					options->dummy_DSIG = true;
+				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
+					options->verbose = true;
+					show_time = true;
 				}
 				break;
 			case 'v':
@@ -175,13 +174,14 @@ int main(int argc, char *argv[]) {
 				outputPath = sdsnew(optarg);
 				break;
 			case 's':
-				dumpopts->dummy_DSIG = true;
+				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				dumpopts->optimize_level = atoi(optarg);
-				if (dumpopts->optimize_level >= 2) {
-					dumpopts->short_post = true;
-					dumpopts->ignore_glyph_order = true;
+				options->optimize_level = atoi(optarg);
+				if (options->optimize_level >= 2) {
+					options->short_post = true;
+					options->ignore_glyph_order = true;
+					options->cff_short_vmtx = true;
 				}
 				break;
 		}
@@ -212,8 +212,10 @@ int main(int argc, char *argv[]) {
 	long length;
 	{
 		if (inPath) {
+			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", inPath, outputPath); }
 			readEntireFile(inPath, &buffer, &length);
 		} else {
+			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", "[STDIN]", outputPath); }
 			readEntireStdin(&buffer, &length);
 		}
 		if (show_time) push_stopwatch("Read input", &begin);
@@ -232,7 +234,7 @@ int main(int argc, char *argv[]) {
 
 	caryll_font *font;
 	{
-		font = caryll_font_from_json(root, dumpopts);
+		font = caryll_font_from_json(root, options);
 		if (!font) {
 			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -241,13 +243,13 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Convert JSON to font", &begin);
 	}
 	{
-		caryll_font_consolidate(font, dumpopts);
+		caryll_font_consolidate(font, options);
 		if (show_time) push_stopwatch("Consolidation", &begin);
-		caryll_font_stat(font, dumpopts);
+		caryll_font_stat(font, options);
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_write_font(font, dumpopts);
+		caryll_buffer *otf = caryll_write_font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
@@ -255,7 +257,7 @@ int main(int argc, char *argv[]) {
 
 		buffree(otf);
 		caryll_delete_font(font);
-		if (dumpopts) free(dumpopts);
+		caryll_delete_options(options);
 		if (show_time) push_stopwatch("Finalize", &begin);
 	}
 	return 0;

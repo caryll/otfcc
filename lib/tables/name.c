@@ -56,8 +56,10 @@ void caryll_delete_name(table_name *table) {
 	free(table);
 }
 
-void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_options *dumpopts) {
+void caryll_name_to_json(table_name *table, json_value *root, caryll_options *options) {
 	if (!table) return;
+	if (options->verbose) fprintf(stderr, "Dumping name.\n");
+
 	json_value *name = json_array_new(table->count);
 	for (uint16_t j = 0; j < table->count; j++) {
 		name_record *r = table->records[j];
@@ -66,8 +68,7 @@ void caryll_name_to_json(table_name *table, json_value *root, caryll_dump_option
 		json_object_push(record, "encodingID", json_integer_new(r->encodingID));
 		json_object_push(record, "languageID", json_integer_new(r->languageID));
 		json_object_push(record, "nameID", json_integer_new(r->nameID));
-		json_object_push(record, "nameString",
-		                 json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
+		json_object_push(record, "nameString", json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
 		json_array_push(name, record);
 	}
 	json_object_push(root, "name", name);
@@ -80,10 +81,11 @@ static int name_record_sort(const void *_a, const void *_b) {
 	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
 	return (*a)->nameID - (*b)->nameID;
 }
-table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopts) {
+table_name *caryll_name_from_json(json_value *root, caryll_options *options) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
+		if (options->verbose) fprintf(stderr, "Parsing name.\n");
 		int validCount = 0;
 		for (uint32_t j = 0; j < table->u.array.length; j++) {
 			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
@@ -125,8 +127,7 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 					name->records[jj]->nameID = json_obj_getint(record, "nameID");
 
 					json_value *str = json_obj_get_type(record, "nameString", json_string);
-					name->records[jj]->nameString =
-					    sdsnewlen(str->u.string.ptr, str->u.string.length);
+					name->records[jj]->nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
 					jj += 1;
 				}
 			}
@@ -135,7 +136,7 @@ table_name *caryll_name_from_json(json_value *root, caryll_dump_options *dumpopt
 	}
 	return name;
 }
-caryll_buffer *caryll_write_name(table_name *name, caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_name(table_name *name, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);

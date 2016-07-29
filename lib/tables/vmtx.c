@@ -1,9 +1,7 @@
 #include "vmtx.h"
 
 table_vmtx *caryll_read_vmtx(caryll_packet packet, table_vhea *vhea, table_maxp *maxp) {
-	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 ||
-	    maxp->numGlyphs < vhea->numOfLongVerMetrics)
-		return NULL;
+	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 || maxp->numGlyphs < vhea->numOfLongVerMetrics) return NULL;
 	FOR_TABLE('vmtx', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -42,8 +40,7 @@ void caryll_delete_vmtx(table_vmtx *table) {
 	free(table);
 }
 
-caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k,
-                                 caryll_dump_options *dumpopts) {
+caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k, caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {
@@ -53,7 +50,9 @@ caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t co
 		}
 	}
 	if (vmtx->topSideBearing) {
-		for (uint16_t j = 0; j < count_k; j++) { bufwrite16b(buf, vmtx->topSideBearing[j]); }
+		for (uint16_t j = 0; j < count_k; j++) {
+			bufwrite16b(buf, vmtx->topSideBearing[j]);
+		}
 	}
 	return buf;
 }

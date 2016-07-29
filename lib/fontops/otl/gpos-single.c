@@ -10,8 +10,7 @@ static int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *_subtable,
-                             sds lookupName) {
+bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	consolidate_coverage(font, subtable->coverage, lookupName);
 	gpos_single_hash *h = NULL;

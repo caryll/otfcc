@@ -1,7 +1,6 @@
 #include "chaining.h"
 
-bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_subtable,
-                          sds lookupName) {
+bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	otl_chaining_rule *rule = subtable->rules[0];
 	for (uint16_t j = 0; j < rule->matchCount; j++) {
@@ -26,8 +25,8 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 				}
 		}
 		if (!foundLookup && rule->apply[j].lookupName) {
-			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n",
-			        rule->apply[j].lookupName, lookupName);
+			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookupName,
+			        lookupName);
 			DELETE(sdsfree, rule->apply[j].lookupName);
 		}
 	}
@@ -51,7 +50,9 @@ typedef struct {
 	int cls;
 	UT_hash_handle hh;
 } classifier_hash;
-static int by_gid_clsh(classifier_hash *a, classifier_hash *b) { return a->gid - b->gid; }
+static int by_gid_clsh(classifier_hash *a, classifier_hash *b) {
+	return a->gid - b->gid;
+}
 
 static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
@@ -118,8 +119,7 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 		return 1;
 	}
 }
-static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier_hash *hi,
-                        classifier_hash *hf) {
+static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier_hash *hi, classifier_hash *hf) {
 	for (uint16_t m = 0; m < rule->matchCount; m++)
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
@@ -268,5 +268,7 @@ void classify(otl_lookup *lookup) {
 	// in this procedure we will replace the subtables' content to classes.
 	// This can massively reduce the size of the lookup.
 	// Remember, this process is completely automatic.
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) { classify_around(lookup, j); }
+	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		classify_around(lookup, j);
+	}
 }

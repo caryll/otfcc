@@ -37,8 +37,7 @@ static void reverseBacktracks(subtable_gsub_reverse *subtable) {
 	}
 }
 
-otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLength,
-                                       uint32_t offset) {
+otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
@@ -77,8 +76,7 @@ otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLen
 	subtable->to->numGlyphs = nReplacement;
 	NEW_N(subtable->to->glyphs, nReplacement);
 	for (uint16_t j = 0; j < nReplacement; j++) {
-		subtable->to->glyphs[j].gid =
-		    read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2);
+		subtable->to->glyphs[j].gid = read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2);
 		subtable->to->glyphs[j].name = NULL;
 	}
 	reverseBacktracks(subtable);

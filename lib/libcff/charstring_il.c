@@ -38,8 +38,7 @@ static void il_lineto(charstring_il *il, float dx, float dy) {
 	il_push_operand(il, dy);
 	il_push_op(il, op_rlineto);
 }
-static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3,
-                       float dy3) {
+static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3, float dy3) {
 	il_push_operand(il, dx1);
 	il_push_operand(il, dy1);
 	il_push_operand(il, dx2);
@@ -88,10 +87,10 @@ static void il_push_masks(charstring_il *il, glyf_glyph *g, // meta
                           uint16_t *jm                      // index of pushed hmasks
                           ) {
 	if (!g->numberOfStemH && !g->numberOfStemV) return;
-	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH,
-	                   g->numberOfStemV, jh, op_cntrmask);
-	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, points, g->numberOfStemH,
-	                   g->numberOfStemV, jm, op_hintmask);
+	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH, g->numberOfStemV, jh,
+	                   op_cntrmask);
+	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, points, g->numberOfStemH, g->numberOfStemV, jm,
+	                   op_hintmask);
 }
 
 static void _il_push_stemgroup(charstring_il *il,                               // il seq
@@ -170,10 +169,10 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 			if (contour->points[j].onCurve) { // A line-to
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
 				pointsSofar++;
-			} else if (j < n - 2                          // have enough points
-			           && !contour->points[j + 1].onCurve // next is offcurve
-			           && contour->points[j + 2].onCurve  // and next is oncurve
-			           ) {                                // means this is an bezier curve strand
+			} else if (j < n - 2                                                // have enough points
+			           && !contour->points[j + 1].onCurve                       // next is offcurve
+			           && contour->points[j + 2].onCurve                        // and next is oncurve
+			           ) {                                                      // means this is an bezier curve strand
 				il_curveto(il, contour->points[j].x, contour->points[j].y,      // dz1
 				           contour->points[j + 1].x, contour->points[j + 1].y,  // dz2
 				           contour->points[j + 2].x, contour->points[j + 2].y); // dz3
@@ -208,8 +207,8 @@ static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...
 	if (arity > 16 || j + arity >= il->length) return 0;
 	if ((j == 0 || // We are at the beginning of charstring
 	     !il_matchtype(il, j - 1, j,
-	                   IL_ITEM_PHANTOM_OPERATOR)) // .. or we are right after a solid operator
-	    && il_matchop(il, j + arity, op)          // The next operator is <op>
+	                   IL_ITEM_PHANTOM_OPERATOR))          // .. or we are right after a solid operator
+	    && il_matchop(il, j + arity, op)                   // The next operator is <op>
 	    && il_matchtype(il, j, j + arity, IL_ITEM_OPERAND) // And we have correct number of operands
 	    ) {
 		va_list ap;
@@ -240,8 +239,7 @@ static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...
 		return 0;
 	}
 }
-static uint8_t opop_roll(charstring_il *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2,
-                         int32_t resultop) {
+static uint8_t opop_roll(charstring_il *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2, int32_t resultop) {
 	if (j + 1 + arity >= il->length) return 0;
 	charstring_instruction *current = &(il->instr[j]);
 	charstring_instruction *nextop = &(il->instr[j + 1 + arity]);
@@ -270,7 +268,7 @@ static uint8_t hvlineto_roll(charstring_il *il, uint32_t j) {
 	    && il_matchop(il, j + 3, op_rlineto)                             // followed by a lineto
 	    && il_matchtype(il, j + 1, j + 3, IL_ITEM_OPERAND)               // have enough operands
 	    && il->instr[j + checkdelta].d == 0                              // and it is a h/v
-	    && current->arity + 1 <= type2_argument_stack // we have enough stack space
+	    && current->arity + 1 <= type2_argument_stack                    // we have enough stack space
 	    ) {
 		il->instr[j + checkdelta].type = IL_ITEM_PHANTOM_OPERAND;
 		il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
@@ -354,18 +352,18 @@ static uint32_t nextstop(charstring_il *il, uint32_t j) {
 		;
 	return delta;
 }
-#define ROLL_FALL(x)                                                                               \
+#define ROLL_FALL(x)                                                                                                   \
 	if ((r = (x))) return r;
 static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLevel) {
 	uint8_t r = 0;
-	ROLL_FALL(zroll(il, j, op_rlineto, op_hlineto, 0, 1));                 // rlineto -> hlineto
-	ROLL_FALL(zroll(il, j, op_rlineto, op_vlineto, 1, 0));                 // rlineto -> vlineto
-	ROLL_FALL(zroll(il, j, op_rmoveto, op_hmoveto, 0, 1));                 // rmoveto -> hmoveto
-	ROLL_FALL(zroll(il, j, op_rmoveto, op_vmoveto, 1, 0));                 // rmoveto -> vmoveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0)); // rrcurveto->hvcurveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1)); // rrcurveto->vhcurveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1)); // rrcurveto->hhcurveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0)); // rrcurveto->vvcurveto
+	ROLL_FALL(zroll(il, j, op_rlineto, op_hlineto, 0, 1));                    // rlineto -> hlineto
+	ROLL_FALL(zroll(il, j, op_rlineto, op_vlineto, 1, 0));                    // rlineto -> vlineto
+	ROLL_FALL(zroll(il, j, op_rmoveto, op_hmoveto, 0, 1));                    // rmoveto -> hmoveto
+	ROLL_FALL(zroll(il, j, op_rmoveto, op_vmoveto, 1, 0));                    // rmoveto -> vmoveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0));    // rrcurveto->hvcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1));    // rrcurveto->vhcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1));    // rrcurveto->hhcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0));    // rrcurveto->vvcurveto
 	ROLL_FALL(opop_roll(il, j, op_rrcurveto, 6, op_rrcurveto, op_rrcurveto)); // rrcurveto roll
 	ROLL_FALL(opop_roll(il, j, op_rrcurveto, 2, op_rlineto, op_rcurveline));  // rcurveline roll
 	ROLL_FALL(opop_roll(il, j, op_rlineto, 6, op_rrcurveto, op_rlinecurve));  // rlinecurve roll
@@ -374,17 +372,19 @@ static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLeve
 	ROLL_FALL(opop_roll(il, j, op_vstemhm, 0, op_hintmask, op_hintmask));     // hintmask roll
 	ROLL_FALL(opop_roll(il, j, op_hstemhm, 0, op_cntrmask, op_cntrmask));     // cntrmask roll
 	ROLL_FALL(opop_roll(il, j, op_vstemhm, 0, op_cntrmask, op_cntrmask));     // cntrmask roll
-	ROLL_FALL(hvlineto_roll(il, j));  // hlineto-vlineto roll
-	ROLL_FALL(hhvvcurve_roll(il, j)); // hhcurveto-vvcurveto roll
-	ROLL_FALL(hvvhcurve_roll(il, j)); // hvcurveto-vhcurveto roll
-	ROLL_FALL(nextstop(il, j));       // move to next stop for operand match
-	return 1;                         // nothing match
+	ROLL_FALL(hvlineto_roll(il, j));                                          // hlineto-vlineto roll
+	ROLL_FALL(hhvvcurve_roll(il, j));                                         // hhcurveto-vvcurveto roll
+	ROLL_FALL(hvvhcurve_roll(il, j));                                         // hvcurveto-vhcurveto roll
+	ROLL_FALL(nextstop(il, j));                                               // move to next stop for operand match
+	return 1;                                                                 // nothing match
 }
 
-void glyph_il_peephole_optimization(charstring_il *il, caryll_dump_options *dumpopts) {
-	if (!dumpopts->optimize_level) return;
+void glyph_il_peephole_optimization(charstring_il *il, caryll_options *options) {
+	if (!options->optimize_level) return;
 	uint32_t j = 0;
-	while (j < il->length) { j += decideAdvance(il, j, dumpopts->optimize_level); }
+	while (j < il->length) {
+		j += decideAdvance(il, j, options->optimize_level);
+	}
 }
 
 // IL to buffer conversion

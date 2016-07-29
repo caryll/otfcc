@@ -14,7 +14,9 @@ typedef struct {
 	UT_hash_handle hh;
 } coverage_entry;
 
-static int by_covIndex(coverage_entry *a, coverage_entry *b) { return a->covIndex - b->covIndex; }
+static int by_covIndex(coverage_entry *a, coverage_entry *b) {
+	return a->covIndex - b->covIndex;
+}
 
 otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_classdef *cd;
@@ -155,8 +157,7 @@ otl_classdef *caryll_classdef_from_json(json_value *_cd) {
 	NEW_N(cd->classes, cd->numGlyphs);
 	uint16_t maxclass = 0;
 	for (uint16_t j = 0; j < _cd->u.object.length; j++) {
-		cd->glyphs[j].name =
-		    sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length);
+		cd->glyphs[j].name = sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length);
 		json_value *_cid = _cd->u.object.values[j].value;
 		if (_cid->type == json_integer) {
 			cd->classes[j] = _cid->u.integer;

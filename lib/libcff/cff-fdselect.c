@@ -22,7 +22,9 @@ caryll_buffer *compile_fdselect(CFF_FDSelect fd) {
 			caryll_buffer *blob = bufnew();
 			blob->size = 1 + fd.s;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
-			for (uint16_t j = 0; j < fd.s; j++) { blob->data[j] = fd.f0.fds[j]; }
+			for (uint16_t j = 0; j < fd.s; j++) {
+				blob->data[j] = fd.f0.fds[j];
+			}
 			return blob;
 		}
 		case CFF_FDSELECT_FORMAT3: {

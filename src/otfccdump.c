@@ -17,9 +17,7 @@
 #define PATCH_VER 0
 #endif
 
-void printInfo() {
-	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
-}
+void printInfo() { fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER); }
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
@@ -65,12 +63,14 @@ int main(int argc, char *argv[]) {
 	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
+	                            {"verbose", no_argument, NULL, 0},
 	                            {"add-bom", no_argument, NULL, 0},
 	                            {"no-bom", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
-	caryll_dump_options *dumpopts = calloc(1, sizeof(caryll_dump_options));
+
+	caryll_options *options = caryll_new_options();
 
 	int option_index = 0;
 	int c;
@@ -93,13 +93,16 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(longopts[option_index].name, "no-bom") == 0) {
 					no_bom = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
-					dumpopts->ignore_glyph_order = true;
+					options->ignore_glyph_order = true;
+				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
+					options->verbose = true;
+					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
-					dumpopts->ignore_hints = true;
+					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
-					dumpopts->instr_as_bytes = true;
+					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
-					dumpopts->glyph_name_prefix = sdsnew(optarg);
+					options->glyph_name_prefix = sdsnew(optarg);
 				}
 				break;
 			case 'v':
@@ -150,8 +153,8 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		if (ttcindex >= sfnt->count) {
-			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex,
-			        inPath, (sfnt->count - 1));
+			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
+			        (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
 		if (show_time) push_stopwatch("Read Input SFNT", &begin);
@@ -164,13 +167,13 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		caryll_font_unconsolidate(font, dumpopts);
+		caryll_font_unconsolidate(font, options);
 		if (show_time) push_stopwatch("Parse SFNT", &begin);
 	}
 
 	json_value *root;
 	{
-		root = caryll_font_to_json(font, dumpopts);
+		root = caryll_font_to_json(font, options);
 		if (!root) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -184,9 +187,7 @@ int main(int argc, char *argv[]) {
 		options.mode = json_serialize_mode_packed;
 		options.opts = 0;
 		options.indent_size = 4;
-		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) {
-			options.mode = json_serialize_mode_multiline;
-		}
+		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) { options.mode = json_serialize_mode_multiline; }
 		if (show_ugly) options.mode = json_serialize_mode_packed;
 		buf = malloc(json_measure_ex(root, options));
 		json_serialize_ex(buf, root, options);
@@ -218,8 +219,7 @@ int main(int argc, char *argv[]) {
 				while (written < dwNum) {
 					DWORD len = dwNum - written;
 					if (len > chunk) len = chunk;
-					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual,
-					              NULL);
+					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual, NULL);
 					written += len;
 				}
 				free(pwStr);
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
 		if (sfnt) caryll_delete_sfnt(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);
-		if (dumpopts) free(dumpopts);
+		caryll_delete_options(options);
 		if (show_time) push_stopwatch("Complete", &begin);
 	}
 

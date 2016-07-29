@@ -25,8 +25,7 @@ uint32_t count_index(CFF_Index i);
 
 void parse_index(uint8_t *data, uint32_t pos, CFF_Index *in);
 
-CFF_Index *cff_buildindex_callback(void *context, uint32_t length,
-                                   caryll_buffer *(*fn)(void *, uint32_t));
+CFF_Index *cff_buildindex_callback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t));
 
 caryll_buffer *compile_index(CFF_Index index);
 

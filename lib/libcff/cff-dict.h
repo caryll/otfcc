@@ -24,8 +24,7 @@ void esrap_dict(CFF_Dict *d);
 CFF_Dict *parse_dict(uint8_t *data, uint32_t len);
 
 void parse_dict_callback(uint8_t *data, uint32_t len, void *context,
-                         void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack,
-                                          void *context));
+                         void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack, void *context));
 CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx);
 
 caryll_buffer *compile_dict(CFF_Dict *dict);

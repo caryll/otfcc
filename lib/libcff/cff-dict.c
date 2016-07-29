@@ -3,7 +3,9 @@
 // DICT util functions
 void cff_delete_dict(CFF_Dict *dict) {
 	if (!dict) return;
-	for (uint32_t j = 0; j < dict->count; j++) { free(dict->ents[j].vals); }
+	for (uint32_t j = 0; j < dict->count; j++) {
+		free(dict->ents[j].vals);
+	}
 	free(dict->ents);
 	free(dict);
 }
@@ -53,8 +55,7 @@ CFF_Dict *parse_dict(uint8_t *data, uint32_t len) {
 }
 
 void parse_dict_callback(uint8_t *data, uint32_t len, void *context,
-                         void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack,
-                                          void *context)) {
+                         void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack, void *context)) {
 	uint8_t index = 0;
 	uint32_t advance;
 	CFF_Value val, stack[256];
