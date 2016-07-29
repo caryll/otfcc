@@ -5,16 +5,17 @@
 #include <support/util.h>
 
 typedef struct {
-	int16_t verticalOrigin;
 	uint16_t gid;
+	int16_t verticalOrigin;
 } VORG_entry;
 
 typedef struct {
-	VORG_entry *entries;
 	uint16_t numVertOriginYMetrics;
 	int16_t defaultVerticalOrigin;
+	VORG_entry *entries;
 } table_VORG;
 
-table_VORG *caryll_read_VORG(caryll_packet packet);
 void caryll_delete_VORG(table_VORG *vorg);
+table_VORG *caryll_read_VORG(caryll_packet packet);
+caryll_buffer *caryll_write_VORG(table_VORG *table, caryll_options *options);
 #endif

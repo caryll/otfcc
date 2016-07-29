@@ -70,7 +70,7 @@ typedef struct {
 	// Metrics
 	uint16_t advanceWidth;
 	uint16_t advanceHeight;
-	float verticalOrigin;
+	int16_t verticalOrigin;
 
 	// Outline
 	// NOTE: SFNT does not support mixed glyphs, but we do.
@@ -134,7 +134,12 @@ table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp 
 void caryll_delete_glyf(table_glyf *table);
 void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_options *options);
 table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, caryll_options *options);
-void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca,
-                       caryll_options *options);
+
+typedef struct {
+	caryll_buffer *glyf;
+	caryll_buffer *loca;
+} glyf_loca_bufpair;
+
+glyf_loca_bufpair caryll_write_glyf(table_glyf *table, table_head *head, caryll_options *options);
 
 #endif

@@ -161,6 +161,7 @@ int main(int argc, char *argv[]) {
 					options->dummy_DSIG = true;
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
+					show_time = true;
 				}
 				break;
 			case 'v':
@@ -180,6 +181,7 @@ int main(int argc, char *argv[]) {
 				if (options->optimize_level >= 2) {
 					options->short_post = true;
 					options->ignore_glyph_order = true;
+					options->cff_short_vmtx = true;
 				}
 				break;
 		}
@@ -210,8 +212,10 @@ int main(int argc, char *argv[]) {
 	long length;
 	{
 		if (inPath) {
+			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", inPath, outputPath); }
 			readEntireFile(inPath, &buffer, &length);
 		} else {
+			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", "[STDIN]", outputPath); }
 			readEntireStdin(&buffer, &length);
 		}
 		if (show_time) push_stopwatch("Read input", &begin);

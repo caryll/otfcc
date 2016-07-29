@@ -16,6 +16,7 @@ typedef struct {
 	bool keep_modified_time;
 	bool instr_as_bytes;
 	bool verbose;
+	bool cff_short_vmtx;
 	char *glyph_name_prefix;
 	uint8_t optimize_level;
 } caryll_options;

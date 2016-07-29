@@ -99,5 +99,5 @@ void push_stopwatch(const char *reason, struct timespec *sofar) {
 	struct timespec diff;
 	timespec_diff(sofar, &ends, &diff);
 	*sofar = ends;
-	fprintf(stderr, "%s: %g\n", reason, diff.tv_sec + diff.tv_nsec / (double)BILLION);
+	fprintf(stderr, "Done %s (%gs).\n", reason, diff.tv_sec + diff.tv_nsec / (double)BILLION);
 }

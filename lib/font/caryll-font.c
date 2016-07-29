@@ -166,11 +166,9 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
 
 	// Outline data
 	if (font->subtype == FONTTYPE_TTF) {
-		caryll_buffer *bufglyf = bufnew();
-		caryll_buffer *bufloca = bufnew();
-		if (font->glyf && font->head) { caryll_write_glyf(font->glyf, font->head, bufglyf, bufloca, options); }
-		sfnt_builder_push_table(builder, 'loca', bufloca);
-		sfnt_builder_push_table(builder, 'glyf', bufglyf);
+		glyf_loca_bufpair pair = caryll_write_glyf(font->glyf, font->head, options);
+		sfnt_builder_push_table(builder, 'glyf', pair.glyf);
+		sfnt_builder_push_table(builder, 'loca', pair.loca);
 	} else {
 		caryll_cff_parse_result r = {font->CFF_, font->glyf};
 		sfnt_builder_push_table(builder, 'CFF ', caryll_write_CFF(r, options));
@@ -198,9 +196,10 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
 		                        caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
 		                                          font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics, options));
 	}
+	if (font->VORG) { sfnt_builder_push_table(builder, 'VORG', caryll_write_VORG(font->VORG, options)); }
 
-	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB, options));
-	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS, options));
+	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB, options, "GSUB"));
+	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS, options, "GPOS"));
 	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF, options));
 
 	if (options->dummy_DSIG) {

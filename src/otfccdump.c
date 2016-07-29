@@ -96,6 +96,7 @@ int main(int argc, char *argv[]) {
 					options->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
+					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {

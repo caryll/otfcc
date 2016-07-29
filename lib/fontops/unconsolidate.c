@@ -262,7 +262,8 @@ static void merge_vmtx(caryll_font *font) {
 			}
 			for (uint16_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
 				if (font->VORG->entries[j].gid < font->glyf->numberGlyphs) {
-					font->glyf->glyphs[j]->verticalOrigin = font->VORG->entries[j].verticalOrigin;
+					font->glyf->glyphs[font->VORG->entries[j].gid]->verticalOrigin =
+					    font->VORG->entries[j].verticalOrigin;
 				}
 			}
 		}

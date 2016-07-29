@@ -623,7 +623,7 @@ static bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(ot
 }
 
 // When writing lookups, otfcc will try to maintain everything correctly.
-static caryll_buffer *writeOTLLookups(table_otl *table, caryll_options *options) {
+static caryll_buffer *writeOTLLookups(table_otl *table, caryll_options *options, const char *tag) {
 	caryll_buffer *bufl = bufnew();
 	caryll_buffer *bufsts = bufnew();
 	uint32_t **subtableOffsets;
@@ -643,7 +643,7 @@ static caryll_buffer *writeOTLLookups(table_otl *table, caryll_options *options)
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
-		if (options->verbose) { fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout.\n"); }
+		if (options->verbose) { fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag); }
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
 			if (lookupWritten[j]) { headerSize += 8 * table->lookups[j]->subtableCount; }
 		}
@@ -861,11 +861,11 @@ static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, caryll_option
 	return bufs;
 }
 
-caryll_buffer *caryll_write_otl(table_otl *table, caryll_options *options) {
+caryll_buffer *caryll_write_otl(table_otl *table, caryll_options *options, const char *tag) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 
-	caryll_buffer *bufl = writeOTLLookups(table, options);
+	caryll_buffer *bufl = writeOTLLookups(table, options, tag);
 	caryll_buffer *buff = writeOTLFeatures(table, options);
 	caryll_buffer *bufs = writeOTLScriptAndLanguages(table, options);
 

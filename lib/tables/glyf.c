@@ -828,38 +828,42 @@ static void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-void caryll_write_glyf(table_glyf *table, table_head *head, caryll_buffer *bufglyf, caryll_buffer *bufloca,
-                       caryll_options *options) {
-	caryll_buffer *gbuf = bufnew();
-
-	uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));
-	for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-		loca[j] = (uint32_t)bufglyf->cursor;
-		glyf_glyph *g = table->glyphs[j];
-		bufclear(gbuf);
-		if (g->numberOfContours > 0) {
-			glyf_write_simple(g, gbuf);
-		} else if (g->numberOfReferences > 0) {
-			glyf_write_composite(g, gbuf);
+glyf_loca_bufpair caryll_write_glyf(table_glyf *table, table_head *head, caryll_options *options) {
+	caryll_buffer *bufglyf = bufnew();
+	caryll_buffer *bufloca = bufnew();
+	if (table && head) {
+		caryll_buffer *gbuf = bufnew();
+		uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));
+		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+			loca[j] = (uint32_t)bufglyf->cursor;
+			glyf_glyph *g = table->glyphs[j];
+			bufclear(gbuf);
+			if (g->numberOfContours > 0) {
+				glyf_write_simple(g, gbuf);
+			} else if (g->numberOfReferences > 0) {
+				glyf_write_composite(g, gbuf);
+			}
+			// pad extra zeroes
+			buflongalign(gbuf);
+			bufwrite_buf(bufglyf, gbuf);
 		}
-		// pad extra zeroes
-		buflongalign(gbuf);
-		bufwrite_buf(bufglyf, gbuf);
-	}
-	loca[table->numberGlyphs] = (uint32_t)bufglyf->cursor;
-	if (bufglyf->cursor >= 0x20000) {
-		head->indexToLocFormat = 1;
-	} else {
-		head->indexToLocFormat = 0;
-	}
-	// write loca table
-	for (uint32_t j = 0; j <= table->numberGlyphs; j++) {
-		if (head->indexToLocFormat) {
-			bufwrite32b(bufloca, loca[j]);
+		loca[table->numberGlyphs] = (uint32_t)bufglyf->cursor;
+		if (bufglyf->cursor >= 0x20000) {
+			head->indexToLocFormat = 1;
 		} else {
-			bufwrite16b(bufloca, loca[j] >> 1);
+			head->indexToLocFormat = 0;
 		}
+		// write loca table
+		for (uint32_t j = 0; j <= table->numberGlyphs; j++) {
+			if (head->indexToLocFormat) {
+				bufwrite32b(bufloca, loca[j]);
+			} else {
+				bufwrite16b(bufloca, loca[j] >> 1);
+			}
+		}
+		buffree(gbuf);
+		free(loca);
 	}
-	buffree(gbuf);
-	free(loca);
+	glyf_loca_bufpair pair = {bufglyf, bufloca};
+	return pair;
 }
