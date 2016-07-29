@@ -92,6 +92,8 @@ typedef struct {
 	// TTF instructions
 	uint16_t instructionsLength;
 	uint8_t *instructions;
+	// TTF Screen specific
+	uint8_t yPel;
 
 	// CID FDSelect
 	uint16_t fdSelectIndex;

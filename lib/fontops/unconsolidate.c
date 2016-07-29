@@ -269,10 +269,18 @@ static void merge_vmtx(caryll_font *font) {
 		}
 	}
 }
+static void merge_LTSH(caryll_font *font) {
+	if (font->glyf && font->LTSH) {
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs && j < font->LTSH->numGlyphs; j++) {
+			font->glyf->glyphs[j]->yPel = font->LTSH->yPels[j];
+		}
+	}
+}
 void caryll_font_unconsolidate(caryll_font *font, caryll_options *options) {
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);
+	merge_LTSH(font);
 
 	// Name glyphs
 	caryll_name_glyphs(font, options);

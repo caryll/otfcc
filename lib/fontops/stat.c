@@ -506,6 +506,21 @@ static void caryll_stat_cff_vorgs(caryll_font *font) {
 	font->VORG = vorg;
 }
 
+static void caryll_stat_LTSH(caryll_font *font) {
+	if (!font->glyf) return;
+	bool needLTSH = false;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++)
+		if (font->glyf->glyphs[j]->yPel > 1) { needLTSH = true; }
+	if (!needLTSH) return;
+
+	table_LTSH *ltsh;
+	NEW(ltsh);
+	ltsh->numGlyphs = font->glyf->numberGlyphs;
+	NEW_N(ltsh->yPels, ltsh->numGlyphs);
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) { ltsh->yPels[j] = font->glyf->glyphs[j]->yPel; }
+	font->LTSH = ltsh;
+}
+
 void caryll_font_stat(caryll_font *font, caryll_options *options) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font);
@@ -539,4 +554,5 @@ void caryll_font_stat(caryll_font *font, caryll_options *options) {
 		caryll_font_stat_vmtx(font, options);
 		caryll_stat_cff_vorgs(font);
 	}
+	caryll_stat_LTSH(font);
 }

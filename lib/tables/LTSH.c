@@ -1,5 +1,9 @@
 #include "LTSH.h"
 
+void caryll_delete_LTSH(table_LTSH *ltsh) {
+	if (ltsh) { free(ltsh->yPels); }
+	free(ltsh);
+}
 table_LTSH *caryll_read_LTSH(caryll_packet packet) {
 	FOR_TABLE('LTSH', table) {
 		font_file_pointer data = table.data;
@@ -13,4 +17,12 @@ table_LTSH *caryll_read_LTSH(caryll_packet packet) {
 		return LTSH;
 	}
 	return NULL;
+}
+caryll_buffer *caryll_write_LTSH(table_LTSH *ltsh, caryll_options *options) {
+	caryll_buffer *buf = bufnew();
+	if (!ltsh) return buf;
+	bufwrite16b(buf, 0);
+	bufwrite16b(buf, ltsh->numGlyphs);
+	for (uint16_t j = 0; j < ltsh->numGlyphs; j++) { bufwrite8(buf, ltsh->yPels[j]); }
+	return buf;
 }

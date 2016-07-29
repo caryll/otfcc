@@ -49,6 +49,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->CFF_) caryll_delete_CFF(font->CFF_);
 	if (font->glyf) caryll_delete_glyf(font->glyf);
 	if (font->cmap) caryll_delete_cmap(font->cmap);
+	if (font->LTSH) caryll_delete_LTSH(font->LTSH);
 	if (font->GSUB) caryll_delete_otl(font->GSUB);
 	if (font->GPOS) caryll_delete_otl(font->GPOS);
 	if (font->GDEF) caryll_delete_GDEF(font->GDEF);
@@ -85,6 +86,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 			font->prep = caryll_read_fpgm_prep(packet, 'prep');
 			font->cvt_ = caryll_read_cvt(packet, 'cvt ');
 			font->gasp = caryll_read_gasp(packet);
+			font->LTSH = caryll_read_LTSH(packet);
 			font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
 		} else {
 			caryll_cff_parse_result cffpr = caryll_read_CFF_and_glyf(packet);
@@ -181,10 +183,14 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
 	sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name, options));
 	sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post, font->glyph_order, options));
 	sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap, options));
-	if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm, options));
-	if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep, options));
-	if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_cvt(font->cvt_, options));
 	if (font->gasp) sfnt_builder_push_table(builder, 'gasp', caryll_write_gasp(font->gasp, options));
+
+	if (font->subtype == FONTTYPE_TTF) {
+		if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm, options));
+		if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep, options));
+		if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_cvt(font->cvt_, options));
+		if (font->LTSH) sfnt_builder_push_table(builder, 'LTSH', caryll_write_LTSH(font->LTSH, options));
+	}
 
 	sfnt_builder_push_table(builder, 'hmtx',
 	                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,

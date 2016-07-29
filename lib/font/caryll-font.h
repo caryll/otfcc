@@ -60,6 +60,8 @@ struct _caryll_font {
 	table_cvt *cvt_;
 	table_gasp *gasp;
 
+	table_LTSH *LTSH;
+
 	table_otl *GSUB;
 	table_otl *GPOS;
 	table_GDEF *GDEF;
