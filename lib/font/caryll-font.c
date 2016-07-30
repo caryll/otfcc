@@ -136,10 +136,17 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_options *options) {
 	return root;
 }
 
+caryll_font_subtype caryll_decide_font_subtype_json(json_value *root) {
+	if (json_obj_get_type(root, "CFF_", json_object) != NULL) {
+		return FONTTYPE_CFF;
+	} else {
+		return FONTTYPE_TTF;
+	}
+}
 caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 	caryll_font *font = caryll_new_font();
 	if (!font) return NULL;
-	font->subtype = json_obj_get_type(root, "CFF_", json_object) != NULL;
+	font->subtype = caryll_decide_font_subtype_json(root);
 	font->glyph_order = caryll_glyphorder_from_json(root, options);
 	font->head = caryll_head_from_json(root, options);
 	font->hhea = caryll_hhea_from_json(root, options);
@@ -194,15 +201,16 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
 		if (font->LTSH) sfnt_builder_push_table(builder, 'LTSH', caryll_write_LTSH(font->LTSH, options));
 	}
 
-	sfnt_builder_push_table(builder, 'hmtx',
-	                        caryll_write_hmtx(font->hmtx, font->hhea->numberOfMetrics,
-	                                          font->maxp->numGlyphs - font->hhea->numberOfMetrics, options));
-
+	if (font->hhea && font->maxp && font->hmtx) {
+		uint16_t hmtx_counta = font->hhea->numberOfMetrics;
+		uint16_t hmtx_countk = font->maxp->numGlyphs - font->hhea->numberOfMetrics;
+		sfnt_builder_push_table(builder, 'hmtx', caryll_write_hmtx(font->hmtx, hmtx_counta, hmtx_countk, options));
+	}
 	if (font->vhea) sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea, options));
-	if (font->vmtx) {
-		sfnt_builder_push_table(builder, 'vmtx',
-		                        caryll_write_vmtx(font->vmtx, font->vhea->numOfLongVerMetrics,
-		                                          font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics, options));
+	if (font->vhea && font->maxp && font->vmtx) {
+		uint16_t vmtx_counta = font->vhea->numOfLongVerMetrics;
+		uint16_t vmtx_countk = font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics;
+		sfnt_builder_push_table(builder, 'vmtx', caryll_write_vmtx(font->vmtx, vmtx_counta, vmtx_countk, options));
 	}
 	if (font->VORG) { sfnt_builder_push_table(builder, 'VORG', caryll_write_VORG(font->VORG, options)); }
 
