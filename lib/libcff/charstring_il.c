@@ -399,6 +399,11 @@ caryll_buffer *il2blob(charstring_il *il) {
 				stackDepth++;
 				break;
 			}
+			case IL_ITEM_PROGID: {
+				merge_cs2_operand(blob, il->instr[j].i);
+				stackDepth++;
+				break;
+			}
 			case IL_ITEM_OPERATOR: {
 				merge_cs2_operator(blob, il->instr[j].i);
 				stackDepth = 0;
@@ -413,4 +418,16 @@ caryll_buffer *il2blob(charstring_il *il) {
 		}
 	}
 	return blob;
+}
+
+bool instruction_eq(charstring_instruction *z1, charstring_instruction *z2) {
+	if (z1->type == z2->type) {
+		if (z1->type == IL_ITEM_OPERAND || z1->type == IL_ITEM_PHANTOM_OPERAND) {
+			return z1->d == z2->d;
+		} else {
+			return z1->i == z2->i;
+		}
+	} else {
+		return false;
+	}
 }
