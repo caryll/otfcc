@@ -314,6 +314,12 @@ typedef struct {
 	sds name;
 } glyph_handle;
 
+// fd reference type
+typedef struct {
+	uint16_t index;
+	sds name;
+} fd_handle;
+
 #define MOVE /*move*/
 
 static INLINE json_value *preserialize(MOVE json_value *x) {

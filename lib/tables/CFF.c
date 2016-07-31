@@ -427,7 +427,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	else
 		fd = parse_subr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
-	g->fdSelectIndex = fd;
+	g->fdSelect.index = fd;
 	if (context->meta->fdArray && fd >= 0 && fd < context->meta->fdArrayCount &&
 	    context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
@@ -573,6 +573,9 @@ caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet) {
 				parse_dict_callback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
 				                    cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
 				                    callback_extract_fd);
+				if (!context.meta->fdArray[j]->fontName) {
+					context.meta->fdArray[j]->fontName = sdscatprintf(sdsempty(), "_Subfont%d", j);
+				}
 			}
 		}
 		ret.meta = context.meta;
@@ -674,9 +677,12 @@ static json_value *fdToJson(table_CFF *table) {
 		json_object_push(_CFF_, "cidSupplement", json_double_new(table->cidSupplement));
 	}
 	if (table->fdArray) {
-		json_value *_fdArray = json_array_new(table->fdArrayCount);
+		json_value *_fdArray = json_object_new(table->fdArrayCount);
 		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
-			json_array_push(_fdArray, fdToJson(table->fdArray[j]));
+			sds name = table->fdArray[j]->fontName;
+			table->fdArray[j]->fontName = NULL;
+			json_object_push(_fdArray, name, fdToJson(table->fdArray[j]));
+			table->fdArray[j]->fontName = name;
 		}
 		json_object_push(_CFF_, "fdArray", _fdArray);
 	}
@@ -771,13 +777,16 @@ static table_CFF *fdFromJson(json_value *dump) {
 	table->cidFontRevision = json_obj_getnum(dump, "cidFontRevision");
 
 	// fdArray
-	json_value *fdarraydump = json_obj_get_type(dump, "fdArray", json_array);
+	json_value *fdarraydump = json_obj_get_type(dump, "fdArray", json_object);
 	if (fdarraydump && table->cidRegistry && table->cidOrdering) {
 		table->isCID = true;
-		table->fdArrayCount = fdarraydump->u.array.length;
+		table->fdArrayCount = fdarraydump->u.object.length;
 		NEW_N(table->fdArray, table->fdArrayCount);
 		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
-			table->fdArray[j] = fdFromJson(fdarraydump->u.array.values[j]);
+			table->fdArray[j] = fdFromJson(fdarraydump->u.object.values[j].value);
+			if (table->fdArray[j]->fontName) { sdsfree(table->fdArray[j]->fontName); }
+			table->fdArray[j]->fontName =
+			    sdsnewlen(fdarraydump->u.object.values[j].name, fdarraydump->u.object.values[j].name_length);
 		}
 	}
 	if (!table->privateDict) table->privateDict = caryll_new_CFF_private();
@@ -1055,11 +1064,11 @@ static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	NEW_CLEAN(fds);
 	fds->t = CFF_FDSELECT_UNSPECED;
 	if (!glyf->numberGlyphs) goto done;
-	uint8_t fdi0 = glyf->glyphs[0]->fdSelectIndex;
+	uint8_t fdi0 = glyf->glyphs[0]->fdSelect.index;
 	if (fdi0 > cff->fdArrayCount) fdi0 = 0;
 	current = fdi0;
 	for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
-		uint8_t fdi = glyf->glyphs[j]->fdSelectIndex;
+		uint8_t fdi = glyf->glyphs[j]->fdSelect.index;
 		if (fdi > cff->fdArrayCount) fdi = 0;
 		if (fdi != current) {
 			current = fdi;
@@ -1070,9 +1079,9 @@ static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	fds->f3.range3[0].first = 0;
 	fds->f3.range3[0].fd = current = fdi0;
 	for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
-		uint8_t fdi = glyf->glyphs[j]->fdSelectIndex;
+		uint8_t fdi = glyf->glyphs[j]->fdSelect.index;
 		if (fdi > cff->fdArrayCount) fdi = 0;
-		if (glyf->glyphs[j]->fdSelectIndex != current) {
+		if (glyf->glyphs[j]->fdSelect.index != current) {
 			current = fdi;
 			fds->s++;
 			fds->f3.range3[fds->s].first = j;
