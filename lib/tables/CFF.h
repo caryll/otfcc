@@ -51,6 +51,10 @@ typedef struct {
 typedef struct _table_CFF table_CFF;
 
 struct _table_CFF {
+	// Name
+	sds fontName;
+
+	// General properties
 	bool isCID;
 	sds version;
 	sds notice;
@@ -71,7 +75,6 @@ struct _table_CFF {
 	cff_fontmatrix *fontMatrix;
 
 	// CID-only operators
-	sds fontName;
 	sds cidRegistry;
 	sds cidOrdering;
 	uint32_t cidSupplement;

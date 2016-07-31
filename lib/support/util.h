@@ -314,6 +314,12 @@ typedef struct {
 	sds name;
 } glyph_handle;
 
+// fd reference type
+typedef struct {
+	uint16_t index;
+	sds name;
+} fd_handle;
+
 #define MOVE /*move*/
 
 static INLINE json_value *preserialize(MOVE json_value *x) {
@@ -357,9 +363,9 @@ static INLINE void *__caryll_allocate_clean(size_t n, unsigned long line) {
 #define FREE(ptr) (free(ptr), ptr = nullptr)
 #define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)
 #else
-#define NEW(ptr) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)), __LINE__)
-#define NEW_CLEAN(ptr) ptr = __caryll_allocate_clean(sizeof(__typeof__(*ptr)), __LINE__)
-#define NEW_N(ptr, n) ptr = __caryll_allocate(sizeof(__typeof__(*ptr)) * (n), __LINE__)
+#define NEW(ptr) ptr = __caryll_allocate(sizeof(*ptr), __LINE__)
+#define NEW_CLEAN(ptr) ptr = __caryll_allocate_clean(sizeof(*ptr), __LINE__)
+#define NEW_N(ptr, n) ptr = __caryll_allocate(sizeof(*ptr) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = NULL)
 #define DELETE(fn, ptr) (fn(ptr), ptr = NULL)
 #endif

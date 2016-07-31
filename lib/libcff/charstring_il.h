@@ -14,9 +14,11 @@ typedef enum {
 
 typedef struct {
 	il_type type;
-	double d;
-	int32_t i;
 	uint16_t arity;
+	union {
+		double d;  // for type == IL_ITEM_OPERAND, IL_ITEM_PHANTOM_OPERAND
+		int32_t i; // otherwise
+	};
 } charstring_instruction;
 
 typedef struct {

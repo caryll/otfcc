@@ -96,7 +96,7 @@ typedef struct {
 	uint8_t yPel;
 
 	// CID FDSelect
-	uint16_t fdSelectIndex;
+	fd_handle fdSelect;
 
 	// Stats
 	glyf_glyph_stat stat;

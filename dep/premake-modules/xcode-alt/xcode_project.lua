@@ -87,49 +87,50 @@
 		 tr.products = tree.insert(tr, tree.new("Products"))
 
 		-- the special folder "Projects" lists sibling project dependencies
-		 tr.projects = tree.new("Projects")
-		 for _, dep in ipairs(project.getdependencies(prj, "sibling", "object")) do
-		 	-- create a child node for the dependency's xcodeproj
-		 	local xcpath = xcode.getxcodeprojname(dep)
-		 	local xcnode = tree.insert(tr.projects, tree.new(path.getname(xcpath)))
-		 	xcnode.path = xcpath
-		 	xcnode.project = dep
-		 	xcnode.productgroupid = xcode.newid(xcnode.name, "prodgrp")
-		 	xcnode.productproxyid = xcode.newid(xcnode.name, "prodprox")
-		 	xcnode.targetproxyid  = xcode.newid(xcnode.name, "targprox")
-		 	xcnode.targetdependid = xcode.newid(xcnode.name, "targdep")
+		tr.projects = tree.new("Projects")
+		for _, dep in ipairs(project.getdependencies(prj)) do
+			-- create a child node for the dependency's xcodeproj
+			local xcpath = xcode.getxcodeprojname(dep)
+			local xcnode = tree.insert(tr.projects, tree.new(path.getname(xcpath)))
+			xcnode.path = xcpath
+			xcnode.project = dep
+			xcnode.productgroupid = xcode.newid(xcnode.name, "prodgrp")
+			xcnode.productproxyid = xcode.newid(xcnode.name, "prodprox")
+			xcnode.targetproxyid  = xcode.newid(xcnode.name, "targprox")
+			xcnode.targetdependid = xcode.newid(xcnode.name, "targdep")
+			xcnode.not_a_link_dependency = not table.contains(project.getdependencies(prj, "linkOnly"), dep)
 
 			-- create a grandchild node for the dependency's link target
-		 	local lprj = premake.workspace.findproject(prj.workspace, dep.name)
-		 	local cfg = project.findClosestMatch(lprj, prj.configurations[1])
-		 	node = tree.insert(xcnode, tree.new(cfg.linktarget.name))
-		 	node.path = cfg.linktarget.fullpath
-		 	node.cfg = cfg
+			local lprj = premake.workspace.findproject(prj.workspace, dep.name)
+			local cfg = project.findClosestMatch(lprj, prj.configurations[1])
+			node = tree.insert(xcnode, tree.new(cfg.linktarget.name))
+			node.path = cfg.linktarget.fullpath
+			node.cfg = cfg
+			node.not_a_link_dependency = xcnode.not_a_link_dependency
 		end
 
-		 if #tr.projects.children > 0 then
-		 	tree.insert(tr, tr.projects)
-		 end
+		if #tr.projects.children > 0 then
+			tree.insert(tr, tr.projects)
+		end
 
         -- Final setup
-		 tree.traverse(tr, {
-		 	onnode = function(node)
-		 		-- assign IDs to every node in the tree
-		 		node.id = xcode.newid(node.name, nil, node.path)
+		tree.traverse(tr, {
+			onnode = function(node)
+				-- assign IDs to every node in the tree
+			node.id = xcode.newid(node.name, nil, node.path)
+				node.isResource = xcode.isItemResource(prj, node)
 
-		 		node.isResource = xcode.isItemResource(prj, node)
+				-- assign build IDs to buildable files
+				if xcode.getbuildcategory(node) then
+					node.buildid = xcode.newid(node.name, "build", node.path)
+				end
 
-		 		-- assign build IDs to buildable files
-		 		if xcode.getbuildcategory(node) then
-		 			node.buildid = xcode.newid(node.name, "build", node.path)
-		 		end
-
-		 		-- remember key files that are needed elsewhere
-		 		if string.endswith(node.name, "Info.plist") then
-		 			tr.infoplist = node
-		 		end
-		 	end
-		 }, true)
+				-- remember key files that are needed elsewhere
+				if string.endswith(node.name, "Info.plist") then
+					tr.infoplist = node
+				end
+			end
+		}, true)
 
         -- Plug in the product node into the Products folder in the tree. The node
 		-- was built in xcode.prepareWorkspace() in xcode_common.lua; it contains IDs

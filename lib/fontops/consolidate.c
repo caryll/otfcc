@@ -106,6 +106,30 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 	}
 	free(hmap);
 	free(vmap);
+	// Consolidate fdSelect
+	if (g->fdSelect.name && font->CFF_ && font->CFF_->fdArray) {
+		bool found = false;
+		for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
+			if (strcmp(g->fdSelect.name, font->CFF_->fdArray[j]->fontName) == 0) {
+				found = true;
+				sdsfree(g->fdSelect.name);
+				g->fdSelect.name = font->CFF_->fdArray[j]->fontName;
+				g->fdSelect.index = j;
+				break;
+			}
+		}
+		if (!found) {
+			fprintf(stderr, "[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name,
+			        g->name);
+			sdsfree(g->fdSelect.name);
+			g->fdSelect.name = NULL;
+			g->fdSelect.index = 0;
+		}
+	} else if (g->fdSelect.name) {
+		sdsfree(g->fdSelect.name);
+		g->fdSelect.name = NULL;
+		g->fdSelect.index = 0;
+	}
 }
 
 void caryll_font_consolidate_glyf(caryll_font *font) {

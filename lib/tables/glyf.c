@@ -23,7 +23,8 @@ glyf_glyph *caryll_new_glyf_glyph() {
 	g->stemV = NULL;
 	g->hintMasks = NULL;
 	g->contourMasks = NULL;
-	g->fdSelectIndex = 0;
+	g->fdSelect.index = 0;
+	g->fdSelect.name = NULL;
 	g->yPel = 0;
 
 	g->stat.xMin = 0;
@@ -441,7 +442,6 @@ static json_value *glyf_glyph_maskdefs_to_json(glyf_postscript_hint_mask *masks,
 
 static json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_options *options) {
 	json_value *glyph = json_object_new(12);
-	if (options->export_fdselect) { json_object_push(glyph, "fdSelectIndex", json_integer_new(g->fdSelectIndex)); }
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
 	if (options->has_vertical_metrics) {
 		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
@@ -468,7 +468,8 @@ static json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_options *options) {
 		                 preserialize(glyf_glyph_maskdefs_to_json(g->contourMasks, g->numberOfContourMasks,
 		                                                          g->numberOfStemH, g->numberOfStemV)));
 	}
-	if (g->yPel) { json_object_push(glyph, "yPel", json_integer_new(g->yPel)); }
+	if (options->export_fdselect) { json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name)); }
+	if (g->yPel) { json_object_push(glyph, "LTSH_yPel", json_integer_new(g->yPel)); }
 	return glyph;
 }
 void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
@@ -642,8 +643,6 @@ static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_orde
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");
 	g->verticalOrigin = json_obj_getint(glyphdump, "verticalOrigin");
-	g->fdSelectIndex = json_obj_getint(glyphdump, "fdSelectIndex");
-	g->yPel = json_obj_getint(glyphdump, "yPel");
 	glyf_contours_from_json(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_references_from_json(json_obj_get_type(glyphdump, "references", json_array), g);
 	if (!options->ignore_hints) {
@@ -655,6 +654,10 @@ static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_orde
 		masks_from_json(json_obj_get_type(glyphdump, "contourMasks", json_array), &(g->numberOfContourMasks),
 		                &(g->contourMasks));
 	}
+	// Glyph data of other tables
+	g->fdSelect.name = json_obj_getsds(glyphdump, "CFF_fdSelect");
+	g->yPel = json_obj_getint(glyphdump, "LTSH_yPel");
+	if (!g->yPel) { g->yPel = json_obj_getint(glyphdump, "yPel"); }
 	return g;
 }
 

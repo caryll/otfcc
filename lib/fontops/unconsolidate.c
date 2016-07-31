@@ -242,6 +242,18 @@ static void caryll_name_features(caryll_font *font) {
 		if (font->GDEF->ligCarets) { name_coverage(font, font->GDEF->ligCarets->coverage); }
 	}
 }
+
+static void caryll_name_fdselect(caryll_font *font) {
+	if (font->CFF_ && font->glyf && font->CFF_->fdArray) {
+		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			glyf_glyph *g = font->glyf->glyphs[j];
+			if (g->fdSelect.index < font->CFF_->fdArrayCount) {
+				g->fdSelect.name = font->CFF_->fdArray[g->fdSelect.index]->fontName;
+			}
+		}
+	}
+}
+
 static void merge_hmtx(caryll_font *font) {
 	// Merge hmtx table into glyf.
 	if (font->hhea && font->hmtx && font->glyf) {
@@ -295,4 +307,5 @@ void caryll_font_unconsolidate(caryll_font *font, caryll_options *options) {
 	caryll_name_cmap_entries(font);
 	caryll_name_glyf(font);
 	caryll_name_features(font);
+	caryll_name_fdselect(font);
 }

@@ -272,6 +272,9 @@
 		return types[node.cfg.kind]
 	end
 
+function xcode.printSettingsTable(level, settings)
+		printSettingsTable(level, settings)
+end
 
 --
 -- Return a unique file name for a project. Since Xcode uses .xcodeproj's to
@@ -368,7 +371,7 @@
 		local settings = {};
 		tree.traverse(tr, {
 			onnode = function(node)
-				if node.buildid then
+				if node.buildid and (not node.not_a_link_dependency) then
 					settings[node.buildid] = function(level)
 						_p(level,'%s /* %s in %s */ = {isa = PBXBuildFile; fileRef = %s /* %s */; };',
 							node.buildid, node.name, xcode.getbuildcategory(node), node.id, node.name)
@@ -529,7 +532,7 @@
 		-- write out project dependencies
 		tree.traverse(tr.projects, {
 			onleaf = function(node)
-				if node.buildid then
+				if node.buildid and not node.not_a_link_dependency then
 					_p(4,'%s /* %s in Frameworks */,', node.buildid, node.name)
 				end
 			end

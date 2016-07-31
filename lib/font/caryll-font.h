@@ -70,6 +70,7 @@ struct _caryll_font {
 };
 
 caryll_font_subtype caryll_decide_font_subtype(caryll_sfnt *sfnt, uint32_t index);
+caryll_font_subtype caryll_decide_font_subtype_json(json_value *root);
 caryll_font *caryll_new_font();
 caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index);
 void caryll_delete_font(caryll_font *font);
