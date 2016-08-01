@@ -519,6 +519,7 @@ static lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
 			char *lookupName = lookups->u.object.values[j].name;
 			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, &lh);
 			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
+			FREE(lookups->u.object.values[j].value);
 		}
 	}
 	return lh;

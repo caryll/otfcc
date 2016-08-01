@@ -497,10 +497,21 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_options *op
 
 // from json
 static void glyf_point_from_json(glyf_point *point, json_value *pointdump) {
-	point->x = json_obj_getnum(pointdump, "x");
-	point->y = json_obj_getnum(pointdump, "y");
+	point->x = 0;
+	point->y = 0;
 	point->onCurve = 0;
-	if (json_obj_getbool(pointdump, "on")) { point->onCurve |= MASK_ON_CURVE; }
+	if (!pointdump || pointdump->type != json_object) return;
+	for (uint32_t _k = 0; _k < pointdump->u.object.length; _k++) {
+		char *ck = pointdump->u.object.values[_k].name;
+		json_value *cv = pointdump->u.object.values[_k].value;
+		if (strcmp(ck, "x") == 0) {
+			point->x = json_numof(cv);
+		} else if (strcmp(ck, "y") == 0) {
+			point->y = json_numof(cv);
+		} else if (strcmp(ck, "on") == 0) {
+			point->onCurve = json_boolof(cv);
+		}
+	}
 }
 static void glyf_reference_from_json(glyf_reference *ref, json_value *refdump) {
 	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
@@ -679,6 +690,7 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
 				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump, order_entry, options);
 			}
+			FREE(table->u.object.values[j].value);
 			sdsfree(gname);
 		}
 		return glyf;

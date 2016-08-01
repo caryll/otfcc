@@ -107,6 +107,10 @@ static INLINE int32_t json_obj_getint_fallback(json_value *obj, const char *key,
 	}
 	return fallback;
 }
+static INLINE bool json_boolof(json_value *cv) {
+	if (cv && cv->type == json_boolean) return cv->u.boolean;
+	return false;
+}
 static INLINE bool json_obj_getbool(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return false;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
