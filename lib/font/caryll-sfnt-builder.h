@@ -15,9 +15,10 @@ typedef struct {
 	uint32_t count;
 	uint32_t header;
 	sfnt_builder_entry *tables;
+	caryll_options *options;
 } sfnt_builder;
 
-sfnt_builder *new_sfnt_builder();
+sfnt_builder *new_sfnt_builder(uint32_t header, caryll_options *options);
 void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer *buffer);
 void delete_sfnt_builder(sfnt_builder *builder);
 

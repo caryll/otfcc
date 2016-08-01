@@ -173,7 +173,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 }
 
 caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
-	sfnt_builder *builder = new_sfnt_builder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000);
+	sfnt_builder *builder = new_sfnt_builder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 
 	// Outline data
 	if (font->subtype == FONTTYPE_TTF) {
