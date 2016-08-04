@@ -69,7 +69,7 @@ void caryll_delete_post(table_post *table) {
 	free(table);
 }
 
-void caryll_post_to_json(table_post *table, json_value *root, caryll_options *options) {
+void caryll_post_to_json(table_post *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping post.\n");
 
@@ -85,7 +85,7 @@ void caryll_post_to_json(table_post *table, json_value *root, caryll_options *op
 	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
 	json_object_push(root, "post", post);
 }
-table_post *caryll_post_from_json(json_value *root, caryll_options *options) {
+table_post *caryll_post_from_json(json_value *root, const caryll_options *options) {
 	table_post *post = caryll_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
@@ -106,7 +106,7 @@ table_post *caryll_post_from_json(json_value *root, caryll_options *options) {
 	}
 	return post;
 }
-caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder, caryll_options *options) {
+caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);

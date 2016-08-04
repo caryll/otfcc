@@ -26,7 +26,7 @@ void caryll_delete_VORG(table_VORG *vorg) {
 	free(vorg);
 }
 
-caryll_buffer *caryll_write_VORG(table_VORG *table, caryll_options *options) {
+caryll_buffer *caryll_write_VORG(table_VORG *table, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite16b(buf, 1);

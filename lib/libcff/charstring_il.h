@@ -32,7 +32,7 @@ bool instruction_eq(charstring_instruction *z1, charstring_instruction *z2);
 
 // basic ops
 charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidth);
-void glyph_il_peephole_optimization(charstring_il *il, caryll_options *options);
+void glyph_il_peephole_optimization(charstring_il *il, const caryll_options *options);
 caryll_buffer *il2blob(charstring_il *il);
 
 #endif

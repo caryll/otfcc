@@ -49,7 +49,7 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 	}
 	return NULL;
 }
-void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_options *options) {
+void caryll_gasp_to_json(table_gasp *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping gasp.\n");
 
@@ -66,7 +66,7 @@ void caryll_gasp_to_json(table_gasp *table, json_value *root, caryll_options *op
 	json_object_push(root, "gasp", t);
 }
 
-table_gasp *caryll_gasp_from_json(json_value *root, caryll_options *options) {
+table_gasp *caryll_gasp_from_json(json_value *root, const caryll_options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
@@ -92,7 +92,7 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *caryll_write_gasp(table_gasp *gasp, caryll_options *options) {
+caryll_buffer *caryll_write_gasp(table_gasp *gasp, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);

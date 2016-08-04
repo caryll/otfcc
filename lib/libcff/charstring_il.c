@@ -379,7 +379,7 @@ static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLeve
 	return 1;                                                                 // nothing match
 }
 
-void glyph_il_peephole_optimization(charstring_il *il, caryll_options *options) {
+void glyph_il_peephole_optimization(charstring_il *il, const caryll_options *options) {
 	if (!options->optimize_level) return;
 	uint32_t j = 0;
 	while (j < il->length) {

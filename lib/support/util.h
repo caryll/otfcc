@@ -8,6 +8,7 @@
 #include "base64.h"
 #include "buffer.h"
 #include "options.h"
+#include "json-ident.h"
 #include <extern/json-builder.h>
 #include <extern/json.h>
 #include <extern/sds.h>

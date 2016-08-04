@@ -6,6 +6,7 @@ typedef enum { LOOKUP_ORDER_FORCE, LOOKUP_ORDER_FILE } lookup_order_type;
 
 typedef struct {
 	char *name;
+	bool alias;
 	otl_lookup *lookup;
 	UT_hash_handle hh;
 	lookup_order_type orderType;
@@ -14,6 +15,7 @@ typedef struct {
 
 typedef struct {
 	char *name;
+	bool alias;
 	otl_feature *feature;
 	UT_hash_handle hh;
 } feature_hash;
@@ -41,6 +43,8 @@ table_otl *caryll_new_otl() {
 	table->features = NULL;
 	table->lookupCount = 0;
 	table->lookups = NULL;
+	table->lookupAliasesCount = 0;
+	table->lookupAliases = NULL;
 	return table;
 }
 
@@ -67,6 +71,13 @@ void caryll_delete_otl(table_otl *table) {
 			caryll_delete_lookup(table->lookups[j]);
 		}
 		free(table->lookups);
+	}
+	if (table->lookupAliases) {
+		for (uint16_t j = 0; j < table->lookupAliasesCount; j++) {
+			sdsfree(table->lookupAliases[j].from);
+			sdsfree(table->lookupAliases[j].to);
+		}
+		free(table->lookupAliases);
 	}
 	free(table);
 }
@@ -311,7 +322,7 @@ static void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, json_val
 	}
 }
 
-void caryll_otl_to_json(table_otl *table, json_value *root, caryll_options *options, const char *tag) {
+void caryll_otl_to_json(table_otl *table, json_value *root, const caryll_options *options, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
 	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
 
@@ -392,6 +403,7 @@ static bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl_subtab
 
 	NEW(item);
 	item->name = sdsnew(lookupName);
+	item->alias = false;
 	lookup->name = sdsdup(item->name);
 	item->lookup = lookup;
 	item->lookup->name = sdsdup(item->name);
@@ -402,8 +414,53 @@ static bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl_subtab
 	return true;
 }
 
-static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag) {
+static void feature_merger_activate(json_value *d, const bool sametag, const char *objtype,
+                                    const caryll_options *options) {
+	for (uint32_t j = 0; j < d->u.object.length; j++) {
+		json_value *jthis = d->u.object.values[j].value;
+		char *kthis = d->u.object.values[j].name;
+		uint32_t nkthis = d->u.object.values[j].name_length;
+		if (jthis->type != json_array && jthis->type != json_object) continue;
+		for (uint32_t k = j + 1; k < d->u.object.length; k++) {
+			json_value *jthat = d->u.object.values[k].value;
+			char *kthat = d->u.object.values[k].name;
+			if (json_ident(jthis, jthat) && (sametag ? strncmp(kthis, kthat, 4) == 0 : true)) {
+				json_value_free(jthat);
+				d->u.object.values[k].value = json_string_new_length(nkthis, kthis);
+				if (options->verbose) {
+					fprintf(stderr, "[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat, kthis);
+				}
+			}
+		}
+	}
+}
+
+static void replace_aliased_lookup_names(json_value *features, lookup_hash *lh) {
+	for (uint32_t j = 0; j < features->u.object.length; j++) {
+		json_value *_feature = features->u.object.values[j].value;
+		if (_feature->type != json_array) continue;
+		for (uint16_t k = 0; k < _feature->u.array.length; k++) {
+			json_value *term = _feature->u.array.values[k];
+			if (term->type != json_string) continue;
+
+			lookup_hash *item = NULL;
+			HASH_FIND_STR(lh, term->u.string.ptr, item);
+			if (item && item->alias) {
+				json_value_free(term);
+				term = _feature->u.array.values[k] = json_string_new(item->lookup->name);
+			}
+		}
+	}
+}
+
+static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag,
+                                               const caryll_options *options) {
 	feature_hash *fh = NULL;
+	// Replace aliased lookup names
+	replace_aliased_lookup_names(features, lh);
+	// Remove duplicates
+	if (options->optimize_level >= 2) { feature_merger_activate(features, true, "feature", options); }
+	// Resolve features
 	for (uint32_t j = 0; j < features->u.object.length; j++) {
 		char *featureName = features->u.object.values[j].name;
 		json_value *_feature = features->u.object.values[j].value;
@@ -413,11 +470,10 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 			NEW_N(al, _feature->u.array.length);
 			for (uint16_t k = 0; k < _feature->u.array.length; k++) {
 				json_value *term = _feature->u.array.values[k];
-				if (term->type == json_string) {
-					lookup_hash *item = NULL;
-					HASH_FIND_STR(lh, term->u.string.ptr, item);
-					if (item) { al[nal++] = item->lookup; }
-				}
+				if (term->type != json_string) continue;
+				lookup_hash *item = NULL;
+				HASH_FIND_STR(lh, term->u.string.ptr, item);
+				if (item) { al[nal++] = item->lookup; }
 			}
 			if (nal > 0) {
 				feature_hash *s = NULL;
@@ -425,6 +481,7 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 				if (!s) {
 					NEW(s);
 					s->name = sdsnew(featureName);
+					s->alias = false;
 					NEW(s->feature);
 					s->feature->name = sdsdup(s->name);
 					s->feature->lookupCount = nal;
@@ -443,6 +500,18 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 				        tag, featureName);
 				FREE(al);
 			}
+		} else if (_feature->type == json_string) {
+			feature_hash *s = NULL;
+			char *target = _feature->u.string.ptr;
+			HASH_FIND_STR(fh, target, s);
+			if (s) {
+				feature_hash *dup;
+				NEW(dup);
+				dup->alias = true;
+				dup->name = sdsnew(featureName);
+				dup->feature = s->feature;
+				HASH_ADD_STR(fh, name, dup);
+			}
 		}
 	}
 	return fh;
@@ -450,7 +519,8 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 bool isValidLanguageName(const char *name, const size_t length) {
 	return length == 9 && name[4] == SCRIPT_LANGUAGE_SEPARATOR;
 }
-static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh, const char *tag) {
+static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh, const char *tag,
+                                                 const caryll_options *options) {
 	language_hash *sh = NULL;
 	// languages
 	for (uint32_t j = 0; j < languages->u.object.length; j++) {
@@ -512,14 +582,30 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 	return sh;
 }
 
-static lookup_hash *figureOutLookupsFromJSON(json_value *lookups) {
+static lookup_hash *figureOutLookupsFromJSON(json_value *lookups, const caryll_options *options) {
 	lookup_hash *lh = NULL;
+	if (options->optimize_level >= 2) { feature_merger_activate(lookups, false, "lookup", options); }
+
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
+		char *lookupName = lookups->u.object.values[j].name;
 		if (lookups->u.object.values[j].value->type == json_object) {
-			char *lookupName = lookups->u.object.values[j].name;
 			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, &lh);
 			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
 			FREE(lookups->u.object.values[j].value);
+		} else if (lookups->u.object.values[j].value->type == json_string) {
+			char *thatname = lookups->u.object.values[j].value->u.string.ptr;
+			lookup_hash *s = NULL;
+			HASH_FIND_STR(lh, thatname, s);
+			if (s) {
+				lookup_hash *dup;
+				NEW(dup);
+				dup->name = sdsnew(lookupName);
+				dup->alias = true;
+				dup->lookup = s->lookup;
+				dup->orderType = LOOKUP_ORDER_FILE;
+				dup->orderVal = HASH_COUNT(lh);
+				HASH_ADD_STR(lh, name, dup);
+			}
 		}
 	}
 	return lh;
@@ -537,7 +623,7 @@ static int by_feature_name(feature_hash *a, feature_hash *b) {
 static int by_language_name(language_hash *a, language_hash *b) {
 	return strcmp(a->name, b->name);
 }
-table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const char *tag) {
+table_otl *caryll_otl_from_json(json_value *root, const caryll_options *options, const char *tag) {
 	table_otl *otl = NULL;
 	NEW(otl);
 	json_value *table = json_obj_get_type(root, tag, json_object);
@@ -548,7 +634,7 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
 	if (!languages || !features || !lookups) goto FAIL;
 
-	lookup_hash *lh = figureOutLookupsFromJSON(lookups);
+	lookup_hash *lh = figureOutLookupsFromJSON(lookups, options);
 	json_value *lookupOrder = json_obj_get_type(table, "lookupOrder", json_array);
 	if (lookupOrder) {
 		for (uint16_t j = 0; j < lookupOrder->u.array.length; j++) {
@@ -564,24 +650,35 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const
 		}
 	}
 	HASH_SORT(lh, by_lookup_order);
-	feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag);
+	feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag, options);
 	HASH_SORT(fh, by_feature_name);
-	language_hash *sh = figureOutLanguagesFromJson(languages, fh, tag);
+	language_hash *sh = figureOutLanguagesFromJson(languages, fh, tag, options);
 	HASH_SORT(sh, by_language_name);
 	if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) goto FAIL;
 
 	{
 		lookup_hash *s, *tmp;
 		otl->lookupCount = HASH_COUNT(lh);
+		otl->lookupAliasesCount = HASH_COUNT(lh);
 		NEW_N(otl->lookups, otl->lookupCount);
+		NEW_N(otl->lookupAliases, otl->lookupAliasesCount);
 		uint16_t j = 0;
+		uint16_t ja = 0;
 		HASH_ITER(hh, lh, s, tmp) {
-			otl->lookups[j] = s->lookup;
+			if (!s->alias) {
+				otl->lookups[j] = s->lookup;
+				j++;
+			} else {
+				otl->lookupAliases[ja].from = sdsdup(s->name);
+				otl->lookupAliases[ja].to = sdsdup(s->lookup->name);
+				ja++;
+			}
 			HASH_DEL(lh, s);
 			sdsfree(s->name);
 			free(s);
-			j++;
 		}
+		otl->lookupCount = j;
+		otl->lookupAliasesCount = ja;
 	}
 	{
 		feature_hash *s, *tmp;
@@ -589,12 +686,15 @@ table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const
 		NEW_N(otl->features, otl->featureCount);
 		uint16_t j = 0;
 		HASH_ITER(hh, fh, s, tmp) {
-			otl->features[j] = s->feature;
+			if (!s->alias) {
+				otl->features[j] = s->feature;
+				j++;
+			}
 			HASH_DEL(fh, s);
 			sdsfree(s->name);
 			free(s);
-			j++;
 		}
+		otl->featureCount = j;
 	}
 	{
 		language_hash *s, *tmp;
@@ -632,7 +732,7 @@ static bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(ot
 }
 
 // When writing lookups, otfcc will try to maintain everything correctly.
-static caryll_buffer *writeOTLLookups(table_otl *table, caryll_options *options, const char *tag) {
+static caryll_buffer *writeOTLLookups(table_otl *table, const caryll_options *options, const char *tag) {
 	caryll_buffer *bufl = bufnew();
 	caryll_buffer *bufsts = bufnew();
 	uint32_t **subtableOffsets;
@@ -729,7 +829,7 @@ static uint32_t featureNameToTag(sds name) {
 	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
 	return tag;
 }
-static caryll_buffer *writeOTLFeatures(table_otl *table, caryll_options *options) {
+static caryll_buffer *writeOTLFeatures(table_otl *table, const caryll_options *options) {
 	caryll_buffer *buff = bufnew();
 	bufwrite16b(buff, table->featureCount);
 	size_t offset = 2 + table->featureCount * 6;
@@ -819,7 +919,7 @@ static caryll_buffer *writeScript(script_stat_hash *script, table_otl *table) {
 	}
 	return buf;
 }
-static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, caryll_options *options) {
+static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, const caryll_options *options) {
 	caryll_buffer *bufs = bufnew();
 	script_stat_hash *h = NULL;
 	for (uint16_t j = 0; j < table->languageCount; j++) {
@@ -870,7 +970,7 @@ static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, caryll_option
 	return bufs;
 }
 
-caryll_buffer *caryll_write_otl(table_otl *table, caryll_options *options, const char *tag) {
+caryll_buffer *caryll_write_otl(table_otl *table, const caryll_options *options, const char *tag) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 

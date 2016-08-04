@@ -14,15 +14,25 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		bool foundLookup = false;
 		if (rule->apply[j].lookupName) {
-			for (uint16_t k = 0; k < table->lookupCount; k++)
-				if (strcmp(table->lookups[k]->name, rule->apply[j].lookupName) == 0) {
-					foundLookup = true;
-					rule->apply[j].lookupIndex = k;
-					if (rule->apply[j].lookupName != table->lookups[k]->name) {
-						DELETE(sdsfree, rule->apply[j].lookupName);
-					}
-					rule->apply[j].lookupName = table->lookups[k]->name;
+		FIND_LOOKUP:;
+			for (uint16_t k = 0; k < table->lookupCount; k++) {
+				if (strcmp(table->lookups[k]->name, rule->apply[j].lookupName) != 0) continue;
+				foundLookup = true;
+				rule->apply[j].lookupIndex = k;
+				if (rule->apply[j].lookupName != table->lookups[k]->name) {
+					DELETE(sdsfree, rule->apply[j].lookupName);
 				}
+				rule->apply[j].lookupName = table->lookups[k]->name;
+			}
+			if (!foundLookup) {
+				// Maybe the lookup is aliased.
+				for (uint16_t k = 0; k < table->lookupAliasesCount; k++) {
+					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookupName) != 0) continue;
+					DELETE(sdsfree, rule->apply[j].lookupName);
+					rule->apply[j].lookupName = sdsdup(table->lookupAliases[k].to);
+					goto FIND_LOOKUP;
+				}
+			}
 		}
 		if (!foundLookup && rule->apply[j].lookupName) {
 			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookupName,

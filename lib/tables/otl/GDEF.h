@@ -25,8 +25,8 @@ typedef struct {
 
 void caryll_delete_GDEF(table_GDEF *gdef);
 table_GDEF *caryll_read_GDEF(caryll_packet packet);
-void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, caryll_options *options);
-table_GDEF *caryll_GDEF_from_json(json_value *root, caryll_options *options);
-caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, caryll_options *options);
+void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, const caryll_options *options);
+table_GDEF *caryll_GDEF_from_json(json_value *root, const caryll_options *options);
+caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, const caryll_options *options);
 
 #endif
