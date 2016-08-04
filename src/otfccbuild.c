@@ -18,7 +18,9 @@
 #define PATCH_VER 0
 #endif
 
-void printInfo() { fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER); }
+void printInfo() {
+	fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+}
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
@@ -28,8 +30,18 @@ void printHelp() {
 	                " -v, --version             : Display version information and exit.\n"
 	                " -o <file>                 : Set output file path to <file>.\n"
 	                " --time                    : Time each substep.\n"
+	                " -O<n>                     : Specify the level for optimization.\n"
+	                "     -O0                     Turn off any optimization.\n"
+	                "     -O1                     Default optimization.\n"
+	                "     -O2                     More aggressive optimizations for web font. In\n"
+	                "                             this level, the --ignore-glyph-order and\n"
+	                "                             --short-post will be turned on.\n"
+	                //	        "     -O3                     In this level, CFF Subroutinization will be\n"
+	                //	        "                             enabled to compress more. Building font may be\n"
+	                //	        "                             slower than -O2.\n"
 	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
+	                " --keep-glyph-order        : Keep the glyph order information in the input.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	                "                             instead of stating the average width of glyphs. \n"
 	                "                             Useful when creating a monospaced font.\n"
@@ -40,15 +52,6 @@ void printHelp() {
 	                " --dummy-dsig, -s          : Include an empty DSIG table in the font. For\n"
 	                "                             some Microsoft applications, a DSIG is required\n"
 	                "                             to enable OpenType features.\n"
-	                " -O<n>                     : Specify the level for optimization.\n"
-	                "     -O0                     Turn off any optimization.\n"
-	                "     -O1                     Default optimization.\n"
-	                "     -O2                     More aggressive optimizations for web font. In\n"
-	                "                             this level, the --ignore-glyph-order and\n"
-	                "                             --short-post will be turned on.\n"
-	                //	        "     -O3                     In this level, CFF Subroutinization will be\n"
-	                //	        "                             enabled to compress more. Building font may be\n"
-	                //	        "                             slower than -O2.\n"
 	                "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
@@ -126,6 +129,7 @@ int main(int argc, char *argv[]) {
 	                            {"help", no_argument, NULL, 'h'},
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
+	                            {"keep-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"keep-average-char-width", no_argument, NULL, 0},
 	                            {"keep-modified-time", no_argument, NULL, 0},
@@ -153,6 +157,8 @@ int main(int argc, char *argv[]) {
 					options->keep_modified_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
 					options->ignore_glyph_order = true;
+				} else if (strcmp(longopts[option_index].name, "keep-glyph-order") == 0) {
+					options->ignore_glyph_order = false;
 				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
 					options->short_post = true;
 				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
