@@ -37,7 +37,7 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_options *options) {
+void caryll_hhea_to_json(table_hhea *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping hhea.\n");
 	json_value *hhea = json_object_new(13);
@@ -57,7 +57,7 @@ void caryll_hhea_to_json(table_hhea *table, json_value *root, caryll_options *op
 	json_object_push(root, "hhea", hhea);
 }
 
-table_hhea *caryll_hhea_from_json(json_value *root, caryll_options *options) {
+table_hhea *caryll_hhea_from_json(json_value *root, const caryll_options *options) {
 	table_hhea *hhea = caryll_new_hhea();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
@@ -79,7 +79,7 @@ table_hhea *caryll_hhea_from_json(json_value *root, caryll_options *options) {
 	return hhea;
 }
 
-caryll_buffer *caryll_write_hhea(table_hhea *hhea, caryll_options *options) {
+caryll_buffer *caryll_write_hhea(table_hhea *hhea, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!hhea) return buf;
 	bufwrite32b(buf, hhea->version);

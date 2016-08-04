@@ -480,7 +480,7 @@ static int instr_typify(struct instrdata *id) {
 	return (lh);
 }
 
-json_value *instr_to_json(uint8_t *instructions, uint32_t length, caryll_options *options) {
+json_value *instr_to_json(uint8_t *instructions, uint32_t length, const caryll_options *options) {
 	if (options->instr_as_bytes) {
 		size_t len = 0;
 		uint8_t *buf = base64_encode(instructions, length, &len);

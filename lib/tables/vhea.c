@@ -35,7 +35,7 @@ table_vhea *caryll_read_vhea(caryll_packet packet) {
 	}
 	return NULL;
 }
-void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_options *options) {
+void caryll_vhea_to_json(table_vhea *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
 	if (options->verbose) fprintf(stderr, "Dumping vhea.\n");
@@ -54,7 +54,7 @@ void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_options *op
 	json_object_push(root, "vhea", vhea);
 }
 
-table_vhea *caryll_vhea_from_json(json_value *root, caryll_options *options) {
+table_vhea *caryll_vhea_from_json(json_value *root, const caryll_options *options) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
@@ -76,7 +76,7 @@ table_vhea *caryll_vhea_from_json(json_value *root, caryll_options *options) {
 	return vhea;
 }
 
-caryll_buffer *caryll_write_vhea(table_vhea *vhea, caryll_options *options) {
+caryll_buffer *caryll_write_vhea(table_vhea *vhea, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vhea) return buf;
 	bufwrite32b(buf, vhea->version);

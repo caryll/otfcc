@@ -182,12 +182,19 @@ typedef struct {
 } otl_language_system;
 
 typedef struct {
+	sds from;
+	sds to;
+} otl_lookup_alias_record;
+
+typedef struct {
 	uint32_t languageCount;
 	otl_language_system **languages;
 	uint16_t featureCount;
 	otl_feature **features;
 	uint16_t lookupCount;
 	otl_lookup **lookups;
+	uint16_t lookupAliasesCount;
+	otl_lookup_alias_record *lookupAliases;
 } table_otl;
 
 otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
@@ -195,10 +202,10 @@ otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLen
 
 table_otl *caryll_new_otl();
 void caryll_delete_otl(table_otl *table);
-table_otl *caryll_read_otl(caryll_packet packet, uint32_t tag);
-void caryll_otl_to_json(table_otl *table, json_value *root, caryll_options *options, const char *tag);
-table_otl *caryll_otl_from_json(json_value *root, caryll_options *options, const char *tag);
-caryll_buffer *caryll_write_otl(table_otl *table, caryll_options *options, const char *tag);
+table_otl *caryll_read_otl(caryll_packet packet, const uint32_t tag);
+void caryll_otl_to_json(table_otl *table, json_value *root, const caryll_options *options, const char *tag);
+table_otl *caryll_otl_from_json(json_value *root, const caryll_options *options, const char *tag);
+caryll_buffer *caryll_write_otl(table_otl *table, const caryll_options *options, const char *tag);
 
 #include "gsub-single.h"
 #include "gsub-multi.h"

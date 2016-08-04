@@ -26,7 +26,7 @@ typedef struct {
 
 table_vhea *caryll_new_vhea();
 table_vhea *caryll_read_vhea(caryll_packet packet);
-void caryll_vhea_to_json(table_vhea *table, json_value *root, caryll_options *options);
-table_vhea *caryll_vhea_from_json(json_value *root, caryll_options *options);
-caryll_buffer *caryll_write_vhea(table_vhea *vhea, caryll_options *options);
+void caryll_vhea_to_json(table_vhea *table, json_value *root, const caryll_options *options);
+table_vhea *caryll_vhea_from_json(json_value *root, const caryll_options *options);
+caryll_buffer *caryll_write_vhea(table_vhea *vhea, const caryll_options *options);
 #endif

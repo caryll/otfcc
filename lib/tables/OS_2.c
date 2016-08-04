@@ -87,7 +87,7 @@ const char *codePageLabels2[] = {"oem8",  "oem9",  "oem10", "oem11", "oem12", "o
                                  "cp865", "cp864", "cp863", "cp862", "cp861", "cp860", "cp857", "cp855", "cp852",
                                  "cp775", "cp737", "cp708", "cp850", "ascii", NULL};
 
-void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_options *options) {
+void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping OS/2.\n");
 
@@ -143,7 +143,7 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, caryll_options *op
 	json_object_push(root, "OS_2", os_2);
 }
 
-table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_options *options) {
+table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *options) {
 	table_OS_2 *os_2 = caryll_new_OS_2();
 	if (!os_2) return NULL;
 	json_value *table = NULL;
@@ -211,7 +211,7 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, caryll_options *options) {
 	return os_2;
 }
 
-caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2, caryll_options *options) {
+caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);

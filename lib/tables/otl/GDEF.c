@@ -92,7 +92,7 @@ table_GDEF *caryll_read_GDEF(caryll_packet packet) {
 	return gdef;
 }
 
-void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, caryll_options *options) {
+void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, const caryll_options *options) {
 	if (!gdef) return;
 	if (options->verbose) fprintf(stderr, "Dumping GDEF.\n");
 
@@ -161,7 +161,7 @@ static lig_caret_table *ligCaretFromJson(json_value *_carets) {
 	return lc;
 }
 
-table_GDEF *caryll_GDEF_from_json(json_value *root, caryll_options *options) {
+table_GDEF *caryll_GDEF_from_json(json_value *root, const caryll_options *options) {
 	table_GDEF *gdef = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
@@ -211,7 +211,7 @@ static caryll_buffer *writeLigCarets(lig_caret_table *lc) {
 	return buf;
 }
 
-caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, caryll_options *options) {
+caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	bufwrite32b(buf, 0x10000);
 	size_t offset = 12;
