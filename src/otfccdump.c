@@ -17,7 +17,9 @@
 #define PATCH_VER 0
 #endif
 
-void printInfo() { fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER); }
+void printInfo() {
+	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+}
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
@@ -29,6 +31,7 @@ void printHelp() {
 	                " --pretty                : Prettify the output JSON.\n"
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --time                  : Time each substep.\n"
+	                " --verbose                 : Show more information when building.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
