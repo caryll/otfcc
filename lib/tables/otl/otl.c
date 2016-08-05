@@ -459,7 +459,7 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 	// Replace aliased lookup names
 	replace_aliased_lookup_names(features, lh);
 	// Remove duplicates
-	if (options->optimize_level >= 2) { feature_merger_activate(features, true, "feature", options); }
+	if (options->merge_features) { feature_merger_activate(features, true, "feature", options); }
 	// Resolve features
 	for (uint32_t j = 0; j < features->u.object.length; j++) {
 		char *featureName = features->u.object.values[j].name;
@@ -584,7 +584,7 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 
 static lookup_hash *figureOutLookupsFromJSON(json_value *lookups, const caryll_options *options) {
 	lookup_hash *lh = NULL;
-	if (options->optimize_level >= 2) { feature_merger_activate(lookups, false, "lookup", options); }
+	if (options->merge_lookups) { feature_merger_activate(lookups, false, "lookup", options); }
 
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
 		char *lookupName = lookups->u.object.values[j].name;

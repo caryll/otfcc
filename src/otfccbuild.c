@@ -24,37 +24,42 @@ void printInfo() {
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
-	                " input.json                : Path to input file. When absent the input will\n"
-	                "                             be read from the STDIN.\n"
+	                " input.json                : Path to input file. When absent the input will be\n"
+	                "                             read from the STDIN.\n\n"
 	                " -h, --help                : Display this help message and exit.\n"
 	                " -v, --version             : Display version information and exit.\n"
 	                " -o <file>                 : Set output file path to <file>.\n"
+	                " -s, --dummy-dsig          : Include an empty DSIG table in the font. For some\n"
+	                "                             Microsoft applications, DSIG is required to enable\n"
+	                "                             OpenType features.\n"
 	                " -O<n>                     : Specify the level for optimization.\n"
 	                "     -O0                     Turn off any optimization.\n"
 	                "     -O1                     Default optimization.\n"
-	                "     -O2                     More aggressive optimizations for web font. In\n"
-	                "                             this level, the --ignore-glyph-order and\n"
-	                "                             --short-post will be turned on.\n"
-	                //	        "     -O3                     In this level, CFF Subroutinization will be\n"
-	                //	        "                             enabled to compress more. Building font may be\n"
-	                //	        "                             slower than -O2.\n"
+	                "     -O2                     More aggressive optimizations for web font. In this\n"
+	                "                             level, the following options will be set:\n"
+	                "                               --ignore-glyph-order\n"
+	                "                               --short-post\n"
+	                "                               --merge-features\n"
+	                "     -O3                     Most aggressive opptimization strategy will be\n"
+	                "                             used. In this level, these options will be set:\n"
+	                "                               --merge-lookups\n"
 	                " --time                    : Time each substep.\n"
-	                " --verbose                 : Show more information when building.\n"
-	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
+	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
-	                " --keep-glyph-order        : Keep the glyph order information in the input.\n"
-	                "                             Use if you want to preserve glyph order under \n"
-	                "                             -O2 and -O3.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
-	                "                             instead of stating the average width of glyphs. \n"
+	                "                             instead of stating the average width of glyphs.\n"
 	                "                             Useful when creating a monospaced font.\n"
-	                " --keep-modified-time      : Keep the head.modified time in the json, instead\n"
-	                "                             of using current time.\n"
-	                " --short-post              : Don't export glyph names in the result font. It \n"
-	                "                             will reduce file size.\n"
-	                " --dummy-dsig, -s          : Include an empty DSIG table in the font. For\n"
-	                "                             some Microsoft applications, a DSIG is required\n"
-	                "                             to enable OpenType features.\n"
+	                " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
+	                "                             using current time.\n\n"
+	                " --short-post              : Don't export glyph names in the result font.\n"
+	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
+	                " --keep-glyph-order        : Keep the glyph order information in the input.\n"
+	                "                             Use to preserve glyph order under -O2 and -O3.\n"
+	                " --dont-ignore-glyph-order : Same as --keep-glyph-order.\n"
+	                " --merge-features          : Merge duplicate OpenType feature definitions.\n"
+	                " --dont-merge-features     : Keep duplicate OpenType feature definitions.\n"
+	                " --merge-lookups           : Merge duplicate OpenType lookups.\n"
+	                " --dont-merge-lookups      : Keep duplicate OpenType lookups.\n"
 	                "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
@@ -133,9 +138,14 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"keep-glyph-order", no_argument, NULL, 0},
+	                            {"dont-ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"keep-average-char-width", no_argument, NULL, 0},
 	                            {"keep-modified-time", no_argument, NULL, 0},
+	                            {"merge-lookups", no_argument, NULL, 0},
+	                            {"merge-features", no_argument, NULL, 0},
+	                            {"dont-merge-lookups", no_argument, NULL, 0},
+	                            {"dont-merge-features", no_argument, NULL, 0},
 	                            {"short-post", no_argument, NULL, 0},
 	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
@@ -158,9 +168,19 @@ int main(int argc, char *argv[]) {
 					options->keep_average_char_width = true;
 				} else if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
 					options->keep_modified_time = true;
+				} else if (strcmp(longopts[option_index].name, "merge-features") == 0) {
+					options->merge_features = true;
+				} else if (strcmp(longopts[option_index].name, "merge-lookups") == 0) {
+					options->merge_lookups = true;
+				} else if (strcmp(longopts[option_index].name, "dont-merge-features") == 0) {
+					options->merge_features = false;
+				} else if (strcmp(longopts[option_index].name, "dont-merge-lookups") == 0) {
+					options->merge_lookups = false;
 				} else if (strcmp(longopts[option_index].name, "ignore-glyph-order") == 0) {
 					options->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "keep-glyph-order") == 0) {
+					options->ignore_glyph_order = false;
+				} else if (strcmp(longopts[option_index].name, "dont-keep-glyph-order") == 0) {
 					options->ignore_glyph_order = false;
 				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
 					options->short_post = true;
@@ -191,7 +211,9 @@ int main(int argc, char *argv[]) {
 					options->short_post = true;
 					options->ignore_glyph_order = true;
 					options->cff_short_vmtx = true;
+					options->merge_features = true;
 				}
+				if (options->optimize_level >= 3) { options->merge_lookups = true; }
 				break;
 		}
 	}
