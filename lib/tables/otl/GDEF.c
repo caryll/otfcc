@@ -136,9 +136,8 @@ static lig_caret_table *ligCaretFromJson(json_value *_carets) {
 	for (uint16_t j = 0; j < lc->coverage->numGlyphs; j++) {
 		json_value *a = _carets->u.object.values[j].value;
 		if (!a || a->type != json_array) continue;
-		lc->coverage->glyphs[jj].name =
-		    sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length);
-		lc->coverage->glyphs[jj].gid = 0;
+		lc->coverage->glyphs[jj] =
+		    handle_from_name(sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length));
 		lc->carets[jj].caretCount = a->u.array.length;
 		NEW_N(lc->carets[jj].values, lc->carets[jj].caretCount);
 		for (uint16_t k = 0; k < lc->carets[jj].caretCount; k++) {

@@ -68,21 +68,21 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
 	classifier_hash *s;
 	if (cov->numGlyphs == 0) return 1;
-	int gid = cov->glyphs[0].gid;
+	int gid = cov->glyphs[0].index;
 	// check pass
 	HASH_FIND_INT(*h, &gid, s);
 	if (s) {
 		// the coverage has been defined into a class
 		classifier_hash *ss, *tmp;
 		for (uint16_t j = 1; j < cov->numGlyphs; j++) {
-			int gid = cov->glyphs[j].gid;
+			int gid = cov->glyphs[j].index;
 			HASH_FIND_INT(*h, &gid, ss);
 			if (!ss || ss->cls != s->cls) return 0;
 		}
 		// reverse check: all glyphs classified are there in the coverage
 		classifier_hash *revh = NULL;
 		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
-			int gid = cov->glyphs[j].gid;
+			int gid = cov->glyphs[j].index;
 			classifier_hash *rss;
 			HASH_FIND_INT(revh, &gid, rss);
 			if (!rss) {
@@ -113,14 +113,14 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 		// the coverage is not defined into a class.
 		classifier_hash *ss;
 		for (uint16_t j = 1; j < cov->numGlyphs; j++) {
-			int gid = cov->glyphs[j].gid;
+			int gid = cov->glyphs[j].index;
 			HASH_FIND_INT(*h, &gid, ss);
 			if (ss) return 0;
 		}
 		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
 			classifier_hash *s;
 			NEW(s);
-			s->gid = cov->glyphs[j].gid;
+			s->gid = cov->glyphs[j].index;
 			s->gname = cov->glyphs[j].name;
 			s->cls = *past + 1;
 			HASH_ADD_INT(*h, gid, s);
@@ -134,20 +134,20 @@ static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
 			classifier_hash *s;
-			int gid = rule->match[m]->glyphs[0].gid;
+			int gid = rule->match[m]->glyphs[0].index;
 			HASH_FIND_INT(h, &gid, s);
 			caryll_delete_coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0].gid = s->cls;
+			rule->match[m]->glyphs[0].index = s->cls;
 			rule->match[m]->glyphs[0].name = NULL;
 		} else {
 			caryll_delete_coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0].gid = 0;
+			rule->match[m]->glyphs[0].index = 0;
 			rule->match[m]->glyphs[0].name = NULL;
 		}
 }
@@ -167,7 +167,7 @@ static otl_classdef *toClass(classifier_hash *h) {
 	uint16_t j = 0;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
-		cd->glyphs[j].gid = item->gid;
+		cd->glyphs[j].index = item->gid;
 		cd->glyphs[j].name = item->gname;
 		cd->classes[j] = item->cls;
 		if (item->cls > maxclass) maxclass = item->cls;

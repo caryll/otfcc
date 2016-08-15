@@ -315,13 +315,8 @@ static INLINE f16dot16 caryll_to_fixed(float x) {
 
 #include "handle.h"
 
-// glyph reference type
-typedef struct {
-	uint16_t gid;
-	sds name;
-} glyph_handle;
-
-// fd reference type
+// Handle types
+typedef struct _caryll_handle glyph_handle;
 typedef struct _caryll_handle fd_handle;
 typedef struct _caryll_handle lookup_handle;
 

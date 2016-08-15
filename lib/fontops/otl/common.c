@@ -1,7 +1,7 @@
 #include "common.h"
 
 static int by_gid(const void *a, const void *b) {
-	return ((glyph_handle *)a)->gid - ((glyph_handle *)b)->gid;
+	return ((glyph_handle *)a)->index - ((glyph_handle *)b)->index;
 }
 
 void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName) {
@@ -10,13 +10,13 @@ void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupN
 		glyph_order_entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
 		if (ordentry) {
-			coverage->glyphs[j].gid = ordentry->gid;
+			coverage->glyphs[j].index = ordentry->gid;
 			if (ordentry->name != coverage->glyphs[j].name) sdsfree(coverage->glyphs[j].name);
 			coverage->glyphs[j].name = ordentry->name;
 		} else {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", coverage->glyphs[j].name,
 			        lookupName);
-			coverage->glyphs[j].gid = 0;
+			coverage->glyphs[j].index = 0;
 			DELETE(sdsfree, coverage->glyphs[j].name);
 		}
 	}
@@ -37,12 +37,12 @@ void consolidate_classdef(caryll_font *font, otl_classdef *cd, sds lookupName) {
 		glyph_order_entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, cd->glyphs[j].name, ordentry);
 		if (ordentry) {
-			cd->glyphs[j].gid = ordentry->gid;
+			cd->glyphs[j].index = ordentry->gid;
 			if (ordentry->name != cd->glyphs[j].name) sdsfree(cd->glyphs[j].name);
 			cd->glyphs[j].name = ordentry->name;
 		} else {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", cd->glyphs[j].name, lookupName);
-			cd->glyphs[j].gid = 0;
+			cd->glyphs[j].index = 0;
 			DELETE(sdsfree, cd->glyphs[j].name);
 		}
 	}

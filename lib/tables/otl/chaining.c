@@ -60,8 +60,7 @@ otl_coverage *singleCoverage(font_file_pointer data, uint32_t tableLength, uint1
 	NEW(cov);
 	cov->numGlyphs = 1;
 	NEW(cov->glyphs);
-	cov->glyphs[0].gid = gid;
-	cov->glyphs[0].name = NULL;
+	cov->glyphs[0] = handle_from_id(gid);
 	return cov;
 }
 otl_coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16_t cls, uint32_t _offset, uint16_t kind,
@@ -172,7 +171,7 @@ otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLengt
 			for (uint16_t k = 0; k < srsCount; k++) {
 				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
 				subtable->rules[jj] = GeneralReadContextualRule(
-				    data, tableLength, srOffset, firstCoverage->glyphs[j].gid, true, singleCoverage, NULL);
+				    data, tableLength, srOffset, firstCoverage->glyphs[j].index, true, singleCoverage, NULL);
 				jj += 1;
 			}
 		}
@@ -326,8 +325,8 @@ otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength,
 			uint16_t srsCount = read_16u(data + srsOffset);
 			for (uint16_t k = 0; k < srsCount; k++) {
 				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
-				subtable->rules[jj] = GeneralReadChainingRule(data, tableLength, srOffset, firstCoverage->glyphs[j].gid,
-				                                              true, singleCoverage, NULL);
+				subtable->rules[jj] = GeneralReadChainingRule(
+				    data, tableLength, srOffset, firstCoverage->glyphs[j].index, true, singleCoverage, NULL);
 				jj += 1;
 			}
 		}
@@ -524,7 +523,7 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 	}
 	for (uint16_t j = 0; j < subtable->rulesCount; j++) {
 		uint16_t ib = subtable->rules[j]->inputBegins;
-		uint16_t startClass = subtable->rules[j]->match[ib]->glyphs[0].gid;
+		uint16_t startClass = subtable->rules[j]->match[ib]->glyphs[0].index;
 		if (startClass <= subtable->ic->maxclass) rcpg[startClass] += 1;
 	}
 
@@ -542,7 +541,7 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 			bufwrite16b(buf, rcpg[j]);
 			for (uint16_t k = 0; k < subtable->rulesCount; k++) {
 				otl_chaining_rule *rule = subtable->rules[k];
-				uint16_t startClass = rule->match[rule->inputBegins]->glyphs[0].gid;
+				uint16_t startClass = rule->match[rule->inputBegins]->glyphs[0].index;
 				if (startClass == j) {
 					reverseBacktracks(rule);
 					bufwrite16b(buf, rulesOffset - setsOffset);
@@ -556,15 +555,15 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 
 					bufwrite16b(buf, nBacktrack);
 					for (uint16_t m = 0; m < rule->inputBegins; m++) {
-						bufwrite16b(buf, rule->match[m]->glyphs[0].gid);
+						bufwrite16b(buf, rule->match[m]->glyphs[0].index);
 					}
 					bufwrite16b(buf, nInput);
 					for (uint16_t m = rule->inputBegins + 1; m < rule->inputEnds; m++) {
-						bufwrite16b(buf, rule->match[m]->glyphs[0].gid);
+						bufwrite16b(buf, rule->match[m]->glyphs[0].index);
 					}
 					bufwrite16b(buf, nLookahead);
 					for (uint16_t m = rule->inputEnds; m < rule->matchCount; m++) {
-						bufwrite16b(buf, rule->match[m]->glyphs[0].gid);
+						bufwrite16b(buf, rule->match[m]->glyphs[0].index);
 					}
 					bufwrite16b(buf, nSubst);
 					for (uint16_t m = 0; m < nSubst; m++) {

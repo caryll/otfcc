@@ -17,7 +17,7 @@ bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable 
 	for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
 		if (subtable->coverage->glyphs[k].name) {
 			gpos_cursive_hash *s;
-			int fromid = subtable->coverage->glyphs[k].gid;
+			int fromid = subtable->coverage->glyphs[k].index;
 			HASH_FIND_INT(h, &fromid, s);
 			if (s) {
 				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
@@ -25,7 +25,7 @@ bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable 
 				        subtable->coverage->glyphs[k].name);
 			} else {
 				NEW(s);
-				s->fromid = subtable->coverage->glyphs[k].gid;
+				s->fromid = subtable->coverage->glyphs[k].index;
 				s->fromname = subtable->coverage->glyphs[k].name;
 				s->enter = subtable->enter[k];
 				s->exit = subtable->exit[k];
@@ -40,7 +40,7 @@ bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable 
 		gpos_cursive_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->coverage->glyphs[j].gid = s->fromid;
+			subtable->coverage->glyphs[j].index = s->fromid;
 			subtable->coverage->glyphs[j].name = s->fromname;
 			subtable->enter[j] = s->enter;
 			subtable->exit[j] = s->exit;

@@ -222,7 +222,7 @@ static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 			d = caryll_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
-		g->references[j].glyph.gid = index;
+		g->references[j].glyph = handle_from_id(index);
 		g->references[j].a = a;
 		g->references[j].b = b;
 		g->references[j].c = c;
@@ -516,7 +516,7 @@ static void glyf_point_from_json(glyf_point *point, json_value *pointdump) {
 static void glyf_reference_from_json(glyf_reference *ref, json_value *refdump) {
 	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
 	if (_gname) {
-		ref->glyph.name = sdsnewlen(_gname->u.string.ptr, _gname->u.string.length);
+		ref->glyph = handle_from_name(sdsnewlen(_gname->u.string.ptr, _gname->u.string.length));
 		ref->x = json_obj_getnum_fallback(refdump, "x", 0.0);
 		ref->y = json_obj_getnum_fallback(refdump, "y", 0.0);
 		ref->a = json_obj_getnum_fallback(refdump, "a", 1.0);
@@ -828,7 +828,7 @@ static void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 		if (r->roundToGrid) flags |= ROUND_XY_TO_GRID;
 		if (r->useMyMetrics) flags |= USE_MY_METRICS;
 		bufwrite16b(gbuf, flags);
-		bufwrite16b(gbuf, r->glyph.gid);
+		bufwrite16b(gbuf, r->glyph.index);
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
 			bufwrite16b(gbuf, arg1);
 			bufwrite16b(gbuf, arg2);

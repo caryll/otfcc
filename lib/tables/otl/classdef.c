@@ -35,8 +35,7 @@ otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength,
 			NEW_N(cd->classes, count);
 			uint16_t maxclass = 0;
 			for (uint16_t j = 0; j < count; j++) {
-				cd->glyphs[j].gid = startGID + j;
-				cd->glyphs[j].name = NULL;
+				cd->glyphs[j] = handle_from_id(startGID + j);
 				cd->classes[j] = read_16u(data + offset + 6 + j * 2);
 				if (cd->classes[j] > maxclass) maxclass = cd->classes[j];
 			}
@@ -74,8 +73,7 @@ otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength,
 				uint16_t maxclass = 0;
 				coverage_entry *e, *tmp;
 				HASH_ITER(hh, hash, e, tmp) {
-					cd->glyphs[j].gid = e->gid;
-					cd->glyphs[j].name = NULL;
+					cd->glyphs[j] = handle_from_id(e->gid);
 					cd->classes[j] = e->covIndex;
 					if (e->covIndex > maxclass) maxclass = e->covIndex;
 					HASH_DEL(hash, e);
@@ -95,7 +93,7 @@ otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
 	NEW(cd);
 	coverage_entry *hash = NULL;
 	for (uint16_t j = 0; j < ocd->numGlyphs; j++) {
-		int gid = ocd->glyphs[j].gid;
+		int gid = ocd->glyphs[j].index;
 		int cid = ocd->classes[j];
 		coverage_entry *item = NULL;
 		HASH_FIND_INT(hash, &gid, item);
@@ -107,7 +105,7 @@ otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
 		}
 	}
 	for (uint16_t j = 0; j < cov->numGlyphs; j++) {
-		int gid = cov->glyphs[j].gid;
+		int gid = cov->glyphs[j].index;
 		coverage_entry *item = NULL;
 		HASH_FIND_INT(hash, &gid, item);
 		if (!item) {
@@ -126,8 +124,7 @@ otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
 		uint16_t maxclass = 0;
 		coverage_entry *e, *tmp;
 		HASH_ITER(hh, hash, e, tmp) {
-			cd->glyphs[j].gid = e->gid;
-			cd->glyphs[j].name = NULL;
+			cd->glyphs[j] = handle_from_id(e->gid);
 			cd->classes[j] = e->covIndex;
 			if (e->covIndex > maxclass) maxclass = e->covIndex;
 			HASH_DEL(hash, e);
@@ -192,7 +189,7 @@ caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j]) {
-			r[jj].gid = cd->glyphs[j].gid;
+			r[jj].gid = cd->glyphs[j].index;
 			r[jj].cid = cd->classes[j];
 			jj++;
 		}

@@ -134,8 +134,7 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 		pair_classifier_hash *s, *tmp;
 		uint16_t jj = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->second->glyphs[jj].gid = s->gid;
-			subtable->second->glyphs[jj].name = NULL;
+			subtable->second->glyphs[jj] = handle_from_id(s->gid);
 			subtable->second->classes[jj] = s->cid;
 			jj++;
 			HASH_DEL(h, s);
@@ -307,7 +306,7 @@ caryll_buffer *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
 			uint16_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
-				bufwrite16b(buf, subtable->second->glyphs[k].gid);
+				bufwrite16b(buf, subtable->second->glyphs[k].index);
 				write_gpos_value(buf, subtable->firstValues[c1][c2], format1);
 				write_gpos_value(buf, subtable->secondValues[c1][c2], format2);
 			}

@@ -21,11 +21,11 @@ bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subtable *_
 	for (uint16_t k = 0; k < subtable->from->numGlyphs; k++) {
 		if (subtable->from->glyphs[k].name) {
 			gsub_multi_hash *s;
-			int fromid = subtable->from->glyphs[k].gid;
+			int fromid = subtable->from->glyphs[k].index;
 			HASH_FIND_INT(h, &fromid, s);
 			if (!s) {
 				NEW(s);
-				s->fromid = subtable->from->glyphs[k].gid;
+				s->fromid = subtable->from->glyphs[k].index;
 				s->fromname = subtable->from->glyphs[k].name;
 				s->to = subtable->to[k];
 				HASH_ADD_INT(h, fromid, s);
@@ -42,7 +42,7 @@ bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subtable *_
 		gsub_multi_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j].gid = s->fromid;
+			subtable->from->glyphs[j].index = s->fromid;
 			subtable->from->glyphs[j].name = s->fromname;
 			subtable->to[j] = s->to;
 			j++;

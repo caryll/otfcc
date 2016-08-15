@@ -23,7 +23,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		if (r->glyph.name) {
 			HASH_FIND_STR(*font->glyph_order, r->glyph.name, entry);
 			if (entry) {
-				r->glyph.gid = entry->gid;
+				r->glyph.index = entry->gid;
 				if (r->glyph.name != entry->name) sdsfree(r->glyph.name);
 				r->glyph.name = entry->name;
 				nReferencesConsolidated += 1;
@@ -31,12 +31,12 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 				fprintf(stderr, "[Consolidate] Ignored absent glyph component "
 				                "reference /%s within /%s.\n",
 				        r->glyph.name, g->name);
-				r->glyph.gid = 0;
+				r->glyph.index = 0;
 				sdsfree(r->glyph.name);
 				r->glyph.name = NULL;
 			}
 		} else {
-			r->glyph.gid = 0;
+			r->glyph.index = 0;
 			r->glyph.name = NULL;
 		}
 	}
@@ -150,20 +150,20 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 			glyph_order_entry *ordentry;
 			HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
 			if (ordentry) {
-				item->glyph.gid = ordentry->gid;
+				item->glyph.index = ordentry->gid;
 				if (item->glyph.name != ordentry->name) sdsfree(item->glyph.name);
 				item->glyph.name = ordentry->name;
 			} else {
 				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
 				                "non-existent glyph /%s.\n",
 				        item->unicode, item->glyph.name);
-				item->glyph.gid = 0;
+				item->glyph.index = 0;
 				sdsfree(item->glyph.name);
 				item->glyph.name = NULL;
 			}
 		}
 		else {
-			item->glyph.gid = 0;
+			item->glyph.index = 0;
 			item->glyph.name = NULL;
 		}
 	}

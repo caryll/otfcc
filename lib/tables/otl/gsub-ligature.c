@@ -60,17 +60,14 @@ otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLe
 			uint16_t ligComponents = read_16u(data + ligOffset + 2);
 			checkLength(ligOffset + 2 + ligComponents * 2);
 
-			subtable->to->glyphs[jj].gid = read_16u(data + ligOffset);
-			subtable->to->glyphs[jj].name = NULL;
+			subtable->to->glyphs[jj] = handle_from_id(read_16u(data + ligOffset));
 
 			NEW(subtable->from[jj]);
 			subtable->from[jj]->numGlyphs = ligComponents;
 			NEW_N(subtable->from[jj]->glyphs, ligComponents);
-			subtable->from[jj]->glyphs[0].gid = startCoverage->glyphs[j].gid;
-			subtable->from[jj]->glyphs[0].name = NULL;
+			subtable->from[jj]->glyphs[0] = handle_from_id(startCoverage->glyphs[j].index);
 			for (uint16_t m = 1; m < ligComponents; m++) {
-				subtable->from[jj]->glyphs[m].gid = read_16u(data + ligOffset + 2 + m * 2);
-				subtable->from[jj]->glyphs[m].name = NULL;
+				subtable->from[jj]->glyphs[m] = handle_from_id(read_16u(data + ligOffset + 2 + m * 2));
 			}
 			jj++;
 		}
@@ -158,7 +155,7 @@ caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 	ligature_aggerator *h = NULL, *s, *tmp;
 	uint16_t nLigatures = subtable->to->numGlyphs;
 	for (uint16_t j = 0; j < nLigatures; j++) {
-		int sgid = subtable->from[j]->glyphs[0].gid;
+		int sgid = subtable->from[j]->glyphs[0].index;
 		HASH_FIND_INT(h, &sgid, s);
 		if (!s) {
 			NEW(s);
@@ -177,7 +174,7 @@ caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 	uint16_t jj = 0;
 	foreach_hash(s, h) {
 		s->ligid = jj;
-		startCoverage->glyphs[jj].gid = s->gid;
+		startCoverage->glyphs[jj].index = s->gid;
 		startCoverage->glyphs[jj].name = NULL;
 		jj++;
 	}
@@ -193,16 +190,16 @@ caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 		bufping16b(buf, &setOffset, &cp);
 		uint16_t nLigsHere = 0;
 		for (uint16_t j = 0; j < nLigatures; j++)
-			if (subtable->from[j]->glyphs[0].gid == s->gid) nLigsHere++;
+			if (subtable->from[j]->glyphs[0].index == s->gid) nLigsHere++;
 		bufwrite16b(buf, nLigsHere);
 		size_t scp = buf->cursor;
 		for (uint16_t j = 0; j < nLigatures; j++)
-			if (subtable->from[j]->glyphs[0].gid == s->gid) {
+			if (subtable->from[j]->glyphs[0].index == s->gid) {
 				bufping16bd(buf, &offset, &setOffset, &scp);
-				bufwrite16b(buf, subtable->to->glyphs[j].gid);
+				bufwrite16b(buf, subtable->to->glyphs[j].index);
 				bufwrite16b(buf, subtable->from[j]->numGlyphs);
 				for (uint16_t m = 1; m < subtable->from[j]->numGlyphs; m++) {
-					bufwrite16b(buf, subtable->from[j]->glyphs[m].gid);
+					bufwrite16b(buf, subtable->from[j]->glyphs[m].index);
 				}
 				bufpong(buf, &offset, &scp);
 			}

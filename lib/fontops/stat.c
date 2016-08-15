@@ -8,7 +8,7 @@ typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_s
 glyf_glyph_stat stat_single_glyph(table_glyf *table, glyf_reference *gr, stat_status *stated, uint8_t depth,
                                   uint16_t topj) {
 	glyf_glyph_stat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-	uint16_t j = gr->glyph.gid;
+	uint16_t j = gr->glyph.index;
 	if (depth >= 0xFF) return stat;
 	if (stated[j] == stat_doing) {
 		// We have a circular reference
@@ -19,7 +19,7 @@ glyf_glyph_stat stat_single_glyph(table_glyf *table, glyf_reference *gr, stat_st
 		return stat;
 	}
 
-	glyf_glyph *g = table->glyphs[gr->glyph.gid];
+	glyf_glyph *g = table->glyphs[gr->glyph.index];
 	stated[j] = stat_doing;
 	float xmin = 0xFFFF;
 	float xmax = -0xFFFF;
@@ -48,8 +48,7 @@ glyf_glyph_stat stat_single_glyph(table_glyf *table, glyf_reference *gr, stat_st
 	for (uint16_t r = 0; r < g->numberOfReferences; r++) {
 		glyf_reference ref;
 		glyf_reference *rr = &(g->references[r]);
-		ref.glyph.gid = g->references[r].glyph.gid;
-		ref.glyph.name = NULL;
+		ref.glyph = handle_from_id(g->references[r].glyph.index);
 		// composite affine transformations
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
@@ -88,8 +87,7 @@ void caryll_stat_glyf(caryll_font *font) {
 	float ymax = -0xFFFF;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_reference gr;
-		gr.glyph.gid = j;
-		gr.glyph.name = NULL;
+		gr.glyph = handle_from_id(j);
 		gr.x = 0;
 		gr.y = 0;
 		gr.a = 1;

@@ -44,7 +44,7 @@ otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLengt
 		cov->numGlyphs = read_16u(data + seqOffset);
 		NEW_N(cov->glyphs, cov->numGlyphs);
 		for (uint16_t k = 0; k < cov->numGlyphs; k++) {
-			cov->glyphs[k].gid = read_16u(data + seqOffset + 2 + k * 2);
+			cov->glyphs[k] = handle_from_id(read_16u(data + seqOffset + 2 + k * 2));
 		}
 		subtable->to[j] = cov;
 	}
@@ -99,7 +99,7 @@ caryll_buffer *caryll_write_gsub_multi_subtable(otl_subtable *_subtable) {
 		bufping16b(buf, &offset, &cp);
 		bufwrite16b(buf, subtable->to[j]->numGlyphs);
 		for (uint16_t k = 0; k < subtable->to[j]->numGlyphs; k++) {
-			bufwrite16b(buf, subtable->to[j]->glyphs[k].gid);
+			bufwrite16b(buf, subtable->to[j]->glyphs[k].index);
 		}
 		bufpong(buf, &offset, &cp);
 	}

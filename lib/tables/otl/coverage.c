@@ -46,8 +46,7 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 					uint16_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
-						coverage->glyphs[j].gid = e->gid;
-						coverage->glyphs[j].name = NULL;
+						coverage->glyphs[j] = handle_from_id(e->gid);
 						HASH_DEL(hash, e);
 						free(e);
 						j++;
@@ -83,8 +82,7 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 					uint16_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
-						coverage->glyphs[j].gid = e->gid;
-						coverage->glyphs[j].name = NULL;
+						coverage->glyphs[j] = handle_from_id(e->gid);
 						HASH_DEL(hash, e);
 						free(e);
 						j++;
@@ -123,9 +121,8 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
-			c->glyphs[jj].gid = 0;
-			c->glyphs[jj].name =
-			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length);
+			c->glyphs[jj] = handle_from_name(
+			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length));
 			jj++;
 		}
 	}
@@ -138,18 +135,18 @@ caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
 	bufwrite16b(format1, 1);
 	bufwrite16b(format1, coverage->numGlyphs);
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
-		bufwrite16b(format1, coverage->glyphs[j].gid);
+		bufwrite16b(format1, coverage->glyphs[j].index);
 	}
 	if (coverage->numGlyphs < 2) return format1;
 
 	caryll_buffer *format2 = bufnew();
 	bufwrite16b(format2, 2);
 	caryll_buffer *ranges = bufnew();
-	uint16_t startGID = coverage->glyphs[0].gid;
+	uint16_t startGID = coverage->glyphs[0].index;
 	uint16_t endGID = startGID;
 	uint16_t nRanges = 0;
 	for (uint16_t j = 1; j < coverage->numGlyphs; j++) {
-		uint16_t current = coverage->glyphs[j].gid;
+		uint16_t current = coverage->glyphs[j].index;
 		if (current == endGID + 1) {
 			endGID = current;
 		} else {

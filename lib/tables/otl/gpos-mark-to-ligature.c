@@ -32,8 +32,9 @@ static void delete_mtl_subtable(otl_subtable *_subtable) {
 void caryll_delete_gpos_mark_to_ligature(otl_lookup *lookup) {
 	if (lookup) {
 		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
+			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 				delete_mtl_subtable(lookup->subtables[j]);
+			}
 			free(lookup->subtables);
 		}
 		free(lookup);

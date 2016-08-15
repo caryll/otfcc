@@ -18,7 +18,7 @@ void consolidate_GDEF(caryll_font *font, table_GDEF *gdef, char *tableName) {
 		GDEF_ligcaret_hash *h = NULL;
 		for (uint16_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
 			GDEF_ligcaret_hash *s;
-			int gid = gdef->ligCarets->coverage->glyphs[j].gid;
+			int gid = gdef->ligCarets->coverage->glyphs[j].index;
 			sds gname = gdef->ligCarets->coverage->glyphs[j].name;
 			if (gname) {
 				HASH_FIND_INT(h, &gid, s);
@@ -38,7 +38,7 @@ void consolidate_GDEF(caryll_font *font, table_GDEF *gdef, char *tableName) {
 		GDEF_ligcaret_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			gdef->ligCarets->coverage->glyphs[j].gid = s->gid;
+			gdef->ligCarets->coverage->glyphs[j].index = s->gid;
 			gdef->ligCarets->coverage->glyphs[j].name = s->name;
 			gdef->ligCarets->carets[j] = s->cr;
 			j++;
