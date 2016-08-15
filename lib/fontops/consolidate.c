@@ -1,6 +1,6 @@
 #include "consolidate.h"
 // Consolidation
-// Replace name entries in json to gid and do some check
+// Replace name entries in json to ids and do some check
 static int by_stem_pos(const void *_a, const void *_b) {
 	const glyf_postscript_hint_stemdef *a = _a;
 	const glyf_postscript_hint_stemdef *b = _b;

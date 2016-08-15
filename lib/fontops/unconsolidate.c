@@ -139,10 +139,11 @@ static void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, tabl
 		for (uint16_t k = 0; k < rule->matchCount; k++) {
 			name_coverage(font, rule->match[k]);
 		}
-		for (uint16_t k = 0; k < rule->applyCount; k++)
+		for (uint16_t k = 0; k < rule->applyCount; k++) {
 			if (rule->apply[k].lookup.index < table->lookupCount) {
 				rule->apply[k].lookup.name = table->lookups[rule->apply[k].lookup.index]->name;
 			}
+		}
 	}
 }
 

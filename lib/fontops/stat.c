@@ -1,7 +1,7 @@
 #include "stat.h"
 #include <time.h>
-
 // Stating
+// Calculate necessary values for SFNT
 
 typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
 
