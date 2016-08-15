@@ -335,6 +335,7 @@ ABSENT:
 
 static void caryll_delete_glyf_glyph(glyf_glyph *g) {
 	if (!g) return;
+	sdsfree(g->name);
 	if (g->numberOfContours > 0 && g->contours != NULL) {
 		for (uint16_t k = 0; k < g->numberOfContours; k++) {
 			if (g->contours[k].points) free(g->contours[k].points);
@@ -650,7 +651,7 @@ static void masks_from_json(json_value *md, uint16_t *count, glyf_postscript_hin
 static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_order_entry *order_entry,
                                                const caryll_options *options) {
 	glyf_glyph *g = caryll_new_glyf_glyph();
-	g->name = order_entry->name;
+	g->name = sdsdup(order_entry->name);
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");
 	g->verticalOrigin = json_obj_getint(glyphdump, "verticalOrigin");

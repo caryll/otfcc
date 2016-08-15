@@ -32,6 +32,7 @@ static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 			try_name_glyph(glyph_order, s->gid, sdsdup(s->name));
 		}
 	}
+
 	// pass 3: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
 		cmap_entry *s;
@@ -47,6 +48,7 @@ static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
 			if (!actuallyNamed) sdsfree(name);
 		}
 	}
+
 	// pass 4 : Map to GID
 	for (uint16_t j = 0; j < numGlyphs; j++) {
 		sds name;
@@ -84,7 +86,9 @@ static void caryll_name_glyf(caryll_font *font) {
 	if (font->glyph_order != NULL && font->glyf != NULL) {
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_glyph *g = font->glyf->glyphs[j];
-			lookup_name(font->glyph_order, j, &g->name);
+			sds glyphName = NULL;
+			lookup_name(font->glyph_order, j, &glyphName);
+			g->name = sdsdup(glyphName);
 			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
 					lookup_name(font->glyph_order, g->references[k].glyph.gid, &g->references[k].glyph.name);
