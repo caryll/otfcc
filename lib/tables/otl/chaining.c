@@ -120,8 +120,8 @@ otl_chaining_rule *GeneralReadContextualRule(font_file_pointer data, uint32_t ta
 	for (uint16_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
-		rule->apply[j].lookupIndex = read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
-		rule->apply[j].lookupName = NULL;
+		rule->apply[j].lookup.index = read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
+		rule->apply[j].lookup.name = NULL;
 	}
 	reverseBacktracks(rule);
 	return rule;
@@ -274,8 +274,8 @@ otl_chaining_rule *GeneralReadChainingRule(font_file_pointer data, uint32_t tabl
 	for (uint16_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
-		rule->apply[j].lookupIndex = read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
-		rule->apply[j].lookupName = NULL;
+		rule->apply[j].lookup.index = read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
+		rule->apply[j].lookup.name = NULL;
 	}
 	reverseBacktracks(rule);
 	return rule;
@@ -405,7 +405,7 @@ json_value *caryll_chaining_to_json(otl_subtable *_subtable) {
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		json_value *_application = json_object_new(2);
 		json_object_push(_application, "at", json_integer_new(rule->apply[j].index));
-		json_object_push(_application, "lookup", json_string_new(rule->apply[j].lookupName));
+		json_object_push(_application, "lookup", json_string_new(rule->apply[j].lookup.name));
 		json_array_push(_apply, _application);
 	}
 	json_object_push(_st, "apply", preserialize(_apply));
@@ -446,13 +446,13 @@ otl_subtable *caryll_chaining_from_json(json_value *_subtable) {
 	}
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		rule->apply[j].index = 0;
-		rule->apply[j].lookupIndex = 0;
-		rule->apply[j].lookupName = NULL;
+		rule->apply[j].lookup.index = 0;
+		rule->apply[j].lookup.name = NULL;
 		json_value *_application = _apply->u.array.values[j];
 		if (_application->type == json_object) {
 			json_value *_ln = json_obj_get_type(_application, "lookup", json_string);
 			if (_ln) {
-				rule->apply[j].lookupName = sdsnewlen(_ln->u.string.ptr, _ln->u.string.length);
+				rule->apply[j].lookup.name = sdsnewlen(_ln->u.string.ptr, _ln->u.string.length);
 				rule->apply[j].index = json_obj_getnum(_application, "at");
 			}
 		}
@@ -488,7 +488,7 @@ caryll_buffer *caryll_write_chaining_coverage(otl_subtable *_subtable) {
 	bufwrite16b(bufst, rule->applyCount);
 	for (uint16_t j = 0; j < nSubst; j++) {
 		bufwrite16b(bufst, rule->apply[j].index - nBacktrack);
-		bufwrite16b(bufst, rule->apply[j].lookupIndex);
+		bufwrite16b(bufst, rule->apply[j].lookup.index);
 	}
 	return bufst;
 }
@@ -569,7 +569,7 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 					bufwrite16b(buf, nSubst);
 					for (uint16_t m = 0; m < nSubst; m++) {
 						bufwrite16b(buf, rule->apply[m].index - nBacktrack);
-						bufwrite16b(buf, rule->apply[m].lookupIndex);
+						bufwrite16b(buf, rule->apply[m].lookup.index);
 					}
 
 					rulesOffset = buf->cursor;

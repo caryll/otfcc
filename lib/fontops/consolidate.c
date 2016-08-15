@@ -133,13 +133,12 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 }
 
 void caryll_font_consolidate_glyf(caryll_font *font) {
-	if (font->glyph_order && *font->glyph_order && font->glyf) {
-		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			if (font->glyf->glyphs[j]) {
-				caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
-			} else {
-				font->glyf->glyphs[j] = caryll_new_glyf_glyph();
-			}
+	if (!font->glyph_order || !*font->glyph_order || !font->glyf) return;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]) {
+			caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
+		} else {
+			font->glyf->glyphs[j] = caryll_new_glyf_glyph();
 		}
 	}
 }

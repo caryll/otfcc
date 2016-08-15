@@ -13,31 +13,31 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		bool foundLookup = false;
-		if (rule->apply[j].lookupName) {
+		if (rule->apply[j].lookup.name) {
 		FIND_LOOKUP:;
 			for (uint16_t k = 0; k < table->lookupCount; k++) {
-				if (strcmp(table->lookups[k]->name, rule->apply[j].lookupName) != 0) continue;
+				if (strcmp(table->lookups[k]->name, rule->apply[j].lookup.name) != 0) continue;
 				foundLookup = true;
-				rule->apply[j].lookupIndex = k;
-				if (rule->apply[j].lookupName != table->lookups[k]->name) {
-					DELETE(sdsfree, rule->apply[j].lookupName);
+				rule->apply[j].lookup.index = k;
+				if (rule->apply[j].lookup.name != table->lookups[k]->name) {
+					DELETE(sdsfree, rule->apply[j].lookup.name);
 				}
-				rule->apply[j].lookupName = table->lookups[k]->name;
+				rule->apply[j].lookup.name = table->lookups[k]->name;
 			}
 			if (!foundLookup) {
 				// Maybe the lookup is aliased.
 				for (uint16_t k = 0; k < table->lookupAliasesCount; k++) {
-					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookupName) != 0) continue;
-					DELETE(sdsfree, rule->apply[j].lookupName);
-					rule->apply[j].lookupName = sdsdup(table->lookupAliases[k].to);
+					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookup.name) != 0) continue;
+					DELETE(sdsfree, rule->apply[j].lookup.name);
+					rule->apply[j].lookup.name = sdsdup(table->lookupAliases[k].to);
 					goto FIND_LOOKUP;
 				}
 			}
 		}
-		if (!foundLookup && rule->apply[j].lookupName) {
-			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookupName,
+		if (!foundLookup && rule->apply[j].lookup.name) {
+			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookup.name,
 			        lookupName);
-			DELETE(sdsfree, rule->apply[j].lookupName);
+			DELETE(sdsfree, rule->apply[j].lookup.name);
 		}
 	}
 	// If a rule is designed to have no lookup application, it may be a ignoration
@@ -45,7 +45,7 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 	if (rule->applyCount) {
 		uint16_t k = 0;
 		for (uint16_t j = 0; j < rule->applyCount; j++)
-			if (rule->apply[j].lookupName) { rule->apply[k++] = rule->apply[j]; }
+			if (rule->apply[j].lookup.name) { rule->apply[k++] = rule->apply[j]; }
 		rule->applyCount = k;
 		if (!rule->applyCount) {
 			delete_otl_chaining_subtable(_subtable);

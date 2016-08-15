@@ -56,8 +56,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t index;
-	uint16_t lookupIndex;
-	sds lookupName;
+	lookup_handle lookup;
 } otl_contextual_application;
 typedef struct {
 	uint16_t matchCount;
