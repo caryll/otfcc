@@ -428,7 +428,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	else
 		fd = parse_subr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
-	g->fdSelect.index = fd;
+	g->fdSelect = handle_from_id(fd);
 	if (context->meta->fdArray && fd >= 0 && fd < context->meta->fdArrayCount &&
 	    context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;

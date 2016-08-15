@@ -23,8 +23,7 @@ glyf_glyph *caryll_new_glyf_glyph() {
 	g->stemV = NULL;
 	g->hintMasks = NULL;
 	g->contourMasks = NULL;
-	g->fdSelect.index = 0;
-	g->fdSelect.name = NULL;
+	g->fdSelect = handle_new();
 	g->yPel = 0;
 
 	g->stat.xMin = 0;
@@ -667,7 +666,7 @@ static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_orde
 		                &(g->contourMasks));
 	}
 	// Glyph data of other tables
-	g->fdSelect.name = json_obj_getsds(glyphdump, "CFF_fdSelect");
+	g->fdSelect = handle_from_name(json_obj_getsds(glyphdump, "CFF_fdSelect"));
 	g->yPel = json_obj_getint(glyphdump, "LTSH_yPel");
 	if (!g->yPel) { g->yPel = json_obj_getint(glyphdump, "yPel"); }
 	return g;

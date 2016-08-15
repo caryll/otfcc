@@ -120,8 +120,8 @@ otl_chaining_rule *GeneralReadContextualRule(font_file_pointer data, uint32_t ta
 	for (uint16_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
-		rule->apply[j].lookup.index = read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
-		rule->apply[j].lookup.name = NULL;
+		rule->apply[j].lookup =
+		    handle_from_id(read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2));
 	}
 	reverseBacktracks(rule);
 	return rule;
@@ -274,8 +274,8 @@ otl_chaining_rule *GeneralReadChainingRule(font_file_pointer data, uint32_t tabl
 	for (uint16_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
-		rule->apply[j].lookup.index = read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2);
-		rule->apply[j].lookup.name = NULL;
+		rule->apply[j].lookup =
+		    handle_from_id(read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2));
 	}
 	reverseBacktracks(rule);
 	return rule;
@@ -452,7 +452,7 @@ otl_subtable *caryll_chaining_from_json(json_value *_subtable) {
 		if (_application->type == json_object) {
 			json_value *_ln = json_obj_get_type(_application, "lookup", json_string);
 			if (_ln) {
-				rule->apply[j].lookup.name = sdsnewlen(_ln->u.string.ptr, _ln->u.string.length);
+				rule->apply[j].lookup = handle_from_name(sdsnewlen(_ln->u.string.ptr, _ln->u.string.length));
 				rule->apply[j].index = json_obj_getnum(_application, "at");
 			}
 		}
