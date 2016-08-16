@@ -196,26 +196,29 @@ static void replaceptr(caryll_bkgraph *f, caryll_bkblock *b) {
 
 void caryll_minimize_bkgraph(caryll_bkgraph *f) {
 	uint32_t rear = (uint32_t)(f->length - 1);
-	uint32_t front = rear;
-	while (f->entries[front].height == f->entries[rear].height && front > 0) {
-		front--;
-	}
-	front++;
-	for (uint32_t j = front; j <= rear; j++) {
-		f->entries[j].hash = gethash(f->entries[j].block);
-	}
-	for (uint32_t j = front; j <= rear; j++) {
-		bkgraph_entry *a = &(f->entries[j]);
-		if (a->alias == j) {
-			for (uint32_t k = j + 1; k <= rear; k++) {
-				bkgraph_entry *b = &(f->entries[k]);
-				if (b->alias == k && compareEntry(a, b)) { b->alias = j; }
+	while (rear > 0) {
+		uint32_t front = rear;
+		while (f->entries[front].height == f->entries[rear].height && front > 0) {
+			front--;
+		}
+		front++;
+		for (uint32_t j = front; j <= rear; j++) {
+			f->entries[j].hash = gethash(f->entries[j].block);
+		}
+		for (uint32_t j = front; j <= rear; j++) {
+			bkgraph_entry *a = &(f->entries[j]);
+			if (a->alias == j) {
+				for (uint32_t k = j + 1; k <= rear; k++) {
+					bkgraph_entry *b = &(f->entries[k]);
+					if (b->alias == k && compareEntry(a, b)) { b->alias = j; }
+				}
 			}
 		}
-	}
-	// replace pointers with aliased
-	for (uint32_t j = 0; j < front; j++) {
-		replaceptr(f, f->entries[j].block);
+		// replace pointers with aliased
+		for (uint32_t j = 0; j < front; j++) {
+			replaceptr(f, f->entries[j].block);
+		}
+		rear = front - 1;
 	}
 }
 
