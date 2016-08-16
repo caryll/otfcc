@@ -830,29 +830,25 @@ static uint32_t featureNameToTag(sds name) {
 	return tag;
 }
 static caryll_buffer *writeOTLFeatures(table_otl *table, const caryll_options *options) {
-	caryll_buffer *buff = bufnew();
-	bufwrite16b(buff, table->featureCount);
-	size_t offset = 2 + table->featureCount * 6;
+	caryll_bkblock *root = new_bkblock(b16, table->featureCount, bkover);
 	for (uint16_t j = 0; j < table->featureCount; j++) {
-		bufwrite32b(buff, featureNameToTag(table->features[j]->name));
-		bufwrite16b(buff, offset);
-		size_t cp = buff->cursor;
-		bufseek(buff, offset);
-		bufwrite16b(buff, 0);
-		bufwrite16b(buff, table->features[j]->lookupCount);
+		caryll_bkblock *fea = new_bkblock(p16, NULL,                            // FeatureParams
+		                                  b16, table->features[j]->lookupCount, // LookupCount
+		                                  bkover);
 		for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
 			// reverse lookup
 			for (uint16_t l = 0; l < table->lookupCount; l++) {
 				if (table->features[j]->lookups[k] == table->lookups[l]) {
-					bufwrite16b(buff, l);
+					bkblock_push(fea, b16, l, bkover);
 					break;
 				}
 			}
 		}
-		offset = buff->cursor;
-		bufseek(buff, cp);
+		bkblock_push(root, b32, featureNameToTag(table->features[j]->name), // FeatureTag
+		             p16, fea,                                              // Feature
+		             bkover);
 	}
-	return buff;
+	return caryll_write_bk(root);
 }
 
 typedef struct {
@@ -863,64 +859,38 @@ typedef struct {
 	UT_hash_handle hh;
 } script_stat_hash;
 
-static caryll_buffer *writeLanguage(otl_language_system *lang, table_otl *table) {
-	caryll_buffer *buf = bufnew();
-	bufwrite16b(buf, 0x0000);
-	if (lang->requiredFeature) {
-		bool found = false;
-		for (uint16_t j = 0; j < table->featureCount; j++)
-			if (table->features[j] == lang->requiredFeature) {
-				bufwrite16b(buf, j);
-				found = true;
-				break;
-			}
-		if (!found) bufwrite16b(buf, 0xFFFF);
-	} else {
-		bufwrite16b(buf, 0xFFFF);
-	}
-	bufwrite16b(buf, lang->featureCount);
+static uint16_t featureIndex(otl_feature *feature, table_otl *table) {
+	for (uint16_t j = 0; j < table->featureCount; j++)
+		if (table->features[j] == feature) { return j; }
+	return 0xFFFF;
+}
+static caryll_bkblock *writeLanguage(otl_language_system *lang, table_otl *table) {
+	if (!lang) return NULL;
+	caryll_bkblock *root = new_bkblock(p16, NULL,                                       // LookupOrder
+	                                   b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
+	                                   b16, lang->featureCount,                         // FeatureCount
+	                                   bkover);
 	for (uint16_t k = 0; k < lang->featureCount; k++) {
-		bool found = false;
-		for (uint16_t j = 0; j < table->featureCount; j++)
-			if (table->features[j] == lang->features[k]) {
-				bufwrite16b(buf, j);
-				found = true;
-				break;
-			}
-		if (!found) bufwrite16b(buf, 0xFFFF);
+		bkblock_push(root, b16, featureIndex(lang->features[k], table), bkover);
 	}
-	return buf;
+	return root;
 }
 
-static caryll_buffer *writeScript(script_stat_hash *script, table_otl *table) {
-	caryll_buffer *buf = bufnew();
-	size_t offset = script->lc * 6 + 4;
-	if (script->dl) {
-		bufwrite16b(buf, offset);
-		size_t cp = buf->cursor;
-		bufseek(buf, offset);
-		bufwrite_bufdel(buf, writeLanguage(script->dl, table));
-		offset = buf->cursor;
-		bufseek(buf, cp);
-	} else {
-		bufwrite16b(buf, 0);
-	}
-	bufwrite16b(buf, script->lc);
+static caryll_bkblock *writeScript(script_stat_hash *script, table_otl *table) {
+	caryll_bkblock *root = new_bkblock(p16, writeLanguage(script->dl, table), // DefaultLangSys
+	                                   b16, script->lc,                       // LangSysCount
+	                                   bkover);
+
 	for (uint16_t j = 0; j < script->lc; j++) {
 		sds tag = sdsnewlen(script->ll[j]->name + 5, 4);
-		bufwrite32b(buf, featureNameToTag(tag));
-		sdsfree(tag);
-		bufwrite16b(buf, offset);
-		size_t cp = buf->cursor;
-		bufseek(buf, offset);
-		bufwrite_bufdel(buf, writeLanguage(script->ll[j], table));
-		offset = buf->cursor;
-		bufseek(buf, cp);
+
+		bkblock_push(root, b32, featureNameToTag(tag),         // LangSysTag
+		             p16, writeLanguage(script->ll[j], table), // LangSys
+		             bkover);
 	}
-	return buf;
+	return root;
 }
 static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, const caryll_options *options) {
-	caryll_buffer *bufs = bufnew();
 	script_stat_hash *h = NULL;
 	for (uint16_t j = 0; j < table->languageCount; j++) {
 		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
@@ -950,24 +920,20 @@ static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, const caryll_
 			HASH_ADD_STR(h, tag, s);
 		}
 	}
-	bufwrite16b(bufs, HASH_COUNT(h));
-	size_t offset = 2 + 6 * HASH_COUNT(h);
+
+	caryll_bkblock *root = new_bkblock(b16, HASH_COUNT(h), bkover);
+
 	script_stat_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {
-		bufwrite32b(bufs, featureNameToTag(s->tag));
-		bufwrite16b(bufs, offset);
-		size_t cp = bufs->cursor;
-		bufseek(bufs, offset);
-		bufwrite_bufdel(bufs, writeScript(s, table));
-		offset = bufs->cursor;
-		bufseek(bufs, cp);
-
+		bkblock_push(root, b32, featureNameToTag(s->tag), // ScriptTag
+		             p16, writeScript(s, table),          // Script
+		             bkover);
 		HASH_DEL(h, s);
 		sdsfree(s->tag);
 		free(s->ll);
 		free(s);
 	}
-	return bufs;
+	return caryll_write_bk(root);
 }
 
 caryll_buffer *caryll_write_otl(table_otl *table, const caryll_options *options, const char *tag) {
