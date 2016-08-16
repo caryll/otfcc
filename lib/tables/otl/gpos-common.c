@@ -66,6 +66,14 @@ FAIL:
 	return NULL;
 }
 
+caryll_bkblock *bkFromAnchor(otl_anchor a) {
+	if (!a.present) return NULL;
+	return new_bkblock(b16, 1,   // format
+	                   b16, a.x, // x
+	                   b16, a.y, // y
+	                   bkover);
+}
+
 // GPOS position value constants
 const uint8_t FORMAT_DX = 1;
 const uint8_t FORMAT_DY = 2;

@@ -239,132 +239,40 @@ otl_subtable *caryll_gpos_mark_to_ligature_from_json(json_value *_subtable) {
 }
 
 caryll_buffer *caryll_write_gpos_mark_to_ligature(otl_subtable *_subtable) {
-	caryll_buffer *buf = bufnew();
 	subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
+	caryll_bkblock *root =
+	    new_bkblock(b16, 1,                                                               // format
+	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->marks)), // markCoverage
+	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->bases)), // baseCoverage
+	                b16, subtable->classCount,                                            // classCont
+	                bkover);
 
-	// we will aggerate these anchors to reduce subtable size as more as
-	// possible
-	anchor_aggeration_hash *agh = NULL, *s, *tmp;
+	caryll_bkblock *markArray = new_bkblock(b16, subtable->marks->numGlyphs, // markCount
+	                                        bkover);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		ANCHOR_AGGERATOR_PUSH(agh, subtable->markArray->records[j].anchor);
+		bkblock_push(markArray,                                                 // markArray item
+		             b16, subtable->markArray->records[j].markClass,            // markClass
+		             p16, bkFromAnchor(subtable->markArray->records[j].anchor), // Anchor
+		             bkover);
 	}
+
+	caryll_bkblock *ligatureArray = new_bkblock(b16, subtable->bases->numGlyphs, bkover);
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+		caryll_bkblock *attach = new_bkblock(b16, subtable->ligArray[j]->componentCount, // componentCount
+		                                     bkover);
 		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			for (uint16_t m = 0; m < subtable->classCount; m++) {
-				ANCHOR_AGGERATOR_PUSH(agh, subtable->ligArray[j]->anchors[k][m]);
+				bkblock_push(attach, p16, bkFromAnchor(subtable->ligArray[j]->anchors[k][m]), bkover);
 			}
 		}
-	}
-	HASH_SORT(agh, byAnchorIndex);
-
-	/* structure :
-	| format           | 0
-	| markCoverage *   |
-	| baseCoverage *   |
-	| classCount       |
-	| markArray    *   |
-	| ligArray     *   | 10
-	| markCoverage     | 12
-	| baseCoverage     | 12 + a
-	| markArray        | 12 + a + b
-	| ligArray         | 12 + a + b + c
-	| anchor directory | 12 + a + b + c + d
-	*/
-
-	bufwrite16b(buf, 1);
-	size_t covOffset = 12;
-	size_t cp = buf->cursor;
-	bufpingpong16b(buf, caryll_write_coverage(subtable->marks), &covOffset, &cp);
-	bufpingpong16b(buf, caryll_write_coverage(subtable->bases), &covOffset, &cp);
-	bufwrite16b(buf, subtable->classCount);
-
-	size_t markArraySize = 2 + 4 * subtable->marks->numGlyphs;
-	size_t ligArrayIndexSize = 2 + 2 * subtable->bases->numGlyphs;
-	size_t ligArraySize = ligArrayIndexSize;
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		ligArraySize += 2 + 2 * subtable->ligArray[j]->componentCount * subtable->classCount;
-	}
-	size_t markArrayOffset = covOffset;
-	size_t ligArrayOffset = covOffset + markArraySize;
-	size_t anchorDirectoryOffset = covOffset + markArraySize + ligArraySize;
-
-	/* Write the markArray
-	| format           | 0
-	| markCoverage *   |
-	| baseCoverage *   |
-	| classCount       |
-	| markArray    *   | <-- cursor is here
-	| ligArray     *   | 10
-	| markCoverage     | 12
-	| baseCoverage     | 12 + a
-	|                  | <-- offset is here
-	*/
-	bufwrite16b(buf, markArrayOffset);
-	bufwrite16b(buf, ligArrayOffset);
-
-	bufseek(buf, markArrayOffset);
-	bufwrite16b(buf, subtable->marks->numGlyphs);
-	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		bufwrite16b(buf, subtable->markArray->records[j].markClass);
-		anchor_aggeration_hash *s;
-		int position = getPositon(subtable->markArray->records[j].anchor);
-		HASH_FIND_INT(agh, &position, s);
-		if (s) {
-			bufwrite16b(buf, anchorDirectoryOffset + s->index * 6 - markArrayOffset);
-		} else {
-			bufwrite16b(buf, 0);
-		}
+		bkblock_push(ligatureArray, p16, attach, bkover);
 	}
 
-	/* Write the ligArray
-	| format           | 0
-	| markCoverage *   |
-	| baseCoverage *   |
-	| classCount       |
-	| markArray    *   |
-	| ligArray     *   | 10
-	| markCoverage     | 12
-	| baseCoverage     | 12 + a
-	| markArray        | 12 + a + b <-- offset
-	| ligArray         | <-- cursor is here
-	*/
+	bkblock_push(root, p16, markArray, p16, ligatureArray, bkover);
 
-	bufseek(buf, ligArrayOffset);
-	bufwrite16b(buf, subtable->bases->numGlyphs);
-	size_t ligAttachOffset = ligArrayOffset + ligArrayIndexSize;
-	size_t cpls = buf->cursor;
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		bufping16bd(buf, &ligAttachOffset, &ligArrayOffset, &cpls);
-		size_t ligStart = buf->cursor;
-		bufwrite16b(buf, subtable->ligArray[j]->componentCount);
-		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
-			for (uint16_t m = 0; m < subtable->classCount; m++) {
-				if (subtable->ligArray[j]->anchors[k][m].present) {
-					anchor_aggeration_hash *s;
-					int position = getPositon(subtable->ligArray[j]->anchors[k][m]);
-					HASH_FIND_INT(agh, &position, s);
-					if (s) {
-						bufwrite16b(buf, anchorDirectoryOffset + s->index * 6 - ligStart);
-					} else {
-						bufwrite16b(buf, 0);
-					}
-				} else {
-					bufwrite16b(buf, 0);
-				}
-			}
-		}
-		bufpong(buf, &ligAttachOffset, &cpls);
-	}
-
-	bufseek(buf, anchorDirectoryOffset);
-
-	HASH_ITER(hh, agh, s, tmp) {
-		bufwrite16b(buf, 1);
-		bufwrite16b(buf, s->x);
-		bufwrite16b(buf, s->y);
-		HASH_DEL(agh, s);
-		free(s);
-	}
-
+	caryll_bkgraph *f = caryll_bkgraph_from_block(root);
+	caryll_minimize_bkgraph(f);
+	caryll_buffer *buf = caryll_write_bkgraph(f);
+	caryll_delete_bkgraph(f);
 	return buf;
 }

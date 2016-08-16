@@ -8,6 +8,7 @@ otl_anchor otl_anchor_absent();
 otl_anchor otl_read_anchor(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 json_value *otl_anchor_to_json(otl_anchor a);
 otl_anchor otl_anchor_from_json(json_value *v);
+caryll_bkblock *bkFromAnchor(otl_anchor a);
 
 // mark arrays
 void otl_delete_mark_array(otl_mark_array *array);

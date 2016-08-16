@@ -1,6 +1,7 @@
 #ifndef CARYLL_TABLES_OTL_H
 #define CARYLL_TABLES_OTL_H
 #include <support/util.h>
+#include <bk/bkgraph.h>
 #include <font/caryll-sfnt.h>
 
 typedef enum {
