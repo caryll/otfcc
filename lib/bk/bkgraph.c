@@ -115,7 +115,7 @@ static void caryll_write_bkblock(caryll_buffer *buf, caryll_bkblock *b, size_t *
 				break;
 			case p32:
 				if (b->cells[j].p) {
-					bufwrite16b(buf, getoffset(offsets, b, b->cells[j].p, 32));
+					bufwrite32b(buf, getoffset(offsets, b, b->cells[j].p, 32));
 				} else {
 					bufwrite32b(buf, 0);
 				}
