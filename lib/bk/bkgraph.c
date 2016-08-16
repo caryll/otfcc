@@ -236,3 +236,11 @@ caryll_buffer *caryll_write_bkgraph(caryll_bkgraph *f) {
 		if (f->entries[j].alias == j) { caryll_write_bkblock(buf, f->entries[j].block, offsets); }
 	return buf;
 }
+
+caryll_buffer *caryll_write_bk(/*MOVE*/ caryll_bkblock *root) {
+	caryll_bkgraph *f = caryll_bkgraph_from_block(root);
+	caryll_minimize_bkgraph(f);
+	caryll_buffer *buf = caryll_write_bkgraph(f);
+	caryll_delete_bkgraph(f);
+	return buf;
+}

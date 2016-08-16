@@ -100,10 +100,5 @@ caryll_buffer *caryll_write_gpos_cursive(otl_subtable *_subtable) {
 		             bkover);
 	}
 
-	caryll_bkgraph *f = caryll_bkgraph_from_block(root);
-	caryll_minimize_bkgraph(f);
-	caryll_buffer *buf = caryll_write_bkgraph(f);
-	caryll_delete_bkgraph(f);
-
-	return buf;
+	return caryll_write_bk(root);
 }

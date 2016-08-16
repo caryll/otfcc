@@ -204,15 +204,10 @@ caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 		bkblock_push(root, p16, ligset, bkover);
 	}
 
-	caryll_bkgraph *f = caryll_bkgraph_from_block(root);
-	caryll_minimize_bkgraph(f);
-	caryll_buffer *buf = caryll_write_bkgraph(f);
-	caryll_delete_bkgraph(f);
-
 	caryll_delete_coverage(startcov);
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		free(s);
 	}
-	return buf;
+	return caryll_write_bk(root);
 }
