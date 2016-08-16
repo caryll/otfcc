@@ -173,63 +173,48 @@ table_GDEF *caryll_GDEF_from_json(json_value *root, const caryll_options *option
 	return gdef;
 }
 
-static caryll_buffer *writeLigCaretRec(caret_value_record *cr) {
-	caryll_buffer *buf = bufnew();
-	bufwrite16b(buf, cr->caretCount);
-	size_t offset = 2 + cr->caretCount * 2;
-	size_t cp = 0;
+static caryll_bkblock *writeLigCaretRec(caret_value_record *cr) {
+	caryll_bkblock *bcr = new_bkblock(b16, cr->caretCount, // CaretCount
+	                                  bkover);
 	for (uint16_t j = 0; j < cr->caretCount; j++) {
-		bufping16b(buf, &offset, &cp);
-		if (cr->values[j].format == 2) {
-			bufwrite16b(buf, 2);
-			bufwrite16b(buf, cr->values[j].pointIndex);
-		} else {
-			bufwrite16b(buf, 1);
-			bufwrite16b(buf, cr->values[j].coordiante);
-		}
-		bufpong(buf, &offset, &cp);
+		bkblock_push(bcr, p16,
+		             new_bkblock(b16, cr->values[j].format, // format
+		                         b16, cr->values[j].format == 2 ? cr->values[j].pointIndex
+		                                                        : cr->values[j].coordiante, // pointindex / coordinate
+		                         bkover),                                                   // CaretValue
+		             bkover);
 	}
-	return buf;
+	return bcr;
 }
 
-static caryll_buffer *writeLigCarets(lig_caret_table *lc) {
-	caryll_buffer *buf = bufnew();
-	caryll_buffer *cov = caryll_write_coverage(lc->coverage);
-	bufwrite16b(buf, 0);
-	bufwrite16b(buf, lc->coverage->numGlyphs);
-	size_t offset = 4 + lc->coverage->numGlyphs * 2;
-	size_t cp = 0;
+static caryll_bkblock *writeLigCarets(lig_caret_table *lc) {
+	caryll_bkblock *lct = new_bkblock(p16, new_bkblock_from_buffer(caryll_write_coverage(lc->coverage)), // Coverage
+	                                  b16, lc->coverage->numGlyphs, // LigGlyphCount
+	                                  bkover);
 	for (uint16_t j = 0; j < lc->coverage->numGlyphs; j++) {
-		bufpingpong16b(buf, writeLigCaretRec(&(lc->carets[j])), &offset, &cp);
+		bkblock_push(lct, p16, writeLigCaretRec(&(lc->carets[j])), bkover);
 	}
-	offset = buflen(buf);
-	bufseek(buf, offset);
-	bufwrite_bufdel(buf, cov);
-	bufseek(buf, 0);
-	bufwrite16b(buf, offset);
-	return buf;
+	return lct;
 }
 
 caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, const caryll_options *options) {
-	caryll_buffer *buf = bufnew();
-	bufwrite32b(buf, 0x10000);
-	size_t offset = 12;
-	size_t cp = 0;
-	if (gdef->glyphClassDef) {
-		bufpingpong16b(buf, caryll_write_classdef(gdef->glyphClassDef), &offset, &cp);
-	} else {
-		bufwrite16b(buf, 0);
-	}
-	bufwrite16b(buf, 0);
+	caryll_bkblock *bGlyphClassDef = NULL;
+	caryll_bkblock *bAttachList = NULL;
+	caryll_bkblock *bLigCaretList = NULL;
+	caryll_bkblock *bMarkAttachClassDef = NULL;
+
+	if (gdef->glyphClassDef) { bGlyphClassDef = new_bkblock_from_buffer(caryll_write_classdef(gdef->glyphClassDef)); }
 	if (gdef->ligCarets && gdef->ligCarets->coverage && gdef->ligCarets->coverage->numGlyphs) {
-		bufpingpong16b(buf, writeLigCarets(gdef->ligCarets), &offset, &cp);
-	} else {
-		bufwrite16b(buf, 0);
+		bLigCaretList = writeLigCarets(gdef->ligCarets);
 	}
 	if (gdef->markAttachClassDef) {
-		bufpingpong16b(buf, caryll_write_classdef(gdef->markAttachClassDef), &offset, &cp);
-	} else {
-		bufwrite16b(buf, 0);
+		bMarkAttachClassDef = new_bkblock_from_buffer(caryll_write_classdef(gdef->markAttachClassDef));
 	}
-	return buf;
+	caryll_bkblock *root = new_bkblock(b32, 0x10000,             // Version
+	                                   p16, bGlyphClassDef,      // GlyphClassDef
+	                                   p16, bAttachList,         // AttachList
+	                                   p16, bLigCaretList,       // LigCaretList
+	                                   p16, bMarkAttachClassDef, // MarkAttachClassDef
+	                                   bkover);
+	return caryll_write_bk(root);
 }
