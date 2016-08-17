@@ -138,6 +138,14 @@ void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format)
 	if (format & FORMAT_DHEIGHT) bufwrite16b(buf, v.dHeight);
 }
 
+caryll_bkblock *bk_gpos_value(otl_position_value v, uint16_t format) {
+	caryll_bkblock *b = new_bkblock(bkover);
+	if (format & FORMAT_DX) bkblock_push(b, b16, v.dx, bkover);
+	if (format & FORMAT_DY) bkblock_push(b, b16, v.dy, bkover);
+	if (format & FORMAT_DWIDTH) bkblock_push(b, b16, v.dWidth, bkover);
+	if (format & FORMAT_DHEIGHT) bkblock_push(b, b16, v.dHeight, bkover);
+}
+
 // Anchor functions
 int getPositon(otl_anchor anchor) {
 	return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y);

@@ -47,7 +47,22 @@ void bkblock_pushptr(caryll_bkblock *b, bk_cell_type type, caryll_bkblock *p) {
 static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
 	bk_cell_type curtype = type0;
 	while (curtype) {
-		if (curtype < p16) {
+		if (curtype == bembed) {
+			caryll_bkblock *par = va_arg(ap, caryll_bkblock *);
+			if (par && par->cells) {
+				for (uint32_t j = 0; j < par->length; j++) {
+					if (bk_cell_is_ptr(par->cells + j)) {
+						bkblock_pushptr(b, par->cells[j].t, par->cells[j].p);
+					} else {
+						bkblock_pushint(b, par->cells[j].t, par->cells[j].z);
+					}
+				}
+			}
+			if (par) {
+				free(par->cells);
+				free(par);
+			}
+		} else if (curtype < p16) {
 			uint32_t par = va_arg(ap, int);
 			bkblock_pushint(b, curtype, par);
 		} else {

@@ -26,6 +26,8 @@ otl_position_value position_zero();
 otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset, uint16_t format);
 uint8_t required_position_format(otl_position_value v);
 void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format);
+caryll_bkblock *bk_gpos_value(otl_position_value v, uint16_t format);
+
 json_value *gpos_value_to_json(otl_position_value value);
 otl_position_value gpos_value_from_json(json_value *pos);
 

@@ -9,12 +9,13 @@
 
 struct __caryll_bkblock;
 typedef enum {
-	bkover = 0, // nothing
-	b8 = 1,     // byte
-	b16 = 2,    // short
-	b32 = 3,    // long
-	p16 = 0x10, // 16-bit offset, p = pointer to block
-	p32 = 0x11  // 32-bit offset, p = pointer to block
+	bkover = 0,   // nothing
+	b8 = 1,       // byte
+	b16 = 2,      // short
+	b32 = 3,      // long
+	p16 = 0x10,   // 16-bit offset, p = pointer to block
+	p32 = 0x11,   // 32-bit offset, p = pointer to block
+	bembed = 0xFF // Embed another block
 } bk_cell_type;
 typedef enum { VISIT_WHITE, VISIT_GRAY, VISIT_BLACK } bk_cell_visit_state;
 
