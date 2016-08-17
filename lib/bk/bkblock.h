@@ -28,9 +28,9 @@ typedef struct {
 } bk_cell;
 
 typedef struct __caryll_bkblock {
-	bool _stem;
 	bk_cell_visit_state _visitstate;
 	uint32_t _index;
+	uint32_t _height;
 	size_t length;
 	size_t free;
 	bk_cell *cells;

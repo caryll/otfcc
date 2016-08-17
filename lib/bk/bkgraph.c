@@ -16,15 +16,16 @@ static bkgraph_entry *_bkgraph_grow(caryll_bkgraph *f) {
 	return &(f->entries[f->length - 1]);
 }
 
-static bkgraph_entry *dfs_insert_cells(caryll_bkblock *b, caryll_bkgraph *f, uint32_t *order) {
-	if (!b || b->_visitstate != VISIT_WHITE) return NULL;
+static uint32_t dfs_insert_cells(caryll_bkblock *b, caryll_bkgraph *f, uint32_t *order) {
+	if (!b || b->_visitstate == VISIT_GRAY) return 0;
+	if (b->_visitstate == VISIT_BLACK) return b->_height;
 	b->_visitstate = VISIT_GRAY;
 	uint32_t height = 0;
 	for (uint32_t j = 0; j < b->length; j++) {
 		bk_cell *cell = &(b->cells[j]);
 		if (bk_cell_is_ptr(cell) && cell->p) {
-			bkgraph_entry *e = dfs_insert_cells(cell->p, f, order);
-			if (e && e->height + 1 > height) height = e->height + 1;
+			uint32_t thatHeight = dfs_insert_cells(cell->p, f, order);
+			if (thatHeight + 1 > height) height = thatHeight + 1;
 		}
 	}
 	bkgraph_entry *e = _bkgraph_grow(f);
@@ -32,9 +33,9 @@ static bkgraph_entry *dfs_insert_cells(caryll_bkblock *b, caryll_bkgraph *f, uin
 	e->block = b;
 	*order += 1;
 	e->order = *order;
-	e->height = height;
+	e->height = b->_height = height;
 	b->_visitstate = VISIT_BLACK;
-	return e;
+	return height;
 }
 
 static int _by_order(const void *_a, const void *_b) {

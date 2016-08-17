@@ -41,7 +41,6 @@ void bkblock_pushptr(caryll_bkblock *b, bk_cell_type type, caryll_bkblock *p) {
 	bk_cell *cell = bkblock_grow(b, 1);
 	cell->t = type;
 	cell->p = p;
-	b->_stem = true;
 }
 
 static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
