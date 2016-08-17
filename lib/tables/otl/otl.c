@@ -733,7 +733,7 @@ static bool _declare_lookup_writer(otl_lookup_type type, caryll_buffer *(*fn)(ot
 // When writing lookups, otfcc will try to maintain everything correctly.
 // That is, we will use extended layout lookups automatically when the
 // offsets are too large.
-static caryll_buffer *writeOTLLookups(table_otl *table, const caryll_options *options, const char *tag) {
+static caryll_bkblock *writeOTLLookups(table_otl *table, const caryll_options *options, const char *tag) {
 	caryll_buffer ***subtables;
 	NEW_N(subtables, table->lookupCount);
 	bool *lookupWritten;
@@ -799,7 +799,7 @@ static caryll_buffer *writeOTLLookups(table_otl *table, const caryll_options *op
 	}
 	free(subtables);
 	free(lookupWritten);
-	return caryll_write_bk(root);
+	return root;
 }
 
 static uint32_t featureNameToTag(sds name) {
@@ -810,7 +810,7 @@ static uint32_t featureNameToTag(sds name) {
 	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
 	return tag;
 }
-static caryll_buffer *writeOTLFeatures(table_otl *table, const caryll_options *options) {
+static caryll_bkblock *writeOTLFeatures(table_otl *table, const caryll_options *options) {
 	caryll_bkblock *root = new_bkblock(b16, table->featureCount, bkover);
 	for (uint16_t j = 0; j < table->featureCount; j++) {
 		caryll_bkblock *fea = new_bkblock(p16, NULL,                            // FeatureParams
@@ -829,7 +829,7 @@ static caryll_buffer *writeOTLFeatures(table_otl *table, const caryll_options *o
 		             p16, fea,                                              // Feature
 		             bkover);
 	}
-	return caryll_write_bk(root);
+	return root;
 }
 
 typedef struct {
@@ -871,7 +871,7 @@ static caryll_bkblock *writeScript(script_stat_hash *script, table_otl *table) {
 	}
 	return root;
 }
-static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, const caryll_options *options) {
+static caryll_bkblock *writeOTLScriptAndLanguages(table_otl *table, const caryll_options *options) {
 	script_stat_hash *h = NULL;
 	for (uint16_t j = 0; j < table->languageCount; j++) {
 		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
@@ -914,43 +914,16 @@ static caryll_buffer *writeOTLScriptAndLanguages(table_otl *table, const caryll_
 		free(s->ll);
 		free(s);
 	}
-	return caryll_write_bk(root);
+	return root;
 }
 
 caryll_buffer *caryll_write_otl(table_otl *table, const caryll_options *options, const char *tag) {
-	caryll_buffer *buf = bufnew();
-	bufwrite32b(buf, 0x10000);
-
-	caryll_buffer *bufl = writeOTLLookups(table, options, tag);
-	caryll_buffer *buff = writeOTLFeatures(table, options);
-	caryll_buffer *bufs = writeOTLScriptAndLanguages(table, options);
-
-	size_t rootOffset = 10;
-	{
-		bufwrite16b(buf, rootOffset);
-		size_t cp = buf->cursor;
-		bufseek(buf, rootOffset);
-		bufwrite_bufdel(buf, bufs);
-		rootOffset = buf->cursor;
-		bufseek(buf, cp);
-	}
-	{
-		bufwrite16b(buf, rootOffset);
-		size_t cp = buf->cursor;
-		bufseek(buf, rootOffset);
-		bufwrite_bufdel(buf, buff);
-		rootOffset = buf->cursor;
-		bufseek(buf, cp);
-	}
-	{
-		bufwrite16b(buf, rootOffset);
-		size_t cp = buf->cursor;
-		bufseek(buf, rootOffset);
-		bufwrite_bufdel(buf, bufl);
-		rootOffset = buf->cursor;
-		bufseek(buf, cp);
-	}
-	return buf;
+	caryll_bkblock *root = new_bkblock(b32, 0x10000,                                    // Version
+	                                   p16, writeOTLScriptAndLanguages(table, options), // ScriptList
+	                                   p16, writeOTLFeatures(table, options),           // FeatureList
+	                                   p16, writeOTLLookups(table, options, tag),       // LookupList
+	                                   bkover);
+	return caryll_write_bk(root);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
