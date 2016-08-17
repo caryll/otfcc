@@ -144,6 +144,7 @@ caryll_bkblock *bk_gpos_value(otl_position_value v, uint16_t format) {
 	if (format & FORMAT_DY) bkblock_push(b, b16, v.dy, bkover);
 	if (format & FORMAT_DWIDTH) bkblock_push(b, b16, v.dWidth, bkover);
 	if (format & FORMAT_DHEIGHT) bkblock_push(b, b16, v.dHeight, bkover);
+	return b;
 }
 
 // Anchor functions
