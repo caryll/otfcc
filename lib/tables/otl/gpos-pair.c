@@ -265,7 +265,6 @@ FAIL:
 
 caryll_buffer *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-	caryll_buffer *buf = bufnew();
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
 	uint16_t class1Count = subtable->first->maxclass + 1;
@@ -290,34 +289,34 @@ caryll_buffer *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
 			}
 		}
 	}
-	size_t offset = 10 + subtable->first->numGlyphs * 2;
-	size_t cp = 0;
 
-	bufwrite16b(buf, 1);
-	bufpingpong16b(buf, caryll_write_coverage(subtable->coverage), &offset, &cp);
-	bufwrite16b(buf, format1);
-	bufwrite16b(buf, format2);
-	bufwrite16b(buf, subtable->first->numGlyphs);
+	caryll_bkblock *root =
+	    new_bkblock(b16, 1,                                                                  // PosFormat
+	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // Coverage
+	                b16, format1,                                                            // ValueFormat1
+	                b16, format2,                                                            // ValueFormat2
+	                b16, subtable->first->numGlyphs,                                         // PairSetCount
+	                bkover);
 	for (uint16_t j = 0; j < subtable->first->numGlyphs; j++) {
-		bufping16b(buf, &offset, &cp);
-		bufwrite16b(buf, pairCounts[j]);
+		caryll_bkblock *pairSet = new_bkblock(b16, pairCounts[j], // PairValueCount
+		                                      bkover);
 		for (uint16_t k = 0; k < subtable->second->numGlyphs; k++) {
 			uint16_t c1 = subtable->first->classes[j];
 			uint16_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
-				bufwrite16b(buf, subtable->second->glyphs[k].index);
-				write_gpos_value(buf, subtable->firstValues[c1][c2], format1);
-				write_gpos_value(buf, subtable->secondValues[c1][c2], format2);
+				bkblock_push(pairSet, b16, subtable->second->glyphs[k].index,                // SecondGlyph
+				             bembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
+				             bembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
+				             bkover);
 			}
 		}
-		bufpong(buf, &offset, &cp);
+		bkblock_push(root, p16, pairSet, bkover);
 	}
-	return buf;
+	return caryll_write_bk(root);
 }
 caryll_buffer *caryll_write_gpos_pair_classes(otl_subtable *_subtable) {
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-	caryll_buffer *buf = bufnew();
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
 	uint16_t class1Count = subtable->first->maxclass + 1;
@@ -329,27 +328,24 @@ caryll_buffer *caryll_write_gpos_pair_classes(otl_subtable *_subtable) {
 			format2 |= required_position_format(subtable->secondValues[j][k]);
 		}
 	}
-	uint8_t len1 = position_format_length(format1);
-	uint8_t len2 = position_format_length(format2);
-	size_t offset = 16 + class1Count * class2Count * (len1 + len2);
-	size_t cp = 0;
-	bufwrite16b(buf, 2);
-	bufpingpong16b(buf, caryll_write_coverage(subtable->coverage), &offset, &cp);
-	bufwrite16b(buf, format1);
-	bufwrite16b(buf, format2);
-	bufpingpong16b(buf, caryll_write_classdef(subtable->first), &offset, &cp);
-	bufpingpong16b(buf, caryll_write_classdef(subtable->second), &offset, &cp);
-	bufwrite16b(buf, class1Count);
-	bufwrite16b(buf, class2Count);
-
+	caryll_bkblock *root =
+	    new_bkblock(b16, 2,                                                                  // PosFormat
+	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // Coverage
+	                b16, format1,                                                            // ValueFormat1
+	                b16, format2,                                                            // ValueFormat2
+	                p16, new_bkblock_from_buffer(caryll_write_classdef(subtable->first)),    // ClassDef1
+	                p16, new_bkblock_from_buffer(caryll_write_classdef(subtable->second)),   // ClassDef2
+	                b16, class1Count,                                                        // Class1Count
+	                b16, class2Count,                                                        // Class2Count
+	                bkover);
 	for (uint16_t j = 0; j < class1Count; j++) {
 		for (uint16_t k = 0; k < class2Count; k++) {
-			write_gpos_value(buf, subtable->firstValues[j][k], format1);
-			write_gpos_value(buf, subtable->secondValues[j][k], format2);
+			bkblock_push(root, bembed, bk_gpos_value(subtable->firstValues[j][k], format1), // Value1
+			             bembed, bk_gpos_value(subtable->secondValues[j][k], format2),      // Value2
+			             bkover);
 		}
 	}
-
-	return buf;
+	return caryll_write_bk(root);
 }
 caryll_buffer *caryll_write_gpos_pair(otl_subtable *_subtable) {
 	caryll_buffer *format1 = caryll_write_gpos_pair_individual(_subtable);

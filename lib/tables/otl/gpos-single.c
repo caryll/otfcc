@@ -81,7 +81,6 @@ otl_subtable *caryll_gpos_single_from_json(json_value *_subtable) {
 }
 
 caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
-	caryll_buffer *buf = bufnew();
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	bool isConst = subtable->coverage->numGlyphs > 0;
 	uint16_t format = 0;
@@ -95,22 +94,23 @@ caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
 		}
 	}
 	if (isConst) {
-		bufwrite16b(buf, 1);
-		size_t offset = 6 + position_format_length(format);
-		size_t cp = buf->cursor;
-		bufpingpong16b(buf, caryll_write_coverage(subtable->coverage), &offset, &cp);
-		bufwrite16b(buf, format);
-		write_gpos_value(buf, subtable->values[0], format);
+		return caryll_write_bk(
+		    new_bkblock(b16, 1,                                                                  // Format
+		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // coverage
+		                b16, format,                                                             // format
+		                bembed, bk_gpos_value(subtable->values[0], format),                      // value
+		                bkover));
 	} else {
-		bufwrite16b(buf, 2);
-		size_t offset = 8 + position_format_length(format) * subtable->coverage->numGlyphs;
-		size_t cp = buf->cursor;
-		bufpingpong16b(buf, caryll_write_coverage(subtable->coverage), &offset, &cp);
-		bufwrite16b(buf, format);
-		bufwrite16b(buf, subtable->coverage->numGlyphs);
-		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-			write_gpos_value(buf, subtable->values[j], format);
+		caryll_bkblock *b =
+		    new_bkblock(b16, 2,                                                                  // Format
+		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // coverage
+		                b16, format,                                                             // format
+		                b16, subtable->coverage->numGlyphs,                                      // quantity
+		                bkover);
+		for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
+			bkblock_push(b, bembed, bk_gpos_value(subtable->values[k], format), // value
+			             bkover);
 		}
+		return caryll_write_bk(b);
 	}
-	return buf;
 }

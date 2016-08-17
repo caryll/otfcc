@@ -460,7 +460,6 @@ otl_subtable *caryll_chaining_from_json(json_value *_subtable) {
 }
 
 caryll_buffer *caryll_write_chaining_coverage(otl_subtable *_subtable) {
-	caryll_buffer *bufst = bufnew();
 	subtable_chaining *subtable = &(_subtable->chaining);
 	otl_chaining_rule *rule = subtable->rules[0];
 	uint16_t nBacktrack = rule->inputBegins;
@@ -469,54 +468,49 @@ caryll_buffer *caryll_write_chaining_coverage(otl_subtable *_subtable) {
 	uint16_t nSubst = rule->applyCount;
 	reverseBacktracks(rule);
 
-	bufwrite16b(bufst, 3); // By coverage
-	size_t offset = 10 + 2 * rule->matchCount + 4 * rule->applyCount;
-	bufwrite16b(bufst, nBacktrack);
-	size_t cp = bufst->cursor;
+	caryll_bkblock *root = new_bkblock(b16, 3, // format
+	                                   bkover);
+
+	bkblock_push(root, b16, nBacktrack, bkover);
 	for (uint16_t j = 0; j < rule->inputBegins; j++) {
-		bufpingpong16b(bufst, caryll_write_coverage(rule->match[j]), &offset, &cp);
+		bkblock_push(root, p16, new_bkblock_from_buffer(caryll_write_coverage(rule->match[j])), bkover);
 	}
-	bufwrite16b(bufst, nInput);
+	bkblock_push(root, b16, nInput, bkover);
 	for (uint16_t j = rule->inputBegins; j < rule->inputEnds; j++) {
-		bufpingpong16b(bufst, caryll_write_coverage(rule->match[j]), &offset, &cp);
+		bkblock_push(root, p16, new_bkblock_from_buffer(caryll_write_coverage(rule->match[j])), bkover);
 	}
-	bufwrite16b(bufst, nLookahead);
+	bkblock_push(root, b16, nLookahead, bkover);
 	for (uint16_t j = rule->inputEnds; j < rule->matchCount; j++) {
-		bufpingpong16b(bufst, caryll_write_coverage(rule->match[j]), &offset, &cp);
+		bkblock_push(root, p16, new_bkblock_from_buffer(caryll_write_coverage(rule->match[j])), bkover);
 	}
-	bufwrite16b(bufst, rule->applyCount);
+	bkblock_push(root, b16, rule->applyCount, bkover);
 	for (uint16_t j = 0; j < nSubst; j++) {
-		bufwrite16b(bufst, rule->apply[j].index - nBacktrack);
-		bufwrite16b(bufst, rule->apply[j].lookup.index);
+		bkblock_push(root, b16, rule->apply[j].index - nBacktrack, // position
+		             b16, rule->apply[j].lookup.index,             // lookup
+		             bkover);
 	}
-	return bufst;
+
+	return caryll_write_bk(root);
 }
+
 caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
-	caryll_buffer *buf = bufnew();
 	subtable_chaining *subtable = &(_subtable->chaining);
-	// write coverage and class definitions
-	caryll_buffer *after = bufnew();
+
 	otl_coverage *coverage;
 	NEW(coverage);
 	coverage->numGlyphs = subtable->ic->numGlyphs;
 	coverage->glyphs = subtable->ic->glyphs;
-	bufwrite_bufdel(after, caryll_write_coverage(coverage));
-	size_t offsetbc = after->cursor;
-	bufwrite_bufdel(after, caryll_write_classdef(subtable->bc));
-	size_t offsetic = after->cursor;
-	bufwrite_bufdel(after, caryll_write_classdef(subtable->ic));
-	size_t offsetfc = after->cursor;
-	bufwrite_bufdel(after, caryll_write_classdef(subtable->fc));
 
-	// write rules
-	bufwrite16b(buf, 2);                          // by class
-	bufwrite16b(buf, 0);                          // coverage offset -- fill later
-	bufwrite16b(buf, 0);                          // bc offset -- fill later
-	bufwrite16b(buf, 0);                          // ic offset -- fill later
-	bufwrite16b(buf, 0);                          // fc offset -- fill later
-	bufwrite16b(buf, subtable->ic->maxclass + 1); // nclasses of ic;
+	caryll_bkblock *root =
+	    new_bkblock(b16, 2,                                                            // format
+	                p16, new_bkblock_from_buffer(caryll_write_coverage(coverage)),     // coverage
+	                p16, new_bkblock_from_buffer(caryll_write_classdef(subtable->bc)), // BacktrackClassDef
+	                p16, new_bkblock_from_buffer(caryll_write_classdef(subtable->ic)), // InputClassDef
+	                p16, new_bkblock_from_buffer(caryll_write_classdef(subtable->fc)), // LookaheadClassDef
+	                b16, subtable->ic->maxclass + 1,                                   // ChainSubClassSetCnt
+	                bkover);
 
-	uint16_t *rcpg, totalSets = 0, totalRules = 0;
+	uint16_t *rcpg;
 	NEW_N(rcpg, subtable->ic->maxclass + 1);
 	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) {
 		rcpg[j] = 0;
@@ -527,73 +521,49 @@ caryll_buffer *caryll_write_chaining_classes(otl_subtable *_subtable) {
 		if (startClass <= subtable->ic->maxclass) rcpg[startClass] += 1;
 	}
 
-	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++)
-		if (rcpg[j]) { totalSets++, totalRules += rcpg[j]; }
-
-	// we are using a three-level ping-pong to maintain this fxxxing table
-	size_t setsOffset = buf->cursor + 2 + subtable->ic->maxclass * 2;
-	size_t rulesOffset = setsOffset + totalSets * 2 + totalRules * 2;
 	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) {
 		if (rcpg[j]) {
-			bufwrite16b(buf, setsOffset);
-			size_t cp = buf->cursor;
-			bufseek(buf, setsOffset);
-			bufwrite16b(buf, rcpg[j]);
+			caryll_bkblock *cset = new_bkblock(b16, rcpg[j], // ChainSubClassRuleCnt
+			                                   bkover);
 			for (uint16_t k = 0; k < subtable->rulesCount; k++) {
 				otl_chaining_rule *rule = subtable->rules[k];
 				uint16_t startClass = rule->match[rule->inputBegins]->glyphs[0].index;
-				if (startClass == j) {
-					reverseBacktracks(rule);
-					bufwrite16b(buf, rulesOffset - setsOffset);
-					size_t xcp = buf->cursor;
-					bufseek(buf, rulesOffset);
-
-					uint16_t nBacktrack = rule->inputBegins;
-					uint16_t nInput = rule->inputEnds - rule->inputBegins;
-					uint16_t nLookahead = rule->matchCount - rule->inputEnds;
-					uint16_t nSubst = rule->applyCount;
-
-					bufwrite16b(buf, nBacktrack);
-					for (uint16_t m = 0; m < rule->inputBegins; m++) {
-						bufwrite16b(buf, rule->match[m]->glyphs[0].index);
-					}
-					bufwrite16b(buf, nInput);
-					for (uint16_t m = rule->inputBegins + 1; m < rule->inputEnds; m++) {
-						bufwrite16b(buf, rule->match[m]->glyphs[0].index);
-					}
-					bufwrite16b(buf, nLookahead);
-					for (uint16_t m = rule->inputEnds; m < rule->matchCount; m++) {
-						bufwrite16b(buf, rule->match[m]->glyphs[0].index);
-					}
-					bufwrite16b(buf, nSubst);
-					for (uint16_t m = 0; m < nSubst; m++) {
-						bufwrite16b(buf, rule->apply[m].index - nBacktrack);
-						bufwrite16b(buf, rule->apply[m].lookup.index);
-					}
-
-					rulesOffset = buf->cursor;
-					bufseek(buf, xcp);
+				if (startClass != j) { continue; }
+				reverseBacktracks(rule);
+				uint16_t nBacktrack = rule->inputBegins;
+				uint16_t nInput = rule->inputEnds - rule->inputBegins;
+				uint16_t nLookahead = rule->matchCount - rule->inputEnds;
+				uint16_t nSubst = rule->applyCount;
+				caryll_bkblock *r = new_bkblock(bkover);
+				bkblock_push(r, b16, nBacktrack, bkover);
+				for (uint16_t m = 0; m < rule->inputBegins; m++) {
+					bkblock_push(r, b16, rule->match[m]->glyphs[0].index, bkover);
 				}
+				bkblock_push(r, b16, nInput, bkover);
+				for (uint16_t m = rule->inputBegins + 1; m < rule->inputEnds; m++) {
+					bkblock_push(r, b16, rule->match[m]->glyphs[0].index, bkover);
+				}
+				bkblock_push(r, b16, nLookahead, bkover);
+				for (uint16_t m = rule->inputEnds; m < rule->matchCount; m++) {
+					bkblock_push(r, b16, rule->match[m]->glyphs[0].index, bkover);
+				}
+				bkblock_push(r, b16, nSubst, bkover);
+				for (uint16_t m = 0; m < nSubst; m++) {
+					bkblock_push(r, b16, rule->apply[m].index - nBacktrack, // position
+					             b16, rule->apply[m].lookup.index,          // lookup index
+					             bkover);
+				}
+				bkblock_push(cset, p16, r, bkover);
 			}
-			setsOffset = buf->cursor;
-			bufseek(buf, cp);
+			bkblock_push(root, p16, cset, bkover);
 		} else {
-			bufwrite16b(buf, 0);
+			bkblock_push(root, p16, NULL, bkover);
 		}
 	}
 
-	// so, how far have we reached?
-	size_t afterOffset = buflen(buf);
-	bufseek(buf, afterOffset);
-	bufwrite_bufdel(buf, after);
-	bufseek(buf, 2);
-	bufwrite16b(buf, afterOffset);
-	bufwrite16b(buf, afterOffset + offsetbc);
-	bufwrite16b(buf, afterOffset + offsetic);
-	bufwrite16b(buf, afterOffset + offsetfc);
-
 	free(coverage);
-	return buf;
+	free(rcpg);
+	return caryll_write_bk(root);
 }
 
 caryll_buffer *caryll_write_chaining(otl_subtable *_subtable) {

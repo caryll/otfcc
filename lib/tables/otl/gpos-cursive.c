@@ -86,52 +86,19 @@ otl_subtable *caryll_gpos_cursive_from_json(json_value *_subtable) {
 }
 
 caryll_buffer *caryll_write_gpos_cursive(otl_subtable *_subtable) {
-	anchor_aggeration_hash *agh = NULL, *s, *tmp;
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
+
+	caryll_bkblock *root =
+	    new_bkblock(b16, 1,                                                                  // format
+	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // Coverage
+	                b16, subtable->coverage->numGlyphs,                                      // EntryExitCount
+	                bkover);
 	for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-		ANCHOR_AGGERATOR_PUSH(agh, subtable->enter[j]);
-		ANCHOR_AGGERATOR_PUSH(agh, subtable->exit[j]);
+		bkblock_push(root,                                  // EntryExitRecord[.]
+		             p16, bkFromAnchor(subtable->enter[j]), // enter
+		             p16, bkFromAnchor(subtable->exit[j]),  // exit
+		             bkover);
 	}
-	HASH_SORT(agh, byAnchorIndex);
-	caryll_buffer *buf = bufnew();
-	bufwrite16b(buf, 1);
-	size_t covOffset = 6 + 4 * subtable->coverage->numGlyphs;
-	size_t cp = buf->cursor;
-	bufpingpong16b(buf, caryll_write_coverage(subtable->coverage), &covOffset, &cp);
-	bufwrite16b(buf, subtable->coverage->numGlyphs);
-	for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-		if (subtable->enter[j].present) {
-			anchor_aggeration_hash *s;
-			int position = getPositon(subtable->enter[j]);
-			HASH_FIND_INT(agh, &position, s);
-			if (s) {
-				bufwrite16b(buf, covOffset + s->index * 6);
-			} else {
-				bufwrite16b(buf, 0);
-			}
-		} else {
-			bufwrite16b(buf, 0);
-		}
-		if (subtable->exit[j].present) {
-			anchor_aggeration_hash *s;
-			int position = getPositon(subtable->exit[j]);
-			HASH_FIND_INT(agh, &position, s);
-			if (s) {
-				bufwrite16b(buf, covOffset + s->index * 6);
-			} else {
-				bufwrite16b(buf, 0);
-			}
-		} else {
-			bufwrite16b(buf, 0);
-		}
-	}
-	bufseek(buf, covOffset);
-	HASH_ITER(hh, agh, s, tmp) {
-		bufwrite16b(buf, 1);
-		bufwrite16b(buf, s->x);
-		bufwrite16b(buf, s->y);
-		HASH_DEL(agh, s);
-		free(s);
-	}
-	return buf;
+
+	return caryll_write_bk(root);
 }
