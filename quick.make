@@ -1,10 +1,11 @@
-VERSION=0.3.1
-
 ifndef PREMAKE5
 PREMAKE5=premake5
 endif
 
-default: linux-release-x64
+mf-vs2015 :
+	@$(PREMAKE5) vs2015
+mf-gmake :
+	@$(PREMAKE5) gmake
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
@@ -30,15 +31,6 @@ clang-cl-release-x64 : mf-vs2015
 	@cmd /c _vcbuild64.bat /property:Configuration=Release
 clang-cl-release-x86 : mf-vs2015
 	@cmd /c _vcbuild32.bat /property:Configuration=Release /property:Platform=win32
-
-win : clang-cl-release-x86 clang-cl-release-x64
-	cd bin/Release-x64 && 7z a ../otfcc-win64-$(VERSION).zip ./* -y
-	cd bin/Release-x32 && 7z a ../otfcc-win32-$(VERSION).zip ./* -y
-
-mf-vs2015 :
-	@$(PREMAKE5) vs2015
-mf-gmake :
-	@$(PREMAKE5) gmake
 
 cffopcodetest :
 	@bin/Release-x64/otfccdump 'tests/payload/cffspecial/cff.abs.otf' | node tests/cffdump-opcode-check
