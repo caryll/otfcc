@@ -5,8 +5,7 @@ static void encode(cmap_hash *map, int c, uint16_t gid) {
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
 		s = malloc(sizeof(cmap_entry));
-		s->glyph.gid = gid;
-		s->glyph.name = NULL;
+		s->glyph = handle_from_id(gid);
 		s->unicode = c;
 		HASH_ADD_INT(*map, unicode, s);
 	}
@@ -108,7 +107,7 @@ void caryll_delete_cmap(cmap_hash *table) {
 	free(table);
 }
 
-void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_options *options) {
+void caryll_cmap_to_json(cmap_hash *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping cmap.\n");
 
@@ -123,7 +122,7 @@ void caryll_cmap_to_json(cmap_hash *table, json_value *root, caryll_options *opt
 	json_object_push(root, "cmap", cmap);
 }
 
-cmap_hash *caryll_cmap_from_json(json_value *root, caryll_options *options) {
+cmap_hash *caryll_cmap_from_json(json_value *root, const caryll_options *options) {
 	if (root->type != json_object) return NULL;
 	cmap_hash hash = NULL;
 	json_value *table = NULL;
@@ -190,12 +189,12 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 		if (!started) {
 			started = true;
 			lastUnicodeStart = lastUnicodeEnd = item->unicode;
-			lastGIDStart = lastGIDEnd = item->glyph.gid;
+			lastGIDStart = lastGIDEnd = item->glyph.index;
 			isSequencial = true;
 		} else {
 			if (item->unicode == lastUnicodeEnd + 1 &&
-			    !(item->glyph.gid != lastGIDEnd + 1 && isSequencial && lastGIDEnd - lastGIDStart >= 4)) {
-				if (isSequencial && !(item->glyph.gid == lastGIDEnd + 1)) {
+			    !(item->glyph.index != lastGIDEnd + 1 && isSequencial && lastGIDEnd - lastGIDStart >= 4)) {
+				if (isSequencial && !(item->glyph.index == lastGIDEnd + 1)) {
 					lastGlyphIdArrayOffset = glyphIdArray->cursor;
 					// oops, sequencial glyphid broken
 					for (int j = lastGIDStart; j <= lastGIDEnd; j++) {
@@ -203,15 +202,15 @@ caryll_buffer *caryll_write_cmap_format4(cmap_hash *cmap) {
 					}
 				}
 				lastUnicodeEnd = item->unicode;
-				isSequencial = isSequencial && (item->glyph.gid == lastGIDEnd + 1);
-				lastGIDEnd = item->glyph.gid;
+				isSequencial = isSequencial && (item->glyph.index == lastGIDEnd + 1);
+				lastGIDEnd = item->glyph.index;
 				if (!isSequencial) { bufwrite16b(glyphIdArray, lastGIDEnd); }
 			} else {
 				// we have a segment
 				FLUSH_SEQUENCE_FORMAT_4;
 
 				lastUnicodeStart = lastUnicodeEnd = item->unicode;
-				lastGIDStart = lastGIDEnd = item->glyph.gid;
+				lastGIDStart = lastGIDEnd = item->glyph.index;
 				isSequencial = true;
 			}
 		}
@@ -286,17 +285,17 @@ caryll_buffer *caryll_write_cmap_format12(cmap_hash *cmap) {
 		if (!started) {
 			started = true;
 			lastUnicodeStart = lastUnicodeEnd = item->unicode;
-			lastGIDStart = lastGIDEnd = item->glyph.gid;
-		} else if (item->unicode == lastUnicodeEnd + 1 && item->glyph.gid == lastGIDEnd + 1) {
+			lastGIDStart = lastGIDEnd = item->glyph.index;
+		} else if (item->unicode == lastUnicodeEnd + 1 && item->glyph.index == lastGIDEnd + 1) {
 			lastUnicodeEnd = item->unicode;
-			lastGIDEnd = item->glyph.gid;
+			lastGIDEnd = item->glyph.index;
 		} else {
 			bufwrite32b(buf, lastUnicodeStart);
 			bufwrite32b(buf, lastUnicodeEnd);
 			bufwrite32b(buf, lastGIDStart);
 			nGroups += 1;
 			lastUnicodeStart = lastUnicodeEnd = item->unicode;
-			lastGIDStart = lastGIDEnd = item->glyph.gid;
+			lastGIDStart = lastGIDEnd = item->glyph.index;
 		}
 	}
 	bufwrite32b(buf, lastUnicodeStart);
@@ -310,7 +309,7 @@ caryll_buffer *caryll_write_cmap_format12(cmap_hash *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_buffer *caryll_write_cmap(cmap_hash *cmap, caryll_options *options) {
+caryll_buffer *caryll_write_cmap(cmap_hash *cmap, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 

@@ -31,8 +31,7 @@ otl_subtable *caryll_read_gsub_single(font_file_pointer data, uint32_t tableLeng
 
 		uint16_t delta = read_16u(data + subtableOffset + 4);
 		for (uint16_t j = 0; j < from->numGlyphs; j++) {
-			to->glyphs[j].gid = from->glyphs[j].gid + delta;
-			to->glyphs[j].name = NULL;
+			to->glyphs[j] = handle_from_id(from->glyphs[j].index + delta);
 		}
 		subtable->gsub_single.to = to;
 	} else {
@@ -44,8 +43,7 @@ otl_subtable *caryll_read_gsub_single(font_file_pointer data, uint32_t tableLeng
 		NEW_N(to->glyphs, to->numGlyphs);
 
 		for (uint16_t j = 0; j < to->numGlyphs; j++) {
-			to->glyphs[j].gid = read_16u(data + subtableOffset + 6 + j * 2);
-			to->glyphs[j].name = NULL;
+			to->glyphs[j] = handle_from_id(read_16u(data + subtableOffset + 6 + j * 2));
 		}
 		subtable->gsub_single.to = to;
 	}
@@ -91,29 +89,29 @@ otl_subtable *caryll_gsub_single_from_json(json_value *_subtable) {
 };
 
 caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {
-	caryll_buffer *bufst = bufnew();
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	bool isConstantDifference = true;
 	if (subtable->from->numGlyphs > 1) {
-		int32_t difference = subtable->to->glyphs[0].gid - subtable->from->glyphs[0].gid;
+		int32_t difference = subtable->to->glyphs[0].index - subtable->from->glyphs[0].index;
 		for (uint16_t j = 1; j < subtable->from->numGlyphs; j++) {
-			isConstantDifference =
-			    isConstantDifference && ((subtable->to->glyphs[j].gid - subtable->from->glyphs[j].gid) == difference);
+			isConstantDifference = isConstantDifference &&
+			                       ((subtable->to->glyphs[j].index - subtable->from->glyphs[j].index) == difference);
 		}
 	}
 	if (isConstantDifference && subtable->from->numGlyphs > 0) {
-		bufwrite16b(bufst, 1);
-		bufwrite16b(bufst, 6);
-		bufwrite16b(bufst, subtable->to->glyphs[0].gid - subtable->from->glyphs[0].gid);
-		bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
+		return caryll_write_bk(
+		    new_bkblock(b16, 1,                                                               // Format
+		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->from)),  // coverage
+		                b16, subtable->to->glyphs[0].index - subtable->from->glyphs[0].index, // delta
+		                bkover));
 	} else {
-		bufwrite16b(bufst, 2);
-		bufwrite16b(bufst, 6 + subtable->to->numGlyphs * 2);
-		bufwrite16b(bufst, subtable->to->numGlyphs);
+		caryll_bkblock *b = new_bkblock(b16, 2,                                                              // Format
+		                                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->from)), // coverage
+		                                b16, subtable->to->numGlyphs,                                        // quantity
+		                                bkover);
 		for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
-			bufwrite16b(bufst, subtable->to->glyphs[k].gid);
+			bkblock_push(b, b16, subtable->to->glyphs[k].index, bkover);
 		}
-		bufwrite_bufdel(bufst, caryll_write_coverage(subtable->from));
+		return caryll_write_bk(b);
 	}
-	return bufst;
 }

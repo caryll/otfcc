@@ -27,6 +27,7 @@ static void caryll_delete_privatedict(cff_private *priv) {
 	FREE(priv->blueValues);
 	FREE(priv->otherBlues);
 	FREE(priv->familyBlues);
+
 	FREE(priv->familyOtherBlues);
 	FREE(priv->stemSnapH);
 	FREE(priv->stemSnapV);
@@ -427,7 +428,7 @@ static void buildOutline(uint16_t i, cff_parse_context *context) {
 	else
 		fd = parse_subr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
-	g->fdSelect.index = fd;
+	g->fdSelect = handle_from_id(fd);
 	if (context->meta->fdArray && fd >= 0 && fd < context->meta->fdArrayCount &&
 	    context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
@@ -689,7 +690,7 @@ static json_value *fdToJson(table_CFF *table) {
 	return _CFF_;
 }
 
-void caryll_CFF_to_json(table_CFF *table, json_value *root, caryll_options *options) {
+void caryll_CFF_to_json(table_CFF *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
 
@@ -792,7 +793,7 @@ static table_CFF *fdFromJson(json_value *dump) {
 	if (!table->privateDict) table->privateDict = caryll_new_CFF_private();
 	return table;
 }
-table_CFF *caryll_CFF_from_json(json_value *root, caryll_options *options) {
+table_CFF *caryll_CFF_from_json(json_value *root, const caryll_options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
 	if (!dump) {
 		return NULL;
@@ -803,7 +804,7 @@ table_CFF *caryll_CFF_from_json(json_value *root, caryll_options *options) {
 }
 
 static caryll_buffer *compile_glyph(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidthX,
-                                    caryll_options *options) {
+                                    const caryll_options *options) {
 	charstring_il *il = compile_glyph_to_il(g, defaultWidth, nominalWidthX);
 	glyph_il_peephole_optimization(il, options);
 	caryll_buffer *blob = il2blob(il);
@@ -816,7 +817,7 @@ typedef struct {
 	table_glyf *glyf;
 	uint16_t defaultWidth;
 	uint16_t nominalWidthX;
-	caryll_options *options;
+	const caryll_options *options;
 } cff_charstring_builder_context;
 static caryll_buffer *callback_makeglyph(void *_context, uint32_t j) {
 	cff_charstring_builder_context *context = (cff_charstring_builder_context *)_context;
@@ -1122,7 +1123,7 @@ static CFF_Index *cff_make_fdarray(uint16_t fdArrayCount, table_CFF **fdArray, c
 	return cff_buildindex_callback(&context, fdArrayCount, callback_makefd);
 }
 
-static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll_options *options) {
+static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, const caryll_options *options) {
 	caryll_buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;
@@ -1263,6 +1264,6 @@ static caryll_buffer *writeCFF_CIDKeyed(table_CFF *cff, table_glyf *glyf, caryll
 	return blob;
 }
 
-caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf, caryll_options *options) {
+caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf, const caryll_options *options) {
 	return writeCFF_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }

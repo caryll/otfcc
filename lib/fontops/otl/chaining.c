@@ -13,21 +13,31 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		bool foundLookup = false;
-		if (rule->apply[j].lookupName) {
-			for (uint16_t k = 0; k < table->lookupCount; k++)
-				if (strcmp(table->lookups[k]->name, rule->apply[j].lookupName) == 0) {
-					foundLookup = true;
-					rule->apply[j].lookupIndex = k;
-					if (rule->apply[j].lookupName != table->lookups[k]->name) {
-						DELETE(sdsfree, rule->apply[j].lookupName);
-					}
-					rule->apply[j].lookupName = table->lookups[k]->name;
+		if (rule->apply[j].lookup.name) {
+		FIND_LOOKUP:;
+			for (uint16_t k = 0; k < table->lookupCount; k++) {
+				if (strcmp(table->lookups[k]->name, rule->apply[j].lookup.name) != 0) continue;
+				foundLookup = true;
+				rule->apply[j].lookup.index = k;
+				if (rule->apply[j].lookup.name != table->lookups[k]->name) {
+					DELETE(sdsfree, rule->apply[j].lookup.name);
 				}
+				rule->apply[j].lookup.name = table->lookups[k]->name;
+			}
+			if (!foundLookup) {
+				// Maybe the lookup is aliased.
+				for (uint16_t k = 0; k < table->lookupAliasesCount; k++) {
+					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookup.name) != 0) continue;
+					DELETE(sdsfree, rule->apply[j].lookup.name);
+					rule->apply[j].lookup.name = sdsdup(table->lookupAliases[k].to);
+					goto FIND_LOOKUP;
+				}
+			}
 		}
-		if (!foundLookup && rule->apply[j].lookupName) {
-			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookupName,
+		if (!foundLookup && rule->apply[j].lookup.name) {
+			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookup.name,
 			        lookupName);
-			DELETE(sdsfree, rule->apply[j].lookupName);
+			DELETE(sdsfree, rule->apply[j].lookup.name);
 		}
 	}
 	// If a rule is designed to have no lookup application, it may be a ignoration
@@ -35,7 +45,7 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 	if (rule->applyCount) {
 		uint16_t k = 0;
 		for (uint16_t j = 0; j < rule->applyCount; j++)
-			if (rule->apply[j].lookupName) { rule->apply[k++] = rule->apply[j]; }
+			if (rule->apply[j].lookup.name) { rule->apply[k++] = rule->apply[j]; }
 		rule->applyCount = k;
 		if (!rule->applyCount) {
 			delete_otl_chaining_subtable(_subtable);
@@ -58,21 +68,21 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
 	classifier_hash *s;
 	if (cov->numGlyphs == 0) return 1;
-	int gid = cov->glyphs[0].gid;
+	int gid = cov->glyphs[0].index;
 	// check pass
 	HASH_FIND_INT(*h, &gid, s);
 	if (s) {
 		// the coverage has been defined into a class
 		classifier_hash *ss, *tmp;
 		for (uint16_t j = 1; j < cov->numGlyphs; j++) {
-			int gid = cov->glyphs[j].gid;
+			int gid = cov->glyphs[j].index;
 			HASH_FIND_INT(*h, &gid, ss);
 			if (!ss || ss->cls != s->cls) return 0;
 		}
 		// reverse check: all glyphs classified are there in the coverage
 		classifier_hash *revh = NULL;
 		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
-			int gid = cov->glyphs[j].gid;
+			int gid = cov->glyphs[j].index;
 			classifier_hash *rss;
 			HASH_FIND_INT(revh, &gid, rss);
 			if (!rss) {
@@ -103,14 +113,14 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 		// the coverage is not defined into a class.
 		classifier_hash *ss;
 		for (uint16_t j = 1; j < cov->numGlyphs; j++) {
-			int gid = cov->glyphs[j].gid;
+			int gid = cov->glyphs[j].index;
 			HASH_FIND_INT(*h, &gid, ss);
 			if (ss) return 0;
 		}
 		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
 			classifier_hash *s;
 			NEW(s);
-			s->gid = cov->glyphs[j].gid;
+			s->gid = cov->glyphs[j].index;
 			s->gname = cov->glyphs[j].name;
 			s->cls = *past + 1;
 			HASH_ADD_INT(*h, gid, s);
@@ -124,20 +134,20 @@ static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
 			classifier_hash *s;
-			int gid = rule->match[m]->glyphs[0].gid;
+			int gid = rule->match[m]->glyphs[0].index;
 			HASH_FIND_INT(h, &gid, s);
 			caryll_delete_coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0].gid = s->cls;
+			rule->match[m]->glyphs[0].index = s->cls;
 			rule->match[m]->glyphs[0].name = NULL;
 		} else {
 			caryll_delete_coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0].gid = 0;
+			rule->match[m]->glyphs[0].index = 0;
 			rule->match[m]->glyphs[0].name = NULL;
 		}
 }
@@ -157,7 +167,7 @@ static otl_classdef *toClass(classifier_hash *h) {
 	uint16_t j = 0;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
-		cd->glyphs[j].gid = item->gid;
+		cd->glyphs[j].index = item->gid;
 		cd->glyphs[j].name = item->gname;
 		cd->classes[j] = item->cls;
 		if (item->cls > maxclass) maxclass = item->cls;

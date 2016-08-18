@@ -1,6 +1,6 @@
 #include "consolidate.h"
 // Consolidation
-// Replace name entries in json to gid and do some check
+// Replace name entries in json to ids and do some check
 static int by_stem_pos(const void *_a, const void *_b) {
 	const glyf_postscript_hint_stemdef *a = _a;
 	const glyf_postscript_hint_stemdef *b = _b;
@@ -23,7 +23,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		if (r->glyph.name) {
 			HASH_FIND_STR(*font->glyph_order, r->glyph.name, entry);
 			if (entry) {
-				r->glyph.gid = entry->gid;
+				r->glyph.index = entry->gid;
 				if (r->glyph.name != entry->name) sdsfree(r->glyph.name);
 				r->glyph.name = entry->name;
 				nReferencesConsolidated += 1;
@@ -31,12 +31,12 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 				fprintf(stderr, "[Consolidate] Ignored absent glyph component "
 				                "reference /%s within /%s.\n",
 				        r->glyph.name, g->name);
-				r->glyph.gid = 0;
+				r->glyph.index = 0;
 				sdsfree(r->glyph.name);
 				r->glyph.name = NULL;
 			}
 		} else {
-			r->glyph.gid = 0;
+			r->glyph.index = 0;
 			r->glyph.name = NULL;
 		}
 	}
@@ -133,13 +133,12 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 }
 
 void caryll_font_consolidate_glyf(caryll_font *font) {
-	if (font->glyph_order && *font->glyph_order && font->glyf) {
-		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			if (font->glyf->glyphs[j]) {
-				caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
-			} else {
-				font->glyf->glyphs[j] = caryll_new_glyf_glyph();
-			}
+	if (!font->glyph_order || !*font->glyph_order || !font->glyf) return;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		if (font->glyf->glyphs[j]) {
+			caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
+		} else {
+			font->glyf->glyphs[j] = caryll_new_glyf_glyph();
 		}
 	}
 }
@@ -151,20 +150,20 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 			glyph_order_entry *ordentry;
 			HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
 			if (ordentry) {
-				item->glyph.gid = ordentry->gid;
+				item->glyph.index = ordentry->gid;
 				if (item->glyph.name != ordentry->name) sdsfree(item->glyph.name);
 				item->glyph.name = ordentry->name;
 			} else {
 				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
 				                "non-existent glyph /%s.\n",
 				        item->unicode, item->glyph.name);
-				item->glyph.gid = 0;
+				item->glyph.index = 0;
 				sdsfree(item->glyph.name);
 				item->glyph.name = NULL;
 			}
 		}
 		else {
-			item->glyph.gid = 0;
+			item->glyph.index = 0;
 			item->glyph.name = NULL;
 		}
 	}

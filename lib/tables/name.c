@@ -56,7 +56,7 @@ void caryll_delete_name(table_name *table) {
 	free(table);
 }
 
-void caryll_name_to_json(table_name *table, json_value *root, caryll_options *options) {
+void caryll_name_to_json(table_name *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping name.\n");
 
@@ -81,7 +81,7 @@ static int name_record_sort(const void *_a, const void *_b) {
 	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
 	return (*a)->nameID - (*b)->nameID;
 }
-table_name *caryll_name_from_json(json_value *root, caryll_options *options) {
+table_name *caryll_name_from_json(json_value *root, const caryll_options *options) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
@@ -136,7 +136,7 @@ table_name *caryll_name_from_json(json_value *root, caryll_options *options) {
 	}
 	return name;
 }
-caryll_buffer *caryll_write_name(table_name *name, caryll_options *options) {
+caryll_buffer *caryll_write_name(table_name *name, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);

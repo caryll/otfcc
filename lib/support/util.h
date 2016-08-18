@@ -8,6 +8,7 @@
 #include "base64.h"
 #include "buffer.h"
 #include "options.h"
+#include "json-ident.h"
 #include <extern/json-builder.h>
 #include <extern/json.h>
 #include <extern/sds.h>
@@ -106,6 +107,10 @@ static INLINE int32_t json_obj_getint_fallback(json_value *obj, const char *key,
 		}
 	}
 	return fallback;
+}
+static INLINE bool json_boolof(json_value *cv) {
+	if (cv && cv->type == json_boolean) return cv->u.boolean;
+	return false;
 }
 static INLINE bool json_obj_getbool(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return false;
@@ -308,17 +313,12 @@ static INLINE f16dot16 caryll_to_fixed(float x) {
 	return x * 65536.0;
 }
 
-// glyph reference type
-typedef struct {
-	uint16_t gid;
-	sds name;
-} glyph_handle;
+#include "handle.h"
 
-// fd reference type
-typedef struct {
-	uint16_t index;
-	sds name;
-} fd_handle;
+// Handle types
+typedef struct _caryll_handle glyph_handle;
+typedef struct _caryll_handle fd_handle;
+typedef struct _caryll_handle lookup_handle;
 
 #define MOVE /*move*/
 

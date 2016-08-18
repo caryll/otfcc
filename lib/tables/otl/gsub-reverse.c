@@ -76,8 +76,7 @@ otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLen
 	subtable->to->numGlyphs = nReplacement;
 	NEW_N(subtable->to->glyphs, nReplacement);
 	for (uint16_t j = 0; j < nReplacement; j++) {
-		subtable->to->glyphs[j].gid = read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2);
-		subtable->to->glyphs[j].name = NULL;
+		subtable->to->glyphs[j] = handle_from_id(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
 	}
 	reverseBacktracks(subtable);
 	return _subtable;
@@ -120,25 +119,27 @@ otl_subtable *caryll_gsub_reverse_from_json(json_value *_subtable) {
 	subtable->to = caryll_coverage_from_json(_to);
 	return _st;
 }
+
 caryll_buffer *caryll_write_gsub_reverse(otl_subtable *_subtable) {
-	caryll_buffer *buf = bufnew();
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	reverseBacktracks(subtable);
-	bufwrite16b(buf, 1);
-	size_t offset = 10 + 2 * (subtable->matchCount + subtable->to->numGlyphs);
-	size_t cp = buf->cursor;
-	bufpingpong16b(buf, caryll_write_coverage(subtable->match[subtable->inputIndex]), &offset, &cp);
-	bufwrite16b(buf, subtable->inputIndex);
+
+	caryll_bkblock *root = new_bkblock(
+	    b16, 1,                                                                                     // format
+	    p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->match[subtable->inputIndex])), // coverage
+	    bkover);
+	bkblock_push(root, b16, subtable->inputIndex, bkover);
 	for (uint16_t j = 0; j < subtable->inputIndex; j++) {
-		bufpingpong16b(buf, caryll_write_coverage(subtable->match[j]), &offset, &cp);
+		bkblock_push(root, p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->match[j])), bkover);
 	}
-	bufwrite16b(buf, subtable->matchCount - subtable->inputIndex - 1);
+	bkblock_push(root, b16, subtable->matchCount - subtable->inputIndex - 1, bkover);
 	for (uint16_t j = subtable->inputIndex + 1; j < subtable->matchCount; j++) {
-		bufpingpong16b(buf, caryll_write_coverage(subtable->match[j]), &offset, &cp);
+		bkblock_push(root, p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->match[j])), bkover);
 	}
-	bufwrite16b(buf, subtable->to->numGlyphs);
+	bkblock_push(root, b16, subtable->to->numGlyphs, bkover);
 	for (uint16_t j = 0; j < subtable->to->numGlyphs; j++) {
-		bufwrite16b(buf, subtable->to->glyphs[j].gid);
+		bkblock_push(root, b16, subtable->to->glyphs[j].index, bkover);
 	}
-	return buf;
+
+	return caryll_write_bk(root);
 }

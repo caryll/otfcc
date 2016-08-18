@@ -148,6 +148,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 	if (!font) return NULL;
 	font->subtype = caryll_decide_font_subtype_json(root);
 	font->glyph_order = caryll_glyphorder_from_json(root, options);
+	font->glyf = caryll_glyf_from_json(root, *font->glyph_order, options);
 	font->head = caryll_head_from_json(root, options);
 	font->hhea = caryll_hhea_from_json(root, options);
 	font->OS_2 = caryll_OS_2_from_json(root, options);
@@ -156,7 +157,6 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 	font->name = caryll_name_from_json(root, options);
 	font->cmap = caryll_cmap_from_json(root, options);
 	font->CFF_ = caryll_CFF_from_json(root, options);
-	font->glyf = caryll_glyf_from_json(root, *font->glyph_order, options);
 	if (!options->ignore_hints) {
 		font->fpgm = caryll_fpgm_prep_from_json(root, options, "fpgm");
 		font->prep = caryll_fpgm_prep_from_json(root, options, "prep");
@@ -173,7 +173,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 }
 
 caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
-	sfnt_builder *builder = new_sfnt_builder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000);
+	sfnt_builder *builder = new_sfnt_builder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 
 	// Outline data
 	if (font->subtype == FONTTYPE_TTF) {

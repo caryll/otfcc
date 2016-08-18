@@ -17,6 +17,8 @@ typedef struct {
 	bool instr_as_bytes;
 	bool verbose;
 	bool cff_short_vmtx;
+	bool merge_lookups;
+	bool merge_features;
 	char *glyph_name_prefix;
 	uint8_t optimize_level;
 } caryll_options;

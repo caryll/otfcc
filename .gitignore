@@ -31,3 +31,6 @@ build/
 bin/
 .vscode/
 _test
+
+# Makefile is for local dev only
+makefile

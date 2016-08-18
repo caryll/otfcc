@@ -43,11 +43,12 @@ static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	return table;
 }
 
-sfnt_builder *new_sfnt_builder(uint32_t header) {
+sfnt_builder *new_sfnt_builder(uint32_t header, caryll_options *options) {
 	sfnt_builder *builder = malloc(sizeof(sfnt_builder));
 	builder->count = 0;
 	builder->header = header;
 	builder->tables = NULL;
+	builder->options = options;
 	return builder;
 }
 
@@ -69,6 +70,10 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 	if (!item) {
 		item = createSegment(tag, buffer);
 		HASH_ADD_INT(builder->tables, tag, item);
+		if (builder->options->verbose) {
+			fprintf(stderr, "OpenType table %c%c%c%c successfully built.\n", (tag >> 24) & 0xff, (tag >> 16) & 0xff,
+			        (tag >> 8) & 0xff, tag & 0xff);
+		}
 	} else {
 		buffree(buffer);
 	}

@@ -23,8 +23,7 @@ glyf_glyph *caryll_new_glyf_glyph() {
 	g->stemV = NULL;
 	g->hintMasks = NULL;
 	g->contourMasks = NULL;
-	g->fdSelect.index = 0;
-	g->fdSelect.name = NULL;
+	g->fdSelect = handle_new();
 	g->yPel = 0;
 
 	g->stat.xMin = 0;
@@ -223,7 +222,7 @@ static glyf_glyph *caryll_read_composite_glyph(font_file_pointer start) {
 			d = caryll_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
-		g->references[j].glyph.gid = index;
+		g->references[j].glyph = handle_from_id(index);
 		g->references[j].a = a;
 		g->references[j].b = b;
 		g->references[j].c = c;
@@ -335,6 +334,7 @@ ABSENT:
 
 static void caryll_delete_glyf_glyph(glyf_glyph *g) {
 	if (!g) return;
+	sdsfree(g->name);
 	if (g->numberOfContours > 0 && g->contours != NULL) {
 		for (uint16_t k = 0; k < g->numberOfContours; k++) {
 			if (g->contours[k].points) free(g->contours[k].points);
@@ -440,7 +440,7 @@ static json_value *glyf_glyph_maskdefs_to_json(glyf_postscript_hint_mask *masks,
 	return a;
 }
 
-static json_value *glyf_glyph_to_json(glyf_glyph *g, caryll_options *options) {
+static json_value *glyf_glyph_to_json(glyf_glyph *g, const caryll_options *options) {
 	json_value *glyph = json_object_new(12);
 	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
 	if (options->has_vertical_metrics) {
@@ -481,7 +481,7 @@ void caryll_glyphorder_to_json(table_glyf *table, json_value *root) {
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
-void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_options *options) {
+void caryll_glyf_to_json(table_glyf *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping glyf.\n");
 
@@ -497,15 +497,26 @@ void caryll_glyf_to_json(table_glyf *table, json_value *root, caryll_options *op
 
 // from json
 static void glyf_point_from_json(glyf_point *point, json_value *pointdump) {
-	point->x = json_obj_getnum(pointdump, "x");
-	point->y = json_obj_getnum(pointdump, "y");
+	point->x = 0;
+	point->y = 0;
 	point->onCurve = 0;
-	if (json_obj_getbool(pointdump, "on")) { point->onCurve |= MASK_ON_CURVE; }
+	if (!pointdump || pointdump->type != json_object) return;
+	for (uint32_t _k = 0; _k < pointdump->u.object.length; _k++) {
+		char *ck = pointdump->u.object.values[_k].name;
+		json_value *cv = pointdump->u.object.values[_k].value;
+		if (strcmp(ck, "x") == 0) {
+			point->x = json_numof(cv);
+		} else if (strcmp(ck, "y") == 0) {
+			point->y = json_numof(cv);
+		} else if (strcmp(ck, "on") == 0) {
+			point->onCurve = json_boolof(cv);
+		}
+	}
 }
 static void glyf_reference_from_json(glyf_reference *ref, json_value *refdump) {
 	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
 	if (_gname) {
-		ref->glyph.name = sdsnewlen(_gname->u.string.ptr, _gname->u.string.length);
+		ref->glyph = handle_from_name(sdsnewlen(_gname->u.string.ptr, _gname->u.string.length));
 		ref->x = json_obj_getnum_fallback(refdump, "x", 0.0);
 		ref->y = json_obj_getnum_fallback(refdump, "y", 0.0);
 		ref->a = json_obj_getnum_fallback(refdump, "a", 1.0);
@@ -637,9 +648,9 @@ static void masks_from_json(json_value *md, uint16_t *count, glyf_postscript_hin
 }
 
 static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_order_entry *order_entry,
-                                               caryll_options *options) {
+                                               const caryll_options *options) {
 	glyf_glyph *g = caryll_new_glyf_glyph();
-	g->name = order_entry->name;
+	g->name = sdsdup(order_entry->name);
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");
 	g->verticalOrigin = json_obj_getint(glyphdump, "verticalOrigin");
@@ -655,13 +666,13 @@ static glyf_glyph *caryll_glyf_glyph_from_json(json_value *glyphdump, glyph_orde
 		                &(g->contourMasks));
 	}
 	// Glyph data of other tables
-	g->fdSelect.name = json_obj_getsds(glyphdump, "CFF_fdSelect");
+	g->fdSelect = handle_from_name(json_obj_getsds(glyphdump, "CFF_fdSelect"));
 	g->yPel = json_obj_getint(glyphdump, "LTSH_yPel");
 	if (!g->yPel) { g->yPel = json_obj_getint(glyphdump, "yPel"); }
 	return g;
 }
 
-table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, caryll_options *options) {
+table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, const caryll_options *options) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -679,6 +690,7 @@ table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
 				glyf->glyphs[order_entry->gid] = caryll_glyf_glyph_from_json(glyphdump, order_entry, options);
 			}
+			FREE(table->u.object.values[j].value);
 			sdsfree(gname);
 		}
 		return glyf;
@@ -816,7 +828,7 @@ static void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 		if (r->roundToGrid) flags |= ROUND_XY_TO_GRID;
 		if (r->useMyMetrics) flags |= USE_MY_METRICS;
 		bufwrite16b(gbuf, flags);
-		bufwrite16b(gbuf, r->glyph.gid);
+		bufwrite16b(gbuf, r->glyph.index);
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
 			bufwrite16b(gbuf, arg1);
 			bufwrite16b(gbuf, arg2);
@@ -841,7 +853,7 @@ static void glyf_write_composite(glyf_glyph *g, caryll_buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-glyf_loca_bufpair caryll_write_glyf(table_glyf *table, table_head *head, caryll_options *options) {
+glyf_loca_bufpair caryll_write_glyf(table_glyf *table, table_head *head, const caryll_options *options) {
 	caryll_buffer *bufglyf = bufnew();
 	caryll_buffer *bufloca = bufnew();
 	if (table && head) {

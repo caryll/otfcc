@@ -56,7 +56,7 @@ static const char *headFlagsLabels[] = {"baselineAtY_0",
                                         "lastResortFont"};
 static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow", "condensed", "extended"};
 
-void caryll_head_to_json(table_head *table, json_value *root, caryll_options *options) {
+void caryll_head_to_json(table_head *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping head.\n");
 	json_value *head = json_object_new(15);
@@ -78,7 +78,7 @@ void caryll_head_to_json(table_head *table, json_value *root, caryll_options *op
 	json_object_push(root, "head", head);
 }
 
-table_head *caryll_head_from_json(json_value *root, caryll_options *options) {
+table_head *caryll_head_from_json(json_value *root, const caryll_options *options) {
 	table_head *head = caryll_new_head();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
@@ -102,7 +102,7 @@ table_head *caryll_head_from_json(json_value *root, caryll_options *options) {
 	return head;
 }
 
-caryll_buffer *caryll_write_head(table_head *head, caryll_options *options) {
+caryll_buffer *caryll_write_head(table_head *head, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);

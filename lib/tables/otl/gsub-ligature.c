@@ -60,17 +60,14 @@ otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLe
 			uint16_t ligComponents = read_16u(data + ligOffset + 2);
 			checkLength(ligOffset + 2 + ligComponents * 2);
 
-			subtable->to->glyphs[jj].gid = read_16u(data + ligOffset);
-			subtable->to->glyphs[jj].name = NULL;
+			subtable->to->glyphs[jj] = handle_from_id(read_16u(data + ligOffset));
 
 			NEW(subtable->from[jj]);
 			subtable->from[jj]->numGlyphs = ligComponents;
 			NEW_N(subtable->from[jj]->glyphs, ligComponents);
-			subtable->from[jj]->glyphs[0].gid = startCoverage->glyphs[j].gid;
-			subtable->from[jj]->glyphs[0].name = NULL;
+			subtable->from[jj]->glyphs[0] = handle_from_id(startCoverage->glyphs[j].index);
 			for (uint16_t m = 1; m < ligComponents; m++) {
-				subtable->from[jj]->glyphs[m].gid = read_16u(data + ligOffset + 2 + m * 2);
-				subtable->from[jj]->glyphs[m].name = NULL;
+				subtable->from[jj]->glyphs[m] = handle_from_id(read_16u(data + ligOffset + 2 + m * 2));
 			}
 			jj++;
 		}
@@ -153,12 +150,12 @@ static int by_gid(ligature_aggerator *a, ligature_aggerator *b) {
 }
 
 caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
-	caryll_buffer *buf = bufnew();
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
+
 	ligature_aggerator *h = NULL, *s, *tmp;
 	uint16_t nLigatures = subtable->to->numGlyphs;
 	for (uint16_t j = 0; j < nLigatures; j++) {
-		int sgid = subtable->from[j]->glyphs[0].gid;
+		int sgid = subtable->from[j]->glyphs[0].index;
 		HASH_FIND_INT(h, &sgid, s);
 		if (!s) {
 			NEW(s);
@@ -169,49 +166,48 @@ caryll_buffer *caryll_write_gsub_ligature_subtable(otl_subtable *_subtable) {
 	}
 	HASH_SORT(h, by_gid);
 
-	otl_coverage *startCoverage;
-	NEW(startCoverage);
-	startCoverage->numGlyphs = HASH_COUNT(h);
-	NEW_N(startCoverage->glyphs, startCoverage->numGlyphs);
+	otl_coverage *startcov;
+	NEW(startcov);
+	startcov->numGlyphs = HASH_COUNT(h);
+	NEW_N(startcov->glyphs, startcov->numGlyphs);
 
 	uint16_t jj = 0;
 	foreach_hash(s, h) {
 		s->ligid = jj;
-		startCoverage->glyphs[jj].gid = s->gid;
-		startCoverage->glyphs[jj].name = NULL;
+		startcov->glyphs[jj].index = s->gid;
+		startcov->glyphs[jj].name = NULL;
 		jj++;
 	}
 
-	// start writing
-	bufwrite16b(buf, 1);
-	size_t offset = 6 + 4 * startCoverage->numGlyphs + nLigatures * 2;
-	size_t setOffset = 6 + 2 * startCoverage->numGlyphs;
-	size_t cp = buf->cursor;
-	bufpingpong16b(buf, caryll_write_coverage(startCoverage), &offset, &cp);
-	bufwrite16b(buf, startCoverage->numGlyphs);
+	caryll_bkblock *root = new_bkblock(b16, 1,                                                        // format
+	                                   p16, new_bkblock_from_buffer(caryll_write_coverage(startcov)), // coverage
+	                                   b16, startcov->numGlyphs,                                      // LigSetCount
+	                                   bkover);
+
 	foreach_hash(s, h) {
-		bufping16b(buf, &setOffset, &cp);
 		uint16_t nLigsHere = 0;
 		for (uint16_t j = 0; j < nLigatures; j++)
-			if (subtable->from[j]->glyphs[0].gid == s->gid) nLigsHere++;
-		bufwrite16b(buf, nLigsHere);
-		size_t scp = buf->cursor;
-		for (uint16_t j = 0; j < nLigatures; j++)
-			if (subtable->from[j]->glyphs[0].gid == s->gid) {
-				bufping16bd(buf, &offset, &setOffset, &scp);
-				bufwrite16b(buf, subtable->to->glyphs[j].gid);
-				bufwrite16b(buf, subtable->from[j]->numGlyphs);
+			if (subtable->from[j]->glyphs[0].index == s->gid) nLigsHere++;
+		caryll_bkblock *ligset = new_bkblock(b16, nLigsHere, bkover);
+
+		for (uint16_t j = 0; j < nLigatures; j++) {
+			if (subtable->from[j]->glyphs[0].index == s->gid) {
+				caryll_bkblock *ligdef = new_bkblock(b16, subtable->to->glyphs[j].index, // ligGlyph
+				                                     b16, subtable->from[j]->numGlyphs,  // compCount
+				                                     bkover);
 				for (uint16_t m = 1; m < subtable->from[j]->numGlyphs; m++) {
-					bufwrite16b(buf, subtable->from[j]->glyphs[m].gid);
+					bkblock_push(ligdef, b16, subtable->from[j]->glyphs[m].index, bkover);
 				}
-				bufpong(buf, &offset, &scp);
+				bkblock_push(ligset, p16, ligdef, bkover);
 			}
-		bufpong(buf, &setOffset, &cp);
+		}
+		bkblock_push(root, p16, ligset, bkover);
 	}
-	caryll_delete_coverage(startCoverage);
+
+	caryll_delete_coverage(startcov);
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		free(s);
 	}
-	return buf;
+	return caryll_write_bk(root);
 }

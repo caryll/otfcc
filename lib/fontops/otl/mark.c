@@ -34,10 +34,10 @@ static void consolidateMarkArray(caryll_font *font, table_otl *table, sds lookup
 	for (uint16_t k = 0; k < marks->numGlyphs; k++) {
 		if (marks->glyphs[k].name) {
 			mark_hash *s = NULL;
-			HASH_FIND_INT(hm, &(marks->glyphs[k].gid), s);
+			HASH_FIND_INT(hm, &(marks->glyphs[k].index), s);
 			if (!s && markArray->records[k].anchor.present && markArray->records[k].markClass < classCount) {
 				NEW(s);
-				s->gid = marks->glyphs[k].gid;
+				s->gid = marks->glyphs[k].index;
 				s->name = marks->glyphs[k].name;
 				s->markrec = markArray->records[k];
 				HASH_ADD_INT(hm, gid, s);
@@ -55,7 +55,7 @@ static void consolidateMarkArray(caryll_font *font, table_otl *table, sds lookup
 	mark_hash *s, *tmp;
 	uint16_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		marks->glyphs[k].gid = s->gid;
+		marks->glyphs[k].index = s->gid;
 		marks->glyphs[k].name = s->name;
 		markArray->records[k] = s->markrec;
 		k++;
@@ -71,10 +71,10 @@ static void consolidateBaseArray(caryll_font *font, table_otl *table, sds lookup
 	for (uint16_t k = 0; k < bases->numGlyphs; k++) {
 		if (bases->glyphs[k].name) {
 			base_hash *s = NULL;
-			HASH_FIND_INT(hm, &(bases->glyphs[k].gid), s);
+			HASH_FIND_INT(hm, &(bases->glyphs[k].index), s);
 			if (!s) {
 				NEW(s);
-				s->gid = bases->glyphs[k].gid;
+				s->gid = bases->glyphs[k].index;
 				s->name = bases->glyphs[k].name;
 				s->anchors = baseArray[k];
 				HASH_ADD_INT(hm, gid, s);
@@ -93,7 +93,7 @@ static void consolidateBaseArray(caryll_font *font, table_otl *table, sds lookup
 	base_hash *s, *tmp;
 	uint16_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		bases->glyphs[k].gid = s->gid;
+		bases->glyphs[k].index = s->gid;
 		bases->glyphs[k].name = s->name;
 		baseArray[k] = s->anchors;
 		k++;
@@ -108,10 +108,10 @@ static void consolidateLigArray(caryll_font *font, table_otl *table, sds lookupN
 	for (uint16_t k = 0; k < bases->numGlyphs; k++) {
 		if (bases->glyphs[k].name) {
 			lig_hash *s = NULL;
-			HASH_FIND_INT(hm, &(bases->glyphs[k].gid), s);
+			HASH_FIND_INT(hm, &(bases->glyphs[k].index), s);
 			if (!s) {
 				NEW(s);
-				s->gid = bases->glyphs[k].gid;
+				s->gid = bases->glyphs[k].index;
 				s->name = bases->glyphs[k].name;
 				s->ligAttachment = ligArray[k];
 				HASH_ADD_INT(hm, gid, s);
@@ -130,7 +130,7 @@ static void consolidateLigArray(caryll_font *font, table_otl *table, sds lookupN
 	lig_hash *s, *tmp;
 	uint16_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		bases->glyphs[k].gid = s->gid;
+		bases->glyphs[k].index = s->gid;
 		bases->glyphs[k].name = s->name;
 		ligArray[k] = s->ligAttachment;
 		k++;

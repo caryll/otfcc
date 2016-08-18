@@ -22,7 +22,7 @@ bool consolidate_gsub_reverse(caryll_font *font, table_otl *table, otl_subtable 
 	otl_coverage *from = subtable->match[subtable->inputIndex];
 	for (uint16_t k = 0; k < from->numGlyphs && k < subtable->to->numGlyphs; k++) {
 		gsub_single_map_hash *s;
-		int fromid = from->glyphs[k].gid;
+		int fromid = from->glyphs[k].index;
 		HASH_FIND_INT(h, &fromid, s);
 		if (s) {
 			fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
@@ -30,8 +30,8 @@ bool consolidate_gsub_reverse(caryll_font *font, table_otl *table, otl_subtable 
 			        from->glyphs[k].name);
 		} else {
 			NEW(s);
-			s->fromid = from->glyphs[k].gid;
-			s->toid = subtable->to->glyphs[k].gid;
+			s->fromid = from->glyphs[k].index;
+			s->toid = subtable->to->glyphs[k].index;
 			s->fromname = from->glyphs[k].name;
 			s->toname = subtable->to->glyphs[k].name;
 			HASH_ADD_INT(h, fromid, s);
@@ -49,9 +49,9 @@ bool consolidate_gsub_reverse(caryll_font *font, table_otl *table, otl_subtable 
 		gsub_single_map_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			from->glyphs[j].gid = s->fromid;
+			from->glyphs[j].index = s->fromid;
 			from->glyphs[j].name = s->fromname;
-			subtable->to->glyphs[j].gid = s->toid;
+			subtable->to->glyphs[j].index = s->toid;
 			subtable->to->glyphs[j].name = s->toname;
 			j++;
 			HASH_DEL(h, s);

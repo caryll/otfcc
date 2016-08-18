@@ -17,24 +17,27 @@
 #define PATCH_VER 0
 #endif
 
-void printInfo() { fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER); }
+void printInfo() {
+	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+}
 void printHelp() {
 	fprintf(stdout, "\n"
 	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
 	                " -h, --help              : Display this help message and exit.\n"
 	                " -v, --version           : Display version information and exit.\n"
-	                " -o <file>               : Set output file path to <file>. When absent\n"
-	                "                           the dump will be written to STDOUT.\n"
+	                " -o <file>               : Set output file path to <file>. When absent the dump\n"
+	                "                           will be written to STDOUT.\n"
 	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.\n"
 	                " --pretty                : Prettify the output JSON.\n"
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --time                  : Time each substep.\n"
+	                " --verbose               : Show more information when building.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
-	                " --add-bom               : Add BOM mark in the output. (This is default\n"
-	                "                           on Windows when redirecting to another program.\n"
-	                "                           Use --no-bom to turn it off.)\n"
+	                " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
+	                "                           when redirecting to another program. Use --no-bom to\n"
+	                "                           turn it off.)\n"
 	                "\n");
 }
 #ifdef _WIN32

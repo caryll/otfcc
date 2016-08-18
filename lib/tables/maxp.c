@@ -52,7 +52,7 @@ table_maxp *caryll_read_maxp(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_options *options) {
+void caryll_maxp_to_json(table_maxp *table, json_value *root, const caryll_options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping maxp.\n");
 	json_value *maxp = json_object_new(15);
@@ -75,7 +75,7 @@ void caryll_maxp_to_json(table_maxp *table, json_value *root, caryll_options *op
 	json_object_push(root, "maxp", maxp);
 }
 
-table_maxp *caryll_maxp_from_json(json_value *root, caryll_options *options) {
+table_maxp *caryll_maxp_from_json(json_value *root, const caryll_options *options) {
 	table_maxp *maxp = caryll_new_maxp();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {
@@ -92,7 +92,7 @@ table_maxp *caryll_maxp_from_json(json_value *root, caryll_options *options) {
 	return maxp;
 }
 
-caryll_buffer *caryll_write_maxp(table_maxp *maxp, caryll_options *options) {
+caryll_buffer *caryll_write_maxp(table_maxp *maxp, const caryll_options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!maxp) return buf;
 	bufwrite32b(buf, maxp->version);

@@ -44,7 +44,7 @@ otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLengt
 		cov->numGlyphs = read_16u(data + seqOffset);
 		NEW_N(cov->glyphs, cov->numGlyphs);
 		for (uint16_t k = 0; k < cov->numGlyphs; k++) {
-			cov->glyphs[k].gid = read_16u(data + seqOffset + 2 + k * 2);
+			cov->glyphs[k] = handle_from_id(read_16u(data + seqOffset + 2 + k * 2));
 		}
 		subtable->to[j] = cov;
 	}
@@ -88,20 +88,17 @@ otl_subtable *caryll_gsub_multi_from_json(json_value *_subtable) {
 
 caryll_buffer *caryll_write_gsub_multi_subtable(otl_subtable *_subtable) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
-	caryll_buffer *buf = bufnew();
-	bufwrite16b(buf, 1);
 
-	size_t offset = 6 + 2 * subtable->from->numGlyphs;
-	size_t cp = buf->cursor;
-	bufpingpong16b(buf, caryll_write_coverage(subtable->from), &offset, &cp);
-	bufwrite16b(buf, subtable->from->numGlyphs);
+	caryll_bkblock *root = new_bkblock(b16, 1,                                                              // format
+	                                   p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->from)), // coverage
+	                                   b16, subtable->from->numGlyphs,                                      // quantity
+	                                   bkover);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
-		bufping16b(buf, &offset, &cp);
-		bufwrite16b(buf, subtable->to[j]->numGlyphs);
+		caryll_bkblock *b = new_bkblock(b16, subtable->to[j]->numGlyphs, bkover);
 		for (uint16_t k = 0; k < subtable->to[j]->numGlyphs; k++) {
-			bufwrite16b(buf, subtable->to[j]->glyphs[k].gid);
+			bkblock_push(b, b16, subtable->to[j]->glyphs[k].index, bkover);
 		}
-		bufpong(buf, &offset, &cp);
+		bkblock_push(root, p16, b, bkover);
 	}
-	return buf;
+	return caryll_write_bk(root);
 }

@@ -23,8 +23,8 @@ install:
   - chmod +x $PREMAKE5
 
 script:
-  - make linux-release-x64
-  - make test
+  - make -f quick.make linux-release-x64
+  - make -f quick.make test
 
 cache:
   build: true
