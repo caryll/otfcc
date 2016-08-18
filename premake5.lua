@@ -40,8 +40,8 @@ workspace "otfcc"
 	defines {
 		'_CARYLL_USE_PRE_SERIALIZED',
 		'MAIN_VER=0',
-		"SECONDARY_VER=1",
-		"PATCH_VER=0"
+		"SECONDARY_VER=3",
+		"PATCH_VER=1"
 	}
 	
 	location "build"
