@@ -338,6 +338,19 @@ static INLINE json_value *preserialize(MOVE json_value *x) {
 #endif
 }
 
+// Tag handler
+static INLINE char *tag2str(uint32_t tag) {
+	char *tags = (char *)malloc(sizeof(char) * 5);
+	tags[0] = (tag >> 24) & 0xFF;
+	tags[1] = (tag >> 16) & 0xFF;
+	tags[2] = (tag >> 8) & 0xFF;
+	tags[3] = tag & 0xFF;
+	tags[4] = 0;
+	return tags;
+}
+
+// Allocators
+
 static INLINE void *__caryll_allocate(size_t n, unsigned long line) {
 	if (!n) return NULL;
 	void *p = malloc(n);

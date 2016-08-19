@@ -28,6 +28,7 @@ caryll_font *caryll_new_font() {
 	font->GSUB = NULL;
 	font->GPOS = NULL;
 	font->GDEF = NULL;
+	font->BASE = NULL;
 	font->VORG = NULL;
 	return font;
 }
@@ -53,6 +54,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->GSUB) caryll_delete_otl(font->GSUB);
 	if (font->GPOS) caryll_delete_otl(font->GPOS);
 	if (font->GDEF) caryll_delete_GDEF(font->GDEF);
+	if (font->BASE) caryll_delete_BASE(font->BASE);
 	if (font->VORG) caryll_delete_VORG(font->VORG);
 	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font) free(font);
@@ -104,6 +106,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 			font->GSUB = caryll_read_otl(packet, 'GSUB');
 			font->GPOS = caryll_read_otl(packet, 'GPOS');
 			font->GDEF = caryll_read_GDEF(packet);
+			font->BASE = caryll_read_BASE(packet);
 		}
 		return font;
 	}
@@ -133,6 +136,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_options *options) {
 	caryll_otl_to_json(font->GSUB, root, options, "GSUB");
 	caryll_otl_to_json(font->GPOS, root, options, "GPOS");
 	caryll_GDEF_to_json(font->GDEF, root, options);
+	caryll_BASE_to_json(font->BASE, root, options);
 	return root;
 }
 
