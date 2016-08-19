@@ -305,9 +305,9 @@ caryll_bkblock *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
 			uint16_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
-				bkblock_push(pairSet, b16, subtable->second->glyphs[k].index,                // SecondGlyph
-				             bembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
-				             bembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
+				bkblock_push(pairSet, b16, subtable->second->glyphs[k].index,                 // SecondGlyph
+				             bkembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
+				             bkembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
 				             bkover);
 			}
 		}
@@ -340,8 +340,8 @@ caryll_bkblock *caryll_write_gpos_pair_classes(otl_subtable *_subtable) {
 	                bkover);
 	for (uint16_t j = 0; j < class1Count; j++) {
 		for (uint16_t k = 0; k < class2Count; k++) {
-			bkblock_push(root, bembed, bk_gpos_value(subtable->firstValues[j][k], format1), // Value1
-			             bembed, bk_gpos_value(subtable->secondValues[j][k], format2),      // Value2
+			bkblock_push(root, bkembed, bk_gpos_value(subtable->firstValues[j][k], format1), // Value1
+			             bkembed, bk_gpos_value(subtable->secondValues[j][k], format2),      // Value2
 			             bkover);
 		}
 	}

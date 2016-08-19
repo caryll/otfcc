@@ -98,7 +98,7 @@ caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
 		    new_bkblock(b16, 1,                                                                  // Format
 		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // coverage
 		                b16, format,                                                             // format
-		                bembed, bk_gpos_value(subtable->values[0], format),                      // value
+		                bkembed, bk_gpos_value(subtable->values[0], format),                     // value
 		                bkover));
 	} else {
 		caryll_bkblock *b =
@@ -108,7 +108,7 @@ caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
 		                b16, subtable->coverage->numGlyphs,                                      // quantity
 		                bkover);
 		for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
-			bkblock_push(b, bembed, bk_gpos_value(subtable->values[k], format), // value
+			bkblock_push(b, bkembed, bk_gpos_value(subtable->values[k], format), // value
 			             bkover);
 		}
 		return caryll_write_bk(b);

@@ -18,8 +18,8 @@ typedef struct {
 } bkgraph_entry;
 
 typedef struct {
-	size_t length;
-	size_t free;
+	uint32_t length;
+	uint32_t free;
 	bkgraph_entry *entries;
 } caryll_bkgraph;
 

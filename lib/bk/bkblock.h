@@ -9,16 +9,16 @@
 
 struct __caryll_bkblock;
 typedef enum {
-	bkover = 0,   // nothing
-	b8 = 1,       // byte
-	b16 = 2,      // short
-	b32 = 3,      // long
-	p16 = 0x10,   // 16-bit offset, p = pointer to block
-	p32 = 0x11,   // 32-bit offset, p = pointer to block
-	sp16 = 0x80,  // 16-bit offset, p = pointer to block, marked as compact
-	sp32 = 0x81,  // 32-bit offset, p = pointer to block, marked as compact
-	bcopy = 0xFE, // Embed another block
-	bembed = 0xFF // Embed another block
+	bkover = 0,    // nothing
+	b8 = 1,        // byte
+	b16 = 2,       // short
+	b32 = 3,       // long
+	p16 = 0x10,    // 16-bit offset, p = pointer to block
+	p32 = 0x11,    // 32-bit offset, p = pointer to block
+	sp16 = 0x80,   // 16-bit offset, p = pointer to block, marked as compact
+	sp32 = 0x81,   // 32-bit offset, p = pointer to block, marked as compact
+	bkcopy = 0xFE, // Embed another block
+	bkembed = 0xFF // Embed another block
 } bk_cell_type;
 typedef enum { VISIT_WHITE, VISIT_GRAY, VISIT_BLACK } bk_cell_visit_state;
 
@@ -35,8 +35,8 @@ typedef struct __caryll_bkblock {
 	uint32_t _index;
 	uint32_t _height;
 	uint32_t _depth;
-	size_t length;
-	size_t free;
+	uint32_t length;
+	uint32_t free;
 	bk_cell *cells;
 } caryll_bkblock;
 

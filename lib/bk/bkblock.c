@@ -1,6 +1,6 @@
 #include "bkblock.h"
 
-static void bkblock_acells(caryll_bkblock *b, size_t len) {
+static void bkblock_acells(caryll_bkblock *b, uint32_t len) {
 	if (len <= b->length + b->free) {
 		// We have enough space
 		b->free -= len - b->length;
@@ -20,8 +20,8 @@ bool bk_cell_is_ptr(bk_cell *cell) {
 	return cell->t >= p16;
 }
 
-static bk_cell *bkblock_grow(caryll_bkblock *b, size_t len) {
-	size_t olen = b->length;
+static bk_cell *bkblock_grow(caryll_bkblock *b, uint32_t len) {
+	uint32_t olen = b->length;
 	bkblock_acells(b, olen + len);
 	return &(b->cells[olen]);
 }
@@ -46,7 +46,7 @@ void bkblock_pushptr(caryll_bkblock *b, bk_cell_type type, caryll_bkblock *p) {
 static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
 	bk_cell_type curtype = type0;
 	while (curtype) {
-		if (curtype == bcopy || curtype == bembed) {
+		if (curtype == bkcopy || curtype == bkembed) {
 			caryll_bkblock *par = va_arg(ap, caryll_bkblock *);
 			if (par && par->cells) {
 				for (uint32_t j = 0; j < par->length; j++) {
@@ -57,7 +57,7 @@ static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
 					}
 				}
 			}
-			if (curtype == bembed && par) {
+			if (curtype == bkembed && par) {
 				free(par->cells);
 				free(par);
 			}

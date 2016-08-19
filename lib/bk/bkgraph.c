@@ -276,7 +276,7 @@ static bool try_untabgle_block(caryll_bkgraph *f, caryll_bkblock *b, size_t *off
 						bkgraph_entry *e = _bkgraph_grow(f);
 						e->order = 0;
 						e->alias = 0;
-						e->block = new_bkblock(bcopy, b->cells[j].p, bkover);
+						e->block = new_bkblock(bkcopy, b->cells[j].p, bkover);
 						b->cells[j].t = sp16;
 						b->cells[j].p = e->block;
 						didCopy = true;
