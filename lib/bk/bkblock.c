@@ -46,7 +46,7 @@ void bkblock_pushptr(caryll_bkblock *b, bk_cell_type type, caryll_bkblock *p) {
 static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
 	bk_cell_type curtype = type0;
 	while (curtype) {
-		if (curtype == bembed) {
+		if (curtype == bcopy || curtype == bembed) {
 			caryll_bkblock *par = va_arg(ap, caryll_bkblock *);
 			if (par && par->cells) {
 				for (uint32_t j = 0; j < par->length; j++) {
@@ -57,7 +57,7 @@ static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
 					}
 				}
 			}
-			if (par) {
+			if (curtype == bembed && par) {
 				free(par->cells);
 				free(par);
 			}

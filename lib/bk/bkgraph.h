@@ -26,7 +26,9 @@ typedef struct {
 caryll_bkgraph *caryll_bkgraph_from_block(caryll_bkblock *b);
 void caryll_delete_bkgraph(/*MOVE*/ caryll_bkgraph *f);
 void caryll_minimize_bkgraph(/*BORROW*/ caryll_bkgraph *f);
+void caryll_untangle_bkgraph(/*BORROW*/ caryll_bkgraph *f);
 caryll_buffer *caryll_write_bkgraph(/*BORROW*/ caryll_bkgraph *f);
 caryll_buffer *caryll_write_bk(/*MOVE*/ caryll_bkblock *root);
+size_t estimate_bkgraph_size(caryll_bkgraph *f);
 
 #endif

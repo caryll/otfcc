@@ -263,7 +263,7 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
+caryll_bkblock *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
@@ -313,9 +313,9 @@ caryll_buffer *caryll_write_gpos_pair_individual(otl_subtable *_subtable) {
 		}
 		bkblock_push(root, p16, pairSet, bkover);
 	}
-	return caryll_write_bk(root);
+	return root;
 }
-caryll_buffer *caryll_write_gpos_pair_classes(otl_subtable *_subtable) {
+caryll_bkblock *caryll_write_gpos_pair_classes(otl_subtable *_subtable) {
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
@@ -345,16 +345,28 @@ caryll_buffer *caryll_write_gpos_pair_classes(otl_subtable *_subtable) {
 			             bkover);
 		}
 	}
-	return caryll_write_bk(root);
+	return root;
 }
 caryll_buffer *caryll_write_gpos_pair(otl_subtable *_subtable) {
-	caryll_buffer *format1 = caryll_write_gpos_pair_individual(_subtable);
-	caryll_buffer *format2 = caryll_write_gpos_pair_classes(_subtable);
-	if (buflen(format1) < buflen(format2)) {
-		buffree(format2);
-		return format1;
+	caryll_bkblock *format1 = caryll_write_gpos_pair_individual(_subtable);
+	caryll_bkblock *format2 = caryll_write_gpos_pair_classes(_subtable);
+	caryll_bkgraph *g1 = caryll_bkgraph_from_block(format1);
+	caryll_bkgraph *g2 = caryll_bkgraph_from_block(format2);
+	caryll_minimize_bkgraph(g1);
+	caryll_minimize_bkgraph(g2);
+	if (estimate_bkgraph_size(g1) > estimate_bkgraph_size(g2)) {
+		// Choose pair adjustment by classes
+		caryll_delete_bkgraph(g1);
+		caryll_untangle_bkgraph(g2);
+		caryll_buffer *buf = caryll_write_bkgraph(g2);
+		caryll_delete_bkgraph(g2);
+		return buf;
 	} else {
-		buffree(format1);
-		return format2;
+		// Choose pair adjustment by individuals
+		caryll_delete_bkgraph(g2);
+		caryll_untangle_bkgraph(g1);
+		caryll_buffer *buf = caryll_write_bkgraph(g1);
+		caryll_delete_bkgraph(g1);
+		return buf;
 	}
 }

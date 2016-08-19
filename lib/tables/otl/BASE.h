@@ -28,5 +28,7 @@ typedef struct {
 void caryll_delete_BASE(table_BASE *base);
 table_BASE *caryll_read_BASE(caryll_packet packet);
 void caryll_BASE_to_json(table_BASE *base, json_value *root, const caryll_options *options);
+table_BASE *caryll_BASE_from_json(json_value *root, const caryll_options *options);
+caryll_buffer *caryll_write_BASE(table_BASE *base, const caryll_options *options);
 
 #endif

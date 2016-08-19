@@ -106,8 +106,8 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 			font->GSUB = caryll_read_otl(packet, 'GSUB');
 			font->GPOS = caryll_read_otl(packet, 'GPOS');
 			font->GDEF = caryll_read_GDEF(packet);
-			font->BASE = caryll_read_BASE(packet);
 		}
+		font->BASE = caryll_read_BASE(packet);
 		return font;
 	}
 }
@@ -173,6 +173,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 		font->GPOS = caryll_otl_from_json(root, options, "GPOS");
 		font->GDEF = caryll_GDEF_from_json(root, options);
 	}
+	font->BASE = caryll_BASE_from_json(root, options);
 	return font;
 }
 
@@ -221,6 +222,7 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
 	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB, options, "GSUB"));
 	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS, options, "GPOS"));
 	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF, options));
+	if (font->BASE) sfnt_builder_push_table(builder, 'BASE', caryll_write_BASE(font->BASE, options));
 
 	if (options->dummy_DSIG) {
 		caryll_buffer *dsig = bufnew();
