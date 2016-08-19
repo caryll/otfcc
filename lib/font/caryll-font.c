@@ -28,6 +28,7 @@ caryll_font *caryll_new_font() {
 	font->GSUB = NULL;
 	font->GPOS = NULL;
 	font->GDEF = NULL;
+	font->BASE = NULL;
 	font->VORG = NULL;
 	return font;
 }
@@ -53,6 +54,7 @@ void caryll_delete_font(caryll_font *font) {
 	if (font->GSUB) caryll_delete_otl(font->GSUB);
 	if (font->GPOS) caryll_delete_otl(font->GPOS);
 	if (font->GDEF) caryll_delete_GDEF(font->GDEF);
+	if (font->BASE) caryll_delete_BASE(font->BASE);
 	if (font->VORG) caryll_delete_VORG(font->VORG);
 	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
 	if (font) free(font);
@@ -105,6 +107,7 @@ caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
 			font->GPOS = caryll_read_otl(packet, 'GPOS');
 			font->GDEF = caryll_read_GDEF(packet);
 		}
+		font->BASE = caryll_read_BASE(packet);
 		return font;
 	}
 }
@@ -133,6 +136,7 @@ json_value *caryll_font_to_json(caryll_font *font, caryll_options *options) {
 	caryll_otl_to_json(font->GSUB, root, options, "GSUB");
 	caryll_otl_to_json(font->GPOS, root, options, "GPOS");
 	caryll_GDEF_to_json(font->GDEF, root, options);
+	caryll_BASE_to_json(font->BASE, root, options);
 	return root;
 }
 
@@ -169,6 +173,7 @@ caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
 		font->GPOS = caryll_otl_from_json(root, options, "GPOS");
 		font->GDEF = caryll_GDEF_from_json(root, options);
 	}
+	font->BASE = caryll_BASE_from_json(root, options);
 	return font;
 }
 
@@ -217,6 +222,7 @@ caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
 	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB, options, "GSUB"));
 	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS, options, "GPOS"));
 	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF, options));
+	if (font->BASE) sfnt_builder_push_table(builder, 'BASE', caryll_write_BASE(font->BASE, options));
 
 	if (options->dummy_DSIG) {
 		caryll_buffer *dsig = bufnew();

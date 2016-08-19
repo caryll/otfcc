@@ -740,6 +740,7 @@ static caryll_bkblock *writeOTLLookups(table_otl *table, const caryll_options *o
 	NEW_N(lookupWritten, table->lookupCount);
 	size_t lastOffset = 0;
 	for (uint16_t j = 0; j < table->lookupCount; j++) {
+		if (options->verbose) { fprintf(stderr, "    Writing lookup %s\n", table->lookups[j]->name); }
 		subtables[j] = NULL;
 		lookupWritten[j] = _write_subtable(table->lookups[j], &(subtables[j]), &lastOffset);
 	}

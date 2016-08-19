@@ -55,6 +55,13 @@ static INLINE sds json_obj_getsds(json_value *obj, const char *key) {
 	else
 		return sdsnewlen(v->u.string.ptr, v->u.string.length);
 }
+static INLINE char *json_obj_getstr_share(json_value *obj, const char *key) {
+	json_value *v = json_obj_get_type(obj, key, json_string);
+	if (!v)
+		return NULL;
+	else
+		return v->u.string.ptr;
+}
 static INLINE double json_numof(json_value *cv) {
 	if (cv && cv->type == json_integer) return cv->u.integer;
 	if (cv && cv->type == json_double) return cv->u.dbl;
@@ -337,6 +344,32 @@ static INLINE json_value *preserialize(MOVE json_value *x) {
 	return x;
 #endif
 }
+
+// Tag handler
+static INLINE char *tag2str(uint32_t tag) {
+	char *tags = (char *)malloc(sizeof(char) * 5);
+	tags[0] = (tag >> 24) & 0xFF;
+	tags[1] = (tag >> 16) & 0xFF;
+	tags[2] = (tag >> 8) & 0xFF;
+	tags[3] = tag & 0xFF;
+	tags[4] = 0;
+	return tags;
+}
+
+static INLINE uint32_t str2tag(char *tags) {
+	if (!tags) return 0;
+	uint32_t tag = 0;
+	uint8_t len = 0;
+	while (*tags && len < 4) {
+		tag = (tag << 8) | (*tags), tags++, len++;
+	}
+	while (len < 4) {
+		tag = (tag << 8) | ' ', len++;
+	}
+	return tag;
+}
+
+// Allocators
 
 static INLINE void *__caryll_allocate(size_t n, unsigned long line) {
 	if (!n) return NULL;

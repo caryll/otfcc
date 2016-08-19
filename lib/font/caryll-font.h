@@ -31,6 +31,7 @@ typedef struct _caryll_font caryll_font;
 #include <tables/VORG.h>
 
 #include <tables/otl/GDEF.h>
+#include <tables/otl/BASE.h>
 #include <tables/otl/otl.h>
 
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } caryll_font_subtype;
@@ -65,6 +66,7 @@ struct _caryll_font {
 	table_otl *GSUB;
 	table_otl *GPOS;
 	table_GDEF *GDEF;
+	table_BASE *BASE;
 
 	glyph_order_hash *glyph_order;
 };
