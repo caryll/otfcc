@@ -759,8 +759,10 @@ static void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
 		for (uint16_t k = 0; k < g->contours[cj].pointsCount; k++) {
 			glyf_point *p = &(g->contours[cj].points[k]);
 			uint8_t flag = (p->onCurve & MASK_ON_CURVE) ? GLYF_FLAG_ON_CURVE : 0;
-			int16_t dx = (int16_t)(p->x) - cx;
-			int16_t dy = (int16_t)(p->y) - cy;
+			int16_t px = round(p->x);
+			int16_t py = round(p->y);
+			int16_t dx = px - cx;
+			int16_t dy = py - cy;
 			if (dx == 0) {
 				flag |= GLYF_FLAG_SAME_X;
 			} else if (dx >= -0xFF && dx <= 0xFF) {
@@ -789,8 +791,8 @@ static void glyf_write_simple(glyf_glyph *g, caryll_buffer *gbuf) {
 				bufwrite16b(ys, dy);
 			}
 			bufwrite8(flags, flag);
-			cx = p->x;
-			cy = p->y;
+			cx = px;
+			cy = py;
 		}
 	}
 	flags = shrinkFlags(flags);
