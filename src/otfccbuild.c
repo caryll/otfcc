@@ -40,8 +40,8 @@ void printHelp() {
 	                "                               --ignore-glyph-order\n"
 	                "                               --short-post\n"
 	                "                               --merge-features\n"
-	                "     -O3                     Most aggressive opptimization strategy will be\n"
-	                "                             used. In this level, these options will be set:\n"
+	                // "     -O3                     Most aggressive opptimization strategy will be\n"
+	                // "                             used. In this level, these options will be set:\n"
 	                "                               --merge-lookups\n"
 	                " --time                    : Time each substep.\n"
 	                " --verbose                 : Show more information when building.\n\n"
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
 					options->cff_short_vmtx = true;
 					options->merge_features = true;
 				}
-				if (options->optimize_level >= 3) { options->merge_lookups = true; }
+				// if (options->optimize_level >= 3) { options->merge_lookups = true; }
 				break;
 		}
 	}
