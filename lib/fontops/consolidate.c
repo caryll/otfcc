@@ -227,7 +227,7 @@ void caryll_font_consolidate_otl(caryll_font *font) {
 	consolidate_GDEF(font, font->GDEF, "GDEF");
 }
 
-void caryll_font_consolidate(caryll_font *font, caryll_options *options) {
+void caryll_font_consolidate(caryll_font *font, const caryll_options *options) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
 	if (font->glyf) caryll_font_consolidate_otl(font);

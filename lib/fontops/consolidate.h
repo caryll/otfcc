@@ -13,6 +13,6 @@
 #include "otl/mark.h"
 #include "otl/GDEF.h"
 
-void caryll_font_consolidate(caryll_font *font, caryll_options *options);
+void caryll_font_consolidate(caryll_font *font, const caryll_options *options);
 
 #endif

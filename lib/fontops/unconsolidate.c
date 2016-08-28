@@ -6,7 +6,7 @@
 //   2. Replace all glyph IDs into glyph names. Note all glyph references with
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
-static void caryll_name_glyphs(caryll_font *font, caryll_options *options) {
+static void caryll_name_glyphs(caryll_font *font, const caryll_options *options) {
 	if (!font->glyf) return;
 	glyph_order_hash *glyph_order = malloc(sizeof(glyph_order_hash));
 	*glyph_order = NULL;
@@ -301,7 +301,7 @@ static void merge_LTSH(caryll_font *font) {
 		}
 	}
 }
-void caryll_font_unconsolidate(caryll_font *font, caryll_options *options) {
+void caryll_font_unconsolidate(caryll_font *font, const caryll_options *options) {
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);
