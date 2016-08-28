@@ -301,6 +301,10 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *option
 		os_2->usWinDescent = json_obj_getnum_fallback(table, "usWinDescent", 0);
 		os_2->ulCodePageRange1 = caryll_flags_from_json(json_obj_get(table, "ulCodePageRange1"), codePageLabels1);
 		os_2->ulCodePageRange2 = caryll_flags_from_json(json_obj_get(table, "ulCodePageRange2"), codePageLabels2);
+		os_2->ulUnicodeRange1 = caryll_flags_from_json(json_obj_get(table, "ulUnicodeRange1"), unicodeRangeLabels1);
+		os_2->ulUnicodeRange2 = caryll_flags_from_json(json_obj_get(table, "ulUnicodeRange2"), unicodeRangeLabels2);
+		os_2->ulUnicodeRange3 = caryll_flags_from_json(json_obj_get(table, "ulUnicodeRange3"), unicodeRangeLabels3);
+		os_2->ulUnicodeRange4 = caryll_flags_from_json(json_obj_get(table, "ulUnicodeRange4"), unicodeRangeLabels4);
 		os_2->sxHeight = json_obj_getnum_fallback(table, "sxHeight", 0);
 		os_2->sCapHeight = json_obj_getnum_fallback(table, "sCapHeight", 0);
 		os_2->usDefaultChar = json_obj_getnum_fallback(table, "usDefaultChar", 0);

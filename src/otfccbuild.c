@@ -49,6 +49,7 @@ void printHelp() {
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	                "                             instead of stating the average width of glyphs.\n"
 	                "                             Useful when creating a monospaced font.\n"
+	                " --keep-unicode-ranges     : Keep the OS/2.ulUnicodeRange[1-4] as-is.\n"
 	                " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
 	                "                             using current time.\n\n"
 	                " --short-post              : Don't export glyph names in the result font.\n"
@@ -141,6 +142,7 @@ int main(int argc, char *argv[]) {
 	                            {"dont-ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"keep-average-char-width", no_argument, NULL, 0},
+	                            {"keep-unicode-ranges", no_argument, NULL, 0},
 	                            {"keep-modified-time", no_argument, NULL, 0},
 	                            {"merge-lookups", no_argument, NULL, 0},
 	                            {"merge-features", no_argument, NULL, 0},
@@ -166,6 +168,8 @@ int main(int argc, char *argv[]) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
 					options->keep_average_char_width = true;
+				} else if (strcmp(longopts[option_index].name, "keep-unicode-ranges") == 0) {
+					options->keep_unicode_ranges = true;
 				} else if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
 					options->keep_modified_time = true;
 				} else if (strcmp(longopts[option_index].name, "merge-features") == 0) {

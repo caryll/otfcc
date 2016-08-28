@@ -11,6 +11,7 @@ typedef struct {
 	bool has_vertical_metrics;
 	bool export_fdselect;
 	bool keep_average_char_width;
+	bool keep_unicode_ranges;
 	bool short_post;
 	bool dummy_DSIG;
 	bool keep_modified_time;

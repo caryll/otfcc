@@ -235,7 +235,7 @@ static void caryll_font_stat_vmtx(caryll_font *font, caryll_options *options) {
 	font->vhea->advanceHeightMax = maxHeight;
 	font->vmtx = vmtx;
 }
-void caryll_font_stat_OS_2(caryll_font *font, caryll_options *options) {
+static void caryll_font_stat_OS_2_unicodeRanges(caryll_font *font) {
 	cmap_entry *item;
 	// Stat for OS/2.ulUnicodeRange.
 	uint32_t u1 = 0;
@@ -418,14 +418,17 @@ void caryll_font_stat_OS_2(caryll_font *font, caryll_options *options) {
 	} else {
 		font->OS_2->usLastCharIndex = 0xFFFF;
 	}
-
-	if (!options->keep_average_char_width) {
-		uint32_t totalWidth = 0;
-		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			totalWidth += font->glyf->glyphs[j]->advanceWidth;
-		}
-		font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
+}
+static void caryll_font_stat_OS_2_avgwidth(caryll_font *font) {
+	uint32_t totalWidth = 0;
+	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		totalWidth += font->glyf->glyphs[j]->advanceWidth;
 	}
+	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
+}
+static void caryll_font_stat_OS_2(caryll_font *font, caryll_options *options) {
+	if (!options->keep_unicode_ranges) { caryll_font_stat_OS_2_unicodeRanges(font); }
+	if (!options->keep_average_char_width) { caryll_font_stat_OS_2_avgwidth(font); }
 }
 
 #define MAX_STAT_METRIC 4096
