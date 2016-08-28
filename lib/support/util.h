@@ -153,14 +153,14 @@ static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) 
 		if (flags & (1 << j)) { json_object_push(v, labels[j], json_boolean_new(true)); }
 	return v;
 }
-static INLINE int caryll_flags_from_json(json_value *v, const char *labels[]) {
+static INLINE uint32_t caryll_flags_from_json(json_value *v, const char *labels[]) {
 	if (!v) return 0;
 	if (v->type == json_integer) {
-		return (int)v->u.integer;
+		return (uint32_t)v->u.integer;
 	} else if (v->type == json_double) {
-		return v->u.dbl;
+		return (uint32_t)v->u.dbl;
 	} else if (v->type == json_object) {
-		int flags = 0;
+		uint32_t flags = 0;
 		for (uint16_t j = 0; labels[j]; j++) {
 			if (json_obj_getbool(v, labels[j])) { flags |= (1 << j); }
 		}
