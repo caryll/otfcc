@@ -315,7 +315,7 @@ static void _declare_lookup_dumper(otl_lookup_type llt, const char *lt, json_val
 	if (lookup->type == llt) {
 		json_object_push(dump, "type", json_string_new(lt));
 		json_object_push(dump, "flags", caryll_flags_to_json(lookup->flags, lookupFlagsLabels));
-		if (lookup->flags >> 8) { json_object_push(dump, "markFilteringSet", json_integer_new(lookup->flags >> 8)); }
+		if (lookup->flags >> 8) { json_object_push(dump, "markAttachmentType", json_integer_new(lookup->flags >> 8)); }
 		json_value *subtables = json_array_new(lookup->subtableCount);
 		for (uint16_t j = 0; j < lookup->subtableCount; j++)
 			if (lookup->subtables[j]) { json_array_push(subtables, dumper(lookup->subtables[j])); }
@@ -390,8 +390,8 @@ static bool _declareLookupParser(const char *lt, otl_lookup_type llt, otl_subtab
 	NEW(lookup);
 	lookup->type = llt;
 	lookup->flags = caryll_flags_from_json(json_obj_get(_lookup, "flags"), lookupFlagsLabels);
-	uint16_t markFilteringSet = json_obj_getint(_lookup, "markFilteringSet");
-	if (markFilteringSet) { lookup->flags |= markFilteringSet << 8; }
+	uint16_t markAttachmentType = json_obj_getint(_lookup, "markAttachmentType");
+	if (markAttachmentType) { lookup->flags |= markAttachmentType << 8; }
 	lookup->subtableCount = _subtables->u.array.length;
 	NEW_N(lookup->subtables, lookup->subtableCount);
 	uint16_t jj = 0;
