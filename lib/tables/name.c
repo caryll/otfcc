@@ -1,6 +1,13 @@
 #include "name.h"
 #include <support/unicodeconv.h>
 
+static bool shouldDecodeAsUTF16(const name_record *record) {
+	return (record->platformID == 0)                               // Unicode, all
+	       || (record->platformID == 2 && record->encodingID == 1) // ISO, 1
+	       || (record->platformID == 3 &&                          // Microsoft, 0, 1, 10
+	           (record->encodingID == 0 || record->encodingID == 1 || record->encodingID == 10));
+}
+
 table_name *caryll_read_name(caryll_packet packet) {
 	FOR_TABLE('name', table) {
 		table_name *name = NULL;
@@ -27,11 +34,10 @@ table_name *caryll_read_name(caryll_packet packet) {
 			uint16_t offset = read_16u(data + 6 + j * 12 + 10);
 
 			if (record->platformID == 1 && record->encodingID == 0) {
-				// Mac Roman
+				// Mac Roman. Note that this is not very correct, but works for most fonts
 				sds nameString = sdsnewlen(data + (name->stringOffset) + offset, length);
 				record->nameString = nameString;
-			} else if ((record->platformID == 0 && record->encodingID == 1) ||
-			           (record->platformID == 3 && record->encodingID == 1)) {
+			} else if (shouldDecodeAsUTF16(record)) {
 				sds nameString = utf16be_to_utf8(data + (name->stringOffset) + offset, length);
 				record->nameString = nameString;
 			} else {
@@ -150,7 +156,7 @@ caryll_buffer *caryll_write_name(table_name *name, const caryll_options *options
 		bufwrite16b(buf, record->languageID);
 		bufwrite16b(buf, record->nameID);
 		size_t cbefore = strings->cursor;
-		if (record->platformID == 3 && record->encodingID == 1) {
+		if (shouldDecodeAsUTF16(record)) {
 			size_t words;
 			uint8_t *u16 = utf8toutf16be(record->nameString, &words);
 			bufwrite_bytes(strings, words, u16);
