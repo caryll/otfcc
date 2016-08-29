@@ -229,6 +229,7 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_optio
 	json_object_push(os_2, "ySubscriptXOffset", json_integer_new(table->ySubscriptXOffset));
 	json_object_push(os_2, "ySubscriptYOffset", json_integer_new(table->ySubscriptYOffset));
 	json_object_push(os_2, "ySupscriptXSize", json_integer_new(table->ySupscriptXSize));
+	json_object_push(os_2, "ySupscriptYSize", json_integer_new(table->ySupscriptYSize));
 	json_object_push(os_2, "ySupscriptXOffset", json_integer_new(table->ySupscriptXOffset));
 	json_object_push(os_2, "ySupscriptYOffset", json_integer_new(table->ySupscriptYOffset));
 	json_object_push(os_2, "yStrikeoutSize", json_integer_new(table->yStrikeoutSize));
@@ -286,6 +287,7 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *option
 		os_2->ySubscriptXOffset = json_obj_getnum_fallback(table, "ySubscriptXOffset", 0);
 		os_2->ySubscriptYOffset = json_obj_getnum_fallback(table, "ySubscriptYOffset", 0);
 		os_2->ySupscriptXSize = json_obj_getnum_fallback(table, "ySupscriptXSize", 0);
+		os_2->ySupscriptYSize = json_obj_getnum_fallback(table, "ySupscriptYSize", 0);
 		os_2->ySupscriptXOffset = json_obj_getnum_fallback(table, "ySupscriptXOffset", 0);
 		os_2->ySupscriptYOffset = json_obj_getnum_fallback(table, "ySupscriptYOffset", 0);
 		os_2->yStrikeoutSize = json_obj_getnum_fallback(table, "yStrikeoutSize", 0);
