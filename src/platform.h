@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <windows.h>
+#include <Windows.h>
 int get_argv_utf8(int *argc_ptr, char ***argv_ptr) {
 	int argc;
 	char **argv;
@@ -14,7 +14,9 @@ int get_argv_utf8(int *argc_ptr, char ***argv_ptr) {
 	int i;
 	int offset = (argc + 1) * sizeof(char *);
 	int size = offset;
-	for (i = 0; i < argc; i++) size += WideCharToMultiByte(CP_UTF8, 0, argv_utf16[i], -1, 0, 0, 0, 0);
+	for (i = 0; i < argc; i++) {
+		size += WideCharToMultiByte(CP_UTF8, 0, argv_utf16[i], -1, 0, 0, 0, 0);
+	}
 	argv = (char **)malloc(size);
 	for (i = 0; i < argc; i++) {
 		argv[i] = (char *)argv + offset;
