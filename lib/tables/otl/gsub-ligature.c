@@ -1,5 +1,5 @@
 #include "gsub-ligature.h"
-static void deleteGSUBLigatureSubtable(otl_subtable *_subtable) {
+void caryll_delete_gsub_ligature(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	if (subtable->from && subtable->to) {
@@ -11,16 +11,7 @@ static void deleteGSUBLigatureSubtable(otl_subtable *_subtable) {
 	caryll_delete_coverage(subtable->to);
 	free(subtable);
 }
-void caryll_delete_gsub_ligature(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) { deleteGSUBLigatureSubtable(lookup->subtables[j]); }
-			free(lookup->subtables);
-		}
-		FREE(lookup);
-	}
-}
+
 otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);
@@ -75,7 +66,7 @@ otl_subtable *caryll_read_gsub_ligature(font_file_pointer data, uint32_t tableLe
 	caryll_delete_coverage(startCoverage);
 	return _subtable;
 FAIL:
-	deleteGSUBLigatureSubtable(_subtable);
+	caryll_delete_gsub_ligature(_subtable);
 	return NULL;
 }
 

@@ -19,5 +19,5 @@ bool consolidate_gpos_pair(caryll_font *font, table_otl *table, otl_subtable *_s
 	shrink_classdef(subtable->first);
 	shrink_classdef(subtable->second);
 	shrink_coverage(subtable->coverage, true);
-	return false;
+	return (subtable->coverage->numGlyphs == 0);
 }

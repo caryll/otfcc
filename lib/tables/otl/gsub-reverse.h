@@ -3,7 +3,7 @@
 
 #include "otl.h"
 
-void caryll_delete_gsub_reverse(otl_lookup *lookup);
+void caryll_delete_gsub_reverse(otl_subtable *_subtable);
 otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLength, uint32_t offset);
 json_value *caryll_gsub_reverse_to_json(otl_subtable *_subtable);
 otl_subtable *caryll_gsub_reverse_from_json(json_value *_subtable);

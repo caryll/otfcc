@@ -1,7 +1,7 @@
 #include "gpos-pair.h"
 #include "gpos-common.h"
 
-void delete_otl_gpos_pair_subtable(otl_subtable *_subtable) {
+void caryll_delete_gpos_pair(otl_subtable *_subtable) {
 	if (_subtable) {
 		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 		if (subtable->coverage) caryll_delete_coverage(subtable->coverage);
@@ -20,16 +20,6 @@ void delete_otl_gpos_pair_subtable(otl_subtable *_subtable) {
 		caryll_delete_classdef(subtable->first);
 		caryll_delete_classdef(subtable->second);
 		free(_subtable);
-	}
-}
-void caryll_delete_gpos_pair(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				delete_otl_gpos_pair_subtable(lookup->subtables[j]);
-			free(lookup->subtables);
-		}
-		free(lookup);
 	}
 }
 
@@ -178,7 +168,7 @@ otl_subtable *caryll_read_gpos_pair(font_file_pointer data, uint32_t tableLength
 		return _subtable;
 	}
 FAIL:
-	delete_otl_gpos_pair_subtable(_subtable);
+	caryll_delete_gpos_pair(_subtable);
 	return NULL;
 }
 
@@ -259,7 +249,7 @@ otl_subtable *caryll_gpos_pair_from_json(json_value *_subtable) {
 	}
 	return _st;
 FAIL:
-	delete_otl_gpos_pair_subtable(_st);
+	caryll_delete_gpos_pair(_st);
 	return NULL;
 }
 

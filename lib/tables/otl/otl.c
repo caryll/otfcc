@@ -936,7 +936,7 @@ caryll_buffer *caryll_write_otl(table_otl *table, const caryll_options *options,
 
 #define DELETE_TYPE(type, fn)                                                                                          \
 	case type:                                                                                                         \
-		fn(lookup);                                                                                                    \
+		fn(lookup->subtables[j]);                                                                                      \
 		break;
 #define LOOKUP_READER(llt, fn)                                                                                         \
 	case llt:                                                                                                          \
@@ -969,24 +969,28 @@ static const char *tableNames[] = {[otl_type_unknown] = "unknown",
 
 void caryll_delete_lookup(otl_lookup *lookup) {
 	if (!lookup) return;
-	switch (lookup->type) {
-		DELETE_TYPE(otl_type_gsub_single, caryll_delete_gsub_single);
-		DELETE_TYPE(otl_type_gsub_multiple, caryll_delete_gsub_multi);
-		DELETE_TYPE(otl_type_gsub_alternate, caryll_delete_gsub_multi);
-		DELETE_TYPE(otl_type_gsub_ligature, caryll_delete_gsub_ligature);
-		DELETE_TYPE(otl_type_gsub_chaining, caryll_delete_chaining);
-		DELETE_TYPE(otl_type_gsub_reverse, caryll_delete_gsub_reverse);
-		DELETE_TYPE(otl_type_gpos_single, caryll_delete_gpos_single);
-		DELETE_TYPE(otl_type_gpos_pair, caryll_delete_gpos_pair);
-		DELETE_TYPE(otl_type_gpos_cursive, caryll_delete_gpos_cursive);
-		DELETE_TYPE(otl_type_gpos_chaining, caryll_delete_chaining);
-		DELETE_TYPE(otl_type_gpos_mark_to_base, caryll_delete_gpos_mark_to_single);
-		DELETE_TYPE(otl_type_gpos_mark_to_mark, caryll_delete_gpos_mark_to_single);
-		DELETE_TYPE(otl_type_gpos_mark_to_ligature, caryll_delete_gpos_mark_to_ligature);
-		default:
-			free(lookup);
-			break;
+	if (lookup->subtables) {
+		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+			switch (lookup->type) {
+				DELETE_TYPE(otl_type_gsub_single, caryll_delete_gsub_single);
+				DELETE_TYPE(otl_type_gsub_multiple, caryll_delete_gsub_multi);
+				DELETE_TYPE(otl_type_gsub_alternate, caryll_delete_gsub_multi);
+				DELETE_TYPE(otl_type_gsub_ligature, caryll_delete_gsub_ligature);
+				DELETE_TYPE(otl_type_gsub_chaining, caryll_delete_chaining);
+				DELETE_TYPE(otl_type_gsub_reverse, caryll_delete_gsub_reverse);
+				DELETE_TYPE(otl_type_gpos_single, caryll_delete_gpos_single);
+				DELETE_TYPE(otl_type_gpos_pair, caryll_delete_gpos_pair);
+				DELETE_TYPE(otl_type_gpos_cursive, caryll_delete_gpos_cursive);
+				DELETE_TYPE(otl_type_gpos_chaining, caryll_delete_chaining);
+				DELETE_TYPE(otl_type_gpos_mark_to_base, caryll_delete_gpos_mark_to_single);
+				DELETE_TYPE(otl_type_gpos_mark_to_mark, caryll_delete_gpos_mark_to_single);
+				DELETE_TYPE(otl_type_gpos_mark_to_ligature, caryll_delete_gpos_mark_to_ligature);
+				default:;
+			}
+		}
+		free(lookup->subtables);
 	}
+	free(lookup);
 }
 
 otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,

@@ -18,5 +18,5 @@ bool consolidate_gsub_ligature(caryll_font *font, table_otl *table, otl_subtable
 		}
 	}
 	subtable->to->numGlyphs = jj;
-	return false;
+	return (subtable->to->numGlyphs==0);
 }

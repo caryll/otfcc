@@ -155,15 +155,20 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 }
 
 typedef bool (*otl_consolidation_function)(caryll_font *, table_otl *, otl_subtable *, sds);
-#define LOOKUP_CONSOLIDATOR(llt, fn) __declare_otl_consolidation(llt, fn, font, table, lookup);
+typedef void (*subtable_remover)(otl_subtable *);
+#define LOOKUP_CONSOLIDATOR(llt, fn, fndel) __declare_otl_consolidation(llt, fn, fndel, font, table, lookup);
 
-static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_function fn, caryll_font *font,
-                                        table_otl *table, otl_lookup *lookup) {
+static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_function fn, subtable_remover fndel,
+                                        caryll_font *font, table_otl *table, otl_lookup *lookup) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 			if (lookup->subtables[j]) {
 				bool subtableRemoved = fn(font, table, lookup->subtables[j], lookup->name);
-				if (subtableRemoved) { lookup->subtables[j] = NULL; }
+				if (subtableRemoved) {
+					fndel(lookup->subtables[j]);
+					lookup->subtables[j] = NULL;
+					fprintf(stderr, "[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+				}
 			}
 		}
 		uint16_t k = 0;
@@ -185,19 +190,20 @@ static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_
 }
 
 void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *lookup) {
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_base, consolidate_mark_to_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_mark, consolidate_mark_to_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, caryll_delete_gsub_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, caryll_delete_gsub_multi);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, caryll_delete_gsub_multi);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, caryll_delete_gsub_ligature);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, caryll_delete_chaining);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, caryll_delete_gsub_reverse);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, caryll_delete_gpos_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, caryll_delete_gpos_pair);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, caryll_delete_gpos_cursive);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, caryll_delete_chaining);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_base, consolidate_mark_to_single, caryll_delete_gpos_mark_to_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_mark, consolidate_mark_to_single, caryll_delete_gpos_mark_to_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature,
+	                    caryll_delete_gpos_mark_to_ligature);
 }
 
 void caryll_font_consolidate_otl(caryll_font *font) {

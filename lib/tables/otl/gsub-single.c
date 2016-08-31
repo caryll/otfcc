@@ -1,16 +1,9 @@
 #include "gsub-single.h"
-void caryll_delete_gsub_single(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					caryll_delete_coverage(lookup->subtables[j]->gsub_single.from);
-					caryll_delete_coverage(lookup->subtables[j]->gsub_single.to);
-					free(lookup->subtables[j]);
-				}
-			free(lookup->subtables);
-		}
-		FREE(lookup);
+void caryll_delete_gsub_single(otl_subtable *subtable) {
+	if (subtable) {
+		caryll_delete_coverage(subtable->gsub_single.from);
+		caryll_delete_coverage(subtable->gsub_single.to);
+		free(subtable);
 	}
 }
 

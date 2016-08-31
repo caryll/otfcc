@@ -1,6 +1,6 @@
 #include "gsub-reverse.h"
 
-static void delete_gsub_reverse_subtable(otl_subtable *_subtable) {
+void caryll_delete_gsub_reverse(otl_subtable *_subtable) {
 	if (_subtable) {
 		subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 		if (subtable->match)
@@ -9,18 +9,6 @@ static void delete_gsub_reverse_subtable(otl_subtable *_subtable) {
 			}
 		if (subtable->to) caryll_delete_coverage(subtable->to);
 		free(_subtable);
-	}
-}
-
-void caryll_delete_gsub_reverse(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-				delete_gsub_reverse_subtable(lookup->subtables[j]);
-			}
-			free(lookup->subtables);
-		}
-		free(lookup);
 	}
 }
 
@@ -82,7 +70,7 @@ otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLen
 	return _subtable;
 
 FAIL:
-	delete_gsub_reverse_subtable(_subtable);
+	caryll_delete_gsub_reverse(_subtable);
 	return NULL;
 }
 

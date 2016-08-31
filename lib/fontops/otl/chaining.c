@@ -40,13 +40,11 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 	// otfcc will keep them.
 	if (rule->applyCount) {
 		uint16_t k = 0;
-		for (uint16_t j = 0; j < rule->applyCount; j++)
+		for (uint16_t j = 0; j < rule->applyCount; j++) {
 			if (rule->apply[j].lookup.name) { rule->apply[k++] = rule->apply[j]; }
-		rule->applyCount = k;
-		if (!rule->applyCount) {
-			delete_otl_chaining_subtable(_subtable);
-			return true;
 		}
+		rule->applyCount = k;
+		if (!rule->applyCount) { return true; }
 	}
 	return false;
 }
@@ -235,7 +233,7 @@ endcheck:
 				subtable0->rules[kk] = rule;
 				rewriteRule(rule, hb, hi, hf);
 				lookup->subtables[k]->chaining.rules[0] = NULL;
-				delete_otl_chaining_subtable(lookup->subtables[k]);
+				caryll_delete_chaining(lookup->subtables[k]);
 				lookup->subtables[k] = NULL;
 				kk++;
 			}

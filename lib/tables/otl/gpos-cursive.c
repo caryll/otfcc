@@ -1,20 +1,14 @@
 #include "gpos-cursive.h"
 #include "gpos-common.h"
-void caryll_delete_gpos_cursive(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					caryll_delete_coverage(lookup->subtables[j]->gpos_cursive.coverage);
-					free(lookup->subtables[j]->gpos_cursive.enter);
-					free(lookup->subtables[j]->gpos_cursive.exit);
-					free(lookup->subtables[j]);
-				}
-			free(lookup->subtables);
-		}
-		FREE(lookup);
+void caryll_delete_gpos_cursive(otl_subtable *subtable) {
+	if (subtable) {
+		caryll_delete_coverage(subtable->gpos_cursive.coverage);
+		free(subtable->gpos_cursive.enter);
+		free(subtable->gpos_cursive.exit);
+		free(subtable);
 	}
 }
+
 otl_subtable *caryll_read_gpos_cursive(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);

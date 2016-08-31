@@ -1,5 +1,5 @@
 #include "gsub-multi.h"
-static void deleteGSUBMultiSubtable(otl_subtable *_subtable) {
+void caryll_delete_gsub_multi(otl_subtable *_subtable) {
 	if (!_subtable) return;
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	if (subtable->from && subtable->to) {
@@ -10,16 +10,6 @@ static void deleteGSUBMultiSubtable(otl_subtable *_subtable) {
 	}
 	caryll_delete_coverage(subtable->from);
 	free(subtable);
-}
-void caryll_delete_gsub_multi(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) { deleteGSUBMultiSubtable(lookup->subtables[j]); }
-			free(lookup->subtables);
-		}
-		FREE(lookup);
-	}
 }
 
 otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
@@ -51,7 +41,7 @@ otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLengt
 	return _subtable;
 
 FAIL:
-	deleteGSUBMultiSubtable(_subtable);
+	caryll_delete_gsub_multi(_subtable);
 	return NULL;
 }
 

@@ -13,7 +13,7 @@ static void deleteRule(otl_chaining_rule *rule) {
 	}
 	if (rule) free(rule);
 }
-void delete_otl_chaining_subtable(otl_subtable *_subtable) {
+void caryll_delete_chaining(otl_subtable *_subtable) {
 	if (_subtable) {
 		subtable_chaining *subtable = &(_subtable->chaining);
 		if (subtable->rules) {
@@ -26,17 +26,6 @@ void delete_otl_chaining_subtable(otl_subtable *_subtable) {
 		if (subtable->ic) { caryll_delete_classdef(subtable->ic); }
 		if (subtable->fc) { caryll_delete_classdef(subtable->fc); }
 		free(_subtable);
-	}
-}
-void caryll_delete_chaining(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
-				delete_otl_chaining_subtable(lookup->subtables[j]);
-			}
-			free(lookup->subtables);
-		}
-		free(lookup);
 	}
 }
 
@@ -231,7 +220,7 @@ otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLengt
 	}
 FAIL:
 	fprintf(stderr, "Unsupported format %d.\n", format);
-	DELETE(delete_otl_chaining_subtable, _subtable);
+	DELETE(caryll_delete_chaining, _subtable);
 	return NULL;
 }
 
@@ -390,7 +379,7 @@ otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength,
 	}
 FAIL:
 	fprintf(stderr, "Unsupported format %d.\n", format);
-	DELETE(delete_otl_chaining_subtable, _subtable);
+	DELETE(caryll_delete_chaining, _subtable);
 	return NULL;
 }
 

@@ -1,7 +1,7 @@
 #include "gpos-mark-to-single.h"
 #include "gpos-common.h"
 
-static void delete_mtb_subtable(otl_subtable *_subtable) {
+void caryll_delete_gpos_mark_to_single(otl_subtable *_subtable) {
 	if (_subtable) {
 		subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
 		if (subtable->marks) { caryll_delete_coverage(subtable->marks); }
@@ -16,17 +16,6 @@ static void delete_mtb_subtable(otl_subtable *_subtable) {
 			caryll_delete_coverage(subtable->bases);
 		}
 		free(_subtable);
-	}
-}
-
-void caryll_delete_gpos_mark_to_single(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				delete_mtb_subtable(lookup->subtables[j]);
-			free(lookup->subtables);
-		}
-		free(lookup);
 	}
 }
 
@@ -65,7 +54,7 @@ otl_subtable *caryll_read_gpos_mark_to_single(font_file_pointer data, uint32_t t
 	}
 	goto OK;
 FAIL:
-	DELETE(delete_mtb_subtable, _subtable);
+	DELETE(caryll_delete_gpos_mark_to_single, _subtable);
 OK:
 	return _subtable;
 }

@@ -48,5 +48,5 @@ bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *
 			free(s);
 		}
 	}
-	return false;
+	return (subtable->coverage->numGlyphs == 0);
 }

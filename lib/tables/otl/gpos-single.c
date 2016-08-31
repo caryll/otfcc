@@ -1,19 +1,13 @@
 #include "gpos-single.h"
 #include "gpos-common.h"
-void caryll_delete_gpos_single(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					caryll_delete_coverage(lookup->subtables[j]->gpos_single.coverage);
-					free(lookup->subtables[j]->gpos_single.values);
-					free(lookup->subtables[j]);
-				}
-			free(lookup->subtables);
-		}
-		FREE(lookup);
+void caryll_delete_gpos_single(otl_subtable *subtable) {
+	if (subtable) {
+		caryll_delete_coverage(subtable->gpos_single.coverage);
+		free(subtable->gpos_single.values);
+		free(subtable);
 	}
 }
+
 otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_subtable *_subtable;
 	NEW(_subtable);

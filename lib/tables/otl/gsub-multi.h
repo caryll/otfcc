@@ -3,7 +3,7 @@
 
 #include "otl.h"
 
-void caryll_delete_gsub_multi(otl_lookup *lookup);
+void caryll_delete_gsub_multi(otl_subtable *subtable);
 otl_subtable *caryll_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset);
 json_value *caryll_gsub_multi_to_json(otl_subtable *_subtable);
 otl_subtable *caryll_gsub_multi_from_json(json_value *_subtable);
