@@ -38,6 +38,41 @@ glyf_glyph *caryll_new_glyf_glyph() {
 	return g;
 }
 
+static void caryll_delete_glyf_glyph(glyf_glyph *g) {
+	if (!g) return;
+	sdsfree(g->name);
+	if (g->numberOfContours > 0 && g->contours != NULL) {
+		for (uint16_t k = 0; k < g->numberOfContours; k++) {
+			if (g->contours[k].points) free(g->contours[k].points);
+		}
+		free(g->contours);
+	}
+	if (g->numberOfReferences > 0 && g->references != NULL) {
+		for (uint16_t k = 0; k < g->numberOfReferences; k++) {
+			handle_delete(&g->references[k].glyph);
+		}
+		free(g->references);
+	}
+	if (g->instructions) { free(g->instructions); }
+	if (g->stemH) FREE(g->stemH);
+	if (g->stemV) FREE(g->stemV);
+	if (g->hintMasks) FREE(g->hintMasks);
+	if (g->contourMasks) FREE(g->contourMasks);
+	handle_delete(&g->fdSelect);
+	g->name = NULL;
+	free(g);
+}
+
+void caryll_delete_glyf(table_glyf *table) {
+	if (table->glyphs) {
+		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
+			caryll_delete_glyf_glyph(table->glyphs[j]);
+		}
+		free(table->glyphs);
+	}
+	free(table);
+}
+
 static glyf_point *next_point(glyf_contour *contours, uint16_t *cc, uint16_t *cp) {
 	if (*cp >= contours[*cc].pointsCount) {
 		*cp = 0;
@@ -330,39 +365,6 @@ ABSENT:
 	if (offsets) { free(offsets), offsets = NULL; }
 	if (glyf) { free(glyf), glyf = NULL; }
 	return NULL;
-}
-
-static void caryll_delete_glyf_glyph(glyf_glyph *g) {
-	if (!g) return;
-	sdsfree(g->name);
-	if (g->numberOfContours > 0 && g->contours != NULL) {
-		for (uint16_t k = 0; k < g->numberOfContours; k++) {
-			if (g->contours[k].points) free(g->contours[k].points);
-		}
-		free(g->contours);
-	}
-	if (g->numberOfReferences > 0 && g->references != NULL) {
-		for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-			g->references[k].glyph.name = NULL;
-		}
-		free(g->references);
-	}
-	if (g->instructions) { free(g->instructions); }
-	if (g->stemH) FREE(g->stemH);
-	if (g->stemV) FREE(g->stemV);
-	if (g->hintMasks) FREE(g->hintMasks);
-	if (g->contourMasks) FREE(g->contourMasks);
-	g->name = NULL;
-	free(g);
-}
-void caryll_delete_glyf(table_glyf *table) {
-	if (table->glyphs) {
-		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
-			caryll_delete_glyf_glyph(table->glyphs[j]);
-		}
-		free(table->glyphs);
-	}
-	free(table);
 }
 
 // to json

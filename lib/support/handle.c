@@ -16,3 +16,22 @@ struct _caryll_handle handle_from_name(sds s) {
 	}
 	return h;
 }
+void handle_delete(struct _caryll_handle *h) {
+	if (h->state == HANDLE_STATE_NAME) { sdsfree(h->name); };
+	h->name = NULL;
+	h->index = 0;
+	h->state = HANDLE_STATE_EMPTY;
+}
+void handle_delete_force(struct _caryll_handle *h) {
+	sdsfree(h->name);
+	h->name = NULL;
+	h->index = 0;
+	h->state = HANDLE_STATE_EMPTY;
+}
+
+void handle_consolidate_to(struct _caryll_handle *h, uint16_t id, sds name) {
+	handle_delete(h);
+	h->state = HANDLE_STATE_CONSOLIDATED;
+	h->index = id;
+	h->name = name;
+}

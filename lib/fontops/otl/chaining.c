@@ -18,18 +18,14 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 			for (uint16_t k = 0; k < table->lookupCount; k++) {
 				if (strcmp(table->lookups[k]->name, rule->apply[j].lookup.name) != 0) continue;
 				foundLookup = true;
-				rule->apply[j].lookup.index = k;
-				if (rule->apply[j].lookup.name != table->lookups[k]->name) {
-					DELETE(sdsfree, rule->apply[j].lookup.name);
-				}
-				rule->apply[j].lookup.name = table->lookups[k]->name;
+				handle_consolidate_to(&rule->apply[j].lookup, k, table->lookups[k]->name);
 			}
 			if (!foundLookup) {
 				// Maybe the lookup is aliased.
 				for (uint16_t k = 0; k < table->lookupAliasesCount; k++) {
 					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookup.name) != 0) continue;
-					DELETE(sdsfree, rule->apply[j].lookup.name);
-					rule->apply[j].lookup.name = sdsdup(table->lookupAliases[k].to);
+					handle_delete(&rule->apply[j].lookup);
+					rule->apply[j].lookup = handle_from_name(sdsdup(table->lookupAliases[k].to));
 					goto FIND_LOOKUP;
 				}
 			}
@@ -37,7 +33,7 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 		if (!foundLookup && rule->apply[j].lookup.name) {
 			fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n", rule->apply[j].lookup.name,
 			        lookupName);
-			DELETE(sdsfree, rule->apply[j].lookup.name);
+			handle_delete(&rule->apply[j].lookup);
 		}
 	}
 	// If a rule is designed to have no lookup application, it may be a ignoration
@@ -130,7 +126,7 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 	}
 }
 static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier_hash *hi, classifier_hash *hf) {
-	for (uint16_t m = 0; m < rule->matchCount; m++)
+	for (uint16_t m = 0; m < rule->matchCount; m++) {
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
 			classifier_hash *s;
@@ -140,16 +136,15 @@ static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0].index = s->cls;
-			rule->match[m]->glyphs[0].name = NULL;
+			rule->match[m]->glyphs[0] = handle_from_id(s->cls);
 		} else {
 			caryll_delete_coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0].index = 0;
-			rule->match[m]->glyphs[0].name = NULL;
+			rule->match[m]->glyphs[0] = handle_from_id(0);
 		}
+	}
 }
 static otl_classdef *toClass(classifier_hash *h) {
 	otl_classdef *cd;
@@ -167,6 +162,7 @@ static otl_classdef *toClass(classifier_hash *h) {
 	uint16_t j = 0;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
+		cd->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
 		cd->glyphs[j].index = item->gid;
 		cd->glyphs[j].name = item->gname;
 		cd->classes[j] = item->cls;

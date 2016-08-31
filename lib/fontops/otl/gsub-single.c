@@ -52,8 +52,10 @@ bool consolidate_gsub_single(caryll_font *font, table_otl *table, otl_subtable *
 		gsub_single_map_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
+			subtable->from->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
 			subtable->from->glyphs[j].index = s->fromid;
 			subtable->from->glyphs[j].name = s->fromname;
+			subtable->to->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
 			subtable->to->glyphs[j].index = s->toid;
 			subtable->to->glyphs[j].name = s->toname;
 			j++;

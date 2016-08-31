@@ -39,6 +39,7 @@ bool consolidate_gpos_single(caryll_font *font, table_otl *table, otl_subtable *
 		gpos_single_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
+			subtable->coverage->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
 			subtable->coverage->glyphs[j].index = s->fromid;
 			subtable->coverage->glyphs[j].name = s->fromname;
 			subtable->values[j] = s->v;

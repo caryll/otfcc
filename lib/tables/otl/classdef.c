@@ -2,7 +2,12 @@
 
 void caryll_delete_classdef(otl_classdef *cd) {
 	if (cd) {
-		free(cd->glyphs);
+		if (cd->glyphs) {
+			for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+				handle_delete(&cd->glyphs[j]);
+			}
+			free(cd->glyphs);
+		}
 		free(cd->classes);
 		free(cd);
 	}

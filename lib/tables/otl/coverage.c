@@ -1,7 +1,12 @@
 #include "coverage.h"
 
 void caryll_delete_coverage(otl_coverage *coverage) {
-	if (coverage && coverage->glyphs) free(coverage->glyphs);
+	if (coverage && coverage->glyphs) {
+		for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+			handle_delete(&coverage->glyphs[j]);
+		}
+		free(coverage->glyphs);
+	}
 	if (coverage) free(coverage);
 }
 

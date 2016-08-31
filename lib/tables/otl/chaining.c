@@ -5,7 +5,12 @@ static void deleteRule(otl_chaining_rule *rule) {
 			caryll_delete_coverage(rule->match[k]);
 		}
 	}
-	if (rule && rule->apply) free(rule->apply);
+	if (rule && rule->apply) {
+		for (uint16_t j = 0; j < rule->applyCount; j++) {
+			handle_delete(&rule->apply[j].lookup);
+		}
+		free(rule->apply);
+	}
 	if (rule) free(rule);
 }
 void delete_otl_chaining_subtable(otl_subtable *_subtable) {

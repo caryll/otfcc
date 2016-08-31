@@ -23,21 +23,16 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		if (r->glyph.name) {
 			HASH_FIND_STR(*font->glyph_order, r->glyph.name, entry);
 			if (entry) {
-				r->glyph.index = entry->gid;
-				if (r->glyph.name != entry->name) sdsfree(r->glyph.name);
-				r->glyph.name = entry->name;
+				handle_consolidate_to(&r->glyph, entry->gid, entry->name);
 				nReferencesConsolidated += 1;
 			} else {
 				fprintf(stderr, "[Consolidate] Ignored absent glyph component "
 				                "reference /%s within /%s.\n",
 				        r->glyph.name, g->name);
-				r->glyph.index = 0;
-				sdsfree(r->glyph.name);
-				r->glyph.name = NULL;
+				handle_delete(&r->glyph);
 			}
 		} else {
-			r->glyph.index = 0;
-			r->glyph.name = NULL;
+			handle_delete(&r->glyph);
 		}
 	}
 	if (nReferencesConsolidated < g->numberOfReferences) {
@@ -112,23 +107,17 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
 			if (strcmp(g->fdSelect.name, font->CFF_->fdArray[j]->fontName) == 0) {
 				found = true;
-				sdsfree(g->fdSelect.name);
-				g->fdSelect.name = font->CFF_->fdArray[j]->fontName;
-				g->fdSelect.index = j;
+				handle_consolidate_to(&(g->fdSelect), j, font->CFF_->fdArray[j]->fontName);
 				break;
 			}
 		}
 		if (!found) {
 			fprintf(stderr, "[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name,
 			        g->name);
-			sdsfree(g->fdSelect.name);
-			g->fdSelect.name = NULL;
-			g->fdSelect.index = 0;
+			handle_delete(&(g->fdSelect));
 		}
 	} else if (g->fdSelect.name) {
-		sdsfree(g->fdSelect.name);
-		g->fdSelect.name = NULL;
-		g->fdSelect.index = 0;
+		handle_delete(&(g->fdSelect));
 	}
 }
 
@@ -146,25 +135,21 @@ void caryll_font_consolidate_glyf(caryll_font *font) {
 void caryll_font_consolidate_cmap(caryll_font *font) {
 	if (font->glyph_order && *font->glyph_order && font->cmap) {
 		cmap_entry *item;
-		foreach_hash(item, *font->cmap) if (item->glyph.name) {
-			glyph_order_entry *ordentry;
-			HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
-			if (ordentry) {
-				item->glyph.index = ordentry->gid;
-				if (item->glyph.name != ordentry->name) sdsfree(item->glyph.name);
-				item->glyph.name = ordentry->name;
+		foreach_hash(item, *font->cmap) {
+			if (item->glyph.name) {
+				glyph_order_entry *ordentry;
+				HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
+				if (ordentry) {
+					handle_consolidate_to(&item->glyph, ordentry->gid, ordentry->name);
+				} else {
+					fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
+					                "non-existent glyph /%s.\n",
+					        item->unicode, item->glyph.name);
+					handle_delete(&item->glyph);
+				}
 			} else {
-				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
-				                "non-existent glyph /%s.\n",
-				        item->unicode, item->glyph.name);
-				item->glyph.index = 0;
-				sdsfree(item->glyph.name);
-				item->glyph.name = NULL;
+				handle_delete(&item->glyph);
 			}
-		}
-		else {
-			item->glyph.index = 0;
-			item->glyph.name = NULL;
 		}
 	}
 }

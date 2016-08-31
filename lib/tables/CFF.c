@@ -791,6 +791,8 @@ static table_CFF *fdFromJson(json_value *dump) {
 		}
 	}
 	if (!table->privateDict) table->privateDict = caryll_new_CFF_private();
+	if (table->isCID && !table->cidRegistry) { table->cidRegistry = sdsnew("CARYLL"); }
+	if (table->isCID && !table->cidOrdering) { table->cidOrdering = sdsnew("OTFCCAUTOCID"); }
 	return table;
 }
 table_CFF *caryll_CFF_from_json(json_value *root, const caryll_options *options) {

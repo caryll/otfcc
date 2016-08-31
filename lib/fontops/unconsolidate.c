@@ -78,7 +78,7 @@ static void caryll_name_cmap_entries(caryll_font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
 		cmap_entry *s;
 		foreach_hash(s, *font->cmap) {
-			lookup_name(font->glyph_order, s->glyph.index, &s->glyph.name);
+			lookup_name_handle(font->glyph_order, &s->glyph);
 		}
 	}
 }
@@ -91,7 +91,7 @@ static void caryll_name_glyf(caryll_font *font) {
 			g->name = sdsdup(glyphName);
 			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (uint16_t k = 0; k < g->numberOfReferences; k++) {
-					lookup_name(font->glyph_order, g->references[k].glyph.index, &g->references[k].glyph.name);
+					lookup_name_handle(font->glyph_order, &g->references[k].glyph);
 				}
 			}
 		}
@@ -100,16 +100,16 @@ static void caryll_name_glyf(caryll_font *font) {
 static void name_coverage(caryll_font *font, otl_coverage *coverage) {
 	if (!coverage) return;
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
-		lookup_name(font->glyph_order, coverage->glyphs[j].index, &(coverage->glyphs[j].name));
+		lookup_name_handle(font->glyph_order, &coverage->glyphs[j]);
 	}
 }
 static void name_classdef(caryll_font *font, otl_classdef *cd) {
 	if (!cd) return;
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
-		lookup_name(font->glyph_order, cd->glyphs[j].index, &(cd->glyphs[j].name));
+		lookup_name_handle(font->glyph_order, &cd->glyphs[j]);
 	}
 }
-static void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, table_otl *table) {
+static void unconsolidate_chaining(caryll_font *font, otl_lookup *lookup, table_otl *table) {
 	uint16_t totalRules = 0;
 	for (uint16_t j = 0; j < lookup->subtableCount; j++)
 		if (lookup->subtables[j]) { totalRules += lookup->subtables[j]->chaining.rulesCount; }
@@ -142,6 +142,11 @@ static void unconsolidate_gsub_chain(caryll_font *font, otl_lookup *lookup, tabl
 		for (uint16_t k = 0; k < rule->applyCount; k++) {
 			if (rule->apply[k].lookup.index < table->lookupCount) {
 				rule->apply[k].lookup.name = table->lookups[rule->apply[k].lookup.index]->name;
+				rule->apply[k].lookup.state = HANDLE_STATE_CONSOLIDATED;
+			} else {
+				rule->apply[k].lookup.index = 0;
+				rule->apply[k].lookup.name = table->lookups[rule->apply[k].lookup.index]->name;
+				rule->apply[k].lookup.state = HANDLE_STATE_CONSOLIDATED;
 			}
 		}
 	}
@@ -188,7 +193,7 @@ static void name_lookup(caryll_font *font, otl_lookup *lookup, table_otl *table)
 			break;
 		case otl_type_gsub_chaining:
 		case otl_type_gpos_chaining:
-			unconsolidate_gsub_chain(font, lookup, table);
+			unconsolidate_chaining(font, lookup, table);
 			break;
 		case otl_type_gsub_reverse:
 			unconsolidate_gsub_reverse(font, lookup, table);
@@ -249,11 +254,16 @@ static void caryll_name_features(caryll_font *font) {
 }
 
 static void caryll_name_fdselect(caryll_font *font) {
-	if (font->CFF_ && font->glyf && font->CFF_->fdArray) {
+	if (font->CFF_ && font->glyf && font->CFF_->fdArray && font->CFF_->fdArrayCount) {
 		for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_glyph *g = font->glyf->glyphs[j];
 			if (g->fdSelect.index < font->CFF_->fdArrayCount) {
 				g->fdSelect.name = font->CFF_->fdArray[g->fdSelect.index]->fontName;
+				g->fdSelect.state = HANDLE_STATE_CONSOLIDATED;
+			} else {
+				g->fdSelect.index = 0;
+				g->fdSelect.name = font->CFF_->fdArray[g->fdSelect.index]->fontName;
+				g->fdSelect.state = HANDLE_STATE_CONSOLIDATED;
 			}
 		}
 	}

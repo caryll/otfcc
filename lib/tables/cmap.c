@@ -100,7 +100,7 @@ void caryll_delete_cmap(cmap_hash *table) {
 	cmap_entry *s, *tmp;
 	HASH_ITER(hh, *(table), s, tmp) {
 		// delete and free all cmap entries
-		s->glyph.name = NULL;
+		handle_delete(&s->glyph);
 		HASH_DEL(*(table), s);
 		free(s);
 	}
@@ -140,10 +140,11 @@ cmap_hash *caryll_cmap_from_json(json_value *root, const caryll_options *options
 				if (!item) {
 					item = calloc(1, sizeof(cmap_entry));
 					item->unicode = unicode;
-					item->glyph.name = sdsdup(gname);
+					item->glyph = handle_from_name(gname);
 					HASH_ADD_INT(hash, unicode, item);
+				} else {
+					sdsfree(gname);
 				}
-				sdsfree(gname);
 			}
 		}
 	}
