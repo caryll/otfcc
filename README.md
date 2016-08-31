@@ -73,7 +73,6 @@ Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
                                --ignore-glyph-order
                                --short-post
                                --merge-features
-                               --merge-lookups
  --time                    : Time each substep.
  --verbose                 : Show more information when building.
 

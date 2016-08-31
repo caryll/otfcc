@@ -42,7 +42,7 @@ void printHelp() {
 	                "                               --merge-features\n"
 	                // "     -O3                     Most aggressive opptimization strategy will be\n"
 	                // "                             used. In this level, these options will be set:\n"
-	                "                               --merge-lookups\n"
+	                // "                               --merge-lookups\n"
 	                " --time                    : Time each substep.\n"
 	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
