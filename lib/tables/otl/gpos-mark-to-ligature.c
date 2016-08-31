@@ -1,7 +1,7 @@
 #include "gpos-mark-to-ligature.h"
 #include "gpos-common.h"
 
-void delete_lig_attachment(mark_to_ligature_base *att) {
+void delete_lig_attachment(otl_MarkToLigatureBase *att) {
 	if (!att) return;
 	if (att->anchors) {
 		for (uint16_t k = 0; k < att->componentCount; k++)
@@ -11,10 +11,10 @@ void delete_lig_attachment(mark_to_ligature_base *att) {
 	free(att);
 }
 
-void caryll_delete_gpos_mark_to_ligature(otl_subtable *_subtable) {
+void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 	if (_subtable) {
-		subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
-		if (subtable->marks) { caryll_delete_coverage(subtable->marks); }
+		subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
+		if (subtable->marks) { otl_delete_Coverage(subtable->marks); }
 		if (subtable->markArray) { otl_delete_mark_array(subtable->markArray); }
 		if (subtable->bases) {
 			if (subtable->ligArray) {
@@ -23,19 +23,19 @@ void caryll_delete_gpos_mark_to_ligature(otl_subtable *_subtable) {
 				}
 				free(subtable->ligArray);
 			}
-			caryll_delete_coverage(subtable->bases);
+			otl_delete_Coverage(subtable->bases);
 		}
 		free(_subtable);
 	}
 }
 
-otl_subtable *caryll_read_gpos_mark_to_ligature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_subtable *_subtable;
+otl_Subtable *otl_read_gpos_markToLigature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_Subtable *_subtable;
 	NEW(_subtable);
-	subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
+	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	if (tableLength < offset + 12) goto FAIL;
-	subtable->marks = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
-	subtable->bases = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 4));
+	subtable->marks = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->bases = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 4));
 	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
 		goto FAIL;
 	subtable->classCount = read_16u(data + offset + 6);
@@ -79,13 +79,13 @@ otl_subtable *caryll_read_gpos_mark_to_ligature(font_file_pointer data, uint32_t
 	}
 	goto OK;
 FAIL:
-	DELETE(caryll_delete_gpos_mark_to_ligature, _subtable);
+	DELETE(otl_delete_gpos_markToLigature, _subtable);
 OK:
 	return _subtable;
 }
 
-json_value *caryll_gpos_mark_to_ligature_to_json(otl_subtable *st) {
-	subtable_gpos_mark_to_ligature *subtable = &(st->gpos_mark_to_ligature);
+json_value *otl_gpos_dump_markToLigature(otl_Subtable *st) {
+	subtable_gpos_markToLigature *subtable = &(st->gpos_markToLigature);
 	json_value *_subtable = json_object_new(3);
 	json_value *_marks = json_object_new(subtable->marks->numGlyphs);
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
@@ -99,7 +99,7 @@ json_value *caryll_gpos_mark_to_ligature_to_json(otl_subtable *st) {
 		json_object_push(_marks, subtable->marks->glyphs[j].name, preserialize(_mark));
 	}
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		mark_to_ligature_base *base = subtable->ligArray[j];
+		otl_MarkToLigatureBase *base = subtable->ligArray[j];
 		json_value *_base = json_array_new(base->componentCount);
 		for (uint16_t k = 0; k < base->componentCount; k++) {
 			json_value *_bk = json_object_new(subtable->classCount);
@@ -128,7 +128,7 @@ typedef struct {
 	uint16_t classID;
 	UT_hash_handle hh;
 } classname_hash;
-static void parseMarks(json_value *_marks, subtable_gpos_mark_to_ligature *subtable, classname_hash **h) {
+static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtable, classname_hash **h) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
 	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
@@ -164,7 +164,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_ligature *subta
 		subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
 	}
 }
-static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subtable, classname_hash **h) {
+static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtable, classname_hash **h) {
 	uint16_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
@@ -197,7 +197,7 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subta
 				HASH_FIND_STR(*h, className, s);
 				if (!s) goto NEXT;
 				subtable->ligArray[j]->anchors[k][s->classID] =
-				    otl_anchor_from_json(_componentRecord->u.object.values[m].value);
+				    otl_parse_anchor(_componentRecord->u.object.values[m].value);
 
 			NEXT:
 				sdsfree(className);
@@ -205,16 +205,16 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_ligature *subta
 		}
 	}
 }
-otl_subtable *caryll_gpos_mark_to_ligature_from_json(json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_markToLigature(json_value *_subtable) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
-	otl_subtable *st;
+	otl_Subtable *st;
 	NEW(st);
 	classname_hash *h = NULL;
-	parseMarks(_marks, &(st->gpos_mark_to_ligature), &h);
-	st->gpos_mark_to_ligature.classCount = HASH_COUNT(h);
-	parseBases(_bases, &(st->gpos_mark_to_ligature), &h);
+	parseMarks(_marks, &(st->gpos_markToLigature), &h);
+	st->gpos_markToLigature.classCount = HASH_COUNT(h);
+	parseBases(_bases, &(st->gpos_markToLigature), &h);
 
 	classname_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {
@@ -226,37 +226,37 @@ otl_subtable *caryll_gpos_mark_to_ligature_from_json(json_value *_subtable) {
 	return st;
 }
 
-caryll_buffer *caryll_write_gpos_mark_to_ligature(otl_subtable *_subtable) {
-	subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
-	caryll_bkblock *root =
-	    new_bkblock(b16, 1,                                                               // format
-	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->marks)), // markCoverage
-	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->bases)), // baseCoverage
+caryll_buffer *caryll_build_gpos_markToLigature(otl_Subtable *_subtable) {
+	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
+	bk_Block *root =
+	    bk_new_Block(b16, 1,                                                               // format
+	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage
+	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->bases)), // baseCoverage
 	                b16, subtable->classCount,                                            // classCont
 	                bkover);
 
-	caryll_bkblock *markArray = new_bkblock(b16, subtable->marks->numGlyphs, // markCount
+	bk_Block *markArray = bk_new_Block(b16, subtable->marks->numGlyphs, // markCount
 	                                        bkover);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		bkblock_push(markArray,                                                 // markArray item
+		bk_push(markArray,                                                 // markArray item
 		             b16, subtable->markArray->records[j].markClass,            // markClass
 		             p16, bkFromAnchor(subtable->markArray->records[j].anchor), // Anchor
 		             bkover);
 	}
 
-	caryll_bkblock *ligatureArray = new_bkblock(b16, subtable->bases->numGlyphs, bkover);
+	bk_Block *ligatureArray = bk_new_Block(b16, subtable->bases->numGlyphs, bkover);
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		caryll_bkblock *attach = new_bkblock(b16, subtable->ligArray[j]->componentCount, // componentCount
+		bk_Block *attach = bk_new_Block(b16, subtable->ligArray[j]->componentCount, // componentCount
 		                                     bkover);
 		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			for (uint16_t m = 0; m < subtable->classCount; m++) {
-				bkblock_push(attach, p16, bkFromAnchor(subtable->ligArray[j]->anchors[k][m]), bkover);
+				bk_push(attach, p16, bkFromAnchor(subtable->ligArray[j]->anchors[k][m]), bkover);
 			}
 		}
-		bkblock_push(ligatureArray, p16, attach, bkover);
+		bk_push(ligatureArray, p16, attach, bkover);
 	}
 
-	bkblock_push(root, p16, markArray, p16, ligatureArray, bkover);
+	bk_push(root, p16, markArray, p16, ligatureArray, bkover);
 
-	return caryll_write_bk(root);
+	return bk_build_Block(root);
 }

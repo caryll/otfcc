@@ -1,18 +1,18 @@
 #include "cff-charset.h"
 
-void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *charsets) {
+void cff_extract_Charset(uint8_t *data, int32_t offset, uint16_t nchars, cff_Charset *charsets) {
 	uint32_t i;
-	if (offset == CFF_CHARSET_ISOADOBE)
-		charsets->t = CFF_CHARSET_ISOADOBE;
-	else if (offset == CFF_CHARSET_EXPERT)
-		charsets->t = CFF_CHARSET_EXPERT;
-	else if (offset == CFF_CHARSET_EXPERTSUBSET)
-		charsets->t = CFF_CHARSET_EXPERTSUBSET;
+	if (offset == cff_CHARSET_ISOADOBE)
+		charsets->t = cff_CHARSET_ISOADOBE;
+	else if (offset == cff_CHARSET_EXPERT)
+		charsets->t = cff_CHARSET_EXPERT;
+	else if (offset == cff_CHARSET_EXPERTSUBSET)
+		charsets->t = cff_CHARSET_EXPERTSUBSET;
 	else {
 		// NOTE: gid 1 will always be named as .notdef
 		switch (data[offset]) {
 			case 0:
-				charsets->t = CFF_CHARSET_FORMAT0;
+				charsets->t = cff_CHARSET_FORMAT0;
 				{
 					charsets->s = nchars - 1;
 					charsets->f0.glyph = calloc(nchars - 1, sizeof(uint16_t));
@@ -22,7 +22,7 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 				}
 				break;
 			case 1:
-				charsets->t = CFF_CHARSET_FORMAT1;
+				charsets->t = cff_CHARSET_FORMAT1;
 				{
 					uint32_t size;
 					uint32_t glyphsEncodedSofar = 1;
@@ -32,7 +32,7 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 
 					size = i;
 					charsets->s = size;
-					charsets->f1.range1 = calloc(i + 1, sizeof(charset_range1));
+					charsets->f1.range1 = calloc(i + 1, sizeof(cff_CharsetRangeFormat1));
 					for (i = 0; i < size; i++) {
 						charsets->f1.range1[i].first = gu2(data, offset + 1 + i * 3);
 						charsets->f1.range1[i].nleft = gu1(data, offset + 3 + i * 3);
@@ -40,7 +40,7 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 				}
 				break;
 			case 2:
-				charsets->t = CFF_CHARSET_FORMAT2;
+				charsets->t = cff_CHARSET_FORMAT2;
 				{
 					uint32_t size;
 					uint32_t glyphsEncodedSofar = 1;
@@ -50,7 +50,7 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 
 					size = i;
 					charsets->s = size;
-					charsets->f2.range2 = calloc(i + 1, sizeof(charset_range2));
+					charsets->f2.range2 = calloc(i + 1, sizeof(cff_CharsetRangeFormat2));
 
 					for (i = 0; i < size; i++) {
 						charsets->f2.range2[i].first = gu2(data, offset + 1 + i * 4);
@@ -62,14 +62,14 @@ void parse_charset(uint8_t *data, int32_t offset, uint16_t nchars, CFF_Charset *
 	}
 }
 
-caryll_buffer *compile_charset(CFF_Charset cset) {
+caryll_buffer *cff_build_Charset(cff_Charset cset) {
 	switch (cset.t) {
-		case CFF_CHARSET_ISOADOBE:
-		case CFF_CHARSET_EXPERT:
-		case CFF_CHARSET_EXPERTSUBSET: {
+		case cff_CHARSET_ISOADOBE:
+		case cff_CHARSET_EXPERT:
+		case cff_CHARSET_EXPERTSUBSET: {
 			return bufnew();
 		}
-		case CFF_CHARSET_FORMAT0: {
+		case cff_CHARSET_FORMAT0: {
 			caryll_buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 2;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
@@ -79,7 +79,7 @@ caryll_buffer *compile_charset(CFF_Charset cset) {
 			blob->cursor = blob->size;
 			return blob;
 		}
-		case CFF_CHARSET_FORMAT1: {
+		case cff_CHARSET_FORMAT1: {
 			caryll_buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 3;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
@@ -90,7 +90,7 @@ caryll_buffer *compile_charset(CFF_Charset cset) {
 				                   blob->data[3 + 3 * i] = cset.f1.range1[i].nleft;
 			return blob;
 		}
-		case CFF_CHARSET_FORMAT2: {
+		case cff_CHARSET_FORMAT2: {
 			caryll_buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 4;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
@@ -107,19 +107,19 @@ caryll_buffer *compile_charset(CFF_Charset cset) {
 	return NULL;
 }
 
-void close_charset(CFF_Charset cset) {
+void cff_close_Charset(cff_Charset cset) {
 	switch (cset.t) {
-		case CFF_CHARSET_EXPERT:
-		case CFF_CHARSET_EXPERTSUBSET:
-		case CFF_CHARSET_ISOADOBE:
+		case cff_CHARSET_EXPERT:
+		case cff_CHARSET_EXPERTSUBSET:
+		case cff_CHARSET_ISOADOBE:
 			break;
-		case CFF_CHARSET_FORMAT0:
+		case cff_CHARSET_FORMAT0:
 			if (cset.f0.glyph != NULL) free(cset.f0.glyph);
 			break;
-		case CFF_CHARSET_FORMAT1:
+		case cff_CHARSET_FORMAT1:
 			if (cset.f1.range1 != NULL) free(cset.f1.range1);
 			break;
-		case CFF_CHARSET_FORMAT2:
+		case cff_CHARSET_FORMAT2:
 			if (cset.f2.range2 != NULL) free(cset.f2.range2);
 			break;
 	}

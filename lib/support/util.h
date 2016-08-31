@@ -29,7 +29,7 @@
 #define FOR_TABLE(name, table)                                                                                         \
 	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
 	     keep = !keep, count++)                                                                                        \
-		for (caryll_piece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
+		for (caryll_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
 			if (table.tag == (name))                                                                                   \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
@@ -147,13 +147,13 @@ static INLINE json_value *json_from_sds(sds str) {
 }
 
 // flags reader and writer
-static INLINE json_value *caryll_flags_to_json(int flags, const char *labels[]) {
+static INLINE json_value *caryll_dump_flags(int flags, const char *labels[]) {
 	json_value *v = json_object_new(0);
 	for (uint16_t j = 0; labels[j]; j++)
 		if (flags & (1 << j)) { json_object_push(v, labels[j], json_boolean_new(true)); }
 	return v;
 }
-static INLINE uint32_t caryll_flags_from_json(json_value *v, const char *labels[]) {
+static INLINE uint32_t caryll_parse_flags(json_value *v, const char *labels[]) {
 	if (!v) return 0;
 	if (v->type == json_integer) {
 		return (uint32_t)v->u.integer;

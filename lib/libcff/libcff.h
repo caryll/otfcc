@@ -1,5 +1,5 @@
-#ifndef CFF_DATA_TYPES
-#define CFF_DATA_TYPES
+#ifndef cff_DATA_TYPES
+#define cff_DATA_TYPES
 
 #include <stdint.h>
 #include <stdio.h>
@@ -29,87 +29,86 @@ typedef struct {
 	uint8_t minor;
 	uint8_t hdrSize;
 	uint8_t offSize;
-} CFF_Header;
+} cff_Header;
 
 // CFF Encoding Structures
-
 typedef struct {
 	uint8_t format;
 	uint8_t ncodes;
 	uint8_t *code;
-} encoding_f0;
+} cff_EncodingFormat0;
 
 typedef struct {
 	uint8_t first;
 	uint8_t nleft;
-} enc_range1;
+} cff_EncodingRangeFormat1;
 
 typedef struct {
 	uint8_t format;
 	uint8_t nranges;
-	enc_range1 *range1;
-} encoding_f1;
+	cff_EncodingRangeFormat1 *range1;
+} cff_EncodingFormat1;
 
 typedef struct {
 	uint8_t code;
 	uint16_t glyph;
-} enc_supplement;
+} cff_EncodingSupplement;
 
 typedef struct {
 	uint8_t nsup;
-	enc_supplement *supplement;
-} encoding_ns;
+	cff_EncodingSupplement *supplement;
+} cff_EncodingNS;
 
 typedef struct {
 	uint32_t t;
 	union {
-		encoding_f0 f0;
-		encoding_f1 f1;
-		encoding_ns ns;
+		cff_EncodingFormat0 f0;
+		cff_EncodingFormat1 f1;
+		cff_EncodingNS ns;
 	};
-} CFF_Encoding;
+} cff_Encoding;
 
 // Predefined Encoding Types
 enum {
-	CFF_FONT_COMMON,
-	CFF_FONT_CID,
-	CFF_FONT_MM,
+	cff_FONT_COMMON,
+	cff_FONT_CID,
+	cff_FONT_MM,
 };
 
 enum {
-	CFF_ENC_STANDARD,
-	CFF_ENC_EXPERT,
-	CFF_ENC_FORMAT0,
-	CFF_ENC_FORMAT1,
-	CFF_ENC_FORMAT_SUPPLEMENT,
-	CFF_ENC_UNSPECED,
+	cff_ENC_STANDARD,
+	cff_ENC_EXPERT,
+	cff_ENC_FORMAT0,
+	cff_ENC_FORMAT1,
+	cff_ENC_FORMAT_SUPPLEMENT,
+	cff_ENC_UNSPECED,
 };
 
 typedef struct {
-	CFF_Value stack[256];
-	CFF_Value transient[32];
+	cff_Value stack[256];
+	cff_Value transient[32];
 	uint8_t index;
 	uint8_t stem;
-} CFF_Stack;
+} cff_Stack;
 
 typedef struct {
 	uint8_t *raw_data;
 	uint32_t raw_length;
 	uint16_t cnt_glyph;
 
-	CFF_Header head;
-	CFF_Index name;
-	CFF_Index top_dict;
-	CFF_Index string;
-	CFF_Index global_subr;
+	cff_Header head;
+	cff_Index name;
+	cff_Index top_dict;
+	cff_Index string;
+	cff_Index global_subr;
 
-	CFF_Encoding encodings; // offset
-	CFF_Charset charsets;   // offset
-	CFF_FDSelect fdselect;  // offset
-	CFF_Index char_strings; // offset
-	CFF_Index font_dict;    // offset
-	CFF_Index local_subr;   // offset
-} CFF_File;
+	cff_Encoding encodings; // offset
+	cff_Charset charsets;   // offset
+	cff_FDSelect fdselect;  // offset
+	cff_Index char_strings; // offset
+	cff_Index font_dict;    // offset
+	cff_Index local_subr;   // offset
+} cff_File;
 
 // Outline builder method table
 typedef struct {
@@ -120,7 +119,7 @@ typedef struct {
 	void (*setHint)(void *context, bool isVertical, float position, float width);
 	void (*setMask)(void *context, bool isContourMask, bool *mask);
 	double (*getrand)(void *context);
-} cff_outline_builder_interface;
+} cff_IOutlineBuilder;
 
 /*
   CFF -> Compact Font Format
@@ -129,36 +128,35 @@ typedef struct {
 
 extern char *op_cff_name(uint32_t op);
 extern char *op_cs2_name(uint32_t op);
-uint8_t cs2_op_standard_arity(uint32_t op);
+uint8_t cff_getStandardArity(uint32_t op);
 
-sds sdsget_cff_sid(uint16_t idx, CFF_Index str);
+sds sdsget_cff_sid(uint16_t idx, cff_Index str);
 
-extern uint32_t decode_cff_token(uint8_t *start, CFF_Value *val);
-extern uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val);
+extern uint32_t cff_decodeCffToken(uint8_t *start, cff_Value *val);
+extern uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val);
 
 // number, number, float
-extern caryll_buffer *encode_cff_operator(int32_t val);
-extern caryll_buffer *encode_cff_number(int32_t val);
-extern caryll_buffer *encode_cff_real(double val);
+extern caryll_buffer *cff_encodeCffOperator(int32_t val);
+extern caryll_buffer *cff_encodeCffInteger(int32_t val);
+extern caryll_buffer *cff_encodeCffFloat(double val);
 
 /*
   Writer
 */
 
-extern caryll_buffer *compile_offset(int32_t val);
-extern caryll_buffer *compile_header(void);
-extern caryll_buffer *compile_encoding(CFF_Encoding enc);
+extern caryll_buffer *cff_buildOffset(int32_t val);
+extern caryll_buffer *cff_buildHeader(void);
 
-void merge_cs2_operator(caryll_buffer *blob, int32_t val);
-void merge_cs2_operand(caryll_buffer *blob, double val);
-void merge_cs2_special(caryll_buffer *blob, uint8_t val);
+void cff_mergeCS2Operator(caryll_buffer *blob, int32_t val);
+void cff_mergeCS2Operand(caryll_buffer *blob, double val);
+void cff_mergeCS2Special(caryll_buffer *blob, uint8_t val);
 
-extern uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_Index fdarray, CFF_FDSelect select, CFF_Index *subr);
-void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_Index lsubr, CFF_Stack *stack,
-                            void *outline, cff_outline_builder_interface methods);
+extern uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelect select, cff_Index *subr);
+void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack,
+                            void *outline, cff_IOutlineBuilder methods);
 
 // File
-extern CFF_File *CFF_stream_open(uint8_t *data, uint32_t len);
-extern void CFF_close(CFF_File *file);
+extern cff_File *cff_openStream(uint8_t *data, uint32_t len);
+extern void cff_close(cff_File *file);
 
 #endif

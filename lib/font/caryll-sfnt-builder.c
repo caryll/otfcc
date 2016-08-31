@@ -24,8 +24,8 @@ static uint32_t buf_checksum(caryll_buffer *buffer) {
 	return sum;
 }
 
-static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
-	sfnt_builder_entry *table = malloc(sizeof(sfnt_builder_entry));
+static caryll_SFNTTableEntry *createSegment(uint32_t tag, caryll_buffer *buffer) {
+	caryll_SFNTTableEntry *table = malloc(sizeof(caryll_SFNTTableEntry));
 	table->tag = tag;
 	table->length = (uint32_t)buflen(buffer);
 	buflongalign(buffer);
@@ -43,8 +43,8 @@ static sfnt_builder_entry *createSegment(uint32_t tag, caryll_buffer *buffer) {
 	return table;
 }
 
-sfnt_builder *new_sfnt_builder(uint32_t header, caryll_options *options) {
-	sfnt_builder *builder = malloc(sizeof(sfnt_builder));
+caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, caryll_Options *options) {
+	caryll_SFNTBuilder *builder = malloc(sizeof(caryll_SFNTBuilder));
 	builder->count = 0;
 	builder->header = header;
 	builder->tables = NULL;
@@ -52,9 +52,9 @@ sfnt_builder *new_sfnt_builder(uint32_t header, caryll_options *options) {
 	return builder;
 }
 
-void delete_sfnt_builder(sfnt_builder *builder) {
+void caryll_delete_SFNTBuilder(caryll_SFNTBuilder *builder) {
 	if (!builder) return;
-	sfnt_builder_entry *item, *tmp;
+	caryll_SFNTTableEntry *item, *tmp;
 	HASH_ITER(hh, builder->tables, item, tmp) {
 		HASH_DEL(builder->tables, item);
 		buffree(item->buffer);
@@ -63,9 +63,9 @@ void delete_sfnt_builder(sfnt_builder *builder) {
 	free(builder);
 }
 
-void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer *buffer) {
+void caryll_pushTableToSfntBuilder(caryll_SFNTBuilder *builder, uint32_t tag, caryll_buffer *buffer) {
 	if (!builder) return;
-	sfnt_builder_entry *item;
+	caryll_SFNTTableEntry *item;
 	HASH_FIND_INT(builder->tables, &tag, item);
 	if (!item) {
 		item = createSegment(tag, buffer);
@@ -79,11 +79,11 @@ void sfnt_builder_push_table(sfnt_builder *builder, uint32_t tag, caryll_buffer 
 	}
 }
 
-static int byTag(sfnt_builder_entry *a, sfnt_builder_entry *b) {
+static int byTag(caryll_SFNTTableEntry *a, caryll_SFNTTableEntry *b) {
 	return (a->tag - b->tag);
 }
 
-caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
+caryll_buffer *caryll_serializeSFNT(caryll_SFNTBuilder *builder) {
 	caryll_buffer *buffer = bufnew();
 	if (!builder) return buffer;
 	uint16_t nTables = HASH_COUNT(builder->tables);
@@ -94,7 +94,7 @@ caryll_buffer *sfnt_builder_serialize(sfnt_builder *builder) {
 	bufwrite16b(buffer, (nTables < 16 ? 3 : nTables < 32 ? 4 : nTables < 64 ? 5 : 6));
 	bufwrite16b(buffer, nTables * 16 - searchRange);
 
-	sfnt_builder_entry *table;
+	caryll_SFNTTableEntry *table;
 	size_t offset = 32 + nTables * 16;
 	size_t headOffset = offset;
 	HASH_SORT(builder->tables, byTag);

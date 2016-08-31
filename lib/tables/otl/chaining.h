@@ -9,11 +9,11 @@
 // GPOS contextual
 // GPOS chaining
 
-void caryll_delete_chaining(otl_subtable *_subtable);
-otl_subtable *caryll_read_chaining(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-otl_subtable *caryll_read_contextual(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-json_value *caryll_chaining_to_json(otl_subtable *_subtable);
-otl_subtable *caryll_chaining_from_json(json_value *_subtable);
-caryll_buffer *caryll_write_chaining(otl_subtable *_subtable);
+void otl_delete_chaining(otl_Subtable *_subtable);
+otl_Subtable *otl_read_chaining(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+otl_Subtable *otl_read_contextual(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+json_value *otl_dump_chaining(otl_Subtable *_subtable);
+otl_Subtable *otl_parse_chaining(json_value *_subtable);
+caryll_buffer *caryll_build_chaining(otl_Subtable *_subtable);
 
 #endif

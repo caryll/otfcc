@@ -11,15 +11,15 @@ static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_reverse(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_gsub_reverse(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	for (uint16_t j = 0; j < subtable->matchCount; j++) {
-		consolidate_coverage(font, subtable->match[j], lookupName);
+		fontop_consolidateCoverage(font, subtable->match[j], lookupName);
 	}
-	consolidate_coverage(font, subtable->to, lookupName);
+	fontop_consolidateCoverage(font, subtable->to, lookupName);
 	if (subtable->inputIndex >= subtable->matchCount) { subtable->inputIndex = subtable->matchCount - 1; }
 	gsub_single_map_hash *h = NULL;
-	otl_coverage *from = subtable->match[subtable->inputIndex];
+	otl_Coverage *from = subtable->match[subtable->inputIndex];
 	for (uint16_t k = 0; k < from->numGlyphs && k < subtable->to->numGlyphs; k++) {
 		gsub_single_map_hash *s;
 		int fromid = from->glyphs[k].index;

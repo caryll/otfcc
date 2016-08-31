@@ -2,5 +2,5 @@
 #define CARYLL_SUPPORT_AGLFN_H
 #include "glyphorder.h"
 
-void setup_aglfn_glyph_names(glyph_order_hash *map);
+void aglfn_setupNames(glyphorder_Map *map);
 #endif

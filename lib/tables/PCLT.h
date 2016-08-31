@@ -22,6 +22,6 @@ typedef struct {
 	uint8_t pad;
 } table_PCLT;
 
-table_PCLT *caryll_read_PCLT(caryll_packet packet);
+table_PCLT *caryll_read_PCLT(caryll_Packet packet);
 
 #endif

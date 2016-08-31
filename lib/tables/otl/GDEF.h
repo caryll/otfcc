@@ -7,26 +7,26 @@ typedef struct {
 	int8_t format;
 	int16_t coordiante;
 	int16_t pointIndex;
-} caret_value;
+} otl_CaretValue;
 typedef struct {
 	uint16_t caretCount;
-	caret_value *values;
-} caret_value_record;
+	otl_CaretValue *values;
+} otl_CaretValueRecord;
 typedef struct {
-	otl_coverage *coverage;
-	caret_value_record *carets;
-} lig_caret_table;
+	otl_Coverage *coverage;
+	otl_CaretValueRecord *carets;
+} otl_LigCaretTable;
 
 typedef struct {
-	otl_classdef *glyphClassDef;
-	otl_classdef *markAttachClassDef;
-	lig_caret_table *ligCarets;
+	otl_ClassDef *glyphClassDef;
+	otl_ClassDef *markAttachClassDef;
+	otl_LigCaretTable *ligCarets;
 } table_GDEF;
 
-void caryll_delete_GDEF(table_GDEF *gdef);
-table_GDEF *caryll_read_GDEF(caryll_packet packet);
-void caryll_GDEF_to_json(table_GDEF *gdef, json_value *root, const caryll_options *options);
-table_GDEF *caryll_GDEF_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_GDEF(table_GDEF *gdef, const caryll_options *options);
+void table_delete_GDEF(table_GDEF *gdef);
+table_GDEF *table_read_GDEF(caryll_Packet packet);
+void table_dump_GDEF(table_GDEF *gdef, json_value *root, const caryll_Options *options);
+table_GDEF *table_parse_GDEF(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_GDEF(table_GDEF *gdef, const caryll_Options *options);
 
 #endif

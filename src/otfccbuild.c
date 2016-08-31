@@ -108,7 +108,7 @@ void readEntireStdin(char **_buffer, long *_length) {
 	*_length = length;
 }
 
-void print_table(sfnt_builder_entry *t) {
+void print_table(caryll_SFNTTableEntry *t) {
 	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
 	        ((uint32_t)(t->tag) >> 16) & 0xff, ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
 }
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 
-	caryll_options *options = caryll_new_options();
+	caryll_Options *options = options_new();
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -267,9 +267,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	caryll_font *font;
+	caryll_Font *font;
 	{
-		font = caryll_font_from_json(root, options);
+		font = caryll_parse_Font(root, options);
 		if (!font) {
 			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -284,15 +284,15 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_write_font(font, options);
+		caryll_buffer *otf = caryll_build_Font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);
 
 		buffree(otf);
-		caryll_delete_font(font);
-		caryll_delete_options(options);
+		caryll_delete_Font(font);
+		options_delete(options);
 		if (show_time) push_stopwatch("Finalize", &begin);
 	}
 	return 0;

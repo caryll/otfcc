@@ -10,17 +10,17 @@ typedef struct {
 	bool gridfit;
 	bool symmetric_smoothing;
 	bool symmetric_gridfit;
-} gasp_record;
+} gasp_Record;
 typedef struct {
 	uint16_t version;
 	uint16_t numRanges;
-	gasp_record *records;
+	gasp_Record *records;
 } table_gasp;
 
-table_gasp *caryll_new_gasp();
-void caryll_delete_gasp(table_gasp *table);
-table_gasp *caryll_read_gasp(caryll_packet packet);
-void caryll_gasp_to_json(table_gasp *table, json_value *root, const caryll_options *options);
-table_gasp *caryll_gasp_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_gasp(table_gasp *table, const caryll_options *options);
+table_gasp *table_new_gasp();
+void table_delete_gasp(table_gasp *table);
+table_gasp *table_read_gasp(caryll_Packet packet);
+void table_dump_gasp(table_gasp *table, json_value *root, const caryll_Options *options);
+table_gasp *table_parse_gasp(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_gasp(table_gasp *table, const caryll_Options *options);
 #endif

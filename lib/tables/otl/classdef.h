@@ -9,13 +9,13 @@ typedef struct {
 	uint16_t maxclass;
 	glyph_handle *glyphs;
 	uint16_t *classes;
-} otl_classdef;
+} otl_ClassDef;
 
-void caryll_delete_classdef(otl_classdef *cd);
-otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd);
-json_value *caryll_classdef_to_json(otl_classdef *cd);
-otl_classdef *caryll_classdef_from_json(json_value *_cd);
-caryll_buffer *caryll_write_classdef(otl_classdef *cd);
+void otl_delete_ClassDef(otl_ClassDef *cd);
+otl_ClassDef *otl_read_ClassDef(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd);
+json_value *otl_dump_ClassDef(otl_ClassDef *cd);
+otl_ClassDef *otl_parse_ClassDef(json_value *_cd);
+caryll_buffer *otl_build_ClassDef(otl_ClassDef *cd);
 
 #endif

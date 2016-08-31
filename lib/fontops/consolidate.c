@@ -2,8 +2,8 @@
 // Consolidation
 // Replace name entries in json to ids and do some check
 static int by_stem_pos(const void *_a, const void *_b) {
-	const glyf_postscript_hint_stemdef *a = _a;
-	const glyf_postscript_hint_stemdef *b = _b;
+	const glyf_PostscriptStemDef *a = _a;
+	const glyf_PostscriptStemDef *b = _b;
 	if (a->position == b->position) {
 		return (int)a->map - (int)b->map;
 	} else if (a->position > b->position) {
@@ -13,17 +13,17 @@ static int by_stem_pos(const void *_a, const void *_b) {
 	}
 }
 static int by_mask_pointindex(const void *a, const void *b) {
-	return ((glyf_postscript_hint_mask *)a)->pointsBefore - ((glyf_postscript_hint_mask *)b)->pointsBefore;
+	return ((glyf_PostscriptHintMask *)a)->pointsBefore - ((glyf_PostscriptHintMask *)b)->pointsBefore;
 }
-void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
+void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	uint16_t nReferencesConsolidated = 0;
 	for (uint16_t j = 0; j < g->numberOfReferences; j++) {
-		glyph_order_entry *entry = NULL;
-		glyf_reference *r = &(g->references[j]);
+		glyphorder_Entry *entry = NULL;
+		glyf_ComponentReference *r = &(g->references[j]);
 		if (r->glyph.name) {
 			HASH_FIND_STR(*font->glyph_order, r->glyph.name, entry);
 			if (entry) {
-				handle_consolidate_to(&r->glyph, entry->gid, entry->name);
+				handle_consolidateTo(&r->glyph, entry->gid, entry->name);
 				nReferencesConsolidated += 1;
 			} else {
 				fprintf(stderr, "[Consolidate] Ignored absent glyph component "
@@ -41,7 +41,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 			g->references = NULL;
 			g->numberOfReferences = 0;
 		} else {
-			glyf_reference *consolidatedReferences = calloc(nReferencesConsolidated, sizeof(glyf_reference));
+			glyf_ComponentReference *consolidatedReferences = calloc(nReferencesConsolidated, sizeof(glyf_ComponentReference));
 			for (uint16_t j = 0, k = 0; j < g->numberOfReferences; j++) {
 				if (g->references[j].glyph.name) { consolidatedReferences[k++] = g->references[j]; }
 			}
@@ -56,13 +56,13 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		for (uint16_t j = 0; j < g->numberOfStemH; j++) {
 			g->stemH[j].map = j;
 		}
-		qsort(g->stemH, g->numberOfStemH, sizeof(glyf_postscript_hint_stemdef), by_stem_pos);
+		qsort(g->stemH, g->numberOfStemH, sizeof(glyf_PostscriptStemDef), by_stem_pos);
 	}
 	if (g->stemV) {
 		for (uint16_t j = 0; j < g->numberOfStemV; j++) {
 			g->stemV[j].map = j;
 		}
-		qsort(g->stemV, g->numberOfStemV, sizeof(glyf_postscript_hint_stemdef), by_stem_pos);
+		qsort(g->stemV, g->numberOfStemV, sizeof(glyf_PostscriptStemDef), by_stem_pos);
 	}
 	uint16_t *hmap;
 	NEW_N(hmap, g->numberOfStemH);
@@ -76,9 +76,9 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 	}
 	// sort masks
 	if (g->hintMasks) {
-		qsort(g->hintMasks, g->numberOfHintMasks, sizeof(glyf_postscript_hint_mask), by_mask_pointindex);
+		qsort(g->hintMasks, g->numberOfHintMasks, sizeof(glyf_PostscriptHintMask), by_mask_pointindex);
 		for (uint16_t j = 0; j < g->numberOfHintMasks; j++) {
-			glyf_postscript_hint_mask oldmask = g->hintMasks[j]; // copy
+			glyf_PostscriptHintMask oldmask = g->hintMasks[j]; // copy
 			for (uint16_t k = 0; k < g->numberOfStemH; k++) {
 				g->hintMasks[j].maskH[k] = oldmask.maskH[hmap[k]];
 			}
@@ -88,9 +88,9 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		}
 	}
 	if (g->contourMasks) {
-		qsort(g->contourMasks, g->numberOfContourMasks, sizeof(glyf_postscript_hint_mask), by_mask_pointindex);
+		qsort(g->contourMasks, g->numberOfContourMasks, sizeof(glyf_PostscriptHintMask), by_mask_pointindex);
 		for (uint16_t j = 0; j < g->numberOfContourMasks; j++) {
-			glyf_postscript_hint_mask oldmask = g->contourMasks[j]; // copy
+			glyf_PostscriptHintMask oldmask = g->contourMasks[j]; // copy
 			for (uint16_t k = 0; k < g->numberOfStemH; k++) {
 				g->contourMasks[j].maskH[k] = oldmask.maskH[hmap[k]];
 			}
@@ -107,7 +107,7 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 		for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
 			if (strcmp(g->fdSelect.name, font->CFF_->fdArray[j]->fontName) == 0) {
 				found = true;
-				handle_consolidate_to(&(g->fdSelect), j, font->CFF_->fdArray[j]->fontName);
+				handle_consolidateTo(&(g->fdSelect), j, font->CFF_->fdArray[j]->fontName);
 				break;
 			}
 		}
@@ -121,26 +121,26 @@ void caryll_font_consolidate_glyph(glyf_glyph *g, caryll_font *font) {
 	}
 }
 
-void caryll_font_consolidate_glyf(caryll_font *font) {
+void caryll_font_consolidate_glyf(caryll_Font *font) {
 	if (!font->glyph_order || !*font->glyph_order || !font->glyf) return;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]) {
 			caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
 		} else {
-			font->glyf->glyphs[j] = caryll_new_glyf_glyph();
+			font->glyf->glyphs[j] = table_new_glyf_glyph();
 		}
 	}
 }
 
-void caryll_font_consolidate_cmap(caryll_font *font) {
+void caryll_font_consolidate_cmap(caryll_Font *font) {
 	if (font->glyph_order && *font->glyph_order && font->cmap) {
-		cmap_entry *item;
+		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
 			if (item->glyph.name) {
-				glyph_order_entry *ordentry;
+				glyphorder_Entry *ordentry;
 				HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
 				if (ordentry) {
-					handle_consolidate_to(&item->glyph, ordentry->gid, ordentry->name);
+					handle_consolidateTo(&item->glyph, ordentry->gid, ordentry->name);
 				} else {
 					fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
 					                "non-existent glyph /%s.\n",
@@ -154,12 +154,12 @@ void caryll_font_consolidate_cmap(caryll_font *font) {
 	}
 }
 
-typedef bool (*otl_consolidation_function)(caryll_font *, table_otl *, otl_subtable *, sds);
-typedef void (*subtable_remover)(otl_subtable *);
+typedef bool (*otl_consolidation_function)(caryll_Font *, table_OTL *, otl_Subtable *, sds);
+typedef void (*subtable_remover)(otl_Subtable *);
 #define LOOKUP_CONSOLIDATOR(llt, fn, fndel) __declare_otl_consolidation(llt, fn, fndel, font, table, lookup);
 
-static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_function fn, subtable_remover fndel,
-                                        caryll_font *font, table_otl *table, otl_lookup *lookup) {
+static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn, subtable_remover fndel,
+                                        caryll_Font *font, table_OTL *table, otl_Lookup *lookup) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
 		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 			if (lookup->subtables[j]) {
@@ -179,7 +179,7 @@ static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_
 
 		if (lookup->subtableCount &&
 		    (lookup->type == otl_type_gsub_chaining || lookup->type == otl_type_gpos_chaining)) {
-			classify(lookup);
+			fontop_classifyChainings(lookup);
 			uint16_t k = 0;
 			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 				if (lookup->subtables[j]) { lookup->subtables[k++] = lookup->subtables[j]; }
@@ -189,24 +189,24 @@ static void __declare_otl_consolidation(otl_lookup_type type, otl_consolidation_
 	}
 }
 
-void caryll_consolidate_lookup(caryll_font *font, table_otl *table, otl_lookup *lookup) {
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, caryll_delete_gsub_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, caryll_delete_gsub_multi);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, caryll_delete_gsub_multi);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, caryll_delete_gsub_ligature);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, caryll_delete_chaining);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, caryll_delete_gsub_reverse);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, caryll_delete_gpos_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, caryll_delete_gpos_pair);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, caryll_delete_gpos_cursive);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, caryll_delete_chaining);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_base, consolidate_mark_to_single, caryll_delete_gpos_mark_to_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_mark, consolidate_mark_to_single, caryll_delete_gpos_mark_to_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_mark_to_ligature, consolidate_mark_to_ligature,
-	                    caryll_delete_gpos_mark_to_ligature);
+void caryll_consolidate_lookup(caryll_Font *font, table_OTL *table, otl_Lookup *lookup) {
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, otl_delete_gsub_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, otl_delete_gsub_multi);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, otl_delete_gsub_multi);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, otl_delete_gsub_ligature);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, otl_delete_chaining);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, otl_delete_gsub_reverse);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, otl_delete_gpos_single);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, otl_delete_gpos_pair);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, otl_delete_gpos_cursive);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, otl_delete_chaining);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, otl_delete_gpos_markToSingle);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, otl_delete_gpos_markToSingle);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
+	                    otl_delete_gpos_markToLigature);
 }
 
-void caryll_font_consolidate_otl(caryll_font *font) {
+void caryll_font_consolidate_otl(caryll_Font *font) {
 	if (font->glyph_order && font->GSUB)
 		for (uint16_t j = 0; j < font->GSUB->lookupCount; j++) {
 			caryll_consolidate_lookup(font, font->GSUB, font->GSUB->lookups[j]);
@@ -218,7 +218,7 @@ void caryll_font_consolidate_otl(caryll_font *font) {
 	consolidate_GDEF(font, font->GDEF, "GDEF");
 }
 
-void caryll_font_consolidate(caryll_font *font, const caryll_options *options) {
+void caryll_font_consolidate(caryll_Font *font, const caryll_Options *options) {
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
 	if (font->glyf) caryll_font_consolidate_otl(font);

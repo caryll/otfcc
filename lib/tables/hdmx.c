@@ -1,6 +1,6 @@
 #include "hdmx.h"
 
-table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp) {
+table_hdmx *table_read_hdmx(caryll_Packet packet, table_maxp *maxp) {
 	FOR_TABLE('hdmx', table) {
 		font_file_pointer data = table.data;
 
@@ -22,7 +22,7 @@ table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp) {
 	return NULL;
 }
 
-void caryll_delete_hdmx(table_hdmx *table) {
+void table_delete_hdmx(table_hdmx *table) {
 	if (table->records != NULL) {
 		for (uint32_t i = 0; i < table->numRecords; i++) {
 			if (table->records[i].widths != NULL) free(table->records[i].widths);

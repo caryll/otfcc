@@ -1,7 +1,7 @@
 #include <support/util.h>
 #include "caryll-sfnt.h"
 
-static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
+static void caryll_read_packets(caryll_SplineFontContainer *font, FILE *file) {
 	for (uint32_t count = 0; count < font->count; count++) {
 		(void)fseek(file, font->offsets[count], SEEK_SET);
 
@@ -10,7 +10,8 @@ static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
 		font->packets[count].searchRange = caryll_get16u(file);
 		font->packets[count].entrySelector = caryll_get16u(file);
 		font->packets[count].rangeShift = caryll_get16u(file);
-		font->packets[count].pieces = (caryll_piece *)malloc(sizeof(caryll_piece) * font->packets[count].numTables);
+		font->packets[count].pieces =
+		    (caryll_PacketPiece *)malloc(sizeof(caryll_PacketPiece) * font->packets[count].numTables);
 
 		for (uint32_t i = 0; i < font->packets[count].numTables; i++) {
 			font->packets[count].pieces[i].tag = caryll_get32u(file);
@@ -28,9 +29,9 @@ static void caryll_read_packets(caryll_sfnt *font, FILE *file) {
 	}
 }
 
-caryll_sfnt *caryll_read_sfnt(FILE *file) {
+caryll_SplineFontContainer *caryll_read_SFNT(FILE *file) {
 	if (!file) return NULL;
-	caryll_sfnt *font = (caryll_sfnt *)malloc(sizeof(caryll_sfnt) * 1);
+	caryll_SplineFontContainer *font = (caryll_SplineFontContainer *)malloc(sizeof(caryll_SplineFontContainer) * 1);
 
 	font->type = caryll_get32u(file);
 
@@ -41,7 +42,7 @@ caryll_sfnt *caryll_read_sfnt(FILE *file) {
 		case 'typ1':
 			font->count = 1;
 			font->offsets = (uint32_t *)malloc(sizeof(uint32_t) * font->count);
-			font->packets = (caryll_packet *)malloc(sizeof(caryll_packet) * font->count);
+			font->packets = (caryll_Packet *)malloc(sizeof(caryll_Packet) * font->count);
 			font->offsets[0] = 0;
 			caryll_read_packets(font, file);
 			break;
@@ -50,7 +51,7 @@ caryll_sfnt *caryll_read_sfnt(FILE *file) {
 			(void)caryll_get32u(file);
 			font->count = caryll_get32u(file);
 			font->offsets = (uint32_t *)malloc(sizeof(uint32_t) * font->count);
-			font->packets = (caryll_packet *)malloc(sizeof(caryll_packet) * font->count);
+			font->packets = (caryll_Packet *)malloc(sizeof(caryll_Packet) * font->count);
 
 			for (uint32_t i = 0; i < font->count; i++) {
 				font->offsets[i] = caryll_get32u(file);
@@ -71,7 +72,7 @@ caryll_sfnt *caryll_read_sfnt(FILE *file) {
 	return font;
 }
 
-void caryll_delete_sfnt(caryll_sfnt *font) {
+void caryll_delete_SFNT(caryll_SplineFontContainer *font) {
 	if (font->count > 0) {
 		for (uint32_t count = 0; count < font->count; count++) {
 			for (int i = 0; i < font->packets[count].numTables; i++) {
@@ -81,14 +82,4 @@ void caryll_delete_sfnt(caryll_sfnt *font) {
 		}
 	}
 	free(font);
-}
-
-caryll_piece shift_piece(caryll_piece piece, uint32_t delta) {
-	caryll_piece n;
-	n.tag = piece.tag;
-	n.checkSum = 0;
-	n.length = piece.length - delta;
-	n.data = piece.data + delta;
-	n.offset = piece.offset + delta;
-	return n;
 }

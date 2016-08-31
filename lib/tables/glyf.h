@@ -18,25 +18,25 @@ typedef struct {
 	                // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
 	                // bit 1 - 7 : unused, set to 0
 	                // in JSON, they are separated into several boolean fields.
-} glyf_point;
+} glyf_Point;
 
 typedef struct {
 	uint16_t pointsCount;
-	glyf_point *points;
-} glyf_contour;
+	glyf_Point *points;
+} glyf_Contour;
 
 // CFF stems and hint masks
 typedef struct {
 	uint16_t map;
 	float position;
 	float width;
-} glyf_postscript_hint_stemdef;
+} glyf_PostscriptStemDef;
 
 typedef struct {
 	uint16_t pointsBefore;
 	bool maskH[0x100];
 	bool maskV[0x100];
-} glyf_postscript_hint_mask;
+} glyf_PostscriptHintMask;
 
 typedef struct {
 	glyph_handle glyph;
@@ -50,7 +50,7 @@ typedef struct {
 	// flags
 	bool roundToGrid;
 	bool useMyMetrics;
-} glyf_reference;
+} glyf_ComponentReference;
 
 typedef struct {
 	float xMin;
@@ -62,7 +62,7 @@ typedef struct {
 	uint16_t nContours;
 	uint16_t nCompositePoints;
 	uint16_t nCompositeContours;
-} glyf_glyph_stat;
+} glyf_GlyphStat;
 
 typedef struct {
 	sds name;
@@ -76,18 +76,18 @@ typedef struct {
 	// NOTE: SFNT does not support mixed glyphs, but we do.
 	uint16_t numberOfContours;
 	uint16_t numberOfReferences;
-	glyf_contour *contours;
-	glyf_reference *references;
+	glyf_Contour *contours;
+	glyf_ComponentReference *references;
 
 	// Postscript hints
 	uint16_t numberOfStemH;
 	uint16_t numberOfStemV;
 	uint16_t numberOfHintMasks;
 	uint16_t numberOfContourMasks;
-	glyf_postscript_hint_stemdef *stemH;
-	glyf_postscript_hint_stemdef *stemV;
-	glyf_postscript_hint_mask *hintMasks;
-	glyf_postscript_hint_mask *contourMasks;
+	glyf_PostscriptStemDef *stemH;
+	glyf_PostscriptStemDef *stemV;
+	glyf_PostscriptHintMask *hintMasks;
+	glyf_PostscriptHintMask *contourMasks;
 
 	// TTF instructions
 	uint16_t instructionsLength;
@@ -99,12 +99,12 @@ typedef struct {
 	fd_handle fdSelect;
 
 	// Stats
-	glyf_glyph_stat stat;
-} glyf_glyph;
+	glyf_GlyphStat stat;
+} glyf_Glyph;
 
 typedef struct {
 	uint16_t numberGlyphs;
-	glyf_glyph **glyphs;
+	glyf_Glyph **glyphs;
 } table_glyf;
 
 typedef enum {
@@ -131,17 +131,17 @@ typedef enum {
 	OVERLAP_COMPOUND = (1 << 10)
 } glyf_reference_flag;
 
-glyf_glyph *caryll_new_glyf_glyph();
-table_glyf *caryll_read_glyf(caryll_packet packet, table_head *head, table_maxp *maxp);
-void caryll_delete_glyf(table_glyf *table);
-void caryll_glyf_to_json(table_glyf *table, json_value *root, const caryll_options *options);
-table_glyf *caryll_glyf_from_json(json_value *root, glyph_order_hash glyph_order, const caryll_options *options);
+glyf_Glyph *table_new_glyf_glyph();
+table_glyf *table_read_glyf(caryll_Packet packet, table_head *head, table_maxp *maxp);
+void table_delete_glyf(table_glyf *table);
+void table_dump_glyf(table_glyf *table, json_value *root, const caryll_Options *options);
+table_glyf *table_parse_glyf(json_value *root, glyphorder_Map glyph_order, const caryll_Options *options);
 
 typedef struct {
 	caryll_buffer *glyf;
 	caryll_buffer *loca;
 } glyf_loca_bufpair;
 
-glyf_loca_bufpair caryll_write_glyf(table_glyf *table, table_head *head, const caryll_options *options);
+glyf_loca_bufpair table_build_glyf(table_glyf *table, table_head *head, const caryll_Options *options);
 
 #endif

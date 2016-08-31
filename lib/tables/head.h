@@ -25,10 +25,10 @@ typedef struct {
 	int16_t glyphDataFormat;
 } table_head;
 
-table_head *caryll_new_head();
-table_head *caryll_read_head(caryll_packet packet);
-void caryll_head_to_json(table_head *table, json_value *root, const caryll_options *options);
-table_head *caryll_head_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_head(table_head *head, const caryll_options *options);
+table_head *table_new_head();
+table_head *table_read_head(caryll_Packet packet);
+void table_dump_head(table_head *table, json_value *root, const caryll_Options *options);
+table_head *table_parse_head(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_head(table_head *head, const caryll_Options *options);
 
 #endif

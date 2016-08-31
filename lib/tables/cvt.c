@@ -1,6 +1,6 @@
 #include "cvt.h"
 
-table_cvt *caryll_read_cvt(caryll_packet packet, uint32_t tag) {
+table_cvt *table_read_cvt(caryll_Packet packet, uint32_t tag) {
 	table_cvt *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
@@ -15,12 +15,12 @@ table_cvt *caryll_read_cvt(caryll_packet packet, uint32_t tag) {
 	}
 	return NULL;
 }
-void caryll_delete_cvt(table_cvt *table) {
+void table_delete_cvt(table_cvt *table) {
 	if (!table) return;
 	if (table->words) free(table->words);
 	free(table);
 }
-void caryll_cvt_to_json(table_cvt *table, json_value *root, const caryll_options *options, const char *tag) {
+void table_dump_cvt(table_cvt *table, json_value *root, const caryll_Options *options, const char *tag) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping cvt.\n");
 
@@ -30,7 +30,7 @@ void caryll_cvt_to_json(table_cvt *table, json_value *root, const caryll_options
 	}
 	json_object_push(root, tag, arr);
 }
-table_cvt *caryll_cvt_from_json(json_value *root, const caryll_options *options, const char *tag) {
+table_cvt *table_parse_cvt(json_value *root, const caryll_Options *options, const char *tag) {
 	table_cvt *t = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, tag, json_array))) {
@@ -65,7 +65,7 @@ table_cvt *caryll_cvt_from_json(json_value *root, const caryll_options *options,
 	return t;
 }
 
-caryll_buffer *caryll_write_cvt(table_cvt *table, const caryll_options *options) {
+caryll_buffer *table_build_cvt(table_cvt *table, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) {

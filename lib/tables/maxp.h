@@ -23,9 +23,9 @@ typedef struct {
 	uint16_t maxComponentDepth;
 } table_maxp;
 
-table_maxp *caryll_new_maxp();
-table_maxp *caryll_read_maxp(caryll_packet packet);
-void caryll_maxp_to_json(table_maxp *table, json_value *root, const caryll_options *options);
-table_maxp *caryll_maxp_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_maxp(table_maxp *maxp, const caryll_options *options);
+table_maxp *table_new_maxp();
+table_maxp *table_read_maxp(caryll_Packet packet);
+void table_dump_maxp(table_maxp *table, json_value *root, const caryll_Options *options);
+table_maxp *table_parse_maxp(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_maxp(table_maxp *maxp, const caryll_Options *options);
 #endif

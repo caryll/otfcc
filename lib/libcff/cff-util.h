@@ -1,5 +1,5 @@
-#ifndef CARYLL_CFF_UTIL_H
-#define CARYLL_CFF_UTIL_H
+#ifndef CARYLL_cff_UTIL_H
+#define CARYLL_cff_UTIL_H
 
 #include <stdint.h>
 #include <stdio.h>

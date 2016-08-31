@@ -1,13 +1,13 @@
 #include "head.h"
 
-table_head *caryll_new_head() {
+table_head *table_new_head() {
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));
 	head->magicNumber = 0x5f0f3cf5;
 	head->unitsPerEm = 1000;
 	return head;
 }
 
-table_head *caryll_read_head(caryll_packet packet) {
+table_head *table_read_head(caryll_Packet packet) {
 	FOR_TABLE('head', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -56,13 +56,13 @@ static const char *headFlagsLabels[] = {"baselineAtY_0",
                                         "lastResortFont"};
 static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow", "condensed", "extended"};
 
-void caryll_head_to_json(table_head *table, json_value *root, const caryll_options *options) {
+void table_dump_head(table_head *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping head.\n");
 	json_value *head = json_object_new(15);
 	json_object_push(head, "version", json_double_new(caryll_from_fixed(table->version)));
 	json_object_push(head, "fontRevison", json_double_new(caryll_from_fixed(table->fontRevison)));
-	json_object_push(head, "flags", caryll_flags_to_json(table->flags, headFlagsLabels));
+	json_object_push(head, "flags", caryll_dump_flags(table->flags, headFlagsLabels));
 	json_object_push(head, "unitsPerEm", json_integer_new(table->unitsPerEm));
 	json_object_push(head, "created", json_integer_new(table->created));
 	json_object_push(head, "modified", json_integer_new(table->modified));
@@ -70,7 +70,7 @@ void caryll_head_to_json(table_head *table, json_value *root, const caryll_optio
 	json_object_push(head, "xMax", json_integer_new(table->xMax));
 	json_object_push(head, "yMin", json_integer_new(table->yMin));
 	json_object_push(head, "yMax", json_integer_new(table->yMax));
-	json_object_push(head, "macStyle", caryll_flags_to_json(table->macStyle, macStyleLabels));
+	json_object_push(head, "macStyle", caryll_dump_flags(table->macStyle, macStyleLabels));
 	json_object_push(head, "lowestRecPPEM", json_integer_new(table->lowestRecPPEM));
 	json_object_push(head, "fontDirectoryHint", json_integer_new(table->fontDirectoryHint));
 	json_object_push(head, "indexToLocFormat", json_integer_new(table->indexToLocFormat));
@@ -78,14 +78,14 @@ void caryll_head_to_json(table_head *table, json_value *root, const caryll_optio
 	json_object_push(root, "head", head);
 }
 
-table_head *caryll_head_from_json(json_value *root, const caryll_options *options) {
-	table_head *head = caryll_new_head();
+table_head *table_parse_head(json_value *root, const caryll_Options *options) {
+	table_head *head = table_new_head();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
 		if (options->verbose) fprintf(stderr, "Parsing head.\n");
 		head->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
 		head->fontRevison = caryll_to_fixed(json_obj_getnum_fallback(table, "fontRevison", 0));
-		head->flags = caryll_flags_from_json(json_obj_get(table, "flags"), headFlagsLabels);
+		head->flags = caryll_parse_flags(json_obj_get(table, "flags"), headFlagsLabels);
 		head->unitsPerEm = json_obj_getnum_fallback(table, "unitsPerEm", 0);
 		head->created = json_obj_getnum_fallback(table, "created", 0);
 		head->modified = json_obj_getnum_fallback(table, "modified", 0);
@@ -93,7 +93,7 @@ table_head *caryll_head_from_json(json_value *root, const caryll_options *option
 		head->xMax = json_obj_getnum_fallback(table, "xMax", 0);
 		head->yMin = json_obj_getnum_fallback(table, "yMin", 0);
 		head->yMax = json_obj_getnum_fallback(table, "yMax", 0);
-		head->macStyle = caryll_flags_from_json(json_obj_get(table, "macStyle"), macStyleLabels);
+		head->macStyle = caryll_parse_flags(json_obj_get(table, "macStyle"), macStyleLabels);
 		head->lowestRecPPEM = json_obj_getnum_fallback(table, "lowestRecPPEM", 0);
 		head->fontDirectoryHint = json_obj_getnum_fallback(table, "fontDirectoryHint", 0);
 		head->indexToLocFormat = json_obj_getnum_fallback(table, "indexToLocFormat", 0);
@@ -102,7 +102,7 @@ table_head *caryll_head_from_json(json_value *root, const caryll_options *option
 	return head;
 }
 
-caryll_buffer *caryll_write_head(table_head *head, const caryll_options *options) {
+caryll_buffer *table_build_head(table_head *head, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);

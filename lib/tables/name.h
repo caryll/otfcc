@@ -19,9 +19,9 @@ typedef struct {
 	name_record **records;
 } table_name;
 
-table_name *caryll_read_name(caryll_packet packet);
-void caryll_delete_name(table_name *table);
-void caryll_name_to_json(table_name *table, json_value *root, const caryll_options *options);
-table_name *caryll_name_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_name(table_name *name, const caryll_options *options);
+table_name *table_read_name(caryll_Packet packet);
+void table_delete_name(table_name *table);
+void table_dump_name(table_name *table, json_value *root, const caryll_Options *options);
+table_name *table_parse_name(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_name(table_name *name, const caryll_Options *options);
 #endif

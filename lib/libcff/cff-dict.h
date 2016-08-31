@@ -1,5 +1,5 @@
-#ifndef CARYLL_CFF_DICT_H
-#define CARYLL_CFF_DICT_H
+#ifndef CARYLL_cff_DICT_H
+#define CARYLL_cff_DICT_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -11,22 +11,22 @@
 typedef struct {
 	uint32_t op;
 	uint32_t cnt;
-	CFF_Value *vals;
-} CFF_Dict_Entry;
+	cff_Value *vals;
+} cff_DictEntry;
 
 typedef struct {
 	uint32_t count;
-	CFF_Dict_Entry *ents;
-} CFF_Dict;
+	cff_DictEntry *ents;
+} cff_Dict;
 
-void cff_delete_dict(CFF_Dict *dict);
-void esrap_dict(CFF_Dict *d);
-CFF_Dict *parse_dict(uint8_t *data, uint32_t len);
+void cff_delete_Dict(cff_Dict *dict);
+void cff_close_Dict(cff_Dict *d);
+cff_Dict *cff_extract_Dict(uint8_t *data, uint32_t len);
 
-void parse_dict_callback(uint8_t *data, uint32_t len, void *context,
-                         void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack, void *context));
-CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx);
+void cff_extract_DictByCallback(uint8_t *data, uint32_t len, void *context,
+                         void (*callback)(uint32_t op, uint8_t top, cff_Value *stack, void *context));
+cff_Value cff_parseDictKey(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx);
 
-caryll_buffer *compile_dict(CFF_Dict *dict);
+caryll_buffer *cff_build_Dict(cff_Dict *dict);
 
 #endif

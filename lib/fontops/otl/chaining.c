@@ -1,11 +1,11 @@
 #include "chaining.h"
 
-bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_chaining *subtable = &(_subtable->chaining);
-	otl_chaining_rule *rule = subtable->rules[0];
+	otl_ChainingRule *rule = subtable->rules[0];
 	for (uint16_t j = 0; j < rule->matchCount; j++) {
-		consolidate_coverage(font, rule->match[j], lookupName);
-		shrink_coverage(rule->match[j], true);
+		fontop_consolidateCoverage(font, rule->match[j], lookupName);
+		fontop_shrinkCoverage(rule->match[j], true);
 	}
 	if (rule->inputBegins < 0) rule->inputBegins = 0;
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
@@ -18,14 +18,14 @@ bool consolidate_chaining(caryll_font *font, table_otl *table, otl_subtable *_su
 			for (uint16_t k = 0; k < table->lookupCount; k++) {
 				if (strcmp(table->lookups[k]->name, rule->apply[j].lookup.name) != 0) continue;
 				foundLookup = true;
-				handle_consolidate_to(&rule->apply[j].lookup, k, table->lookups[k]->name);
+				handle_consolidateTo(&rule->apply[j].lookup, k, table->lookups[k]->name);
 			}
 			if (!foundLookup) {
 				// Maybe the lookup is aliased.
 				for (uint16_t k = 0; k < table->lookupAliasesCount; k++) {
 					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookup.name) != 0) continue;
 					handle_delete(&rule->apply[j].lookup);
-					rule->apply[j].lookup = handle_from_name(sdsdup(table->lookupAliases[k].to));
+					rule->apply[j].lookup = handle_fromName(sdsdup(table->lookupAliases[k].to));
 					goto FIND_LOOKUP;
 				}
 			}
@@ -58,7 +58,7 @@ static int by_gid_clsh(classifier_hash *a, classifier_hash *b) {
 	return a->gid - b->gid;
 }
 
-static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
+static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
 	classifier_hash *s;
 	if (cov->numGlyphs == 0) return 1;
@@ -123,29 +123,29 @@ static int classCompatible(classifier_hash **h, otl_coverage *cov, int *past) {
 		return 1;
 	}
 }
-static void rewriteRule(otl_chaining_rule *rule, classifier_hash *hb, classifier_hash *hi, classifier_hash *hf) {
+static void rewriteRule(otl_ChainingRule *rule, classifier_hash *hb, classifier_hash *hi, classifier_hash *hf) {
 	for (uint16_t m = 0; m < rule->matchCount; m++) {
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
 			classifier_hash *s;
 			int gid = rule->match[m]->glyphs[0].index;
 			HASH_FIND_INT(h, &gid, s);
-			caryll_delete_coverage(rule->match[m]);
+			otl_delete_Coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0] = handle_from_id(s->cls);
+			rule->match[m]->glyphs[0] = handle_fromIndex(s->cls);
 		} else {
-			caryll_delete_coverage(rule->match[m]);
+			otl_delete_Coverage(rule->match[m]);
 			NEW(rule->match[m]);
 			rule->match[m]->numGlyphs = 1;
 			NEW(rule->match[m]->glyphs);
-			rule->match[m]->glyphs[0] = handle_from_id(0);
+			rule->match[m]->glyphs[0] = handle_fromIndex(0);
 		}
 	}
 }
-static otl_classdef *toClass(classifier_hash *h) {
-	otl_classdef *cd;
+static otl_ClassDef *toClass(classifier_hash *h) {
+	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = HASH_COUNT(h);
 	if (!cd->numGlyphs) {
@@ -170,7 +170,7 @@ static otl_classdef *toClass(classifier_hash *h) {
 	cd->maxclass = maxclass;
 	return cd;
 }
-void classify_around(otl_lookup *lookup, uint16_t j) {
+void classify_around(otl_Lookup *lookup, uint16_t j) {
 	classifier_hash *hb = NULL;
 	classifier_hash *hi = NULL;
 	classifier_hash *hf = NULL;
@@ -181,7 +181,7 @@ void classify_around(otl_lookup *lookup, uint16_t j) {
 	int classno_i = 0;
 	int classno_f = 0;
 	bool *compatibility = NULL;
-	otl_chaining_rule *rule0 = subtable0->rules[0];
+	otl_ChainingRule *rule0 = subtable0->rules[0];
 	for (uint16_t m = 0; m < rule0->matchCount; m++) {
 		int check = 0;
 		if (m < rule0->inputBegins) {
@@ -197,7 +197,7 @@ void classify_around(otl_lookup *lookup, uint16_t j) {
 	uint16_t compatibleCount = 0;
 	for (uint16_t k = j + 1; k < lookup->subtableCount; k++) {
 		if (lookup->subtables[k] && !lookup->subtables[k]->chaining.classified) {
-			otl_chaining_rule *rule = lookup->subtables[k]->chaining.rules[0];
+			otl_ChainingRule *rule = lookup->subtables[k]->chaining.rules[0];
 			bool allcheck = true;
 			for (uint16_t m = 0; m < rule->matchCount; m++) {
 				int check = 0;
@@ -229,11 +229,11 @@ endcheck:
 		uint16_t kk = 1;
 		for (uint16_t k = j + 1; k < lookup->subtableCount; k++)
 			if (compatibility[k]) {
-				otl_chaining_rule *rule = lookup->subtables[k]->chaining.rules[0];
+				otl_ChainingRule *rule = lookup->subtables[k]->chaining.rules[0];
 				subtable0->rules[kk] = rule;
 				rewriteRule(rule, hb, hi, hf);
 				lookup->subtables[k]->chaining.rules[0] = NULL;
-				caryll_delete_chaining(lookup->subtables[k]);
+				otl_delete_chaining(lookup->subtables[k]);
 				lookup->subtables[k] = NULL;
 				kk++;
 			}
@@ -268,7 +268,7 @@ FAIL:;
 	}
 	return;
 }
-void classify(otl_lookup *lookup) {
+void fontop_classifyChainings(otl_Lookup *lookup) {
 	// in this procedure we will replace the subtables' content to classes.
 	// This can massively reduce the size of the lookup.
 	// Remember, this process is completely automatic.

@@ -3,19 +3,19 @@
 typedef struct {
 	int fromid;
 	sds fromname;
-	otl_coverage *to;
+	otl_Coverage *to;
 	UT_hash_handle hh;
 } gsub_multi_hash;
 static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_gsub_multi(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
-	consolidate_coverage(font, subtable->from, lookupName);
+	fontop_consolidateCoverage(font, subtable->from, lookupName);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
-		consolidate_coverage(font, subtable->to[j], lookupName);
-		shrink_coverage(subtable->to[j], false);
+		fontop_consolidateCoverage(font, subtable->to[j], lookupName);
+		fontop_shrinkCoverage(subtable->to[j], false);
 	}
 	gsub_multi_hash *h = NULL;
 	for (uint16_t k = 0; k < subtable->from->numGlyphs; k++) {
@@ -30,10 +30,10 @@ bool consolidate_gsub_multi(caryll_font *font, table_otl *table, otl_subtable *_
 				s->to = subtable->to[k];
 				HASH_ADD_INT(h, fromid, s);
 			} else {
-				caryll_delete_coverage(subtable->to[k]);
+				otl_delete_Coverage(subtable->to[k]);
 			}
 		} else {
-			caryll_delete_coverage(subtable->to[k]);
+			otl_delete_Coverage(subtable->to[k]);
 		}
 	}
 	HASH_SORT(h, by_from_id_multi);

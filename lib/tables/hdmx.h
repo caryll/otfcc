@@ -20,7 +20,7 @@ typedef struct {
 	device_record *records;
 } table_hdmx;
 
-table_hdmx *caryll_read_hdmx(caryll_packet packet, table_maxp *maxp);
-void caryll_delete_hdmx(table_hdmx *table);
+table_hdmx *table_read_hdmx(caryll_Packet packet, table_maxp *maxp);
+void table_delete_hdmx(table_hdmx *table);
 
 #endif

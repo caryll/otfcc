@@ -1,7 +1,7 @@
 #include "gpos-pair.h"
 
-static otl_coverage *covFromCD(otl_classdef *cd) {
-	otl_coverage *cov;
+static otl_Coverage *covFromCD(otl_ClassDef *cd) {
+	otl_Coverage *cov;
 	NEW(cov);
 	cov->numGlyphs = cd->numGlyphs;
 	NEW_N(cov->glyphs, cd->numGlyphs);
@@ -11,13 +11,13 @@ static otl_coverage *covFromCD(otl_classdef *cd) {
 	}
 	return cov;
 }
-bool consolidate_gpos_pair(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_gpos_pair(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-	consolidate_classdef(font, subtable->first, lookupName);
-	consolidate_classdef(font, subtable->second, lookupName);
+	fontop_consolidateClassDef(font, subtable->first, lookupName);
+	fontop_consolidateClassDef(font, subtable->second, lookupName);
 	subtable->coverage = covFromCD(subtable->first);
-	shrink_classdef(subtable->first);
-	shrink_classdef(subtable->second);
-	shrink_coverage(subtable->coverage, true);
+	fontop_shrinkClassDef(subtable->first);
+	fontop_shrinkClassDef(subtable->second);
+	fontop_shrinkCoverage(subtable->coverage, true);
 	return (subtable->coverage->numGlyphs == 0);
 }

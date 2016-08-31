@@ -9,12 +9,12 @@ typedef struct {
 	UT_hash_handle hh;
 	int unicode;
 	glyph_handle glyph;
-} cmap_entry;
-typedef cmap_entry *cmap_hash;
+} cmap_Entry;
+typedef cmap_Entry *table_cmap;
 
-cmap_hash *caryll_read_cmap(caryll_packet packet);
-void caryll_delete_cmap(cmap_hash *table);
-void caryll_cmap_to_json(cmap_hash *table, json_value *root, const caryll_options *options);
-cmap_hash *caryll_cmap_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_cmap(cmap_hash *cmap, const caryll_options *options);
+table_cmap *table_read_cmap(caryll_Packet packet);
+void table_delete_cmap(table_cmap *table);
+void table_dump_cmap(table_cmap *table, json_value *root, const caryll_Options *options);
+table_cmap *table_parse_cmap(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_cmap(table_cmap *cmap, const caryll_Options *options);
 #endif

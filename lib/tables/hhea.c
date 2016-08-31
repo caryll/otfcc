@@ -1,11 +1,11 @@
 #include "hhea.h"
 
-table_hhea *caryll_new_hhea() {
+table_hhea *table_new_hhea() {
 	table_hhea *hhea = (table_hhea *)calloc(1, sizeof(table_hhea));
 	return hhea;
 }
 
-table_hhea *caryll_read_hhea(caryll_packet packet) {
+table_hhea *table_read_hhea(caryll_Packet packet) {
 	FOR_TABLE('hhea', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -37,7 +37,7 @@ table_hhea *caryll_read_hhea(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_hhea_to_json(table_hhea *table, json_value *root, const caryll_options *options) {
+void table_dump_hhea(table_hhea *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping hhea.\n");
 	json_value *hhea = json_object_new(13);
@@ -57,8 +57,8 @@ void caryll_hhea_to_json(table_hhea *table, json_value *root, const caryll_optio
 	json_object_push(root, "hhea", hhea);
 }
 
-table_hhea *caryll_hhea_from_json(json_value *root, const caryll_options *options) {
-	table_hhea *hhea = caryll_new_hhea();
+table_hhea *table_parse_hhea(json_value *root, const caryll_Options *options) {
+	table_hhea *hhea = table_new_hhea();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
 		if (options->verbose) fprintf(stderr, "Parsing hhea.\n");
@@ -79,7 +79,7 @@ table_hhea *caryll_hhea_from_json(json_value *root, const caryll_options *option
 	return hhea;
 }
 
-caryll_buffer *caryll_write_hhea(table_hhea *hhea, const caryll_options *options) {
+caryll_buffer *table_build_hhea(table_hhea *hhea, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!hhea) return buf;
 	bufwrite32b(buf, hhea->version);

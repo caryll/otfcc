@@ -6,8 +6,8 @@
 #include "caryll-sfnt-builder.h"
 #include "caryll-sfnt.h"
 
-caryll_font *caryll_new_font() {
-	caryll_font *font = calloc(1, sizeof(caryll_font));
+caryll_Font *caryll_new_Font() {
+	caryll_Font *font = calloc(1, sizeof(caryll_Font));
 	if (!font) return NULL;
 	font->head = NULL;
 	font->hhea = NULL;
@@ -33,206 +33,206 @@ caryll_font *caryll_new_font() {
 	return font;
 }
 
-void caryll_delete_font(caryll_font *font) {
+void caryll_delete_Font(caryll_Font *font) {
 	if (font->head) free(font->head);
 	if (font->hhea) free(font->hhea);
 	if (font->maxp) free(font->maxp);
 	if (font->OS_2) free(font->OS_2);
-	if (font->name) caryll_delete_name(font->name);
-	if (font->hmtx) caryll_delete_hmtx(font->hmtx);
-	if (font->post) caryll_delete_post(font->post);
-	if (font->hdmx) caryll_delete_hdmx(font->hdmx);
+	if (font->name) table_delete_name(font->name);
+	if (font->hmtx) table_delete_hmtx(font->hmtx);
+	if (font->post) table_delete_post(font->post);
+	if (font->hdmx) table_delete_hdmx(font->hdmx);
 	if (font->vhea) free(font->vhea);
-	if (font->fpgm) caryll_delete_fpgm_prep(font->fpgm);
-	if (font->prep) caryll_delete_fpgm_prep(font->prep);
-	if (font->cvt_) caryll_delete_cvt(font->cvt_);
-	if (font->gasp) caryll_delete_gasp(font->gasp);
-	if (font->CFF_) caryll_delete_CFF(font->CFF_);
-	if (font->glyf) caryll_delete_glyf(font->glyf);
-	if (font->cmap) caryll_delete_cmap(font->cmap);
-	if (font->LTSH) caryll_delete_LTSH(font->LTSH);
-	if (font->GSUB) caryll_delete_otl(font->GSUB);
-	if (font->GPOS) caryll_delete_otl(font->GPOS);
-	if (font->GDEF) caryll_delete_GDEF(font->GDEF);
-	if (font->BASE) caryll_delete_BASE(font->BASE);
-	if (font->VORG) caryll_delete_VORG(font->VORG);
-	if (font->glyph_order && *font->glyph_order) { delete_glyph_order_map(font->glyph_order); }
+	if (font->fpgm) table_delete_fpgm_prep(font->fpgm);
+	if (font->prep) table_delete_fpgm_prep(font->prep);
+	if (font->cvt_) table_delete_cvt(font->cvt_);
+	if (font->gasp) table_delete_gasp(font->gasp);
+	if (font->CFF_) table_delete_CFF(font->CFF_);
+	if (font->glyf) table_delete_glyf(font->glyf);
+	if (font->cmap) table_delete_cmap(font->cmap);
+	if (font->LTSH) table_delete_LTSH(font->LTSH);
+	if (font->GSUB) table_delete_otl(font->GSUB);
+	if (font->GPOS) table_delete_otl(font->GPOS);
+	if (font->GDEF) table_delete_GDEF(font->GDEF);
+	if (font->BASE) table_delete_BASE(font->BASE);
+	if (font->VORG) table_delete_VORG(font->VORG);
+	if (font->glyph_order && *font->glyph_order) { glyphorder_deleteMap(font->glyph_order); }
 	if (font) free(font);
 }
 
-caryll_font_subtype caryll_decide_font_subtype(caryll_sfnt *sfnt, uint32_t index) {
-	caryll_packet packet = sfnt->packets[index];
+caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index) {
+	caryll_Packet packet = sfnt->packets[index];
 	FOR_TABLE('CFF ', table) {
 		return FONTTYPE_CFF;
 	}
 	return FONTTYPE_TTF;
 }
 
-caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index) {
+caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index) {
 	if (sfnt->count - 1 < index)
 		return NULL;
 	else {
-		caryll_font *font = caryll_new_font();
-		caryll_packet packet = sfnt->packets[index];
-		font->subtype = caryll_decide_font_subtype(sfnt, index);
-		font->head = caryll_read_head(packet);
-		font->maxp = caryll_read_maxp(packet);
-		font->name = caryll_read_name(packet);
-		font->OS_2 = caryll_read_OS_2(packet);
-		font->post = caryll_read_post(packet);
-		font->hhea = caryll_read_hhea(packet);
-		font->cmap = caryll_read_cmap(packet);
+		caryll_Font *font = caryll_new_Font();
+		caryll_Packet packet = sfnt->packets[index];
+		font->subtype = caryll_decideFontSubtype(sfnt, index);
+		font->head = table_read_head(packet);
+		font->maxp = table_read_maxp(packet);
+		font->name = table_read_name(packet);
+		font->OS_2 = table_read_OS_2(packet);
+		font->post = table_read_post(packet);
+		font->hhea = table_read_hhea(packet);
+		font->cmap = table_read_cmap(packet);
 		if (font->subtype == FONTTYPE_TTF) {
-			font->hmtx = caryll_read_hmtx(packet, font->hhea, font->maxp);
-			font->vhea = caryll_read_vhea(packet);
-			if (font->vhea) font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
-			font->fpgm = caryll_read_fpgm_prep(packet, 'fpgm');
-			font->prep = caryll_read_fpgm_prep(packet, 'prep');
-			font->cvt_ = caryll_read_cvt(packet, 'cvt ');
-			font->gasp = caryll_read_gasp(packet);
-			font->LTSH = caryll_read_LTSH(packet);
-			font->glyf = caryll_read_glyf(packet, font->head, font->maxp);
+			font->hmtx = table_read_hmtx(packet, font->hhea, font->maxp);
+			font->vhea = table_read_vhea(packet);
+			if (font->vhea) font->vmtx = table_read_vmtx(packet, font->vhea, font->maxp);
+			font->fpgm = table_read_fpgm_prep(packet, 'fpgm');
+			font->prep = table_read_fpgm_prep(packet, 'prep');
+			font->cvt_ = table_read_cvt(packet, 'cvt ');
+			font->gasp = table_read_gasp(packet);
+			font->LTSH = table_read_LTSH(packet);
+			font->glyf = table_read_glyf(packet, font->head, font->maxp);
 		} else {
-			caryll_cff_parse_result cffpr = caryll_read_CFF_and_glyf(packet);
+			table_CFFAndGlyf cffpr = table_read_cff_and_glyf(packet);
 			font->CFF_ = cffpr.meta;
 			font->glyf = cffpr.glyphs;
-			font->vhea = caryll_read_vhea(packet);
+			font->vhea = table_read_vhea(packet);
 			if (font->vhea) {
-				font->vmtx = caryll_read_vmtx(packet, font->vhea, font->maxp);
-				font->VORG = caryll_read_VORG(packet);
+				font->vmtx = table_read_vmtx(packet, font->vhea, font->maxp);
+				font->VORG = table_read_VORG(packet);
 			}
 		}
 		if (font->glyf) {
-			font->GSUB = caryll_read_otl(packet, 'GSUB');
-			font->GPOS = caryll_read_otl(packet, 'GPOS');
-			font->GDEF = caryll_read_GDEF(packet);
+			font->GSUB = table_read_otl(packet, 'GSUB');
+			font->GPOS = table_read_otl(packet, 'GPOS');
+			font->GDEF = table_read_GDEF(packet);
 		}
-		font->BASE = caryll_read_BASE(packet);
+		font->BASE = table_read_BASE(packet);
 		return font;
 	}
 }
 
-json_value *caryll_font_to_json(caryll_font *font, caryll_options *options) {
+json_value *caryll_dump_Font(caryll_Font *font, caryll_Options *options) {
 	json_value *root = json_object_new(48);
 	options->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	options->export_fdselect = font->CFF_ && font->CFF_->isCID;
 	if (!root) return NULL;
-	caryll_head_to_json(font->head, root, options);
-	caryll_hhea_to_json(font->hhea, root, options);
-	caryll_maxp_to_json(font->maxp, root, options);
-	caryll_vhea_to_json(font->vhea, root, options);
-	caryll_post_to_json(font->post, root, options);
-	caryll_OS_2_to_json(font->OS_2, root, options);
-	caryll_name_to_json(font->name, root, options);
-	caryll_cmap_to_json(font->cmap, root, options);
-	caryll_CFF_to_json(font->CFF_, root, options);
-	caryll_glyf_to_json(font->glyf, root, options);
+	table_dump_head(font->head, root, options);
+	table_dump_hhea(font->hhea, root, options);
+	table_dump_maxp(font->maxp, root, options);
+	table_dump_vhea(font->vhea, root, options);
+	table_dump_post(font->post, root, options);
+	table_dump_OS_2(font->OS_2, root, options);
+	table_dump_name(font->name, root, options);
+	table_dump_cmap(font->cmap, root, options);
+	table_dump_cff(font->CFF_, root, options);
+	table_dump_glyf(font->glyf, root, options);
 	if (!options->ignore_hints) {
-		caryll_fpgm_prep_to_json(font->fpgm, root, options, "fpgm");
-		caryll_fpgm_prep_to_json(font->prep, root, options, "prep");
-		caryll_cvt_to_json(font->cvt_, root, options, "cvt_");
-		caryll_gasp_to_json(font->gasp, root, options);
+		table_fpgm_dump_prep(font->fpgm, root, options, "fpgm");
+		table_fpgm_dump_prep(font->prep, root, options, "prep");
+		table_dump_cvt(font->cvt_, root, options, "cvt_");
+		table_dump_gasp(font->gasp, root, options);
 	}
-	caryll_otl_to_json(font->GSUB, root, options, "GSUB");
-	caryll_otl_to_json(font->GPOS, root, options, "GPOS");
-	caryll_GDEF_to_json(font->GDEF, root, options);
-	caryll_BASE_to_json(font->BASE, root, options);
+	table_dump_otl(font->GSUB, root, options, "GSUB");
+	table_dump_otl(font->GPOS, root, options, "GPOS");
+	table_dump_GDEF(font->GDEF, root, options);
+	table_dump_BASE(font->BASE, root, options);
 	return root;
 }
 
-caryll_font_subtype caryll_decide_font_subtype_json(json_value *root) {
+caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root) {
 	if (json_obj_get_type(root, "CFF_", json_object) != NULL) {
 		return FONTTYPE_CFF;
 	} else {
 		return FONTTYPE_TTF;
 	}
 }
-caryll_font *caryll_font_from_json(json_value *root, caryll_options *options) {
-	caryll_font *font = caryll_new_font();
+caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
+	caryll_Font *font = caryll_new_Font();
 	if (!font) return NULL;
-	font->subtype = caryll_decide_font_subtype_json(root);
-	font->glyph_order = caryll_glyphorder_from_json(root, options);
-	font->glyf = caryll_glyf_from_json(root, *font->glyph_order, options);
-	font->head = caryll_head_from_json(root, options);
-	font->hhea = caryll_hhea_from_json(root, options);
-	font->OS_2 = caryll_OS_2_from_json(root, options);
-	font->maxp = caryll_maxp_from_json(root, options);
-	font->post = caryll_post_from_json(root, options);
-	font->name = caryll_name_from_json(root, options);
-	font->cmap = caryll_cmap_from_json(root, options);
-	font->CFF_ = caryll_CFF_from_json(root, options);
+	font->subtype = caryll_decideFontSubtypeFromJson(root);
+	font->glyph_order = parse_glyphorder(root, options);
+	font->glyf = table_parse_glyf(root, *font->glyph_order, options);
+	font->head = table_parse_head(root, options);
+	font->hhea = table_parse_hhea(root, options);
+	font->OS_2 = table_parse_OS_2(root, options);
+	font->maxp = table_parse_maxp(root, options);
+	font->post = table_parse_post(root, options);
+	font->name = table_parse_name(root, options);
+	font->cmap = table_parse_cmap(root, options);
+	font->CFF_ = table_parse_cff(root, options);
 	if (!options->ignore_hints) {
-		font->fpgm = caryll_fpgm_prep_from_json(root, options, "fpgm");
-		font->prep = caryll_fpgm_prep_from_json(root, options, "prep");
-		font->cvt_ = caryll_cvt_from_json(root, options, "cvt_");
-		font->gasp = caryll_gasp_from_json(root, options);
+		font->fpgm = table_fpgm_parse_prep(root, options, "fpgm");
+		font->prep = table_fpgm_parse_prep(root, options, "prep");
+		font->cvt_ = table_parse_cvt(root, options, "cvt_");
+		font->gasp = table_parse_gasp(root, options);
 	}
-	font->vhea = caryll_vhea_from_json(root, options);
+	font->vhea = table_parse_vhea(root, options);
 	if (font->glyf) {
-		font->GSUB = caryll_otl_from_json(root, options, "GSUB");
-		font->GPOS = caryll_otl_from_json(root, options, "GPOS");
-		font->GDEF = caryll_GDEF_from_json(root, options);
+		font->GSUB = table_parse_otl(root, options, "GSUB");
+		font->GPOS = table_parse_otl(root, options, "GPOS");
+		font->GDEF = table_parse_GDEF(root, options);
 	}
-	font->BASE = caryll_BASE_from_json(root, options);
+	font->BASE = table_parse_BASE(root, options);
 	return font;
 }
 
-caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options) {
-	sfnt_builder *builder = new_sfnt_builder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
+caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
+	caryll_SFNTBuilder *builder = caryll_new_SFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 
 	// Outline data
 	if (font->subtype == FONTTYPE_TTF) {
-		glyf_loca_bufpair pair = caryll_write_glyf(font->glyf, font->head, options);
-		sfnt_builder_push_table(builder, 'glyf', pair.glyf);
-		sfnt_builder_push_table(builder, 'loca', pair.loca);
+		glyf_loca_bufpair pair = table_build_glyf(font->glyf, font->head, options);
+		caryll_pushTableToSfntBuilder(builder, 'glyf', pair.glyf);
+		caryll_pushTableToSfntBuilder(builder, 'loca', pair.loca);
 	} else {
-		caryll_cff_parse_result r = {font->CFF_, font->glyf};
-		sfnt_builder_push_table(builder, 'CFF ', caryll_write_CFF(r, options));
+		table_CFFAndGlyf r = {font->CFF_, font->glyf};
+		caryll_pushTableToSfntBuilder(builder, 'CFF ', table_build_CFF(r, options));
 	}
 
-	sfnt_builder_push_table(builder, 'head', caryll_write_head(font->head, options));
-	sfnt_builder_push_table(builder, 'hhea', caryll_write_hhea(font->hhea, options));
-	sfnt_builder_push_table(builder, 'OS/2', caryll_write_OS_2(font->OS_2, options));
-	sfnt_builder_push_table(builder, 'maxp', caryll_write_maxp(font->maxp, options));
-	sfnt_builder_push_table(builder, 'name', caryll_write_name(font->name, options));
-	sfnt_builder_push_table(builder, 'post', caryll_write_post(font->post, font->glyph_order, options));
-	sfnt_builder_push_table(builder, 'cmap', caryll_write_cmap(font->cmap, options));
-	if (font->gasp) sfnt_builder_push_table(builder, 'gasp', caryll_write_gasp(font->gasp, options));
+	caryll_pushTableToSfntBuilder(builder, 'head', table_build_head(font->head, options));
+	caryll_pushTableToSfntBuilder(builder, 'hhea', table_build_hhea(font->hhea, options));
+	caryll_pushTableToSfntBuilder(builder, 'OS/2', table_build_OS_2(font->OS_2, options));
+	caryll_pushTableToSfntBuilder(builder, 'maxp', table_build_maxp(font->maxp, options));
+	caryll_pushTableToSfntBuilder(builder, 'name', table_build_name(font->name, options));
+	caryll_pushTableToSfntBuilder(builder, 'post', table_build_post(font->post, font->glyph_order, options));
+	caryll_pushTableToSfntBuilder(builder, 'cmap', table_build_cmap(font->cmap, options));
+	if (font->gasp) caryll_pushTableToSfntBuilder(builder, 'gasp', table_build_gasp(font->gasp, options));
 
 	if (font->subtype == FONTTYPE_TTF) {
-		if (font->fpgm) sfnt_builder_push_table(builder, 'fpgm', caryll_write_fpgm_prep(font->fpgm, options));
-		if (font->prep) sfnt_builder_push_table(builder, 'prep', caryll_write_fpgm_prep(font->prep, options));
-		if (font->cvt_) sfnt_builder_push_table(builder, 'cvt ', caryll_write_cvt(font->cvt_, options));
-		if (font->LTSH) sfnt_builder_push_table(builder, 'LTSH', caryll_write_LTSH(font->LTSH, options));
+		if (font->fpgm) caryll_pushTableToSfntBuilder(builder, 'fpgm', table_build_fpgm_prep(font->fpgm, options));
+		if (font->prep) caryll_pushTableToSfntBuilder(builder, 'prep', table_build_fpgm_prep(font->prep, options));
+		if (font->cvt_) caryll_pushTableToSfntBuilder(builder, 'cvt ', table_build_cvt(font->cvt_, options));
+		if (font->LTSH) caryll_pushTableToSfntBuilder(builder, 'LTSH', table_build_LTSH(font->LTSH, options));
 	}
 
 	if (font->hhea && font->maxp && font->hmtx) {
 		uint16_t hmtx_counta = font->hhea->numberOfMetrics;
 		uint16_t hmtx_countk = font->maxp->numGlyphs - font->hhea->numberOfMetrics;
-		sfnt_builder_push_table(builder, 'hmtx', caryll_write_hmtx(font->hmtx, hmtx_counta, hmtx_countk, options));
+		caryll_pushTableToSfntBuilder(builder, 'hmtx', table_build_hmtx(font->hmtx, hmtx_counta, hmtx_countk, options));
 	}
-	if (font->vhea) sfnt_builder_push_table(builder, 'vhea', caryll_write_vhea(font->vhea, options));
+	if (font->vhea) caryll_pushTableToSfntBuilder(builder, 'vhea', table_build_vhea(font->vhea, options));
 	if (font->vhea && font->maxp && font->vmtx) {
 		uint16_t vmtx_counta = font->vhea->numOfLongVerMetrics;
 		uint16_t vmtx_countk = font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics;
-		sfnt_builder_push_table(builder, 'vmtx', caryll_write_vmtx(font->vmtx, vmtx_counta, vmtx_countk, options));
+		caryll_pushTableToSfntBuilder(builder, 'vmtx', table_build_vmtx(font->vmtx, vmtx_counta, vmtx_countk, options));
 	}
-	if (font->VORG) { sfnt_builder_push_table(builder, 'VORG', caryll_write_VORG(font->VORG, options)); }
+	if (font->VORG) { caryll_pushTableToSfntBuilder(builder, 'VORG', table_build_VORG(font->VORG, options)); }
 
-	if (font->GSUB) sfnt_builder_push_table(builder, 'GSUB', caryll_write_otl(font->GSUB, options, "GSUB"));
-	if (font->GPOS) sfnt_builder_push_table(builder, 'GPOS', caryll_write_otl(font->GPOS, options, "GPOS"));
-	if (font->GDEF) sfnt_builder_push_table(builder, 'GDEF', caryll_write_GDEF(font->GDEF, options));
-	if (font->BASE) sfnt_builder_push_table(builder, 'BASE', caryll_write_BASE(font->BASE, options));
+	if (font->GSUB) caryll_pushTableToSfntBuilder(builder, 'GSUB', table_build_otl(font->GSUB, options, "GSUB"));
+	if (font->GPOS) caryll_pushTableToSfntBuilder(builder, 'GPOS', table_build_otl(font->GPOS, options, "GPOS"));
+	if (font->GDEF) caryll_pushTableToSfntBuilder(builder, 'GDEF', table_build_GDEF(font->GDEF, options));
+	if (font->BASE) caryll_pushTableToSfntBuilder(builder, 'BASE', table_build_BASE(font->BASE, options));
 
 	if (options->dummy_DSIG) {
 		caryll_buffer *dsig = bufnew();
 		bufwrite32b(dsig, 0x00000001);
 		bufwrite16b(dsig, 0);
 		bufwrite16b(dsig, 0);
-		sfnt_builder_push_table(builder, 'DSIG', dsig);
+		caryll_pushTableToSfntBuilder(builder, 'DSIG', dsig);
 	}
 
-	caryll_buffer *otf = sfnt_builder_serialize(builder);
-	delete_sfnt_builder(builder);
+	caryll_buffer *otf = caryll_serializeSFNT(builder);
+	caryll_delete_SFNTBuilder(builder);
 	return otf;
 }

@@ -21,15 +21,15 @@ typedef enum {
 	otl_type_gpos_single = 0x21,
 	otl_type_gpos_pair = 0x22,
 	otl_type_gpos_cursive = 0x23,
-	otl_type_gpos_mark_to_base = 0x24,
-	otl_type_gpos_mark_to_ligature = 0x25,
-	otl_type_gpos_mark_to_mark = 0x26,
+	otl_type_gpos_markToBase = 0x24,
+	otl_type_gpos_markToLigature = 0x25,
+	otl_type_gpos_markToMark = 0x26,
 	otl_type_gpos_context = 0x27,
 	otl_type_gpos_chaining = 0x28,
 	otl_type_gpos_extend = 0x29
-} otl_lookup_type;
+} otl_LookupType;
 
-typedef union _otl_subtable otl_subtable;
+typedef union _otl_subtable otl_Subtable;
 
 #include "coverage.h"
 #include "classdef.h"
@@ -39,110 +39,110 @@ typedef struct {
 	int16_t dy;
 	int16_t dWidth;
 	int16_t dHeight;
-} otl_position_value;
+} otl_PositionValue;
 
 // GSUB subtable formats
 typedef struct {
-	otl_coverage *from;
-	otl_coverage *to;
+	otl_Coverage *from;
+	otl_Coverage *to;
 } subtable_gsub_single;
 typedef struct {
-	otl_coverage *from;
-	otl_coverage **to;
+	otl_Coverage *from;
+	otl_Coverage **to;
 } subtable_gsub_multi;
 typedef struct {
-	otl_coverage **from;
-	otl_coverage *to;
+	otl_Coverage **from;
+	otl_Coverage *to;
 } subtable_gsub_ligature;
 
 typedef struct {
 	uint16_t index;
 	lookup_handle lookup;
-} otl_contextual_application;
+} otl_ChainLookupApplication;
 typedef struct {
 	uint16_t matchCount;
 	uint16_t inputBegins;
 	uint16_t inputEnds;
-	otl_coverage **match;
+	otl_Coverage **match;
 	uint16_t applyCount;
-	otl_contextual_application *apply;
-} otl_chaining_rule;
+	otl_ChainLookupApplication *apply;
+} otl_ChainingRule;
 typedef struct {
 	uint16_t rulesCount;
-	otl_chaining_rule **rules;
+	otl_ChainingRule **rules;
 	bool classified;
-	otl_classdef *bc;
-	otl_classdef *ic;
-	otl_classdef *fc;
+	otl_ClassDef *bc;
+	otl_ClassDef *ic;
+	otl_ClassDef *fc;
 } subtable_chaining;
 
 typedef struct {
 	uint16_t matchCount;
 	uint16_t inputIndex;
-	otl_coverage **match;
-	otl_coverage *to;
+	otl_Coverage **match;
+	otl_Coverage *to;
 } subtable_gsub_reverse;
 
 // GPOS subtable formats
 typedef struct {
-	otl_coverage *coverage;
-	otl_position_value *values;
+	otl_Coverage *coverage;
+	otl_PositionValue *values;
 } subtable_gpos_single;
 
 typedef struct {
 	bool present;
 	int16_t x;
 	int16_t y;
-} otl_anchor;
+} otl_Anchor;
 
 typedef struct {
-	otl_coverage *coverage;
-	otl_classdef *first;
-	otl_classdef *second;
-	otl_position_value **firstValues;
-	otl_position_value **secondValues;
+	otl_Coverage *coverage;
+	otl_ClassDef *first;
+	otl_ClassDef *second;
+	otl_PositionValue **firstValues;
+	otl_PositionValue **secondValues;
 } subtable_gpos_pair;
 
 typedef struct {
-	otl_coverage *coverage;
-	otl_anchor *enter;
-	otl_anchor *exit;
+	otl_Coverage *coverage;
+	otl_Anchor *enter;
+	otl_Anchor *exit;
 } subtable_gpos_cursive;
 
 typedef struct {
 	uint16_t markClass;
-	otl_anchor anchor;
-} otl_mark_record;
+	otl_Anchor anchor;
+} otl_MarkRecord;
 
 typedef struct {
 	uint16_t markCount;
-	otl_mark_record *records;
-} otl_mark_array;
+	otl_MarkRecord *records;
+} otl_MarkArray;
 
 typedef struct {
-	otl_coverage *marks;
-	otl_coverage *bases;
+	otl_Coverage *marks;
+	otl_Coverage *bases;
 	uint16_t classCount;
-	otl_mark_array *markArray;
-	otl_anchor **baseArray;
-} subtable_gpos_mark_to_single;
+	otl_MarkArray *markArray;
+	otl_Anchor **baseArray;
+} subtable_gpos_markToSingle;
 
 typedef struct {
 	uint16_t componentCount;
-	otl_anchor **anchors;
-} mark_to_ligature_base;
+	otl_Anchor **anchors;
+} otl_MarkToLigatureBase;
 
 typedef struct {
-	otl_coverage *marks;
-	otl_coverage *bases;
+	otl_Coverage *marks;
+	otl_Coverage *bases;
 	uint16_t classCount;
-	otl_mark_array *markArray;
-	mark_to_ligature_base **ligArray;
-} subtable_gpos_mark_to_ligature;
+	otl_MarkArray *markArray;
+	otl_MarkToLigatureBase **ligArray;
+} subtable_gpos_markToLigature;
 
 typedef struct {
 	uint16_t type;
-	otl_subtable *subtable;
+	otl_Subtable *subtable;
 } subtable_extend;
 
 typedef union _otl_subtable {
@@ -154,58 +154,58 @@ typedef union _otl_subtable {
 	subtable_gpos_single gpos_single;
 	subtable_gpos_pair gpos_pair;
 	subtable_gpos_cursive gpos_cursive;
-	subtable_gpos_mark_to_single gpos_mark_to_single;
-	subtable_gpos_mark_to_ligature gpos_mark_to_ligature;
+	subtable_gpos_markToSingle gpos_markToSingle;
+	subtable_gpos_markToLigature gpos_markToLigature;
 	subtable_extend extend;
-} otl_subtable;
+} otl_Subtable;
 
 typedef struct _otl_lookup {
 	sds name;
-	otl_lookup_type type;
+	otl_LookupType type;
 	uint32_t _offset;
 	uint16_t flags;
 	uint16_t subtableCount;
-	otl_subtable **subtables;
-} otl_lookup;
+	otl_Subtable **subtables;
+} otl_Lookup;
 
 typedef struct {
 	sds name;
 	uint16_t lookupCount;
-	otl_lookup **lookups;
-} otl_feature;
+	otl_Lookup **lookups;
+} otl_Feature;
 
 typedef struct {
 	sds name;
-	otl_feature *requiredFeature;
+	otl_Feature *requiredFeature;
 	uint16_t featureCount;
-	otl_feature **features;
-} otl_language_system;
+	otl_Feature **features;
+} otl_LanguageSystem;
 
 typedef struct {
 	sds from;
 	sds to;
-} otl_lookup_alias_record;
+} otl_LookupAliasingRecord;
 
 typedef struct {
 	uint32_t languageCount;
-	otl_language_system **languages;
+	otl_LanguageSystem **languages;
 	uint16_t featureCount;
-	otl_feature **features;
+	otl_Feature **features;
 	uint16_t lookupCount;
-	otl_lookup **lookups;
+	otl_Lookup **lookups;
 	uint16_t lookupAliasesCount;
-	otl_lookup_alias_record *lookupAliases;
-} table_otl;
+	otl_LookupAliasingRecord *lookupAliases;
+} table_OTL;
 
-otl_subtable *caryll_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                       otl_lookup_type lookupType);
+otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                       otl_LookupType lookupType);
 
-table_otl *caryll_new_otl();
-void caryll_delete_otl(table_otl *table);
-table_otl *caryll_read_otl(caryll_packet packet, const uint32_t tag);
-void caryll_otl_to_json(table_otl *table, json_value *root, const caryll_options *options, const char *tag);
-table_otl *caryll_otl_from_json(json_value *root, const caryll_options *options, const char *tag);
-caryll_buffer *caryll_write_otl(table_otl *table, const caryll_options *options, const char *tag);
+table_OTL *table_new_otl();
+void table_delete_otl(table_OTL *table);
+table_OTL *table_read_otl(caryll_Packet packet, const uint32_t tag);
+void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *options, const char *tag);
+table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, const char *tag);
+caryll_buffer *table_build_otl(table_OTL *table, const caryll_Options *options, const char *tag);
 
 #include "gsub-single.h"
 #include "gsub-multi.h"

@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
 
-	caryll_options *options = caryll_new_options();
+	caryll_Options *options = options_new();
 
 	int option_index = 0;
 	int c;
@@ -147,10 +147,10 @@ int main(int argc, char *argv[]) {
 
 	time_now(&begin);
 
-	caryll_sfnt *sfnt;
+	caryll_SplineFontContainer *sfnt;
 	{
 		FILE *file = u8fopen(inPath, "rb");
-		sfnt = caryll_read_sfnt(file);
+		sfnt = caryll_read_SFNT(file);
 		if (!sfnt || sfnt->count == 0) {
 			fprintf(stderr, "Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -163,9 +163,9 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Read Input SFNT", &begin);
 	}
 
-	caryll_font *font;
+	caryll_Font *font;
 	{
-		font = caryll_read_font(sfnt, ttcindex);
+		font = caryll_read_Font(sfnt, ttcindex);
 		if (!font) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 
 	json_value *root;
 	{
-		root = caryll_font_to_json(font, options);
+		root = caryll_dump_Font(font, options);
 		if (!root) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -248,12 +248,12 @@ int main(int argc, char *argv[]) {
 
 	{
 		free(buf);
-		if (font) caryll_delete_font(font);
+		if (font) caryll_delete_Font(font);
 		if (root) json_builder_free(root);
-		if (sfnt) caryll_delete_sfnt(sfnt);
+		if (sfnt) caryll_delete_SFNT(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);
-		caryll_delete_options(options);
+		options_delete(options);
 		if (show_time) push_stopwatch("Complete", &begin);
 	}
 
