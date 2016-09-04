@@ -627,10 +627,11 @@ static int by_language_name(language_hash *a, language_hash *b) {
 }
 table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, const char *tag) {
 	table_OTL *otl = NULL;
-	NEW(otl);
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
+
 	if (options->verbose) fprintf(stderr, "Parsing %s.\n", tag);
+	otl = table_new_otl();
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
@@ -713,8 +714,10 @@ table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, cons
 	}
 	return otl;
 FAIL:
-	fprintf(stderr, "[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
-	table_delete_otl(otl);
+	if (otl) {
+		fprintf(stderr, "[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
+		table_delete_otl(otl);
+	}
 	return NULL;
 }
 
