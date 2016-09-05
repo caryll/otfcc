@@ -38,7 +38,7 @@ table_gasp *table_read_gasp(caryll_Packet packet) {
 			gasp->records[j].dogray = !!(rangeGaspBehavior & GASP_DOGRAY);
 			gasp->records[j].gridfit = !!(rangeGaspBehavior & GASP_GRIDFIT);
 			gasp->records[j].symmetric_smoothing = !!(rangeGaspBehavior & GASP_SYMMETRIC_SMOOTHING);
-			gasp->records[j].symmetric_gridfit = !!(rangeGaspBehavior & GASP_SYMMETRIC_SMOOTHING);
+			gasp->records[j].symmetric_gridfit = !!(rangeGaspBehavior & GASP_SYMMETRIC_GRIDFIT);
 		}
 		return gasp;
 
