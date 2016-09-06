@@ -6,7 +6,7 @@
 typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
 
 glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr, stat_status *stated, uint8_t depth,
-                                  uint16_t topj) {
+                                 uint16_t topj) {
 	glyf_GlyphStat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 	uint16_t j = gr->glyph.index;
 	if (depth >= 0xFF) return stat;
@@ -21,10 +21,10 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 
 	glyf_Glyph *g = table->glyphs[gr->glyph.index];
 	stated[j] = stat_doing;
-	float xmin = 0xFFFF;
-	float xmax = -0xFFFF;
-	float ymin = 0xFFFF;
-	float ymax = -0xFFFF;
+	double xmin = 0xFFFFFFFF;
+	double xmax = -0xFFFFFFFF;
+	double ymin = 0xFFFFFFFF;
+	double ymax = -0xFFFFFFFF;
 	uint16_t nestDepth = 0;
 	uint16_t nPoints = 0;
 	uint16_t nCompositePoints = 0;
@@ -34,8 +34,8 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		for (uint16_t pj = 0; pj < g->contours[c].pointsCount; pj++) {
 			// Stat point coordinates USING the matrix transformation
 			glyf_Point *p = &(g->contours[c].points[pj]);
-			float x = gr->x + gr->a * p->x + gr->b * p->y;
-			float y = gr->y + gr->c * p->x + gr->d * p->y;
+			double x = gr->x + gr->a * p->x + gr->b * p->y;
+			double y = gr->y + gr->c * p->x + gr->d * p->y;
 			if (x < xmin) xmin = x;
 			if (x > xmax) xmax = x;
 			if (y < ymin) ymin = y;
@@ -81,10 +81,10 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 
 void caryll_stat_glyf(caryll_Font *font) {
 	stat_status *stated = calloc(font->glyf->numberGlyphs, sizeof(stat_status));
-	float xmin = 0xFFFF;
-	float xmax = -0xFFFF;
-	float ymin = 0xFFFF;
-	float ymax = -0xFFFF;
+	double xmin = 0xFFFFFFFF;
+	double xmax = -0xFFFFFFFF;
+	double ymin = 0xFFFFFFFF;
+	double ymax = -0xFFFFFFFF;
 	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_ComponentReference gr;
 		gr.glyph = handle_fromIndex(j);

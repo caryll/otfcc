@@ -755,16 +755,16 @@ static void glyf_build_simple(glyf_Glyph *g, caryll_buffer *gbuf) {
 	bufclear(flags);
 	bufclear(xs);
 	bufclear(ys);
-	int16_t cx = 0;
-	int16_t cy = 0;
+	int32_t cx = 0;
+	int32_t cy = 0;
 	for (uint16_t cj = 0; cj < g->numberOfContours; cj++) {
 		for (uint16_t k = 0; k < g->contours[cj].pointsCount; k++) {
 			glyf_Point *p = &(g->contours[cj].points[k]);
 			uint8_t flag = (p->onCurve & MASK_ON_CURVE) ? GLYF_FLAG_ON_CURVE : 0;
-			int16_t px = round(p->x);
-			int16_t py = round(p->y);
-			int16_t dx = px - cx;
-			int16_t dy = py - cy;
+			int32_t px = round(p->x);
+			int32_t py = round(p->y);
+			int16_t dx = (int16_t)(px - cx);
+			int16_t dy = (int16_t)(py - cy);
 			if (dx == 0) {
 				flag |= GLYF_FLAG_SAME_X;
 			} else if (dx >= -0xFF && dx <= 0xFF) {

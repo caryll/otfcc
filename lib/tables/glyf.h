@@ -12,8 +12,8 @@
 enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
-	float x;
-	float y;
+	double x;
+	double y;
 	int8_t onCurve; // a mask indicates whether a point is on-curve or off-curve
 	                // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
 	                // bit 1 - 7 : unused, set to 0
@@ -28,8 +28,8 @@ typedef struct {
 // CFF stems and hint masks
 typedef struct {
 	uint16_t map;
-	float position;
-	float width;
+	double position;
+	double width;
 } glyf_PostscriptStemDef;
 
 typedef struct {
@@ -41,22 +41,22 @@ typedef struct {
 typedef struct {
 	glyph_handle glyph;
 	// transformation term
-	float a;
-	float b;
-	float c;
-	float d;
-	float x;
-	float y;
+	double a;
+	double b;
+	double c;
+	double d;
+	double x;
+	double y;
 	// flags
 	bool roundToGrid;
 	bool useMyMetrics;
 } glyf_ComponentReference;
 
 typedef struct {
-	float xMin;
-	float xMax;
-	float yMin;
-	float yMax;
+	double xMin;
+	double xMax;
+	double yMin;
+	double yMax;
 	uint16_t nestDepth;
 	uint16_t nPoints;
 	uint16_t nContours;

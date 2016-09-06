@@ -11,7 +11,7 @@ static void ensureThereIsSpace(cff_CharstringIL *il) {
 	}
 }
 
-static void il_push_operand(cff_CharstringIL *il, float x) {
+static void il_push_operand(cff_CharstringIL *il, double x) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERAND;
 	il->instr[il->length].d = x;
@@ -33,12 +33,12 @@ static void il_push_op(cff_CharstringIL *il, int32_t op) {
 	il->length++;
 	il->free--;
 }
-static void il_lineto(cff_CharstringIL *il, float dx, float dy) {
+static void il_lineto(cff_CharstringIL *il, double dx, double dy) {
 	il_push_operand(il, dx);
 	il_push_operand(il, dy);
 	il_push_op(il, op_rlineto);
 }
-static void il_curveto(cff_CharstringIL *il, float dx1, float dy1, float dx2, float dy2, float dx3, float dy3) {
+static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2, double dy2, double dx3, double dy3) {
 	il_push_operand(il, dx1);
 	il_push_operand(il, dy1);
 	il_push_operand(il, dx2);
@@ -48,12 +48,12 @@ static void il_curveto(cff_CharstringIL *il, float dx1, float dy1, float dx2, fl
 	il_push_op(il, op_rrcurveto);
 }
 
-static void _il_push_maskgroup(cff_CharstringIL *il,                            // il seq
+static void _il_push_maskgroup(cff_CharstringIL *il,                       // il seq
                                uint16_t n, glyf_PostscriptHintMask *masks, // masks array
-                               uint16_t points,                              // points drawn
-                               uint16_t nh, uint16_t nv,                     // quantity of stems
-                               uint16_t *jm,                                 // index of cur mask
-                               int32_t op) {                                 // mask operator
+                               uint16_t points,                            // points drawn
+                               uint16_t nh, uint16_t nv,                   // quantity of stems
+                               uint16_t *jm,                               // index of cur mask
+                               int32_t op) {                               // mask operator
 	while (*jm < n && masks[*jm].pointsBefore <= points) {
 		il_push_op(il, op);
 		uint8_t maskByte = 0;
@@ -82,9 +82,9 @@ static void _il_push_maskgroup(cff_CharstringIL *il,                            
 	}
 }
 static void il_push_masks(cff_CharstringIL *il, glyf_Glyph *g, // meta
-                          uint16_t points,                  // points sofar
-                          uint16_t *jh,                     // index of pushed cmasks
-                          uint16_t *jm                      // index of pushed hmasks
+                          uint16_t points,                     // points sofar
+                          uint16_t *jh,                        // index of pushed cmasks
+                          uint16_t *jm                         // index of pushed hmasks
                           ) {
 	if (!g->numberOfStemH && !g->numberOfStemV) return;
 	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH, g->numberOfStemV, jh,
@@ -93,11 +93,11 @@ static void il_push_masks(cff_CharstringIL *il, glyf_Glyph *g, // meta
 	                   op_hintmask);
 }
 
-static void _il_push_stemgroup(cff_CharstringIL *il,                               // il seq
+static void _il_push_stemgroup(cff_CharstringIL *il,                      // il seq
                                uint16_t n, glyf_PostscriptStemDef *stems, // stem array
                                bool hasmask, bool haswidth, int32_t ophm, int32_t oph) {
 	if (!stems || !n) return;
-	float ref = 0;
+	double ref = 0;
 	uint16_t nn = haswidth ? 1 : 0;
 	for (uint16_t j = 0; j < n; j++) {
 		il_push_operand(il, stems[j].position - ref);
@@ -129,14 +129,14 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	cff_CharstringIL *il;
 	NEW_CLEAN(il);
 	// Convert absolute positions to deltas
-	float x = 0;
-	float y = 0;
+	double x = 0;
+	double y = 0;
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
 		for (uint16_t j = 0; j < n; j++) {
-			float dx = contour->points[j].x - x;
-			float dy = contour->points[j].y - y;
+			double dx = contour->points[j].x - x;
+			double dy = contour->points[j].y - y;
 			x = contour->points[j].x, y = contour->points[j].y;
 			contour->points[j].x = dx;
 			contour->points[j].y = dy;
