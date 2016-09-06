@@ -7,6 +7,9 @@ static bool shouldDecodeAsUTF16(const name_record *record) {
 	       || (record->platformID == 3 &&                          // Microsoft, 0, 1, 10
 	           (record->encodingID == 0 || record->encodingID == 1 || record->encodingID == 10));
 }
+static bool shouldDecodeAsBytes(const name_record *record) {
+	return record->platformID == 1 && record->encodingID == 0 && record->languageID == 0; // Mac Roman English - I hope
+}
 
 table_name *table_read_name(caryll_Packet packet) {
 	FOR_TABLE('name', table) {
@@ -33,7 +36,7 @@ table_name *table_read_name(caryll_Packet packet) {
 			uint16_t length = read_16u(data + 6 + j * 12 + 8);
 			uint16_t offset = read_16u(data + 6 + j * 12 + 10);
 
-			if (record->platformID == 1 && record->encodingID == 0) {
+			if (shouldDecodeAsBytes(record)) {
 				// Mac Roman. Note that this is not very correct, but works for most fonts
 				sds nameString = sdsnewlen(data + (name->stringOffset) + offset, length);
 				record->nameString = nameString;
@@ -41,7 +44,10 @@ table_name *table_read_name(caryll_Packet packet) {
 				sds nameString = utf16be_to_utf8(data + (name->stringOffset) + offset, length);
 				record->nameString = nameString;
 			} else {
-				record->nameString = sdsnew("(Unsupported encoding)");
+				size_t len = 0;
+				uint8_t *buf = base64_encode(data + (name->stringOffset) + offset, length, &len);
+				record->nameString = sdsnewlen(buf, len);
+				FREE(buf);
 			}
 			name->records[j] = record;
 		}
@@ -161,8 +167,13 @@ caryll_buffer *table_build_name(table_name *name, const caryll_Options *options)
 			uint8_t *u16 = utf8toutf16be(record->nameString, &words);
 			bufwrite_bytes(strings, words, u16);
 			free(u16);
-		} else {
+		} else if (shouldDecodeAsBytes(record)) {
 			bufwrite_bytes(strings, sdslen(record->nameString), (uint8_t *)record->nameString);
+		} else {
+			size_t length;
+			uint8_t *decoded = base64_decode((uint8_t *)record->nameString, sdslen(record->nameString), &length);
+			bufwrite_bytes(strings, length, decoded);
+			FREE(decoded);
 		}
 		size_t cafter = strings->cursor;
 		bufwrite16b(buf, cafter - cbefore);
