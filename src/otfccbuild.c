@@ -40,15 +40,16 @@ void printHelp() {
 	                "                               --ignore-glyph-order\n"
 	                "                               --short-post\n"
 	                "                               --merge-features\n"
-	                "     -O3                     Most aggressive opptimization strategy will be\n"
-	                "                             used. In this level, these options will be set:\n"
-	                "                               --merge-lookups\n"
+	                // "     -O3                     Most aggressive opptimization strategy will be\n"
+	                // "                             used. In this level, these options will be set:\n"
+	                // "                               --merge-lookups\n"
 	                " --time                    : Time each substep.\n"
 	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	                "                             instead of stating the average width of glyphs.\n"
 	                "                             Useful when creating a monospaced font.\n"
+	                " --keep-unicode-ranges     : Keep the OS/2.ulUnicodeRange[1-4] as-is.\n"
 	                " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
 	                "                             using current time.\n\n"
 	                " --short-post              : Don't export glyph names in the result font.\n"
@@ -107,7 +108,7 @@ void readEntireStdin(char **_buffer, long *_length) {
 	*_length = length;
 }
 
-void print_table(sfnt_builder_entry *t) {
+void print_table(caryll_SFNTTableEntry *t) {
 	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
 	        ((uint32_t)(t->tag) >> 16) & 0xff, ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
 }
@@ -131,7 +132,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 
-	caryll_options *options = caryll_new_options();
+	caryll_Options *options = options_new();
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -141,6 +142,7 @@ int main(int argc, char *argv[]) {
 	                            {"dont-ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"keep-average-char-width", no_argument, NULL, 0},
+	                            {"keep-unicode-ranges", no_argument, NULL, 0},
 	                            {"keep-modified-time", no_argument, NULL, 0},
 	                            {"merge-lookups", no_argument, NULL, 0},
 	                            {"merge-features", no_argument, NULL, 0},
@@ -166,6 +168,8 @@ int main(int argc, char *argv[]) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
 					options->keep_average_char_width = true;
+				} else if (strcmp(longopts[option_index].name, "keep-unicode-ranges") == 0) {
+					options->keep_unicode_ranges = true;
 				} else if (strcmp(longopts[option_index].name, "keep-modified-time") == 0) {
 					options->keep_modified_time = true;
 				} else if (strcmp(longopts[option_index].name, "merge-features") == 0) {
@@ -213,7 +217,7 @@ int main(int argc, char *argv[]) {
 					options->cff_short_vmtx = true;
 					options->merge_features = true;
 				}
-				if (options->optimize_level >= 3) { options->merge_lookups = true; }
+				// if (options->optimize_level >= 3) { options->merge_lookups = true; }
 				break;
 		}
 	}
@@ -263,9 +267,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	caryll_font *font;
+	caryll_Font *font;
 	{
-		font = caryll_font_from_json(root, options);
+		font = caryll_parse_Font(root, options);
 		if (!font) {
 			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -280,15 +284,15 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_write_font(font, options);
+		caryll_buffer *otf = caryll_build_Font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);
 
 		buffree(otf);
-		caryll_delete_font(font);
-		caryll_delete_options(options);
+		caryll_delete_Font(font);
+		options_delete(options);
 		if (show_time) push_stopwatch("Finalize", &begin);
 	}
 	return 0;

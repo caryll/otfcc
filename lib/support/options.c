@@ -1,11 +1,11 @@
 #include "options.h"
 
-caryll_options *caryll_new_options() {
-	caryll_options *options = calloc(1, sizeof(caryll_options));
+caryll_Options *options_new() {
+	caryll_Options *options = calloc(1, sizeof(caryll_Options));
 	options->optimize_level = 1;
 	return options;
 }
-void caryll_delete_options(caryll_options *options) {
+void options_delete(caryll_Options *options) {
 	if (options) { free(options->glyph_name_prefix); }
 	free(options);
 }

@@ -9,13 +9,14 @@ typedef struct {
 	uint8_t dump_order_type;
 	uint32_t dump_order_entry;
 	UT_hash_handle hh;
-} glyph_order_entry;
-typedef glyph_order_entry *glyph_order_hash;
+} glyphorder_Entry;
+typedef glyphorder_Entry *glyphorder_Map;
 
-int try_name_glyph(glyph_order_hash *glyph_order, int _id, sds name);
-void lookup_name(glyph_order_hash *glyph_order, int _gid, sds *field);
-void delete_glyph_order_map(glyph_order_hash *map);
+int glyphorder_tryAssignName(glyphorder_Map *glyph_order, int _id, sds name);
+void glyphorder_nameAnIndex(glyphorder_Map *glyph_order, int _gid, sds *field);
+void glyphorder_nameAIndexedHandle(glyphorder_Map *glyph_order, glyph_handle *h);
+void glyphorder_deleteMap(glyphorder_Map *map);
 
-glyph_order_hash *caryll_glyphorder_from_json(json_value *root, caryll_options *options);
+glyphorder_Map *parse_glyphorder(json_value *root, caryll_Options *options);
 
 #endif

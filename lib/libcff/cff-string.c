@@ -400,7 +400,7 @@ static const char *const string_standard[391] = {
 };
 
 // substring in name/string INDEX
-char *get_cff_sid(uint16_t idx, CFF_Index str) {
+char *get_cff_sid(uint16_t idx, cff_Index str) {
 	if (idx >= 0 && idx <= 390) return strdup(string_standard[idx]);
 	if (str.count > 0 && idx - 391 < str.count) {
 		char *dup = calloc(str.offset[idx - 390] - str.offset[idx - 391] + 1, sizeof(uint8_t));
@@ -410,7 +410,7 @@ char *get_cff_sid(uint16_t idx, CFF_Index str) {
 		return strdup("Unknown");
 }
 
-sds sdsget_cff_sid(uint16_t idx, CFF_Index str) {
+sds sdsget_cff_sid(uint16_t idx, cff_Index str) {
 	if (idx >= 0 && idx <= 390) {
 		return sdsnew(string_standard[idx]);
 	} else if (str.count > 0 && idx - 391 < str.count) {

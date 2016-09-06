@@ -1,6 +1,6 @@
 #include "vmtx.h"
 
-table_vmtx *caryll_read_vmtx(caryll_packet packet, table_vhea *vhea, table_maxp *maxp) {
+table_vmtx *table_read_vmtx(caryll_Packet packet, table_vhea *vhea, table_maxp *maxp) {
 	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 || maxp->numGlyphs < vhea->numOfLongVerMetrics) return NULL;
 	FOR_TABLE('vmtx', table) {
 		font_file_pointer data = table.data;
@@ -28,19 +28,19 @@ table_vmtx *caryll_read_vmtx(caryll_packet packet, table_vhea *vhea, table_maxp 
 		return vmtx;
 	vmtx_CORRUPTED:
 		fprintf(stderr, "Table 'vmtx' corrupted.\n");
-		if (vmtx) { caryll_delete_vmtx(vmtx), vmtx = NULL; }
+		if (vmtx) { table_delete_vmtx(vmtx), vmtx = NULL; }
 	}
 	return NULL;
 }
 
-void caryll_delete_vmtx(table_vmtx *table) {
+void table_delete_vmtx(table_vmtx *table) {
 	if (!table) return;
 	if (table->metrics != NULL) free(table->metrics);
 	if (table->topSideBearing != NULL) free(table->topSideBearing);
 	free(table);
 }
 
-caryll_buffer *caryll_write_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k, const caryll_options *options) {
+caryll_buffer *table_build_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {

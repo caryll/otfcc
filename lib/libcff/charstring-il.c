@@ -1,44 +1,44 @@
-#include "charstring_il.h"
+#include "charstring-il.h"
 
 // Glyph building
-static void ensureThereIsSpace(charstring_il *il) {
+static void ensureThereIsSpace(cff_CharstringIL *il) {
 	if (il->free) return;
 	il->free = 0x100;
 	if (il->instr) {
-		il->instr = realloc(il->instr, sizeof(charstring_instruction) * (il->length + il->free));
+		il->instr = realloc(il->instr, sizeof(cff_CharstringInstruction) * (il->length + il->free));
 	} else {
-		il->instr = malloc(sizeof(charstring_instruction) * (il->length + il->free));
+		il->instr = malloc(sizeof(cff_CharstringInstruction) * (il->length + il->free));
 	}
 }
 
-static void il_push_operand(charstring_il *il, float x) {
+static void il_push_operand(cff_CharstringIL *il, double x) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERAND;
 	il->instr[il->length].d = x;
 	il->length++;
 	il->free--;
 }
-static void il_push_special(charstring_il *il, int32_t s) {
+static void il_push_special(cff_CharstringIL *il, int32_t s) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_SPECIAL;
 	il->instr[il->length].i = s;
 	il->length++;
 	il->free--;
 }
-static void il_push_op(charstring_il *il, int32_t op) {
+static void il_push_op(cff_CharstringIL *il, int32_t op) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERATOR;
 	il->instr[il->length].i = op;
-	il->instr[il->length].arity = cs2_op_standard_arity(op);
+	il->instr[il->length].arity = cff_getStandardArity(op);
 	il->length++;
 	il->free--;
 }
-static void il_lineto(charstring_il *il, float dx, float dy) {
+static void il_lineto(cff_CharstringIL *il, double dx, double dy) {
 	il_push_operand(il, dx);
 	il_push_operand(il, dy);
 	il_push_op(il, op_rlineto);
 }
-static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float dy2, float dx3, float dy3) {
+static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2, double dy2, double dx3, double dy3) {
 	il_push_operand(il, dx1);
 	il_push_operand(il, dy1);
 	il_push_operand(il, dx2);
@@ -48,12 +48,12 @@ static void il_curveto(charstring_il *il, float dx1, float dy1, float dx2, float
 	il_push_op(il, op_rrcurveto);
 }
 
-static void _il_push_maskgroup(charstring_il *il,                            // il seq
-                               uint16_t n, glyf_postscript_hint_mask *masks, // masks array
-                               uint16_t points,                              // points drawn
-                               uint16_t nh, uint16_t nv,                     // quantity of stems
-                               uint16_t *jm,                                 // index of cur mask
-                               int32_t op) {                                 // mask operator
+static void _il_push_maskgroup(cff_CharstringIL *il,                       // il seq
+                               uint16_t n, glyf_PostscriptHintMask *masks, // masks array
+                               uint16_t points,                            // points drawn
+                               uint16_t nh, uint16_t nv,                   // quantity of stems
+                               uint16_t *jm,                               // index of cur mask
+                               int32_t op) {                               // mask operator
 	while (*jm < n && masks[*jm].pointsBefore <= points) {
 		il_push_op(il, op);
 		uint8_t maskByte = 0;
@@ -81,10 +81,10 @@ static void _il_push_maskgroup(charstring_il *il,                            // 
 		*jm += 1;
 	}
 }
-static void il_push_masks(charstring_il *il, glyf_glyph *g, // meta
-                          uint16_t points,                  // points sofar
-                          uint16_t *jh,                     // index of pushed cmasks
-                          uint16_t *jm                      // index of pushed hmasks
+static void il_push_masks(cff_CharstringIL *il, glyf_Glyph *g, // meta
+                          uint16_t points,                     // points sofar
+                          uint16_t *jh,                        // index of pushed cmasks
+                          uint16_t *jm                         // index of pushed hmasks
                           ) {
 	if (!g->numberOfStemH && !g->numberOfStemV) return;
 	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH, g->numberOfStemV, jh,
@@ -93,11 +93,11 @@ static void il_push_masks(charstring_il *il, glyf_glyph *g, // meta
 	                   op_hintmask);
 }
 
-static void _il_push_stemgroup(charstring_il *il,                               // il seq
-                               uint16_t n, glyf_postscript_hint_stemdef *stems, // stem array
+static void _il_push_stemgroup(cff_CharstringIL *il,                      // il seq
+                               uint16_t n, glyf_PostscriptStemDef *stems, // stem array
                                bool hasmask, bool haswidth, int32_t ophm, int32_t oph) {
 	if (!stems || !n) return;
-	float ref = 0;
+	double ref = 0;
 	uint16_t nn = haswidth ? 1 : 0;
 	for (uint16_t j = 0; j < n; j++) {
 		il_push_operand(il, stems[j].position - ref);
@@ -121,22 +121,22 @@ static void _il_push_stemgroup(charstring_il *il,                               
 	}
 	il->instr[il->length - 1].arity = nn;
 }
-static void il_push_stems(charstring_il *il, glyf_glyph *g, bool hasmask, bool haswidth) {
+static void il_push_stems(cff_CharstringIL *il, glyf_Glyph *g, bool hasmask, bool haswidth) {
 	_il_push_stemgroup(il, g->numberOfStemH, g->stemH, hasmask, haswidth, op_hstemhm, op_hstem);
 	_il_push_stemgroup(il, g->numberOfStemV, g->stemV, hasmask, haswidth, op_vstemhm, op_vstem);
 }
-charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
-	charstring_il *il;
+cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
+	cff_CharstringIL *il;
 	NEW_CLEAN(il);
 	// Convert absolute positions to deltas
-	float x = 0;
-	float y = 0;
+	double x = 0;
+	double y = 0;
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_contour *contour = &(g->contours[c]);
+		glyf_Contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
 		for (uint16_t j = 0; j < n; j++) {
-			float dx = contour->points[j].x - x;
-			float dy = contour->points[j].y - y;
+			double dx = contour->points[j].x - x;
+			double dy = contour->points[j].y - y;
 			x = contour->points[j].x, y = contour->points[j].y;
 			contour->points[j].x = dx;
 			contour->points[j].y = dy;
@@ -156,7 +156,7 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 	uint16_t jm = 0;
 	if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_contour *contour = &(g->contours[c]);
+		glyf_Contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
 		if (n == 0) continue;
 		il_push_operand(il, contour->points[0].x);
@@ -190,20 +190,20 @@ charstring_il *compile_glyph_to_il(glyf_glyph *g, uint16_t defaultWidth, uint16_
 }
 
 // Pattern-based peephole optimization
-static bool il_matchtype(charstring_il *il, uint32_t j, uint32_t k, il_type t) {
+static bool il_matchtype(cff_CharstringIL *il, uint32_t j, uint32_t k, cff_InstructionType t) {
 	if (k >= il->length) return false;
 	for (uint32_t m = j; m < k; m++) {
 		if (il->instr[m].type != t) return false;
 	}
 	return true;
 }
-static bool il_matchop(charstring_il *il, uint32_t j, int32_t op) {
+static bool il_matchop(cff_CharstringIL *il, uint32_t j, int32_t op) {
 	if (il->instr[j].type != IL_ITEM_OPERATOR) return false;
 	if (il->instr[j].i != op) return false;
 	return true;
 }
-static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...) {
-	uint8_t arity = cs2_op_standard_arity(op);
+static uint8_t zroll(cff_CharstringIL *il, uint32_t j, int32_t op, int32_t op2, ...) {
+	uint8_t arity = cff_getStandardArity(op);
 	if (arity > 16 || j + arity >= il->length) return 0;
 	if ((j == 0 || // We are at the beginning of charstring
 	     !il_matchtype(il, j - 1, j,
@@ -239,10 +239,10 @@ static uint8_t zroll(charstring_il *il, uint32_t j, int32_t op, int32_t op2, ...
 		return 0;
 	}
 }
-static uint8_t opop_roll(charstring_il *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2, int32_t resultop) {
+static uint8_t opop_roll(cff_CharstringIL *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2, int32_t resultop) {
 	if (j + 1 + arity >= il->length) return 0;
-	charstring_instruction *current = &(il->instr[j]);
-	charstring_instruction *nextop = &(il->instr[j + 1 + arity]);
+	cff_CharstringInstruction *current = &(il->instr[j]);
+	cff_CharstringInstruction *nextop = &(il->instr[j + 1 + arity]);
 	if (il_matchop(il, j, op1)                                     // match this operator
 	    && il_matchtype(il, j + 1, j + 1 + arity, IL_ITEM_OPERAND) // match operands
 	    && il_matchop(il, j + 1 + arity, op2)                      // match next operator
@@ -256,9 +256,9 @@ static uint8_t opop_roll(charstring_il *il, uint32_t j, int32_t op1, int32_t ari
 		return 0;
 	}
 }
-static uint8_t hvlineto_roll(charstring_il *il, uint32_t j) {
+static uint8_t hvlineto_roll(cff_CharstringIL *il, uint32_t j) {
 	if (j + 3 >= il->length) return 0;
-	charstring_instruction *current = &(il->instr[j]);
+	cff_CharstringInstruction *current = &(il->instr[j]);
 	// We will check whether operand <checkdelta> is zero
 	//          ODD     EVEN -- current arity
 	// hlineto   X       Y
@@ -279,9 +279,9 @@ static uint8_t hvlineto_roll(charstring_il *il, uint32_t j) {
 		return 0;
 	}
 }
-static uint8_t hvvhcurve_roll(charstring_il *il, uint32_t j) {
+static uint8_t hvvhcurve_roll(cff_CharstringIL *il, uint32_t j) {
 	if (!il_matchop(il, j, op_hvcurveto) && !il_matchop(il, j, op_vhcurveto)) return 0;
-	charstring_instruction *current = &(il->instr[j]);
+	cff_CharstringInstruction *current = &(il->instr[j]);
 	// Exit in case of array not long enough or we have already ended
 	if (j + 7 >= il->length || current->arity & 1) return 0;
 	bool hvcase = (bool)((current->arity >> 2) & 1) ^ (bool)(current->i == op_hvcurveto);
@@ -323,9 +323,9 @@ static uint8_t hvvhcurve_roll(charstring_il *il, uint32_t j) {
 		return 0;
 	}
 }
-static uint8_t hhvvcurve_roll(charstring_il *il, uint32_t j) {
+static uint8_t hhvvcurve_roll(cff_CharstringIL *il, uint32_t j) {
 	if (!il_matchop(il, j, op_hhcurveto) && !il_matchop(il, j, op_vvcurveto)) return 0;
-	charstring_instruction *current = &(il->instr[j]);
+	cff_CharstringInstruction *current = &(il->instr[j]);
 	// Exit in case of array not long enough or we have already ended
 	if (j + 7 >= il->length) return 0;
 	bool hh = current->i == op_hhcurveto;
@@ -346,7 +346,7 @@ static uint8_t hhvvcurve_roll(charstring_il *il, uint32_t j) {
 		return 0;
 	}
 }
-static uint32_t nextstop(charstring_il *il, uint32_t j) {
+static uint32_t nextstop(cff_CharstringIL *il, uint32_t j) {
 	uint32_t delta = 0;
 	for (; j + delta < il->length && il->instr[j + delta].type == IL_ITEM_OPERAND; delta++)
 		;
@@ -354,7 +354,7 @@ static uint32_t nextstop(charstring_il *il, uint32_t j) {
 }
 #define ROLL_FALL(x)                                                                                                   \
 	if ((r = (x))) return r;
-static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLevel) {
+static uint8_t decideAdvance(cff_CharstringIL *il, uint32_t j, uint8_t optimizeLevel) {
 	uint8_t r = 0;
 	ROLL_FALL(zroll(il, j, op_rlineto, op_hlineto, 0, 1));                    // rlineto -> hlineto
 	ROLL_FALL(zroll(il, j, op_rlineto, op_vlineto, 1, 0));                    // rlineto -> vlineto
@@ -379,7 +379,7 @@ static uint8_t decideAdvance(charstring_il *il, uint32_t j, uint8_t optimizeLeve
 	return 1;                                                                 // nothing match
 }
 
-void glyph_il_peephole_optimization(charstring_il *il, const caryll_options *options) {
+void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
 	if (!options->optimize_level) return;
 	uint32_t j = 0;
 	while (j < il->length) {
@@ -388,29 +388,29 @@ void glyph_il_peephole_optimization(charstring_il *il, const caryll_options *opt
 }
 
 // IL to buffer conversion
-caryll_buffer *il2blob(charstring_il *il) {
+caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 	caryll_buffer *blob = bufnew();
 
 	uint16_t stackDepth = 0;
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {
-				merge_cs2_operand(blob, il->instr[j].d);
+				cff_mergeCS2Operand(blob, il->instr[j].d);
 				stackDepth++;
 				break;
 			}
 			case IL_ITEM_PROGID: {
-				merge_cs2_operand(blob, il->instr[j].i);
+				cff_mergeCS2Operand(blob, il->instr[j].i);
 				stackDepth++;
 				break;
 			}
 			case IL_ITEM_OPERATOR: {
-				merge_cs2_operator(blob, il->instr[j].i);
+				cff_mergeCS2Operator(blob, il->instr[j].i);
 				stackDepth = 0;
 				break;
 			}
 			case IL_ITEM_SPECIAL: {
-				merge_cs2_special(blob, il->instr[j].i);
+				cff_mergeCS2Special(blob, il->instr[j].i);
 				break;
 			}
 			default:
@@ -420,7 +420,7 @@ caryll_buffer *il2blob(charstring_il *il) {
 	return blob;
 }
 
-bool instruction_eq(charstring_instruction *z1, charstring_instruction *z2) {
+bool instruction_eq(cff_CharstringInstruction *z1, cff_CharstringInstruction *z2) {
 	if (z1->type == z2->type) {
 		if (z1->type == IL_ITEM_OPERAND || z1->type == IL_ITEM_PHANTOM_OPERAND) {
 			return z1->d == z2->d;

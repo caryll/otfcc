@@ -1,6 +1,6 @@
 #include "BASE.h"
 
-static void deleteBaseAxis(base_axis *axis) {
+static void deleteBaseAxis(otl_BaseAxis *axis) {
 	if (!axis) return;
 	if (axis->entries) {
 		for (uint16_t j = 0; j < axis->scriptCount; j++) {
@@ -10,7 +10,7 @@ static void deleteBaseAxis(base_axis *axis) {
 	}
 }
 
-void caryll_delete_BASE(table_BASE *base) {
+void table_delete_BASE(table_BASE *base) {
 	deleteBaseAxis(base->horizontal);
 	deleteBaseAxis(base->vertical);
 }
@@ -22,7 +22,7 @@ FAIL:
 	return 0;
 }
 
-static void readBaseScript(font_file_pointer data, uint32_t tableLength, uint16_t offset, base_script_entry *entry,
+static void readBaseScript(font_file_pointer data, uint32_t tableLength, uint16_t offset, otl_BaseScriptEntry *entry,
                            uint32_t *baseTagList, uint16_t nBaseTags) {
 	entry->baseValuesCount = 0;
 	entry->baseValues = NULL;
@@ -57,8 +57,8 @@ FAIL:
 	return;
 }
 
-static base_axis *readAxis(font_file_pointer data, uint32_t tableLength, uint16_t offset) {
-	base_axis *axis = NULL;
+static otl_BaseAxis *readAxis(font_file_pointer data, uint32_t tableLength, uint16_t offset) {
+	otl_BaseAxis *axis = NULL;
 	uint32_t *baseTagList = NULL;
 	checkLength(offset + 4);
 
@@ -102,7 +102,7 @@ FAIL:
 	return axis;
 }
 
-table_BASE *caryll_read_BASE(caryll_packet packet) {
+table_BASE *table_read_BASE(caryll_Packet packet) {
 	table_BASE *base = NULL;
 	FOR_TABLE('BASE', table) {
 		font_file_pointer data = table.data;
@@ -115,12 +115,12 @@ table_BASE *caryll_read_BASE(caryll_packet packet) {
 		if (offsetV) base->vertical = readAxis(data, tableLength, offsetV);
 		return base;
 	FAIL:
-		DELETE(caryll_delete_BASE, base);
+		DELETE(table_delete_BASE, base);
 	}
 	return base;
 }
 
-static json_value *axisToJson(base_axis *axis) {
+static json_value *axisToJson(otl_BaseAxis *axis) {
 	json_value *_axis = json_object_new(axis->scriptCount);
 	for (uint16_t j = 0; j < axis->scriptCount; j++) {
 		if (!axis->entries[j].tag) continue;
@@ -141,7 +141,7 @@ static json_value *axisToJson(base_axis *axis) {
 	return _axis;
 }
 
-void caryll_BASE_to_json(table_BASE *base, json_value *root, const caryll_options *options) {
+void table_dump_BASE(table_BASE *base, json_value *root, const caryll_Options *options) {
 	if (!base) return;
 	if (options->verbose) fprintf(stderr, "Dumping BASE.\n");
 	json_value *_base = json_object_new(2);
@@ -150,7 +150,7 @@ void caryll_BASE_to_json(table_BASE *base, json_value *root, const caryll_option
 	json_object_push(root, "BASE", _base);
 }
 
-static void baseScriptFromJson(json_value *_sr, base_script_entry *entry) {
+static void baseScriptFromJson(json_value *_sr, otl_BaseScriptEntry *entry) {
 	entry->defaultBaselineTag = str2tag(json_obj_getstr_share(_sr, "defaultBaseline"));
 	json_value *_basevalues = json_obj_get_type(_sr, "baselines", json_object);
 	if (!_basevalues) {
@@ -166,9 +166,9 @@ static void baseScriptFromJson(json_value *_sr, base_script_entry *entry) {
 	}
 }
 
-static base_axis *axisFromJson(json_value *_axis) {
+static otl_BaseAxis *axisFromJson(json_value *_axis) {
 	if (!_axis) return NULL;
-	base_axis *axis;
+	otl_BaseAxis *axis;
 	NEW(axis);
 	axis->scriptCount = _axis->u.object.length;
 	NEW_N(axis->entries, axis->scriptCount);
@@ -184,7 +184,7 @@ static base_axis *axisFromJson(json_value *_axis) {
 	return axis;
 }
 
-table_BASE *caryll_BASE_from_json(json_value *root, const caryll_options *options) {
+table_BASE *table_parse_BASE(json_value *root, const caryll_Options *options) {
 	table_BASE *base = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "BASE", json_object))) {
@@ -196,7 +196,7 @@ table_BASE *caryll_BASE_from_json(json_value *root, const caryll_options *option
 	return base;
 }
 
-caryll_bkblock *axisToBk(base_axis *axis) {
+bk_Block *axisToBk(otl_BaseAxis *axis) {
 	if (!axis) return NULL;
 	struct {
 		uint16_t size;
@@ -206,7 +206,7 @@ caryll_bkblock *axisToBk(base_axis *axis) {
 	taglist.items = NULL;
 
 	for (uint16_t j = 0; j < axis->scriptCount; j++) {
-		base_script_entry *entry = &(axis->entries[j]);
+		otl_BaseScriptEntry *entry = &(axis->entries[j]);
 		if (entry->defaultBaselineTag) {
 			bool found = false;
 			for (uint16_t jk = 0; jk < taglist.size; jk++) {
@@ -244,15 +244,15 @@ caryll_bkblock *axisToBk(base_axis *axis) {
 		}
 	}
 
-	caryll_bkblock *baseTagList = new_bkblock(b16, taglist.size, bkover);
+	bk_Block *baseTagList = bk_new_Block(b16, taglist.size, bkover);
 	for (uint16_t j = 0; j < taglist.size; j++) {
-		bkblock_push(baseTagList, b32, taglist.items[j], bkover);
+		bk_push(baseTagList, b32, taglist.items[j], bkover);
 	}
 
-	caryll_bkblock *baseScriptList = new_bkblock(b16, axis->scriptCount, bkover);
+	bk_Block *baseScriptList = bk_new_Block(b16, axis->scriptCount, bkover);
 	for (uint16_t j = 0; j < axis->scriptCount; j++) {
-		base_script_entry *entry = &(axis->entries[j]);
-		caryll_bkblock *baseValues = new_bkblock(bkover);
+		otl_BaseScriptEntry *entry = &(axis->entries[j]);
+		bk_Block *baseValues = bk_new_Block(bkover);
 		{
 			uint16_t defaultIndex = 0;
 			for (uint16_t m = 0; m < taglist.size; m++) {
@@ -261,9 +261,9 @@ caryll_bkblock *axisToBk(base_axis *axis) {
 					break;
 				}
 			}
-			bkblock_push(baseValues, b16, defaultIndex, bkover);
+			bk_push(baseValues, b16, defaultIndex, bkover);
 		}
-		bkblock_push(baseValues, b16, taglist.size, bkover);
+		bk_push(baseValues, b16, taglist.size, bkover);
 		for (uint16_t m = 0; m < taglist.size; m++) {
 			uint16_t found = false;
 			uint16_t foundIndex = 0;
@@ -274,37 +274,37 @@ caryll_bkblock *axisToBk(base_axis *axis) {
 				}
 			}
 			if (found) {
-				bkblock_push(baseValues,                                                     // base value
-				             p16, new_bkblock(b16, 1,                                        // format
+				bk_push(baseValues,                                                     // base value
+				             p16, bk_new_Block(b16, 1,                                        // format
 				                              b16, entry->baseValues[foundIndex].coordinate, // coordinate
 				                              bkover),
 				             bkover);
 			} else {
-				bkblock_push(baseValues,              // assign a zero value
-				             p16, new_bkblock(b16, 1, // format
+				bk_push(baseValues,              // assign a zero value
+				             p16, bk_new_Block(b16, 1, // format
 				                              b16, 0, // coordinate
 				                              bkover),
 				             bkover);
 			}
 		}
-		caryll_bkblock *scriptRecord = new_bkblock(p16, baseValues, // BaseValues
+		bk_Block *scriptRecord = bk_new_Block(p16, baseValues, // BaseValues
 		                                           p16, NULL,       // DefaultMinMax
 		                                           b16, 0,          // BaseLangSysCount
 		                                           bkover);
-		bkblock_push(baseScriptList, b32, entry->tag, // BaseScriptTag
+		bk_push(baseScriptList, b32, entry->tag, // BaseScriptTag
 		             p16, scriptRecord,               // BaseScript
 		             bkover);
 	}
 	free(taglist.items);
-	return new_bkblock(p16, baseTagList,    // BaseTagList
+	return bk_new_Block(p16, baseTagList,    // BaseTagList
 	                   p16, baseScriptList, // BaseScriptList
 	                   bkover);
 }
 
-caryll_buffer *caryll_write_BASE(table_BASE *base, const caryll_options *options) {
-	caryll_bkblock *root = new_bkblock(b32, 0x10000,                    // Version
+caryll_buffer *table_build_BASE(table_BASE *base, const caryll_Options *options) {
+	bk_Block *root = bk_new_Block(b32, 0x10000,                    // Version
 	                                   p16, axisToBk(base->horizontal), // HorizAxis
 	                                   p16, axisToBk(base->vertical),   // VertAxis
 	                                   bkover);
-	return caryll_write_bk(root);
+	return bk_build_Block(root);
 }

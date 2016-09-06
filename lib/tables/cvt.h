@@ -9,10 +9,10 @@ typedef struct {
 	uint32_t length;
 	uint16_t *words;
 } table_cvt;
-table_cvt *caryll_read_cvt(caryll_packet packet, uint32_t tag);
-void caryll_delete_cvt(table_cvt *table);
-void caryll_cvt_to_json(table_cvt *table, json_value *root, const caryll_options *options, const char *tag);
-table_cvt *caryll_cvt_from_json(json_value *root, const caryll_options *options, const char *tag);
-caryll_buffer *caryll_write_cvt(table_cvt *table, const caryll_options *options);
+table_cvt *table_read_cvt(caryll_Packet packet, uint32_t tag);
+void table_delete_cvt(table_cvt *table);
+void table_dump_cvt(table_cvt *table, json_value *root, const caryll_Options *options, const char *tag);
+table_cvt *table_parse_cvt(json_value *root, const caryll_Options *options, const char *tag);
+caryll_buffer *table_build_cvt(table_cvt *table, const caryll_Options *options);
 
 #endif

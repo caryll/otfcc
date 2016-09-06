@@ -1,8 +1,13 @@
 #include "classdef.h"
 
-void caryll_delete_classdef(otl_classdef *cd) {
+void otl_delete_ClassDef(otl_ClassDef *cd) {
 	if (cd) {
-		free(cd->glyphs);
+		if (cd->glyphs) {
+			for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+				handle_delete(&cd->glyphs[j]);
+			}
+			free(cd->glyphs);
+		}
 		free(cd->classes);
 		free(cd);
 	}
@@ -18,8 +23,8 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_classdef *cd;
+otl_ClassDef *otl_read_ClassDef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = 0;
 	cd->glyphs = NULL;
@@ -35,7 +40,7 @@ otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength,
 			NEW_N(cd->classes, count);
 			uint16_t maxclass = 0;
 			for (uint16_t j = 0; j < count; j++) {
-				cd->glyphs[j] = handle_from_id(startGID + j);
+				cd->glyphs[j] = handle_fromIndex(startGID + j);
 				cd->classes[j] = read_16u(data + offset + 6 + j * 2);
 				if (cd->classes[j] > maxclass) maxclass = cd->classes[j];
 			}
@@ -73,7 +78,7 @@ otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength,
 				uint16_t maxclass = 0;
 				coverage_entry *e, *tmp;
 				HASH_ITER(hh, hash, e, tmp) {
-					cd->glyphs[j] = handle_from_id(e->gid);
+					cd->glyphs[j] = handle_fromIndex(e->gid);
 					cd->classes[j] = e->covIndex;
 					if (e->covIndex > maxclass) maxclass = e->covIndex;
 					HASH_DEL(hash, e);
@@ -88,8 +93,8 @@ otl_classdef *caryll_read_classdef(font_file_pointer data, uint32_t tableLength,
 	return cd;
 }
 
-otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
-	otl_classdef *cd;
+otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
+	otl_ClassDef *cd;
 	NEW(cd);
 	coverage_entry *hash = NULL;
 	for (uint16_t j = 0; j < ocd->numGlyphs; j++) {
@@ -124,7 +129,7 @@ otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
 		uint16_t maxclass = 0;
 		coverage_entry *e, *tmp;
 		HASH_ITER(hh, hash, e, tmp) {
-			cd->glyphs[j] = handle_from_id(e->gid);
+			cd->glyphs[j] = handle_fromIndex(e->gid);
 			cd->classes[j] = e->covIndex;
 			if (e->covIndex > maxclass) maxclass = e->covIndex;
 			HASH_DEL(hash, e);
@@ -133,11 +138,11 @@ otl_classdef *caryll_expand_classdef(otl_coverage *cov, otl_classdef *ocd) {
 		}
 		cd->maxclass = maxclass;
 	}
-	caryll_delete_classdef(ocd);
+	otl_delete_ClassDef(ocd);
 	return cd;
 }
 
-json_value *caryll_classdef_to_json(otl_classdef *cd) {
+json_value *otl_dump_ClassDef(otl_ClassDef *cd) {
 	json_value *a = json_object_new(cd->numGlyphs);
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
 		json_object_push(a, cd->glyphs[j].name, json_integer_new(cd->classes[j]));
@@ -145,9 +150,9 @@ json_value *caryll_classdef_to_json(otl_classdef *cd) {
 	return preserialize(a);
 }
 
-otl_classdef *caryll_classdef_from_json(json_value *_cd) {
+otl_ClassDef *otl_parse_ClassDef(json_value *_cd) {
 	if (!_cd || _cd->type != json_object) return NULL;
-	otl_classdef *cd;
+	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = _cd->u.object.length;
 	NEW_N(cd->glyphs, cd->numGlyphs);
@@ -176,7 +181,7 @@ typedef struct {
 static int by_gid(const void *a, const void *b) {
 	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
 }
-caryll_buffer *caryll_write_classdef(otl_classdef *cd) {
+caryll_buffer *otl_build_ClassDef(otl_ClassDef *cd) {
 	caryll_buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
 	if (!cd->numGlyphs) { // no glyphs, return a blank classdef

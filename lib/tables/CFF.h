@@ -1,11 +1,11 @@
-#ifndef CARYLL_TABLES_CFF_H
-#define CARYLL_TABLES_CFF_H
+#ifndef CARYLL_TABLES_cff_H
+#define CARYLL_TABLES_cff_H
 
 #include <math.h>
 #include <stdarg.h>
 #include <support/util.h>
 #include <libcff/libcff.h>
-#include <libcff/charstring_il.h>
+#include <libcff/charstring-il.h>
 #include <font/caryll-sfnt.h>
 #include "glyf.h"
 
@@ -20,7 +20,7 @@ typedef struct {
 	float d;
 	float x;
 	float y;
-} cff_fontmatrix;
+} cff_FontMatrix;
 
 typedef struct {
 	uint16_t blueValuesCount;
@@ -46,7 +46,7 @@ typedef struct {
 	float initialRandomSeed;
 	float defaultWidthX;
 	float nominalWidthX;
-} cff_private;
+} cff_PrivateDict;
 
 typedef struct _table_CFF table_CFF;
 
@@ -71,8 +71,8 @@ struct _table_CFF {
 	float fontBBoxLeft;
 	float fontBBoxRight;
 	float strokeWidth;
-	cff_private *privateDict;
-	cff_fontmatrix *fontMatrix;
+	cff_PrivateDict *privateDict;
+	cff_FontMatrix *fontMatrix;
 
 	// CID-only operators
 	sds cidRegistry;
@@ -91,13 +91,13 @@ struct _table_CFF {
 typedef struct {
 	table_CFF *meta;
 	table_glyf *glyphs;
-} caryll_cff_parse_result;
+} table_CFFAndGlyf;
 
-table_CFF *caryll_new_CFF();
-void caryll_delete_CFF(table_CFF *table);
-caryll_cff_parse_result caryll_read_CFF_and_glyf(caryll_packet packet);
-void caryll_CFF_to_json(table_CFF *table, json_value *root, const caryll_options *options);
-table_CFF *caryll_CFF_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_CFF(caryll_cff_parse_result cffAndGlyf, const caryll_options *options);
+table_CFF *table_new_CFF();
+void table_delete_CFF(table_CFF *table);
+table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet);
+void table_dump_cff(table_CFF *table, json_value *root, const caryll_Options *options);
+table_CFF *table_parse_cff(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_CFF(table_CFFAndGlyf cffAndGlyf, const caryll_Options *options);
 
 #endif

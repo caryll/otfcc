@@ -2,9 +2,9 @@
 #define CARYLL_FONTOPS_OTL_COMMON_H
 #include <font/caryll-font.h>
 
-void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName);
-void shrink_coverage(otl_coverage *coverage, bool dosort);
-void consolidate_classdef(caryll_font *font, otl_classdef *cd, sds lookupName);
-void shrink_classdef(otl_classdef *cd);
+void fontop_consolidateCoverage(caryll_Font *font, otl_Coverage *coverage, sds lookupName);
+void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort);
+void fontop_consolidateClassDef(caryll_Font *font, otl_ClassDef *cd, sds lookupName);
+void fontop_shrinkClassDef(otl_ClassDef *cd);
 
 #endif

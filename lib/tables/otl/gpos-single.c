@@ -1,21 +1,15 @@
 #include "gpos-single.h"
 #include "gpos-common.h"
-void caryll_delete_gpos_single(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					caryll_delete_coverage(lookup->subtables[j]->gpos_single.coverage);
-					free(lookup->subtables[j]->gpos_single.values);
-					free(lookup->subtables[j]);
-				}
-			free(lookup->subtables);
-		}
-		FREE(lookup);
+void otl_delete_gpos_single(otl_Subtable *subtable) {
+	if (subtable) {
+		otl_delete_Coverage(subtable->gpos_single.coverage);
+		free(subtable->gpos_single.values);
+		free(subtable);
 	}
 }
-otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_subtable *_subtable;
+
+otl_Subtable *otl_read_gpos_single(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	subtable->coverage = NULL;
@@ -23,12 +17,12 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 	checkLength(offset + 6);
 
 	uint16_t subtableFormat = read_16u(data + offset);
-	subtable->coverage = caryll_read_coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->coverage = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
 	NEW_N(subtable->values, subtable->coverage->numGlyphs);
 
 	if (subtableFormat == 1) {
-		otl_position_value v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
+		otl_PositionValue v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
 		for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 			subtable->values[j] = v;
 		}
@@ -45,23 +39,23 @@ otl_subtable *caryll_read_gpos_single(font_file_pointer data, uint32_t tableLeng
 	}
 	goto OK;
 FAIL:
-	if (subtable->coverage) caryll_delete_coverage(subtable->coverage);
+	if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
 	if (subtable->values) free(subtable->values);
 	_subtable = NULL;
 OK:
 	return _subtable;
 }
 
-json_value *caryll_gpos_single_to_json(otl_subtable *_subtable) {
+json_value *otl_gpos_dump_single(otl_Subtable *_subtable) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	json_value *st = json_object_new(subtable->coverage->numGlyphs);
 	for (uint16_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-		json_object_push(st, subtable->coverage->glyphs[j].name, gpos_value_to_json(subtable->values[j]));
+		json_object_push(st, subtable->coverage->glyphs[j].name, gpos_dump_value(subtable->values[j]));
 	}
 	return st;
 }
-otl_subtable *caryll_gpos_single_from_json(json_value *_subtable) {
-	otl_subtable *_st;
+otl_Subtable *otl_gpos_parse_single(json_value *_subtable) {
+	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_single *subtable = &(_st->gpos_single);
 	NEW(subtable->coverage);
@@ -72,7 +66,7 @@ otl_subtable *caryll_gpos_single_from_json(json_value *_subtable) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
 			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
 			subtable->coverage->glyphs[jj].name = gname;
-			subtable->values[jj] = gpos_value_from_json(_subtable->u.object.values[j].value);
+			subtable->values[jj] = gpos_parse_value(_subtable->u.object.values[j].value);
 			jj++;
 		}
 	}
@@ -80,7 +74,7 @@ otl_subtable *caryll_gpos_single_from_json(json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
+caryll_buffer *caryll_build_gpos_single(otl_Subtable *_subtable) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	bool isConst = subtable->coverage->numGlyphs > 0;
 	uint16_t format = 0;
@@ -94,23 +88,23 @@ caryll_buffer *caryll_write_gpos_single(otl_subtable *_subtable) {
 		}
 	}
 	if (isConst) {
-		return caryll_write_bk(
-		    new_bkblock(b16, 1,                                                                  // Format
-		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // coverage
+		return bk_build_Block(
+		    bk_new_Block(b16, 1,                                                                  // Format
+		                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // coverage
 		                b16, format,                                                             // format
 		                bkembed, bk_gpos_value(subtable->values[0], format),                     // value
 		                bkover));
 	} else {
-		caryll_bkblock *b =
-		    new_bkblock(b16, 2,                                                                  // Format
-		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->coverage)), // coverage
+		bk_Block *b =
+		    bk_new_Block(b16, 2,                                                                  // Format
+		                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // coverage
 		                b16, format,                                                             // format
 		                b16, subtable->coverage->numGlyphs,                                      // quantity
 		                bkover);
 		for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
-			bkblock_push(b, bkembed, bk_gpos_value(subtable->values[k], format), // value
+			bk_push(b, bkembed, bk_gpos_value(subtable->values[k], format), // value
 			             bkover);
 		}
-		return caryll_write_bk(b);
+		return bk_build_Block(b);
 	}
 }

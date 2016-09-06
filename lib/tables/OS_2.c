@@ -1,11 +1,11 @@
 #include "OS_2.h"
 
-table_OS_2 *caryll_new_OS_2() {
+table_OS_2 *table_new_OS_2() {
 	table_OS_2 *os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));
 	return os_2;
 }
 
-table_OS_2 *caryll_read_OS_2(caryll_packet packet) {
+table_OS_2 *table_read_OS_2(caryll_Packet packet) {
 	table_OS_2 *os_2 = NULL;
 	FOR_TABLE('OS/2', table) {
 		font_file_pointer data = table.data;
@@ -86,8 +86,135 @@ const char *codePageLabels2[] = {"oem8",  "oem9",  "oem10", "oem11", "oem12", "o
                                  "oem17", "oem18", "oem19", "oem20", "oem21", "oem22", "oem23", "cp869", "cp866",
                                  "cp865", "cp864", "cp863", "cp862", "cp861", "cp860", "cp857", "cp855", "cp852",
                                  "cp775", "cp737", "cp708", "cp850", "ascii", NULL};
+const char *unicodeRangeLabels1[] = {"Basic_Latin",
+                                     "Latin_1_Supplement",
+                                     "Latin_Extended_A",
+                                     "Latin_Extended_B",
+                                     "Phonetics",
+                                     "Spacing_Modifiers",
+                                     "Combining_Diacritical_Marks",
+                                     "Greek_and_Coptic",
+                                     "Coptic",
+                                     "Cyrillic",
+                                     "Armenian",
+                                     "Hebrew",
+                                     "Vai",
+                                     "Arabic",
+                                     "NKo",
+                                     "Devanagari",
+                                     "Bengali",
+                                     "Gurmukhi",
+                                     "Gujarati",
+                                     "Oriya",
+                                     "Tamil",
+                                     "Telugu",
+                                     "Kannada",
+                                     "Malayalam",
+                                     "Thai",
+                                     "Lao",
+                                     "Georgian",
+                                     "Balinese",
+                                     "Hangul_Jamo",
+                                     "Latin_Extended_Additional",
+                                     "Greek_Extended",
+                                     "Punctuations",
+                                     NULL};
+const char *unicodeRangeLabels2[] = {"Superscripts_And_Subscripts",
+                                     "Currency_Symbols",
+                                     "Combining_Diacritical_Marks_For_Symbols",
+                                     "Letterlike_Symbols",
+                                     "Number_Forms",
+                                     "Arrows",
+                                     "Mathematical_Operators",
+                                     "Miscellaneous_Technical",
+                                     "Control_Pictures",
+                                     "Optical_Character_Recognition",
+                                     "Enclosed_Alphanumerics",
+                                     "Box_Drawing",
+                                     "Block_Elements",
+                                     "Geometric_Shapes",
+                                     "Miscellaneous_Symbols",
+                                     "Dingbats",
+                                     "CJK_Symbols_And_Punctuation",
+                                     "Hiragana",
+                                     "Katakana",
+                                     "Bopomofo",
+                                     "Hangul_Compatibility_Jamo",
+                                     "Phags_pa",
+                                     "Enclosed_CJK_Letters_And_Months",
+                                     "CJK_Compatibility",
+                                     "Hangul_Syllables",
+                                     "Non_Plane_0",
+                                     "Phoenician",
+                                     "CJK_Unified_Ideographs",
+                                     "Private_Use_Area_p0",
+                                     "CJK_Strokes",
+                                     "Alphabetic_Presentation_Forms",
+                                     "Arabic_Presentation_Forms_A",
+                                     NULL};
+const char *unicodeRangeLabels3[] = {"Combining_Half_Marks",
+                                     "Vertical_Forms_and_CJK_Compatibility_Forms",
+                                     "Small_Form_Variants",
+                                     "Arabic_Presentation_Forms_B",
+                                     "Halfwidth_And_Fullwidth_Forms",
+                                     "Specials",
+                                     "Tibetan",
+                                     "Syriac",
+                                     "Thaana",
+                                     "Sinhala",
+                                     "Myanmar",
+                                     "Ethiopic",
+                                     "Cherokee",
+                                     "Unified_Canadian_Aboriginal_Syllabics",
+                                     "Ogham",
+                                     "Runic",
+                                     "Khmer",
+                                     "Mongolian",
+                                     "Braille_Patterns",
+                                     "Yi_Syllables",
+                                     "Tagalog",
+                                     "Old_Italic",
+                                     "Gothic",
+                                     "Deseret",
+                                     "Musical_Symbols",
+                                     "Mathematical_Alphanumeric_Symbols",
+                                     "Private_Use_p15_and_p16",
+                                     "Variation_Selectors",
+                                     "Tags",
+                                     "Limbu",
+                                     "Tai_Le",
+                                     "New_Tai_Lue",
+                                     NULL};
+const char *unicodeRangeLabels4[] = {"Buginese",
+                                     "Glagolitic",
+                                     "Tifinagh",
+                                     "Yijing_Hexagram_Symbols",
+                                     "Syloti_Nagri",
+                                     "Linear_B_Syllabary_Ideograms_and_Aegean_Numbers",
+                                     "Ancient_Greek_Numbers",
+                                     "Ugaritic",
+                                     "Old_Persian",
+                                     "Shavian",
+                                     "Osmanya",
+                                     "Cypriot_Syllabary",
+                                     "Kharoshthi",
+                                     "Tai_Xuan_Jing_Symbols",
+                                     "Cuneiform",
+                                     "Counting_Rod_Numerals",
+                                     "Sundanese",
+                                     "Lepcha",
+                                     "Ol_Chiki",
+                                     "Saurashtra",
+                                     "Kayah_Li",
+                                     "Rejang",
+                                     "Cham",
+                                     "Ancient_Symbols",
+                                     "Phaistos_Disc",
+                                     "Carian_and_Lycian",
+                                     "Domino_and_Mahjong_Tiles",
+                                     NULL};
 
-void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_options *options) {
+void table_dump_OS_2(table_OS_2 *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping OS/2.\n");
 
@@ -96,12 +223,13 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_optio
 	json_object_push(os_2, "xAvgCharWidth", json_integer_new(table->xAvgCharWidth));
 	json_object_push(os_2, "usWeightClass", json_integer_new(table->usWeightClass));
 	json_object_push(os_2, "usWidthClass", json_integer_new(table->usWidthClass));
-	json_object_push(os_2, "fsType", caryll_flags_to_json(table->fsType, fsTypeLabels));
+	json_object_push(os_2, "fsType", caryll_dump_flags(table->fsType, fsTypeLabels));
 	json_object_push(os_2, "ySubscriptXSize", json_integer_new(table->ySubscriptXSize));
 	json_object_push(os_2, "ySubscriptYSize", json_integer_new(table->ySubscriptYSize));
 	json_object_push(os_2, "ySubscriptXOffset", json_integer_new(table->ySubscriptXOffset));
 	json_object_push(os_2, "ySubscriptYOffset", json_integer_new(table->ySubscriptYOffset));
 	json_object_push(os_2, "ySupscriptXSize", json_integer_new(table->ySupscriptXSize));
+	json_object_push(os_2, "ySupscriptYSize", json_integer_new(table->ySupscriptYSize));
 	json_object_push(os_2, "ySupscriptXOffset", json_integer_new(table->ySupscriptXOffset));
 	json_object_push(os_2, "ySupscriptYOffset", json_integer_new(table->ySupscriptYOffset));
 	json_object_push(os_2, "yStrikeoutSize", json_integer_new(table->yStrikeoutSize));
@@ -114,16 +242,16 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_optio
 	}
 	json_object_push(os_2, "panose", panose);
 
-	json_object_push(os_2, "ulUnicodeRange1", json_integer_new(table->ulUnicodeRange1));
-	json_object_push(os_2, "ulUnicodeRange2", json_integer_new(table->ulUnicodeRange2));
-	json_object_push(os_2, "ulUnicodeRange3", json_integer_new(table->ulUnicodeRange3));
-	json_object_push(os_2, "ulUnicodeRange4", json_integer_new(table->ulUnicodeRange4));
+	json_object_push(os_2, "ulUnicodeRange1", caryll_dump_flags(table->ulUnicodeRange1, unicodeRangeLabels1));
+	json_object_push(os_2, "ulUnicodeRange2", caryll_dump_flags(table->ulUnicodeRange2, unicodeRangeLabels2));
+	json_object_push(os_2, "ulUnicodeRange3", caryll_dump_flags(table->ulUnicodeRange3, unicodeRangeLabels3));
+	json_object_push(os_2, "ulUnicodeRange4", caryll_dump_flags(table->ulUnicodeRange4, unicodeRangeLabels4));
 
 	sds vendorid = sdsnewlen(table->achVendID, 4);
 	json_object_push(os_2, "achVendID", json_string_new(vendorid));
 	sdsfree(vendorid);
 
-	json_object_push(os_2, "fsSelection", caryll_flags_to_json(table->fsSelection, fsSelectionLabels));
+	json_object_push(os_2, "fsSelection", caryll_dump_flags(table->fsSelection, fsSelectionLabels));
 	json_object_push(os_2, "usFirstCharIndex", json_integer_new(table->usFirstCharIndex));
 	json_object_push(os_2, "usLastCharIndex", json_integer_new(table->usLastCharIndex));
 	json_object_push(os_2, "sTypoAscender", json_integer_new(table->sTypoAscender));
@@ -131,8 +259,8 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_optio
 	json_object_push(os_2, "sTypoLineGap", json_integer_new(table->sTypoLineGap));
 	json_object_push(os_2, "usWinAscent", json_integer_new(table->usWinAscent));
 	json_object_push(os_2, "usWinDescent", json_integer_new(table->usWinDescent));
-	json_object_push(os_2, "ulCodePageRange1", caryll_flags_to_json(table->ulCodePageRange1, codePageLabels1));
-	json_object_push(os_2, "ulCodePageRange2", caryll_flags_to_json(table->ulCodePageRange2, codePageLabels2));
+	json_object_push(os_2, "ulCodePageRange1", caryll_dump_flags(table->ulCodePageRange1, codePageLabels1));
+	json_object_push(os_2, "ulCodePageRange2", caryll_dump_flags(table->ulCodePageRange2, codePageLabels2));
 	json_object_push(os_2, "sxHeight", json_integer_new(table->sxHeight));
 	json_object_push(os_2, "sCapHeight", json_integer_new(table->sCapHeight));
 	json_object_push(os_2, "usDefaultChar", json_integer_new(table->usDefaultChar));
@@ -143,8 +271,8 @@ void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_optio
 	json_object_push(root, "OS_2", os_2);
 }
 
-table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *options) {
-	table_OS_2 *os_2 = caryll_new_OS_2();
+table_OS_2 *table_parse_OS_2(json_value *root, const caryll_Options *options) {
+	table_OS_2 *os_2 = table_new_OS_2();
 	if (!os_2) return NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "OS_2", json_object))) {
@@ -153,18 +281,19 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *option
 		os_2->xAvgCharWidth = json_obj_getnum_fallback(table, "xAvgCharWidth", 0);
 		os_2->usWeightClass = json_obj_getnum_fallback(table, "usWeightClass", 0);
 		os_2->usWidthClass = json_obj_getnum_fallback(table, "usWidthClass", 0);
-		os_2->fsType = caryll_flags_from_json(json_obj_get(table, "fsType"), fsTypeLabels);
+		os_2->fsType = caryll_parse_flags(json_obj_get(table, "fsType"), fsTypeLabels);
 		os_2->ySubscriptXSize = json_obj_getnum_fallback(table, "ySubscriptXSize", 0);
 		os_2->ySubscriptYSize = json_obj_getnum_fallback(table, "ySubscriptYSize", 0);
 		os_2->ySubscriptXOffset = json_obj_getnum_fallback(table, "ySubscriptXOffset", 0);
 		os_2->ySubscriptYOffset = json_obj_getnum_fallback(table, "ySubscriptYOffset", 0);
 		os_2->ySupscriptXSize = json_obj_getnum_fallback(table, "ySupscriptXSize", 0);
+		os_2->ySupscriptYSize = json_obj_getnum_fallback(table, "ySupscriptYSize", 0);
 		os_2->ySupscriptXOffset = json_obj_getnum_fallback(table, "ySupscriptXOffset", 0);
 		os_2->ySupscriptYOffset = json_obj_getnum_fallback(table, "ySupscriptYOffset", 0);
 		os_2->yStrikeoutSize = json_obj_getnum_fallback(table, "yStrikeoutSize", 0);
 		os_2->yStrikeoutPosition = json_obj_getnum_fallback(table, "yStrikeoutPosition", 0);
 		os_2->sFamilyClass = json_obj_getnum_fallback(table, "sFamilyClass", 0);
-		os_2->fsSelection = caryll_flags_from_json(json_obj_get(table, "fsSelection"), fsSelectionLabels);
+		os_2->fsSelection = caryll_parse_flags(json_obj_get(table, "fsSelection"), fsSelectionLabels);
 		os_2->usFirstCharIndex = json_obj_getnum_fallback(table, "usFirstCharIndex", 0);
 		os_2->usLastCharIndex = json_obj_getnum_fallback(table, "usLastCharIndex", 0);
 		os_2->sTypoAscender = json_obj_getnum_fallback(table, "sTypoAscender", 0);
@@ -172,8 +301,12 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *option
 		os_2->sTypoLineGap = json_obj_getnum_fallback(table, "sTypoLineGap", 0);
 		os_2->usWinAscent = json_obj_getnum_fallback(table, "usWinAscent", 0);
 		os_2->usWinDescent = json_obj_getnum_fallback(table, "usWinDescent", 0);
-		os_2->ulCodePageRange1 = caryll_flags_from_json(json_obj_get(table, "ulCodePageRange1"), codePageLabels1);
-		os_2->ulCodePageRange2 = caryll_flags_from_json(json_obj_get(table, "ulCodePageRange2"), codePageLabels2);
+		os_2->ulCodePageRange1 = caryll_parse_flags(json_obj_get(table, "ulCodePageRange1"), codePageLabels1);
+		os_2->ulCodePageRange2 = caryll_parse_flags(json_obj_get(table, "ulCodePageRange2"), codePageLabels2);
+		os_2->ulUnicodeRange1 = caryll_parse_flags(json_obj_get(table, "ulUnicodeRange1"), unicodeRangeLabels1);
+		os_2->ulUnicodeRange2 = caryll_parse_flags(json_obj_get(table, "ulUnicodeRange2"), unicodeRangeLabels2);
+		os_2->ulUnicodeRange3 = caryll_parse_flags(json_obj_get(table, "ulUnicodeRange3"), unicodeRangeLabels3);
+		os_2->ulUnicodeRange4 = caryll_parse_flags(json_obj_get(table, "ulUnicodeRange4"), unicodeRangeLabels4);
 		os_2->sxHeight = json_obj_getnum_fallback(table, "sxHeight", 0);
 		os_2->sCapHeight = json_obj_getnum_fallback(table, "sCapHeight", 0);
 		os_2->usDefaultChar = json_obj_getnum_fallback(table, "usDefaultChar", 0);
@@ -211,7 +344,7 @@ table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *option
 	return os_2;
 }
 
-caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2, const caryll_options *options) {
+caryll_buffer *table_build_OS_2(table_OS_2 *os_2, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);

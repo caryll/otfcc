@@ -16,14 +16,14 @@ typedef struct {
 	uint32_t maxMemType42;
 	uint32_t minMemType1;
 	uint32_t maxMemType1;
-	glyph_order_hash *post_name_map;
+	glyphorder_Map *post_name_map;
 } table_post;
 
-table_post *caryll_new_post();
-table_post *caryll_read_post(caryll_packet packet);
-void caryll_delete_post(table_post *table);
-void caryll_post_to_json(table_post *table, json_value *root, const caryll_options *options);
-table_post *caryll_post_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder, const caryll_options *options);
+table_post *table_new_post();
+table_post *table_read_post(caryll_Packet packet);
+void table_delete_post(table_post *table);
+void table_dump_post(table_post *table, json_value *root, const caryll_Options *options);
+table_post *table_parse_post(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_post(table_post *post, glyphorder_Map *glyphorder, const caryll_Options *options);
 
 #endif

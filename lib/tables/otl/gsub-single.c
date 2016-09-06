@@ -1,62 +1,55 @@
 #include "gsub-single.h"
-void caryll_delete_gsub_single(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				if (lookup->subtables[j]) {
-					caryll_delete_coverage(lookup->subtables[j]->gsub_single.from);
-					caryll_delete_coverage(lookup->subtables[j]->gsub_single.to);
-					free(lookup->subtables[j]);
-				}
-			free(lookup->subtables);
-		}
-		FREE(lookup);
+void otl_delete_gsub_single(otl_Subtable *subtable) {
+	if (subtable) {
+		otl_delete_Coverage(subtable->gsub_single.from);
+		otl_delete_Coverage(subtable->gsub_single.to);
+		free(subtable);
 	}
 }
 
-otl_subtable *caryll_read_gsub_single(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
-	otl_subtable *subtable;
+otl_Subtable *otl_read_gsub_single(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
+	otl_Subtable *subtable;
 	NEW(subtable);
 	if (tableLength < subtableOffset + 6) goto FAIL;
 	uint16_t subtableFormat = read_16u(data + subtableOffset);
-	otl_coverage *from = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
+	otl_Coverage *from = otl_read_Coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
 	subtable->gsub_single.from = from;
 	if (!from || from->numGlyphs == 0) goto FAIL;
 
 	if (subtableFormat == 1) {
-		otl_coverage *to;
+		otl_Coverage *to;
 		NEW(to);
 		to->numGlyphs = from->numGlyphs;
 		NEW_N(to->glyphs, to->numGlyphs);
 
 		uint16_t delta = read_16u(data + subtableOffset + 4);
 		for (uint16_t j = 0; j < from->numGlyphs; j++) {
-			to->glyphs[j] = handle_from_id(from->glyphs[j].index + delta);
+			to->glyphs[j] = handle_fromIndex(from->glyphs[j].index + delta);
 		}
 		subtable->gsub_single.to = to;
 	} else {
 		uint16_t toglyphs = read_16u(data + subtableOffset + 4);
 		if (tableLength < subtableOffset + 6 + toglyphs * 2 || toglyphs != from->numGlyphs) goto FAIL;
-		otl_coverage *to;
+		otl_Coverage *to;
 		NEW(to);
 		to->numGlyphs = toglyphs;
 		NEW_N(to->glyphs, to->numGlyphs);
 
 		for (uint16_t j = 0; j < to->numGlyphs; j++) {
-			to->glyphs[j] = handle_from_id(read_16u(data + subtableOffset + 6 + j * 2));
+			to->glyphs[j] = handle_fromIndex(read_16u(data + subtableOffset + 6 + j * 2));
 		}
 		subtable->gsub_single.to = to;
 	}
 	goto OK;
 FAIL:
-	if (subtable->gsub_single.from) caryll_delete_coverage(subtable->gsub_single.from);
-	if (subtable->gsub_single.to) caryll_delete_coverage(subtable->gsub_single.to);
+	if (subtable->gsub_single.from) otl_delete_Coverage(subtable->gsub_single.from);
+	if (subtable->gsub_single.to) otl_delete_Coverage(subtable->gsub_single.to);
 	subtable = NULL;
 OK:
 	return subtable;
 }
 
-json_value *caryll_gsub_single_to_json(otl_subtable *_subtable) {
+json_value *otl_gsub_dump_single(otl_Subtable *_subtable) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	json_value *st = json_object_new(subtable->from->numGlyphs);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs && j < subtable->from->numGlyphs; j++) {
@@ -65,8 +58,8 @@ json_value *caryll_gsub_single_to_json(otl_subtable *_subtable) {
 	return st;
 }
 
-otl_subtable *caryll_gsub_single_from_json(json_value *_subtable) {
-	otl_subtable *_st;
+otl_Subtable *otl_gsub_parse_single(json_value *_subtable) {
+	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gsub_single *subtable = &(_st->gsub_single);
 	NEW(subtable->from);
@@ -88,7 +81,7 @@ otl_subtable *caryll_gsub_single_from_json(json_value *_subtable) {
 	return _st;
 };
 
-caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {
+caryll_buffer *caryll_build_gsub_single_subtable(otl_Subtable *_subtable) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	bool isConstantDifference = true;
 	if (subtable->from->numGlyphs > 1) {
@@ -99,19 +92,19 @@ caryll_buffer *caryll_write_gsub_single_subtable(otl_subtable *_subtable) {
 		}
 	}
 	if (isConstantDifference && subtable->from->numGlyphs > 0) {
-		return caryll_write_bk(
-		    new_bkblock(b16, 1,                                                               // Format
-		                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->from)),  // coverage
+		return bk_build_Block(
+		    bk_new_Block(b16, 1,                                                               // Format
+		                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)),  // coverage
 		                b16, subtable->to->glyphs[0].index - subtable->from->glyphs[0].index, // delta
 		                bkover));
 	} else {
-		caryll_bkblock *b = new_bkblock(b16, 2,                                                              // Format
-		                                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->from)), // coverage
+		bk_Block *b = bk_new_Block(b16, 2,                                                              // Format
+		                                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
 		                                b16, subtable->to->numGlyphs,                                        // quantity
 		                                bkover);
 		for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
-			bkblock_push(b, b16, subtable->to->glyphs[k].index, bkover);
+			bk_push(b, b16, subtable->to->glyphs[k].index, bkover);
 		}
-		return caryll_write_bk(b);
+		return bk_build_Block(b);
 	}
 }

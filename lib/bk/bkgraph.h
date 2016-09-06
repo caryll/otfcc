@@ -14,21 +14,21 @@ typedef struct {
 	uint32_t order;
 	uint32_t height;
 	uint32_t hash;
-	caryll_bkblock *block;
-} bkgraph_entry;
+	bk_Block *block;
+} bk_GraphNode;
 
 typedef struct {
 	uint32_t length;
 	uint32_t free;
-	bkgraph_entry *entries;
-} caryll_bkgraph;
+	bk_GraphNode *entries;
+} bk_Graph;
 
-caryll_bkgraph *caryll_bkgraph_from_block(caryll_bkblock *b);
-void caryll_delete_bkgraph(/*MOVE*/ caryll_bkgraph *f);
-void caryll_minimize_bkgraph(/*BORROW*/ caryll_bkgraph *f);
-void caryll_untangle_bkgraph(/*BORROW*/ caryll_bkgraph *f);
-caryll_buffer *caryll_write_bkgraph(/*BORROW*/ caryll_bkgraph *f);
-caryll_buffer *caryll_write_bk(/*MOVE*/ caryll_bkblock *root);
-size_t estimate_bkgraph_size(caryll_bkgraph *f);
+bk_Graph *bk_newGraphFromRootBlock(bk_Block *b);
+void bk_delete_Graph(/*MOVE*/ bk_Graph *f);
+void bk_minimizeGraph(/*BORROW*/ bk_Graph *f);
+void bk_untangleGraph(/*BORROW*/ bk_Graph *f);
+caryll_buffer *bk_build_Graph(/*BORROW*/ bk_Graph *f);
+caryll_buffer *bk_build_Block(/*MOVE*/ bk_Block *root);
+size_t bk_estimateSizeOfGraph(bk_Graph *f);
 
 #endif

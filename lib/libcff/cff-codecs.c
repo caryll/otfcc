@@ -19,7 +19,7 @@
   * 30 (double)
 */
 
-caryll_buffer *encode_cff_operator(int32_t val) {
+caryll_buffer *cff_encodeCffOperator(int32_t val) {
 	if (val > 256) {
 		return bufninit(2, val / 256, val % 256);
 	} else {
@@ -27,7 +27,7 @@ caryll_buffer *encode_cff_operator(int32_t val) {
 	}
 }
 
-caryll_buffer *encode_cff_number(int32_t val) {
+caryll_buffer *cff_encodeCffInteger(int32_t val) {
 	if (val >= -107 && val <= 107) {
 		return bufninit(1, val + 139);
 	} else if (val >= 108 && val <= 1131) {
@@ -46,7 +46,7 @@ caryll_buffer *encode_cff_number(int32_t val) {
 
 // -2.25       -> 1e e2 a2 5f
 // 0.140541E-3 -> 1e 0a 14 05 41 c3 ff
-caryll_buffer *encode_cff_real(double val) {
+caryll_buffer *cff_encodeCffFloat(double val) {
 	caryll_buffer *blob = bufnew();
 	uint32_t i, j = 0;
 	uint8_t temp[32] = {0};
@@ -110,7 +110,7 @@ caryll_buffer *encode_cff_real(double val) {
 	return blob;
 }
 
-uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val) {
+uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val) {
 	uint32_t advance = 0;
 
 	if (*start >= 0 && *start <= 27) {
@@ -167,7 +167,7 @@ uint32_t decode_cs2_token(uint8_t *start, CFF_Value *val) {
 }
 
 // decode integer
-static uint32_t cff_dec_i(uint8_t *start, CFF_Value *val) {
+static uint32_t cff_dec_i(uint8_t *start, cff_Value *val) {
 	uint8_t b0 = *start, b1, b2, b3, b4;
 	uint32_t len = 0;
 
@@ -196,7 +196,7 @@ static uint32_t cff_dec_i(uint8_t *start, CFF_Value *val) {
 		len = 5;
 	}
 
-	val->t = CFF_INTEGER;
+	val->t = cff_INTEGER;
 	return len;
 }
 
@@ -204,7 +204,7 @@ static const int nibble_attr[15] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 1}
 static const char *nibble_symb[15] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "E", "E-", "", "-"};
 
 // decode double
-static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
+static uint32_t cff_dec_r(uint8_t *start, cff_Value *val) {
 	uint8_t *nibst, restr[72] = {0};
 	size_t str_len = 0;
 	uint32_t len;
@@ -250,13 +250,13 @@ static uint32_t cff_dec_r(uint8_t *start, CFF_Value *val) {
 	}
 
 	val->d = atof((char *)restr);
-	val->t = CFF_DOUBLE;
+	val->t = cff_DOUBLE;
 
 	return len;
 }
 
 // decode operator
-static uint32_t cff_dec_o(uint8_t *start, CFF_Value *val) {
+static uint32_t cff_dec_o(uint8_t *start, cff_Value *val) {
 	uint8_t b0 = *start, b1;
 	uint32_t len = 0;
 
@@ -271,20 +271,20 @@ static uint32_t cff_dec_o(uint8_t *start, CFF_Value *val) {
 		}
 	}
 
-	val->t = CFF_OPERATOR;
+	val->t = cff_OPERATOR;
 
 	return len;
 }
 
 // error in parsing, return a integer
-static uint32_t cff_dec_e(uint8_t *start, CFF_Value *val) {
+static uint32_t cff_dec_e(uint8_t *start, cff_Value *val) {
 	printf("Undefined Byte in CFF: %d.\n", *start);
 	val->i = *start;
-	val->t = CFF_INTEGER;
+	val->t = cff_INTEGER;
 	return 1;
 }
 
-static uint32_t (*_de_t2[256])(uint8_t *, CFF_Value *) = {
+static uint32_t (*_de_t2[256])(uint8_t *, cff_Value *) = {
     cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o,
     cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o, cff_dec_o,
     cff_dec_o, cff_dec_o, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_e, cff_dec_i, cff_dec_i,
@@ -312,6 +312,6 @@ static uint32_t (*_de_t2[256])(uint8_t *, CFF_Value *) = {
     cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i,
     cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_i, cff_dec_e};
 
-uint32_t decode_cff_token(uint8_t *start, CFF_Value *val) {
+uint32_t cff_decodeCffToken(uint8_t *start, cff_Value *val) {
 	return _de_t2[*start](start, val);
 }

@@ -1,7 +1,12 @@
 #include "coverage.h"
 
-void caryll_delete_coverage(otl_coverage *coverage) {
-	if (coverage && coverage->glyphs) free(coverage->glyphs);
+void otl_delete_Coverage(otl_Coverage *coverage) {
+	if (coverage && coverage->glyphs) {
+		for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+			handle_delete(&coverage->glyphs[j]);
+		}
+		free(coverage->glyphs);
+	}
 	if (coverage) free(coverage);
 }
 
@@ -15,8 +20,8 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_coverage *coverage;
+otl_Coverage *otl_read_Coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_Coverage *coverage;
 	NEW(coverage);
 	coverage->numGlyphs = 0;
 	coverage->glyphs = NULL;
@@ -46,7 +51,7 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 					uint16_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
-						coverage->glyphs[j] = handle_from_id(e->gid);
+						coverage->glyphs[j] = handle_fromIndex(e->gid);
 						HASH_DEL(hash, e);
 						free(e);
 						j++;
@@ -82,7 +87,7 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 					uint16_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
-						coverage->glyphs[j] = handle_from_id(e->gid);
+						coverage->glyphs[j] = handle_fromIndex(e->gid);
 						HASH_DEL(hash, e);
 						free(e);
 						j++;
@@ -97,7 +102,7 @@ otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength,
 	return coverage;
 }
 
-json_value *caryll_coverage_to_json(otl_coverage *coverage) {
+json_value *otl_dump_Coverage(otl_Coverage *coverage) {
 	json_value *a = json_array_new(coverage->numGlyphs);
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
 		json_array_push(a, json_string_new(coverage->glyphs[j].name));
@@ -105,8 +110,8 @@ json_value *caryll_coverage_to_json(otl_coverage *coverage) {
 	return preserialize(a);
 }
 
-otl_coverage *caryll_coverage_from_json(json_value *cov) {
-	otl_coverage *c;
+otl_Coverage *otl_parse_Coverage(json_value *cov) {
+	otl_Coverage *c;
 	NEW(c);
 	c->numGlyphs = 0;
 	c->glyphs = NULL;
@@ -121,7 +126,7 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
-			c->glyphs[jj] = handle_from_name(
+			c->glyphs[jj] = handle_fromName(
 			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length));
 			jj++;
 		}
@@ -130,7 +135,7 @@ otl_coverage *caryll_coverage_from_json(json_value *cov) {
 	return c;
 }
 
-caryll_buffer *caryll_write_coverage(otl_coverage *coverage) {
+caryll_buffer *otl_build_Coverage(otl_Coverage *coverage) {
 	caryll_buffer *format1 = bufnew();
 	bufwrite16b(format1, 1);
 	bufwrite16b(format1, coverage->numGlyphs);

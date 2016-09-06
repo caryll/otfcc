@@ -1,7 +1,7 @@
 #include "libcff.h"
 
 // DICT util functions
-void cff_delete_dict(CFF_Dict *dict) {
+void cff_delete_Dict(cff_Dict *dict) {
 	if (!dict) return;
 	for (uint32_t j = 0; j < dict->count; j++) {
 		free(dict->ents[j].vals);
@@ -10,7 +10,7 @@ void cff_delete_dict(CFF_Dict *dict) {
 	free(dict);
 }
 
-void esrap_dict(CFF_Dict *d) {
+void cff_close_Dict(cff_Dict *d) {
 	uint32_t i;
 
 	if (d != NULL) {
@@ -23,27 +23,27 @@ void esrap_dict(CFF_Dict *d) {
 	}
 }
 
-CFF_Dict *parse_dict(uint8_t *data, uint32_t len) {
-	CFF_Dict *dict = calloc(1, sizeof(CFF_Dict));
+cff_Dict *cff_extract_Dict(uint8_t *data, uint32_t len) {
+	cff_Dict *dict = calloc(1, sizeof(cff_Dict));
 	uint32_t index = 0, advance;
-	CFF_Value val, stack[48];
+	cff_Value val, stack[48];
 	uint8_t *temp = data;
 
 	while (temp < data + len) {
-		advance = decode_cff_token(temp, &val);
+		advance = cff_decodeCffToken(temp, &val);
 
 		switch (val.t) {
-			case CFF_OPERATOR:
-				dict->ents = realloc(dict->ents, sizeof(CFF_Dict_Entry) * (dict->count + 1));
+			case cff_OPERATOR:
+				dict->ents = realloc(dict->ents, sizeof(cff_DictEntry) * (dict->count + 1));
 				dict->ents[dict->count].op = val.i;
 				dict->ents[dict->count].cnt = index;
-				dict->ents[dict->count].vals = calloc(index, sizeof(CFF_Value));
-				memcpy(dict->ents[dict->count].vals, stack, sizeof(CFF_Value) * index);
+				dict->ents[dict->count].vals = calloc(index, sizeof(cff_Value));
+				memcpy(dict->ents[dict->count].vals, stack, sizeof(cff_Value) * index);
 				dict->count++;
 				index = 0;
 				break;
-			case CFF_INTEGER:
-			case CFF_DOUBLE:
+			case cff_INTEGER:
+			case cff_DOUBLE:
 				stack[index++] = val;
 				break;
 		}
@@ -54,24 +54,24 @@ CFF_Dict *parse_dict(uint8_t *data, uint32_t len) {
 	return dict;
 }
 
-void parse_dict_callback(uint8_t *data, uint32_t len, void *context,
-                         void (*callback)(uint32_t op, uint8_t top, CFF_Value *stack, void *context)) {
+void cff_extract_DictByCallback(uint8_t *data, uint32_t len, void *context,
+                         void (*callback)(uint32_t op, uint8_t top, cff_Value *stack, void *context)) {
 	uint8_t index = 0;
 	uint32_t advance;
-	CFF_Value val, stack[256];
+	cff_Value val, stack[256];
 	uint8_t *temp = data;
 
 	while (temp < data + len) {
-		advance = decode_cff_token(temp, &val);
+		advance = cff_decodeCffToken(temp, &val);
 
 		switch (val.t) {
-			case CFF_OPERATOR:
+			case cff_OPERATOR:
 				callback(val.i, index, stack, context);
 				index = 0;
 				break;
 
-			case CFF_INTEGER:
-			case CFF_DOUBLE:
+			case cff_INTEGER:
+			case cff_DOUBLE:
 				stack[index++] = val;
 				break;
 		}
@@ -82,12 +82,12 @@ void parse_dict_callback(uint8_t *data, uint32_t len, void *context,
 
 typedef struct {
 	bool found;
-	CFF_Value res;
+	cff_Value res;
 	uint32_t op;
 	uint32_t idx;
 } cff_get_key_context;
 
-static void callback_get_key(uint32_t op, uint8_t top, CFF_Value *stack, void *_context) {
+static void callback_get_key(uint32_t op, uint8_t top, cff_Value *stack, void *_context) {
 	cff_get_key_context *context = (cff_get_key_context *)_context;
 	if (op == context->op && context->idx <= top) {
 		context->found = true;
@@ -95,7 +95,7 @@ static void callback_get_key(uint32_t op, uint8_t top, CFF_Value *stack, void *_
 	}
 }
 
-CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx) {
+cff_Value cff_parseDictKey(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx) {
 	cff_get_key_context context;
 	context.found = false;
 	context.idx = idx;
@@ -103,25 +103,25 @@ CFF_Value parse_dict_key(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx)
 	context.res.t = 0;
 	context.res.i = -1;
 
-	parse_dict_callback(data, len, &context, callback_get_key);
+	cff_extract_DictByCallback(data, len, &context, callback_get_key);
 	return context.res;
 }
 
-caryll_buffer *compile_dict(CFF_Dict *dict) {
+caryll_buffer *cff_build_Dict(cff_Dict *dict) {
 	caryll_buffer *blob = bufnew();
 	for (uint32_t i = 0; i < dict->count; i++) {
 		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
 			caryll_buffer *blob_val;
-			if (dict->ents[i].vals[j].t == CFF_INTEGER) {
-				blob_val = encode_cff_number(dict->ents[i].vals[j].i);
-			} else if (dict->ents[i].vals[j].t == CFF_DOUBLE) {
-				blob_val = encode_cff_real(dict->ents[i].vals[j].d);
+			if (dict->ents[i].vals[j].t == cff_INTEGER) {
+				blob_val = cff_encodeCffInteger(dict->ents[i].vals[j].i);
+			} else if (dict->ents[i].vals[j].t == cff_DOUBLE) {
+				blob_val = cff_encodeCffFloat(dict->ents[i].vals[j].d);
 			} else {
-				blob_val = encode_cff_number(0);
+				blob_val = cff_encodeCffInteger(0);
 			}
 			bufwrite_bufdel(blob, blob_val);
 		}
-		bufwrite_bufdel(blob, encode_cff_operator(dict->ents[i].op));
+		bufwrite_bufdel(blob, cff_encodeCffOperator(dict->ents[i].op));
 	}
 	return blob;
 }

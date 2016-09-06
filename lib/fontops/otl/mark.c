@@ -3,7 +3,7 @@
 typedef struct {
 	int gid;
 	sds name;
-	otl_mark_record markrec;
+	otl_MarkRecord markrec;
 	UT_hash_handle hh;
 } mark_hash;
 static int mark_by_gid(mark_hash *a, mark_hash *b) {
@@ -12,7 +12,7 @@ static int mark_by_gid(mark_hash *a, mark_hash *b) {
 typedef struct {
 	int gid;
 	sds name;
-	otl_anchor *anchors;
+	otl_Anchor *anchors;
 	UT_hash_handle hh;
 } base_hash;
 static int base_by_gid(base_hash *a, base_hash *b) {
@@ -21,15 +21,15 @@ static int base_by_gid(base_hash *a, base_hash *b) {
 typedef struct {
 	int gid;
 	sds name;
-	mark_to_ligature_base *ligAttachment;
+	otl_MarkToLigatureBase *ligAttachment;
 	UT_hash_handle hh;
 } lig_hash;
 static int lig_by_gid(lig_hash *a, lig_hash *b) {
 	return a->gid - b->gid;
 }
 
-static void consolidateMarkArray(caryll_font *font, table_otl *table, sds lookupName, otl_coverage *marks,
-                                 otl_mark_array *markArray, uint16_t classCount) {
+static void consolidateMarkArray(caryll_Font *font, table_OTL *table, sds lookupName, otl_Coverage *marks,
+                                 otl_MarkArray *markArray, uint16_t classCount) {
 	mark_hash *hm = NULL;
 	for (uint16_t k = 0; k < marks->numGlyphs; k++) {
 		if (marks->glyphs[k].name) {
@@ -57,6 +57,7 @@ static void consolidateMarkArray(caryll_font *font, table_otl *table, sds lookup
 	HASH_ITER(hh, hm, s, tmp) {
 		marks->glyphs[k].index = s->gid;
 		marks->glyphs[k].name = s->name;
+		marks->glyphs[k].state = HANDLE_STATE_CONSOLIDATED;
 		markArray->records[k] = s->markrec;
 		k++;
 		HASH_DEL(hm, s);
@@ -64,8 +65,8 @@ static void consolidateMarkArray(caryll_font *font, table_otl *table, sds lookup
 	}
 }
 
-static void consolidateBaseArray(caryll_font *font, table_otl *table, sds lookupName, otl_coverage *bases,
-                                 otl_anchor **baseArray) {
+static void consolidateBaseArray(caryll_Font *font, table_OTL *table, sds lookupName, otl_Coverage *bases,
+                                 otl_Anchor **baseArray) {
 	// consolidate bases
 	base_hash *hm = NULL;
 	for (uint16_t k = 0; k < bases->numGlyphs; k++) {
@@ -95,6 +96,7 @@ static void consolidateBaseArray(caryll_font *font, table_otl *table, sds lookup
 	HASH_ITER(hh, hm, s, tmp) {
 		bases->glyphs[k].index = s->gid;
 		bases->glyphs[k].name = s->name;
+		bases->glyphs[k].state = HANDLE_STATE_CONSOLIDATED;
 		baseArray[k] = s->anchors;
 		k++;
 		HASH_DEL(hm, s);
@@ -102,8 +104,8 @@ static void consolidateBaseArray(caryll_font *font, table_otl *table, sds lookup
 	}
 }
 
-static void consolidateLigArray(caryll_font *font, table_otl *table, sds lookupName, otl_coverage *bases,
-                                mark_to_ligature_base **ligArray) {
+static void consolidateLigArray(caryll_Font *font, table_OTL *table, sds lookupName, otl_Coverage *bases,
+                                otl_MarkToLigatureBase **ligArray) {
 	lig_hash *hm = NULL;
 	for (uint16_t k = 0; k < bases->numGlyphs; k++) {
 		if (bases->glyphs[k].name) {
@@ -132,6 +134,7 @@ static void consolidateLigArray(caryll_font *font, table_otl *table, sds lookupN
 	HASH_ITER(hh, hm, s, tmp) {
 		bases->glyphs[k].index = s->gid;
 		bases->glyphs[k].name = s->name;
+		bases->glyphs[k].state = HANDLE_STATE_CONSOLIDATED;
 		ligArray[k] = s->ligAttachment;
 		k++;
 		HASH_DEL(hm, s);
@@ -139,19 +142,19 @@ static void consolidateLigArray(caryll_font *font, table_otl *table, sds lookupN
 	}
 }
 
-bool consolidate_mark_to_single(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
-	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
-	consolidate_coverage(font, subtable->marks, lookupName);
-	consolidate_coverage(font, subtable->bases, lookupName);
+bool consolidate_mark_to_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
+	fontop_consolidateCoverage(font, subtable->marks, lookupName);
+	fontop_consolidateCoverage(font, subtable->bases, lookupName);
 	consolidateMarkArray(font, table, lookupName, subtable->marks, subtable->markArray, subtable->classCount);
 	consolidateBaseArray(font, table, lookupName, subtable->bases, subtable->baseArray);
 	return false;
 }
 
-bool consolidate_mark_to_ligature(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
-	subtable_gpos_mark_to_ligature *subtable = &(_subtable->gpos_mark_to_ligature);
-	consolidate_coverage(font, subtable->marks, lookupName);
-	consolidate_coverage(font, subtable->bases, lookupName);
+bool consolidate_mark_to_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
+	fontop_consolidateCoverage(font, subtable->marks, lookupName);
+	fontop_consolidateCoverage(font, subtable->bases, lookupName);
 	consolidateMarkArray(font, table, lookupName, subtable->marks, subtable->markArray, subtable->classCount);
 	consolidateLigArray(font, table, lookupName, subtable->bases, subtable->ligArray);
 	return false;

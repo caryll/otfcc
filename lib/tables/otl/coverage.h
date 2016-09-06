@@ -6,12 +6,12 @@
 typedef struct {
 	uint16_t numGlyphs;
 	glyph_handle *glyphs;
-} otl_coverage;
+} otl_Coverage;
 
-void caryll_delete_coverage(otl_coverage *coverage);
-otl_coverage *caryll_read_coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-json_value *caryll_coverage_to_json(otl_coverage *coverage);
-otl_coverage *caryll_coverage_from_json(json_value *cov);
-caryll_buffer *caryll_write_coverage(otl_coverage *coverage);
+void otl_delete_Coverage(otl_Coverage *coverage);
+otl_Coverage *otl_read_Coverage(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+json_value *otl_dump_Coverage(otl_Coverage *coverage);
+otl_Coverage *otl_parse_Coverage(json_value *cov);
+caryll_buffer *otl_build_Coverage(otl_Coverage *coverage);
 
 #endif

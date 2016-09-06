@@ -3,16 +3,16 @@
 typedef struct {
 	int fromid;
 	sds fromname;
-	otl_anchor enter;
-	otl_anchor exit;
+	otl_Anchor enter;
+	otl_Anchor exit;
 	UT_hash_handle hh;
 } gpos_cursive_hash;
 static int gpos_cursive_by_from_id(gpos_cursive_hash *a, gpos_cursive_hash *b) {
 	return a->fromid - b->fromid;
 }
-bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName) {
+bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
-	consolidate_coverage(font, subtable->coverage, lookupName);
+	fontop_consolidateCoverage(font, subtable->coverage, lookupName);
 	gpos_cursive_hash *h = NULL;
 	for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
 		if (subtable->coverage->glyphs[k].name) {
@@ -40,6 +40,7 @@ bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable 
 		gpos_cursive_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
+			subtable->coverage->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
 			subtable->coverage->glyphs[j].index = s->fromid;
 			subtable->coverage->glyphs[j].name = s->fromname;
 			subtable->enter[j] = s->enter;
@@ -49,5 +50,5 @@ bool consolidate_gpos_cursive(caryll_font *font, table_otl *table, otl_subtable 
 			free(s);
 		}
 	}
-	return false;
+	return (subtable->coverage->numGlyphs == 0);
 }

@@ -1,6 +1,6 @@
 #include "hmtx.h"
 
-table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp *maxp) {
+table_hmtx *table_read_hmtx(caryll_Packet packet, table_hhea *hhea, table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
 	FOR_TABLE('hmtx', table) {
 		font_file_pointer data = table.data;
@@ -28,19 +28,19 @@ table_hmtx *caryll_read_hmtx(caryll_packet packet, table_hhea *hhea, table_maxp 
 		return hmtx;
 	HMTX_CORRUPTED:
 		fprintf(stderr, "Table 'hmtx' corrupted.\n");
-		if (hmtx) { caryll_delete_hmtx(hmtx), hmtx = NULL; }
+		if (hmtx) { table_delete_hmtx(hmtx), hmtx = NULL; }
 	}
 	return NULL;
 }
 
-void caryll_delete_hmtx(table_hmtx *table) {
+void table_delete_hmtx(table_hmtx *table) {
 	if (!table) return;
 	if (table->metrics != NULL) free(table->metrics);
 	if (table->leftSideBearing != NULL) free(table->leftSideBearing);
 	free(table);
 }
 
-caryll_buffer *caryll_write_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t count_k, const caryll_options *options) {
+caryll_buffer *table_build_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t count_k, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!hmtx) return buf;
 	if (hmtx->metrics) {

@@ -5,7 +5,7 @@
 #define GASP_SYMMETRIC_GRIDFIT 0x0004
 #define GASP_SYMMETRIC_SMOOTHING 0x0008
 
-table_gasp *caryll_new_gasp() {
+table_gasp *table_new_gasp() {
 	table_gasp *gasp = malloc(sizeof(table_gasp));
 	if (!gasp) return NULL;
 	gasp->version = 1;
@@ -13,12 +13,12 @@ table_gasp *caryll_new_gasp() {
 	gasp->records = NULL;
 	return gasp;
 }
-void caryll_delete_gasp(table_gasp *table) {
+void table_delete_gasp(table_gasp *table) {
 	if (!table) return;
 	if (table->records) free(table->records);
 	free(table);
 }
-table_gasp *caryll_read_gasp(caryll_packet packet) {
+table_gasp *table_read_gasp(caryll_Packet packet) {
 	table_gasp *gasp = NULL;
 	FOR_TABLE('gasp', table) {
 		font_file_pointer data = table.data;
@@ -29,7 +29,7 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 		gasp->numRanges = read_16u(data + 2);
 		if (length < 4 + gasp->numRanges * 4) { goto FAIL; }
 
-		gasp->records = malloc(gasp->numRanges * sizeof(gasp_record));
+		gasp->records = malloc(gasp->numRanges * sizeof(gasp_Record));
 		if (!gasp->records) goto FAIL;
 
 		for (uint32_t j = 0; j < gasp->numRanges; j++) {
@@ -38,18 +38,18 @@ table_gasp *caryll_read_gasp(caryll_packet packet) {
 			gasp->records[j].dogray = !!(rangeGaspBehavior & GASP_DOGRAY);
 			gasp->records[j].gridfit = !!(rangeGaspBehavior & GASP_GRIDFIT);
 			gasp->records[j].symmetric_smoothing = !!(rangeGaspBehavior & GASP_SYMMETRIC_SMOOTHING);
-			gasp->records[j].symmetric_gridfit = !!(rangeGaspBehavior & GASP_SYMMETRIC_SMOOTHING);
+			gasp->records[j].symmetric_gridfit = !!(rangeGaspBehavior & GASP_SYMMETRIC_GRIDFIT);
 		}
 		return gasp;
 
 	FAIL:
 		fprintf(stderr, "table 'head' corrupted.\n");
-		caryll_delete_gasp(gasp);
+		table_delete_gasp(gasp);
 		gasp = NULL;
 	}
 	return NULL;
 }
-void caryll_gasp_to_json(table_gasp *table, json_value *root, const caryll_options *options) {
+void table_dump_gasp(table_gasp *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping gasp.\n");
 
@@ -66,15 +66,15 @@ void caryll_gasp_to_json(table_gasp *table, json_value *root, const caryll_optio
 	json_object_push(root, "gasp", t);
 }
 
-table_gasp *caryll_gasp_from_json(json_value *root, const caryll_options *options) {
+table_gasp *table_parse_gasp(json_value *root, const caryll_Options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
 		if (options->verbose) fprintf(stderr, "Parsing gasp.\n");
-		gasp = caryll_new_gasp();
+		gasp = table_new_gasp();
 		if (!gasp) goto FAIL;
 		gasp->numRanges = table->u.array.length;
-		gasp->records = malloc(gasp->numRanges * sizeof(gasp_record));
+		gasp->records = malloc(gasp->numRanges * sizeof(gasp_Record));
 		if (!gasp->records) goto FAIL;
 		for (uint16_t j = 0; j < gasp->numRanges; j++) {
 			json_value *r = table->u.array.values[j];
@@ -88,17 +88,17 @@ table_gasp *caryll_gasp_from_json(json_value *root, const caryll_options *option
 	}
 	return gasp;
 FAIL:
-	if (gasp) caryll_delete_gasp(gasp);
+	if (gasp) table_delete_gasp(gasp);
 	return NULL;
 }
 
-caryll_buffer *caryll_write_gasp(table_gasp *gasp, const caryll_options *options) {
+caryll_buffer *table_build_gasp(table_gasp *gasp, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);
 	bufwrite16b(buf, gasp->numRanges);
 	for (uint16_t j = 0; j < gasp->numRanges; j++) {
-		gasp_record *r = &(gasp->records[j]);
+		gasp_Record *r = &(gasp->records[j]);
 		bufwrite16b(buf, r->rangeMaxPPEM);
 		bufwrite16b(buf, (r->dogray ? GASP_DOGRAY : 0) | (r->gridfit ? GASP_GRIDFIT : 0) |
 		                     (r->symmetric_gridfit ? GASP_SYMMETRIC_GRIDFIT : 0) |

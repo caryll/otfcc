@@ -1,6 +1,6 @@
 #include "bkblock.h"
 
-static void bkblock_acells(caryll_bkblock *b, uint32_t len) {
+static void bkblock_acells(bk_Block *b, uint32_t len) {
 	if (len <= b->length + b->free) {
 		// We have enough space
 		b->free -= len - b->length;
@@ -10,47 +10,47 @@ static void bkblock_acells(caryll_bkblock *b, uint32_t len) {
 		b->length = len;
 		b->free = (len >> 1) & 0xFFFFFF;
 		if (b->cells) {
-			b->cells = realloc(b->cells, sizeof(bk_cell) * (b->length + b->free));
+			b->cells = realloc(b->cells, sizeof(bk_Cell) * (b->length + b->free));
 		} else {
-			b->cells = malloc(sizeof(bk_cell) * (b->length + b->free));
+			b->cells = malloc(sizeof(bk_Cell) * (b->length + b->free));
 		}
 	}
 }
-bool bk_cell_is_ptr(bk_cell *cell) {
+bool bk_cellIsPointer(bk_Cell *cell) {
 	return cell->t >= p16;
 }
 
-static bk_cell *bkblock_grow(caryll_bkblock *b, uint32_t len) {
+static bk_Cell *bkblock_grow(bk_Block *b, uint32_t len) {
 	uint32_t olen = b->length;
 	bkblock_acells(b, olen + len);
 	return &(b->cells[olen]);
 }
 
-caryll_bkblock *_bkblock_init() {
-	caryll_bkblock *b = calloc(1, sizeof(caryll_bkblock));
+bk_Block *_bkblock_init() {
+	bk_Block *b = calloc(1, sizeof(bk_Block));
 	bkblock_acells(b, 0);
 	return b;
 }
 
-void bkblock_pushint(caryll_bkblock *b, bk_cell_type type, uint32_t x) {
-	bk_cell *cell = bkblock_grow(b, 1);
+void bkblock_pushint(bk_Block *b, bk_CellType type, uint32_t x) {
+	bk_Cell *cell = bkblock_grow(b, 1);
 	cell->t = type;
 	cell->z = x;
 }
-void bkblock_pushptr(caryll_bkblock *b, bk_cell_type type, caryll_bkblock *p) {
-	bk_cell *cell = bkblock_grow(b, 1);
+void bkblock_pushptr(bk_Block *b, bk_CellType type, bk_Block *p) {
+	bk_Cell *cell = bkblock_grow(b, 1);
 	cell->t = type;
 	cell->p = p;
 }
 
-static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
-	bk_cell_type curtype = type0;
+static void vbkpushitems(bk_Block *b, bk_CellType type0, va_list ap) {
+	bk_CellType curtype = type0;
 	while (curtype) {
 		if (curtype == bkcopy || curtype == bkembed) {
-			caryll_bkblock *par = va_arg(ap, caryll_bkblock *);
+			bk_Block *par = va_arg(ap, bk_Block *);
 			if (par && par->cells) {
 				for (uint32_t j = 0; j < par->length; j++) {
-					if (bk_cell_is_ptr(par->cells + j)) {
+					if (bk_cellIsPointer(par->cells + j)) {
 						bkblock_pushptr(b, par->cells[j].t, par->cells[j].p);
 					} else {
 						bkblock_pushint(b, par->cells[j].t, par->cells[j].z);
@@ -65,23 +65,23 @@ static void vbkpushitems(caryll_bkblock *b, bk_cell_type type0, va_list ap) {
 			uint32_t par = va_arg(ap, int);
 			bkblock_pushint(b, curtype, par);
 		} else {
-			caryll_bkblock *par = va_arg(ap, caryll_bkblock *);
+			bk_Block *par = va_arg(ap, bk_Block *);
 			bkblock_pushptr(b, curtype, par);
 		}
 		curtype = va_arg(ap, int);
 	}
 }
 
-caryll_bkblock *new_bkblock(bk_cell_type type0, ...) {
+bk_Block *bk_new_Block(bk_CellType type0, ...) {
 	va_list ap;
 	va_start(ap, type0);
-	caryll_bkblock *b = _bkblock_init();
+	bk_Block *b = _bkblock_init();
 	vbkpushitems(b, type0, ap);
 	va_end(ap);
 	return b;
 }
 
-caryll_bkblock *bkblock_push(caryll_bkblock *b, bk_cell_type type0, ...) {
+bk_Block *bk_push(bk_Block *b, bk_CellType type0, ...) {
 	va_list ap;
 	va_start(ap, type0);
 	vbkpushitems(b, type0, ap);
@@ -89,8 +89,8 @@ caryll_bkblock *bkblock_push(caryll_bkblock *b, bk_cell_type type0, ...) {
 	return b;
 }
 
-caryll_bkblock *new_bkblock_from_buffer(/*MOVE*/ caryll_buffer *buf) {
-	caryll_bkblock *b = new_bkblock(bkover);
+bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_buffer *buf) {
+	bk_Block *b = bk_new_Block(bkover);
 	for (size_t j = 0; j < buf->size; j++) {
 		bkblock_pushint(b, b8, buf->data[j]);
 	}
@@ -98,11 +98,11 @@ caryll_bkblock *new_bkblock_from_buffer(/*MOVE*/ caryll_buffer *buf) {
 	return b;
 }
 
-void print_bkblock(caryll_bkblock *b) {
+void bk_printBlock(bk_Block *b) {
 	fprintf(stderr, "Block size %08x\n", (uint32_t)b->length);
 	fprintf(stderr, "------------------\n");
 	for (uint32_t j = 0; j < b->length; j++) {
-		if (bk_cell_is_ptr(b->cells + j)) {
+		if (bk_cellIsPointer(b->cells + j)) {
 			if (b->cells[j].p) {
 				fprintf(stderr, "  %3d %p[%d]\n", b->cells[j].t, b->cells[j].p, b->cells[j].p->_index);
 			} else {

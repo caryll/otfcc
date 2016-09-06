@@ -7,7 +7,7 @@
 
 #ifdef _WIN32
 // Windows
-#include <windows.h>
+#include <Windows.h>
 #elif __MACH__
 // OSX
 #include <unistd.h>

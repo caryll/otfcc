@@ -4,24 +4,21 @@ static int by_gid(const void *a, const void *b) {
 	return ((glyph_handle *)a)->index - ((glyph_handle *)b)->index;
 }
 
-void consolidate_coverage(caryll_font *font, otl_coverage *coverage, sds lookupName) {
+void fontop_consolidateCoverage(caryll_Font *font, otl_Coverage *coverage, sds lookupName) {
 	if (!coverage) return;
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
-		glyph_order_entry *ordentry;
+		glyphorder_Entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
 		if (ordentry) {
-			coverage->glyphs[j].index = ordentry->gid;
-			if (ordentry->name != coverage->glyphs[j].name) sdsfree(coverage->glyphs[j].name);
-			coverage->glyphs[j].name = ordentry->name;
+			handle_consolidateTo(&coverage->glyphs[j], ordentry->gid, ordentry->name);
 		} else {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", coverage->glyphs[j].name,
 			        lookupName);
-			coverage->glyphs[j].index = 0;
-			DELETE(sdsfree, coverage->glyphs[j].name);
+			handle_delete(&coverage->glyphs[j]);
 		}
 	}
 }
-void shrink_coverage(otl_coverage *coverage, bool dosort) {
+void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 	if (!coverage) return;
 	uint16_t k = 0;
 	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
@@ -31,23 +28,22 @@ void shrink_coverage(otl_coverage *coverage, bool dosort) {
 	coverage->numGlyphs = k;
 }
 
-void consolidate_classdef(caryll_font *font, otl_classdef *cd, sds lookupName) {
+void fontop_consolidateClassDef(caryll_Font *font, otl_ClassDef *cd, sds lookupName) {
 	if (!cd) return;
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
-		glyph_order_entry *ordentry;
+		glyphorder_Entry *ordentry;
 		HASH_FIND_STR(*font->glyph_order, cd->glyphs[j].name, ordentry);
 		if (ordentry) {
-			cd->glyphs[j].index = ordentry->gid;
-			if (ordentry->name != cd->glyphs[j].name) sdsfree(cd->glyphs[j].name);
-			cd->glyphs[j].name = ordentry->name;
+			handle_consolidateTo(&cd->glyphs[j], ordentry->gid, ordentry->name);
+
 		} else {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", cd->glyphs[j].name, lookupName);
 			cd->glyphs[j].index = 0;
-			DELETE(sdsfree, cd->glyphs[j].name);
+			handle_delete(&cd->glyphs[j]);
 		}
 	}
 }
-void shrink_classdef(otl_classdef *cd) {
+void fontop_shrinkClassDef(otl_ClassDef *cd) {
 	uint16_t k = 0;
 	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->glyphs[j].name) {

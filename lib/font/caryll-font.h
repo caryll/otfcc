@@ -4,7 +4,7 @@
 #include <support/util.h>
 
 struct _caryll_font;
-typedef struct _caryll_font caryll_font;
+typedef struct _caryll_font caryll_Font;
 
 #include <support/glyphorder.h>
 
@@ -53,7 +53,7 @@ struct _caryll_font {
 
 	table_CFF *CFF_;
 	table_glyf *glyf;
-	cmap_hash *cmap;
+	table_cmap *cmap;
 	table_name *name;
 
 	table_fpgm_prep *fpgm;
@@ -63,21 +63,21 @@ struct _caryll_font {
 
 	table_LTSH *LTSH;
 
-	table_otl *GSUB;
-	table_otl *GPOS;
+	table_OTL *GSUB;
+	table_OTL *GPOS;
 	table_GDEF *GDEF;
 	table_BASE *BASE;
 
-	glyph_order_hash *glyph_order;
+	glyphorder_Map *glyph_order;
 };
 
-caryll_font_subtype caryll_decide_font_subtype(caryll_sfnt *sfnt, uint32_t index);
-caryll_font_subtype caryll_decide_font_subtype_json(json_value *root);
-caryll_font *caryll_new_font();
-caryll_font *caryll_read_font(caryll_sfnt *sfnt, uint32_t index);
-void caryll_delete_font(caryll_font *font);
-json_value *caryll_font_to_json(caryll_font *font, caryll_options *options);
-caryll_font *caryll_font_from_json(json_value *root, caryll_options *options);
-caryll_buffer *caryll_write_font(caryll_font *font, caryll_options *options);
+caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index);
+caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root);
+caryll_Font *caryll_new_Font();
+void caryll_delete_Font(caryll_Font *font);
+caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index);
+json_value *caryll_dump_Font(caryll_Font *font, caryll_Options *options);
+caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options);
+caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options);
 
 #endif

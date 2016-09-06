@@ -3,10 +3,10 @@
 
 #include "otl.h"
 
-void caryll_delete_gsub_reverse(otl_lookup *lookup);
-otl_subtable *caryll_read_gsub_reverse(font_file_pointer data, uint32_t tableLength, uint32_t offset);
-json_value *caryll_gsub_reverse_to_json(otl_subtable *_subtable);
-otl_subtable *caryll_gsub_reverse_from_json(json_value *_subtable);
-caryll_buffer *caryll_write_gsub_reverse(otl_subtable *_subtable);
+void otl_delete_gsub_reverse(otl_Subtable *_subtable);
+otl_Subtable *otl_read_gsub_reverse(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+json_value *otl_gsub_dump_reverse(otl_Subtable *_subtable);
+otl_Subtable *otl_gsub_parse_reverse(json_value *_subtable);
+caryll_buffer *caryll_build_gsub_reverse(otl_Subtable *_subtable);
 
 #endif

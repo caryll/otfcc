@@ -2,6 +2,6 @@
 #define CARYLL_FONTOPS_OTL_GPOS_PAIR_H
 #include "common.h"
 
-bool consolidate_gpos_pair(caryll_font *font, table_otl *table, otl_subtable *_subtable, sds lookupName);
+bool consolidate_gpos_pair(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName);
 
 #endif

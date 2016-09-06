@@ -1,5 +1,5 @@
-#ifndef CARYLL_CFF_FDSELECT_H
-#define CARYLL_CFF_FDSELECT_H
+#ifndef CARYLL_cff_FDSELECT_H
+#define CARYLL_cff_FDSELECT_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -10,39 +10,39 @@
 #include "cff-value.h"
 
 enum {
-	CFF_FDSELECT_FORMAT0,
-	CFF_FDSELECT_FORMAT3,
-	CFF_FDSELECT_UNSPECED,
+	cff_FDSELECT_FORMAT0,
+	cff_FDSELECT_FORMAT3,
+	cff_FDSELECT_UNSPECED,
 };
 
 typedef struct {
 	uint8_t format;
 	uint8_t *fds;
-} fdselect_f0;
+} cff_FDSelectFormat0;
 
 typedef struct {
 	uint16_t first;
 	uint8_t fd;
-} fdselect_range3;
+} cff_FDSelectRangeFormat3;
 
 typedef struct {
 	uint8_t format;
 	uint16_t nranges;
-	fdselect_range3 *range3;
+	cff_FDSelectRangeFormat3 *range3;
 	uint16_t sentinel;
-} fdselect_f3;
+} cff_FDSelectFormat3;
 
 typedef struct {
 	uint32_t t;
 	uint32_t s;
 	union {
-		fdselect_f0 f0;
-		fdselect_f3 f3;
+		cff_FDSelectFormat0 f0;
+		cff_FDSelectFormat3 f3;
 	};
-} CFF_FDSelect;
+} cff_FDSelect;
 
-void close_fdselect(CFF_FDSelect fds);
-caryll_buffer *compile_fdselect(CFF_FDSelect fd);
-void parse_fdselect(uint8_t *data, int32_t offset, uint16_t nchars, CFF_FDSelect *fdselect);
+void cff_close_FDSelect(cff_FDSelect fds);
+void cff_extract_FDSelect(uint8_t *data, int32_t offset, uint16_t nchars, cff_FDSelect *fdselect);
+caryll_buffer *cff_build_FDSelect(cff_FDSelect fd);
 
 #endif

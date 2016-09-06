@@ -1,17 +1,17 @@
 #include "gpos-common.h"
 
-void otl_delete_mark_array(otl_mark_array *array) {
+void otl_delete_mark_array(otl_MarkArray *array) {
 	if (array) {
 		if (array->records) free(array->records);
 		free(array);
 	};
 }
-otl_anchor otl_anchor_absent() {
-	otl_anchor anchor = {.present = false, .x = 0, .y = 0};
+otl_Anchor otl_anchor_absent() {
+	otl_Anchor anchor = {.present = false, .x = 0, .y = 0};
 	return anchor;
 }
-otl_anchor otl_read_anchor(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_anchor anchor = {.present = false, .x = 0, .y = 0};
+otl_Anchor otl_read_anchor(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_Anchor anchor = {.present = false, .x = 0, .y = 0};
 	checkLength(offset + 6);
 	anchor.present = true;
 	anchor.x = read_16s(data + offset + 2);
@@ -23,7 +23,7 @@ FAIL:
 	anchor.y = 0;
 	return anchor;
 }
-json_value *otl_anchor_to_json(otl_anchor a) {
+json_value *otl_dump_anchor(otl_Anchor a) {
 	if (a.present) {
 		json_value *v = json_object_new(2);
 		json_object_push(v, "x", json_integer_new(a.x));
@@ -33,8 +33,8 @@ json_value *otl_anchor_to_json(otl_anchor a) {
 		return json_null_new();
 	}
 }
-otl_anchor otl_anchor_from_json(json_value *v) {
-	otl_anchor anchor = {.present = false, .x = 0, .y = 0};
+otl_Anchor otl_parse_anchor(json_value *v) {
+	otl_Anchor anchor = {.present = false, .x = 0, .y = 0};
 	if (!v || v->type != json_object) return anchor;
 	anchor.present = true;
 	anchor.x = json_obj_getnum_fallback(v, "x", 0);
@@ -42,8 +42,8 @@ otl_anchor otl_anchor_from_json(json_value *v) {
 	return anchor;
 }
 
-otl_mark_array *otl_read_mark_array(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_mark_array *array = NULL;
+otl_MarkArray *otl_read_mark_array(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	otl_MarkArray *array = NULL;
 	NEW(array);
 	checkLength(offset + 2);
 	array->markCount = read_16u(data + offset);
@@ -66,9 +66,9 @@ FAIL:
 	return NULL;
 }
 
-caryll_bkblock *bkFromAnchor(otl_anchor a) {
+bk_Block *bkFromAnchor(otl_Anchor a) {
 	if (!a.present) return NULL;
-	return new_bkblock(b16, 1,   // format
+	return bk_new_Block(b16, 1,   // format
 	                   b16, a.x, // x
 	                   b16, a.y, // y
 	                   bkover);
@@ -94,13 +94,13 @@ const uint8_t bits_in[0x100] = {d(0)};
 uint8_t position_format_length(uint16_t format) {
 	return bits_in[format & 0xFF] << 1;
 }
-otl_position_value position_zero() {
-	otl_position_value v = {0, 0, 0, 0};
+otl_PositionValue position_zero() {
+	otl_PositionValue v = {0, 0, 0, 0};
 	return v;
 }
 // Read a position value from SFNT
-otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset, uint16_t format) {
-	otl_position_value v = {0, 0, 0, 0};
+otl_PositionValue read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset, uint16_t format) {
+	otl_PositionValue v = {0, 0, 0, 0};
 	if (tableLength < offset + position_format_length(format)) return v;
 	if (format & FORMAT_DX) { v.dx = read_16u(data + offset), offset += 2; };
 	if (format & FORMAT_DY) { v.dy = read_16u(data + offset), offset += 2; };
@@ -108,7 +108,7 @@ otl_position_value read_gpos_value(font_file_pointer data, uint32_t tableLength,
 	if (format & FORMAT_DHEIGHT) { v.dHeight = read_16u(data + offset), offset += 2; };
 	return v;
 }
-json_value *gpos_value_to_json(otl_position_value value) {
+json_value *gpos_dump_value(otl_PositionValue value) {
 	json_value *v = json_object_new(4);
 	if (value.dx) json_object_push(v, "dx", json_integer_new(value.dx));
 	if (value.dy) json_object_push(v, "dy", json_integer_new(value.dy));
@@ -116,8 +116,8 @@ json_value *gpos_value_to_json(otl_position_value value) {
 	if (value.dHeight) json_object_push(v, "dHeight", json_integer_new(value.dHeight));
 	return preserialize(v);
 }
-otl_position_value gpos_value_from_json(json_value *pos) {
-	otl_position_value v = {0, 0, 0, 0};
+otl_PositionValue gpos_parse_value(json_value *pos) {
+	otl_PositionValue v = {0, 0, 0, 0};
 	if (!pos || pos->type != json_object) return v;
 	v.dx = json_obj_getnum(pos, "dx");
 	v.dy = json_obj_getnum(pos, "dy");
@@ -126,31 +126,23 @@ otl_position_value gpos_value_from_json(json_value *pos) {
 	return v;
 }
 // The required format of a position value
-uint8_t required_position_format(otl_position_value v) {
+uint8_t required_position_format(otl_PositionValue v) {
 	return (v.dx ? FORMAT_DX : 0) | (v.dy ? FORMAT_DY : 0) | (v.dWidth ? FORMAT_DWIDTH : 0) |
 	       (v.dHeight ? FORMAT_DHEIGHT : 0);
 }
 // Write gpos position value
-void write_gpos_value(caryll_buffer *buf, otl_position_value v, uint16_t format) {
+void write_gpos_value(caryll_buffer *buf, otl_PositionValue v, uint16_t format) {
 	if (format & FORMAT_DX) bufwrite16b(buf, v.dx);
 	if (format & FORMAT_DY) bufwrite16b(buf, v.dy);
 	if (format & FORMAT_DWIDTH) bufwrite16b(buf, v.dWidth);
 	if (format & FORMAT_DHEIGHT) bufwrite16b(buf, v.dHeight);
 }
 
-caryll_bkblock *bk_gpos_value(otl_position_value v, uint16_t format) {
-	caryll_bkblock *b = new_bkblock(bkover);
-	if (format & FORMAT_DX) bkblock_push(b, b16, v.dx, bkover);
-	if (format & FORMAT_DY) bkblock_push(b, b16, v.dy, bkover);
-	if (format & FORMAT_DWIDTH) bkblock_push(b, b16, v.dWidth, bkover);
-	if (format & FORMAT_DHEIGHT) bkblock_push(b, b16, v.dHeight, bkover);
+bk_Block *bk_gpos_value(otl_PositionValue v, uint16_t format) {
+	bk_Block *b = bk_new_Block(bkover);
+	if (format & FORMAT_DX) bk_push(b, b16, v.dx, bkover);
+	if (format & FORMAT_DY) bk_push(b, b16, v.dy, bkover);
+	if (format & FORMAT_DWIDTH) bk_push(b, b16, v.dWidth, bkover);
+	if (format & FORMAT_DHEIGHT) bk_push(b, b16, v.dHeight, bkover);
 	return b;
-}
-
-// Anchor functions
-int getPositon(otl_anchor anchor) {
-	return ((uint16_t)anchor.x) << 16 | ((uint16_t)anchor.y);
-}
-int byAnchorIndex(anchor_aggeration_hash *a, anchor_aggeration_hash *b) {
-	return a->index - b->index;
 }

@@ -221,7 +221,7 @@ char *op_cs2_name(uint32_t op) {
 	}
 }
 
-uint8_t cs2_op_standard_arity(uint32_t op) {
+uint8_t cff_getStandardArity(uint32_t op) {
 	switch (op) {
 		case op_rlineto:
 		case op_rmoveto:

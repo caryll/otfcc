@@ -13,17 +13,17 @@
 
 #include "libcff.h"
 
-static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
+static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 	uint8_t *data = cff->raw_data;
 
-	if (offset == CFF_ENC_STANDARD)
-		enc->t = CFF_ENC_STANDARD;
-	else if (offset == CFF_ENC_EXPERT)
-		enc->t = CFF_ENC_EXPERT;
+	if (offset == cff_ENC_STANDARD)
+		enc->t = cff_ENC_STANDARD;
+	else if (offset == cff_ENC_EXPERT)
+		enc->t = cff_ENC_EXPERT;
 	else {
 		switch (data[offset]) {
 			case 0:
-				enc->t = CFF_ENC_FORMAT0;
+				enc->t = cff_ENC_FORMAT0;
 				{
 					enc->f0.format = 0;
 					enc->f0.ncodes = data[offset + 1];
@@ -34,11 +34,11 @@ static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 				}
 				break;
 			case 1:
-				enc->t = CFF_ENC_FORMAT1;
+				enc->t = cff_ENC_FORMAT1;
 				{
 					enc->f1.format = 1;
 					enc->f1.nranges = data[offset + 1];
-					enc->f1.range1 = calloc(enc->f1.nranges, sizeof(enc_range1));
+					enc->f1.range1 = calloc(enc->f1.nranges, sizeof(cff_EncodingRangeFormat1));
 
 					for (uint32_t i = 0; i < enc->f1.nranges; i++)
 						enc->f1.range1[i].first = data[offset + 2 + i * 2],
@@ -46,10 +46,10 @@ static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 				}
 				break;
 			default:
-				enc->t = CFF_ENC_FORMAT_SUPPLEMENT;
+				enc->t = cff_ENC_FORMAT_SUPPLEMENT;
 				{
 					enc->ns.nsup = data[offset];
-					enc->ns.supplement = calloc(enc->ns.nsup, sizeof(enc_supplement));
+					enc->ns.supplement = calloc(enc->ns.nsup, sizeof(cff_EncodingSupplement));
 
 					for (uint32_t i = 0; i < enc->ns.nsup; i++)
 						enc->ns.supplement[i].code = data[offset + 1 + i * 3],
@@ -60,7 +60,7 @@ static void parse_encoding(CFF_File *cff, int32_t offset, CFF_Encoding *enc) {
 	}
 }
 
-static void parse_cff_bytecode(CFF_File *cff) {
+static void parse_cff_bytecode(cff_File *cff) {
 	uint32_t pos;
 	int32_t offset;
 
@@ -72,79 +72,79 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 	/* Name INDEX */
 	pos = cff->head.hdrSize;
-	parse_index(cff->raw_data, pos, &cff->name);
+	cff_extract_Index(cff->raw_data, pos, &cff->name);
 
 	/* Top Dict INDEX */
-	pos = 4 + count_index(cff->name);
-	parse_index(cff->raw_data, pos, &cff->top_dict);
+	pos = 4 + cff_lengthOfIndex(cff->name);
+	cff_extract_Index(cff->raw_data, pos, &cff->top_dict);
 
 	/** LINT CFF FONTSET **/
 	if (cff->name.count != cff->top_dict.count)
 		fprintf(stderr, "[libcff] Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count, cff->top_dict.count);
 
 	/* String INDEX */
-	pos = 4 + count_index(cff->name) + count_index(cff->top_dict);
-	parse_index(cff->raw_data, pos, &cff->string);
+	pos = 4 + cff_lengthOfIndex(cff->name) + cff_lengthOfIndex(cff->top_dict);
+	cff_extract_Index(cff->raw_data, pos, &cff->string);
 
 	/* Global Subr INDEX */
-	pos = 4 + count_index(cff->name) + count_index(cff->top_dict) + count_index(cff->string);
-	parse_index(cff->raw_data, pos, &cff->global_subr);
+	pos = 4 + cff_lengthOfIndex(cff->name) + cff_lengthOfIndex(cff->top_dict) + cff_lengthOfIndex(cff->string);
+	cff_extract_Index(cff->raw_data, pos, &cff->global_subr);
 
 	if (cff->top_dict.data != NULL) {
 		int32_t offset;
 
-		// cff->topdict.dict = calloc(1, sizeof(CFF_Dict));
-		// cff->topdict.dict = parse_dict(cff->top_dict.data, cff->top_dict.offset[1] -
+		// cff->topdict.dict = calloc(1, sizeof(cff_Dict));
+		// cff->topdict.dict = cff_extract_Dict(cff->top_dict.data, cff->top_dict.offset[1] -
 		// cff->top_dict.offset[0]);
 
 		/* CharStrings INDEX */
 		offset =
-		    parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_CharStrings, 0).i;
+		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_CharStrings, 0).i;
 
 		if (offset != -1) {
-			parse_index(cff->raw_data, offset, &cff->char_strings);
+			cff_extract_Index(cff->raw_data, offset, &cff->char_strings);
 			cff->cnt_glyph = cff->char_strings.count;
 		} else {
-			empty_index(&cff->char_strings);
+			cff_empty_Index(&cff->char_strings);
 			fprintf(stderr, "[libcff] Bad CFF font: no any glyph data.\n");
 		}
 
 		/* Encodings */
 		offset =
-		    parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Encoding, 0).i;
+		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Encoding, 0).i;
 
 		if (offset != -1) {
 			parse_encoding(cff, offset, &cff->encodings);
 		} else {
-			cff->encodings.t = CFF_ENC_UNSPECED;
+			cff->encodings.t = cff_ENC_UNSPECED;
 		}
 
 		/* Charsets */
-		offset = parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_charset, 0).i;
+		offset = cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_charset, 0).i;
 
 		if (offset != -1) {
-			parse_charset(cff->raw_data, offset, cff->char_strings.count, &cff->charsets);
+			cff_extract_Charset(cff->raw_data, offset, cff->char_strings.count, &cff->charsets);
 		} else {
-			cff->charsets.t = CFF_CHARSET_UNSPECED;
+			cff->charsets.t = cff_CHARSET_UNSPECED;
 		}
 
 		/* FDSelect */
 		offset =
-		    parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDSelect, 0).i;
+		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDSelect, 0).i;
 
 		if (offset != -1) {
-			parse_fdselect(cff->raw_data, offset, cff->char_strings.count, &cff->fdselect);
+			cff_extract_FDSelect(cff->raw_data, offset, cff->char_strings.count, &cff->fdselect);
 		} else {
-			cff->fdselect.t = CFF_FDSELECT_UNSPECED;
+			cff->fdselect.t = cff_FDSELECT_UNSPECED;
 		}
 
 		/* Font Dict INDEX */
-		offset = parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDArray, 0).i;
+		offset = cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDArray, 0).i;
 
 		if (offset != -1) {
-			parse_index(cff->raw_data, offset, &cff->font_dict);
+			cff_extract_Index(cff->raw_data, offset, &cff->font_dict);
 		} else {
-			empty_index(&cff->font_dict);
+			cff_empty_Index(&cff->font_dict);
 		}
 	}
 
@@ -155,25 +155,25 @@ static void parse_cff_bytecode(CFF_File *cff) {
 
 		if (cff->top_dict.data != NULL) {
 			private_len =
-			    parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0).i;
+			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0).i;
 			private_off =
-			    parse_dict_key(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1).i;
+			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1).i;
 		}
 
 		if (private_off != -1 && private_len != -1) {
-			offset = parse_dict_key(cff->raw_data + private_off, private_len, op_Subrs, 0).i;
+			offset = cff_parseDictKey(cff->raw_data + private_off, private_len, op_Subrs, 0).i;
 
 			if (offset != -1)
-				parse_index(cff->raw_data, private_off + offset, &cff->local_subr);
+				cff_extract_Index(cff->raw_data, private_off + offset, &cff->local_subr);
 			else
-				empty_index(&cff->local_subr);
+				cff_empty_Index(&cff->local_subr);
 		} else
-			empty_index(&cff->local_subr);
+			cff_empty_Index(&cff->local_subr);
 	}
 }
 
-CFF_File *CFF_stream_open(uint8_t *data, uint32_t len) {
-	CFF_File *file = calloc(1, sizeof(CFF_File));
+cff_File *cff_openStream(uint8_t *data, uint32_t len) {
+	cff_File *file = calloc(1, sizeof(cff_File));
 
 	file->raw_data = calloc(len, sizeof(uint8_t));
 	memcpy(file->raw_data, data, len);
@@ -184,78 +184,78 @@ CFF_File *CFF_stream_open(uint8_t *data, uint32_t len) {
 	return file;
 }
 
-void CFF_close(CFF_File *file) {
+void cff_close(cff_File *file) {
 	if (file != NULL) {
 		if (file->raw_data != NULL) free(file->raw_data);
 
-		esrap_index(file->name);
-		esrap_index(file->top_dict);
-		esrap_index(file->string);
-		esrap_index(file->global_subr);
-		esrap_index(file->char_strings);
-		esrap_index(file->font_dict);
-		esrap_index(file->local_subr);
+		cff_close_Index(file->name);
+		cff_close_Index(file->top_dict);
+		cff_close_Index(file->string);
+		cff_close_Index(file->global_subr);
+		cff_close_Index(file->char_strings);
+		cff_close_Index(file->font_dict);
+		cff_close_Index(file->local_subr);
 
 		switch (file->encodings.t) {
-			case CFF_ENC_STANDARD:
-			case CFF_ENC_EXPERT:
-			case CFF_ENC_UNSPECED:
+			case cff_ENC_STANDARD:
+			case cff_ENC_EXPERT:
+			case cff_ENC_UNSPECED:
 				break;
-			case CFF_ENC_FORMAT0:
+			case cff_ENC_FORMAT0:
 				if (file->encodings.f0.code != NULL) free(file->encodings.f0.code);
 				break;
-			case CFF_ENC_FORMAT1:
+			case cff_ENC_FORMAT1:
 				if (file->encodings.f1.range1 != NULL) free(file->encodings.f1.range1);
 				break;
-			case CFF_ENC_FORMAT_SUPPLEMENT:
+			case cff_ENC_FORMAT_SUPPLEMENT:
 				if (file->encodings.ns.supplement != NULL) free(file->encodings.ns.supplement);
 				break;
 		}
 
-		close_charset(file->charsets);
-		close_fdselect(file->fdselect);
+		cff_close_Charset(file->charsets);
+		cff_close_FDSelect(file->fdselect);
 
 		free(file);
 	}
 }
 
-uint8_t parse_subr(uint16_t idx, uint8_t *raw, CFF_Index fdarray, CFF_FDSelect select, CFF_Index *subr) {
+uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelect select, cff_Index *subr) {
 	uint8_t fd = 0;
 	int32_t off_private, len_private;
 	int32_t off_subr;
 
 	switch (select.t) {
-		case CFF_FDSELECT_FORMAT0:
+		case cff_FDSELECT_FORMAT0:
 			fd = select.f0.fds[idx];
 			break;
-		case CFF_FDSELECT_FORMAT3:
+		case cff_FDSELECT_FORMAT3:
 			for (int i = 0; i < select.f3.nranges - 1; i++)
 				if (idx >= select.f3.range3[i].first && idx < select.f3.range3[i + 1].first)
 					fd = select.f3.range3[i].fd;
 			if (idx >= select.f3.range3[select.f3.nranges - 1].first && idx < select.f3.sentinel)
 				fd = select.f3.range3[select.f3.nranges - 1].fd;
 			break;
-		case CFF_FDSELECT_UNSPECED:
+		case cff_FDSELECT_UNSPECED:
 			fd = 0;
 			break;
 	}
 
-	off_private = parse_dict_key(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
+	off_private = cff_parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
 	                             op_Private, 1)
 	                  .i;
-	len_private = parse_dict_key(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
+	len_private = cff_parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
 	                             op_Private, 0)
 	                  .i;
 
 	if (off_private != -1 && len_private != -1) {
-		off_subr = parse_dict_key(raw + off_private, len_private, op_Subrs, 0).i;
+		off_subr = cff_parseDictKey(raw + off_private, len_private, op_Subrs, 0).i;
 
 		if (off_subr != -1)
-			parse_index(raw, off_private + off_subr, subr);
+			cff_extract_Index(raw, off_private + off_subr, subr);
 		else
-			empty_index(subr);
+			cff_empty_Index(subr);
 	} else
-		empty_index(subr);
+		cff_empty_Index(subr);
 
 	return fd;
 }
@@ -273,11 +273,11 @@ static inline uint16_t compute_subr_bias(uint16_t cnt) {
   CharString program:
     w? {hs* vs* cm* hm* mt subpath}? {mt subpath}* endchar
 */
-static void reverseStack(CFF_Stack *stack, uint8_t left, uint8_t right) {
-	CFF_Value *p1 = stack->stack + left;
-	CFF_Value *p2 = stack->stack + right;
+static void reverseStack(cff_Stack *stack, uint8_t left, uint8_t right) {
+	cff_Value *p1 = stack->stack + left;
+	cff_Value *p2 = stack->stack + right;
 	while (p1 < p2) {
-		CFF_Value temp = *p1;
+		cff_Value temp = *p1;
 		*p1 = *p2;
 		*p2 = temp;
 		p1++;
@@ -304,13 +304,13 @@ static double callback_nopgetrand(void *context) {
 			break;                                                                                                     \
 		}                                                                                                              \
 	}
-void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_Index lsubr, CFF_Stack *stack,
-                            void *outline, cff_outline_builder_interface methods) {
+void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack,
+                            void *outline, cff_IOutlineBuilder methods) {
 	uint16_t gsubr_bias = compute_subr_bias(gsubr.count);
 	uint16_t lsubr_bias = compute_subr_bias(lsubr.count);
 	uint8_t *start = data;
 	uint32_t advance, i, cnt_bezier;
-	CFF_Value val;
+	cff_Value val;
 
 	void (*setWidth)(void *context, float width) = methods.setWidth;
 	void (*newContour)(void *context) = methods.newContour;
@@ -329,7 +329,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_In
 	if (!getrand) getrand = callback_nopgetrand;
 
 	while (start < data + len) {
-		advance = decode_cs2_token(start, &val);
+		advance = cff_decodeCS2Token(start, &val);
 
 		switch (val.t) {
 			case CS2_OPERATOR:
@@ -701,7 +701,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_In
 					case op_random: {
 						// Chosen from a fair dice
 						// TODO: use a real randomizer
-						stack->stack[stack->index].t = CFF_DOUBLE;
+						stack->stack[stack->index].t = cff_DOUBLE;
 						stack->stack[stack->index].d = getrand(outline);
 						stack->index += 1;
 						break;
@@ -763,7 +763,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_In
 					case op_callsubr: {
 						CHECK_STACK_TOP(op_callsubr, 1);
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
-						parse_outline_callback(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
+						cff_parseOutline(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
 						                       lsubr.offset[lsubr_bias + subr + 1] - lsubr.offset[lsubr_bias + subr],
 						                       gsubr, lsubr, stack, outline, methods);
 						break;
@@ -771,7 +771,7 @@ void parse_outline_callback(uint8_t *data, uint32_t len, CFF_Index gsubr, CFF_In
 					case op_callgsubr: {
 						CHECK_STACK_TOP(op_callgsubr, 1);
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
-						parse_outline_callback(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
+						cff_parseOutline(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
 						                       gsubr.offset[gsubr_bias + subr + 1] - gsubr.offset[gsubr_bias + subr],
 						                       gsubr, lsubr, stack, outline, methods);
 						break;

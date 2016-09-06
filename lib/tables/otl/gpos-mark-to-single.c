@@ -1,10 +1,10 @@
 #include "gpos-mark-to-single.h"
 #include "gpos-common.h"
 
-static void delete_mtb_subtable(otl_subtable *_subtable) {
+void otl_delete_gpos_markToSingle(otl_Subtable *_subtable) {
 	if (_subtable) {
-		subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
-		if (subtable->marks) { caryll_delete_coverage(subtable->marks); }
+		subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
+		if (subtable->marks) { otl_delete_Coverage(subtable->marks); }
 		if (subtable->markArray) { otl_delete_mark_array(subtable->markArray); }
 		if (subtable->bases) {
 			if (subtable->baseArray) {
@@ -13,30 +13,19 @@ static void delete_mtb_subtable(otl_subtable *_subtable) {
 				}
 				free(subtable->baseArray);
 			}
-			caryll_delete_coverage(subtable->bases);
+			otl_delete_Coverage(subtable->bases);
 		}
 		free(_subtable);
 	}
 }
 
-void caryll_delete_gpos_mark_to_single(otl_lookup *lookup) {
-	if (lookup) {
-		if (lookup->subtables) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++)
-				delete_mtb_subtable(lookup->subtables[j]);
-			free(lookup->subtables);
-		}
-		free(lookup);
-	}
-}
-
-otl_subtable *caryll_read_gpos_mark_to_single(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
-	otl_subtable *_subtable;
+otl_Subtable *otl_read_gpos_markToSingle(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
+	otl_Subtable *_subtable;
 	NEW(_subtable);
-	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
+	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
 	if (tableLength < subtableOffset + 12) goto FAIL;
-	subtable->marks = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
-	subtable->bases = caryll_read_coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 4));
+	subtable->marks = otl_read_Coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
+	subtable->bases = otl_read_Coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 4));
 	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
 		goto FAIL;
 	subtable->classCount = read_16u(data + subtableOffset + 6);
@@ -65,13 +54,13 @@ otl_subtable *caryll_read_gpos_mark_to_single(font_file_pointer data, uint32_t t
 	}
 	goto OK;
 FAIL:
-	DELETE(delete_mtb_subtable, _subtable);
+	DELETE(otl_delete_gpos_markToSingle, _subtable);
 OK:
 	return _subtable;
 }
 
-json_value *caryll_gpos_mark_to_single_to_json(otl_subtable *st) {
-	subtable_gpos_mark_to_single *subtable = &(st->gpos_mark_to_single);
+json_value *otl_gpos_dump_markToSingle(otl_Subtable *st) {
+	subtable_gpos_markToSingle *subtable = &(st->gpos_markToSingle);
 	json_value *_subtable = json_object_new(3);
 	json_value *_marks = json_object_new(subtable->marks->numGlyphs);
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
@@ -108,7 +97,7 @@ typedef struct {
 	uint16_t classID;
 	UT_hash_handle hh;
 } classname_hash;
-static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtable, classname_hash **h) {
+static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable, classname_hash **h) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
 	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
@@ -144,7 +133,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_mark_to_single *subtabl
 		subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
 	}
 }
-static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtable, classname_hash **h) {
+static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable, classname_hash **h) {
 	uint16_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
@@ -170,22 +159,22 @@ static void parseBases(json_value *_bases, subtable_gpos_mark_to_single *subtabl
 				        className, gname);
 				goto NEXT;
 			}
-			subtable->baseArray[j][s->classID] = otl_anchor_from_json(baseRecord->u.object.values[k].value);
+			subtable->baseArray[j][s->classID] = otl_parse_anchor(baseRecord->u.object.values[k].value);
 		NEXT:
 			sdsfree(className);
 		}
 	}
 }
-otl_subtable *caryll_gpos_mark_to_single_from_json(json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_markToSingle(json_value *_subtable) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
-	otl_subtable *st;
+	otl_Subtable *st;
 	NEW(st);
 	classname_hash *h = NULL;
-	parseMarks(_marks, &(st->gpos_mark_to_single), &h);
-	st->gpos_mark_to_single.classCount = HASH_COUNT(h);
-	parseBases(_bases, &(st->gpos_mark_to_single), &h);
+	parseMarks(_marks, &(st->gpos_markToSingle), &h);
+	st->gpos_markToSingle.classCount = HASH_COUNT(h);
+	parseBases(_bases, &(st->gpos_markToSingle), &h);
 
 	classname_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {
@@ -197,35 +186,35 @@ otl_subtable *caryll_gpos_mark_to_single_from_json(json_value *_subtable) {
 	return st;
 }
 
-caryll_buffer *caryll_write_gpos_mark_to_single(otl_subtable *_subtable) {
+caryll_buffer *caryll_build_gpos_markToSingle(otl_Subtable *_subtable) {
 
-	subtable_gpos_mark_to_single *subtable = &(_subtable->gpos_mark_to_single);
+	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
 
-	caryll_bkblock *root =
-	    new_bkblock(b16, 1,                                                               // format
-	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->marks)), // markCoverage
-	                p16, new_bkblock_from_buffer(caryll_write_coverage(subtable->bases)), // baseCoverage
+	bk_Block *root =
+	    bk_new_Block(b16, 1,                                                               // format
+	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage
+	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->bases)), // baseCoverage
 	                b16, subtable->classCount,                                            // classCont
 	                bkover);
 
-	caryll_bkblock *markArray = new_bkblock(b16, subtable->marks->numGlyphs, // markCount
+	bk_Block *markArray = bk_new_Block(b16, subtable->marks->numGlyphs, // markCount
 	                                        bkover);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
-		bkblock_push(markArray,                                                 // markArray item
+		bk_push(markArray,                                                 // markArray item
 		             b16, subtable->markArray->records[j].markClass,            // markClass
 		             p16, bkFromAnchor(subtable->markArray->records[j].anchor), // Anchor
 		             bkover);
 	}
 
-	caryll_bkblock *baseArray = new_bkblock(b16, subtable->bases->numGlyphs, // baseCount
+	bk_Block *baseArray = bk_new_Block(b16, subtable->bases->numGlyphs, // baseCount
 	                                        bkover);
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
-			bkblock_push(baseArray, p16, bkFromAnchor(subtable->baseArray[j][k]), bkover);
+			bk_push(baseArray, p16, bkFromAnchor(subtable->baseArray[j][k]), bkover);
 		}
 	}
 
-	bkblock_push(root, p16, markArray, p16, baseArray, bkover);
+	bk_push(root, p16, markArray, p16, baseArray, bkover);
 
-	return caryll_write_bk(root);
+	return bk_build_Block(root);
 }

@@ -17,8 +17,8 @@ typedef struct {
 	int16_t *topSideBearing;
 } table_vmtx;
 
-table_vmtx *caryll_read_vmtx(caryll_packet packet, table_vhea *vhea, table_maxp *maxp);
-void caryll_delete_vmtx(table_vmtx *table);
-caryll_buffer *caryll_write_vmtx(table_vmtx *table, uint16_t count_a, uint16_t count_k, const caryll_options *options);
+table_vmtx *table_read_vmtx(caryll_Packet packet, table_vhea *vhea, table_maxp *maxp);
+void table_delete_vmtx(table_vmtx *table);
+caryll_buffer *table_build_vmtx(table_vmtx *table, uint16_t count_a, uint16_t count_k, const caryll_Options *options);
 
 #endif

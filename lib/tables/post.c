@@ -3,12 +3,12 @@
 // clang-format off
 const char *standardMacNames[258] = {".notdef", ".null", "nonmarkingreturn", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis", "Aring", "Ccedilla", "Eacute", "Ntilde", "Odieresis", "Udieresis", "aacute", "agrave", "acircumflex", "adieresis", "atilde", "aring", "ccedilla", "eacute", "egrave", "ecircumflex", "edieresis", "iacute", "igrave", "icircumflex", "idieresis", "ntilde", "oacute", "ograve", "ocircumflex", "odieresis", "otilde", "uacute", "ugrave", "ucircumflex", "udieresis", "dagger", "degree", "cent", "sterling", "section", "bullet", "paragraph", "germandbls", "registered", "copyright", "trademark", "acute", "dieresis", "notequal", "AE", "Oslash", "infinity", "plusminus", "lessequal", "greaterequal", "yen", "mu", "partialdiff", "summation", "product", "pi", "integral", "ordfeminine", "ordmasculine", "Omega", "ae", "oslash", "questiondown", "exclamdown", "logicalnot", "radical", "florin", "approxequal", "Delta", "guillemotleft", "guillemotright", "ellipsis", "nonbreakingspace", "Agrave", "Atilde", "Otilde", "OE", "oe", "endash", "emdash", "quotedblleft", "quotedblright", "quoteleft", "quoteright", "divide", "lozenge", "ydieresis", "Ydieresis", "fraction", "currency", "guilsinglleft", "guilsinglright", "fi", "fl", "daggerdbl", "periodcentered", "quotesinglbase", "quotedblbase", "perthousand", "Acircumflex", "Ecircumflex", "Aacute", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Oacute", "Ocircumflex", "apple", "Ograve", "Uacute", "Ucircumflex", "Ugrave", "dotlessi", "circumflex", "tilde", "macron", "breve", "dotaccent", "ring", "cedilla", "hungarumlaut", "ogonek", "caron", "Lslash", "lslash", "Scaron", "scaron", "Zcaron", "zcaron", "brokenbar", "Eth", "eth", "Yacute", "yacute", "Thorn", "thorn", "minus", "multiply", "onesuperior", "twosuperior", "threesuperior", "onehalf", "onequarter", "threequarters", "franc", "Gbreve", "gbreve", "Idotaccent", "Scedilla", "scedilla", "Cacute", "cacute", "Ccaron", "ccaron", "dcroat"};
 // clang-format on
-table_post *caryll_new_post() {
+table_post *table_new_post() {
 	table_post *post = (table_post *)calloc(1, sizeof(table_post));
 	post->version = 0x30000;
 	return post;
 }
-table_post *caryll_read_post(caryll_packet packet) {
+table_post *table_read_post(caryll_Packet packet) {
 	FOR_TABLE('post', table) {
 		font_file_pointer data = table.data;
 
@@ -25,7 +25,7 @@ table_post *caryll_read_post(caryll_packet packet) {
 		post->post_name_map = NULL;
 		// Foamt 2 additional glyph names
 		if (post->version == 0x20000) {
-			glyph_order_hash *map;
+			glyphorder_Map *map;
 			NEW(map);
 			*map = NULL;
 
@@ -49,9 +49,9 @@ table_post *caryll_read_post(caryll_packet packet) {
 			for (uint16_t j = 0; j < numberGlyphs; j++) {
 				uint16_t nameMap = read_16u(data + 34 + 2 * j);
 				if (nameMap >= 258) { // Custom glyph name
-					try_name_glyph(map, j, sdsdup(pendingNames[nameMap - 258]));
+					glyphorder_tryAssignName(map, j, sdsdup(pendingNames[nameMap - 258]));
 				} else { // Standard Macintosh glyph name
-					try_name_glyph(map, j, sdsnew(standardMacNames[nameMap]));
+					glyphorder_tryAssignName(map, j, sdsnew(standardMacNames[nameMap]));
 				}
 			}
 			for (uint32_t j = 0; j < pendingNameIndex; j++) {
@@ -64,12 +64,12 @@ table_post *caryll_read_post(caryll_packet packet) {
 	return NULL;
 }
 
-void caryll_delete_post(table_post *table) {
-	if (table->post_name_map != NULL) { delete_glyph_order_map(table->post_name_map); }
+void table_delete_post(table_post *table) {
+	if (table->post_name_map != NULL) { glyphorder_deleteMap(table->post_name_map); }
 	free(table);
 }
 
-void caryll_post_to_json(table_post *table, json_value *root, const caryll_options *options) {
+void table_dump_post(table_post *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping post.\n");
 
@@ -85,8 +85,8 @@ void caryll_post_to_json(table_post *table, json_value *root, const caryll_optio
 	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
 	json_object_push(root, "post", post);
 }
-table_post *caryll_post_from_json(json_value *root, const caryll_options *options) {
-	table_post *post = caryll_new_post();
+table_post *table_parse_post(json_value *root, const caryll_Options *options) {
+	table_post *post = table_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
 		if (options->verbose) fprintf(stderr, "Parsing post.\n");
@@ -106,7 +106,7 @@ table_post *caryll_post_from_json(json_value *root, const caryll_options *option
 	}
 	return post;
 }
-caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder, const caryll_options *options) {
+caryll_buffer *table_build_post(table_post *post, glyphorder_Map *glyphorder, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);
@@ -122,7 +122,7 @@ caryll_buffer *caryll_write_post(table_post *post, glyph_order_hash *glyphorder,
 		bufwrite16b(buf, HASH_COUNT(*glyphorder));
 		// Since the glyphorder is already sorted using the "real" glyph order
 		// we can simply write down the glyph names.
-		glyph_order_entry *s;
+		glyphorder_Entry *s;
 		foreach_hash(s, *glyphorder) {
 			bufwrite16b(buf, 258 + s->gid);
 		}

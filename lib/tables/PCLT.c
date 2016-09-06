@@ -1,6 +1,6 @@
 #include "PCLT.h"
 
-table_PCLT *caryll_read_PCLT(caryll_packet packet) {
+table_PCLT *caryll_read_PCLT(caryll_Packet packet) {
 	FOR_TABLE('PCLT', table) {
 		font_file_pointer data = table.data;
 

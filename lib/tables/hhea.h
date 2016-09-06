@@ -22,10 +22,10 @@ typedef struct {
 	uint16_t numberOfMetrics;
 } table_hhea;
 
-table_hhea *caryll_new_hhea();
-table_hhea *caryll_read_hhea(caryll_packet packet);
-void caryll_hhea_to_json(table_hhea *table, json_value *root, const caryll_options *options);
-table_hhea *caryll_hhea_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_hhea(table_hhea *hhea, const caryll_options *options);
+table_hhea *table_new_hhea();
+table_hhea *table_read_hhea(caryll_Packet packet);
+void table_dump_hhea(table_hhea *table, json_value *root, const caryll_Options *options);
+table_hhea *table_parse_hhea(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_hhea(table_hhea *hhea, const caryll_Options *options);
 
 #endif

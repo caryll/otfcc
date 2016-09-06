@@ -56,30 +56,43 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 ```
 Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
 
- input.json                : Path to input file. When absent the input will
-                             be read from the STDIN.
+ input.json                : Path to input file. When absent the input will be
+                             read from the STDIN.
+
  -h, --help                : Display this help message and exit.
  -v, --version             : Display version information and exit.
  -o <file>                 : Set output file path to <file>.
+ -s, --dummy-dsig          : Include an empty DSIG table in the font. For some
+                             Microsoft applications, DSIG is required to enable
+                             OpenType features.
+ -O<n>                     : Specify the level for optimization.
+     -O0                     Turn off any optimization.
+     -O1                     Default optimization.
+     -O2                     More aggressive optimizations for web font. In this
+                             level, the following options will be set:
+                               --ignore-glyph-order
+                               --short-post
+                               --merge-features
  --time                    : Time each substep.
- --ignore-glyph-order      : Ignore the glyph order information in the input.
+ --verbose                 : Show more information when building.
+
  --ignore-hints            : Ignore the hinting information in the input.
  --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input
                              instead of stating the average width of glyphs.
                              Useful when creating a monospaced font.
- --keep-modified-time      : Keep the head.modified time in the json, instead
-                             of using current time.
- --short-post              : Don't export glyph names in the result font. It
-                             will reduce file size.
- --dummy-dsig, -s          : Include an empty DSIG table in the font. For
-                             some Microsoft applications, a DSIG is required
-                             to enable OpenType features.
- -O<n>                     : Specify the level for optimization.
-     -O0                     Turn off any optimization.
-     -O1                     Default optimization.
-     -O2                     More aggressive optimizations for web font. In
-                             this level, the --ignore-glyph-order and
-                             --short-post will be turned on.
+ --keep-unicode-ranges     : Keep the OS/2.ulUnicodeRange[1-4] as-is.
+ --keep-modified-time      : Keep the head.modified time in the json, instead of
+                             using current time.
+
+ --short-post              : Don't export glyph names in the result font.
+ --ignore-glyph-order      : Ignore the glyph order information in the input.
+ --keep-glyph-order        : Keep the glyph order information in the input.
+                             Use to preserve glyph order under -O2 and -O3.
+ --dont-ignore-glyph-order : Same as --keep-glyph-order.
+ --merge-features          : Merge duplicate OpenType feature definitions.
+ --dont-merge-features     : Keep duplicate OpenType feature definitions.
+ --merge-lookups           : Merge duplicate OpenType lookups.
+ --dont-merge-lookups      : Keep duplicate OpenType lookups.
 ```
 
 ## Building

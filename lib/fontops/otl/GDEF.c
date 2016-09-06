@@ -3,18 +3,18 @@
 typedef struct {
 	int gid;
 	sds name;
-	caret_value_record cr;
+	otl_CaretValueRecord cr;
 	UT_hash_handle hh;
 } GDEF_ligcaret_hash;
 static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) {
 	return a->gid - b->gid;
 }
-void consolidate_GDEF(caryll_font *font, table_GDEF *gdef, char *tableName) {
+void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, char *tableName) {
 	if (!font || !font->glyph_order || !gdef) return;
-	if (gdef->glyphClassDef) consolidate_classdef(font, gdef->glyphClassDef, tableName);
-	if (gdef->markAttachClassDef) consolidate_classdef(font, gdef->markAttachClassDef, tableName);
+	if (gdef->glyphClassDef) fontop_consolidateClassDef(font, gdef->glyphClassDef, tableName);
+	if (gdef->markAttachClassDef) fontop_consolidateClassDef(font, gdef->markAttachClassDef, tableName);
 	if (gdef->ligCarets) {
-		consolidate_coverage(font, gdef->ligCarets->coverage, tableName);
+		fontop_consolidateCoverage(font, gdef->ligCarets->coverage, tableName);
 		GDEF_ligcaret_hash *h = NULL;
 		for (uint16_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
 			GDEF_ligcaret_hash *s;
@@ -38,6 +38,7 @@ void consolidate_GDEF(caryll_font *font, table_GDEF *gdef, char *tableName) {
 		GDEF_ligcaret_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
+			gdef->ligCarets->coverage->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
 			gdef->ligCarets->coverage->glyphs[j].index = s->gid;
 			gdef->ligCarets->coverage->glyphs[j].name = s->name;
 			gdef->ligCarets->carets[j] = s->cr;

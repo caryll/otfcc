@@ -1,23 +1,23 @@
 #include "cff-index.h"
 // INDEX util functions
-CFF_Index *cff_index_init(void) {
-	CFF_Index *out = calloc(1, sizeof(CFF_Index));
+cff_Index *cff_new_Index(void) {
+	cff_Index *out = calloc(1, sizeof(cff_Index));
 	return out;
 }
 
-void esrap_index(CFF_Index in) {
+void cff_close_Index(cff_Index in) {
 	if (in.offset != NULL) free(in.offset);
 	if (in.data != NULL) free(in.data);
 }
 
-void empty_index(CFF_Index *in) {
+void cff_empty_Index(cff_Index *in) {
 	in->count = 0;
 	in->offSize = 0;
 	in->offset = NULL;
 	in->data = NULL;
 }
 
-void cff_index_fini(CFF_Index *out) {
+void cff_delete_Index(cff_Index *out) {
 	if (out != NULL) {
 		if (out->offset != NULL) free(out->offset);
 		if (out->data != NULL) free(out->data);
@@ -25,14 +25,14 @@ void cff_index_fini(CFF_Index *out) {
 	}
 }
 
-uint32_t count_index(CFF_Index i) {
+uint32_t cff_lengthOfIndex(cff_Index i) {
 	if (i.count != 0)
 		return 3 + (i.offset[i.count] - 1) + ((i.count + 1) * i.offSize);
 	else
 		return 3;
 }
 
-void parse_index(uint8_t *data, uint32_t pos, CFF_Index *in) {
+void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 	in->count = gu2(data, pos);
 	in->offSize = gu1(data, pos + 2);
 
@@ -64,8 +64,8 @@ void parse_index(uint8_t *data, uint32_t pos, CFF_Index *in) {
 	}
 }
 
-CFF_Index *cff_buildindex_callback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t)) {
-	CFF_Index *idx = cff_index_init();
+cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t)) {
+	cff_Index *idx = cff_new_Index();
 	idx->count = length;
 	NEW_N(idx->offset, idx->count + 1);
 	idx->offset[0] = 1;
@@ -91,7 +91,7 @@ CFF_Index *cff_buildindex_callback(void *context, uint32_t length, caryll_buffer
 	return idx;
 }
 
-caryll_buffer *compile_index(CFF_Index index) {
+caryll_buffer *cff_build_Index(cff_Index index) {
 	caryll_buffer *blob = bufnew();
 	uint32_t i;
 

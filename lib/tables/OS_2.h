@@ -47,10 +47,10 @@ typedef struct {
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
 
-table_OS_2 *caryll_new_OS_2();
-table_OS_2 *caryll_read_OS_2(caryll_packet packet);
-void caryll_OS_2_to_json(table_OS_2 *table, json_value *root, const caryll_options *options);
-table_OS_2 *caryll_OS_2_from_json(json_value *root, const caryll_options *options);
-caryll_buffer *caryll_write_OS_2(table_OS_2 *os_2, const caryll_options *options);
+table_OS_2 *table_new_OS_2();
+table_OS_2 *table_read_OS_2(caryll_Packet packet);
+void table_dump_OS_2(table_OS_2 *table, json_value *root, const caryll_Options *options);
+table_OS_2 *table_parse_OS_2(json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_OS_2(table_OS_2 *os_2, const caryll_Options *options);
 
 #endif

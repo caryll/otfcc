@@ -11,6 +11,7 @@ typedef struct {
 	bool has_vertical_metrics;
 	bool export_fdselect;
 	bool keep_average_char_width;
+	bool keep_unicode_ranges;
 	bool short_post;
 	bool dummy_DSIG;
 	bool keep_modified_time;
@@ -21,9 +22,9 @@ typedef struct {
 	bool merge_features;
 	char *glyph_name_prefix;
 	uint8_t optimize_level;
-} caryll_options;
+} caryll_Options;
 
-caryll_options *caryll_new_options();
-void caryll_delete_options(caryll_options *options);
+caryll_Options *options_new();
+void options_delete(caryll_Options *options);
 
 #endif
