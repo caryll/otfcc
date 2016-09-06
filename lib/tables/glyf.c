@@ -178,8 +178,8 @@ static glyf_Glyph *caryll_read_simple_glyph(font_file_pointer start, uint16_t nu
 	}
 	free(flags);
 	// turn deltas to absolute coordiantes
-	float cx = 0;
-	float cy = 0;
+	double cx = 0;
+	double cy = 0;
 	for (uint16_t j = 0; j < numberOfContours; j++) {
 		for (uint16_t k = 0; k < contours[j].pointsCount; k++) {
 			cx += contours[j].points[k].x;
@@ -239,10 +239,10 @@ static glyf_Glyph *caryll_read_composite_glyph(font_file_pointer start) {
 			y = read_8s(start + offset + 1);
 			offset += 2;
 		}
-		float a = 1.0;
-		float b = 0.0;
-		float c = 0.0;
-		float d = 1.0;
+		double a = 1.0;
+		double b = 0.0;
+		double c = 0.0;
+		double d = 1.0;
 		if (flags & WE_HAVE_A_SCALE) {
 			a = d = caryll_from_f2dot14(read_16s(start + offset));
 			offset += 2;
@@ -262,8 +262,8 @@ static glyf_Glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		g->references[j].b = b;
 		g->references[j].c = c;
 		g->references[j].d = d;
-		g->references[j].x = x;
-		g->references[j].y = y;
+		g->references[j].x = (double)x;
+		g->references[j].y = (double)y;
 		g->references[j].roundToGrid = !!(flags & ROUND_XY_TO_GRID);
 		g->references[j].useMyMetrics = !!(flags & USE_MY_METRICS);
 	}
@@ -421,8 +421,7 @@ static json_value *glyf_glyph_dump_stemdefs(glyf_PostscriptStemDef *stems, uint1
 	}
 	return a;
 }
-static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, uint16_t count, uint16_t nh,
-                                               uint16_t nv) {
+static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, uint16_t count, uint16_t nh, uint16_t nv) {
 	json_value *a = json_array_new(count);
 	for (uint16_t j = 0; j < count; j++) {
 		json_value *mask = json_object_new(3);
@@ -463,12 +462,12 @@ static json_value *glyf_dump_glyph(glyf_Glyph *g, const caryll_Options *options)
 	if (!options->ignore_hints && g->hintMasks && g->numberOfHintMasks) {
 		json_object_push(glyph, "hintMasks",
 		                 preserialize(glyf_glyph_dump_maskdefs(g->hintMasks, g->numberOfHintMasks, g->numberOfStemH,
-		                                                          g->numberOfStemV)));
+		                                                       g->numberOfStemV)));
 	}
 	if (!options->ignore_hints && g->contourMasks && g->numberOfContourMasks) {
 		json_object_push(glyph, "contourMasks",
 		                 preserialize(glyf_glyph_dump_maskdefs(g->contourMasks, g->numberOfContourMasks,
-		                                                          g->numberOfStemH, g->numberOfStemV)));
+		                                                       g->numberOfStemH, g->numberOfStemV)));
 	}
 	if (options->export_fdselect) { json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name)); }
 	if (g->yPel) { json_object_push(glyph, "LTSH_yPel", json_integer_new(g->yPel)); }
@@ -650,7 +649,7 @@ static void parse_masks(json_value *md, uint16_t *count, glyf_PostscriptHintMask
 }
 
 static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, glyphorder_Entry *order_entry,
-                                               const caryll_Options *options) {
+                                           const caryll_Options *options) {
 	glyf_Glyph *g = table_new_glyf_glyph();
 	g->name = sdsdup(order_entry->name);
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
@@ -662,10 +661,9 @@ static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, glyphorder_Ent
 		parse_ttinstr(json_obj_get(glyphdump, "instructions"), g, makeInstrsForGlyph, wrongInstrsForGlyph);
 		parse_stems(json_obj_get_type(glyphdump, "stemH", json_array), &g->numberOfStemH, &(g->stemH));
 		parse_stems(json_obj_get_type(glyphdump, "stemV", json_array), &g->numberOfStemV, &(g->stemV));
-		parse_masks(json_obj_get_type(glyphdump, "hintMasks", json_array), &(g->numberOfHintMasks),
-		                &(g->hintMasks));
+		parse_masks(json_obj_get_type(glyphdump, "hintMasks", json_array), &(g->numberOfHintMasks), &(g->hintMasks));
 		parse_masks(json_obj_get_type(glyphdump, "contourMasks", json_array), &(g->numberOfContourMasks),
-		                &(g->contourMasks));
+		            &(g->contourMasks));
 	}
 	// Glyph data of other tables
 	g->fdSelect = handle_fromName(json_obj_getsds(glyphdump, "CFF_fdSelect"));
@@ -820,10 +818,10 @@ static void glyf_build_composite(glyf_Glyph *g, caryll_buffer *gbuf) {
 		int16_t arg1 = r->x;
 		int16_t arg2 = r->y;
 		if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128)) flags |= ARG_1_AND_2_ARE_WORDS;
-		if (fabsf(r->b) > EPSILON || fabsf(r->c) > EPSILON) {
+		if (fabs(r->b) > EPSILON || fabs(r->c) > EPSILON) {
 			flags |= WE_HAVE_A_TWO_BY_TWO;
-		} else if (fabsf(r->a - 1) > EPSILON || fabsf(r->d - 1) > EPSILON) {
-			if (fabsf(r->a - r->d) > EPSILON) {
+		} else if (fabs(r->a - 1) > EPSILON || fabs(r->d - 1) > EPSILON) {
+			if (fabs(r->a - r->d) > EPSILON) {
 				flags |= WE_HAVE_AN_X_AND_Y_SCALE;
 			} else {
 				flags |= WE_HAVE_A_SCALE;
