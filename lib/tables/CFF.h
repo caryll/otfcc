@@ -14,38 +14,38 @@
 // and the CFF table contains CFF metadata only.
 
 typedef struct {
-	float a;
-	float b;
-	float c;
-	float d;
-	float x;
-	float y;
+	double a;
+	double b;
+	double c;
+	double d;
+	double x;
+	double y;
 } cff_FontMatrix;
 
 typedef struct {
 	uint16_t blueValuesCount;
-	float *blueValues;
+	double *blueValues;
 	uint16_t otherBluesCount;
-	float *otherBlues;
+	double *otherBlues;
 	uint16_t familyBluesCount;
-	float *familyBlues;
+	double *familyBlues;
 	uint16_t familyOtherBluesCount;
-	float *familyOtherBlues;
-	float blueScale;
-	float blueShift;
-	float blueFuzz;
-	float stdHW;
-	float stdVW;
+	double *familyOtherBlues;
+	double blueScale;
+	double blueShift;
+	double blueFuzz;
+	double stdHW;
+	double stdVW;
 	uint16_t stemSnapHCount;
-	float *stemSnapH;
+	double *stemSnapH;
 	uint16_t stemSnapVCount;
-	float *stemSnapV;
+	double *stemSnapV;
 	bool forceBold;
 	uint32_t languageGroup;
-	float expansionFactor;
-	float initialRandomSeed;
-	float defaultWidthX;
-	float nominalWidthX;
+	double expansionFactor;
+	double initialRandomSeed;
+	double defaultWidthX;
+	double nominalWidthX;
 } cff_PrivateDict;
 
 typedef struct _table_CFF table_CFF;
@@ -63,14 +63,14 @@ struct _table_CFF {
 	sds familyName;
 	sds weight;
 	bool isFixedPitch;
-	float italicAngle;
-	float underlinePosition;
-	float underlineThickness;
-	float fontBBoxTop;
-	float fontBBoxBottom;
-	float fontBBoxLeft;
-	float fontBBoxRight;
-	float strokeWidth;
+	double italicAngle;
+	double underlinePosition;
+	double underlineThickness;
+	double fontBBoxTop;
+	double fontBBoxBottom;
+	double fontBBoxLeft;
+	double fontBBoxRight;
+	double strokeWidth;
 	cff_PrivateDict *privateDict;
 	cff_FontMatrix *fontMatrix;
 
@@ -78,8 +78,8 @@ struct _table_CFF {
 	sds cidRegistry;
 	sds cidOrdering;
 	uint32_t cidSupplement;
-	float cidFontVersion;
-	float cidFontRevision;
+	double cidFontVersion;
+	double cidFontRevision;
 	uint32_t cidCount;
 	uint32_t UIDBase;
 	// CID FDArray

@@ -228,7 +228,8 @@ static void callback_extract_fd(uint32_t op, uint8_t top, cff_Value *stack, void
 				uint32_t privateLength = cffnum(stack[top - 2]);
 				uint32_t privateOffset = cffnum(stack[top - 1]);
 				meta->privateDict = table_new_cff_private();
-				cff_extract_DictByCallback(file->raw_data + privateOffset, privateLength, context,callback_extract_private);
+				cff_extract_DictByCallback(file->raw_data + privateOffset, privateLength, context,
+				                           callback_extract_private);
 			}
 			break;
 		// CID
@@ -412,15 +413,15 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0};
 	cff_IOutlineBuilder pass1 = {NULL, callback_count_contour, NULL, NULL, NULL, NULL, NULL};
 	cff_IOutlineBuilder pass2 = {NULL,
-	                                       callback_countpoint_next_contour,
-	                                       callback_countpoint_lineto,
-	                                       callback_countpoint_curveto,
-	                                       callback_countpoint_sethint,
-	                                       callback_countpoint_setmask,
-	                                       NULL};
+	                             callback_countpoint_next_contour,
+	                             callback_countpoint_lineto,
+	                             callback_countpoint_curveto,
+	                             callback_countpoint_sethint,
+	                             callback_countpoint_setmask,
+	                             NULL};
 	cff_IOutlineBuilder pass3 = {callback_draw_setwidth, callback_draw_next_contour, callback_draw_lineto,
-	                                       callback_draw_curveto,  callback_draw_sethint,      callback_draw_setmask,
-	                                       callback_draw_getrand};
+	                             callback_draw_curveto,  callback_draw_sethint,      callback_draw_setmask,
+	                             callback_draw_getrand};
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != cff_FDSELECT_UNSPECED)
@@ -559,8 +560,8 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 		context.meta = table_new_CFF();
 
 		// Extract data in TOP DICT
-		cff_extract_DictByCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0], &context,
-		                    callback_extract_fd);
+		cff_extract_DictByCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
+		                           &context, callback_extract_fd);
 
 		if (!context.meta->fontName) { context.meta->fontName = sdsget_cff_sid(391, cffFile->name); }
 
@@ -572,8 +573,8 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 				context.meta->fdArray[j] = table_new_CFF();
 				context.fdArrayIndex = j;
 				cff_extract_DictByCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
-				                    cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
-				                    callback_extract_fd);
+				                           cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
+				                           callback_extract_fd);
 				if (!context.meta->fdArray[j]->fontName) {
 					context.meta->fdArray[j]->fontName = sdscatprintf(sdsempty(), "_Subfont%d", j);
 				}
@@ -604,7 +605,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 	return ret;
 }
 
-static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
+static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, double *values) {
 	if (!count || !values) return;
 	json_value *a = json_array_new(count);
 	for (uint16_t j = 0; j < count; j++) {
@@ -697,7 +698,7 @@ void table_dump_cff(table_CFF *table, json_value *root, const caryll_Options *op
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
-static void pdDeltaFromJson(json_value *dump, uint16_t *count, float **array) {
+static void pdDeltaFromJson(json_value *dump, uint16_t *count, double **array) {
 	if (!dump || dump->type != json_array) return;
 	*count = dump->u.array.length;
 	NEW_N(*array, *count);
@@ -889,7 +890,7 @@ static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_
 	}
 	va_end(ap);
 }
-static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_t arity, float *arr) {
+static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_t arity, double *arr) {
 	if (!arity || !arr) return;
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;
