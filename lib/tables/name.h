@@ -3,6 +3,7 @@
 
 #include <support/util.h>
 #include <font/caryll-sfnt.h>
+#include <support/base64.h>
 
 typedef struct {
 	uint16_t platformID;

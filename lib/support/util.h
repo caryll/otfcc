@@ -5,6 +5,14 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
 #include "base64.h"
 #include "buffer.h"
 #include "options.h"
@@ -13,12 +21,6 @@
 #include <extern/json.h>
 #include <extern/sds.h>
 #include <extern/uthash.h>
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
@@ -29,7 +31,7 @@
 #define FOR_TABLE(name, table)                                                                                         \
 	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
 	     keep = !keep, count++)                                                                                        \
-		for (caryll_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                          \
+		for (caryll_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                    \
 			if (table.tag == (name))                                                                                   \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
@@ -304,20 +306,20 @@ static INLINE int64_t read_64s(uint8_t *src) {
 
 // f2dot14 type
 typedef int16_t f2dot14;
-static INLINE float caryll_from_f2dot14(int16_t x) {
+static INLINE double caryll_from_f2dot14(int16_t x) {
 	return x / 16384.0;
 }
-static INLINE int16_t caryll_to_f2dot14(float x) {
-	return x * 16384.0;
+static INLINE int16_t caryll_to_f2dot14(double x) {
+	return round(x * 16384.0);
 }
 
 // F16.16 (fixed) type
 typedef int32_t f16dot16;
-static INLINE float caryll_from_fixed(f16dot16 x) {
+static INLINE double caryll_from_fixed(f16dot16 x) {
 	return x / 65536.0;
 }
-static INLINE f16dot16 caryll_to_fixed(float x) {
-	return x * 65536.0;
+static INLINE f16dot16 caryll_to_fixed(double x) {
+	return round(x * 65536.0);
 }
 
 #include "handle.h"

@@ -1,9 +1,9 @@
 #include "CFF.h"
 
-const float DEFAULT_BLUE_SCALE = 0.039625;
-const float DEFAULT_BLUE_SHIFT = 7;
-const float DEFAULT_BLUE_FUZZ = 1;
-const float DEFAULT_EXPANSION_FACTOR = 0.06;
+const double DEFAULT_BLUE_SCALE = 0.039625;
+const double DEFAULT_BLUE_SHIFT = 7;
+const double DEFAULT_BLUE_FUZZ = 1;
+const double DEFAULT_EXPANSION_FACTOR = 0.06;
 
 static cff_PrivateDict *table_new_cff_private() {
 	cff_PrivateDict *pd = NULL;
@@ -228,7 +228,8 @@ static void callback_extract_fd(uint32_t op, uint8_t top, cff_Value *stack, void
 				uint32_t privateLength = cffnum(stack[top - 2]);
 				uint32_t privateOffset = cffnum(stack[top - 1]);
 				meta->privateDict = table_new_cff_private();
-				cff_extract_DictByCallback(file->raw_data + privateOffset, privateLength, context,callback_extract_private);
+				cff_extract_DictByCallback(file->raw_data + privateOffset, privateLength, context,
+				                           callback_extract_private);
 			}
 			break;
 		// CID
@@ -247,8 +248,8 @@ typedef struct {
 	glyf_Glyph *g;
 	uint16_t jContour;
 	uint16_t jPoint;
-	float defaultWidthX;
-	float nominalWidthX;
+	double defaultWidthX;
+	double nominalWidthX;
 	uint16_t pointsDefined;
 	uint8_t definedHStems;
 	uint8_t definedVStems;
@@ -266,21 +267,22 @@ static void callback_countpoint_next_contour(void *_context) {
 	context->g->contours[context->jContour - 1].pointsCount = 0;
 	context->jPoint = 0;
 }
-static void callback_countpoint_lineto(void *_context, float x1, float y1) {
+static void callback_countpoint_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].pointsCount += 1;
 		context->jPoint += 1;
 	}
 }
-static void callback_countpoint_curveto(void *_context, float x1, float y1, float x2, float y2, float x3, float y3) {
+static void callback_countpoint_curveto(void *_context, double x1, double y1, double x2, double y2, double x3,
+                                        double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].pointsCount += 3;
 		context->jPoint += 3;
 	}
 }
-static void callback_countpoint_sethint(void *_context, bool isVertical, float position, float width) {
+static void callback_countpoint_sethint(void *_context, bool isVertical, double position, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (isVertical) {
 		context->g->numberOfStemV += 1;
@@ -298,7 +300,7 @@ static void callback_countpoint_setmask(void *_context, bool isContourMask, bool
 	free(mask);
 }
 
-static void callback_draw_setwidth(void *_context, float width) {
+static void callback_draw_setwidth(void *_context, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	context->g->advanceWidth = width + context->nominalWidthX;
 }
@@ -307,7 +309,7 @@ static void callback_draw_next_contour(void *_context) {
 	context->jContour += 1;
 	context->jPoint = 0;
 }
-static void callback_draw_lineto(void *_context, float x1, float y1) {
+static void callback_draw_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].points[context->jPoint].onCurve = true;
@@ -317,7 +319,7 @@ static void callback_draw_lineto(void *_context, float x1, float y1) {
 		context->pointsDefined += 1;
 	}
 }
-static void callback_draw_curveto(void *_context, float x1, float y1, float x2, float y2, float x3, float y3) {
+static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2, double x3, double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].points[context->jPoint].onCurve = false;
@@ -333,7 +335,7 @@ static void callback_draw_curveto(void *_context, float x1, float y1, float x2, 
 		context->pointsDefined += 3;
 	}
 }
-static void callback_draw_sethint(void *_context, bool isVertical, float position, float width) {
+static void callback_draw_sethint(void *_context, bool isVertical, double position, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (isVertical) {
 		context->g->stemV[context->definedVStems].position = position;
@@ -412,15 +414,15 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0};
 	cff_IOutlineBuilder pass1 = {NULL, callback_count_contour, NULL, NULL, NULL, NULL, NULL};
 	cff_IOutlineBuilder pass2 = {NULL,
-	                                       callback_countpoint_next_contour,
-	                                       callback_countpoint_lineto,
-	                                       callback_countpoint_curveto,
-	                                       callback_countpoint_sethint,
-	                                       callback_countpoint_setmask,
-	                                       NULL};
+	                             callback_countpoint_next_contour,
+	                             callback_countpoint_lineto,
+	                             callback_countpoint_curveto,
+	                             callback_countpoint_sethint,
+	                             callback_countpoint_setmask,
+	                             NULL};
 	cff_IOutlineBuilder pass3 = {callback_draw_setwidth, callback_draw_next_contour, callback_draw_lineto,
-	                                       callback_draw_curveto,  callback_draw_sethint,      callback_draw_setmask,
-	                                       callback_draw_getrand};
+	                             callback_draw_curveto,  callback_draw_sethint,      callback_draw_setmask,
+	                             callback_draw_getrand};
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != cff_FDSELECT_UNSPECED)
@@ -471,13 +473,14 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 	g->numberOfHintMasks = bc.definedHintMasks;
 
 	// PASS 4 : Turn deltas into absolute coordinates
-	float cx = 0;
-	float cy = 0;
+	double cx = 0;
+	double cy = 0;
 	for (uint16_t j = 0; j < g->numberOfContours; j++) {
 		for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
 			cx += g->contours[j].points[k].x;
-			g->contours[j].points[k].x = cx;
 			cy += g->contours[j].points[k].y;
+
+			g->contours[j].points[k].x = cx;
 			g->contours[j].points[k].y = cy;
 		}
 	}
@@ -559,8 +562,8 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 		context.meta = table_new_CFF();
 
 		// Extract data in TOP DICT
-		cff_extract_DictByCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0], &context,
-		                    callback_extract_fd);
+		cff_extract_DictByCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
+		                           &context, callback_extract_fd);
 
 		if (!context.meta->fontName) { context.meta->fontName = sdsget_cff_sid(391, cffFile->name); }
 
@@ -572,8 +575,8 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 				context.meta->fdArray[j] = table_new_CFF();
 				context.fdArrayIndex = j;
 				cff_extract_DictByCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
-				                    cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
-				                    callback_extract_fd);
+				                           cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
+				                           callback_extract_fd);
 				if (!context.meta->fdArray[j]->fontName) {
 					context.meta->fdArray[j]->fontName = sdscatprintf(sdsempty(), "_Subfont%d", j);
 				}
@@ -604,7 +607,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 	return ret;
 }
 
-static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, float *values) {
+static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, double *values) {
 	if (!count || !values) return;
 	json_value *a = json_array_new(count);
 	for (uint16_t j = 0; j < count; j++) {
@@ -697,7 +700,7 @@ void table_dump_cff(table_CFF *table, json_value *root, const caryll_Options *op
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
-static void pdDeltaFromJson(json_value *dump, uint16_t *count, float **array) {
+static void pdDeltaFromJson(json_value *dump, uint16_t *count, double **array) {
 	if (!dump || dump->type != json_array) return;
 	*count = dump->u.array.length;
 	NEW_N(*array, *count);
@@ -754,16 +757,19 @@ static table_CFF *fdFromJson(json_value *dump) {
 	table->fontBBoxTop = json_obj_getnum(dump, "fontBBoxTop");
 
 	// fontMatrix
+	// Need?
+	/*
 	json_value *fmatdump = json_obj_get_type(dump, "fontMatrix", json_object);
 	if (fmatdump) {
-		NEW(table->fontMatrix);
-		table->fontMatrix->a = json_obj_getnum(fmatdump, "a");
-		table->fontMatrix->b = json_obj_getnum(fmatdump, "b");
-		table->fontMatrix->c = json_obj_getnum(fmatdump, "c");
-		table->fontMatrix->d = json_obj_getnum(fmatdump, "d");
-		table->fontMatrix->x = json_obj_getnum(fmatdump, "x");
-		table->fontMatrix->y = json_obj_getnum(fmatdump, "y");
+	    NEW(table->fontMatrix);
+	    table->fontMatrix->a = json_obj_getnum(fmatdump, "a");
+	    table->fontMatrix->b = json_obj_getnum(fmatdump, "b");
+	    table->fontMatrix->c = json_obj_getnum(fmatdump, "c");
+	    table->fontMatrix->d = json_obj_getnum(fmatdump, "d");
+	    table->fontMatrix->x = json_obj_getnum(fmatdump, "x");
+	    table->fontMatrix->y = json_obj_getnum(fmatdump, "y");
 	}
+	*/
 
 	// privates
 	table->privateDict = pdFromJson(json_obj_get_type(dump, "privates", json_object));
@@ -889,7 +895,7 @@ static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_
 	}
 	va_end(ap);
 }
-static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_t arity, float *arr) {
+static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_t arity, double *arr) {
 	if (!arity || !arr) return;
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;

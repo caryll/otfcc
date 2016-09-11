@@ -99,7 +99,8 @@ static void parse_cff_bytecode(cff_File *cff) {
 
 		/* CharStrings INDEX */
 		offset =
-		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_CharStrings, 0).i;
+		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_CharStrings, 0)
+		        .i;
 
 		if (offset != -1) {
 			cff_extract_Index(cff->raw_data, offset, &cff->char_strings);
@@ -120,7 +121,8 @@ static void parse_cff_bytecode(cff_File *cff) {
 		}
 
 		/* Charsets */
-		offset = cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_charset, 0).i;
+		offset =
+		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_charset, 0).i;
 
 		if (offset != -1) {
 			cff_extract_Charset(cff->raw_data, offset, cff->char_strings.count, &cff->charsets);
@@ -139,7 +141,8 @@ static void parse_cff_bytecode(cff_File *cff) {
 		}
 
 		/* Font Dict INDEX */
-		offset = cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDArray, 0).i;
+		offset =
+		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDArray, 0).i;
 
 		if (offset != -1) {
 			cff_extract_Index(cff->raw_data, offset, &cff->font_dict);
@@ -155,9 +158,11 @@ static void parse_cff_bytecode(cff_File *cff) {
 
 		if (cff->top_dict.data != NULL) {
 			private_len =
-			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0).i;
+			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0)
+			        .i;
 			private_off =
-			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1).i;
+			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1)
+			        .i;
 		}
 
 		if (private_off != -1 && private_len != -1) {
@@ -241,10 +246,10 @@ uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelec
 	}
 
 	off_private = cff_parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
-	                             op_Private, 1)
+	                               op_Private, 1)
 	                  .i;
 	len_private = cff_parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
-	                             op_Private, 0)
+	                               op_Private, 0)
 	                  .i;
 
 	if (off_private != -1 && len_private != -1) {
@@ -284,11 +289,11 @@ static void reverseStack(cff_Stack *stack, uint8_t left, uint8_t right) {
 		p2--;
 	}
 }
-static void callback_nopSetWidth(void *context, float width) {}
+static void callback_nopSetWidth(void *context, double width) {}
 static void callback_nopNewContour(void *context) {}
-static void callback_nopLineTo(void *context, float x1, float y1) {}
-static void callback_nopCurveTo(void *context, float x1, float y1, float x2, float y2, float x3, float y3) {}
-static void callback_nopsetHint(void *context, bool isVertical, float position, float width) {}
+static void callback_nopLineTo(void *context, double x1, double y1) {}
+static void callback_nopCurveTo(void *context, double x1, double y1, double x2, double y2, double x3, double y3) {}
+static void callback_nopsetHint(void *context, bool isVertical, double position, double width) {}
 static void callback_nopsetMask(void *context, bool isContourMask, bool *mask) {
 	FREE(mask);
 }
@@ -304,19 +309,19 @@ static double callback_nopgetrand(void *context) {
 			break;                                                                                                     \
 		}                                                                                                              \
 	}
-void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack,
-                            void *outline, cff_IOutlineBuilder methods) {
+void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack, void *outline,
+                      cff_IOutlineBuilder methods) {
 	uint16_t gsubr_bias = compute_subr_bias(gsubr.count);
 	uint16_t lsubr_bias = compute_subr_bias(lsubr.count);
 	uint8_t *start = data;
 	uint32_t advance, i, cnt_bezier;
 	cff_Value val;
 
-	void (*setWidth)(void *context, float width) = methods.setWidth;
+	void (*setWidth)(void *context, double width) = methods.setWidth;
 	void (*newContour)(void *context) = methods.newContour;
-	void (*lineTo)(void *context, float x1, float y1) = methods.lineTo;
-	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3) = methods.curveTo;
-	void (*setHint)(void *context, bool isVertical, float position, float width) = methods.setHint;
+	void (*lineTo)(void *context, double x1, double y1) = methods.lineTo;
+	void (*curveTo)(void *context, double x1, double y1, double x2, double y2, double x3, double y3) = methods.curveTo;
+	void (*setHint)(void *context, bool isVertical, double position, double width) = methods.setHint;
 	void (*setMask)(void *context, bool isContourMask, bool *mask) = methods.setMask;
 	double (*getrand)(void *context) = methods.getrand;
 
@@ -340,10 +345,10 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 					case op_vstemhm:
 						if (stack->index % 2) setWidth(outline, stack->stack[0].d);
 						stack->stem += stack->index >> 1;
-						float hintBase = 0;
+						double hintBase = 0;
 						for (uint16_t j = stack->index % 2; j < stack->index; j += 2) {
-							float pos = stack->stack[j].d;
-							float width = stack->stack[j + 1].d;
+							double pos = stack->stack[j].d;
+							double width = stack->stack[j + 1].d;
 							setHint(outline, (val.i == op_vstem || val.i == op_vstemhm), pos + hintBase, width);
 							hintBase += pos + width;
 						}
@@ -354,10 +359,10 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						if (stack->index % 2) setWidth(outline, stack->stack[0].d);
 						bool isVertical = stack->stem > 0;
 						stack->stem += stack->index >> 1;
-						float hintBase = 0;
+						double hintBase = 0;
 						for (uint16_t j = stack->index % 2; j < stack->index; j += 2) {
-							float pos = stack->stack[j].d;
-							float width = stack->stack[j + 1].d;
+							double pos = stack->stack[j].d;
+							double width = stack->stack[j + 1].d;
 							setHint(outline, isVertical, pos + hintBase, width);
 							hintBase += pos + width;
 						}
@@ -764,16 +769,16 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						CHECK_STACK_TOP(op_callsubr, 1);
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						cff_parseOutline(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
-						                       lsubr.offset[lsubr_bias + subr + 1] - lsubr.offset[lsubr_bias + subr],
-						                       gsubr, lsubr, stack, outline, methods);
+						                 lsubr.offset[lsubr_bias + subr + 1] - lsubr.offset[lsubr_bias + subr], gsubr,
+						                 lsubr, stack, outline, methods);
 						break;
 					}
 					case op_callgsubr: {
 						CHECK_STACK_TOP(op_callgsubr, 1);
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						cff_parseOutline(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
-						                       gsubr.offset[gsubr_bias + subr + 1] - gsubr.offset[gsubr_bias + subr],
-						                       gsubr, lsubr, stack, outline, methods);
+						                 gsubr.offset[gsubr_bias + subr + 1] - gsubr.offset[gsubr_bias + subr], gsubr,
+						                 lsubr, stack, outline, methods);
 						break;
 					}
 				}

@@ -1,5 +1,4 @@
 #include "unconsolidate.h"
-#include <support/aglfn.h>
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:
 //   1. Merge hmtx data into glyf
@@ -311,7 +310,36 @@ static void merge_LTSH(caryll_Font *font) {
 		}
 	}
 }
+static double qround(double x) {
+	return round(x * 65536.0) / (65536.0);
+}
+static void applyCffMatrix(caryll_Font *font) {
+	if (!font || !font->head || !font->glyf || !font->CFF_) return;
+	for (uint16_t jj = 0; jj < font->glyf->numberGlyphs; jj++) {
+		glyf_Glyph *g = font->glyf->glyphs[jj];
+		table_CFF *fd = font->CFF_;
+		if (fd->fdArray && g->fdSelect.index < fd->fdArrayCount) { fd = fd->fdArray[g->fdSelect.index]; }
+		if (fd->fontMatrix) {
+			double a = qround(font->head->unitsPerEm * fd->fontMatrix->a);
+			double b = qround(font->head->unitsPerEm * fd->fontMatrix->b);
+			double c = qround(font->head->unitsPerEm * fd->fontMatrix->c);
+			double d = qround(font->head->unitsPerEm * fd->fontMatrix->d);
+			double x = qround(font->head->unitsPerEm * fd->fontMatrix->x);
+			double y = qround(font->head->unitsPerEm * fd->fontMatrix->y);
+			for (uint16_t j = 0; j < g->numberOfContours; j++) {
+				for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
+					double zx = g->contours[j].points[k].x;
+					double zy = g->contours[j].points[k].y;
+					g->contours[j].points[k].x = a * zx + b * zy + x;
+					g->contours[j].points[k].y = c * zx + d * zy + y;
+				}
+			}
+		}
+	}
+}
 void caryll_font_unconsolidate(caryll_Font *font, const caryll_Options *options) {
+	// Apply CFF FontMatrix
+	applyCffMatrix(font);
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);

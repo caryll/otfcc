@@ -41,7 +41,7 @@ workspace "otfcc"
 		'_CARYLL_USE_PRE_SERIALIZED',
 		'MAIN_VER=0',
 		"SECONDARY_VER=3",
-		"PATCH_VER=3"
+		"PATCH_VER=4"
 	}
 	
 	location "build"
