@@ -543,6 +543,20 @@ void caryll_font_stat(caryll_Font *font, const caryll_Options *options) {
 				font->CFF_->fontMatrix->x = 0.0;
 				font->CFF_->fontMatrix->y = 0.0;
 			}
+			if (font->CFF_->fdArray) {
+				for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
+					table_CFF *fd = font->CFF_->fdArray[j];
+					if (!fd->fontMatrix) {
+						NEW(fd->fontMatrix);
+						fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
+						fd->fontMatrix->b = 0.0;
+						fd->fontMatrix->c = 0.0;
+						fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
+						fd->fontMatrix->x = 0.0;
+						fd->fontMatrix->y = 0.0;
+					}
+				}
+			}
 		}
 	}
 	if (font->head && font->CFF_) {
