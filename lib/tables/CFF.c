@@ -1,9 +1,9 @@
 #include "CFF.h"
 
-const float DEFAULT_BLUE_SCALE = 0.039625;
-const float DEFAULT_BLUE_SHIFT = 7;
-const float DEFAULT_BLUE_FUZZ = 1;
-const float DEFAULT_EXPANSION_FACTOR = 0.06;
+const double DEFAULT_BLUE_SCALE = 0.039625;
+const double DEFAULT_BLUE_SHIFT = 7;
+const double DEFAULT_BLUE_FUZZ = 1;
+const double DEFAULT_EXPANSION_FACTOR = 0.06;
 
 static cff_PrivateDict *table_new_cff_private() {
 	cff_PrivateDict *pd = NULL;
@@ -248,8 +248,8 @@ typedef struct {
 	glyf_Glyph *g;
 	uint16_t jContour;
 	uint16_t jPoint;
-	float defaultWidthX;
-	float nominalWidthX;
+	double defaultWidthX;
+	double nominalWidthX;
 	uint16_t pointsDefined;
 	uint8_t definedHStems;
 	uint8_t definedVStems;
@@ -267,21 +267,22 @@ static void callback_countpoint_next_contour(void *_context) {
 	context->g->contours[context->jContour - 1].pointsCount = 0;
 	context->jPoint = 0;
 }
-static void callback_countpoint_lineto(void *_context, float x1, float y1) {
+static void callback_countpoint_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].pointsCount += 1;
 		context->jPoint += 1;
 	}
 }
-static void callback_countpoint_curveto(void *_context, float x1, float y1, float x2, float y2, float x3, float y3) {
+static void callback_countpoint_curveto(void *_context, double x1, double y1, double x2, double y2, double x3,
+                                        double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].pointsCount += 3;
 		context->jPoint += 3;
 	}
 }
-static void callback_countpoint_sethint(void *_context, bool isVertical, float position, float width) {
+static void callback_countpoint_sethint(void *_context, bool isVertical, double position, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (isVertical) {
 		context->g->numberOfStemV += 1;
@@ -299,7 +300,7 @@ static void callback_countpoint_setmask(void *_context, bool isContourMask, bool
 	free(mask);
 }
 
-static void callback_draw_setwidth(void *_context, float width) {
+static void callback_draw_setwidth(void *_context, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	context->g->advanceWidth = width + context->nominalWidthX;
 }
@@ -308,7 +309,7 @@ static void callback_draw_next_contour(void *_context) {
 	context->jContour += 1;
 	context->jPoint = 0;
 }
-static void callback_draw_lineto(void *_context, float x1, float y1) {
+static void callback_draw_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].points[context->jPoint].onCurve = true;
@@ -318,7 +319,7 @@ static void callback_draw_lineto(void *_context, float x1, float y1) {
 		context->pointsDefined += 1;
 	}
 }
-static void callback_draw_curveto(void *_context, float x1, float y1, float x2, float y2, float x3, float y3) {
+static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2, double x3, double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		context->g->contours[context->jContour - 1].points[context->jPoint].onCurve = false;
@@ -334,7 +335,7 @@ static void callback_draw_curveto(void *_context, float x1, float y1, float x2, 
 		context->pointsDefined += 3;
 	}
 }
-static void callback_draw_sethint(void *_context, bool isVertical, float position, float width) {
+static void callback_draw_sethint(void *_context, bool isVertical, double position, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (isVertical) {
 		context->g->stemV[context->definedVStems].position = position;

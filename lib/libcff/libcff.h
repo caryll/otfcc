@@ -112,11 +112,11 @@ typedef struct {
 
 // Outline builder method table
 typedef struct {
-	void (*setWidth)(void *context, float width);
+	void (*setWidth)(void *context, double width);
 	void (*newContour)(void *context);
-	void (*lineTo)(void *context, float x1, float y1);
-	void (*curveTo)(void *context, float x1, float y1, float x2, float y2, float x3, float y3);
-	void (*setHint)(void *context, bool isVertical, float position, float width);
+	void (*lineTo)(void *context, double x1, double y1);
+	void (*curveTo)(void *context, double x1, double y1, double x2, double y2, double x3, double y3);
+	void (*setHint)(void *context, bool isVertical, double position, double width);
 	void (*setMask)(void *context, bool isContourMask, bool *mask);
 	double (*getrand)(void *context);
 } cff_IOutlineBuilder;
@@ -152,8 +152,8 @@ void cff_mergeCS2Operand(caryll_buffer *blob, double val);
 void cff_mergeCS2Special(caryll_buffer *blob, uint8_t val);
 
 extern uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelect select, cff_Index *subr);
-void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack,
-                            void *outline, cff_IOutlineBuilder methods);
+void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack, void *outline,
+                      cff_IOutlineBuilder methods);
 
 // File
 extern cff_File *cff_openStream(uint8_t *data, uint32_t len);
