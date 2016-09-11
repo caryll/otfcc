@@ -368,8 +368,8 @@ ABSENT:
 }
 
 // to json
-static json_value *dump_coord(float z) {
-	if (roundf(z) == z) {
+static json_value *dump_coord(double z) {
+	if (round(z) == z) {
 		return json_integer_new(z);
 	} else {
 		return json_double_new(z);

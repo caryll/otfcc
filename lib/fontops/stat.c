@@ -538,8 +538,8 @@ void caryll_font_stat(caryll_Font *font, const caryll_Options *options) {
 				NEW(font->CFF_->fontMatrix);
 				font->CFF_->fontMatrix->a = 1.0 / font->head->unitsPerEm;
 				font->CFF_->fontMatrix->b = 0.0;
-				font->CFF_->fontMatrix->c = 1.0 / font->head->unitsPerEm;
-				font->CFF_->fontMatrix->d = 0.0;
+				font->CFF_->fontMatrix->c = 0.0;
+				font->CFF_->fontMatrix->d = 1.0 / font->head->unitsPerEm;
 				font->CFF_->fontMatrix->x = 0.0;
 				font->CFF_->fontMatrix->y = 0.0;
 			}

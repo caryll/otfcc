@@ -47,7 +47,7 @@ static void merge_cs2_real(caryll_buffer *blob, double val) {
 void cff_mergeCS2Operand(caryll_buffer *blob, double val) {
 	double intpart;
 	if (modf(val, &intpart) == 0.0) {
-		merge_cs2_int(blob, intpart);
+		merge_cs2_int(blob, (int32_t)intpart);
 	} else {
 		merge_cs2_real(blob, val);
 	}

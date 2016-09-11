@@ -472,13 +472,14 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 	g->numberOfHintMasks = bc.definedHintMasks;
 
 	// PASS 4 : Turn deltas into absolute coordinates
-	float cx = 0;
-	float cy = 0;
+	double cx = 0;
+	double cy = 0;
 	for (uint16_t j = 0; j < g->numberOfContours; j++) {
 		for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
 			cx += g->contours[j].points[k].x;
-			g->contours[j].points[k].x = cx;
 			cy += g->contours[j].points[k].y;
+
+			g->contours[j].points[k].x = cx;
 			g->contours[j].points[k].y = cy;
 		}
 	}
@@ -755,16 +756,19 @@ static table_CFF *fdFromJson(json_value *dump) {
 	table->fontBBoxTop = json_obj_getnum(dump, "fontBBoxTop");
 
 	// fontMatrix
+	// Need?
+	/*
 	json_value *fmatdump = json_obj_get_type(dump, "fontMatrix", json_object);
 	if (fmatdump) {
-		NEW(table->fontMatrix);
-		table->fontMatrix->a = json_obj_getnum(fmatdump, "a");
-		table->fontMatrix->b = json_obj_getnum(fmatdump, "b");
-		table->fontMatrix->c = json_obj_getnum(fmatdump, "c");
-		table->fontMatrix->d = json_obj_getnum(fmatdump, "d");
-		table->fontMatrix->x = json_obj_getnum(fmatdump, "x");
-		table->fontMatrix->y = json_obj_getnum(fmatdump, "y");
+	    NEW(table->fontMatrix);
+	    table->fontMatrix->a = json_obj_getnum(fmatdump, "a");
+	    table->fontMatrix->b = json_obj_getnum(fmatdump, "b");
+	    table->fontMatrix->c = json_obj_getnum(fmatdump, "c");
+	    table->fontMatrix->d = json_obj_getnum(fmatdump, "d");
+	    table->fontMatrix->x = json_obj_getnum(fmatdump, "x");
+	    table->fontMatrix->y = json_obj_getnum(fmatdump, "y");
 	}
+	*/
 
 	// privates
 	table->privateDict = pdFromJson(json_obj_get_type(dump, "privates", json_object));
