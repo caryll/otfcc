@@ -533,38 +533,36 @@ void caryll_font_stat(caryll_Font *font, const caryll_Options *options) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font);
 		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
-		if (font->CFF_) {
-			if (!font->CFF_->fontMatrix) {
-				NEW(font->CFF_->fontMatrix);
-				font->CFF_->fontMatrix->a = 1.0 / font->head->unitsPerEm;
-				font->CFF_->fontMatrix->b = 0.0;
-				font->CFF_->fontMatrix->c = 0.0;
-				font->CFF_->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-				font->CFF_->fontMatrix->x = 0.0;
-				font->CFF_->fontMatrix->y = 0.0;
-			}
-			if (font->CFF_->fdArray) {
-				for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
-					table_CFF *fd = font->CFF_->fdArray[j];
-					if (!fd->fontMatrix) {
-						NEW(fd->fontMatrix);
-						fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
-						fd->fontMatrix->b = 0.0;
-						fd->fontMatrix->c = 0.0;
-						fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-						fd->fontMatrix->x = 0.0;
-						fd->fontMatrix->y = 0.0;
-					}
-				}
-			}
-		}
 	}
 	if (font->head && font->CFF_) {
-		if (font->CFF_->fontBBoxBottom > font->head->yMin) font->CFF_->fontBBoxBottom = font->head->yMin;
-		if (font->CFF_->fontBBoxTop < font->head->yMax) font->CFF_->fontBBoxTop = font->head->yMax;
-		if (font->CFF_->fontBBoxLeft < font->head->xMin) font->CFF_->fontBBoxLeft = font->head->xMin;
-		if (font->CFF_->fontBBoxRight < font->head->xMax) font->CFF_->fontBBoxRight = font->head->xMax;
-		if (font->glyf && font->CFF_->isCID) { font->CFF_->cidCount = font->glyf->numberGlyphs; }
+		table_CFF *cff = font->CFF_;
+		if (cff->fontBBoxBottom > font->head->yMin) cff->fontBBoxBottom = font->head->yMin;
+		if (cff->fontBBoxTop < font->head->yMax) cff->fontBBoxTop = font->head->yMax;
+		if (cff->fontBBoxLeft < font->head->xMin) cff->fontBBoxLeft = font->head->xMin;
+		if (cff->fontBBoxRight < font->head->xMax) cff->fontBBoxRight = font->head->xMax;
+		if (font->glyf && cff->isCID) { cff->cidCount = font->glyf->numberGlyphs; }
+		if (cff->isCID) {
+			if (cff->fontMatrix) { FREE(cff->fontMatrix); }
+			for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+				table_CFF *fd = cff->fdArray[j];
+				if (!fd->fontMatrix) { NEW(fd->fontMatrix); }
+				fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
+				fd->fontMatrix->b = 0.0;
+				fd->fontMatrix->c = 0.0;
+				fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
+				fd->fontMatrix->x = 0.0;
+				fd->fontMatrix->y = 0.0;
+			}
+		} else {
+			if (!cff->fontMatrix) { NEW(cff->fontMatrix); }
+			cff->fontMatrix->a = 1.0 / font->head->unitsPerEm;
+			cff->fontMatrix->b = 0.0;
+			cff->fontMatrix->c = 0.0;
+			cff->fontMatrix->d = 1.0 / font->head->unitsPerEm;
+			cff->fontMatrix->x = 0.0;
+			cff->fontMatrix->y = 0.0;
+		}
+
 		caryll_stat_cff_widths(font);
 	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
