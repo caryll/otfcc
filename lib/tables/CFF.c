@@ -785,7 +785,7 @@ static table_CFF *fdFromJson(json_value *dump) {
 
 	// fdArray
 	json_value *fdarraydump = json_obj_get_type(dump, "fdArray", json_object);
-	if (fdarraydump && table->cidRegistry && table->cidOrdering) {
+	if (fdarraydump) {
 		table->isCID = true;
 		table->fdArrayCount = fdarraydump->u.object.length;
 		NEW_N(table->fdArray, table->fdArrayCount);
