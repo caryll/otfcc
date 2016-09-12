@@ -31,7 +31,6 @@ void glyphorder_nameAIndexedHandle(glyphorder_Map *glyph_order, glyph_handle *h)
 void glyphorder_deleteMap(glyphorder_Map *map) {
 	glyphorder_Entry *s, *tmp;
 	HASH_ITER(hh, *map, s, tmp) {
-		fprintf(stderr, "%s", s->name);
 		// delete and free all cmap entries
 		sdsfree(s->name);
 		HASH_DEL(*map, s);
