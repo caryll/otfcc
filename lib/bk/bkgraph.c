@@ -74,6 +74,7 @@ void bk_delete_Graph(bk_Graph *f) {
 		free(b);
 	}
 	free(f->entries);
+	free(f);
 }
 
 static uint32_t gethash(bk_Block *b) {

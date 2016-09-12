@@ -112,10 +112,10 @@ caryll_buffer *caryll_build_gsub_reverse(otl_Subtable *_subtable) {
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	reverseBacktracks(subtable);
 
-	bk_Block *root = bk_new_Block(
-	    b16, 1,                                                                                     // format
-	    p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->match[subtable->inputIndex])), // coverage
-	    bkover);
+	bk_Block *root =
+	    bk_new_Block(b16, 1,                                                                                // format
+	                 p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->match[subtable->inputIndex])), // coverage
+	                 bkover);
 	bk_push(root, b16, subtable->inputIndex, bkover);
 	for (uint16_t j = 0; j < subtable->inputIndex; j++) {
 		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->match[j])), bkover);

@@ -387,6 +387,7 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtabl
 
 	otl_Lookup *lookup;
 	NEW(lookup);
+	lookup->name = NULL;
 	lookup->type = llt;
 	lookup->flags = caryll_parse_flags(json_obj_get(_lookup, "flags"), lookupFlagsLabels);
 	uint16_t markAttachmentType = json_obj_getint(_lookup, "markAttachmentType");
@@ -991,6 +992,7 @@ void caryll_delete_lookup(otl_Lookup *lookup) {
 			}
 		}
 		free(lookup->subtables);
+		sdsfree(lookup->name);
 	}
 	free(lookup);
 }
