@@ -54,6 +54,7 @@ void table_delete_CFF(table_CFF *table) {
 		}
 		free(table->fdArray);
 	}
+	FREE(table);
 }
 
 typedef struct {

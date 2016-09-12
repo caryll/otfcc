@@ -50,6 +50,8 @@ table_OTL *table_new_otl() {
 
 void table_delete_otl(table_OTL *table) {
 	if (!table) return;
+	fprintf(stderr, "begin delete otl\n");
+
 	if (table->languages) {
 		for (uint16_t j = 0; j < table->languageCount; j++) {
 			if (table->languages[j]->name) sdsfree(table->languages[j]->name);
@@ -58,6 +60,8 @@ void table_delete_otl(table_OTL *table) {
 		}
 		free(table->languages);
 	}
+	fprintf(stderr, "otl delete languages\n");
+
 	if (table->features) {
 		for (uint16_t j = 0; j < table->featureCount; j++) {
 			if (table->features[j]->name) sdsfree(table->features[j]->name);
@@ -66,12 +70,16 @@ void table_delete_otl(table_OTL *table) {
 		}
 		free(table->features);
 	}
+	fprintf(stderr, "otl delete features\n");
+
 	if (table->lookups) {
 		for (uint16_t j = 0; j < table->lookupCount; j++) {
 			caryll_delete_lookup(table->lookups[j]);
 		}
 		free(table->lookups);
 	}
+	fprintf(stderr, "otl delete lookups\n");
+
 	if (table->lookupAliases) {
 		for (uint16_t j = 0; j < table->lookupAliasesCount; j++) {
 			sdsfree(table->lookupAliases[j].from);
@@ -79,6 +87,10 @@ void table_delete_otl(table_OTL *table) {
 		}
 		free(table->lookupAliases);
 	}
+	fprintf(stderr, "otl delete lookup aliases\n");
+
+	fprintf(stderr, "end delete otl\n");
+
 	free(table);
 }
 

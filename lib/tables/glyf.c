@@ -64,6 +64,7 @@ static void table_delete_glyf_glyph(glyf_Glyph *g) {
 }
 
 void table_delete_glyf(table_glyf *table) {
+	fprintf(stderr, "begin delete glyf\n");
 	if (table->glyphs) {
 		for (uint16_t j = 0; j < table->numberGlyphs; j++) {
 			table_delete_glyf_glyph(table->glyphs[j]);
@@ -71,6 +72,7 @@ void table_delete_glyf(table_glyf *table) {
 		free(table->glyphs);
 	}
 	free(table);
+	fprintf(stderr, "end delete glyf\n");
 }
 
 static glyf_Point *next_point(glyf_Contour *contours, uint16_t *cc, uint16_t *cp) {
