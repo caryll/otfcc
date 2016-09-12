@@ -159,7 +159,7 @@ otl_ClassDef *otl_parse_ClassDef(json_value *_cd) {
 	NEW_N(cd->classes, cd->numGlyphs);
 	uint16_t maxclass = 0;
 	for (uint16_t j = 0; j < _cd->u.object.length; j++) {
-		cd->glyphs[j].name = sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length);
+		cd->glyphs[j] = handle_fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
 		json_value *_cid = _cd->u.object.values[j].value;
 		if (_cid->type == json_integer) {
 			cd->classes[j] = _cid->u.integer;

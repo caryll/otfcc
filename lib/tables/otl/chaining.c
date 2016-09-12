@@ -83,8 +83,8 @@ otl_Coverage *format3Coverage(font_file_pointer data, uint32_t tableLength, uint
 
 typedef otl_Coverage *(*CoverageReaderHandler)(font_file_pointer, uint32_t, uint16_t, uint32_t, uint16_t, void *);
 otl_ChainingRule *GeneralReadContextualRule(font_file_pointer data, uint32_t tableLength, uint32_t offset,
-                                             uint16_t startGID, bool minusOne, CoverageReaderHandler fn,
-                                             void *userdata) {
+                                            uint16_t startGID, bool minusOne, CoverageReaderHandler fn,
+                                            void *userdata) {
 	otl_ChainingRule *rule;
 	NEW(rule);
 	rule->match = NULL;
@@ -225,7 +225,7 @@ FAIL:
 }
 
 otl_ChainingRule *GeneralReadChainingRule(font_file_pointer data, uint32_t tableLength, uint32_t offset,
-                                           uint16_t startGID, bool minusOne, CoverageReaderHandler fn, void *userdata) {
+                                          uint16_t startGID, bool minusOne, CoverageReaderHandler fn, void *userdata) {
 	otl_ChainingRule *rule;
 	NEW(rule);
 	rule->match = NULL;
@@ -439,8 +439,7 @@ otl_Subtable *otl_parse_chaining(json_value *_subtable) {
 	}
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		rule->apply[j].index = 0;
-		rule->apply[j].lookup.index = 0;
-		rule->apply[j].lookup.name = NULL;
+		rule->apply[j].lookup = handle_new();
 		json_value *_application = _apply->u.array.values[j];
 		if (_application->type == json_object) {
 			json_value *_ln = json_obj_get_type(_application, "lookup", json_string);
@@ -463,7 +462,7 @@ caryll_buffer *caryll_build_chaining_coverage(otl_Subtable *_subtable) {
 	reverseBacktracks(rule);
 
 	bk_Block *root = bk_new_Block(b16, 3, // format
-	                                   bkover);
+	                              bkover);
 
 	bk_push(root, b16, nBacktrack, bkover);
 	for (uint16_t j = 0; j < rule->inputBegins; j++) {
@@ -480,8 +479,8 @@ caryll_buffer *caryll_build_chaining_coverage(otl_Subtable *_subtable) {
 	bk_push(root, b16, rule->applyCount, bkover);
 	for (uint16_t j = 0; j < nSubst; j++) {
 		bk_push(root, b16, rule->apply[j].index - nBacktrack, // position
-		             b16, rule->apply[j].lookup.index,             // lookup
-		             bkover);
+		        b16, rule->apply[j].lookup.index,             // lookup
+		        bkover);
 	}
 
 	return bk_build_Block(root);
@@ -495,14 +494,13 @@ caryll_buffer *caryll_build_chaining_classes(otl_Subtable *_subtable) {
 	coverage->numGlyphs = subtable->ic->numGlyphs;
 	coverage->glyphs = subtable->ic->glyphs;
 
-	bk_Block *root =
-	    bk_new_Block(b16, 2,                                                            // format
-	                p16, bk_newBlockFromBuffer(otl_build_Coverage(coverage)),     // coverage
-	                p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->bc)), // BacktrackClassDef
-	                p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->ic)), // InputClassDef
-	                p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->fc)), // LookaheadClassDef
-	                b16, subtable->ic->maxclass + 1,                                   // ChainSubClassSetCnt
-	                bkover);
+	bk_Block *root = bk_new_Block(b16, 2,                                                       // format
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(coverage)),     // coverage
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->bc)), // BacktrackClassDef
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->ic)), // InputClassDef
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->fc)), // LookaheadClassDef
+	                              b16, subtable->ic->maxclass + 1,                              // ChainSubClassSetCnt
+	                              bkover);
 
 	uint16_t *rcpg;
 	NEW_N(rcpg, subtable->ic->maxclass + 1);
@@ -518,7 +516,7 @@ caryll_buffer *caryll_build_chaining_classes(otl_Subtable *_subtable) {
 	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) {
 		if (rcpg[j]) {
 			bk_Block *cset = bk_new_Block(b16, rcpg[j], // ChainSubClassRuleCnt
-			                                   bkover);
+			                              bkover);
 			for (uint16_t k = 0; k < subtable->rulesCount; k++) {
 				otl_ChainingRule *rule = subtable->rules[k];
 				uint16_t startClass = rule->match[rule->inputBegins]->glyphs[0].index;
@@ -544,8 +542,8 @@ caryll_buffer *caryll_build_chaining_classes(otl_Subtable *_subtable) {
 				bk_push(r, b16, nSubst, bkover);
 				for (uint16_t m = 0; m < nSubst; m++) {
 					bk_push(r, b16, rule->apply[m].index - nBacktrack, // position
-					             b16, rule->apply[m].lookup.index,          // lookup index
-					             bkover);
+					        b16, rule->apply[m].lookup.index,          // lookup index
+					        bkover);
 				}
 				bk_push(cset, p16, r, bkover);
 			}

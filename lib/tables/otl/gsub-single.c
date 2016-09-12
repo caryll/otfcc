@@ -70,10 +70,10 @@ otl_Subtable *otl_gsub_parse_single(json_value *_subtable) {
 	uint16_t jj = 0;
 	for (uint16_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_string) {
-			subtable->from->glyphs[jj].name =
-			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
-			subtable->to->glyphs[jj].name = sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
-			                                          _subtable->u.object.values[j].value->u.string.length);
+			subtable->from->glyphs[jj] = handle_fromName(
+			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length));
+			subtable->to->glyphs[jj] = handle_fromName(sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
+			                                                     _subtable->u.object.values[j].value->u.string.length));
 			jj++;
 		}
 	}
@@ -92,16 +92,16 @@ caryll_buffer *caryll_build_gsub_single_subtable(otl_Subtable *_subtable) {
 		}
 	}
 	if (isConstantDifference && subtable->from->numGlyphs > 0) {
-		return bk_build_Block(
-		    bk_new_Block(b16, 1,                                                               // Format
-		                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)),  // coverage
-		                b16, subtable->to->glyphs[0].index - subtable->from->glyphs[0].index, // delta
-		                bkover));
+		return bk_build_Block(bk_new_Block(b16, 1,                                                         // Format
+		                                   p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
+		                                   b16,
+		                                   subtable->to->glyphs[0].index - subtable->from->glyphs[0].index, // delta
+		                                   bkover));
 	} else {
-		bk_Block *b = bk_new_Block(b16, 2,                                                              // Format
-		                                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
-		                                b16, subtable->to->numGlyphs,                                        // quantity
-		                                bkover);
+		bk_Block *b = bk_new_Block(b16, 2,                                                         // Format
+		                           p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
+		                           b16, subtable->to->numGlyphs,                                   // quantity
+		                           bkover);
 		for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
 			bk_push(b, b16, subtable->to->glyphs[k].index, bkover);
 		}

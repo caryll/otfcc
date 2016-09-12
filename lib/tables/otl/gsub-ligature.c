@@ -103,7 +103,7 @@ otl_Subtable *otl_gsub_parse_ligature(json_value *_subtable) {
 			json_value *_from = json_obj_get_type(entry, "from", json_array);
 			json_value *_to = json_obj_get_type(entry, "to", json_string);
 			if (!_from || !_to) continue;
-			st->to->glyphs[jj].name = sdsnewlen(_to->u.string.ptr, _to->u.string.length);
+			st->to->glyphs[jj] = handle_fromName(sdsnewlen(_to->u.string.ptr, _to->u.string.length));
 			st->from[jj] = otl_parse_Coverage(_from);
 			jj += 1;
 		}
@@ -121,8 +121,8 @@ otl_Subtable *otl_gsub_parse_ligature(json_value *_subtable) {
 		for (uint16_t k = 0; k < st->to->numGlyphs; k++) {
 			json_value *_from = _subtable->u.object.values[k].value;
 			if (!_from || _from->type != json_array) continue;
-			st->to->glyphs[jj].name =
-			    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length);
+			st->to->glyphs[jj] = handle_fromName(
+			    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
 			st->from[jj] = otl_parse_Coverage(_from);
 			jj += 1;
 		}
@@ -170,10 +170,10 @@ caryll_buffer *caryll_build_gsub_ligature_subtable(otl_Subtable *_subtable) {
 		jj++;
 	}
 
-	bk_Block *root = bk_new_Block(b16, 1,                                                        // format
-	                                   p16, bk_newBlockFromBuffer(otl_build_Coverage(startcov)), // coverage
-	                                   b16, startcov->numGlyphs,                                      // LigSetCount
-	                                   bkover);
+	bk_Block *root = bk_new_Block(b16, 1,                                                   // format
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(startcov)), // coverage
+	                              b16, startcov->numGlyphs,                                 // LigSetCount
+	                              bkover);
 
 	foreach_hash(s, h) {
 		uint16_t nLigsHere = 0;
@@ -184,8 +184,8 @@ caryll_buffer *caryll_build_gsub_ligature_subtable(otl_Subtable *_subtable) {
 		for (uint16_t j = 0; j < nLigatures; j++) {
 			if (subtable->from[j]->glyphs[0].index == s->gid) {
 				bk_Block *ligdef = bk_new_Block(b16, subtable->to->glyphs[j].index, // ligGlyph
-				                                     b16, subtable->from[j]->numGlyphs,  // compCount
-				                                     bkover);
+				                                b16, subtable->from[j]->numGlyphs,  // compCount
+				                                bkover);
 				for (uint16_t m = 1; m < subtable->from[j]->numGlyphs; m++) {
 					bk_push(ligdef, b16, subtable->from[j]->glyphs[m].index, bkover);
 				}

@@ -107,7 +107,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable,
 	for (uint16_t j = 0; j < _marks->u.object.length; j++) {
 		char *gname = _marks->u.object.values[j].name;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
-		subtable->marks->glyphs[j].name = sdsnewlen(gname, _marks->u.object.values[j].name_length);
+		subtable->marks->glyphs[j] = handle_fromName(sdsnewlen(gname, _marks->u.object.values[j].name_length));
 
 		subtable->markArray->records[j].markClass = 0;
 		subtable->markArray->records[j].anchor = otl_anchor_absent();
@@ -141,7 +141,7 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 	NEW_N(subtable->baseArray, _bases->u.object.length);
 	for (uint16_t j = 0; j < _bases->u.object.length; j++) {
 		char *gname = _bases->u.object.values[j].name;
-		subtable->bases->glyphs[j].name = sdsnewlen(gname, _bases->u.object.values[j].name_length);
+		subtable->bases->glyphs[j] = handle_fromName(sdsnewlen(gname, _bases->u.object.values[j].name_length));
 		NEW_N(subtable->baseArray[j], classCount);
 		for (uint16_t k = 0; k < classCount; k++) {
 			subtable->baseArray[j][k] = otl_anchor_absent();
@@ -190,24 +190,23 @@ caryll_buffer *caryll_build_gpos_markToSingle(otl_Subtable *_subtable) {
 
 	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
 
-	bk_Block *root =
-	    bk_new_Block(b16, 1,                                                               // format
-	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage
-	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->bases)), // baseCoverage
-	                b16, subtable->classCount,                                            // classCont
-	                bkover);
+	bk_Block *root = bk_new_Block(b16, 1,                                                          // format
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->bases)), // baseCoverage
+	                              b16, subtable->classCount,                                       // classCont
+	                              bkover);
 
 	bk_Block *markArray = bk_new_Block(b16, subtable->marks->numGlyphs, // markCount
-	                                        bkover);
+	                                   bkover);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		bk_push(markArray,                                                 // markArray item
-		             b16, subtable->markArray->records[j].markClass,            // markClass
-		             p16, bkFromAnchor(subtable->markArray->records[j].anchor), // Anchor
-		             bkover);
+		        b16, subtable->markArray->records[j].markClass,            // markClass
+		        p16, bkFromAnchor(subtable->markArray->records[j].anchor), // Anchor
+		        bkover);
 	}
 
 	bk_Block *baseArray = bk_new_Block(b16, subtable->bases->numGlyphs, // baseCount
-	                                        bkover);
+	                                   bkover);
 	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		for (uint16_t k = 0; k < subtable->classCount; k++) {
 			bk_push(baseArray, p16, bkFromAnchor(subtable->baseArray[j][k]), bkover);

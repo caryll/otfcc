@@ -67,8 +67,8 @@ otl_Subtable *otl_gsub_parse_multi(json_value *_subtable) {
 	for (uint16_t k = 0; k < st->from->numGlyphs; k++) {
 		json_value *_to = _subtable->u.object.values[k].value;
 		if (!_to || _to->type != json_array) continue;
-		st->from->glyphs[jj].name =
-		    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length);
+		st->from->glyphs[jj] =
+		    handle_fromName(sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
 		st->to[jj] = otl_parse_Coverage(_to);
 		jj += 1;
 	}
@@ -79,10 +79,10 @@ otl_Subtable *otl_gsub_parse_multi(json_value *_subtable) {
 caryll_buffer *caryll_build_gsub_multi_subtable(otl_Subtable *_subtable) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 
-	bk_Block *root = bk_new_Block(b16, 1,                                                              // format
-	                                   p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
-	                                   b16, subtable->from->numGlyphs,                                      // quantity
-	                                   bkover);
+	bk_Block *root = bk_new_Block(b16, 1,                                                         // format
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
+	                              b16, subtable->from->numGlyphs,                                 // quantity
+	                              bkover);
 	for (uint16_t j = 0; j < subtable->from->numGlyphs; j++) {
 		bk_Block *b = bk_new_Block(b16, subtable->to[j]->numGlyphs, bkover);
 		for (uint16_t k = 0; k < subtable->to[j]->numGlyphs; k++) {

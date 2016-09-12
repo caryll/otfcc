@@ -15,6 +15,7 @@ static void il_push_operand(cff_CharstringIL *il, double x) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERAND;
 	il->instr[il->length].d = x;
+	il->instr[il->length].arity = 0;
 	il->length++;
 	il->free--;
 }
@@ -22,6 +23,7 @@ static void il_push_special(cff_CharstringIL *il, int32_t s) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_SPECIAL;
 	il->instr[il->length].i = s;
+	il->instr[il->length].arity = 0;
 	il->length++;
 	il->free--;
 }
