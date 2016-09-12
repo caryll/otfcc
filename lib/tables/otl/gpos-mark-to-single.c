@@ -66,7 +66,7 @@ json_value *otl_gpos_dump_markToSingle(otl_Subtable *st) {
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
 	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		json_value *_mark = json_object_new(3);
-		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray->records[j].markClass);
+		sds markClassName = sdscatfmt(sdsempty(), "anchor%i", subtable->markArray->records[j].markClass);
 		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
 		json_object_push(_mark, "x", json_integer_new(subtable->markArray->records[j].anchor.x));
@@ -80,7 +80,7 @@ json_value *otl_gpos_dump_markToSingle(otl_Subtable *st) {
 				json_value *_anchor = json_object_new(2);
 				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray[j][k].x));
 				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray[j][k].y));
-				sds markClassName = sdscatfmt(sdsempty(), "ac_%i", k);
+				sds markClassName = sdscatfmt(sdsempty(), "anchor%i", k);
 				json_object_push_length(_base, (uint32_t)sdslen(markClassName), markClassName, _anchor);
 				sdsfree(markClassName);
 			}
@@ -97,6 +97,9 @@ typedef struct {
 	uint16_t classID;
 	UT_hash_handle hh;
 } classname_hash;
+static int compare_classHash(classname_hash *a, classname_hash *b) {
+	return strcmp(a->className, b->className);
+}
 static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable, classname_hash **h) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
@@ -131,6 +134,27 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable,
 		subtable->markArray->records[j].anchor.present = true;
 		subtable->markArray->records[j].anchor.x = json_obj_getnum(anchorRecord, "x");
 		subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
+	}
+	HASH_SORT(*h, compare_classHash);
+	uint16_t jAnchorIndex = 0;
+	classname_hash *s;
+	foreach_hash(s, *h) {
+		s->classID = jAnchorIndex;
+		jAnchorIndex++;
+	}
+	for (uint16_t j = 0; j < _marks->u.object.length; j++) {
+		if (!subtable->markArray->records[j].anchor.present) continue;
+		json_value *anchorRecord = _marks->u.object.values[j].value;
+		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
+		sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
+		classname_hash *s;
+		HASH_FIND_STR(*h, className, s);
+		if (s) {
+			subtable->markArray->records[j].markClass = s->classID;
+		} else {
+			subtable->markArray->records[j].markClass = 0;
+		}
+		sdsfree(className);
 	}
 }
 static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable, classname_hash **h) {
