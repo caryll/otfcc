@@ -57,7 +57,6 @@ void caryll_delete_Font(caryll_Font *font) {
 	if (font->BASE) table_delete_BASE(font->BASE);
 	if (font->VORG) table_delete_VORG(font->VORG);
 	if (font->glyph_order && *font->glyph_order) { glyphorder_deleteMap(font->glyph_order); }
-	fprintf(stderr, "font ptr before free %p\n", font);
 	if (font) free(font);
 }
 

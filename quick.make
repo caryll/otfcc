@@ -95,10 +95,10 @@ cffroundtriptest3:
 	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-4.otf -o build/roundtrip-Cormorant-Medium-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-Cormorant-Medium-3.json build/roundtrip-Cormorant-Medium-5.json
 cffroundtriptest3O3: cffroundtriptest3
-	bin/Release-x64/otfccbuild -O3 build/roundtrip-Cormorant-Medium-1.json -o build/roundtrip-Cormorant-Medium-2a.otf --keep-average-char-width --keep-modified-time --verbose
-	bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-2a.otf -o build/roundtrip-Cormorant-Medium-3a.json --pretty
-	bin/Release-x64/otfccbuild -O3 build/roundtrip-Cormorant-Medium-3a.json -o build/roundtrip-Cormorant-Medium-4a.otf --keep-average-char-width --keep-modified-time --verbose
-	bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-4a.otf -o build/roundtrip-Cormorant-Medium-5a.json --pretty
+	@bin/Release-x64/otfccbuild -O3 build/roundtrip-Cormorant-Medium-1.json -o build/roundtrip-Cormorant-Medium-2a.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-2a.otf -o build/roundtrip-Cormorant-Medium-3a.json --pretty
+	@bin/Release-x64/otfccbuild -O3 build/roundtrip-Cormorant-Medium-3a.json -o build/roundtrip-Cormorant-Medium-4a.otf --keep-average-char-width --keep-modified-time
+	@bin/Release-x64/otfccdump build/roundtrip-Cormorant-Medium-4a.otf -o build/roundtrip-Cormorant-Medium-5a.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-Cormorant-Medium-3a.json build/roundtrip-Cormorant-Medium-5a.json
 
 test: cffroundtriptest cffopcodetest ttfroundtriptest

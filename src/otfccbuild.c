@@ -280,14 +280,12 @@ int main(int argc, char *argv[]) {
 		json_value_free(root);
 		if (show_time) push_stopwatch("Convert JSON to font", &begin);
 	}
-	fprintf(stderr, "font ptr after parse %p\n", font);
 	{
 		caryll_font_consolidate(font, options);
 		if (show_time) push_stopwatch("Consolidation", &begin);
 		caryll_font_stat(font, options);
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
-	fprintf(stderr, "font ptr after stat %p\n", font);
 	{
 		caryll_buffer *otf = caryll_build_Font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
