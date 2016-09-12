@@ -165,8 +165,7 @@ caryll_buffer *caryll_build_gsub_ligature_subtable(otl_Subtable *_subtable) {
 	uint16_t jj = 0;
 	foreach_hash(s, h) {
 		s->ligid = jj;
-		startcov->glyphs[jj].index = s->gid;
-		startcov->glyphs[jj].name = NULL;
+		startcov->glyphs[jj] = handle_fromIndex(s->gid);
 		jj++;
 	}
 
