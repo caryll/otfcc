@@ -67,7 +67,7 @@ ttfroundtriptest2 :
 	@bin/Release-x64/otfccdump build/roundtrip-NotoNastaliqUrdu-Regular-4.ttf -o build/roundtrip-NotoNastaliqUrdu-Regular-5.json --pretty
 	@node tests/ttf-roundtrip-test.js build/roundtrip-NotoNastaliqUrdu-Regular-3.json build/roundtrip-NotoNastaliqUrdu-Regular-5.json
 
-cffroundtriptest: cffroundtriptest1 cffroundtriptest1O3 cffroundtriptest2 cffroundtriptest3 cffroundtriptest3O3
+cffroundtriptest: cffroundtriptest1 cffroundtriptest1O3 cffroundtriptest2 cffroundtriptest3
 cffroundtriptest1 :
 	@bin/Release-x64/otfccdump tests/payload/WorkSans-Regular.otf -o build/roundtrip-WorkSans-Regular-1.json --pretty
 	@bin/Release-x64/otfccbuild -O1 build/roundtrip-WorkSans-Regular-1.json -o build/roundtrip-WorkSans-Regular-2.otf --keep-average-char-width --keep-modified-time
