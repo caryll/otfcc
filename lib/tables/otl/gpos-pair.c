@@ -280,29 +280,29 @@ bk_Block *caryll_build_gpos_pair_individual(otl_Subtable *_subtable) {
 		}
 	}
 
-	bk_Block *root =
-	    bk_new_Block(b16, 1,                                                                  // PosFormat
-	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
-	                b16, format1,                                                            // ValueFormat1
-	                b16, format2,                                                            // ValueFormat2
-	                b16, subtable->first->numGlyphs,                                         // PairSetCount
-	                bkover);
+	bk_Block *root = bk_new_Block(b16, 1,                                                             // PosFormat
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
+	                              b16, format1,                                                       // ValueFormat1
+	                              b16, format2,                                                       // ValueFormat2
+	                              b16, subtable->first->numGlyphs,                                    // PairSetCount
+	                              bkover);
 	for (uint16_t j = 0; j < subtable->first->numGlyphs; j++) {
 		bk_Block *pairSet = bk_new_Block(b16, pairCounts[j], // PairValueCount
-		                                      bkover);
+		                                 bkover);
 		for (uint16_t k = 0; k < subtable->second->numGlyphs; k++) {
 			uint16_t c1 = subtable->first->classes[j];
 			uint16_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
 				bk_push(pairSet, b16, subtable->second->glyphs[k].index,                 // SecondGlyph
-				             bkembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
-				             bkembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
-				             bkover);
+				        bkembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
+				        bkembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
+				        bkover);
 			}
 		}
 		bk_push(root, p16, pairSet, bkover);
 	}
+	FREE(pairCounts);
 	return root;
 }
 bk_Block *caryll_build_gpos_pair_classes(otl_Subtable *_subtable) {
@@ -318,21 +318,20 @@ bk_Block *caryll_build_gpos_pair_classes(otl_Subtable *_subtable) {
 			format2 |= required_position_format(subtable->secondValues[j][k]);
 		}
 	}
-	bk_Block *root =
-	    bk_new_Block(b16, 2,                                                                  // PosFormat
-	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
-	                b16, format1,                                                            // ValueFormat1
-	                b16, format2,                                                            // ValueFormat2
-	                p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->first)),    // ClassDef1
-	                p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->second)),   // ClassDef2
-	                b16, class1Count,                                                        // Class1Count
-	                b16, class2Count,                                                        // Class2Count
-	                bkover);
+	bk_Block *root = bk_new_Block(b16, 2,                                                             // PosFormat
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
+	                              b16, format1,                                                       // ValueFormat1
+	                              b16, format2,                                                       // ValueFormat2
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->first)),    // ClassDef1
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->second)),   // ClassDef2
+	                              b16, class1Count,                                                   // Class1Count
+	                              b16, class2Count,                                                   // Class2Count
+	                              bkover);
 	for (uint16_t j = 0; j < class1Count; j++) {
 		for (uint16_t k = 0; k < class2Count; k++) {
 			bk_push(root, bkembed, bk_gpos_value(subtable->firstValues[j][k], format1), // Value1
-			             bkembed, bk_gpos_value(subtable->secondValues[j][k], format2),      // Value2
-			             bkover);
+			        bkembed, bk_gpos_value(subtable->secondValues[j][k], format2),      // Value2
+			        bkover);
 		}
 	}
 	return root;

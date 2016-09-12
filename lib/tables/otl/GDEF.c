@@ -1,9 +1,15 @@
 #include "GDEF.h"
 
 void table_delete_GDEF(table_GDEF *gdef) {
-	if (gdef) {
-		if (gdef->glyphClassDef) otl_delete_ClassDef(gdef->glyphClassDef);
-		free(gdef);
+	if (!gdef) return;
+	if (gdef->glyphClassDef) otl_delete_ClassDef(gdef->glyphClassDef);
+	if (gdef->markAttachClassDef) otl_delete_ClassDef(gdef->markAttachClassDef);
+	if (gdef->ligCarets) {
+		for (uint16_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
+			FREE(gdef->ligCarets->carets[j].values);
+		}
+		FREE(gdef->ligCarets->carets);
+		otl_delete_Coverage(gdef->ligCarets->coverage);
 	}
 }
 
@@ -64,8 +70,7 @@ table_GDEF *table_read_GDEF(caryll_Packet packet) {
 			NEW(gdef->ligCarets);
 			gdef->ligCarets->carets = NULL;
 
-			otl_Coverage *cov =
-			    otl_read_Coverage(data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset));
+			otl_Coverage *cov = otl_read_Coverage(data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset));
 			if (!cov || cov->numGlyphs != read_16u(data + ligCaretOffset + 2)) goto FAIL;
 			checkLength(ligCaretOffset + 4 + cov->numGlyphs * 2);
 			if (cov->numGlyphs) {
@@ -175,22 +180,22 @@ table_GDEF *table_parse_GDEF(json_value *root, const caryll_Options *options) {
 
 static bk_Block *writeLigCaretRec(otl_CaretValueRecord *cr) {
 	bk_Block *bcr = bk_new_Block(b16, cr->caretCount, // CaretCount
-	                                  bkover);
+	                             bkover);
 	for (uint16_t j = 0; j < cr->caretCount; j++) {
 		bk_push(bcr, p16,
-		             bk_new_Block(b16, cr->values[j].format, // format
-		                         b16, cr->values[j].format == 2 ? cr->values[j].pointIndex
-		                                                        : cr->values[j].coordiante, // pointindex / coordinate
-		                         bkover),                                                   // CaretValue
-		             bkover);
+		        bk_new_Block(b16, cr->values[j].format, // format
+		                     b16, cr->values[j].format == 2 ? cr->values[j].pointIndex
+		                                                    : cr->values[j].coordiante, // pointindex / coordinate
+		                     bkover),                                                   // CaretValue
+		        bkover);
 	}
 	return bcr;
 }
 
 static bk_Block *writeLigCarets(otl_LigCaretTable *lc) {
 	bk_Block *lct = bk_new_Block(p16, bk_newBlockFromBuffer(otl_build_Coverage(lc->coverage)), // Coverage
-	                                  b16, lc->coverage->numGlyphs, // LigGlyphCount
-	                                  bkover);
+	                             b16, lc->coverage->numGlyphs,                                 // LigGlyphCount
+	                             bkover);
 	for (uint16_t j = 0; j < lc->coverage->numGlyphs; j++) {
 		bk_push(lct, p16, writeLigCaretRec(&(lc->carets[j])), bkover);
 	}
@@ -211,10 +216,10 @@ caryll_buffer *table_build_GDEF(table_GDEF *gdef, const caryll_Options *options)
 		bMarkAttachClassDef = bk_newBlockFromBuffer(otl_build_ClassDef(gdef->markAttachClassDef));
 	}
 	bk_Block *root = bk_new_Block(b32, 0x10000,             // Version
-	                                   p16, bGlyphClassDef,      // GlyphClassDef
-	                                   p16, bAttachList,         // AttachList
-	                                   p16, bLigCaretList,       // LigCaretList
-	                                   p16, bMarkAttachClassDef, // MarkAttachClassDef
-	                                   bkover);
+	                              p16, bGlyphClassDef,      // GlyphClassDef
+	                              p16, bAttachList,         // AttachList
+	                              p16, bLigCaretList,       // LigCaretList
+	                              p16, bMarkAttachClassDef, // MarkAttachClassDef
+	                              bkover);
 	return bk_build_Block(root);
 }

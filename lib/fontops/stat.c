@@ -473,6 +473,7 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 			font->CFF_->fdArray[j]->privateDict->nominalWidthX = nominalWidthX;
 		}
 	}
+	FREE(frequency);
 }
 
 static void caryll_stat_cff_vorgs(caryll_Font *font) {
@@ -512,7 +513,7 @@ static void caryll_stat_cff_vorgs(caryll_Font *font) {
 			jj += 1;
 		}
 	}
-
+	FREE(frequency);
 	font->VORG = vorg;
 }
 

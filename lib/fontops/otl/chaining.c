@@ -249,21 +249,21 @@ FAIL:;
 		classifier_hash *s, *tmp;
 		HASH_ITER(hh, hb, s, tmp) {
 			HASH_DEL(hb, s);
-			if (s) free(s);
+			free(s);
 		}
 	}
 	if (hi) {
 		classifier_hash *s, *tmp;
 		HASH_ITER(hh, hi, s, tmp) {
 			HASH_DEL(hi, s);
-			if (s) free(s);
+			free(s);
 		}
 	}
 	if (hf) {
 		classifier_hash *s, *tmp;
 		HASH_ITER(hh, hf, s, tmp) {
 			HASH_DEL(hf, s);
-			if (s) free(s);
+			free(s);
 		}
 	}
 	return;

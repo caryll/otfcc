@@ -1,17 +1,19 @@
 #include "chaining.h"
 static void deleteRule(otl_ChainingRule *rule) {
+	if (!rule) return;
 	if (rule && rule->match && rule->matchCount) {
 		for (uint16_t k = 0; k < rule->matchCount; k++) {
 			otl_delete_Coverage(rule->match[k]);
 		}
+		FREE(rule->match);
 	}
 	if (rule && rule->apply) {
 		for (uint16_t j = 0; j < rule->applyCount; j++) {
 			handle_delete(&rule->apply[j].lookup);
 		}
-		free(rule->apply);
+		FREE(rule->apply);
 	}
-	if (rule) free(rule);
+	FREE(rule);
 }
 void otl_delete_chaining(otl_Subtable *_subtable) {
 	if (_subtable) {

@@ -409,7 +409,6 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtabl
 	item->alias = false;
 	lookup->name = sdsdup(item->name);
 	item->lookup = lookup;
-	item->lookup->name = sdsdup(item->name);
 	item->orderType = LOOKUP_ORDER_FILE;
 	item->orderVal = HASH_COUNT(*lh);
 	HASH_ADD_STR(*lh, name, item);
@@ -893,6 +892,7 @@ static bk_Block *writeOTLScriptAndLanguages(table_OTL *table, const caryll_Optio
 				s->lc += 1;
 				s->ll[s->lc - 1] = table->languages[j];
 			}
+			sdsfree(scriptTag);
 		} else {
 			NEW(s);
 			s->tag = scriptTag;
