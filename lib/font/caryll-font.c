@@ -54,10 +54,14 @@ void caryll_delete_Font(caryll_Font *font) {
 	if (font->GSUB) table_delete_otl(font->GSUB);
 	if (font->GPOS) table_delete_otl(font->GPOS);
 	if (font->GDEF) table_delete_GDEF(font->GDEF);
+	fprintf(stderr, "end delete GDEF\n");
 	if (font->BASE) table_delete_BASE(font->BASE);
+	fprintf(stderr, "end delete BASE\n");
 	if (font->VORG) table_delete_VORG(font->VORG);
+	fprintf(stderr, "end delete VORG\n");
 	if (font->glyph_order && *font->glyph_order) { glyphorder_deleteMap(font->glyph_order); }
 	if (font) free(font);
+	fprintf(stderr, "end delete font\n");
 }
 
 caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index) {
