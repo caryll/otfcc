@@ -160,9 +160,7 @@ static otl_ClassDef *toClass(classifier_hash *h) {
 	uint16_t j = 0;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
-		cd->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-		cd->glyphs[j].index = item->gid;
-		cd->glyphs[j].name = item->gname;
+		cd->glyphs[j] = handle_fromConsolidated(item->gid, item->gname);
 		cd->classes[j] = item->cls;
 		if (item->cls > maxclass) maxclass = item->cls;
 		j++;

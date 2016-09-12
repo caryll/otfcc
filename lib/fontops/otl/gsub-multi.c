@@ -42,9 +42,7 @@ bool consolidate_gsub_multi(caryll_Font *font, table_OTL *table, otl_Subtable *_
 		gsub_multi_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			subtable->from->glyphs[j].index = s->fromid;
-			subtable->from->glyphs[j].name = s->fromname;
+			subtable->from->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
 			subtable->to[j] = s->to;
 			j++;
 			HASH_DEL(h, s);

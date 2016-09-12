@@ -16,6 +16,7 @@ struct _caryll_handle {
 struct _caryll_handle handle_new();
 struct _caryll_handle handle_fromIndex(uint16_t id);
 struct _caryll_handle handle_fromName(sds s);
+struct _caryll_handle handle_fromConsolidated(uint16_t id, sds s);
 void handle_delete(struct _caryll_handle *h);
 void handle_forceDelete(struct _caryll_handle *h);
 void handle_consolidateTo(struct _caryll_handle *h, uint16_t id, sds name);

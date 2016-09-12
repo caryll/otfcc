@@ -55,9 +55,7 @@ static void consolidateMarkArray(caryll_Font *font, table_OTL *table, sds lookup
 	mark_hash *s, *tmp;
 	uint16_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		marks->glyphs[k].index = s->gid;
-		marks->glyphs[k].name = s->name;
-		marks->glyphs[k].state = HANDLE_STATE_CONSOLIDATED;
+		marks->glyphs[k] = handle_fromConsolidated(s->gid, s->name);
 		markArray->records[k] = s->markrec;
 		k++;
 		HASH_DEL(hm, s);
@@ -94,9 +92,7 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, sds lookup
 	base_hash *s, *tmp;
 	uint16_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		bases->glyphs[k].index = s->gid;
-		bases->glyphs[k].name = s->name;
-		bases->glyphs[k].state = HANDLE_STATE_CONSOLIDATED;
+		bases->glyphs[k] = handle_fromConsolidated(s->gid, s->name);
 		baseArray[k] = s->anchors;
 		k++;
 		HASH_DEL(hm, s);
@@ -132,9 +128,7 @@ static void consolidateLigArray(caryll_Font *font, table_OTL *table, sds lookupN
 	lig_hash *s, *tmp;
 	uint16_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		bases->glyphs[k].index = s->gid;
-		bases->glyphs[k].name = s->name;
-		bases->glyphs[k].state = HANDLE_STATE_CONSOLIDATED;
+		bases->glyphs[k] = handle_fromConsolidated(s->gid, s->name);
 		ligArray[k] = s->ligAttachment;
 		k++;
 		HASH_DEL(hm, s);

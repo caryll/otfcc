@@ -38,9 +38,7 @@ void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, char *tableName) {
 		GDEF_ligcaret_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			gdef->ligCarets->coverage->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			gdef->ligCarets->coverage->glyphs[j].index = s->gid;
-			gdef->ligCarets->coverage->glyphs[j].name = s->name;
+			gdef->ligCarets->coverage->glyphs[j] = handle_fromConsolidated(s->gid, s->name);
 			gdef->ligCarets->carets[j] = s->cr;
 			j++;
 			HASH_DEL(h, s);

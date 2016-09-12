@@ -678,7 +678,7 @@ static json_value *fdToJson(table_CFF *table) {
 	if (table->cidRegistry && table->cidOrdering) {
 		json_object_push(_CFF_, "cidRegistry", json_from_sds(table->cidRegistry));
 		json_object_push(_CFF_, "cidOrdering", json_from_sds(table->cidOrdering));
-		json_object_push(_CFF_, "cidSupplement", json_double_new(table->cidSupplement));
+		json_object_push(_CFF_, "cidSupplement", json_integer_new(table->cidSupplement));
 	}
 	if (table->fdArray) {
 		json_value *_fdArray = json_object_new(table->fdArrayCount);

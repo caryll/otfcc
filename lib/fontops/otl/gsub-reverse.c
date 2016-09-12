@@ -49,12 +49,8 @@ bool consolidate_gsub_reverse(caryll_Font *font, table_OTL *table, otl_Subtable 
 		gsub_single_map_hash *s, *tmp;
 		uint16_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			from->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			from->glyphs[j].index = s->fromid;
-			from->glyphs[j].name = s->fromname;
-			subtable->to->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			subtable->to->glyphs[j].index = s->toid;
-			subtable->to->glyphs[j].name = s->toname;
+			from->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
+			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);
 			j++;
 			HASH_DEL(h, s);
 			free(s);
