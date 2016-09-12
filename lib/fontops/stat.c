@@ -461,12 +461,16 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 			nnsum += font->glyf->glyphs[j]->advanceWidth;
 		}
 	}
-	font->CFF_->privateDict->defaultWidthX = maxj;
-	if (nn != 0) { font->CFF_->privateDict->nominalWidthX = nnsum / nn; }
+	int16_t nominalWidthX = 0;
+	if (nn > 0) nominalWidthX = nnsum / nn;
+	if (font->CFF_->privateDict) {
+		font->CFF_->privateDict->defaultWidthX = maxj;
+		if (nn != 0) { font->CFF_->privateDict->nominalWidthX = nominalWidthX; }
+	}
 	if (font->CFF_->fdArray) {
 		for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
 			font->CFF_->fdArray[j]->privateDict->defaultWidthX = maxj;
-			font->CFF_->fdArray[j]->privateDict->nominalWidthX = font->CFF_->privateDict->nominalWidthX;
+			font->CFF_->fdArray[j]->privateDict->nominalWidthX = nominalWidthX;
 		}
 	}
 }

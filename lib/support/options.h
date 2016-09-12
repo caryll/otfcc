@@ -20,6 +20,7 @@ typedef struct {
 	bool cff_short_vmtx;
 	bool merge_lookups;
 	bool merge_features;
+	bool force_cid;
 	char *glyph_name_prefix;
 	uint8_t optimize_level;
 } caryll_Options;

@@ -48,7 +48,6 @@ void table_delete_CFF(table_CFF *table) {
 
 	FREE(table->fontMatrix);
 	caryll_delete_privatedict(table->privateDict);
-
 	if (table->fdArray) {
 		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
 			table_delete_CFF(table->fdArray[j]);
@@ -733,7 +732,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 
 	return pd;
 }
-static table_CFF *fdFromJson(json_value *dump) {
+static table_CFF *fdFromJson(json_value *dump, const caryll_Options *options, bool topLevel) {
 	table_CFF *table = table_new_CFF();
 	if (!dump || dump->type != json_object) return table;
 	// Names
@@ -790,13 +789,25 @@ static table_CFF *fdFromJson(json_value *dump) {
 		table->fdArrayCount = fdarraydump->u.object.length;
 		NEW_N(table->fdArray, table->fdArrayCount);
 		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
-			table->fdArray[j] = fdFromJson(fdarraydump->u.object.values[j].value);
+			table->fdArray[j] = fdFromJson(fdarraydump->u.object.values[j].value, options, false);
 			if (table->fdArray[j]->fontName) { sdsfree(table->fdArray[j]->fontName); }
 			table->fdArray[j]->fontName =
 			    sdsnewlen(fdarraydump->u.object.values[j].name, fdarraydump->u.object.values[j].name_length);
 		}
 	}
+	if (!table->fontName) table->fontName = sdsnew("CARYLL_CFFFONT");
 	if (!table->privateDict) table->privateDict = table_new_cff_private();
+	// Deal with force-cid
+	if (topLevel && options->force_cid && !table->fdArray) {
+		table->fdArrayCount = 1;
+		NEW_N(table->fdArray, table->fdArrayCount);
+		table->fdArray[0] = table_new_CFF();
+		table_CFF *fd0 = table->fdArray[0];
+		fd0->privateDict = table->privateDict;
+		table->privateDict = table_new_cff_private();
+		fd0->fontName = sdscat(sdsdup(table->fontName), "-subfont0");
+		table->isCID = true;
+	}
 	if (table->isCID && !table->cidRegistry) { table->cidRegistry = sdsnew("CARYLL"); }
 	if (table->isCID && !table->cidOrdering) { table->cidOrdering = sdsnew("OTFCCAUTOCID"); }
 	return table;
@@ -807,7 +818,7 @@ table_CFF *table_parse_cff(json_value *root, const caryll_Options *options) {
 		return NULL;
 	} else {
 		if (options->verbose) fprintf(stderr, "Parsing CFF.\n");
-		return fdFromJson(dump);
+		return fdFromJson(dump, options, true);
 	}
 }
 
@@ -1180,18 +1191,18 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	}
 
 	// Merge these data
-	uint32_t delta = 0;
+	uint32_t additionalTopDictOpsSize = 0;
 	uint32_t off = (uint32_t)(h->size + n->size + 11 + t->size);
-	if (c->size != 0) delta += 6;
-	if (e->size != 0) delta += 7;
-	if (s->size != 0) delta += 6;
-	if (p->size != 0) delta += 11;
-	if (r->size != 0) delta += 7;
+	if (c->size != 0) additionalTopDictOpsSize += 6;  // op_charset
+	if (e->size != 0) additionalTopDictOpsSize += 7;  // op_FDSelect
+	if (s->size != 0) additionalTopDictOpsSize += 6;  // op_CharStrings
+	if (p->size != 0) additionalTopDictOpsSize += 11; // op_Private
+	if (r->size != 0) additionalTopDictOpsSize += 7;  // op_FDArray
 
 	// Start building CFF table
 	bufwrite_bufdel(blob, h); // header
 	bufwrite_bufdel(blob, n); // name index
-	int32_t delta_size = (uint32_t)(t->size + delta + 1);
+	int32_t delta_size = (uint32_t)(t->size + additionalTopDictOpsSize + 1);
 	bufwrite_bufdel(blob, bufninit(11, 0, 1,   // top dict index headerone item
 	                               4,          // four bytes per offset
 	                               0, 0, 0, 1, // offset 1
@@ -1202,7 +1213,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	bufwrite_bufdel(blob, t); // top dict body
 
 	// top dict offsets
-	off += delta + i->size + 3;
+	off += additionalTopDictOpsSize + i->size + 3;
 	if (c->size != 0) {
 		bufwrite_bufdel(blob, cff_buildOffset(off));
 		bufwrite_bufdel(blob, cff_encodeCffOperator(op_charset));
@@ -1231,7 +1242,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	}
 
 	bufwrite_bufdel(blob, i);                    // string index
-	bufwrite_bufdel(blob, bufninit(3, 0, 0, 0)); // gsubr
+	bufwrite_bufdel(blob, bufninit(3, 0, 0, 0)); // gsubr. Currently empty
 	bufwrite_bufdel(blob, c);                    // charset
 	bufwrite_bufdel(blob, e);                    // fdselect
 	bufwrite_bufdel(blob, s);                    // charstring
