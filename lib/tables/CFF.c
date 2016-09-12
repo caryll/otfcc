@@ -42,18 +42,27 @@ void table_delete_CFF(table_CFF *table) {
 	sdsfree(table->familyName);
 	sdsfree(table->weight);
 
+	fprintf(stderr, "fd before delete name\n");
 	sdsfree(table->fontName);
+	fprintf(stderr, "fd delete name\n");
 	sdsfree(table->cidRegistry);
+	fprintf(stderr, "fd delete registry\n");
 	sdsfree(table->cidOrdering);
+	fprintf(stderr, "fd delete ordering\n");
 
 	FREE(table->fontMatrix);
+	fprintf(stderr, "fd delete matrix\n");
 	caryll_delete_privatedict(table->privateDict);
+	fprintf(stderr, "fd delete pd\n");
 	if (table->fdArray) {
 		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+			fprintf(stderr, "begin delete fd\n");
 			table_delete_CFF(table->fdArray[j]);
+			fprintf(stderr, "end delete fd\n");
 		}
 		free(table->fdArray);
 	}
+	fprintf(stderr, "fd delete fdarray\n");
 }
 
 typedef struct {
