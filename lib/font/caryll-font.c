@@ -60,6 +60,7 @@ void caryll_delete_Font(caryll_Font *font) {
 	if (font->VORG) table_delete_VORG(font->VORG);
 	fprintf(stderr, "end delete VORG\n");
 	if (font->glyph_order && *font->glyph_order) { glyphorder_deleteMap(font->glyph_order); }
+	fprintf(stderr, "end delete glyph_order\n");
 	if (font) free(font);
 	fprintf(stderr, "end delete font\n");
 }
