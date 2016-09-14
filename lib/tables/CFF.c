@@ -835,7 +835,8 @@ typedef struct {
 	caryll_buffer *subroutines;
 } cff_charStringAndSubrs;
 
-static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_buffer **s, caryll_buffer **gs) {
+static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_buffer **s, caryll_buffer **gs,
+                                 caryll_buffer **ls) {
 	*s = bufnew();
 	*gs = bufnew();
 	if (context->glyf->numberGlyphs == 0) { return; }
@@ -845,9 +846,11 @@ static void cff_make_charstrings(cff_charstring_builder_context *context, caryll
 		    cff_compileGlyphToIL(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
 		cff_optimizeIL(il, context->options);
 		cff_insertILToGraph(context->graph, il);
+		free(il->instr);
+		free(il);
 	}
-	cff_ilGraphToBuffers(context->graph, s, gs);
-	DELETE(cff_delete_Graph,context->graph);
+	cff_ilGraphToBuffers(context->graph, s, gs, ls);
+	DELETE(cff_delete_Graph, context->graph);
 }
 
 // String table management
@@ -994,6 +997,7 @@ static cff_Dict *cff_make_private_dict(cff_PrivateDict *pd) {
 	// op_nominalWidthX are currently not used
 	cffdict_input(dict, op_defaultWidthX, cff_DOUBLE, 1, pd->defaultWidthX);
 	cffdict_input(dict, op_nominalWidthX, cff_DOUBLE, 1, pd->nominalWidthX);
+
 	return dict;
 }
 
@@ -1158,6 +1162,8 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	// cff top PRIVATE
 	cff_Dict *top_pd = cff_make_private_dict(cff->privateDict);
 	caryll_buffer *p = cff_build_Dict(top_pd);
+	bufwrite_bufdel(p, cff_buildOffset(0xFFFFFFFF));
+	bufwrite_bufdel(p, cff_encodeCffOperator(op_Subrs));
 	cff_delete_Dict(top_pd);
 
 	// FDSelect
@@ -1182,6 +1188,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	// CFF Charstrings
 	caryll_buffer *s;
 	caryll_buffer *gs;
+	caryll_buffer *ls;
 	{
 		cff_charstring_builder_context g2cContext;
 		g2cContext.glyf = glyf;
@@ -1189,7 +1196,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		g2cContext.nominalWidthX = cff->privateDict->nominalWidthX;
 		g2cContext.options = options;
 		g2cContext.graph = cff_new_Graph();
-		cff_make_charstrings(&g2cContext, &s, &gs);
+		cff_make_charstrings(&g2cContext, &s, &gs, &ls);
 	}
 
 	// Merge these data
@@ -1248,14 +1255,22 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	bufwrite_bufdel(blob, c);  // charset
 	bufwrite_bufdel(blob, e);  // fdselect
 	bufwrite_bufdel(blob, s);  // charstring
-	bufwrite_bufdel(blob, p);  // top private
-	if (cff->isCID) {          // fdarray and fdarray privates
+	size_t *startingPositionOfPrivates;
+	NEW_N(startingPositionOfPrivates, 1 + cff->fdArrayCount);
+	startingPositionOfPrivates[0] = blob->cursor;
+	bufwrite_bufdel(blob, p); // top private
+	size_t *endingPositionOfPrivates;
+	NEW_N(endingPositionOfPrivates, 1 + cff->fdArrayCount);
+	endingPositionOfPrivates[0] = blob->cursor;
+	if (cff->isCID) { // fdarray and fdarray privates
 		uint32_t fdArrayPrivatesStartOffset = off;
 		caryll_buffer **fdArrayPrivates;
 		NEW_N(fdArrayPrivates, cff->fdArrayCount);
 		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
 			cff_Dict *pd = cff_make_private_dict(cff->fdArray[j]->privateDict);
 			caryll_buffer *p = cff_build_Dict(pd);
+			bufwrite_bufdel(p, cff_buildOffset(0xFFFFFFFF));
+			bufwrite_bufdel(p, cff_encodeCffOperator(op_Subrs));
 			cff_delete_Dict(pd);
 			fdArrayPrivates[j] = p;
 			uint8_t *privateLengthPtr = &(fdArrayIndex->data[fdArrayIndex->offset[j + 1] - 11]);
@@ -1275,12 +1290,26 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		cff_delete_Index(fdArrayIndex);
 		bufwrite_bufdel(blob, r);
 		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+			startingPositionOfPrivates[j + 1] = blob->cursor;
 			bufwrite_bufdel(blob, fdArrayPrivates[j]);
+			endingPositionOfPrivates[j + 1] = blob->cursor;
 		}
 		free(fdArrayPrivates);
 	} else {
 		bufwrite_bufdel(blob, r);
 	}
+	size_t positionOfLocalSubroutines = blob->cursor;
+	bufwrite_bufdel(blob, ls);
+	for (uint16_t j = 0; j < cff->fdArrayCount + 1; j++) {
+		size_t lsOffset = positionOfLocalSubroutines - startingPositionOfPrivates[j];
+		uint8_t *ptr = &(blob->data[endingPositionOfPrivates[j] - 5]);
+		ptr[0] = (lsOffset >> 24) & 0xFF;
+		ptr[1] = (lsOffset >> 16) & 0xFF;
+		ptr[2] = (lsOffset >> 8) & 0xFF;
+		ptr[3] = (lsOffset >> 0) & 0xFF;
+	}
+	FREE(startingPositionOfPrivates);
+	FREE(endingPositionOfPrivates);
 	// finish
 	return blob;
 }

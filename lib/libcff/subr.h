@@ -25,6 +25,7 @@ struct __cff_SubrRule {
 	uint32_t uniqueIndex;
 	uint16_t cffIndex;
 	uint32_t refcount;
+	uint32_t effectiveLength;
 	cff_SubrNode *guard;
 };
 
@@ -48,6 +49,6 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il);
 void printRule(cff_SubrRule *r);
 void cff_statHeight(cff_SubrRule *r, uint32_t height);
 uint32_t cff_numberSubroutines(cff_SubrGraph *g);
-void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs);
+void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs, caryll_buffer **ls);
 void cff_delete_Graph(cff_SubrGraph *g);
 #endif

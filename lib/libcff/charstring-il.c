@@ -11,7 +11,7 @@ static void ensureThereIsSpace(cff_CharstringIL *il) {
 	}
 }
 
-static void il_push_operand(cff_CharstringIL *il, double x) {
+void il_push_operand(cff_CharstringIL *il, double x) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERAND;
 	il->instr[il->length].d = x;
@@ -19,7 +19,7 @@ static void il_push_operand(cff_CharstringIL *il, double x) {
 	il->length++;
 	il->free--;
 }
-static void il_push_special(cff_CharstringIL *il, int32_t s) {
+void il_push_special(cff_CharstringIL *il, int32_t s) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_SPECIAL;
 	il->instr[il->length].i = s;
@@ -27,7 +27,7 @@ static void il_push_special(cff_CharstringIL *il, int32_t s) {
 	il->length++;
 	il->free--;
 }
-static void il_push_op(cff_CharstringIL *il, int32_t op) {
+void il_push_op(cff_CharstringIL *il, int32_t op) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERATOR;
 	il->instr[il->length].i = op;
@@ -399,10 +399,6 @@ caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 				cff_mergeCS2Operand(blob, il->instr[j].d);
 				break;
 			}
-			case IL_ITEM_PROGID: {
-				cff_mergeCS2Operand(blob, il->instr[j].i);
-				break;
-			}
 			case IL_ITEM_OPERATOR: {
 				cff_mergeCS2Operator(blob, il->instr[j].i);
 				break;
@@ -418,6 +414,51 @@ caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 	return blob;
 }
 
+cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il) {
+	cff_CharstringIL *out;
+	NEW_CLEAN(out);
+	for (uint16_t j = 0; j < il->length; j++) {
+		switch (il->instr[j].type) {
+			case IL_ITEM_OPERAND: {
+				il_push_operand(out, il->instr[j].d);
+				break;
+			}
+			case IL_ITEM_OPERATOR: {
+				il_push_op(out, il->instr[j].i);
+				break;
+			}
+			case IL_ITEM_SPECIAL: {
+				il_push_special(out, il->instr[j].i);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	return out;
+}
+
+void cff_ILmergeIL(cff_CharstringIL *self, cff_CharstringIL *il) {
+	for (uint16_t j = 0; j < il->length; j++) {
+		switch (il->instr[j].type) {
+			case IL_ITEM_OPERAND: {
+				il_push_operand(self, il->instr[j].d);
+				break;
+			}
+			case IL_ITEM_OPERATOR: {
+				il_push_op(self, il->instr[j].i);
+				break;
+			}
+			case IL_ITEM_SPECIAL: {
+				il_push_special(self, il->instr[j].i);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+}
+
 bool instruction_eq(cff_CharstringInstruction *z1, cff_CharstringInstruction *z2) {
 	if (z1->type == z2->type) {
 		if (z1->type == IL_ITEM_OPERAND || z1->type == IL_ITEM_PHANTOM_OPERAND) {
@@ -428,4 +469,12 @@ bool instruction_eq(cff_CharstringInstruction *z1, cff_CharstringInstruction *z2
 	} else {
 		return false;
 	}
+}
+
+bool cff_ilEqual(cff_CharstringIL *a, cff_CharstringIL *b) {
+	if (!a || !b) return false;
+	if (a->length != b->length) return false;
+	for (uint32_t j = 0; j < a->length; j++)
+		if (!instruction_eq(a->instr + j, b->instr + j)) { return false; }
+	return true;
 }
