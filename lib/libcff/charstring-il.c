@@ -393,22 +393,18 @@ void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
 caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 	caryll_buffer *blob = bufnew();
 
-	uint16_t stackDepth = 0;
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {
 				cff_mergeCS2Operand(blob, il->instr[j].d);
-				stackDepth++;
 				break;
 			}
 			case IL_ITEM_PROGID: {
 				cff_mergeCS2Operand(blob, il->instr[j].i);
-				stackDepth++;
 				break;
 			}
 			case IL_ITEM_OPERATOR: {
 				cff_mergeCS2Operator(blob, il->instr[j].i);
-				stackDepth = 0;
 				break;
 			}
 			case IL_ITEM_SPECIAL: {

@@ -690,7 +690,8 @@ table_glyf *table_parse_glyf(json_value *root, glyphorder_Map glyph_order, const
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
 				glyf->glyphs[order_entry->gid] = caryll_glyf_parse_glyph(glyphdump, order_entry, options);
 			}
-			FREE(table->u.object.values[j].value);
+			json_value_free(glyphdump);
+			table->u.object.values[j].value = NULL;
 			sdsfree(gname);
 		}
 		return glyf;
