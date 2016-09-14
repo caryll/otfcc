@@ -6,7 +6,7 @@ void printNode(cff_SubrNode *n, bool nl) {
 	if (n->guard) printf("GUARD ");
 	if (n->hard) printf("HARD ");
 	if (n->rule) {
-		printf("[%d] ", n->rule->uniqueIndex);
+		printf("[%d] ", n->rule->number);
 	} else
 		for (uint32_t j = 0; j < buflen(n->terminal); j++) {
 			printf("%02x ", n->terminal->data[j]);
@@ -26,13 +26,11 @@ void flatprintRule(cff_SubrRule *r) {
 	}
 }
 void printRule(cff_SubrRule *r) {
-	printf("[%d] -> ", r->uniqueIndex);
+	printf("[%d] -> ", r->number);
 	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
 		printNode(e, false);
 	}
-	printf("\n");
-	// flatprintRule(r);
-	// printf("\n");
+	printf(" (%d; %d)\n", r->height, r->refcount);
 	r->printed = true;
 	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
 		if (e->rule && !e->rule->printed) { printRule(e->rule); }
@@ -140,11 +138,6 @@ cff_SubrGraph *cff_new_Graph() {
 	cff_SubrGraph *g;
 	NEW_CLEAN(g);
 	g->root = cff_new_Rule();
-	cff_SubrNode *start = cff_new_Node();
-	caryll_buffer *blob = bufnew();
-	cff_mergeCS2Operator(blob, op_endchar);
-	start->terminal = blob;
-	insertNodeAfter(g->root->guard, start);
 	return g;
 }
 
@@ -173,12 +166,20 @@ static void unlinkNode(cff_SubrGraph *g, cff_SubrNode *a) {
 	uint8_t *key = getDoubletHashKey(a, &len);
 	cff_SubrDiagramIndex *di = NULL;
 	HASH_FIND(hh, g->diagramIndex, key, len, di);
-	if (di && di->start == a) { HASH_DEL(g->diagramIndex, di); }
+	if (di && di->start == a) {
+		HASH_DEL(g->diagramIndex, di);
+		FREE(di->key);
+		FREE(di);
+	}
 	FREE(key);
 	key = getSingletHashKey(a, &len);
 	di = NULL;
 	HASH_FIND(hh, g->diagramIndex, key, len, di);
-	if (di && di->start == a) { HASH_DEL(g->diagramIndex, di); }
+	if (di && di->start == a) {
+		HASH_DEL(g->diagramIndex, di);
+		FREE(di->key);
+		FREE(di);
+	}
 	return;
 }
 
@@ -216,10 +217,6 @@ static void addSinglet(cff_SubrGraph *g, cff_SubrNode *n) {
 		FREE(key);
 	}
 }
-static void linkNode(cff_SubrGraph *g, cff_SubrNode *n) {
-	addSinglet(g, n);
-	addDoublet(g, n);
-}
 
 bool identNode(cff_SubrNode *m, cff_SubrNode *n) {
 	if (m->rule)
@@ -256,7 +253,7 @@ void expandCall(cff_SubrGraph *g, cff_SubrNode *a) {
 	cff_SubrNode *anext = a->next;
 	cff_SubrNode *r1 = a->rule->guard->next;
 	cff_SubrNode *r2 = a->rule->guard->prev;
-	if (aprev == anext || r1 == r2) return;
+
 	// We should move out [a, a'] from g's diagramIndex
 	unlinkNode(g, a);
 
@@ -378,9 +375,13 @@ bool checkSingletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
 
 void appendNodeToGraph(cff_SubrGraph *g, cff_SubrNode *n) {
 	cff_SubrNode *last = lastNodeOf(g->root);
-	insertNodeAfter(last, n);
-	//	if (buflen(n->terminal) > 8) checkSingletMatch(g, n);
+	xInsertNodeAfter(g, last, n);
+	if(g->doSubroutinize){
+	#ifdef USE_SINGLET
+	if (buflen(n->terminal) > 16) checkSingletMatch(g, n);
+	#endif
 	checkDoubletMatch(g, last);
+	}
 }
 
 void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
@@ -430,12 +431,147 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 		n->terminal = blob;
 		n->hard = hard;
 		appendNodeToGraph(g, n);
+	}
+	{
 		blob = bufnew();
 		cff_mergeCS2Operator(blob, op_endchar);
-		n = cff_new_Node();
+		cff_SubrNode *n = cff_new_Node();
 		n->rule = NULL;
 		n->terminal = blob;
 		n->hard = true;
+		n->finish = true;
 		appendNodeToGraph(g, n);
+		g->totalCharStrings += 1;
 	}
+}
+
+void cff_statHeight(cff_SubrRule *r, uint32_t height) {
+	if (height > r->height) r->height = height;
+	// Stat the heights bottom-up.
+	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
+		if (e->rule) { cff_statHeight(e->rule, height + 1); }
+	}
+}
+
+void numberASubroutine(cff_SubrRule *r, uint32_t *current) {
+	if (r->numbered) return;
+	r->number = *current;
+	(*current)++;
+	r->numbered = true;
+	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
+		if (e->rule && e->rule->height < type2_subr_nesting) { numberASubroutine(e->rule, current); }
+	}
+}
+uint32_t cff_numberSubroutines(cff_SubrGraph *g) {
+	uint32_t current = 0;
+	for (cff_SubrNode *e = g->root->guard->next; e != g->root->guard; e = e->next) {
+		if (e->rule) numberASubroutine(e->rule, &current);
+	}
+	return current;
+}
+
+static inline int32_t subroutineBias(int32_t cnt) {
+	if (cnt < 1240)
+		return 107;
+	else if (cnt < 33900)
+		return 1131;
+	else
+		return 32768;
+}
+
+static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll_buffer *gsubrs,
+                                  uint32_t maxSubroutines) {
+	if (node->rule) {
+		if (node->rule->numbered && node->rule->number < type2_max_subrs && node->rule->height < type2_subr_nesting) {
+			// A call.
+			int32_t stacknum = node->rule->number - subroutineBias(maxSubroutines);
+			cff_mergeCS2Int(buf, stacknum);
+			cff_mergeCS2Operator(buf, op_callgsubr);
+			cff_SubrRule *r = node->rule;
+			if (!r->printed) {
+				r->printed = true;
+				caryll_buffer *target = gsubrs + r->number;
+				for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
+					serializeNodeToBuffer(e, target, gsubrs, maxSubroutines);
+				}
+				cff_mergeCS2Operator(target, op_return);
+			}
+		} else {
+			fprintf(stderr, "Inline subroutine %d\n", node->rule->number);
+			// A call, but invalid
+			// Inline its code.
+			cff_SubrRule *r = node->rule;
+			for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
+				serializeNodeToBuffer(e, buf, gsubrs, maxSubroutines);
+			}
+		}
+	} else {
+		bufwrite_buf(buf, node->terminal);
+	}
+}
+
+static caryll_buffer *from_array(void *_context, uint32_t j) {
+	caryll_buffer *context = (caryll_buffer *)_context;
+	caryll_buffer *blob = bufnew();
+	bufwrite_buf(blob, context + j);
+	return blob;
+}
+void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs) {
+	cff_statHeight(g->root, 0);
+	uint32_t maxSubroutines = cff_numberSubroutines(g);
+	caryll_buffer *charStrings, *gsubrs;
+	NEW_N(charStrings, g->totalCharStrings + 1);
+	NEW_N(gsubrs, maxSubroutines + 1);
+	uint32_t j = 0;
+	cff_SubrRule *r = g->root;
+	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
+		serializeNodeToBuffer(e, charStrings + j, gsubrs, maxSubroutines);
+		if (!e->rule && e->terminal && e->finish) { j++; }
+	}
+	cff_Index *is = cff_newIndexByCallback(charStrings, g->totalCharStrings, from_array);
+	uint32_t savedSubroutines = maxSubroutines;
+	if (savedSubroutines > type2_max_subrs) savedSubroutines = type2_max_subrs;
+	cff_Index *igs = cff_newIndexByCallback(gsubrs, savedSubroutines, from_array);
+
+	for (uint32_t j = 0; j < g->totalCharStrings; j++) {
+		free((charStrings + j)->data);
+	}
+	for (uint32_t j = 0; j < maxSubroutines; j++) {
+		free((gsubrs + j)->data);
+	}
+	free(charStrings);
+	free(gsubrs);
+
+	*s = cff_build_Index(*is);
+	*gs = cff_build_Index(*igs);
+	cff_delete_Index(is);
+	cff_delete_Index(igs);
+}
+
+
+static void deleteFullRule(cff_SubrRule *r) {
+	cff_SubrNode *next;
+	for (cff_SubrNode *e = r->guard->next; e != r->guard;) {
+		next = e->next;
+		if (e->rule) {
+			e->rule->refcount -= 1;
+			if (e->rule->refcount < 1) deleteFullRule(e->rule);
+		}
+		if (e->terminal) buffree(e->terminal);
+		free(e);
+		e = next;
+	}
+	free(r->guard);
+	free(r);
+}
+
+void cff_delete_Graph(cff_SubrGraph *g){
+	deleteFullRule(g->root);
+	cff_SubrDiagramIndex *s, *tmp;
+	HASH_ITER(hh, g->diagramIndex, s, tmp) {
+		HASH_DEL(g->diagramIndex, s);
+		FREE(s->key);
+		FREE(s);
+	}
+	FREE(g);
 }

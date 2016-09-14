@@ -823,17 +823,6 @@ table_CFF *table_parse_cff(json_value *root, const caryll_Options *options) {
 	}
 }
 
-static caryll_buffer *compile_glyph(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidthX,
-                                    const caryll_Options *options, cff_SubrGraph *gr) {
-	cff_CharstringIL *il = cff_compileGlyphToIL(g, defaultWidth, nominalWidthX);
-	cff_optimizeIL(il, options);
-	caryll_buffer *blob = cff_build_IL(il);
-	cff_insertILToGraph(gr, il);
-	free(il->instr);
-	free(il);
-	return blob;
-}
-
 typedef struct {
 	table_glyf *glyf;
 	uint16_t defaultWidth;
@@ -841,17 +830,24 @@ typedef struct {
 	const caryll_Options *options;
 	cff_SubrGraph *graph;
 } cff_charstring_builder_context;
-static caryll_buffer *callback_makeglyph(void *_context, uint32_t j) {
-	cff_charstring_builder_context *context = (cff_charstring_builder_context *)_context;
-	return compile_glyph(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX, context->options,
-	                     context->graph);
-}
-static caryll_buffer *cff_make_charstrings(cff_charstring_builder_context *context) {
-	if (context->glyf->numberGlyphs == 0) return bufnew();
-	cff_Index *charstring = cff_newIndexByCallback(context, context->glyf->numberGlyphs, callback_makeglyph);
-	caryll_buffer *final_blob = cff_build_Index(*charstring);
-	cff_delete_Index(charstring);
-	return final_blob;
+typedef struct {
+	caryll_buffer *charStrings;
+	caryll_buffer *subroutines;
+} cff_charStringAndSubrs;
+
+static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_buffer **s, caryll_buffer **gs) {
+	*s = bufnew();
+	*gs = bufnew();
+	if (context->glyf->numberGlyphs == 0) { return; }
+	context->graph->doSubroutinize = context->options->optimize_level >= 3;
+	for (uint16_t j = 0; j < context->glyf->numberGlyphs; j++) {
+		cff_CharstringIL *il =
+		    cff_compileGlyphToIL(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
+		cff_optimizeIL(il, context->options);
+		cff_insertILToGraph(context->graph, il);
+	}
+	cff_ilGraphToBuffers(context->graph, s, gs);
+	DELETE(cff_delete_Graph,context->graph);
 }
 
 // String table management
@@ -1185,6 +1181,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 
 	// CFF Charstrings
 	caryll_buffer *s;
+	caryll_buffer *gs;
 	{
 		cff_charstring_builder_context g2cContext;
 		g2cContext.glyf = glyf;
@@ -1192,8 +1189,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		g2cContext.nominalWidthX = cff->privateDict->nominalWidthX;
 		g2cContext.options = options;
 		g2cContext.graph = cff_new_Graph();
-		s = cff_make_charstrings(&g2cContext);
-		printRule(g2cContext.graph->root);
+		cff_make_charstrings(&g2cContext, &s, &gs);
 	}
 
 	// Merge these data
@@ -1219,7 +1215,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	bufwrite_bufdel(blob, t); // top dict body
 
 	// top dict offsets
-	off += additionalTopDictOpsSize + i->size + 3;
+	off += additionalTopDictOpsSize + i->size + gs->size;
 	if (c->size != 0) {
 		bufwrite_bufdel(blob, cff_buildOffset(off));
 		bufwrite_bufdel(blob, cff_encodeCffOperator(op_charset));
@@ -1247,13 +1243,13 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		off += r->size;
 	}
 
-	bufwrite_bufdel(blob, i);                    // string index
-	bufwrite_bufdel(blob, bufninit(3, 0, 0, 0)); // gsubr. Currently empty
-	bufwrite_bufdel(blob, c);                    // charset
-	bufwrite_bufdel(blob, e);                    // fdselect
-	bufwrite_bufdel(blob, s);                    // charstring
-	bufwrite_bufdel(blob, p);                    // top private
-	if (cff->isCID) {                            // fdarray and fdarray privates
+	bufwrite_bufdel(blob, i);  // string index
+	bufwrite_bufdel(blob, gs); // gsubr
+	bufwrite_bufdel(blob, c);  // charset
+	bufwrite_bufdel(blob, e);  // fdselect
+	bufwrite_bufdel(blob, s);  // charstring
+	bufwrite_bufdel(blob, p);  // top private
+	if (cff->isCID) {          // fdarray and fdarray privates
 		uint32_t fdArrayPrivatesStartOffset = off;
 		caryll_buffer **fdArrayPrivates;
 		NEW_N(fdArrayPrivates, cff->fdArrayCount);

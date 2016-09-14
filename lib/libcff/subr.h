@@ -14,10 +14,14 @@ struct __cff_SubrNode {
 	cff_SubrNode *next;
 	bool hard;
 	bool guard;
+	bool finish;
 };
 
 struct __cff_SubrRule {
 	bool printed;
+	bool numbered;
+	uint32_t number;
+	uint32_t height;
 	uint32_t uniqueIndex;
 	uint16_t cffIndex;
 	uint32_t refcount;
@@ -35,9 +39,15 @@ typedef struct {
 	cff_SubrRule *root;
 	cff_SubrDiagramIndex *diagramIndex;
 	uint32_t totalRules;
+	uint32_t totalCharStrings;
+	bool doSubroutinize;
 } cff_SubrGraph;
 
 cff_SubrGraph *cff_new_Graph();
 void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il);
 void printRule(cff_SubrRule *r);
+void cff_statHeight(cff_SubrRule *r, uint32_t height);
+uint32_t cff_numberSubroutines(cff_SubrGraph *g);
+void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs);
+void cff_delete_Graph(cff_SubrGraph *g);
 #endif
