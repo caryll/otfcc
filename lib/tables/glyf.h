@@ -12,8 +12,8 @@
 enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
-	double x;
-	double y;
+	pos_t x;
+	pos_t y;
 	int8_t onCurve; // a mask indicates whether a point is on-curve or off-curve
 	                // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
 	                // bit 1 - 7 : unused, set to 0
@@ -27,9 +27,10 @@ typedef struct {
 
 // CFF stems and hint masks
 typedef struct {
+	pos_t position;
+	pos_t width;
+
 	uint16_t map;
-	double position;
-	double width;
 } glyf_PostscriptStemDef;
 
 typedef struct {
@@ -41,22 +42,22 @@ typedef struct {
 typedef struct {
 	glyph_handle glyph;
 	// transformation term
-	double a;
-	double b;
-	double c;
-	double d;
-	double x;
-	double y;
+	pos_t a;
+	pos_t b;
+	pos_t c;
+	pos_t d;
+	pos_t x;
+	pos_t y;
 	// flags
 	bool roundToGrid;
 	bool useMyMetrics;
 } glyf_ComponentReference;
 
 typedef struct {
-	double xMin;
-	double xMax;
-	double yMin;
-	double yMax;
+	pos_t xMin;
+	pos_t xMax;
+	pos_t yMin;
+	pos_t yMax;
 	uint16_t nestDepth;
 	uint16_t nPoints;
 	uint16_t nContours;
@@ -68,9 +69,9 @@ typedef struct {
 	sds name;
 
 	// Metrics
-	uint16_t advanceWidth;
-	uint16_t advanceHeight;
-	int16_t verticalOrigin;
+	metric_t advanceWidth;
+	metric_t advanceHeight;
+	pos_t verticalOrigin;
 
 	// Outline
 	// NOTE: SFNT does not support mixed glyphs, but we do.

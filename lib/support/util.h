@@ -13,6 +13,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "font-datatypes.h"
+
 #include "base64.h"
 #include "buffer.h"
 #include "options.h"

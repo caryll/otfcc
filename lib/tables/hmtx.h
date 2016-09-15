@@ -8,18 +8,18 @@
 #include "maxp.h"
 
 typedef struct {
-	uint16_t advanceWidth;
-	int16_t lsb;
+	metric_t advanceWidth;
+	pos_t lsb;
 } horizontal_metric;
 
 typedef struct {
 	// Horizontal metrics
 	horizontal_metric *metrics;
-	int16_t *leftSideBearing;
+	pos_t *leftSideBearing;
 } table_hmtx;
 
 table_hmtx *table_read_hmtx(caryll_Packet packet, table_hhea *hhea, table_maxp *maxp);
 void table_delete_hmtx(table_hmtx *table);
-caryll_buffer *table_build_hmtx(table_hmtx *table, uint16_t count_a, uint16_t count_k, const caryll_Options *options);
+caryll_buffer *table_build_hmtx(table_hmtx *table, glyphid_t count_a, glyphid_t count_k, const caryll_Options *options);
 
 #endif

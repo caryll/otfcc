@@ -8,20 +8,20 @@ table_vmtx *table_read_vmtx(caryll_Packet packet, table_vhea *vhea, table_maxp *
 
 		table_vmtx *vmtx = NULL;
 
-		uint32_t count_a = vhea->numOfLongVerMetrics;
-		uint32_t count_k = maxp->numGlyphs - vhea->numOfLongVerMetrics;
+		glyphid_t count_a = vhea->numOfLongVerMetrics;
+		glyphid_t count_k = maxp->numGlyphs - vhea->numOfLongVerMetrics;
 		if (length < count_a * 4 + count_k * 2) goto vmtx_CORRUPTED;
 
 		vmtx = malloc(sizeof(table_vmtx) * 1);
 		vmtx->metrics = malloc(sizeof(vertical_metric) * count_a);
-		vmtx->topSideBearing = malloc(sizeof(int16_t) * count_k);
+		vmtx->topSideBearing = malloc(sizeof(pos_t) * count_k);
 
-		for (uint32_t ia = 0; ia < count_a; ia++) {
+		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			vmtx->metrics[ia].advanceHeight = read_16u(data + ia * 4);
 			vmtx->metrics[ia].tsb = read_16u(data + ia * 4 + 2);
 		}
 
-		for (uint32_t ik = 0; ik < count_k; ik++) {
+		for (glyphid_t ik = 0; ik < count_k; ik++) {
 			vmtx->topSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
 		}
 
@@ -40,17 +40,17 @@ void table_delete_vmtx(table_vmtx *table) {
 	free(table);
 }
 
-caryll_buffer *table_build_vmtx(table_vmtx *vmtx, uint16_t count_a, uint16_t count_k, const caryll_Options *options) {
+caryll_buffer *table_build_vmtx(table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {
-		for (uint16_t j = 0; j < count_a; j++) {
+		for (glyphid_t j = 0; j < count_a; j++) {
 			bufwrite16b(buf, vmtx->metrics[j].advanceHeight);
 			bufwrite16b(buf, vmtx->metrics[j].tsb);
 		}
 	}
 	if (vmtx->topSideBearing) {
-		for (uint16_t j = 0; j < count_k; j++) {
+		for (glyphid_t j = 0; j < count_k; j++) {
 			bufwrite16b(buf, vmtx->topSideBearing[j]);
 		}
 	}
