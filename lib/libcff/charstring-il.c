@@ -187,7 +187,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 			if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 		}
 	}
-	// il_push_op(il, op_endchar);
+	il_push_op(il, op_endchar);
 	return il;
 }
 

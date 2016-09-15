@@ -1,4 +1,10 @@
 #include "subr.h"
+/**
+Type 2 CharString subroutinizer.
+This program uses SEQUITUR (Nevill-Manning algorithm) to construct a CFG from the input sequence of
+opcodes (in the minimum unit of a operator call. That is, operand* operator special*.)
+
+*/
 
 void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);
 
@@ -45,15 +51,17 @@ static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 		l1 = buflen(n->terminal) * sizeof(uint8_t);
 	}
 
-	*len = 3 + l1;
+	*len = 3 + l1 + 1;
 	uint8_t *key = malloc(*len);
 	key[0] = '1';
 	key[1] = (n->rule ? '1' : '0');
-	key[2] = 0;
+	key[2] = '0';
+	key[*len - 1] = 0;
+
 	if (n->rule) {
-		memcpy(key + 3, &(n->rule->uniqueIndex), sizeof(n->rule->uniqueIndex));
+		memcpy(key + 3, &(n->rule->uniqueIndex), l1);
 	} else {
-		memcpy(key + 3, n->terminal->data, buflen(n->terminal) * sizeof(uint8_t));
+		memcpy(key + 3, n->terminal->data, l1);
 	}
 	return key;
 }
@@ -77,14 +85,14 @@ static uint8_t *getDoubletHashKey(cff_SubrNode *n, size_t *len) {
 	key[2] = (n->next->rule ? '1' : '0');
 	key[*len - 1] = 0;
 	if (n->rule) {
-		memcpy(key + 3, &(n->rule->uniqueIndex), sizeof(n->rule->uniqueIndex));
+		memcpy(key + 3, &(n->rule->uniqueIndex), l1);
 	} else {
-		memcpy(key + 3, n->terminal->data, buflen(n->terminal) * sizeof(uint8_t));
+		memcpy(key + 3, n->terminal->data, l1);
 	}
 	if (n->next->rule) {
-		memcpy(key + 3 + l1, &(n->next->rule->uniqueIndex), sizeof(n->next->rule->uniqueIndex));
+		memcpy(key + 3 + l1, &(n->next->rule->uniqueIndex), l2);
 	} else {
-		memcpy(key + 3 + l1, n->next->terminal->data, buflen(n->next->terminal) * sizeof(uint8_t));
+		memcpy(key + 3 + l1, n->next->terminal->data, l2);
 	}
 	return key;
 }
@@ -141,11 +149,11 @@ cff_SubrGraph *cff_new_Graph() {
 	return g;
 }
 
-cff_SubrNode *lastNodeOf(cff_SubrRule *r) {
+static cff_SubrNode *lastNodeOf(cff_SubrRule *r) {
 	return r->guard->prev;
 }
 
-cff_SubrNode *copyNode(cff_SubrNode *n) {
+static cff_SubrNode *copyNode(cff_SubrNode *n) {
 	cff_SubrNode *m = cff_new_Node();
 	if (n->rule) {
 		m->rule = n->rule;
@@ -154,6 +162,7 @@ cff_SubrNode *copyNode(cff_SubrNode *n) {
 		m->terminal = bufnew();
 		bufwrite_buf(m->terminal, n->terminal);
 	}
+	m->last = n->last;
 	return m;
 }
 
@@ -272,6 +281,8 @@ void substituteDoubletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *
 	xInsertNodeAfter(g, prev, invoke);
 	addDoublet(g, prev);
 	addDoublet(g, invoke);
+	addSinglet(g, invoke);
+
 	if (!checkDoubletMatch(g, prev)) { checkDoubletMatch(g, prev->next); }
 }
 void substituteSingletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *r) {
@@ -283,6 +294,7 @@ void substituteSingletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *
 	xInsertNodeAfter(g, prev, invoke);
 	addDoublet(g, prev);
 	addDoublet(g, invoke);
+	addSinglet(g, invoke);
 }
 
 void processMatchDoublet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
@@ -301,6 +313,8 @@ void processMatchDoublet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 		substituteDoubletWithRule(g, m, rule);
 		substituteDoubletWithRule(g, n, rule);
 		addDoublet(g, rule->guard->next);
+		addSinglet(g, rule->guard->next);
+		addSinglet(g, rule->guard->next->next);
 	}
 
 	if (rule->guard->next->rule && rule->guard->next->rule->refcount == 1) {
@@ -363,7 +377,7 @@ bool checkSingletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
 		di->start = n;
 		HASH_ADD_KEYPTR(hh, g->diagramIndex, key, len, di);
 		return false;
-	} else if (di->arity == 1 && !(n->hard) && di->start != n && !di->start->guard) {
+	} else if (di->arity == 1 && di->start != n && !di->start->guard) {
 		FREE(key);
 		processMatchSinglet(g, di->start, n);
 		return true;
@@ -377,15 +391,16 @@ void appendNodeToGraph(cff_SubrGraph *g, cff_SubrNode *n) {
 	cff_SubrNode *last = lastNodeOf(g->root);
 	xInsertNodeAfter(g, last, n);
 	if (g->doSubroutinize) {
-		//if (buflen(n->terminal) > 16) checkSingletMatch(g, n);
-		checkDoubletMatch(g, last);
+		if (!checkDoubletMatch(g, last)) {
+			if (buflen(n->terminal) > 15) checkSingletMatch(g, n);
+		}
 	}
 }
 
 void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 	caryll_buffer *blob = bufnew();
-	bool hard = true;
 	bool flush = false;
+	bool last = false;
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {
@@ -393,7 +408,7 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 					cff_SubrNode *n = cff_new_Node();
 					n->rule = NULL;
 					n->terminal = blob;
-					n->hard = hard;
+					n->last = last;
 					appendNodeToGraph(g, n);
 					blob = bufnew();
 					flush = false;
@@ -404,9 +419,7 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 
 			case IL_ITEM_OPERATOR: {
 				cff_mergeCS2Operator(blob, il->instr[j].i);
-				if (il->instr[j].i == op_rmoveto || il->instr[j].i == op_hmoveto || il->instr[j].i == op_vmoveto) {
-					hard = false;
-				}
+				if (il->instr[j].i == op_endchar) { last = true; }
 				flush = true;
 				break;
 			}
@@ -422,18 +435,16 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 	if (blob->size) {
 		cff_SubrNode *n = cff_new_Node();
 		n->rule = NULL;
+		n->last = last;
 		n->terminal = blob;
-		n->hard = hard;
 		appendNodeToGraph(g, n);
 	}
 	{
 		blob = bufnew();
-		cff_mergeCS2Operator(blob, op_endchar);
 		cff_SubrNode *n = cff_new_Node();
 		n->rule = NULL;
 		n->terminal = blob;
 		n->hard = true;
-		n->finish = true;
 		appendNodeToGraph(g, n);
 		g->totalCharStrings += 1;
 	}
@@ -482,6 +493,15 @@ static inline int32_t subroutineBias(int32_t cnt) {
 		return 32768;
 }
 
+static bool endsWithEndChar(cff_SubrRule *rule) {
+	cff_SubrNode *node = lastNodeOf(rule);
+	if (node->terminal) {
+		return node->last;
+	} else {
+		return endsWithEndChar(node->rule);
+	}
+}
+
 static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll_buffer *gsubrs, uint32_t maxGSubrs,
                                   caryll_buffer *lsubrs, uint32_t maxLSubrs) {
 	if (node->rule) {
@@ -506,7 +526,7 @@ static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll
 				for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
 					serializeNodeToBuffer(e, target, gsubrs, maxGSubrs, lsubrs, maxLSubrs);
 				}
-				cff_mergeCS2Operator(target, op_return);
+				if (!endsWithEndChar(r)) { cff_mergeCS2Operator(target, op_return); }
 			}
 		} else {
 			// A call, but invalid
@@ -551,7 +571,7 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **g
 	cff_SubrRule *r = g->root;
 	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
 		serializeNodeToBuffer(e, charStrings + j, gsubrs, maxGSubrs, lsubrs, maxLSubrs);
-		if (!e->rule && e->terminal && e->finish) { j++; }
+		if (!e->rule && e->terminal && e->hard) { j++; }
 	}
 
 	cff_Index *is = cff_newIndexByCallback(charStrings, g->totalCharStrings, from_array);

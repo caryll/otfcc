@@ -14,7 +14,7 @@ struct __cff_SubrNode {
 	cff_SubrNode *next;
 	bool hard;
 	bool guard;
-	bool finish;
+	bool last;
 };
 
 struct __cff_SubrRule {
