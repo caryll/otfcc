@@ -7,9 +7,7 @@ bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_su
 		fontop_consolidateCoverage(font, rule->match[j], lookupName);
 		fontop_shrinkCoverage(rule->match[j], true);
 	}
-	if (rule->inputBegins < 0) rule->inputBegins = 0;
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
-	if (rule->inputEnds < 0) rule->inputEnds = 0;
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
 	for (uint16_t j = 0; j < rule->applyCount; j++) {
 		bool foundLookup = false;

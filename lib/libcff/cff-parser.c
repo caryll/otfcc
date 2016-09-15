@@ -134,7 +134,7 @@ static void parse_cff_bytecode(cff_File *cff) {
 		offset =
 		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDSelect, 0).i;
 
-		if (offset != -1) {
+		if (cff->char_strings.count && offset != -1) {
 			cff_extract_FDSelect(cff->raw_data, offset, cff->char_strings.count, &cff->fdselect);
 		} else {
 			cff->fdselect.t = cff_FDSELECT_UNSPECED;
