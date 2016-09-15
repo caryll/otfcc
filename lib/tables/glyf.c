@@ -368,13 +368,6 @@ ABSENT:
 }
 
 // to json
-static json_value *dump_coord(double z) {
-	if (round(z) == z) {
-		return json_integer_new(z);
-	} else {
-		return json_double_new(z);
-	}
-}
 static void glyf_glyph_dump_contours(glyf_Glyph *g, json_value *target) {
 	if (!g->numberOfContours || !g->contours) return;
 	json_value *contours = json_array_new(g->numberOfContours);
@@ -383,8 +376,8 @@ static void glyf_glyph_dump_contours(glyf_Glyph *g, json_value *target) {
 		json_value *contour = json_array_new(c->pointsCount);
 		for (uint16_t m = 0; m < c->pointsCount; m++) {
 			json_value *point = json_object_new(4);
-			json_object_push(point, "x", dump_coord(c->points[m].x));
-			json_object_push(point, "y", dump_coord(c->points[m].y));
+			json_object_push(point, "x", json_new_position(c->points[m].x));
+			json_object_push(point, "y", json_new_position(c->points[m].y));
 			json_object_push(point, "on", json_boolean_new(c->points[m].onCurve & MASK_ON_CURVE));
 			json_array_push(contour, point);
 		}
@@ -399,12 +392,12 @@ static void glyf_glyph_dump_references(glyf_Glyph *g, json_value *target) {
 		glyf_ComponentReference *r = &(g->references[k]);
 		json_value *ref = json_object_new(9);
 		json_object_push(ref, "glyph", json_string_new_length((uint32_t)sdslen(r->glyph.name), r->glyph.name));
-		json_object_push(ref, "x", dump_coord(r->x));
-		json_object_push(ref, "y", dump_coord(r->y));
-		json_object_push(ref, "a", dump_coord(r->a));
-		json_object_push(ref, "b", dump_coord(r->b));
-		json_object_push(ref, "c", dump_coord(r->c));
-		json_object_push(ref, "d", dump_coord(r->d));
+		json_object_push(ref, "x", json_new_position(r->x));
+		json_object_push(ref, "y", json_new_position(r->y));
+		json_object_push(ref, "a", json_new_position(r->a));
+		json_object_push(ref, "b", json_new_position(r->b));
+		json_object_push(ref, "c", json_new_position(r->c));
+		json_object_push(ref, "d", json_new_position(r->d));
 		if (r->roundToGrid) { json_object_push(ref, "roundToGrid", json_boolean_new(true)); }
 		if (r->useMyMetrics) { json_object_push(ref, "useMyMetrics", json_boolean_new(true)); }
 		json_array_push(references, ref);
@@ -415,8 +408,8 @@ static json_value *glyf_glyph_dump_stemdefs(glyf_PostscriptStemDef *stems, uint1
 	json_value *a = json_array_new(count);
 	for (uint16_t j = 0; j < count; j++) {
 		json_value *stem = json_object_new(3);
-		json_object_push(stem, "position", dump_coord(stems[j].position));
-		json_object_push(stem, "width", dump_coord(stems[j].width));
+		json_object_push(stem, "position", json_new_position(stems[j].position));
+		json_object_push(stem, "width", json_new_position(stems[j].width));
 		json_array_push(a, stem);
 	}
 	return a;
@@ -443,10 +436,10 @@ static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, uint
 
 static json_value *glyf_dump_glyph(glyf_Glyph *g, const caryll_Options *options) {
 	json_value *glyph = json_object_new(12);
-	json_object_push(glyph, "advanceWidth", json_integer_new(g->advanceWidth));
+	json_object_push(glyph, "advanceWidth", json_new_position(g->advanceWidth));
 	if (options->has_vertical_metrics) {
-		json_object_push(glyph, "advanceHeight", json_integer_new(g->advanceHeight));
-		json_object_push(glyph, "verticalOrigin", json_integer_new(g->verticalOrigin));
+		json_object_push(glyph, "advanceHeight", json_new_position(g->advanceHeight));
+		json_object_push(glyph, "verticalOrigin", json_new_position(g->verticalOrigin));
 	}
 	glyf_glyph_dump_contours(g, glyph);
 	glyf_glyph_dump_references(g, glyph);

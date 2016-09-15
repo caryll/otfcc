@@ -99,7 +99,7 @@ static void _il_push_stemgroup(cff_CharstringIL *il,                      // il 
                                uint16_t n, glyf_PostscriptStemDef *stems, // stem array
                                bool hasmask, bool haswidth, int32_t ophm, int32_t oph) {
 	if (!stems || !n) return;
-	double ref = 0;
+	pos_t ref = 0;
 	uint16_t nn = haswidth ? 1 : 0;
 	for (uint16_t j = 0; j < n; j++) {
 		il_push_operand(il, stems[j].position - ref);
@@ -131,14 +131,14 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	cff_CharstringIL *il;
 	NEW_CLEAN(il);
 	// Convert absolute positions to deltas
-	double x = 0;
-	double y = 0;
+	pos_t x = 0;
+	pos_t y = 0;
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
 		for (uint16_t j = 0; j < n; j++) {
-			double dx = contour->points[j].x - x;
-			double dy = contour->points[j].y - y;
+			pos_t dx = contour->points[j].x - x;
+			pos_t dy = contour->points[j].y - y;
 			x = contour->points[j].x, y = contour->points[j].y;
 			contour->points[j].x = dx;
 			contour->points[j].y = dy;

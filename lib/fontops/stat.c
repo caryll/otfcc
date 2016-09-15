@@ -158,9 +158,9 @@ static void caryll_font_stat_hmtx(caryll_Font *font, const caryll_Options *optio
 	pos_t minLSB = 0x7FFF;
 	pos_t minRSB = 0x7FFF;
 	pos_t maxExtent = -0x8000;
-	metric_t maxWidth = 0;
+	length_t maxWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		metric_t advanceWidth = font->glyf->glyphs[j]->advanceWidth;
+		length_t advanceWidth = font->glyf->glyphs[j]->advanceWidth;
 		pos_t lsb = font->glyf->glyphs[j]->stat.xMin;
 		pos_t rsb = advanceWidth - font->glyf->glyphs[j]->stat.xMax;
 
@@ -204,10 +204,10 @@ static void caryll_font_stat_vmtx(caryll_Font *font, const caryll_Options *optio
 	pos_t minTSB = 0x7FFF;
 	pos_t minBSB = 0x7FFF;
 	pos_t maxExtent = -0x8000;
-	metric_t maxHeight = 0;
+	length_t maxHeight = 0;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_Glyph *g = font->glyf->glyphs[j];
-		metric_t advanceHeight = g->advanceHeight;
+		length_t advanceHeight = g->advanceHeight;
 		pos_t tsb = g->verticalOrigin - g->stat.yMax;
 		pos_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
 		if (j < count_a) {

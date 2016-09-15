@@ -69,8 +69,8 @@ typedef struct {
 	sds name;
 
 	// Metrics
-	metric_t advanceWidth;
-	metric_t advanceHeight;
+	length_t advanceWidth;
+	length_t advanceHeight;
 	pos_t verticalOrigin;
 
 	// Outline

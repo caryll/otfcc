@@ -187,7 +187,7 @@ json_value *otl_gpos_dump_pair(otl_Subtable *_subtable) {
 			if (f1 | f2) {
 				if (f1 == FORMAT_DWIDTH && f2 == 0) {
 					// simple kerning
-					json_array_push(row, json_integer_new(subtable->firstValues[j][k].dWidth));
+					json_array_push(row, json_new_position(subtable->firstValues[j][k].dWidth));
 				} else {
 					json_value *pair = json_object_new(2);
 					if (f1) { json_object_push(pair, "first", gpos_dump_value(subtable->firstValues[j][k])); }
@@ -195,7 +195,7 @@ json_value *otl_gpos_dump_pair(otl_Subtable *_subtable) {
 					json_array_push(row, pair);
 				}
 			} else {
-				json_array_push(row, json_integer_new(0));
+				json_array_push(row, json_new_position(0));
 			}
 		}
 		json_array_push(mat, preserialize(row));

@@ -35,10 +35,10 @@ typedef union _otl_subtable otl_Subtable;
 #include "classdef.h"
 
 typedef struct {
-	int16_t dx;
-	int16_t dy;
-	int16_t dWidth;
-	int16_t dHeight;
+	pos_t dx;
+	pos_t dy;
+	pos_t dWidth;
+	pos_t dHeight;
 } otl_PositionValue;
 
 // GSUB subtable formats
@@ -91,8 +91,8 @@ typedef struct {
 
 typedef struct {
 	bool present;
-	int16_t x;
-	int16_t y;
+	pos_t x;
+	pos_t y;
 } otl_Anchor;
 
 typedef struct {

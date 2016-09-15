@@ -71,6 +71,14 @@ static INLINE double json_numof(json_value *cv) {
 	if (cv && cv->type == json_double) return cv->u.dbl;
 	return 0;
 }
+static INLINE json_value *json_new_position(pos_t z) {
+	if (round(z) == z) {
+		return json_integer_new(z);
+	} else {
+		return json_double_new(z);
+	}
+}
+
 static INLINE double json_obj_getnum(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {

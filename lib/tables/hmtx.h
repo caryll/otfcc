@@ -8,7 +8,7 @@
 #include "maxp.h"
 
 typedef struct {
-	metric_t advanceWidth;
+	length_t advanceWidth;
 	pos_t lsb;
 } horizontal_metric;
 

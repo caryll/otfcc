@@ -5,6 +5,6 @@
 
 typedef uint16_t glyphid_t;
 typedef double pos_t;
-typedef double metric_t;
+typedef double length_t;
 
 #endif
