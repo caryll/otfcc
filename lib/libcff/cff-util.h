@@ -32,10 +32,10 @@ enum {
 	op_Subrs            = 0x13, op_initialRandomSeed  = 0x0c13,
 	op_defaultWidthX    = 0x14, op_SyntheicBase       = 0x0c14,
 	op_nominalWidthX    = 0x15, op_PostScript         = 0x0c15,
-								op_BaseFontName       = 0x0c16,
-								op_BaseFontBlend      = 0x0c17,
-								/* 0x0c18 Reserved */
-								/* 0x0c19 Reserved */
+	op_vsindex          = 0x16, op_BaseFontName       = 0x0c16,
+	op_blend            = 0x17, op_BaseFontBlend      = 0x0c17,
+	op_vstore           = 0x18, /* 0x0c18 Reserved */
+	op_maxstack         = 0x19, /* 0x0c19 Reserved */
 								/* 0x0c1a Reserved */
 								/* 0x0c1b Reserved */
 								/* 0x0c1c Reserved */
@@ -68,8 +68,8 @@ enum {
 	/* 0x0c escape   */   op_div    = 0x0c0c,
 	/* 0x0d Reserved */   /* 0x0c0d Reserved */
 	op_endchar    = 0x0e, op_neg    = 0x0c0e,
-	/* 0x0f Reserved */   op_eq     = 0x0c0f,
-	/* 0x10 Reserved */   /* 0x0c10 Reserved */
+	op_cff2vsidx  = 0x0f, op_eq     = 0x0c0f,
+	op_cff2blend  = 0x10, /* 0x0c10 Reserved */
 	/* 0x11 Reserved */   /* 0x0c11 Reserved */
 	op_hstemhm    = 0x12, op_drop   = 0x0c12,
 	op_hintmask   = 0x13, /* 0x0c13 Reserved */

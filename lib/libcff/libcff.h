@@ -20,7 +20,7 @@ enum {
 	type2_stem_hints = 96,
 	type2_subr_nesting = 10,
 	type2_charstring_len = 65535,
-	type2_max_subrs = 65536,
+	type2_max_subrs = 65300,
 	type2_transient_array = 32,
 };
 
@@ -85,9 +85,10 @@ enum {
 };
 
 typedef struct {
-	cff_Value stack[256];
+	cff_Value *stack;
 	cff_Value transient[32];
-	uint8_t index;
+	uint32_t index;
+	uint32_t max;
 	uint8_t stem;
 } cff_Stack;
 
@@ -147,6 +148,7 @@ extern caryll_buffer *cff_encodeCffFloat(double val);
 extern caryll_buffer *cff_buildOffset(int32_t val);
 extern caryll_buffer *cff_buildHeader(void);
 
+void cff_mergeCS2Int(caryll_buffer *blob, int32_t val);
 void cff_mergeCS2Operator(caryll_buffer *blob, int32_t val);
 void cff_mergeCS2Operand(caryll_buffer *blob, double val);
 void cff_mergeCS2Special(caryll_buffer *blob, uint8_t val);

@@ -270,7 +270,9 @@ void fontop_classifyChainings(otl_Lookup *lookup) {
 	// in this procedure we will replace the subtables' content to classes.
 	// This can massively reduce the size of the lookup.
 	// Remember, this process is completely automatic.
+	#ifndef DEBUG
 	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
 		classify_around(lookup, j);
 	}
+	#endif
 }

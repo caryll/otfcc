@@ -6,6 +6,7 @@
 #include <support/util.h>
 #include <libcff/libcff.h>
 #include <libcff/charstring-il.h>
+#include <libcff/subr.h>
 #include <font/caryll-sfnt.h>
 #include "glyf.h"
 
