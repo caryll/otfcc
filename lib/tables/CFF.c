@@ -407,7 +407,8 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 
 	cff_Index localSubrs;
 	cff_Stack stack;
-
+	stack.max = 0x10000;
+	NEW_N(stack.stack, stack.max);
 	stack.index = 0;
 	stack.stem = 0;
 
@@ -485,6 +486,7 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 		}
 	}
 	cff_close_Index(localSubrs);
+	FREE(stack.stack);
 	context->seed = bc.randx;
 }
 
