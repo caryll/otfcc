@@ -24,22 +24,22 @@ typedef struct {
 } cff_FontMatrix;
 
 typedef struct {
-	uint16_t blueValuesCount;
+	arity_t blueValuesCount;
 	double *blueValues;
-	uint16_t otherBluesCount;
+	arity_t otherBluesCount;
 	double *otherBlues;
-	uint16_t familyBluesCount;
+	arity_t familyBluesCount;
 	double *familyBlues;
-	uint16_t familyOtherBluesCount;
+	arity_t familyOtherBluesCount;
 	double *familyOtherBlues;
 	double blueScale;
 	double blueShift;
 	double blueFuzz;
 	double stdHW;
 	double stdVW;
-	uint16_t stemSnapHCount;
+	arity_t stemSnapHCount;
 	double *stemSnapH;
-	uint16_t stemSnapVCount;
+	arity_t stemSnapVCount;
 	double *stemSnapV;
 	bool forceBold;
 	uint32_t languageGroup;
@@ -84,7 +84,7 @@ struct _table_CFF {
 	uint32_t cidCount;
 	uint32_t UIDBase;
 	// CID FDArray
-	uint16_t fdArrayCount;
+	tableid_t fdArrayCount;
 	table_CFF **fdArray;
 };
 

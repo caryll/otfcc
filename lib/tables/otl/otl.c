@@ -51,7 +51,7 @@ table_OTL *table_new_otl() {
 void table_delete_otl(table_OTL *table) {
 	if (!table) return;
 	if (table->languages) {
-		for (uint16_t j = 0; j < table->languageCount; j++) {
+		for (tableid_t j = 0; j < table->languageCount; j++) {
 			if (table->languages[j]->name) sdsfree(table->languages[j]->name);
 			if (table->languages[j]->features) free(table->languages[j]->features);
 			free(table->languages[j]);
@@ -59,7 +59,7 @@ void table_delete_otl(table_OTL *table) {
 		free(table->languages);
 	}
 	if (table->features) {
-		for (uint16_t j = 0; j < table->featureCount; j++) {
+		for (tableid_t j = 0; j < table->featureCount; j++) {
 			if (table->features[j]->name) sdsfree(table->features[j]->name);
 			if (table->features[j]->lookups) free(table->features[j]->lookups);
 			free(table->features[j]);
@@ -67,13 +67,13 @@ void table_delete_otl(table_OTL *table) {
 		free(table->features);
 	}
 	if (table->lookups) {
-		for (uint16_t j = 0; j < table->lookupCount; j++) {
+		for (tableid_t j = 0; j < table->lookupCount; j++) {
 			caryll_delete_lookup(table->lookups[j]);
 		}
 		free(table->lookups);
 	}
 	if (table->lookupAliases) {
-		for (uint16_t j = 0; j < table->lookupAliasesCount; j++) {
+		for (tableid_t j = 0; j < table->lookupAliasesCount; j++) {
 			sdsfree(table->lookupAliases[j].from);
 			sdsfree(table->lookupAliases[j].to);
 		}
@@ -83,9 +83,9 @@ void table_delete_otl(table_OTL *table) {
 }
 
 static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, otl_LanguageSystem *lang,
-                          uint16_t featureCount, otl_Feature **features) {
+                          tableid_t featureCount, otl_Feature **features) {
 	checkLength(base + 6);
-	uint16_t rid = read_16u(data + base + 2);
+	tableid_t rid = read_16u(data + base + 2);
 	if (rid < featureCount) {
 		lang->requiredFeature = features[rid];
 	} else {
@@ -95,8 +95,8 @@ static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t
 	checkLength(base + 6 + lang->featureCount * 2);
 
 	NEW_N(lang->features, lang->featureCount);
-	for (uint16_t j = 0; j < lang->featureCount; j++) {
-		uint16_t featureIndex = read_16u(data + base + 6 + 2 * j);
+	for (tableid_t j = 0; j < lang->featureCount; j++) {
+		tableid_t featureIndex = read_16u(data + base + 6 + 2 * j);
 		if (featureIndex < featureCount) {
 			lang->features[j] = features[featureIndex];
 		} else {
@@ -124,11 +124,11 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 
 	// parse lookup list
 	{
-		uint16_t lookupCount = read_16u(data + lookupListOffset);
+		tableid_t lookupCount = read_16u(data + lookupListOffset);
 		checkLength(lookupListOffset + 2 + lookupCount * 2);
 		otl_Lookup **lookups;
 		NEW_N(lookups, lookupCount);
-		for (uint16_t j = 0; j < lookupCount; j++) {
+		for (tableid_t j = 0; j < lookupCount; j++) {
 			NEW(lookups[j]);
 			lookups[j]->name = NULL;
 			lookups[j]->_offset = lookupListOffset + read_16u(data + lookupListOffset + 2 + 2 * j);
@@ -141,12 +141,12 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 
 	// parse feature list
 	{
-		uint16_t featureCount = read_16u(data + featureListOffset);
+		tableid_t featureCount = read_16u(data + featureListOffset);
 		checkLength(featureListOffset + 2 + featureCount * 6);
 		otl_Feature **features;
 		NEW_N(features, featureCount);
-		uint16_t lnk = 0;
-		for (uint16_t j = 0; j < featureCount; j++) {
+		tableid_t lnk = 0;
+		for (tableid_t j = 0; j < featureCount; j++) {
 			otl_Feature *feature;
 			NEW(feature);
 			features[j] = feature;
@@ -156,12 +156,12 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 			uint32_t featureOffset = featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
 
 			checkLength(featureOffset + 4);
-			uint16_t lookupCount = read_16u(data + featureOffset + 2);
+			tableid_t lookupCount = read_16u(data + featureOffset + 2);
 			checkLength(featureOffset + 4 + lookupCount * 2);
 			features[j]->lookupCount = lookupCount;
 			NEW_N(features[j]->lookups, lookupCount);
-			for (uint16_t k = 0; k < lookupCount; k++) {
-				uint16_t lookupid = read_16u(data + featureOffset + 4 + k * 2);
+			for (tableid_t k = 0; k < lookupCount; k++) {
+				tableid_t lookupid = read_16u(data + featureOffset + 4 + k * 2);
 				if (lookupid < table->lookupCount) {
 					features[j]->lookups[k] = table->lookups[lookupid];
 					if (!features[j]->lookups[k]->name) {
@@ -178,15 +178,15 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 
 	// parse script list
 	{
-		uint16_t scriptCount = read_16u(data + scriptListOffset);
+		tableid_t scriptCount = read_16u(data + scriptListOffset);
 		checkLength(scriptListOffset + 2 + 6 * scriptCount);
 
 		uint32_t nLanguageCombinations = 0;
-		for (uint16_t j = 0; j < scriptCount; j++) {
+		for (tableid_t j = 0; j < scriptCount; j++) {
 			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
 			checkLength(scriptOffset + 4);
 
-			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
+			tableid_t defaultLangSystem = read_16u(data + scriptOffset);
 			nLanguageCombinations += (defaultLangSystem ? 1 : 0) + read_16u(data + scriptOffset + 2);
 		}
 
@@ -194,11 +194,11 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 		otl_LanguageSystem **languages;
 		NEW_N(languages, nLanguageCombinations);
 
-		uint16_t currentLang = 0;
-		for (uint16_t j = 0; j < scriptCount; j++) {
+		tableid_t currentLang = 0;
+		for (tableid_t j = 0; j < scriptCount; j++) {
 			uint32_t tag = read_32u(data + scriptListOffset + 2 + 6 * j);
 			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
-			uint16_t defaultLangSystem = read_16u(data + scriptOffset);
+			tableid_t defaultLangSystem = read_16u(data + scriptOffset);
 			if (defaultLangSystem) {
 				NEW(languages[currentLang]);
 				languages[currentLang]->name =
@@ -208,10 +208,10 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 				              table->featureCount, table->features);
 				currentLang += 1;
 			}
-			uint16_t langSysCount = read_16u(data + scriptOffset + 2);
-			for (uint16_t k = 0; k < langSysCount; k++) {
+			tableid_t langSysCount = read_16u(data + scriptOffset + 2);
+			for (tableid_t k = 0; k < langSysCount; k++) {
 				uint32_t langTag = read_32u(data + scriptOffset + 4 + 6 * k);
-				uint16_t langSys = read_16u(data + scriptOffset + 4 + 6 * k + 4);
+				tableid_t langSys = read_16u(data + scriptOffset + 4 + 6 * k + 4);
 				NEW(languages[currentLang]);
 				languages[currentLang]->name =
 				    sdscatprintf(sdsempty(), "%c%c%c%c%c%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
@@ -226,7 +226,7 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 		table->languages = languages;
 	}
 	// name all lookups
-	for (uint16_t j = 0; j < table->lookupCount; j++) {
+	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		if (!table->lookups[j]->name)
 			table->lookups[j]->name = sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups[j]->type, j);
 	}
@@ -246,20 +246,20 @@ static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, 
 		return;
 	}
 	NEW_N(lookup->subtables, lookup->subtableCount);
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
 		lookup->subtables[j] = table_read_otl_subtable(data, tableLength, subtableOffset, lookup->type);
 	}
 	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
 		lookup->type = 0;
-		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 			if (lookup->subtables[j]) {
 				lookup->type = lookup->subtables[j]->extend.type;
 				break;
 			}
 		}
 		if (lookup->type) {
-			for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+			for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 				if (lookup->subtables[j] && lookup->subtables[j]->extend.type == lookup->type) {
 					// this subtable is valid
 					otl_Subtable *st = lookup->subtables[j]->extend.subtable;
@@ -296,7 +296,7 @@ table_OTL *table_read_otl(caryll_Packet packet, uint32_t tag) {
 		    data, length,
 		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown));
 		if (!otl) goto FAIL;
-		for (uint16_t j = 0; j < otl->lookupCount; j++) {
+		for (tableid_t j = 0; j < otl->lookupCount; j++) {
 			table_read_otl_lookup(data, length, otl->lookups[j]);
 		}
 		return otl;
@@ -316,7 +316,7 @@ static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_valu
 		json_object_push(dump, "flags", caryll_dump_flags(lookup->flags, lookupFlagsLabels));
 		if (lookup->flags >> 8) { json_object_push(dump, "markAttachmentType", json_integer_new(lookup->flags >> 8)); }
 		json_value *subtables = json_array_new(lookup->subtableCount);
-		for (uint16_t j = 0; j < lookup->subtableCount; j++)
+		for (tableid_t j = 0; j < lookup->subtableCount; j++)
 			if (lookup->subtables[j]) { json_array_push(subtables, dumper(lookup->subtables[j])); }
 		json_object_push(dump, "subtables", subtables);
 	}
@@ -330,14 +330,14 @@ void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *op
 	{
 		// dump script list
 		json_value *languages = json_object_new(table->languageCount);
-		for (uint16_t j = 0; j < table->languageCount; j++) {
+		for (tableid_t j = 0; j < table->languageCount; j++) {
 			json_value *language = json_object_new(5);
 			if (table->languages[j]->requiredFeature) {
 				json_object_push(language, "requiredFeature",
 				                 json_string_new(table->languages[j]->requiredFeature->name));
 			}
 			json_value *features = json_array_new(table->languages[j]->featureCount);
-			for (uint16_t k = 0; k < table->languages[j]->featureCount; k++)
+			for (tableid_t k = 0; k < table->languages[j]->featureCount; k++)
 				if (table->languages[j]->features[k]) {
 					json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
 				}
@@ -349,9 +349,9 @@ void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *op
 	{
 		// dump feature list
 		json_value *features = json_object_new(table->featureCount);
-		for (uint16_t j = 0; j < table->featureCount; j++) {
+		for (tableid_t j = 0; j < table->featureCount; j++) {
 			json_value *feature = json_array_new(table->features[j]->lookupCount);
-			for (uint16_t k = 0; k < table->features[j]->lookupCount; k++)
+			for (tableid_t k = 0; k < table->features[j]->lookupCount; k++)
 				if (table->features[j]->lookups[k]) {
 					json_array_push(feature, json_string_new(table->features[j]->lookups[k]->name));
 				}
@@ -363,7 +363,7 @@ void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *op
 		// dump lookups
 		json_value *lookups = json_object_new(table->lookupCount);
 		json_value *lookupOrder = json_array_new(table->lookupCount);
-		for (uint16_t j = 0; j < table->lookupCount; j++) {
+		for (tableid_t j = 0; j < table->lookupCount; j++) {
 			json_value *lookup = json_object_new(5);
 			_dump_lookup(table->lookups[j], lookup);
 			json_object_push(lookups, table->lookups[j]->name, lookup);
@@ -394,8 +394,8 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtabl
 	if (markAttachmentType) { lookup->flags |= markAttachmentType << 8; }
 	lookup->subtableCount = _subtables->u.array.length;
 	NEW_N(lookup->subtables, lookup->subtableCount);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		json_value *_subtable = _subtables->u.array.values[j];
 		if (_subtable && _subtable->type == json_object) {
 			otl_Subtable *_st = parser(_subtable);
@@ -441,7 +441,7 @@ static void replace_aliased_lookup_names(json_value *features, lookup_hash *lh) 
 	for (uint32_t j = 0; j < features->u.object.length; j++) {
 		json_value *_feature = features->u.object.values[j].value;
 		if (_feature->type != json_array) continue;
-		for (uint16_t k = 0; k < _feature->u.array.length; k++) {
+		for (tableid_t k = 0; k < _feature->u.array.length; k++) {
 			json_value *term = _feature->u.array.values[k];
 			if (term->type != json_string) continue;
 
@@ -467,10 +467,10 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 		char *featureName = features->u.object.values[j].name;
 		json_value *_feature = features->u.object.values[j].value;
 		if (_feature->type == json_array) {
-			uint16_t nal = 0;
+			tableid_t nal = 0;
 			otl_Lookup **al;
 			NEW_N(al, _feature->u.array.length);
-			for (uint16_t k = 0; k < _feature->u.array.length; k++) {
+			for (tableid_t k = 0; k < _feature->u.array.length; k++) {
 				json_value *term = _feature->u.array.values[k];
 				if (term->type != json_string) continue;
 				lookup_hash *item = NULL;
@@ -539,12 +539,12 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 				if (rf) { requiredFeature = rf->feature; }
 			}
 
-			uint16_t naf = 0;
+			tableid_t naf = 0;
 			otl_Feature **af = NULL;
 			json_value *_features = json_obj_get_type(_language, "features", json_array);
 			if (_features) {
 				NEW_N(af, _features->u.array.length);
-				for (uint16_t k = 0; k < _features->u.array.length; k++) {
+				for (tableid_t k = 0; k < _features->u.array.length; k++) {
 					json_value *term = _features->u.array.values[k];
 					if (term->type == json_string) {
 						feature_hash *item = NULL;
@@ -640,7 +640,7 @@ table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, cons
 	lookup_hash *lh = figureOutLookupsFromJSON(lookups, options);
 	json_value *lookupOrder = json_obj_get_type(table, "lookupOrder", json_array);
 	if (lookupOrder) {
-		for (uint16_t j = 0; j < lookupOrder->u.array.length; j++) {
+		for (tableid_t j = 0; j < lookupOrder->u.array.length; j++) {
 			json_value *_ln = lookupOrder->u.array.values[j];
 			if (_ln && _ln->type == json_string) {
 				lookup_hash *item = NULL;
@@ -665,8 +665,8 @@ table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, cons
 		otl->lookupAliasesCount = HASH_COUNT(lh);
 		NEW_N(otl->lookups, otl->lookupCount);
 		NEW_N(otl->lookupAliases, otl->lookupAliasesCount);
-		uint16_t j = 0;
-		uint16_t ja = 0;
+		tableid_t j = 0;
+		tableid_t ja = 0;
 		HASH_ITER(hh, lh, s, tmp) {
 			if (!s->alias) {
 				otl->lookups[j] = s->lookup;
@@ -687,7 +687,7 @@ table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, cons
 		feature_hash *s, *tmp;
 		otl->featureCount = HASH_COUNT(fh);
 		NEW_N(otl->features, otl->featureCount);
-		uint16_t j = 0;
+		tableid_t j = 0;
 		HASH_ITER(hh, fh, s, tmp) {
 			if (!s->alias) {
 				otl->features[j] = s->feature;
@@ -703,7 +703,7 @@ table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, cons
 		language_hash *s, *tmp;
 		otl->languageCount = HASH_COUNT(sh);
 		NEW_N(otl->languages, otl->languageCount);
-		uint16_t j = 0;
+		tableid_t j = 0;
 		HASH_ITER(hh, sh, s, tmp) {
 			otl->languages[j] = s->script;
 			HASH_DEL(sh, s);
@@ -725,7 +725,7 @@ static bool _declare_lookup_writer(otl_LookupType type, caryll_buffer *(*fn)(otl
                                    otl_Lookup *lookup, caryll_buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtables, lookup->subtableCount);
-		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 			caryll_buffer *buf = fn(lookup->subtables[j]);
 			(*subtables)[j] = buf;
 			*lastOffset += buf->size;
@@ -744,26 +744,26 @@ static bk_Block *writeOTLLookups(table_OTL *table, const caryll_Options *options
 	bool *lookupWritten;
 	NEW_N(lookupWritten, table->lookupCount);
 	size_t lastOffset = 0;
-	for (uint16_t j = 0; j < table->lookupCount; j++) {
+	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		if (options->verbose) { fprintf(stderr, "    Writing lookup %s\n", table->lookups[j]->name); }
 		subtables[j] = NULL;
 		lookupWritten[j] = _build_subtable(table->lookups[j], &(subtables[j]), &lastOffset);
 	}
 	size_t headerSize = 2 + 2 * table->lookupCount;
-	for (uint16_t j = 0; j < table->lookupCount; j++) {
+	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		if (lookupWritten[j]) { headerSize += 6 + 2 * table->lookups[j]->subtableCount; }
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
 		if (options->verbose) { fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag); }
-		for (uint16_t j = 0; j < table->lookupCount; j++) {
+		for (tableid_t j = 0; j < table->lookupCount; j++) {
 			if (lookupWritten[j]) { headerSize += 8 * table->lookups[j]->subtableCount; }
 		}
 	}
 
 	bk_Block *root = bk_new_Block(b16, table->lookupCount, // LookupCount
 	                              bkover);
-	for (uint16_t j = 0; j < table->lookupCount; j++) {
+	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		if (!lookupWritten[j]) {
 			fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name);
 			continue;
@@ -782,7 +782,7 @@ static bk_Block *writeOTLLookups(table_OTL *table, const caryll_Options *options
 		                             b16, lookup->flags,         // LookupFlag
 		                             b16, lookup->subtableCount, // SubTableCount
 		                             bkover);
-		for (uint16_t k = 0; k < lookup->subtableCount; k++) {
+		for (tableid_t k = 0; k < lookup->subtableCount; k++) {
 			if (useExtended) {
 				uint16_t extensionLookupType =
 				    lookup->type > otl_type_gpos_unknown
@@ -818,13 +818,13 @@ static uint32_t featureNameToTag(sds name) {
 }
 static bk_Block *writeOTLFeatures(table_OTL *table, const caryll_Options *options) {
 	bk_Block *root = bk_new_Block(b16, table->featureCount, bkover);
-	for (uint16_t j = 0; j < table->featureCount; j++) {
+	for (tableid_t j = 0; j < table->featureCount; j++) {
 		bk_Block *fea = bk_new_Block(p16, NULL,                            // FeatureParams
 		                             b16, table->features[j]->lookupCount, // LookupCount
 		                             bkover);
-		for (uint16_t k = 0; k < table->features[j]->lookupCount; k++) {
+		for (tableid_t k = 0; k < table->features[j]->lookupCount; k++) {
 			// reverse lookup
-			for (uint16_t l = 0; l < table->lookupCount; l++) {
+			for (tableid_t l = 0; l < table->lookupCount; l++) {
 				if (table->features[j]->lookups[k] == table->lookups[l]) {
 					bk_push(fea, b16, l, bkover);
 					break;
@@ -846,8 +846,8 @@ typedef struct {
 	UT_hash_handle hh;
 } script_stat_hash;
 
-static uint16_t featureIndex(otl_Feature *feature, table_OTL *table) {
-	for (uint16_t j = 0; j < table->featureCount; j++)
+static tableid_t featureIndex(otl_Feature *feature, table_OTL *table) {
+	for (tableid_t j = 0; j < table->featureCount; j++)
 		if (table->features[j] == feature) { return j; }
 	return 0xFFFF;
 }
@@ -857,7 +857,7 @@ static bk_Block *writeLanguage(otl_LanguageSystem *lang, table_OTL *table) {
 	                              b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
 	                              b16, lang->featureCount,                         // FeatureCount
 	                              bkover);
-	for (uint16_t k = 0; k < lang->featureCount; k++) {
+	for (tableid_t k = 0; k < lang->featureCount; k++) {
 		bk_push(root, b16, featureIndex(lang->features[k], table), bkover);
 	}
 	return root;
@@ -868,7 +868,7 @@ static bk_Block *writeScript(script_stat_hash *script, table_OTL *table) {
 	                              b16, script->lc,                       // LangSysCount
 	                              bkover);
 
-	for (uint16_t j = 0; j < script->lc; j++) {
+	for (tableid_t j = 0; j < script->lc; j++) {
 		sds tag = sdsnewlen(script->ll[j]->name + 5, 4);
 
 		bk_push(root, b32, featureNameToTag(tag),         // LangSysTag
@@ -879,7 +879,7 @@ static bk_Block *writeScript(script_stat_hash *script, table_OTL *table) {
 }
 static bk_Block *writeOTLScriptAndLanguages(table_OTL *table, const caryll_Options *options) {
 	script_stat_hash *h = NULL;
-	for (uint16_t j = 0; j < table->languageCount; j++) {
+	for (tableid_t j = 0; j < table->languageCount; j++) {
 		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
 		bool isDefault = strncmp(table->languages[j]->name + 5, "DFLT", 4) == 0 ||
 		                 strncmp(table->languages[j]->name + 5, "dflt", 4) == 0;
@@ -973,7 +973,7 @@ static const char *tableNames[] = {[otl_type_unknown] = "unknown",
 void caryll_delete_lookup(otl_Lookup *lookup) {
 	if (!lookup) return;
 	if (lookup->subtables) {
-		for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 			switch (lookup->type) {
 				DELETE_TYPE(otl_type_gsub_single, otl_delete_gsub_single);
 				DELETE_TYPE(otl_type_gsub_multiple, otl_delete_gsub_multi);

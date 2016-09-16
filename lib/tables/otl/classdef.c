@@ -3,7 +3,7 @@
 void otl_delete_ClassDef(otl_ClassDef *cd) {
 	if (cd) {
 		if (cd->glyphs) {
-			for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+			for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 				handle_delete(&cd->glyphs[j]);
 			}
 			free(cd->glyphs);
@@ -32,14 +32,14 @@ otl_ClassDef *otl_read_ClassDef(font_file_pointer data, uint32_t tableLength, ui
 	if (tableLength < offset + 4) return cd;
 	uint16_t format = read_16u(data + offset);
 	if (format == 1 && tableLength >= offset + 6) {
-		uint16_t startGID = read_16u(data + offset + 2);
-		uint16_t count = read_16u(data + offset + 4);
+		glyphid_t startGID = read_16u(data + offset + 2);
+		glyphid_t count = read_16u(data + offset + 4);
 		if (count && tableLength >= offset + 6 + count * 2) {
 			cd->numGlyphs = count;
 			NEW_N(cd->glyphs, count);
 			NEW_N(cd->classes, count);
 			uint16_t maxclass = 0;
-			for (uint16_t j = 0; j < count; j++) {
+			for (glyphid_t j = 0; j < count; j++) {
 				cd->glyphs[j] = handle_fromIndex(startGID + j);
 				cd->classes[j] = read_16u(data + offset + 6 + j * 2);
 				if (cd->classes[j] > maxclass) maxclass = cd->classes[j];
@@ -74,8 +74,8 @@ otl_ClassDef *otl_read_ClassDef(font_file_pointer data, uint32_t tableLength, ui
 			NEW_N(cd->glyphs, cd->numGlyphs);
 			NEW_N(cd->classes, cd->numGlyphs);
 			{
-				uint16_t j = 0;
-				uint16_t maxclass = 0;
+				glyphid_t j = 0;
+				glyphclass_t maxclass = 0;
 				coverage_entry *e, *tmp;
 				HASH_ITER(hh, hash, e, tmp) {
 					cd->glyphs[j] = handle_fromIndex(e->gid);
@@ -97,7 +97,7 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 	otl_ClassDef *cd;
 	NEW(cd);
 	coverage_entry *hash = NULL;
-	for (uint16_t j = 0; j < ocd->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < ocd->numGlyphs; j++) {
 		int gid = ocd->glyphs[j].index;
 		int cid = ocd->classes[j];
 		coverage_entry *item = NULL;
@@ -109,7 +109,7 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 			HASH_ADD_INT(hash, gid, item);
 		}
 	}
-	for (uint16_t j = 0; j < cov->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 		int gid = cov->glyphs[j].index;
 		coverage_entry *item = NULL;
 		HASH_FIND_INT(hash, &gid, item);
@@ -125,8 +125,8 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 	NEW_N(cd->glyphs, cd->numGlyphs);
 	NEW_N(cd->classes, cd->numGlyphs);
 	{
-		uint16_t j = 0;
-		uint16_t maxclass = 0;
+		glyphid_t j = 0;
+		glyphclass_t maxclass = 0;
 		coverage_entry *e, *tmp;
 		HASH_ITER(hh, hash, e, tmp) {
 			cd->glyphs[j] = handle_fromIndex(e->gid);
@@ -144,7 +144,7 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 
 json_value *otl_dump_ClassDef(otl_ClassDef *cd) {
 	json_value *a = json_object_new(cd->numGlyphs);
-	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		json_object_push(a, cd->glyphs[j].name, json_integer_new(cd->classes[j]));
 	}
 	return preserialize(a);
@@ -157,8 +157,8 @@ otl_ClassDef *otl_parse_ClassDef(json_value *_cd) {
 	cd->numGlyphs = _cd->u.object.length;
 	NEW_N(cd->glyphs, cd->numGlyphs);
 	NEW_N(cd->classes, cd->numGlyphs);
-	uint16_t maxclass = 0;
-	for (uint16_t j = 0; j < _cd->u.object.length; j++) {
+	glyphclass_t maxclass = 0;
+	for (glyphid_t j = 0; j < _cd->u.object.length; j++) {
 		cd->glyphs[j] = handle_fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
 		json_value *_cid = _cd->u.object.values[j].value;
 		if (_cid->type == json_integer) {
@@ -175,8 +175,8 @@ otl_ClassDef *otl_parse_ClassDef(json_value *_cd) {
 }
 
 typedef struct {
-	uint16_t gid;
-	uint16_t cid;
+	glyphid_t gid;
+	glyphclass_t cid;
 } classdef_sortrecord;
 static int by_gid(const void *a, const void *b) {
 	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
@@ -191,8 +191,8 @@ caryll_buffer *otl_build_ClassDef(otl_ClassDef *cd) {
 
 	classdef_sortrecord *r;
 	NEW_N(r, cd->numGlyphs);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
+	glyphid_t jj = 0;
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j]) {
 			r[jj].gid = cd->glyphs[j].index;
 			r[jj].cid = cd->classes[j];
@@ -206,13 +206,13 @@ caryll_buffer *otl_build_ClassDef(otl_ClassDef *cd) {
 	}
 	qsort(r, jj, sizeof(classdef_sortrecord), by_gid);
 
-	uint16_t startGID = r[0].gid;
-	uint16_t endGID = startGID;
-	uint16_t lastClass = r[0].cid;
-	uint16_t nRanges = 0;
+	glyphid_t startGID = r[0].gid;
+	glyphid_t endGID = startGID;
+	glyphclass_t lastClass = r[0].cid;
+	glyphid_t nRanges = 0;
 	caryll_buffer *ranges = bufnew();
-	for (uint16_t j = 1; j < jj; j++) {
-		uint16_t current = r[j].gid;
+	for (glyphid_t j = 1; j < jj; j++) {
+		glyphid_t current = r[j].gid;
 		if (current == endGID + 1 && r[j].cid == lastClass) {
 			endGID = current;
 		} else {

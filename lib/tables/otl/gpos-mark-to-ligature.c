@@ -4,7 +4,7 @@
 void delete_lig_attachment(otl_MarkToLigatureBase *att) {
 	if (!att) return;
 	if (att->anchors) {
-		for (uint16_t k = 0; k < att->componentCount; k++)
+		for (glyphid_t k = 0; k < att->componentCount; k++)
 			free(att->anchors[k]);
 		free(att->anchors);
 	}
@@ -18,7 +18,7 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 		if (subtable->markArray) { otl_delete_mark_array(subtable->markArray); }
 		if (subtable->bases) {
 			if (subtable->ligArray) {
-				for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+				for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 					delete_lig_attachment(subtable->ligArray[j]);
 				}
 				free(subtable->ligArray);
@@ -47,10 +47,10 @@ otl_Subtable *otl_read_gpos_markToLigature(font_file_pointer data, uint32_t tabl
 	checkLength(ligArrayOffset + 2 + 2 * subtable->bases->numGlyphs);
 	if (read_16u(data + ligArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
 	NEW_N(subtable->ligArray, subtable->bases->numGlyphs);
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		subtable->ligArray[j] = NULL;
 	}
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		uint32_t ligAttachOffset = ligArrayOffset + read_16u(data + ligArrayOffset + 2 + j * 2);
 		NEW(subtable->ligArray[j]);
 		subtable->ligArray[j]->anchors = NULL;
@@ -61,9 +61,9 @@ otl_Subtable *otl_read_gpos_markToLigature(font_file_pointer data, uint32_t tabl
 		NEW_N(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
 
 		uint32_t _offset = ligAttachOffset + 2;
-		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
+		for (glyphid_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			NEW_N(subtable->ligArray[j]->anchors[k], subtable->classCount);
-			for (uint16_t m = 0; m < subtable->classCount; m++) {
+			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
 				uint32_t anchorOffset = read_16u(data + _offset);
 				if (anchorOffset) {
 					subtable->ligArray[j]->anchors[k][m] =
@@ -89,7 +89,7 @@ json_value *otl_gpos_dump_markToLigature(otl_Subtable *st) {
 	json_value *_subtable = json_object_new(3);
 	json_value *_marks = json_object_new(subtable->marks->numGlyphs);
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
-	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		json_value *_mark = json_object_new(3);
 		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray->records[j].markClass);
 		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
@@ -98,12 +98,12 @@ json_value *otl_gpos_dump_markToLigature(otl_Subtable *st) {
 		json_object_push(_mark, "y", json_integer_new(subtable->markArray->records[j].anchor.y));
 		json_object_push(_marks, subtable->marks->glyphs[j].name, preserialize(_mark));
 	}
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		otl_MarkToLigatureBase *base = subtable->ligArray[j];
 		json_value *_base = json_array_new(base->componentCount);
-		for (uint16_t k = 0; k < base->componentCount; k++) {
+		for (glyphid_t k = 0; k < base->componentCount; k++) {
 			json_value *_bk = json_object_new(subtable->classCount);
-			for (uint16_t m = 0; m < subtable->classCount; m++) {
+			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
 				if (base->anchors[k][m].present) {
 					json_value *_anchor = json_object_new(2);
 					json_object_push(_anchor, "x", json_integer_new(base->anchors[k][m].x));
@@ -125,7 +125,7 @@ json_value *otl_gpos_dump_markToLigature(otl_Subtable *st) {
 
 typedef struct {
 	sds className;
-	uint16_t classID;
+	glyphclass_t classID;
 	UT_hash_handle hh;
 } classname_hash;
 static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtable, classname_hash **h) {
@@ -135,7 +135,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtabl
 	NEW(subtable->markArray);
 	subtable->markArray->markCount = _marks->u.object.length;
 	NEW_N(subtable->markArray->records, subtable->markArray->markCount);
-	for (uint16_t j = 0; j < _marks->u.object.length; j++) {
+	for (glyphid_t j = 0; j < _marks->u.object.length; j++) {
 		char *gname = _marks->u.object.values[j].name;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
 		subtable->marks->glyphs[j] = handle_fromName(sdsnewlen(gname, _marks->u.object.values[j].name_length));
@@ -165,12 +165,12 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtabl
 	}
 }
 static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtable, classname_hash **h) {
-	uint16_t classCount = HASH_COUNT(*h);
+	glyphclass_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
 	NEW_N(subtable->bases->glyphs, subtable->bases->numGlyphs);
 	NEW_N(subtable->ligArray, _bases->u.object.length);
-	for (uint16_t j = 0; j < _bases->u.object.length; j++) {
+	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
 		subtable->bases->glyphs[j] =
 		    handle_fromName(sdsnewlen(_bases->u.object.values[j].name, _bases->u.object.values[j].name_length));
 		NEW(subtable->ligArray[j]);
@@ -183,14 +183,14 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 
 		NEW_N(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
 
-		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
+		for (glyphid_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			json_value *_componentRecord = baseRecord->u.array.values[k];
 			NEW_N(subtable->ligArray[j]->anchors[k], classCount);
-			for (uint16_t m = 0; m < classCount; m++) {
+			for (glyphclass_t m = 0; m < classCount; m++) {
 				subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent();
 			}
 			if (!_componentRecord || _componentRecord->type != json_object) { continue; }
-			for (uint16_t m = 0; m < _componentRecord->u.object.length; m++) {
+			for (glyphclass_t m = 0; m < _componentRecord->u.object.length; m++) {
 				sds className = sdsnewlen(_componentRecord->u.object.values[m].name,
 				                          _componentRecord->u.object.values[m].name_length);
 				classname_hash *s;
@@ -236,7 +236,7 @@ caryll_buffer *caryll_build_gpos_markToLigature(otl_Subtable *_subtable) {
 
 	bk_Block *markArray = bk_new_Block(b16, subtable->marks->numGlyphs, // markCount
 	                                   bkover);
-	for (uint16_t j = 0; j < subtable->marks->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->marks->numGlyphs; j++) {
 		bk_push(markArray,                                                 // markArray item
 		        b16, subtable->markArray->records[j].markClass,            // markClass
 		        p16, bkFromAnchor(subtable->markArray->records[j].anchor), // Anchor
@@ -244,11 +244,11 @@ caryll_buffer *caryll_build_gpos_markToLigature(otl_Subtable *_subtable) {
 	}
 
 	bk_Block *ligatureArray = bk_new_Block(b16, subtable->bases->numGlyphs, bkover);
-	for (uint16_t j = 0; j < subtable->bases->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		bk_Block *attach = bk_new_Block(b16, subtable->ligArray[j]->componentCount, // componentCount
 		                                bkover);
-		for (uint16_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
-			for (uint16_t m = 0; m < subtable->classCount; m++) {
+		for (glyphid_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
+			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
 				bk_push(attach, p16, bkFromAnchor(subtable->ligArray[j]->anchors[k][m]), bkover);
 			}
 		}

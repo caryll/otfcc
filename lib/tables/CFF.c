@@ -49,7 +49,7 @@ void table_delete_CFF(table_CFF *table) {
 	FREE(table->fontMatrix);
 	caryll_delete_privatedict(table->privateDict);
 	if (table->fdArray) {
-		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
 			table_delete_CFF(table->fdArray[j]);
 		}
 		free(table->fdArray);
@@ -76,7 +76,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		case op_BlueValues: {
 			pd->blueValuesCount = top;
 			NEW_N(pd->blueValues, pd->blueValuesCount);
-			for (uint16_t j = 0; j < pd->blueValuesCount; j++) {
+			for (arity_t j = 0; j < pd->blueValuesCount; j++) {
 				pd->blueValues[j] = cffnum(stack[j]);
 			}
 			break;
@@ -84,7 +84,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		case op_OtherBlues: {
 			pd->otherBluesCount = top;
 			NEW_N(pd->otherBlues, pd->otherBluesCount);
-			for (uint16_t j = 0; j < pd->otherBluesCount; j++) {
+			for (arity_t j = 0; j < pd->otherBluesCount; j++) {
 				pd->otherBlues[j] = cffnum(stack[j]);
 			}
 			break;
@@ -92,7 +92,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		case op_FamilyBlues: {
 			pd->familyBluesCount = top;
 			NEW_N(pd->familyBlues, pd->familyBluesCount);
-			for (uint16_t j = 0; j < pd->familyBluesCount; j++) {
+			for (arity_t j = 0; j < pd->familyBluesCount; j++) {
 				pd->familyBlues[j] = cffnum(stack[j]);
 			}
 			break;
@@ -100,7 +100,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		case op_FamilyOtherBlues: {
 			pd->familyOtherBluesCount = top;
 			NEW_N(pd->familyOtherBlues, pd->familyOtherBluesCount);
-			for (uint16_t j = 0; j < pd->familyOtherBluesCount; j++) {
+			for (arity_t j = 0; j < pd->familyOtherBluesCount; j++) {
 				pd->familyOtherBlues[j] = cffnum(stack[j]);
 			}
 			break;
@@ -108,7 +108,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		case op_StemSnapH: {
 			pd->stemSnapHCount = top;
 			NEW_N(pd->stemSnapH, pd->stemSnapHCount);
-			for (uint16_t j = 0; j < pd->stemSnapHCount; j++) {
+			for (arity_t j = 0; j < pd->stemSnapHCount; j++) {
 				pd->stemSnapH[j] = cffnum(stack[j]);
 			}
 			break;
@@ -116,7 +116,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		case op_StemSnapV: {
 			pd->stemSnapVCount = top;
 			NEW_N(pd->stemSnapV, pd->stemSnapVCount);
-			for (uint16_t j = 0; j < pd->stemSnapVCount; j++) {
+			for (arity_t j = 0; j < pd->stemSnapVCount; j++) {
 				pd->stemSnapV[j] = cffnum(stack[j]);
 			}
 			break;
@@ -246,11 +246,11 @@ static void callback_extract_fd(uint32_t op, uint8_t top, cff_Value *stack, void
 
 typedef struct {
 	glyf_Glyph *g;
-	uint16_t jContour;
-	uint16_t jPoint;
+	shapeid_t jContour;
+	shapeid_t jPoint;
 	double defaultWidthX;
 	double nominalWidthX;
-	uint16_t pointsDefined;
+	shapeid_t pointsDefined;
 	uint8_t definedHStems;
 	uint8_t definedVStems;
 	uint8_t definedHintMasks;
@@ -349,7 +349,7 @@ static void callback_draw_sethint(void *_context, bool isVertical, double positi
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	uint16_t maskIndex = isContourMask ? context->definedContourMasks : context->definedHintMasks;
+	shapeid_t maskIndex = isContourMask ? context->definedContourMasks : context->definedHintMasks;
 	glyf_PostscriptHintMask *maskList = isContourMask ? context->g->contourMasks : context->g->hintMasks;
 	glyf_PostscriptHintMask *mask;
 	bool duplicateMask = false;
@@ -367,7 +367,7 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	}
 	mask->pointsBefore = context->pointsDefined;
 
-	for (uint16_t j = 0; j < 0x100; j++) {
+	for (shapeid_t j = 0; j < 0x100; j++) {
 		mask->maskH[j] = j < context->g->numberOfStemH ? maskArray[j] : 0;
 		mask->maskV[j] = j < context->g->numberOfStemV ? maskArray[j + context->g->numberOfStemH] : 0;
 	}
@@ -399,7 +399,7 @@ static double callback_draw_getrand(void *_context) {
 	return a.d - q;
 }
 
-static void buildOutline(uint16_t i, cff_extract_context *context) {
+static void buildOutline(glyphid_t i, cff_extract_context *context) {
 	cff_File *f = context->cffFile;
 	glyf_Glyph *g = table_new_glyf_glyph();
 	context->glyphs->glyphs[i] = g;
@@ -432,8 +432,7 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 		fd = cff_parseSubr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
 	g->fdSelect = handle_fromIndex(fd);
-	if (context->meta->fdArray && fd < context->meta->fdArrayCount &&
-	    context->meta->fdArray[fd]->privateDict) {
+	if (context->meta->fdArray && fd < context->meta->fdArrayCount && context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
 		bc.nominalWidthX = context->meta->fdArray[fd]->privateDict->nominalWidthX;
 	} else if (context->meta->privateDict) {
@@ -455,7 +454,7 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 	stack.stem = 0;
 	bc.randx = seed;
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, pass2);
-	for (uint16_t j = 0; j < g->numberOfContours; j++) {
+	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
 		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
 	}
 	NEW_N(g->stemH, g->numberOfStemH);
@@ -476,8 +475,8 @@ static void buildOutline(uint16_t i, cff_extract_context *context) {
 	// PASS 4 : Turn deltas into absolute coordinates
 	double cx = 0;
 	double cy = 0;
-	for (uint16_t j = 0; j < g->numberOfContours; j++) {
-		for (uint16_t k = 0; k < g->contours[j].pointsCount; k++) {
+	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
+		for (shapeid_t k = 0; k < g->contours[j].pointsCount; k++) {
 			cx += g->contours[j].points[k].x;
 			cy += g->contours[j].points[k].y;
 
@@ -496,8 +495,8 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 	table_glyf *glyphs = context->glyphs;
 	switch (cffFile->charsets.t) {
 		case cff_CHARSET_FORMAT0: {
-			for (uint16_t j = 0; j < cffFile->charsets.s; j++) {
-				uint16_t sid = cffFile->charsets.f0.glyph[j];
+			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
+				cffsid_t sid = cffFile->charsets.f0.glyph[j];
 				sds glyphname = sdsget_cff_sid(sid, cffFile->string);
 				if (glyphname) { glyphs->glyphs[j + 1]->name = glyphname; }
 			}
@@ -505,15 +504,15 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 		}
 		case cff_CHARSET_FORMAT1: {
 			uint32_t glyphsNamedSofar = 1;
-			for (uint16_t j = 0; j < cffFile->charsets.s; j++) {
-				uint16_t first = cffFile->charsets.f1.range1[j].first;
+			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
+				glyphid_t first = cffFile->charsets.f1.range1[j].first;
 				sds glyphname = sdsget_cff_sid(first, cffFile->string);
 				if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
 					glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
 				}
 				glyphsNamedSofar++;
-				for (uint16_t k = 0; k < cffFile->charsets.f1.range1[j].nleft; k++) {
-					uint16_t sid = first + k + 1;
+				for (glyphid_t k = 0; k < cffFile->charsets.f1.range1[j].nleft; k++) {
+					cffsid_t sid = first + k + 1;
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
 					if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
 						glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
@@ -525,15 +524,15 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 		}
 		case cff_CHARSET_FORMAT2: {
 			uint32_t glyphsNamedSofar = 1;
-			for (uint16_t j = 0; j < cffFile->charsets.s; j++) {
-				uint16_t first = cffFile->charsets.f2.range2[j].first;
+			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
+				glyphid_t first = cffFile->charsets.f2.range2[j].first;
 				sds glyphname = sdsget_cff_sid(first, cffFile->string);
 				if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
 					glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
 				}
 				glyphsNamedSofar++;
-				for (uint16_t k = 0; k < cffFile->charsets.f2.range2[j].nleft; k++) {
-					uint16_t sid = first + k + 1;
+				for (glyphid_t k = 0; k < cffFile->charsets.f2.range2[j].nleft; k++) {
+					cffsid_t sid = first + k + 1;
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
 					if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
 						glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
@@ -573,7 +572,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 		if (cffFile->font_dict.count) {
 			context.meta->fdArrayCount = cffFile->font_dict.count;
 			NEW_N(context.meta->fdArray, context.meta->fdArrayCount);
-			for (uint16_t j = 0; j < context.meta->fdArrayCount; j++) {
+			for (tableid_t j = 0; j < context.meta->fdArrayCount; j++) {
 				context.meta->fdArray[j] = table_new_CFF();
 				context.fdArrayIndex = j;
 				cff_extract_DictByCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
@@ -596,7 +595,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 		context.glyphs = glyphs;
 		glyphs->numberGlyphs = cffFile->char_strings.count;
 		NEW_N(glyphs->glyphs, glyphs->numberGlyphs);
-		for (uint16_t j = 0; j < glyphs->numberGlyphs; j++) {
+		for (glyphid_t j = 0; j < glyphs->numberGlyphs; j++) {
 			buildOutline(j, &context);
 		}
 
@@ -609,10 +608,10 @@ table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
 	return ret;
 }
 
-static void pdDeltaToJson(json_value *target, const char *field, uint16_t count, double *values) {
+static void pdDeltaToJson(json_value *target, const char *field, arity_t count, double *values) {
 	if (!count || !values) return;
 	json_value *a = json_array_new(count);
-	for (uint16_t j = 0; j < count; j++) {
+	for (arity_t j = 0; j < count; j++) {
 		json_array_push(a, json_double_new(values[j]));
 	}
 	json_object_push(target, field, a);
@@ -684,7 +683,7 @@ static json_value *fdToJson(table_CFF *table) {
 	}
 	if (table->fdArray) {
 		json_value *_fdArray = json_object_new(table->fdArrayCount);
-		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
 			sds name = table->fdArray[j]->fontName;
 			table->fdArray[j]->fontName = NULL;
 			json_object_push(_fdArray, name, fdToJson(table->fdArray[j]));
@@ -702,11 +701,11 @@ void table_dump_cff(table_CFF *table, json_value *root, const caryll_Options *op
 	json_object_push(root, "CFF_", fdToJson(table));
 }
 
-static void pdDeltaFromJson(json_value *dump, uint16_t *count, double **array) {
+static void pdDeltaFromJson(json_value *dump, arity_t *count, double **array) {
 	if (!dump || dump->type != json_array) return;
 	*count = dump->u.array.length;
 	NEW_N(*array, *count);
-	for (uint16_t j = 0; j < *count; j++) {
+	for (arity_t j = 0; j < *count; j++) {
 		(*array)[j] = json_numof(dump->u.array.values[j]);
 	}
 }
@@ -791,7 +790,7 @@ static table_CFF *fdFromJson(json_value *dump, const caryll_Options *options, bo
 		table->isCID = true;
 		table->fdArrayCount = fdarraydump->u.object.length;
 		NEW_N(table->fdArray, table->fdArrayCount);
-		for (uint16_t j = 0; j < table->fdArrayCount; j++) {
+		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
 			table->fdArray[j] = fdFromJson(fdarraydump->u.object.values[j].value, options, false);
 			if (table->fdArray[j]->fontName) { sdsfree(table->fdArray[j]->fontName); }
 			table->fdArray[j]->fontName =
@@ -843,7 +842,7 @@ static void cff_make_charstrings(cff_charstring_builder_context *context, caryll
 	*gs = bufnew();
 	if (context->glyf->numberGlyphs == 0) { return; }
 	context->graph->doSubroutinize = context->options->optimize_level >= 3;
-	for (uint16_t j = 0; j < context->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < context->glyf->numberGlyphs; j++) {
 		cff_CharstringIL *il =
 		    cff_compileGlyphToIL(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
 		cff_optimizeIL(il, context->options);
@@ -885,7 +884,7 @@ static cff_DictEntry *cffdict_givemeablank(cff_Dict *dict) {
 	}
 	return &(dict->ents[dict->count - 1]);
 }
-static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_t arity, ...) {
+static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t arity, ...) {
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;
 	last->cnt = arity;
@@ -893,7 +892,7 @@ static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_
 
 	va_list ap;
 	va_start(ap, arity);
-	for (uint16_t j = 0; j < arity; j++) {
+	for (arity_t j = 0; j < arity; j++) {
 		if (t == cff_DOUBLE) {
 			double x = va_arg(ap, double);
 			if (x == round(x)) {
@@ -911,13 +910,13 @@ static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_
 	}
 	va_end(ap);
 }
-static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, uint16_t arity, double *arr) {
+static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t arity, double *arr) {
 	if (!arity || !arr) return;
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;
 	last->cnt = arity;
 	NEW_N(last->vals, arity);
-	for (uint16_t j = 0; j < arity; j++) {
+	for (arity_t j = 0; j < arity; j++) {
 		double x = arr[j];
 		if (t == cff_DOUBLE) {
 			if (x == round(x)) {
@@ -1066,7 +1065,7 @@ static caryll_buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid
 			charset->f2.range2[0].first = 1;
 			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
 		} else {
-			for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+			for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
 				sidof(stringHash, glyf->glyphs[j]->name);
 			}
 			charset->f2.range2[0].first = sidof(stringHash, glyf->glyphs[1]->name);
@@ -1093,7 +1092,7 @@ static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	uint8_t fdi0 = glyf->glyphs[0]->fdSelect.index;
 	if (fdi0 > cff->fdArrayCount) fdi0 = 0;
 	current = fdi0;
-	for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
 		uint8_t fdi = glyf->glyphs[j]->fdSelect.index;
 		if (fdi > cff->fdArrayCount) fdi = 0;
 		if (fdi != current) {
@@ -1104,7 +1103,7 @@ static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	NEW_N(fds->f3.range3, ranges);
 	fds->f3.range3[0].first = 0;
 	fds->f3.range3[0].fd = current = fdi0;
-	for (uint16_t j = 1; j < glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
 		uint8_t fdi = glyf->glyphs[j]->fdSelect.index;
 		if (fdi > cff->fdArrayCount) fdi = 0;
 		if (glyf->glyphs[j]->fdSelect.index != current) {
@@ -1140,7 +1139,7 @@ static caryll_buffer *callback_makefd(void *_context, uint32_t i) {
 	cff_delete_Dict(fd);
 	return blob;
 }
-static cff_Index *cff_make_fdarray(uint16_t fdArrayCount, table_CFF **fdArray, cff_sid_entry **stringHash) {
+static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray, cff_sid_entry **stringHash) {
 	fdarray_compile_context context;
 	context.fdArray = fdArray;
 	context.stringHash = stringHash;
@@ -1268,7 +1267,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		uint32_t fdArrayPrivatesStartOffset = off;
 		caryll_buffer **fdArrayPrivates;
 		NEW_N(fdArrayPrivates, cff->fdArrayCount);
-		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+		for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 			cff_Dict *pd = cff_make_private_dict(cff->fdArray[j]->privateDict);
 			caryll_buffer *p = cff_build_Dict(pd);
 			bufwrite_bufdel(p, cff_buildOffset(0xFFFFFFFF));
@@ -1291,7 +1290,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		r = cff_build_Index(*fdArrayIndex);
 		cff_delete_Index(fdArrayIndex);
 		bufwrite_bufdel(blob, r);
-		for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+		for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 			startingPositionOfPrivates[j + 1] = blob->cursor;
 			bufwrite_bufdel(blob, fdArrayPrivates[j]);
 			endingPositionOfPrivates[j + 1] = blob->cursor;
@@ -1302,7 +1301,7 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	}
 	size_t positionOfLocalSubroutines = blob->cursor;
 	bufwrite_bufdel(blob, ls);
-	for (uint16_t j = 0; j < cff->fdArrayCount + 1; j++) {
+	for (tableid_t j = 0; j < cff->fdArrayCount + 1; j++) {
 		size_t lsOffset = positionOfLocalSubroutines - startingPositionOfPrivates[j];
 		uint8_t *ptr = &(blob->data[endingPositionOfPrivates[j] - 5]);
 		ptr[0] = (lsOffset >> 24) & 0xFF;

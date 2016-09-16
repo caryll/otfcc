@@ -2,13 +2,13 @@
 static void deleteRule(otl_ChainingRule *rule) {
 	if (!rule) return;
 	if (rule && rule->match && rule->matchCount) {
-		for (uint16_t k = 0; k < rule->matchCount; k++) {
+		for (tableid_t k = 0; k < rule->matchCount; k++) {
 			otl_delete_Coverage(rule->match[k]);
 		}
 		FREE(rule->match);
 	}
 	if (rule && rule->apply) {
-		for (uint16_t j = 0; j < rule->applyCount; j++) {
+		for (tableid_t j = 0; j < rule->applyCount; j++) {
 			handle_delete(&rule->apply[j].lookup);
 		}
 		FREE(rule->apply);
@@ -19,7 +19,7 @@ void otl_delete_chaining(otl_Subtable *_subtable) {
 	if (_subtable) {
 		subtable_chaining *subtable = &(_subtable->chaining);
 		if (subtable->rules) {
-			for (uint16_t j = 0; j < subtable->rulesCount; j++) {
+			for (tableid_t j = 0; j < subtable->rulesCount; j++) {
 				deleteRule(subtable->rules[j]);
 			}
 			free(subtable->rules);
@@ -33,8 +33,8 @@ void otl_delete_chaining(otl_Subtable *_subtable) {
 
 static void reverseBacktracks(otl_ChainingRule *rule) {
 	if (rule->inputBegins > 0) {
-		uint16_t start = 0;
-		uint16_t end = rule->inputBegins - 1;
+		tableid_t start = 0;
+		tableid_t end = rule->inputBegins - 1;
 		while (end > start) {
 			otl_Coverage *tmp = rule->match[start];
 			rule->match[start] = rule->match[end];
@@ -56,7 +56,7 @@ otl_Coverage *singleCoverage(font_file_pointer data, uint32_t tableLength, uint1
 	NEW(cov);
 	cov->numGlyphs = 1;
 	NEW(cov->glyphs);
-	cov->glyphs[0] = handle_fromIndex(gid);
+	cov->glyphs[0] = handle_fromIndex((glyphid_t)gid);
 	return cov;
 }
 otl_Coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16_t cls, uint32_t _offset, uint16_t kind,
@@ -67,15 +67,17 @@ otl_Coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16
 	NEW(cov);
 	cov->numGlyphs = 0;
 	cov->glyphs = NULL;
-	uint16_t count = 0;
-	for (uint16_t j = 0; j < cd->numGlyphs; j++)
+	glyphid_t count = 0;
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j] == cls) count++;
+	}
 	if (!count) return cov;
 	cov->numGlyphs = count;
 	NEW_N(cov->glyphs, count);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < cd->numGlyphs; j++)
+	glyphid_t jj = 0;
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j] == cls) { cov->glyphs[jj++] = cd->glyphs[j]; }
+	}
 	return cov;
 }
 otl_Coverage *format3Coverage(font_file_pointer data, uint32_t tableLength, uint16_t shift, uint32_t _offset,
@@ -84,6 +86,7 @@ otl_Coverage *format3Coverage(font_file_pointer data, uint32_t tableLength, uint
 }
 
 typedef otl_Coverage *(*CoverageReaderHandler)(font_file_pointer, uint32_t, uint16_t, uint32_t, uint16_t, void *);
+
 otl_ChainingRule *GeneralReadContextualRule(font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                             uint16_t startGID, bool minusOne, CoverageReaderHandler fn,
                                             void *userdata) {
@@ -112,7 +115,7 @@ otl_ChainingRule *GeneralReadContextualRule(font_file_pointer data, uint32_t tab
 	}
 	rule->applyCount = nApply;
 	NEW_N(rule->apply, rule->applyCount);
-	for (uint16_t j = 0; j < nApply; j++) {
+	for (tableid_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
 		rule->apply[j].lookup =
@@ -146,12 +149,12 @@ otl_Subtable *otl_read_contextual(font_file_pointer data, uint32_t tableLength, 
 		uint16_t covOffset = offset + read_16u(data + offset + 2);
 		otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
 
-		uint16_t chainSubRuleSetCount = read_16u(data + offset + 4);
+		tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
 		if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
 		checkLength(offset + 6 + 2 * chainSubRuleSetCount);
 
-		uint16_t totalRules = 0;
-		for (uint16_t j = 0; j < chainSubRuleSetCount; j++) {
+		tableid_t totalRules = 0;
+		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
 			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
 			checkLength(srsOffset + 2);
 			totalRules += read_16u(data + srsOffset);
@@ -160,11 +163,11 @@ otl_Subtable *otl_read_contextual(font_file_pointer data, uint32_t tableLength, 
 		subtable->rulesCount = totalRules;
 		NEW_N(subtable->rules, totalRules);
 
-		uint16_t jj = 0;
-		for (uint16_t j = 0; j < chainSubRuleSetCount; j++) {
+		tableid_t jj = 0;
+		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
 			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
-			uint16_t srsCount = read_16u(data + srsOffset);
-			for (uint16_t k = 0; k < srsCount; k++) {
+			tableid_t srsCount = read_16u(data + srsOffset);
+			for (tableid_t k = 0; k < srsCount; k++) {
 				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
 				subtable->rules[jj] = GeneralReadContextualRule(
 				    data, tableLength, srOffset, firstCoverage->glyphs[j].index, true, singleCoverage, NULL);
@@ -184,23 +187,23 @@ otl_Subtable *otl_read_contextual(font_file_pointer data, uint32_t tableLength, 
 		cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
 		cds->fc = NULL;
 
-		uint16_t chainSubClassSetCnt = read_16u(data + offset + 6);
+		tableid_t chainSubClassSetCnt = read_16u(data + offset + 6);
 		checkLength(offset + 12 + 2 * chainSubClassSetCnt);
 
-		uint16_t totalRules = 0;
-		for (uint16_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint16_t srcOffset = read_16u(data + offset + 8 + j * 2);
+		tableid_t totalRules = 0;
+		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+			uint32_t srcOffset = read_16u(data + offset + 8 + j * 2);
 			if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
 		}
 		subtable->rulesCount = totalRules;
 		NEW_N(subtable->rules, totalRules);
 
-		uint16_t jj = 0;
-		for (uint16_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint16_t srcOffset = read_16u(data + offset + 8 + j * 2);
+		tableid_t jj = 0;
+		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+			uint32_t srcOffset = read_16u(data + offset + 8 + j * 2);
 			if (srcOffset) {
-				uint16_t srsCount = read_16u(data + offset + srcOffset);
-				for (uint16_t k = 0; k < srsCount; k++) {
+				tableid_t srsCount = read_16u(data + offset + srcOffset);
+				for (tableid_t k = 0; k < srsCount; k++) {
 					uint32_t srOffset = offset + srcOffset + read_16u(data + offset + srcOffset + 2 + k * 2);
 					subtable->rules[jj] =
 					    GeneralReadContextualRule(data, tableLength, srOffset, j, true, classCoverage, cds);
@@ -236,13 +239,13 @@ otl_ChainingRule *GeneralReadChainingRule(font_file_pointer data, uint32_t table
 	uint16_t minusOneQ = (minusOne ? 1 : 0);
 
 	checkLength(offset + 8);
-	uint16_t nBack = read_16u(data + offset);
+	tableid_t nBack = read_16u(data + offset);
 	checkLength(offset + 2 + 2 * nBack + 2);
-	uint16_t nInput = read_16u(data + offset + 2 + 2 * nBack);
+	tableid_t nInput = read_16u(data + offset + 2 + 2 * nBack);
 	checkLength(offset + 4 + 2 * (nBack + nInput - minusOneQ) + 2);
-	uint16_t nLookaround = read_16u(data + offset + 4 + 2 * (nBack + nInput - minusOneQ));
+	tableid_t nLookaround = read_16u(data + offset + 4 + 2 * (nBack + nInput - minusOneQ));
 	checkLength(offset + 6 + 2 * (nBack + nInput - minusOneQ + nLookaround) + 2);
-	uint16_t nApply = read_16u(data + offset + 6 + 2 * (nBack + nInput - minusOneQ + nLookaround));
+	tableid_t nApply = read_16u(data + offset + 6 + 2 * (nBack + nInput - minusOneQ + nLookaround));
 	checkLength(offset + 8 + 2 * (nBack + nInput - minusOneQ + nLookaround) + nApply * 4);
 
 	rule->matchCount = nBack + nInput + nLookaround;
@@ -250,23 +253,23 @@ otl_ChainingRule *GeneralReadChainingRule(font_file_pointer data, uint32_t table
 	rule->inputEnds = nBack + nInput;
 
 	NEW_N(rule->match, rule->matchCount);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < nBack; j++) {
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < nBack; j++) {
 		uint32_t gid = read_16u(data + offset + 2 + j * 2);
 		rule->match[jj++] = fn(data, tableLength, gid, offset, 1, userdata);
 	}
 	if (minusOne) { rule->match[jj++] = fn(data, tableLength, startGID, offset, 2, userdata); }
-	for (uint16_t j = 0; j < nInput - minusOneQ; j++) {
+	for (tableid_t j = 0; j < nInput - minusOneQ; j++) {
 		uint32_t gid = read_16u(data + offset + 4 + 2 * rule->inputBegins + j * 2);
 		rule->match[jj++] = fn(data, tableLength, gid, offset, 2, userdata);
 	}
-	for (uint16_t j = 0; j < nLookaround; j++) {
+	for (tableid_t j = 0; j < nLookaround; j++) {
 		uint32_t gid = read_16u(data + offset + 6 + 2 * (rule->inputEnds - minusOneQ) + j * 2);
 		rule->match[jj++] = fn(data, tableLength, gid, offset, 3, userdata);
 	}
 	rule->applyCount = nApply;
 	NEW_N(rule->apply, rule->applyCount);
-	for (uint16_t j = 0; j < nApply; j++) {
+	for (tableid_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
 		rule->apply[j].lookup =
@@ -301,12 +304,12 @@ otl_Subtable *otl_read_chaining(font_file_pointer data, uint32_t tableLength, ui
 		uint16_t covOffset = offset + read_16u(data + offset + 2);
 		otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
 
-		uint16_t chainSubRuleSetCount = read_16u(data + offset + 4);
+		tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
 		if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
 		checkLength(offset + 6 + 2 * chainSubRuleSetCount);
 
-		uint16_t totalRules = 0;
-		for (uint16_t j = 0; j < chainSubRuleSetCount; j++) {
+		tableid_t totalRules = 0;
+		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
 			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
 			checkLength(srsOffset + 2);
 			totalRules += read_16u(data + srsOffset);
@@ -315,11 +318,11 @@ otl_Subtable *otl_read_chaining(font_file_pointer data, uint32_t tableLength, ui
 		subtable->rulesCount = totalRules;
 		NEW_N(subtable->rules, totalRules);
 
-		uint16_t jj = 0;
-		for (uint16_t j = 0; j < chainSubRuleSetCount; j++) {
+		tableid_t jj = 0;
+		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
 			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
-			uint16_t srsCount = read_16u(data + srsOffset);
-			for (uint16_t k = 0; k < srsCount; k++) {
+			tableid_t srsCount = read_16u(data + srsOffset);
+			for (tableid_t k = 0; k < srsCount; k++) {
 				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
 				subtable->rules[jj] = GeneralReadChainingRule(
 				    data, tableLength, srOffset, firstCoverage->glyphs[j].index, true, singleCoverage, NULL);
@@ -339,24 +342,24 @@ otl_Subtable *otl_read_chaining(font_file_pointer data, uint32_t tableLength, ui
 		cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 6));
 		cds->fc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 8));
 
-		uint16_t chainSubClassSetCnt = read_16u(data + offset + 10);
+		tableid_t chainSubClassSetCnt = read_16u(data + offset + 10);
 		checkLength(offset + 12 + 2 * chainSubClassSetCnt);
 
-		uint16_t totalRules = 0;
-		for (uint16_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint16_t srcOffset = read_16u(data + offset + 12 + j * 2);
+		tableid_t totalRules = 0;
+		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+			uint32_t srcOffset = read_16u(data + offset + 12 + j * 2);
 			if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
 		}
 		subtable->rulesCount = totalRules;
 		NEW_N(subtable->rules, totalRules);
 
-		uint16_t jj = 0;
-		for (uint16_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint16_t srcOffset = read_16u(data + offset + 12 + j * 2);
+		tableid_t jj = 0;
+		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+			uint32_t srcOffset = read_16u(data + offset + 12 + j * 2);
 			if (srcOffset) {
-				uint16_t srsCount = read_16u(data + offset + srcOffset);
-				for (uint16_t k = 0; k < srsCount; k++) {
-					uint16_t dsrOffset = read_16u(data + offset + srcOffset + 2 + k * 2);
+				tableid_t srsCount = read_16u(data + offset + srcOffset);
+				for (tableid_t k = 0; k < srsCount; k++) {
+					uint32_t dsrOffset = read_16u(data + offset + srcOffset + 2 + k * 2);
 					uint32_t srOffset = offset + srcOffset + dsrOffset;
 					subtable->rules[jj] =
 					    GeneralReadChainingRule(data, tableLength, srOffset, j, true, classCoverage, cds);
@@ -391,13 +394,13 @@ json_value *otl_dump_chaining(otl_Subtable *_subtable) {
 	json_value *_st = json_object_new(4);
 
 	json_value *_match = json_array_new(rule->matchCount);
-	for (uint16_t j = 0; j < rule->matchCount; j++) {
+	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		json_array_push(_match, otl_dump_Coverage(rule->match[j]));
 	}
 	json_object_push(_st, "match", _match);
 
 	json_value *_apply = json_array_new(rule->applyCount);
-	for (uint16_t j = 0; j < rule->applyCount; j++) {
+	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		json_value *_application = json_object_new(2);
 		json_object_push(_application, "at", json_integer_new(rule->apply[j].index));
 		json_object_push(_application, "lookup", json_string_new(rule->apply[j].lookup.name));
@@ -436,10 +439,10 @@ otl_Subtable *otl_parse_chaining(json_value *_subtable) {
 	rule->inputBegins = json_obj_getnum_fallback(_subtable, "inputBegins", 0);
 	rule->inputEnds = json_obj_getnum_fallback(_subtable, "inputEnds", rule->matchCount);
 
-	for (uint16_t j = 0; j < rule->matchCount; j++) {
+	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		rule->match[j] = otl_parse_Coverage(_match->u.array.values[j]);
 	}
-	for (uint16_t j = 0; j < rule->applyCount; j++) {
+	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		rule->apply[j].index = 0;
 		rule->apply[j].lookup = handle_new();
 		json_value *_application = _apply->u.array.values[j];
@@ -457,29 +460,29 @@ otl_Subtable *otl_parse_chaining(json_value *_subtable) {
 caryll_buffer *caryll_build_chaining_coverage(otl_Subtable *_subtable) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = subtable->rules[0];
-	uint16_t nBacktrack = rule->inputBegins;
-	uint16_t nInput = rule->inputEnds - rule->inputBegins;
-	uint16_t nLookahead = rule->matchCount - rule->inputEnds;
-	uint16_t nSubst = rule->applyCount;
+	tableid_t nBacktrack = rule->inputBegins;
+	tableid_t nInput = rule->inputEnds - rule->inputBegins;
+	tableid_t nLookahead = rule->matchCount - rule->inputEnds;
+	tableid_t nSubst = rule->applyCount;
 	reverseBacktracks(rule);
 
 	bk_Block *root = bk_new_Block(b16, 3, // format
 	                              bkover);
 
 	bk_push(root, b16, nBacktrack, bkover);
-	for (uint16_t j = 0; j < rule->inputBegins; j++) {
+	for (tableid_t j = 0; j < rule->inputBegins; j++) {
 		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(rule->match[j])), bkover);
 	}
 	bk_push(root, b16, nInput, bkover);
-	for (uint16_t j = rule->inputBegins; j < rule->inputEnds; j++) {
+	for (tableid_t j = rule->inputBegins; j < rule->inputEnds; j++) {
 		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(rule->match[j])), bkover);
 	}
 	bk_push(root, b16, nLookahead, bkover);
-	for (uint16_t j = rule->inputEnds; j < rule->matchCount; j++) {
+	for (tableid_t j = rule->inputEnds; j < rule->matchCount; j++) {
 		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(rule->match[j])), bkover);
 	}
 	bk_push(root, b16, rule->applyCount, bkover);
-	for (uint16_t j = 0; j < nSubst; j++) {
+	for (tableid_t j = 0; j < nSubst; j++) {
 		bk_push(root, b16, rule->apply[j].index - nBacktrack, // position
 		        b16, rule->apply[j].lookup.index,             // lookup
 		        bkover);
@@ -504,45 +507,45 @@ caryll_buffer *caryll_build_chaining_classes(otl_Subtable *_subtable) {
 	                              b16, subtable->ic->maxclass + 1,                              // ChainSubClassSetCnt
 	                              bkover);
 
-	uint16_t *rcpg;
+	glyphclass_t *rcpg;
 	NEW_N(rcpg, subtable->ic->maxclass + 1);
-	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) {
+	for (glyphclass_t j = 0; j <= subtable->ic->maxclass; j++) {
 		rcpg[j] = 0;
 	}
-	for (uint16_t j = 0; j < subtable->rulesCount; j++) {
-		uint16_t ib = subtable->rules[j]->inputBegins;
-		uint16_t startClass = subtable->rules[j]->match[ib]->glyphs[0].index;
+	for (tableid_t j = 0; j < subtable->rulesCount; j++) {
+		tableid_t ib = subtable->rules[j]->inputBegins;
+		tableid_t startClass = subtable->rules[j]->match[ib]->glyphs[0].index;
 		if (startClass <= subtable->ic->maxclass) rcpg[startClass] += 1;
 	}
 
-	for (uint16_t j = 0; j <= subtable->ic->maxclass; j++) {
+	for (glyphclass_t j = 0; j <= subtable->ic->maxclass; j++) {
 		if (rcpg[j]) {
 			bk_Block *cset = bk_new_Block(b16, rcpg[j], // ChainSubClassRuleCnt
 			                              bkover);
-			for (uint16_t k = 0; k < subtable->rulesCount; k++) {
+			for (tableid_t k = 0; k < subtable->rulesCount; k++) {
 				otl_ChainingRule *rule = subtable->rules[k];
-				uint16_t startClass = rule->match[rule->inputBegins]->glyphs[0].index;
+				glyphclass_t startClass = rule->match[rule->inputBegins]->glyphs[0].index;
 				if (startClass != j) { continue; }
 				reverseBacktracks(rule);
-				uint16_t nBacktrack = rule->inputBegins;
-				uint16_t nInput = rule->inputEnds - rule->inputBegins;
-				uint16_t nLookahead = rule->matchCount - rule->inputEnds;
-				uint16_t nSubst = rule->applyCount;
+				tableid_t nBacktrack = rule->inputBegins;
+				tableid_t nInput = rule->inputEnds - rule->inputBegins;
+				tableid_t nLookahead = rule->matchCount - rule->inputEnds;
+				tableid_t nSubst = rule->applyCount;
 				bk_Block *r = bk_new_Block(bkover);
 				bk_push(r, b16, nBacktrack, bkover);
-				for (uint16_t m = 0; m < rule->inputBegins; m++) {
+				for (tableid_t m = 0; m < rule->inputBegins; m++) {
 					bk_push(r, b16, rule->match[m]->glyphs[0].index, bkover);
 				}
 				bk_push(r, b16, nInput, bkover);
-				for (uint16_t m = rule->inputBegins + 1; m < rule->inputEnds; m++) {
+				for (tableid_t m = rule->inputBegins + 1; m < rule->inputEnds; m++) {
 					bk_push(r, b16, rule->match[m]->glyphs[0].index, bkover);
 				}
 				bk_push(r, b16, nLookahead, bkover);
-				for (uint16_t m = rule->inputEnds; m < rule->matchCount; m++) {
+				for (tableid_t m = rule->inputEnds; m < rule->matchCount; m++) {
 					bk_push(r, b16, rule->match[m]->glyphs[0].index, bkover);
 				}
 				bk_push(r, b16, nSubst, bkover);
-				for (uint16_t m = 0; m < nSubst; m++) {
+				for (tableid_t m = 0; m < nSubst; m++) {
 					bk_push(r, b16, rule->apply[m].index - nBacktrack, // position
 					        b16, rule->apply[m].lookup.index,          // lookup index
 					        bkover);

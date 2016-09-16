@@ -2,7 +2,7 @@
 
 void otl_delete_Coverage(otl_Coverage *coverage) {
 	if (coverage && coverage->glyphs) {
-		for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 			handle_delete(&coverage->glyphs[j]);
 		}
 		free(coverage->glyphs);
@@ -48,7 +48,7 @@ otl_Coverage *otl_read_Coverage(font_file_pointer data, uint32_t tableLength, ui
 			if (coverage->numGlyphs) {
 				NEW_N(coverage->glyphs, coverage->numGlyphs);
 				{
-					uint16_t j = 0;
+					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
 						coverage->glyphs[j] = handle_fromIndex(e->gid);
@@ -84,7 +84,7 @@ otl_Coverage *otl_read_Coverage(font_file_pointer data, uint32_t tableLength, ui
 			if (coverage->numGlyphs) {
 				NEW_N(coverage->glyphs, coverage->numGlyphs);
 				{
-					uint16_t j = 0;
+					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
 						coverage->glyphs[j] = handle_fromIndex(e->gid);
@@ -104,7 +104,7 @@ otl_Coverage *otl_read_Coverage(font_file_pointer data, uint32_t tableLength, ui
 
 json_value *otl_dump_Coverage(otl_Coverage *coverage) {
 	json_value *a = json_array_new(coverage->numGlyphs);
-	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 		json_array_push(a, json_string_new(coverage->glyphs[j].name));
 	}
 	return preserialize(a);
@@ -123,8 +123,8 @@ otl_Coverage *otl_parse_Coverage(json_value *cov) {
 		return c;
 	}
 	NEW_N(c->glyphs, c->numGlyphs);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < c->numGlyphs; j++) {
+	glyphid_t jj = 0;
+	for (glyphid_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
 			c->glyphs[jj] = handle_fromName(
 			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length));
@@ -139,7 +139,7 @@ caryll_buffer *otl_build_Coverage(otl_Coverage *coverage) {
 	caryll_buffer *format1 = bufnew();
 	bufwrite16b(format1, 1);
 	bufwrite16b(format1, coverage->numGlyphs);
-	for (uint16_t j = 0; j < coverage->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 		bufwrite16b(format1, coverage->glyphs[j].index);
 	}
 	if (coverage->numGlyphs < 2) return format1;
@@ -147,11 +147,11 @@ caryll_buffer *otl_build_Coverage(otl_Coverage *coverage) {
 	caryll_buffer *format2 = bufnew();
 	bufwrite16b(format2, 2);
 	caryll_buffer *ranges = bufnew();
-	uint16_t startGID = coverage->glyphs[0].index;
-	uint16_t endGID = startGID;
-	uint16_t nRanges = 0;
-	for (uint16_t j = 1; j < coverage->numGlyphs; j++) {
-		uint16_t current = coverage->glyphs[j].index;
+	glyphid_t startGID = coverage->glyphs[0].index;
+	glyphid_t endGID = startGID;
+	glyphid_t nRanges = 0;
+	for (glyphid_t j = 1; j < coverage->numGlyphs; j++) {
+		glyphid_t current = coverage->glyphs[j].index;
 		if (current == endGID + 1) {
 			endGID = current;
 		} else {

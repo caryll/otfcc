@@ -3,7 +3,7 @@
 static void deleteBaseAxis(otl_BaseAxis *axis) {
 	if (!axis) return;
 	if (axis->entries) {
-		for (uint16_t j = 0; j < axis->scriptCount; j++) {
+		for (tableid_t j = 0; j < axis->scriptCount; j++) {
 			if (axis->entries[j].baseValues) free(axis->entries[j].baseValues);
 		}
 		free(axis->entries);
@@ -38,7 +38,7 @@ static void readBaseScript(font_file_pointer data, uint32_t tableLength, uint16_
 		if (entry->baseValuesCount != nBaseTags) goto FAIL;
 		checkLength(baseValuesOffset + 4 + 2 * entry->baseValuesCount);
 		NEW_N(entry->baseValues, entry->baseValuesCount);
-		for (uint16_t j = 0; j < entry->baseValuesCount; j++) {
+		for (tableid_t j = 0; j < entry->baseValuesCount; j++) {
 			entry->baseValues[j].tag = baseTagList[j];
 			uint16_t _valOffset = read_16u(data + baseValuesOffset + 4 + 2 * j);
 			if (_valOffset) {
@@ -77,12 +77,12 @@ static otl_BaseAxis *readAxis(font_file_pointer data, uint32_t tableLength, uint
 	uint16_t baseScriptListOffset = offset + read_16u(data + offset + 2);
 	if (baseScriptListOffset <= offset) goto FAIL;
 	checkLength(baseScriptListOffset + 2);
-	uint16_t nBaseScripts = read_16u(data + baseScriptListOffset);
+	tableid_t nBaseScripts = read_16u(data + baseScriptListOffset);
 	checkLength(baseScriptListOffset + 2 + 6 * nBaseScripts);
 	NEW(axis);
 	axis->scriptCount = nBaseScripts;
 	NEW_N(axis->entries, nBaseScripts);
-	for (uint16_t j = 0; j < nBaseScripts; j++) {
+	for (tableid_t j = 0; j < nBaseScripts; j++) {
 		axis->entries[j].tag = read_32u(data + baseScriptListOffset + 2 + 6 * j);
 		uint16_t baseScriptOffset = read_16u(data + baseScriptListOffset + 2 + 6 * j + 4);
 		if (baseScriptOffset) {
@@ -122,7 +122,7 @@ table_BASE *table_read_BASE(caryll_Packet packet) {
 
 static json_value *axisToJson(otl_BaseAxis *axis) {
 	json_value *_axis = json_object_new(axis->scriptCount);
-	for (uint16_t j = 0; j < axis->scriptCount; j++) {
+	for (tableid_t j = 0; j < axis->scriptCount; j++) {
 		if (!axis->entries[j].tag) continue;
 		json_value *_entry = json_object_new(3);
 		if (axis->entries[j].defaultBaselineTag) {
@@ -130,10 +130,10 @@ static json_value *axisToJson(otl_BaseAxis *axis) {
 			                 json_string_new_nocopy(4, tag2str(axis->entries[j].defaultBaselineTag)));
 		}
 		json_value *_values = json_object_new(axis->entries[j].baseValuesCount);
-		for (uint16_t k = 0; k < axis->entries[j].baseValuesCount; k++) {
+		for (tableid_t k = 0; k < axis->entries[j].baseValuesCount; k++) {
 			if (axis->entries[j].baseValues[k].tag)
 				json_object_push(_values, tag2str(axis->entries[j].baseValues[k].tag),
-				                 json_integer_new(axis->entries[j].baseValues[k].coordinate));
+				                 json_new_position(axis->entries[j].baseValues[k].coordinate));
 		}
 		json_object_push(_entry, "baselines", _values);
 		json_object_push(_axis, tag2str(axis->entries[j].tag), _entry);
@@ -159,7 +159,7 @@ static void baseScriptFromJson(json_value *_sr, otl_BaseScriptEntry *entry) {
 	} else {
 		entry->baseValuesCount = _basevalues->u.object.length;
 		NEW_N(entry->baseValues, entry->baseValuesCount);
-		for (uint16_t j = 0; j < entry->baseValuesCount; j++) {
+		for (tableid_t j = 0; j < entry->baseValuesCount; j++) {
 			entry->baseValues[j].tag = str2tag(_basevalues->u.object.values[j].name);
 			entry->baseValues[j].coordinate = json_numof(_basevalues->u.object.values[j].value);
 		}
@@ -172,8 +172,8 @@ static otl_BaseAxis *axisFromJson(json_value *_axis) {
 	NEW(axis);
 	axis->scriptCount = _axis->u.object.length;
 	NEW_N(axis->entries, axis->scriptCount);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < axis->scriptCount; j++) {
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < axis->scriptCount; j++) {
 		if (_axis->u.object.values[j].value && _axis->u.object.values[j].value->type == json_object) {
 			axis->entries[jj].tag = str2tag(_axis->u.object.values[j].name);
 			baseScriptFromJson(_axis->u.object.values[j].value, &(axis->entries[jj]));
@@ -199,17 +199,17 @@ table_BASE *table_parse_BASE(json_value *root, const caryll_Options *options) {
 bk_Block *axisToBk(otl_BaseAxis *axis) {
 	if (!axis) return NULL;
 	struct {
-		uint16_t size;
+		tableid_t size;
 		uint32_t *items;
 	} taglist;
 	taglist.size = 0;
 	taglist.items = NULL;
 
-	for (uint16_t j = 0; j < axis->scriptCount; j++) {
+	for (tableid_t j = 0; j < axis->scriptCount; j++) {
 		otl_BaseScriptEntry *entry = &(axis->entries[j]);
 		if (entry->defaultBaselineTag) {
 			bool found = false;
-			for (uint16_t jk = 0; jk < taglist.size; jk++) {
+			for (tableid_t jk = 0; jk < taglist.size; jk++) {
 				if (taglist.items[jk] == entry->defaultBaselineTag) {
 					found = true;
 					break;
@@ -224,10 +224,10 @@ bk_Block *axisToBk(otl_BaseAxis *axis) {
 				taglist.items[taglist.size - 1] = entry->defaultBaselineTag;
 			}
 		}
-		for (uint16_t k = 0; k < entry->baseValuesCount; k++) {
+		for (tableid_t k = 0; k < entry->baseValuesCount; k++) {
 			uint32_t tag = entry->baseValues[k].tag;
 			bool found = false;
-			for (uint16_t jk = 0; jk < taglist.size; jk++) {
+			for (tableid_t jk = 0; jk < taglist.size; jk++) {
 				if (taglist.items[jk] == tag) {
 					found = true;
 					break;
@@ -245,17 +245,17 @@ bk_Block *axisToBk(otl_BaseAxis *axis) {
 	}
 
 	bk_Block *baseTagList = bk_new_Block(b16, taglist.size, bkover);
-	for (uint16_t j = 0; j < taglist.size; j++) {
+	for (tableid_t j = 0; j < taglist.size; j++) {
 		bk_push(baseTagList, b32, taglist.items[j], bkover);
 	}
 
 	bk_Block *baseScriptList = bk_new_Block(b16, axis->scriptCount, bkover);
-	for (uint16_t j = 0; j < axis->scriptCount; j++) {
+	for (tableid_t j = 0; j < axis->scriptCount; j++) {
 		otl_BaseScriptEntry *entry = &(axis->entries[j]);
 		bk_Block *baseValues = bk_new_Block(bkover);
 		{
-			uint16_t defaultIndex = 0;
-			for (uint16_t m = 0; m < taglist.size; m++) {
+			tableid_t defaultIndex = 0;
+			for (tableid_t m = 0; m < taglist.size; m++) {
 				if (taglist.items[m] == entry->defaultBaselineTag) {
 					defaultIndex = m;
 					break;
@@ -264,47 +264,47 @@ bk_Block *axisToBk(otl_BaseAxis *axis) {
 			bk_push(baseValues, b16, defaultIndex, bkover);
 		}
 		bk_push(baseValues, b16, taglist.size, bkover);
-		for (uint16_t m = 0; m < taglist.size; m++) {
-			uint16_t found = false;
-			uint16_t foundIndex = 0;
-			for (uint16_t k = 0; k < entry->baseValuesCount; k++) {
+		for (size_t m = 0; m < taglist.size; m++) {
+			bool found = false;
+			tableid_t foundIndex = 0;
+			for (tableid_t k = 0; k < entry->baseValuesCount; k++) {
 				if (entry->baseValues[k].tag == taglist.items[m]) {
 					found = true, foundIndex = k;
 					break;
 				}
 			}
 			if (found) {
-				bk_push(baseValues,                                                     // base value
-				             p16, bk_new_Block(b16, 1,                                        // format
-				                              b16, entry->baseValues[foundIndex].coordinate, // coordinate
-				                              bkover),
-				             bkover);
+				bk_push(baseValues,                                                               // base value
+				        p16, bk_new_Block(b16, 1,                                                 // format
+				                          b16, (int16_t)entry->baseValues[foundIndex].coordinate, // coordinate
+				                          bkover),
+				        bkover);
 			} else {
-				bk_push(baseValues,              // assign a zero value
-				             p16, bk_new_Block(b16, 1, // format
-				                              b16, 0, // coordinate
-				                              bkover),
-				             bkover);
+				bk_push(baseValues,               // assign a zero value
+				        p16, bk_new_Block(b16, 1, // format
+				                          b16, 0, // coordinate
+				                          bkover),
+				        bkover);
 			}
 		}
 		bk_Block *scriptRecord = bk_new_Block(p16, baseValues, // BaseValues
-		                                           p16, NULL,       // DefaultMinMax
-		                                           b16, 0,          // BaseLangSysCount
-		                                           bkover);
+		                                      p16, NULL,       // DefaultMinMax
+		                                      b16, 0,          // BaseLangSysCount
+		                                      bkover);
 		bk_push(baseScriptList, b32, entry->tag, // BaseScriptTag
-		             p16, scriptRecord,               // BaseScript
-		             bkover);
+		        p16, scriptRecord,               // BaseScript
+		        bkover);
 	}
 	free(taglist.items);
 	return bk_new_Block(p16, baseTagList,    // BaseTagList
-	                   p16, baseScriptList, // BaseScriptList
-	                   bkover);
+	                    p16, baseScriptList, // BaseScriptList
+	                    bkover);
 }
 
 caryll_buffer *table_build_BASE(table_BASE *base, const caryll_Options *options) {
 	bk_Block *root = bk_new_Block(b32, 0x10000,                    // Version
-	                                   p16, axisToBk(base->horizontal), // HorizAxis
-	                                   p16, axisToBk(base->vertical),   // VertAxis
-	                                   bkover);
+	                              p16, axisToBk(base->horizontal), // HorizAxis
+	                              p16, axisToBk(base->vertical),   // VertAxis
+	                              bkover);
 	return bk_build_Block(root);
 }

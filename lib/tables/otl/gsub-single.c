@@ -23,19 +23,19 @@ otl_Subtable *otl_read_gsub_single(font_file_pointer data, uint32_t tableLength,
 		NEW_N(to->glyphs, to->numGlyphs);
 
 		uint16_t delta = read_16u(data + subtableOffset + 4);
-		for (uint16_t j = 0; j < from->numGlyphs; j++) {
+		for (glyphid_t j = 0; j < from->numGlyphs; j++) {
 			to->glyphs[j] = handle_fromIndex(from->glyphs[j].index + delta);
 		}
 		subtable->gsub_single.to = to;
 	} else {
-		uint16_t toglyphs = read_16u(data + subtableOffset + 4);
+		glyphid_t toglyphs = read_16u(data + subtableOffset + 4);
 		if (tableLength < subtableOffset + 6 + toglyphs * 2 || toglyphs != from->numGlyphs) goto FAIL;
 		otl_Coverage *to;
 		NEW(to);
 		to->numGlyphs = toglyphs;
 		NEW_N(to->glyphs, to->numGlyphs);
 
-		for (uint16_t j = 0; j < to->numGlyphs; j++) {
+		for (glyphid_t j = 0; j < to->numGlyphs; j++) {
 			to->glyphs[j] = handle_fromIndex(read_16u(data + subtableOffset + 6 + j * 2));
 		}
 		subtable->gsub_single.to = to;
@@ -52,7 +52,7 @@ OK:
 json_value *otl_gsub_dump_single(otl_Subtable *_subtable) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	json_value *st = json_object_new(subtable->from->numGlyphs);
-	for (uint16_t j = 0; j < subtable->from->numGlyphs && j < subtable->from->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < subtable->from->numGlyphs && j < subtable->from->numGlyphs; j++) {
 		json_object_push(st, subtable->from->glyphs[j].name, json_string_new(subtable->to->glyphs[j].name));
 	}
 	return st;
@@ -67,8 +67,8 @@ otl_Subtable *otl_gsub_parse_single(json_value *_subtable) {
 	subtable->from->numGlyphs = subtable->to->numGlyphs = _subtable->u.object.length;
 	NEW_N(subtable->from->glyphs, subtable->from->numGlyphs);
 	NEW_N(subtable->to->glyphs, subtable->to->numGlyphs);
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < _subtable->u.object.length; j++) {
+	glyphid_t jj = 0;
+	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_string) {
 			subtable->from->glyphs[jj] = handle_fromName(
 			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length));
@@ -86,7 +86,7 @@ caryll_buffer *caryll_build_gsub_single_subtable(otl_Subtable *_subtable) {
 	bool isConstantDifference = true;
 	if (subtable->from->numGlyphs > 1) {
 		int32_t difference = subtable->to->glyphs[0].index - subtable->from->glyphs[0].index;
-		for (uint16_t j = 1; j < subtable->from->numGlyphs; j++) {
+		for (glyphid_t j = 1; j < subtable->from->numGlyphs; j++) {
 			isConstantDifference = isConstantDifference &&
 			                       ((subtable->to->glyphs[j].index - subtable->from->glyphs[j].index) == difference);
 		}
@@ -102,7 +102,7 @@ caryll_buffer *caryll_build_gsub_single_subtable(otl_Subtable *_subtable) {
 		                           p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
 		                           b16, subtable->to->numGlyphs,                                   // quantity
 		                           bkover);
-		for (uint16_t k = 0; k < subtable->to->numGlyphs; k++) {
+		for (glyphid_t k = 0; k < subtable->to->numGlyphs; k++) {
 			bk_push(b, b16, subtable->to->glyphs[k].index, bkover);
 		}
 		return bk_build_Block(b);

@@ -401,7 +401,7 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 	caryll_buffer *blob = bufnew();
 	bool flush = false;
 	bool last = false;
-	for (uint16_t j = 0; j < il->length; j++) {
+	for (uint32_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {
 				if (flush) {

@@ -49,7 +49,7 @@ otl_MarkArray *otl_read_mark_array(font_file_pointer data, uint32_t tableLength,
 	array->markCount = read_16u(data + offset);
 	checkLength(offset + 2 + 4 * array->markCount);
 	NEW_N(array->records, array->markCount);
-	for (uint16_t j = 0; j < array->markCount; j++) {
+	for (glyphid_t j = 0; j < array->markCount; j++) {
 		array->records[j].markClass = read_16u(data + offset + 2 + j * 4);
 		uint16_t delta = read_16u(data + offset + 2 + j * 4 + 2);
 		if (delta) {

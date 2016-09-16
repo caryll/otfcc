@@ -13,14 +13,14 @@ static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
 
 bool consolidate_gsub_reverse(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
-	for (uint16_t j = 0; j < subtable->matchCount; j++) {
+	for (tableid_t j = 0; j < subtable->matchCount; j++) {
 		fontop_consolidateCoverage(font, subtable->match[j], lookupName);
 	}
 	fontop_consolidateCoverage(font, subtable->to, lookupName);
 	if (subtable->inputIndex >= subtable->matchCount) { subtable->inputIndex = subtable->matchCount - 1; }
 	gsub_single_map_hash *h = NULL;
 	otl_Coverage *from = subtable->match[subtable->inputIndex];
-	for (uint16_t k = 0; k < from->numGlyphs && k < subtable->to->numGlyphs; k++) {
+	for (glyphid_t k = 0; k < from->numGlyphs && k < subtable->to->numGlyphs; k++) {
 		gsub_single_map_hash *s;
 		int fromid = from->glyphs[k].index;
 		HASH_FIND_INT(h, &fromid, s);
@@ -47,7 +47,7 @@ bool consolidate_gsub_reverse(caryll_Font *font, table_OTL *table, otl_Subtable 
 	subtable->to->numGlyphs = HASH_COUNT(h);
 	{
 		gsub_single_map_hash *s, *tmp;
-		uint16_t j = 0;
+		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
 			from->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
 			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);

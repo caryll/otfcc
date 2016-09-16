@@ -3,24 +3,24 @@
 bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = subtable->rules[0];
-	for (uint16_t j = 0; j < rule->matchCount; j++) {
+	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		fontop_consolidateCoverage(font, rule->match[j], lookupName);
 		fontop_shrinkCoverage(rule->match[j], true);
 	}
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
-	for (uint16_t j = 0; j < rule->applyCount; j++) {
+	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		bool foundLookup = false;
 		if (rule->apply[j].lookup.name) {
 		FIND_LOOKUP:;
-			for (uint16_t k = 0; k < table->lookupCount; k++) {
+			for (tableid_t k = 0; k < table->lookupCount; k++) {
 				if (strcmp(table->lookups[k]->name, rule->apply[j].lookup.name) != 0) continue;
 				foundLookup = true;
 				handle_consolidateTo(&rule->apply[j].lookup, k, table->lookups[k]->name);
 			}
 			if (!foundLookup) {
 				// Maybe the lookup is aliased.
-				for (uint16_t k = 0; k < table->lookupAliasesCount; k++) {
+				for (tableid_t k = 0; k < table->lookupAliasesCount; k++) {
 					if (strcmp(table->lookupAliases[k].from, rule->apply[j].lookup.name) != 0) continue;
 					handle_delete(&rule->apply[j].lookup);
 					rule->apply[j].lookup = handle_fromName(sdsdup(table->lookupAliases[k].to));
@@ -37,8 +37,8 @@ bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_su
 	// If a rule is designed to have no lookup application, it may be a ignoration
 	// otfcc will keep them.
 	if (rule->applyCount) {
-		uint16_t k = 0;
-		for (uint16_t j = 0; j < rule->applyCount; j++) {
+		tableid_t k = 0;
+		for (tableid_t j = 0; j < rule->applyCount; j++) {
 			if (rule->apply[j].lookup.name) { rule->apply[k++] = rule->apply[j]; }
 		}
 		rule->applyCount = k;
@@ -66,14 +66,14 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 	if (s) {
 		// the coverage has been defined into a class
 		classifier_hash *ss, *tmp;
-		for (uint16_t j = 1; j < cov->numGlyphs; j++) {
+		for (glyphid_t j = 1; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
 			HASH_FIND_INT(*h, &gid, ss);
 			if (!ss || ss->cls != s->cls) return 0;
 		}
 		// reverse check: all glyphs classified are there in the coverage
 		classifier_hash *revh = NULL;
-		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
+		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
 			classifier_hash *rss;
 			HASH_FIND_INT(revh, &gid, rss);
@@ -104,12 +104,12 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 	} else {
 		// the coverage is not defined into a class.
 		classifier_hash *ss;
-		for (uint16_t j = 1; j < cov->numGlyphs; j++) {
+		for (glyphid_t j = 1; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
 			HASH_FIND_INT(*h, &gid, ss);
 			if (ss) return 0;
 		}
-		for (uint16_t j = 0; j < cov->numGlyphs; j++) {
+		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			classifier_hash *s;
 			NEW(s);
 			s->gid = cov->glyphs[j].index;
@@ -122,7 +122,7 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 	}
 }
 static void rewriteRule(otl_ChainingRule *rule, classifier_hash *hb, classifier_hash *hi, classifier_hash *hf) {
-	for (uint16_t m = 0; m < rule->matchCount; m++) {
+	for (tableid_t m = 0; m < rule->matchCount; m++) {
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
 			classifier_hash *s;
@@ -154,8 +154,8 @@ static otl_ClassDef *toClass(classifier_hash *h) {
 	NEW_N(cd->glyphs, cd->numGlyphs);
 	NEW_N(cd->classes, cd->numGlyphs);
 	classifier_hash *item;
-	uint16_t maxclass = 0;
-	uint16_t j = 0;
+	glyphclass_t maxclass = 0;
+	glyphid_t j = 0;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
 		cd->glyphs[j] = handle_fromConsolidated(item->gid, item->gname);
@@ -166,7 +166,7 @@ static otl_ClassDef *toClass(classifier_hash *h) {
 	cd->maxclass = maxclass;
 	return cd;
 }
-void classify_around(otl_Lookup *lookup, uint16_t j) {
+void classify_around(otl_Lookup *lookup, tableid_t j) {
 	classifier_hash *hb = NULL;
 	classifier_hash *hi = NULL;
 	classifier_hash *hf = NULL;
@@ -178,7 +178,7 @@ void classify_around(otl_Lookup *lookup, uint16_t j) {
 	int classno_f = 0;
 	bool *compatibility = NULL;
 	otl_ChainingRule *rule0 = subtable0->rules[0];
-	for (uint16_t m = 0; m < rule0->matchCount; m++) {
+	for (tableid_t m = 0; m < rule0->matchCount; m++) {
 		int check = 0;
 		if (m < rule0->inputBegins) {
 			check = classCompatible(&hb, rule0->match[m], &classno_b);
@@ -190,12 +190,12 @@ void classify_around(otl_Lookup *lookup, uint16_t j) {
 		if (!check) { goto FAIL; }
 	}
 	compatibility = calloc(lookup->subtableCount, sizeof(bool));
-	uint16_t compatibleCount = 0;
-	for (uint16_t k = j + 1; k < lookup->subtableCount; k++) {
+	tableid_t compatibleCount = 0;
+	for (tableid_t k = j + 1; k < lookup->subtableCount; k++) {
 		if (lookup->subtables[k] && !lookup->subtables[k]->chaining.classified) {
 			otl_ChainingRule *rule = lookup->subtables[k]->chaining.rules[0];
 			bool allcheck = true;
-			for (uint16_t m = 0; m < rule->matchCount; m++) {
+			for (tableid_t m = 0; m < rule->matchCount; m++) {
 				int check = 0;
 				if (m < rule->inputBegins) {
 					check = classCompatible(&hb, rule->match[m], &classno_b);
@@ -222,8 +222,8 @@ endcheck:
 		subtable0->rules[0] = rule0;
 		rewriteRule(rule0, hb, hi, hf);
 		// write other rules
-		uint16_t kk = 1;
-		for (uint16_t k = j + 1; k < lookup->subtableCount; k++)
+		tableid_t kk = 1;
+		for (tableid_t k = j + 1; k < lookup->subtableCount; k++)
 			if (compatibility[k]) {
 				otl_ChainingRule *rule = lookup->subtables[k]->chaining.rules[0];
 				subtable0->rules[kk] = rule;
@@ -269,7 +269,7 @@ void fontop_classifyChainings(otl_Lookup *lookup) {
 	// This can massively reduce the size of the lookup.
 	// Remember, this process is completely automatic.
 	#ifndef DEBUG
-	for (uint16_t j = 0; j < lookup->subtableCount; j++) {
+	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		classify_around(lookup, j);
 	}
 	#endif

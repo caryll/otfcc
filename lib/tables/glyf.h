@@ -75,16 +75,16 @@ typedef struct {
 
 	// Outline
 	// NOTE: SFNT does not support mixed glyphs, but we do.
-	uint16_t numberOfContours;
-	uint16_t numberOfReferences;
+	shapeid_t numberOfContours;
+	shapeid_t numberOfReferences;
 	glyf_Contour *contours;
 	glyf_ComponentReference *references;
 
 	// Postscript hints
-	uint16_t numberOfStemH;
-	uint16_t numberOfStemV;
-	uint16_t numberOfHintMasks;
-	uint16_t numberOfContourMasks;
+	shapeid_t numberOfStemH;
+	shapeid_t numberOfStemV;
+	shapeid_t numberOfHintMasks;
+	shapeid_t numberOfContourMasks;
 	glyf_PostscriptStemDef *stemH;
 	glyf_PostscriptStemDef *stemV;
 	glyf_PostscriptHintMask *hintMasks;
@@ -104,7 +104,7 @@ typedef struct {
 } glyf_Glyph;
 
 typedef struct {
-	uint16_t numberGlyphs;
+	glyphid_t numberGlyphs;
 	glyf_Glyph **glyphs;
 } table_glyf;
 

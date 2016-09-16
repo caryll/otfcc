@@ -14,7 +14,7 @@ typedef enum {
 
 typedef struct {
 	cff_InstructionType type;
-	uint16_t arity;
+	arity_t arity;
 	union {
 		double d;  // for type == IL_ITEM_OPERAND, IL_ITEM_PHANTOM_OPERAND
 		int32_t i; // otherwise

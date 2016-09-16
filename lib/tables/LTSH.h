@@ -6,7 +6,7 @@
 
 typedef struct {
 	uint16_t version;
-	uint16_t numGlyphs;
+	glyphid_t numGlyphs;
 	uint8_t *yPels;
 } table_LTSH;
 
