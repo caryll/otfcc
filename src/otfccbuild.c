@@ -213,14 +213,7 @@ int main(int argc, char *argv[]) {
 				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				options->optimize_level = atoi(optarg);
-				if (options->optimize_level >= 2) {
-					options->short_post = true;
-					options->ignore_glyph_order = true;
-					options->cff_short_vmtx = true;
-					options->merge_features = true;
-				}
-				if (options->optimize_level >= 3) { options->force_cid = true; }
+				options_optimizeTo(options, atoi(optarg));
 				break;
 		}
 	}

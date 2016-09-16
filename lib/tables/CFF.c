@@ -841,7 +841,7 @@ static void cff_make_charstrings(cff_charstring_builder_context *context, caryll
 	*s = bufnew();
 	*gs = bufnew();
 	if (context->glyf->numberGlyphs == 0) { return; }
-	context->graph->doSubroutinize = context->options->optimize_level >= 3;
+	context->graph->doSubroutinize = context->options->cff_doSubroutinize;
 	for (glyphid_t j = 0; j < context->glyf->numberGlyphs; j++) {
 		cff_CharstringIL *il =
 		    cff_compileGlyphToIL(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);

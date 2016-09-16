@@ -6,42 +6,7 @@ opcodes (in the minimum unit of a operator call. That is, operand* operator spec
 
 */
 
-void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);
-
-void printNode(cff_SubrNode *n, bool nl) {
-	if (n->guard) printf("GUARD ");
-	if (n->hard) printf("HARD ");
-	if (n->rule) {
-		printf("[%d] ", n->rule->number);
-	} else
-		for (uint32_t j = 0; j < buflen(n->terminal); j++) {
-			printf("%02x ", n->terminal->data[j]);
-		}
-	if (nl)
-		printf("\n");
-	else
-		printf(". ");
-}
-void flatprintRule(cff_SubrRule *r) {
-	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
-		if (e->rule) {
-			flatprintRule(e->rule);
-		} else {
-			printNode(e, false);
-		}
-	}
-}
-void printRule(cff_SubrRule *r) {
-	printf("[%d] -> ", r->number);
-	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
-		printNode(e, false);
-	}
-	printf(" (%d; %d)\n", r->height, r->refcount);
-	r->printed = true;
-	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
-		if (e->rule && !e->rule->printed) { printRule(e->rule); }
-	}
-}
+static void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);
 
 static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 	size_t l1;
@@ -97,27 +62,19 @@ static uint8_t *getDoubletHashKey(cff_SubrNode *n, size_t *len) {
 	return key;
 }
 
-void insertNodeAfter(cff_SubrNode *a, cff_SubrNode *b) {
-	cff_SubrNode *n = a->next;
-	b->next = n;
-	n->prev = b;
-	a->next = b;
-	b->prev = a;
-}
-
-void clean_Node(cff_SubrNode *x) {
+static void clean_Node(cff_SubrNode *x) {
 	if (x->rule) { x->rule->refcount -= 1; }
 	x->rule = NULL;
 	buffree(x->terminal);
 	x->terminal = NULL;
 }
-void delete_Node(cff_SubrNode *x) {
+static void delete_Node(cff_SubrNode *x) {
 	if (!x) return;
 	clean_Node(x);
 	FREE(x);
 }
 
-cff_SubrNode *cff_new_Node() {
+static cff_SubrNode *cff_new_Node() {
 	cff_SubrNode *n;
 	NEW_CLEAN(n);
 	n->rule = NULL;
@@ -129,7 +86,7 @@ cff_SubrNode *cff_new_Node() {
 	return n;
 }
 
-cff_SubrRule *cff_new_Rule() {
+static cff_SubrRule *cff_new_Rule() {
 	cff_SubrRule *r;
 	NEW_CLEAN(r);
 	r->refcount = 0;
@@ -167,7 +124,7 @@ static cff_SubrNode *copyNode(cff_SubrNode *n) {
 }
 
 // checkNode: check whether node N is shrinkable
-bool checkDoubletMatch(cff_SubrGraph *g, cff_SubrNode *n);
+static bool checkDoubletMatch(cff_SubrGraph *g, cff_SubrNode *n);
 
 static void unlinkNode(cff_SubrGraph *g, cff_SubrNode *a) {
 	if (a->hard || a->guard) return;
@@ -227,7 +184,7 @@ static void addSinglet(cff_SubrGraph *g, cff_SubrNode *n) {
 	}
 }
 
-bool identNode(cff_SubrNode *m, cff_SubrNode *n) {
+static bool identNode(cff_SubrNode *m, cff_SubrNode *n) {
 	if (m->rule)
 		return (m->rule == n->rule);
 	else if (n->rule)
@@ -236,7 +193,7 @@ bool identNode(cff_SubrNode *m, cff_SubrNode *n) {
 		return (m->terminal->size == n->terminal->size &&
 		        strncmp((char *)m->terminal->data, (char *)n->terminal->data, m->terminal->size) == 0);
 }
-void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
+static void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 	if (m->next) {
 		unlinkNode(g, m);
 		if (n->prev && n->next && identNode(n->prev, n) && identNode(n, n->next)) { addDoublet(g, n); }
@@ -245,11 +202,11 @@ void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 	m->next = n;
 	n->prev = m;
 }
-void xInsertNodeAfter(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
+static void xInsertNodeAfter(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 	joinNodes(g, n, m->next);
 	joinNodes(g, m, n);
 }
-void removeNodeFromGraph(cff_SubrGraph *g, cff_SubrNode *a) {
+static void removeNodeFromGraph(cff_SubrGraph *g, cff_SubrNode *a) {
 	joinNodes(g, a->prev, a->next);
 	if (!a->guard) {
 		unlinkNode(g, a);
@@ -257,7 +214,7 @@ void removeNodeFromGraph(cff_SubrGraph *g, cff_SubrNode *a) {
 	}
 }
 
-void expandCall(cff_SubrGraph *g, cff_SubrNode *a) {
+static void expandCall(cff_SubrGraph *g, cff_SubrNode *a) {
 	cff_SubrNode *aprev = a->prev;
 	cff_SubrNode *anext = a->next;
 	cff_SubrNode *r1 = a->rule->guard->next;
@@ -271,7 +228,7 @@ void expandCall(cff_SubrGraph *g, cff_SubrNode *a) {
 	addDoublet(g, r2);
 }
 
-void substituteDoubletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *r) {
+static void substituteDoubletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *r) {
 	cff_SubrNode *prev = m->prev;
 	removeNodeFromGraph(g, prev->next);
 	removeNodeFromGraph(g, prev->next);
@@ -285,7 +242,7 @@ void substituteDoubletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *
 
 	if (!checkDoubletMatch(g, prev)) { checkDoubletMatch(g, prev->next); }
 }
-void substituteSingletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *r) {
+static void substituteSingletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *r) {
 	cff_SubrNode *prev = m->prev;
 	removeNodeFromGraph(g, prev->next);
 	cff_SubrNode *invoke = cff_new_Node();
@@ -297,7 +254,7 @@ void substituteSingletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *
 	addSinglet(g, invoke);
 }
 
-void processMatchDoublet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
+static void processMatchDoublet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 	cff_SubrRule *rule = NULL;
 	if (m->prev->guard && m->next->next->guard) {
 		// The match [m, m'] is a rule's full content
@@ -322,7 +279,7 @@ void processMatchDoublet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 		expandCall(g, rule->guard->next);
 	}
 }
-void processMatchSinglet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
+static void processMatchSinglet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 	cff_SubrRule *rule = NULL;
 	if (m->prev->guard && m->next->guard) {
 		// The match [m] is a rule's full content
@@ -340,7 +297,7 @@ void processMatchSinglet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n) {
 	}
 }
 
-bool checkDoubletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
+static bool checkDoubletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
 	if (n->guard || n->next->guard || n->hard || n->next->hard) return false;
 	// printf("test "), printNode(n, false), printNode(n->next, true);
 	size_t len;
@@ -364,7 +321,7 @@ bool checkDoubletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
 	}
 }
 
-bool checkSingletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
+static bool checkSingletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
 	if (n->guard || n->hard) return false;
 	size_t len;
 	uint8_t *key = getSingletHashKey(n, &len);
@@ -387,7 +344,7 @@ bool checkSingletMatch(cff_SubrGraph *g, cff_SubrNode *n) {
 	}
 }
 
-void appendNodeToGraph(cff_SubrGraph *g, cff_SubrNode *n) {
+static void appendNodeToGraph(cff_SubrGraph *g, cff_SubrNode *n) {
 	cff_SubrNode *last = lastNodeOf(g->root);
 	xInsertNodeAfter(g, last, n);
 	if (g->doSubroutinize) {
@@ -450,7 +407,7 @@ void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
 	}
 }
 
-void cff_statHeight(cff_SubrRule *r, uint32_t height) {
+static void cff_statHeight(cff_SubrRule *r, uint32_t height) {
 	if (height > r->height) r->height = height;
 	// Stat the heights bottom-up.
 	uint32_t effectiveLength = 0;
@@ -465,7 +422,7 @@ void cff_statHeight(cff_SubrRule *r, uint32_t height) {
 	r->effectiveLength = effectiveLength;
 }
 
-void numberASubroutine(cff_SubrRule *r, uint32_t *current) {
+static void numberASubroutine(cff_SubrRule *r, uint32_t *current) {
 	if (r->numbered) return;
 	if (r->height >= type2_subr_nesting) return;
 	if ((r->effectiveLength - 4) * (r->refcount - 1) - 4 <= 0) return;
@@ -476,7 +433,7 @@ void numberASubroutine(cff_SubrRule *r, uint32_t *current) {
 		if (e->rule) { numberASubroutine(e->rule, current); }
 	}
 }
-uint32_t cff_numberSubroutines(cff_SubrGraph *g) {
+static uint32_t cff_numberSubroutines(cff_SubrGraph *g) {
 	uint32_t current = 0;
 	for (cff_SubrNode *e = g->root->guard->next; e != g->root->guard; e = e->next) {
 		if (e->rule) numberASubroutine(e->rule, &current);
