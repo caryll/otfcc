@@ -1,5 +1,14 @@
 require "dep/premake-modules/xcode-alt"
 
+function generalOptions()
+	defines {
+		'_CARYLL_USE_PRE_SERIALIZED',
+		'MAIN_VER=0',
+		"SECONDARY_VER=4",
+		"PATCH_VER=0"
+	}
+end
+
 function cbuildoptions()
 	filter "action:vs2015"
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
@@ -37,12 +46,7 @@ workspace "otfcc"
 	configurations { "Debug", "Release" }
 	platforms { "x32", "x64" }
 	
-	defines {
-		'_CARYLL_USE_PRE_SERIALIZED',
-		'MAIN_VER=0',
-		"SECONDARY_VER=3",
-		"PATCH_VER=4"
-	}
+	generalOptions()
 	
 	location "build"
 	includedirs { "dep", "lib" }
