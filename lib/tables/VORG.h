@@ -5,13 +5,13 @@
 #include <support/util.h>
 
 typedef struct {
-	uint16_t gid;
+	glyphid_t gid;
 	int16_t verticalOrigin;
 } VORG_entry;
 
 typedef struct {
-	uint16_t numVertOriginYMetrics;
-	int16_t defaultVerticalOrigin;
+	glyphid_t numVertOriginYMetrics;
+	pos_t defaultVerticalOrigin;
 	VORG_entry *entries;
 } table_VORG;
 

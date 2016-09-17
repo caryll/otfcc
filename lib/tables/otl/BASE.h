@@ -5,18 +5,18 @@
 
 typedef struct {
 	uint32_t tag;
-	int16_t coordinate;
+	pos_t coordinate;
 } otl_BaseValue;
 
 typedef struct {
 	uint32_t tag;
 	uint32_t defaultBaselineTag;
-	uint16_t baseValuesCount;
+	tableid_t baseValuesCount;
 	otl_BaseValue *baseValues;
 } otl_BaseScriptEntry;
 
 typedef struct {
-	uint16_t scriptCount;
+	tableid_t scriptCount;
 	otl_BaseScriptEntry *entries;
 } otl_BaseAxis;
 

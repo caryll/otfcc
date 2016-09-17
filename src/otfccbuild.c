@@ -149,6 +149,7 @@ int main(int argc, char *argv[]) {
 	                            {"dont-merge-lookups", no_argument, NULL, 0},
 	                            {"dont-merge-features", no_argument, NULL, 0},
 	                            {"short-post", no_argument, NULL, 0},
+	                            {"force-cid", no_argument, NULL, 0},
 	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
@@ -188,6 +189,8 @@ int main(int argc, char *argv[]) {
 					options->ignore_glyph_order = false;
 				} else if (strcmp(longopts[option_index].name, "short-post") == 0) {
 					options->short_post = true;
+				} else if (strcmp(longopts[option_index].name, "force-cid") == 0) {
+					options->force_cid = true;
 				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
 					options->ignore_glyph_order = true;
 					options->short_post = true;
@@ -210,14 +213,7 @@ int main(int argc, char *argv[]) {
 				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				options->optimize_level = atoi(optarg);
-				if (options->optimize_level >= 2) {
-					options->short_post = true;
-					options->ignore_glyph_order = true;
-					options->cff_short_vmtx = true;
-					options->merge_features = true;
-				}
-				// if (options->optimize_level >= 3) { options->merge_lookups = true; }
+				options_optimizeTo(options, atoi(optarg));
 				break;
 		}
 	}

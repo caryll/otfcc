@@ -11,21 +11,23 @@ static void ensureThereIsSpace(cff_CharstringIL *il) {
 	}
 }
 
-static void il_push_operand(cff_CharstringIL *il, double x) {
+void il_push_operand(cff_CharstringIL *il, double x) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERAND;
 	il->instr[il->length].d = x;
+	il->instr[il->length].arity = 0;
 	il->length++;
 	il->free--;
 }
-static void il_push_special(cff_CharstringIL *il, int32_t s) {
+void il_push_special(cff_CharstringIL *il, int32_t s) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_SPECIAL;
 	il->instr[il->length].i = s;
+	il->instr[il->length].arity = 0;
 	il->length++;
 	il->free--;
 }
-static void il_push_op(cff_CharstringIL *il, int32_t op) {
+void il_push_op(cff_CharstringIL *il, int32_t op) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_OPERATOR;
 	il->instr[il->length].i = op;
@@ -97,7 +99,7 @@ static void _il_push_stemgroup(cff_CharstringIL *il,                      // il 
                                uint16_t n, glyf_PostscriptStemDef *stems, // stem array
                                bool hasmask, bool haswidth, int32_t ophm, int32_t oph) {
 	if (!stems || !n) return;
-	double ref = 0;
+	pos_t ref = 0;
 	uint16_t nn = haswidth ? 1 : 0;
 	for (uint16_t j = 0; j < n; j++) {
 		il_push_operand(il, stems[j].position - ref);
@@ -129,14 +131,14 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	cff_CharstringIL *il;
 	NEW_CLEAN(il);
 	// Convert absolute positions to deltas
-	double x = 0;
-	double y = 0;
+	pos_t x = 0;
+	pos_t y = 0;
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		uint16_t n = contour->pointsCount;
 		for (uint16_t j = 0; j < n; j++) {
-			double dx = contour->points[j].x - x;
-			double dy = contour->points[j].y - y;
+			pos_t dx = contour->points[j].x - x;
+			pos_t dy = contour->points[j].y - y;
 			x = contour->points[j].x, y = contour->points[j].y;
 			contour->points[j].x = dx;
 			contour->points[j].y = dy;
@@ -380,10 +382,10 @@ static uint8_t decideAdvance(cff_CharstringIL *il, uint32_t j, uint8_t optimizeL
 }
 
 void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
-	if (!options->optimize_level) return;
+	if (!options->cff_rollCharString) return;
 	uint32_t j = 0;
 	while (j < il->length) {
-		j += decideAdvance(il, j, options->optimize_level);
+		j += decideAdvance(il, j, options->cff_rollCharString);
 	}
 }
 
@@ -391,22 +393,14 @@ void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
 caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 	caryll_buffer *blob = bufnew();
 
-	uint16_t stackDepth = 0;
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {
 				cff_mergeCS2Operand(blob, il->instr[j].d);
-				stackDepth++;
-				break;
-			}
-			case IL_ITEM_PROGID: {
-				cff_mergeCS2Operand(blob, il->instr[j].i);
-				stackDepth++;
 				break;
 			}
 			case IL_ITEM_OPERATOR: {
 				cff_mergeCS2Operator(blob, il->instr[j].i);
-				stackDepth = 0;
 				break;
 			}
 			case IL_ITEM_SPECIAL: {
@@ -420,6 +414,51 @@ caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 	return blob;
 }
 
+cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il) {
+	cff_CharstringIL *out;
+	NEW_CLEAN(out);
+	for (uint16_t j = 0; j < il->length; j++) {
+		switch (il->instr[j].type) {
+			case IL_ITEM_OPERAND: {
+				il_push_operand(out, il->instr[j].d);
+				break;
+			}
+			case IL_ITEM_OPERATOR: {
+				il_push_op(out, il->instr[j].i);
+				break;
+			}
+			case IL_ITEM_SPECIAL: {
+				il_push_special(out, il->instr[j].i);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	return out;
+}
+
+void cff_ILmergeIL(cff_CharstringIL *self, cff_CharstringIL *il) {
+	for (uint16_t j = 0; j < il->length; j++) {
+		switch (il->instr[j].type) {
+			case IL_ITEM_OPERAND: {
+				il_push_operand(self, il->instr[j].d);
+				break;
+			}
+			case IL_ITEM_OPERATOR: {
+				il_push_op(self, il->instr[j].i);
+				break;
+			}
+			case IL_ITEM_SPECIAL: {
+				il_push_special(self, il->instr[j].i);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+}
+
 bool instruction_eq(cff_CharstringInstruction *z1, cff_CharstringInstruction *z2) {
 	if (z1->type == z2->type) {
 		if (z1->type == IL_ITEM_OPERAND || z1->type == IL_ITEM_PHANTOM_OPERAND) {
@@ -430,4 +469,12 @@ bool instruction_eq(cff_CharstringInstruction *z1, cff_CharstringInstruction *z2
 	} else {
 		return false;
 	}
+}
+
+bool cff_ilEqual(cff_CharstringIL *a, cff_CharstringIL *b) {
+	if (!a || !b) return false;
+	if (a->length != b->length) return false;
+	for (uint32_t j = 0; j < a->length; j++)
+		if (!instruction_eq(a->instr + j, b->instr + j)) { return false; }
+	return true;
 }

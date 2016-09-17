@@ -8,20 +8,20 @@ table_hmtx *table_read_hmtx(caryll_Packet packet, table_hhea *hhea, table_maxp *
 
 		table_hmtx *hmtx = NULL;
 
-		uint32_t count_a = hhea->numberOfMetrics;
-		uint32_t count_k = maxp->numGlyphs - hhea->numberOfMetrics;
+		glyphid_t count_a = hhea->numberOfMetrics;
+		glyphid_t count_k = maxp->numGlyphs - hhea->numberOfMetrics;
 		if (length < count_a * 4 + count_k * 2) goto HMTX_CORRUPTED;
 
 		hmtx = malloc(sizeof(table_hmtx) * 1);
 		hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
-		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
+		hmtx->leftSideBearing = malloc(sizeof(pos_t) * count_k);
 
-		for (uint32_t ia = 0; ia < count_a; ia++) {
+		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			hmtx->metrics[ia].advanceWidth = read_16u(data + ia * 4);
 			hmtx->metrics[ia].lsb = read_16u(data + ia * 4 + 2);
 		}
 
-		for (uint32_t ik = 0; ik < count_k; ik++) {
+		for (glyphid_t ik = 0; ik < count_k; ik++) {
 			hmtx->leftSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
 		}
 
@@ -40,17 +40,17 @@ void table_delete_hmtx(table_hmtx *table) {
 	free(table);
 }
 
-caryll_buffer *table_build_hmtx(table_hmtx *hmtx, uint16_t count_a, uint16_t count_k, const caryll_Options *options) {
+caryll_buffer *table_build_hmtx(table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!hmtx) return buf;
 	if (hmtx->metrics) {
-		for (uint16_t j = 0; j < count_a; j++) {
+		for (glyphid_t j = 0; j < count_a; j++) {
 			bufwrite16b(buf, hmtx->metrics[j].advanceWidth);
 			bufwrite16b(buf, hmtx->metrics[j].lsb);
 		}
 	}
 	if (hmtx->leftSideBearing) {
-		for (uint16_t j = 0; j < count_k; j++) {
+		for (glyphid_t j = 0; j < count_k; j++) {
 			bufwrite16b(buf, hmtx->leftSideBearing[j]);
 		}
 	}

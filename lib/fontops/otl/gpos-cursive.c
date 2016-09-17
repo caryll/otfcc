@@ -14,7 +14,7 @@ bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable 
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 	fontop_consolidateCoverage(font, subtable->coverage, lookupName);
 	gpos_cursive_hash *h = NULL;
-	for (uint16_t k = 0; k < subtable->coverage->numGlyphs; k++) {
+	for (glyphid_t k = 0; k < subtable->coverage->numGlyphs; k++) {
 		if (subtable->coverage->glyphs[k].name) {
 			gpos_cursive_hash *s;
 			int fromid = subtable->coverage->glyphs[k].index;
@@ -38,11 +38,9 @@ bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable 
 	subtable->coverage->numGlyphs = HASH_COUNT(h);
 	{
 		gpos_cursive_hash *s, *tmp;
-		uint16_t j = 0;
+		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->coverage->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			subtable->coverage->glyphs[j].index = s->fromid;
-			subtable->coverage->glyphs[j].name = s->fromname;
+			subtable->coverage->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
 			subtable->enter[j] = s->enter;
 			subtable->exit[j] = s->exit;
 			j++;

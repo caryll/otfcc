@@ -4,6 +4,9 @@
 #include <bk/bkgraph.h>
 #include <font/caryll-sfnt.h>
 
+#include "coverage.h"
+#include "classdef.h"
+
 typedef enum {
 	otl_type_unknown = 0,
 
@@ -31,14 +34,11 @@ typedef enum {
 
 typedef union _otl_subtable otl_Subtable;
 
-#include "coverage.h"
-#include "classdef.h"
-
 typedef struct {
-	int16_t dx;
-	int16_t dy;
-	int16_t dWidth;
-	int16_t dHeight;
+	pos_t dx;
+	pos_t dy;
+	pos_t dWidth;
+	pos_t dHeight;
 } otl_PositionValue;
 
 // GSUB subtable formats
@@ -56,19 +56,19 @@ typedef struct {
 } subtable_gsub_ligature;
 
 typedef struct {
-	uint16_t index;
+	tableid_t index;
 	lookup_handle lookup;
 } otl_ChainLookupApplication;
 typedef struct {
-	uint16_t matchCount;
-	uint16_t inputBegins;
-	uint16_t inputEnds;
+	tableid_t matchCount;
+	tableid_t inputBegins;
+	tableid_t inputEnds;
 	otl_Coverage **match;
-	uint16_t applyCount;
+	tableid_t applyCount;
 	otl_ChainLookupApplication *apply;
 } otl_ChainingRule;
 typedef struct {
-	uint16_t rulesCount;
+	tableid_t rulesCount;
 	otl_ChainingRule **rules;
 	bool classified;
 	otl_ClassDef *bc;
@@ -77,8 +77,8 @@ typedef struct {
 } subtable_chaining;
 
 typedef struct {
-	uint16_t matchCount;
-	uint16_t inputIndex;
+	tableid_t matchCount;
+	tableid_t inputIndex;
 	otl_Coverage **match;
 	otl_Coverage *to;
 } subtable_gsub_reverse;
@@ -91,8 +91,8 @@ typedef struct {
 
 typedef struct {
 	bool present;
-	int16_t x;
-	int16_t y;
+	pos_t x;
+	pos_t y;
 } otl_Anchor;
 
 typedef struct {
@@ -110,38 +110,38 @@ typedef struct {
 } subtable_gpos_cursive;
 
 typedef struct {
-	uint16_t markClass;
+	glyphclass_t markClass;
 	otl_Anchor anchor;
 } otl_MarkRecord;
 
 typedef struct {
-	uint16_t markCount;
+	glyphclass_t markCount;
 	otl_MarkRecord *records;
 } otl_MarkArray;
 
 typedef struct {
 	otl_Coverage *marks;
 	otl_Coverage *bases;
-	uint16_t classCount;
+	glyphclass_t classCount;
 	otl_MarkArray *markArray;
 	otl_Anchor **baseArray;
 } subtable_gpos_markToSingle;
 
 typedef struct {
-	uint16_t componentCount;
+	glyphid_t componentCount;
 	otl_Anchor **anchors;
 } otl_MarkToLigatureBase;
 
 typedef struct {
 	otl_Coverage *marks;
 	otl_Coverage *bases;
-	uint16_t classCount;
+	glyphclass_t classCount;
 	otl_MarkArray *markArray;
 	otl_MarkToLigatureBase **ligArray;
 } subtable_gpos_markToLigature;
 
 typedef struct {
-	uint16_t type;
+	otl_LookupType type;
 	otl_Subtable *subtable;
 } subtable_extend;
 
@@ -164,20 +164,20 @@ typedef struct _otl_lookup {
 	otl_LookupType type;
 	uint32_t _offset;
 	uint16_t flags;
-	uint16_t subtableCount;
+	tableid_t subtableCount;
 	otl_Subtable **subtables;
 } otl_Lookup;
 
 typedef struct {
 	sds name;
-	uint16_t lookupCount;
+	tableid_t lookupCount;
 	otl_Lookup **lookups;
 } otl_Feature;
 
 typedef struct {
 	sds name;
 	otl_Feature *requiredFeature;
-	uint16_t featureCount;
+	tableid_t featureCount;
 	otl_Feature **features;
 } otl_LanguageSystem;
 
@@ -189,11 +189,11 @@ typedef struct {
 typedef struct {
 	uint32_t languageCount;
 	otl_LanguageSystem **languages;
-	uint16_t featureCount;
+	tableid_t featureCount;
 	otl_Feature **features;
-	uint16_t lookupCount;
+	tableid_t lookupCount;
 	otl_Lookup **lookups;
-	uint16_t lookupAliasesCount;
+	tableid_t lookupAliasesCount;
 	otl_LookupAliasingRecord *lookupAliases;
 } table_OTL;
 

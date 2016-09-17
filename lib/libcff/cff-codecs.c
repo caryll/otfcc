@@ -113,10 +113,10 @@ caryll_buffer *cff_encodeCffFloat(double val) {
 uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val) {
 	uint32_t advance = 0;
 
-	if (*start >= 0 && *start <= 27) {
+	if (*start <= 27) {
 		val->t = CS2_OPERATOR;
 
-		if (*start >= 0 && *start <= 11) {
+		if (*start <= 11) {
 			val->i = *start;
 			advance = 1;
 		} else if (*start == 12) {
@@ -260,7 +260,7 @@ static uint32_t cff_dec_o(uint8_t *start, cff_Value *val) {
 	uint8_t b0 = *start, b1;
 	uint32_t len = 0;
 
-	if (b0 >= 0 && b0 <= 21) {
+	if (b0 <= 21) {
 		if (b0 != 12) {
 			val->i = b0;
 			len = 1;

@@ -47,34 +47,35 @@ caryll_buffer *cff_build_FDSelect(cff_FDSelect fd) {
 }
 
 void cff_extract_FDSelect(uint8_t *data, int32_t offset, uint16_t nchars, cff_FDSelect *fdselect) {
-	fdselect->t = data[offset];
-
 	switch (data[offset]) {
-		case 0:
+		case 0: {
 			fdselect->t = cff_FDSELECT_FORMAT0;
-			{
-				fdselect->f0.format = 0;
-				fdselect->s = nchars - 1;
-				fdselect->f0.fds = calloc(nchars - 1, sizeof(uint8_t));
+			fdselect->f0.format = 0;
+			fdselect->s = nchars;
+			fdselect->f0.fds = calloc(nchars, sizeof(uint8_t));
 
-				for (uint32_t i = 0; i < nchars - 1; i++)
-					fdselect->f0.fds[i] = gu1(data, offset + 1 + i);
+			for (uint32_t i = 0; i < nchars; i++) {
+				fdselect->f0.fds[i] = gu1(data, offset + 1 + i);
 			}
 			break;
-		case 3:
+		}
+		case 3: {
 			fdselect->t = cff_FDSELECT_FORMAT3;
-			{
-				fdselect->f3.format = 3;
-				fdselect->f3.nranges = gu2(data, offset + 1);
-				fdselect->f3.range3 = calloc(fdselect->f3.nranges, sizeof(cff_FDSelectRangeFormat3));
+			fdselect->f3.format = 3;
+			fdselect->f3.nranges = gu2(data, offset + 1);
+			fdselect->f3.range3 = calloc(fdselect->f3.nranges, sizeof(cff_FDSelectRangeFormat3));
 
-				for (uint32_t i = 0; i < fdselect->f3.nranges; i++) {
-					fdselect->f3.range3[i].first = gu2(data, offset + 3 + i * 3);
-					fdselect->f3.range3[i].fd = gu1(data, offset + 5 + i * 3);
-				}
-
-				fdselect->f3.sentinel = gu2(data, offset + (fdselect->f3.nranges + 1) * 3);
+			for (uint32_t i = 0; i < fdselect->f3.nranges; i++) {
+				fdselect->f3.range3[i].first = gu2(data, offset + 3 + i * 3);
+				fdselect->f3.range3[i].fd = gu1(data, offset + 5 + i * 3);
 			}
+
+			fdselect->f3.sentinel = gu2(data, offset + (fdselect->f3.nranges + 1) * 3);
 			break;
+		}
+		default: {
+			fdselect->t = cff_FDSELECT_UNSPECED;
+			break;
+		}
 	}
 }

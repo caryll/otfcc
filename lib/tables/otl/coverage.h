@@ -4,7 +4,7 @@
 #include <font/caryll-sfnt.h>
 
 typedef struct {
-	uint16_t numGlyphs;
+	glyphid_t numGlyphs;
 	glyph_handle *glyphs;
 } otl_Coverage;
 

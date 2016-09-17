@@ -5,11 +5,11 @@
 
 typedef struct {
 	int8_t format;
-	int16_t coordiante;
+	pos_t coordiante;
 	int16_t pointIndex;
 } otl_CaretValue;
 typedef struct {
-	uint16_t caretCount;
+	glyphid_t caretCount;
 	otl_CaretValue *values;
 } otl_CaretValueRecord;
 typedef struct {

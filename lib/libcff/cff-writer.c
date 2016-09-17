@@ -23,7 +23,7 @@ void cff_mergeCS2Operator(caryll_buffer *blob, int32_t val) {
 		bufnwrite8(blob, 1, val & 0xff);
 	}
 }
-static void merge_cs2_int(caryll_buffer *blob, int32_t val) {
+void cff_mergeCS2Int(caryll_buffer *blob, int32_t val) {
 	if (val >= -1131 && val <= -108) {
 		bufnwrite8(blob, 2, (uint8_t)((-108 - val) / 256 + 251), (uint8_t)((-108 - val) % 256));
 	} else if (val >= -107 && val <= 107) {
@@ -35,7 +35,7 @@ static void merge_cs2_int(caryll_buffer *blob, int32_t val) {
 			bufnwrite8(blob, 3, 28, (uint8_t)(val >> 8), (uint8_t)((val << 8) >> 8));
 		} else {
 			fprintf(stderr, "Error: Illegal Number (%d) in Type2 CharString.\n", val);
-			merge_cs2_int(blob, 0);
+			cff_mergeCS2Int(blob, 0);
 		}
 	}
 }
@@ -47,7 +47,7 @@ static void merge_cs2_real(caryll_buffer *blob, double val) {
 void cff_mergeCS2Operand(caryll_buffer *blob, double val) {
 	double intpart;
 	if (modf(val, &intpart) == 0.0) {
-		merge_cs2_int(blob, (int32_t)intpart);
+		cff_mergeCS2Int(blob, (int32_t)intpart);
 	} else {
 		merge_cs2_real(blob, val);
 	}

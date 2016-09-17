@@ -325,23 +325,43 @@ caryll_buffer *table_build_cmap(table_cmap *cmap, const caryll_Options *options)
 	bufwrite16b(buf, nTables);
 	uint32_t offset = 4 + 8 * nTables;
 	size_t cp = 0;
-	if (true) {
-		caryll_buffer *format4 = table_build_cmap_format4(cmap);
-		// Windows format 4;
-		bufwrite16b(buf, 3);
-		bufwrite16b(buf, 1);
-		bufwrite32b(buf, offset);
-		// Unicode format 4:
-		bufwrite16b(buf, 0);
-		bufwrite16b(buf, 3);
-		bufwrite32b(buf, offset);
-		cp = buf->cursor;
-		bufseek(buf, offset);
-		bufwrite_buf(buf, format4);
-		bufseek(buf, cp);
-		offset += buflen(format4);
-		buffree(format4);
+	caryll_buffer *format4;
+	if (!hasSMP) {
+		format4 = table_build_cmap_format4(cmap);
+	} else {
+		// Write a dummy
+		format4 = bufnew();
+		bufwrite16b(format4, 4);      // format
+		bufwrite16b(format4, 32);     // length
+		bufwrite16b(format4, 0);      // language
+		bufwrite16b(format4, 4);      // segCountX2
+		bufwrite16b(format4, 4);      // searchRange
+		bufwrite16b(format4, 1);      // entrySelector
+		bufwrite16b(format4, 0);      // rangeShift
+		bufwrite16b(format4, 0);      // endCount
+		bufwrite16b(format4, 0xFFFF); // endCount
+		bufwrite16b(format4, 0);      // endCount
+		bufwrite16b(format4, 0);      // startCount
+		bufwrite16b(format4, 0xFFFF); // startCount
+		bufwrite16b(format4, 0);      // idDelta
+		bufwrite16b(format4, 1);      // idDelta
+		bufwrite16b(format4, 0);      // idRangeOffset
+		bufwrite16b(format4, 0);      // idRangeOffset
 	}
+	// Windows format 4;
+	bufwrite16b(buf, 3);
+	bufwrite16b(buf, 1);
+	bufwrite32b(buf, offset);
+	// Unicode format 4:
+	bufwrite16b(buf, 0);
+	bufwrite16b(buf, 3);
+	bufwrite32b(buf, offset);
+	cp = buf->cursor;
+	bufseek(buf, offset);
+	bufwrite_buf(buf, format4);
+	bufseek(buf, cp);
+	offset += buflen(format4);
+	buffree(format4);
 	if (hasSMP) {
 		caryll_buffer *format12 = table_build_cmap_format12(cmap);
 		// Windows format 12;

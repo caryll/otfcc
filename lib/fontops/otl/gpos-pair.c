@@ -5,9 +5,8 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	NEW(cov);
 	cov->numGlyphs = cd->numGlyphs;
 	NEW_N(cov->glyphs, cd->numGlyphs);
-	for (uint16_t j = 0; j < cd->numGlyphs; j++) {
-		cov->glyphs[j].index = cd->glyphs[j].index;
-		cov->glyphs[j].name = cd->glyphs[j].name;
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
+		cov->glyphs[j] = cd->glyphs[j];
 	}
 	return cov;
 }

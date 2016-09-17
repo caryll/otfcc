@@ -5,10 +5,10 @@
 #include "coverage.h"
 
 typedef struct {
-	uint16_t numGlyphs;
-	uint16_t maxclass;
+	glyphid_t numGlyphs;
+	glyphclass_t maxclass;
 	glyph_handle *glyphs;
-	uint16_t *classes;
+	glyphclass_t *classes;
 } otl_ClassDef;
 
 void otl_delete_ClassDef(otl_ClassDef *cd);

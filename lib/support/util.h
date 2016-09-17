@@ -13,6 +13,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "font-datatypes.h"
+
 #include "base64.h"
 #include "buffer.h"
 #include "options.h"
@@ -69,6 +71,14 @@ static INLINE double json_numof(json_value *cv) {
 	if (cv && cv->type == json_double) return cv->u.dbl;
 	return 0;
 }
+static INLINE json_value *json_new_position(pos_t z) {
+	if (round(z) == z) {
+		return json_integer_new(z);
+	} else {
+		return json_double_new(z);
+	}
+}
+
 static INLINE double json_obj_getnum(json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
@@ -392,15 +402,15 @@ static INLINE void *__caryll_allocate_clean(size_t n, unsigned long line) {
 	return p;
 }
 #ifdef __cplusplus
-#define NEW(ptr) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)), __LINE__)
+#define NEW(ptr) ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
 #define NEW_CLEAN(ptr) ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
-#define NEW_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate(sizeof(decltype(*ptr)) * (n), __LINE__)
+#define NEW_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = nullptr)
 #define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)
 #else
-#define NEW(ptr) ptr = __caryll_allocate(sizeof(*ptr), __LINE__)
+#define NEW(ptr) ptr = __caryll_allocate_clean(sizeof(*ptr), __LINE__)
 #define NEW_CLEAN(ptr) ptr = __caryll_allocate_clean(sizeof(*ptr), __LINE__)
-#define NEW_N(ptr, n) ptr = __caryll_allocate(sizeof(*ptr) * (n), __LINE__)
+#define NEW_N(ptr, n) ptr = __caryll_allocate_clean(sizeof(*ptr) * (n), __LINE__)
 #define FREE(ptr) (free(ptr), ptr = NULL)
 #define DELETE(fn, ptr) (fn(ptr), ptr = NULL)
 #endif

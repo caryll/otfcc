@@ -14,10 +14,12 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	fontop_consolidateCoverage(font, subtable->from, lookupName);
 	fontop_consolidateCoverage(font, subtable->to, lookupName);
-	uint16_t len =
-	    (subtable->from->numGlyphs < subtable->to->numGlyphs ? subtable->from->numGlyphs : subtable->from->numGlyphs);
+	glyphid_t len =subtable->to->numGlyphs;
+	if(subtable->from->numGlyphs < subtable->to->numGlyphs){
+		len = subtable->from->numGlyphs;
+	}
 	gsub_single_map_hash *h = NULL;
-	for (uint16_t k = 0; k < len; k++) {
+	for (glyphid_t k = 0; k < len; k++) {
 		if (subtable->from->glyphs[k].name && subtable->to->glyphs[k].name) {
 			gsub_single_map_hash *s;
 			int fromid = subtable->from->glyphs[k].index;
@@ -50,14 +52,10 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 	NEW_N(subtable->to->glyphs, subtable->to->numGlyphs);
 	{
 		gsub_single_map_hash *s, *tmp;
-		uint16_t j = 0;
+		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			subtable->from->glyphs[j].index = s->fromid;
-			subtable->from->glyphs[j].name = s->fromname;
-			subtable->to->glyphs[j].state = HANDLE_STATE_CONSOLIDATED;
-			subtable->to->glyphs[j].index = s->toid;
-			subtable->to->glyphs[j].name = s->toname;
+			subtable->from->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
+			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);
 			j++;
 			HASH_DEL(h, s);
 			free(s);

@@ -20,11 +20,14 @@ typedef struct {
 	bool cff_short_vmtx;
 	bool merge_lookups;
 	bool merge_features;
+	bool force_cid;
+	bool cff_rollCharString;
+	bool cff_doSubroutinize;
 	char *glyph_name_prefix;
-	uint8_t optimize_level;
 } caryll_Options;
 
 caryll_Options *options_new();
 void options_delete(caryll_Options *options);
+void options_optimizeTo(caryll_Options *options, uint8_t level);
 
 #endif

@@ -43,8 +43,7 @@ static int dump_order_type_glyphorder = 1;
 static int dump_order_dotnotdef = 2;
 static int dump_order_type_cmap = 3;
 static int dump_order_type_glyf = 4;
-static void caryll_parse_glyphorder_order_subtable(glyphorder_Map *hash, json_value *table,
-                                                       caryll_Options *options) {
+static void caryll_parse_glyphorder_order_subtable(glyphorder_Map *hash, json_value *table, caryll_Options *options) {
 	uint32_t uplimit = table->u.array.length;
 	if (uplimit >= 1 && options->ignore_glyph_order) { uplimit = 1; }
 	for (uint32_t j = 0; j < uplimit; j++) {

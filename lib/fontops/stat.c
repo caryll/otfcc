@@ -6,9 +6,9 @@
 typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
 
 glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr, stat_status *stated, uint8_t depth,
-                                 uint16_t topj) {
+                                 glyphid_t topj) {
 	glyf_GlyphStat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-	uint16_t j = gr->glyph.index;
+	glyphid_t j = gr->glyph.index;
 	if (depth >= 0xFF) return stat;
 	if (stated[j] == stat_doing) {
 		// We have a circular reference
@@ -21,21 +21,21 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 
 	glyf_Glyph *g = table->glyphs[gr->glyph.index];
 	stated[j] = stat_doing;
-	double xmin = 0xFFFFFFFF;
-	double xmax = -0xFFFFFFFF;
-	double ymin = 0xFFFFFFFF;
-	double ymax = -0xFFFFFFFF;
+	pos_t xmin = 0xFFFFFFFF;
+	pos_t xmax = -0xFFFFFFFF;
+	pos_t ymin = 0xFFFFFFFF;
+	pos_t ymax = -0xFFFFFFFF;
 	uint16_t nestDepth = 0;
 	uint16_t nPoints = 0;
 	uint16_t nCompositePoints = 0;
 	uint16_t nCompositeContours = 0;
 	// Stat xmin, xmax, ymin, ymax
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		for (uint16_t pj = 0; pj < g->contours[c].pointsCount; pj++) {
+	for (shapeid_t c = 0; c < g->numberOfContours; c++) {
+		for (shapeid_t pj = 0; pj < g->contours[c].pointsCount; pj++) {
 			// Stat point coordinates USING the matrix transformation
 			glyf_Point *p = &(g->contours[c].points[pj]);
-			double x = gr->x + gr->a * p->x + gr->b * p->y;
-			double y = gr->y + gr->c * p->x + gr->d * p->y;
+			pos_t x = gr->x + gr->a * p->x + gr->b * p->y;
+			pos_t y = gr->y + gr->c * p->x + gr->d * p->y;
 			if (x < xmin) xmin = x;
 			if (x > xmax) xmax = x;
 			if (y < ymin) ymin = y;
@@ -45,7 +45,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	}
 	nCompositePoints = nPoints;
 	nCompositeContours = g->numberOfContours;
-	for (uint16_t r = 0; r < g->numberOfReferences; r++) {
+	for (shapeid_t r = 0; r < g->numberOfReferences; r++) {
 		glyf_ComponentReference ref;
 		glyf_ComponentReference *rr = &(g->references[r]);
 		ref.glyph = handle_fromIndex(g->references[r].glyph.index);
@@ -81,11 +81,11 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 
 void caryll_stat_glyf(caryll_Font *font) {
 	stat_status *stated = calloc(font->glyf->numberGlyphs, sizeof(stat_status));
-	double xmin = 0xFFFFFFFF;
-	double xmax = -0xFFFFFFFF;
-	double ymin = 0xFFFFFFFF;
-	double ymax = -0xFFFFFFFF;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	pos_t xmin = 0xFFFFFFFF;
+	pos_t xmax = -0xFFFFFFFF;
+	pos_t ymin = 0xFFFFFFFF;
+	pos_t ymax = -0xFFFFFFFF;
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_ComponentReference gr;
 		gr.glyph = handle_fromIndex(j);
 		gr.x = 0;
@@ -115,7 +115,7 @@ void caryll_stat_maxp(caryll_Font *font) {
 	uint16_t nCompositePoints = 0;
 	uint16_t nCompositeContours = 0;
 	uint16_t instSize = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_Glyph *g = font->glyf->glyphs[j];
 		if (g->numberOfContours > 0) {
 			if (g->stat.nPoints > nPoints) nPoints = g->stat.nPoints;
@@ -141,8 +141,8 @@ static void caryll_font_stat_hmtx(caryll_Font *font, const caryll_Options *optio
 	if (!font->glyf) return;
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
 	if (!hmtx) return;
-	uint16_t count_a = font->glyf->numberGlyphs;
-	int16_t count_k = 0;
+	glyphid_t count_a = font->glyf->numberGlyphs;
+	glyphid_t count_k = 0;
 	if (font->subtype == FONTTYPE_CFF) {
 		// pass
 	} else {
@@ -152,20 +152,17 @@ static void caryll_font_stat_hmtx(caryll_Font *font, const caryll_Options *optio
 		}
 		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
-	if (count_k > 0) {
-		hmtx->leftSideBearing = malloc(sizeof(int16_t) * count_k);
-	} else {
-		hmtx->leftSideBearing = NULL;
-	}
-	int16_t minLSB = 0x7FFF;
-	int16_t minRSB = 0x7FFF;
-	int16_t maxExtent = -0x8000;
-	uint16_t maxWidth = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		uint16_t advanceWidth = font->glyf->glyphs[j]->advanceWidth;
-		int16_t lsb = font->glyf->glyphs[j]->stat.xMin;
-		int16_t rsb = advanceWidth - font->glyf->glyphs[j]->stat.xMax;
+	NEW_N(hmtx->metrics, count_a);
+	NEW_N(hmtx->leftSideBearing, count_k);
+
+	pos_t minLSB = 0x7FFF;
+	pos_t minRSB = 0x7FFF;
+	pos_t maxExtent = -0x8000;
+	length_t maxWidth = 0;
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		length_t advanceWidth = font->glyf->glyphs[j]->advanceWidth;
+		pos_t lsb = font->glyf->glyphs[j]->stat.xMin;
+		pos_t rsb = advanceWidth - font->glyf->glyphs[j]->stat.xMax;
 
 		if (j < count_a) {
 			hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
@@ -190,8 +187,8 @@ static void caryll_font_stat_vmtx(caryll_Font *font, const caryll_Options *optio
 	if (!font->glyf) return;
 	table_vmtx *vmtx = malloc(sizeof(table_vmtx) * 1);
 	if (!vmtx) return;
-	uint16_t count_a = font->glyf->numberGlyphs;
-	int16_t count_k = 0;
+	glyphid_t count_a = font->glyf->numberGlyphs;
+	glyphid_t count_k = 0;
 	if (font->subtype == FONTTYPE_CFF && !options->cff_short_vmtx) {
 		// pass
 	} else {
@@ -201,22 +198,18 @@ static void caryll_font_stat_vmtx(caryll_Font *font, const caryll_Options *optio
 		}
 		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	vmtx->metrics = malloc(sizeof(vertical_metric) * count_a);
-	if (count_k > 0) {
-		vmtx->topSideBearing = malloc(sizeof(int16_t) * count_k);
-	} else {
-		vmtx->topSideBearing = NULL;
-	}
+	NEW_N(vmtx->metrics, count_a);
+	NEW_N(vmtx->topSideBearing, count_k);
 
-	int16_t minTSB = 0x7FFF;
-	int16_t minBSB = 0x7FFF;
-	int16_t maxExtent = -0x8000;
-	uint16_t maxHeight = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	pos_t minTSB = 0x7FFF;
+	pos_t minBSB = 0x7FFF;
+	pos_t maxExtent = -0x8000;
+	length_t maxHeight = 0;
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_Glyph *g = font->glyf->glyphs[j];
-		uint16_t advanceHeight = g->advanceHeight;
-		int16_t tsb = g->verticalOrigin - g->stat.yMax;
-		int16_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
+		length_t advanceHeight = g->advanceHeight;
+		pos_t tsb = g->verticalOrigin - g->stat.yMax;
+		pos_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
 		if (j < count_a) {
 			vmtx->metrics[j].advanceHeight = advanceHeight;
 			vmtx->metrics[j].tsb = tsb;
@@ -424,7 +417,7 @@ static void caryll_font_stat_OS_2_unicodeRanges(caryll_Font *font, const caryll_
 static void caryll_font_stat_OS_2_avgwidth(caryll_Font *font, const caryll_Options *options) {
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		totalWidth += font->glyf->glyphs[j]->advanceWidth;
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
@@ -439,10 +432,9 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 	if (!font->glyf || !font->CFF_) return;
 	// Stat the most frequent character width
 	uint32_t *frequency = calloc(MAX_STAT_METRIC, sizeof(uint32_t));
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]->advanceWidth < MAX_STAT_METRIC) {
-			frequency[font->glyf->glyphs[j]->advanceWidth] += 1;
-		}
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		uint16_t intWidth = (uint16_t)font->glyf->glyphs[j]->advanceWidth;
+		if (intWidth < MAX_STAT_METRIC) { frequency[intWidth] += 1; }
 	}
 	uint16_t maxfreq = 0;
 	uint16_t maxj = 0;
@@ -455,34 +447,39 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 	// stat nominalWidthX
 	uint16_t nn = 0;
 	uint32_t nnsum = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]->advanceWidth != maxj) {
 			nn += 1;
 			nnsum += font->glyf->glyphs[j]->advanceWidth;
 		}
 	}
-	font->CFF_->privateDict->defaultWidthX = maxj;
-	if (nn != 0) { font->CFF_->privateDict->nominalWidthX = nnsum / nn; }
+	int16_t nominalWidthX = 0;
+	if (nn > 0) nominalWidthX = nnsum / nn;
+	if (font->CFF_->privateDict) {
+		font->CFF_->privateDict->defaultWidthX = maxj;
+		if (nn != 0) { font->CFF_->privateDict->nominalWidthX = nominalWidthX; }
+	}
 	if (font->CFF_->fdArray) {
-		for (uint16_t j = 0; j < font->CFF_->fdArrayCount; j++) {
+		for (tableid_t j = 0; j < font->CFF_->fdArrayCount; j++) {
 			font->CFF_->fdArray[j]->privateDict->defaultWidthX = maxj;
-			font->CFF_->fdArray[j]->privateDict->nominalWidthX = font->CFF_->privateDict->nominalWidthX;
+			font->CFF_->fdArray[j]->privateDict->nominalWidthX = nominalWidthX;
 		}
 	}
+	FREE(frequency);
 }
 
 static void caryll_stat_cff_vorgs(caryll_Font *font) {
 	if (!font->glyf || !font->CFF_ || !font->vhea || !font->vmtx) return;
 	uint32_t *frequency = calloc(MAX_STAT_METRIC, sizeof(uint32_t));
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]->verticalOrigin >= 0 && font->glyf->glyphs[j]->verticalOrigin < MAX_STAT_METRIC) {
 			frequency[(uint16_t)(font->glyf->glyphs[j]->verticalOrigin)] += 1;
 		}
 	}
 	// stat VORG.defaultVerticalOrigin
-	uint16_t maxfreq = 0;
-	uint16_t maxj = 0;
-	for (uint16_t j = 0; j < MAX_STAT_METRIC; j++) {
+	uint32_t maxfreq = 0;
+	glyphid_t maxj = 0;
+	for (glyphid_t j = 0; j < MAX_STAT_METRIC; j++) {
 		if (frequency[j] > maxfreq) {
 			maxfreq = frequency[j];
 			maxj = j;
@@ -493,29 +490,29 @@ static void caryll_stat_cff_vorgs(caryll_Font *font) {
 	NEW(vorg);
 	vorg->defaultVerticalOrigin = maxj;
 
-	uint16_t nVertOrigs = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	glyphid_t nVertOrigs = 0;
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]->verticalOrigin != maxj) { nVertOrigs += 1; }
 	}
 	vorg->numVertOriginYMetrics = nVertOrigs;
 	NEW_N(vorg->entries, nVertOrigs);
 
-	uint16_t jj = 0;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	glyphid_t jj = 0;
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]->verticalOrigin != maxj) {
 			vorg->entries[jj].gid = j;
 			vorg->entries[jj].verticalOrigin = font->glyf->glyphs[j]->verticalOrigin;
 			jj += 1;
 		}
 	}
-
+	FREE(frequency);
 	font->VORG = vorg;
 }
 
 static void caryll_stat_LTSH(caryll_Font *font) {
 	if (!font->glyf) return;
 	bool needLTSH = false;
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++)
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++)
 		if (font->glyf->glyphs[j]->yPel > 1) { needLTSH = true; }
 	if (!needLTSH) return;
 
@@ -523,7 +520,7 @@ static void caryll_stat_LTSH(caryll_Font *font) {
 	NEW(ltsh);
 	ltsh->numGlyphs = font->glyf->numberGlyphs;
 	NEW_N(ltsh->yPels, ltsh->numGlyphs);
-	for (uint16_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		ltsh->yPels[j] = font->glyf->glyphs[j]->yPel;
 	}
 	font->LTSH = ltsh;
@@ -543,24 +540,32 @@ void caryll_font_stat(caryll_Font *font, const caryll_Options *options) {
 		if (font->glyf && cff->isCID) { cff->cidCount = font->glyf->numberGlyphs; }
 		if (cff->isCID) {
 			if (cff->fontMatrix) { FREE(cff->fontMatrix); }
-			for (uint16_t j = 0; j < cff->fdArrayCount; j++) {
+			for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 				table_CFF *fd = cff->fdArray[j];
-				if (!fd->fontMatrix) { NEW(fd->fontMatrix); }
-				fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
-				fd->fontMatrix->b = 0.0;
-				fd->fontMatrix->c = 0.0;
-				fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-				fd->fontMatrix->x = 0.0;
-				fd->fontMatrix->y = 0.0;
+				if (font->head->unitsPerEm == 1000) {
+					FREE(fd->fontMatrix);
+				} else {
+					if (!fd->fontMatrix) { NEW(fd->fontMatrix); }
+					fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
+					fd->fontMatrix->b = 0.0;
+					fd->fontMatrix->c = 0.0;
+					fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
+					fd->fontMatrix->x = 0.0;
+					fd->fontMatrix->y = 0.0;
+				}
 			}
 		} else {
-			if (!cff->fontMatrix) { NEW(cff->fontMatrix); }
-			cff->fontMatrix->a = 1.0 / font->head->unitsPerEm;
-			cff->fontMatrix->b = 0.0;
-			cff->fontMatrix->c = 0.0;
-			cff->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-			cff->fontMatrix->x = 0.0;
-			cff->fontMatrix->y = 0.0;
+			if (font->head->unitsPerEm == 1000) {
+				FREE(cff->fontMatrix);
+			} else {
+				if (!cff->fontMatrix) { NEW(cff->fontMatrix); }
+				cff->fontMatrix->a = 1.0 / font->head->unitsPerEm;
+				cff->fontMatrix->b = 0.0;
+				cff->fontMatrix->c = 0.0;
+				cff->fontMatrix->d = 1.0 / font->head->unitsPerEm;
+				cff->fontMatrix->x = 0.0;
+				cff->fontMatrix->y = 0.0;
+			}
 		}
 
 		caryll_stat_cff_widths(font);

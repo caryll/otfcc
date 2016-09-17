@@ -134,7 +134,7 @@ static void parse_cff_bytecode(cff_File *cff) {
 		offset =
 		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDSelect, 0).i;
 
-		if (offset != -1) {
+		if (cff->char_strings.count && offset != -1) {
 			cff_extract_FDSelect(cff->raw_data, offset, cff->char_strings.count, &cff->fdselect);
 		} else {
 			cff->fdselect.t = cff_FDSELECT_UNSPECED;
@@ -748,8 +748,8 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 					}
 					case op_roll: {
 						CHECK_STACK_TOP(op_roll, 2);
-						int j = stack->stack[stack->index - 1].d;
-						int n = stack->stack[stack->index - 2].d;
+						int32_t j = stack->stack[stack->index - 1].d;
+						uint32_t n = stack->stack[stack->index - 2].d;
 						CHECK_STACK_TOP(op_roll, 2 + n);
 						j = -j % n;
 						if (j < 0) j += n;

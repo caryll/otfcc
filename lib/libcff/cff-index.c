@@ -93,6 +93,12 @@ cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer 
 
 caryll_buffer *cff_build_Index(cff_Index index) {
 	caryll_buffer *blob = bufnew();
+	if (!index.count) {
+		bufwrite8(blob, 0);
+		bufwrite8(blob, 0);
+		bufwrite8(blob, 0);
+		return blob;
+	}
 	uint32_t i;
 
 	uint32_t lastOffset = index.offset[index.count];
