@@ -8,6 +8,7 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 * Building OpenType fonts from JSON.
 * Full support for OpenType features (`GSUB`, `GPOS` and `GDEF`), CID-keyed CFF, vertical metrics, and more.
 * **4× faster than `ttx` on CFF OTF, and 40× on TTF.**
+* **900× faster than `makeotf` for building a fully-optimized CFF OTF.**
 
 ## Prebuilt installations
 
