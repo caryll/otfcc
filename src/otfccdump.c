@@ -205,9 +205,9 @@ int main(int argc, char *argv[]) {
 				exit(EXIT_FAILURE);
 			}
 			if (add_bom) {
-				fputc(0xEF, stdout);
-				fputc(0xBB, stdout);
-				fputc(0xBF, stdout);
+				fputc(0xEF, outputFile);
+				fputc(0xBB, outputFile);
+				fputc(0xBF, outputFile);
 			}
 			fputs(buf, outputFile);
 			fclose(outputFile);
