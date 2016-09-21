@@ -25,9 +25,7 @@ table_post *table_read_post(caryll_Packet packet) {
 		post->post_name_map = NULL;
 		// Foamt 2 additional glyph names
 		if (post->version == 0x20000) {
-			glyphorder_Map *map;
-			NEW(map);
-			*map = NULL;
+			caryll_GlyphOrder *map = caryll_new_GlyphOrder();
 
 			sds pendingNames[0x10000];
 			memset(pendingNames, 0, sizeof(pendingNames));
@@ -49,9 +47,9 @@ table_post *table_read_post(caryll_Packet packet) {
 			for (uint16_t j = 0; j < numberGlyphs; j++) {
 				uint16_t nameMap = read_16u(data + 34 + 2 * j);
 				if (nameMap >= 258) { // Custom glyph name
-					glyphorder_tryAssignName(map, j, sdsdup(pendingNames[nameMap - 258]));
+					caryll_setGlyphOrderByGID(map, j, sdsdup(pendingNames[nameMap - 258]));
 				} else { // Standard Macintosh glyph name
-					glyphorder_tryAssignName(map, j, sdsnew(standardMacNames[nameMap]));
+					caryll_setGlyphOrderByGID(map, j, sdsnew(standardMacNames[nameMap]));
 				}
 			}
 			for (uint32_t j = 0; j < pendingNameIndex; j++) {
@@ -65,7 +63,7 @@ table_post *table_read_post(caryll_Packet packet) {
 }
 
 void table_delete_post(table_post *table) {
-	if (table->post_name_map != NULL) { glyphorder_deleteMap(table->post_name_map); }
+	if (table->post_name_map != NULL) { caryll_delete_GlyphOrder(table->post_name_map); }
 	free(table);
 }
 
@@ -106,7 +104,7 @@ table_post *table_parse_post(json_value *root, const caryll_Options *options) {
 	}
 	return post;
 }
-caryll_buffer *table_build_post(table_post *post, glyphorder_Map *glyphorder, const caryll_Options *options) {
+caryll_buffer *table_build_post(table_post *post, caryll_GlyphOrder *glyphorder, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);
@@ -119,14 +117,14 @@ caryll_buffer *table_build_post(table_post *post, glyphorder_Map *glyphorder, co
 	bufwrite32b(buf, post->minMemType1);
 	bufwrite32b(buf, post->maxMemType1);
 	if (post->version == 0x20000) {
-		bufwrite16b(buf, HASH_COUNT(*glyphorder));
+		bufwrite16b(buf, HASH_CNT(hhName, glyphorder->byName));
 		// Since the glyphorder is already sorted using the "real" glyph order
 		// we can simply write down the glyph names.
-		glyphorder_Entry *s;
-		foreach_hash(s, *glyphorder) {
+		caryll_GlyphOrderEntry *s, *tmp;
+		HASH_ITER(hhName, glyphorder->byName, s, tmp) {
 			bufwrite16b(buf, 258 + s->gid);
 		}
-		foreach_hash(s, *glyphorder) {
+		HASH_ITER(hhName, glyphorder->byName, s, tmp) {
 			bufwrite8(buf, sdslen(s->name));
 			bufwrite_sds(buf, s->name);
 		}
