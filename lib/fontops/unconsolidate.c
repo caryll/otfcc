@@ -55,14 +55,15 @@ static void caryll_name_glyphs(caryll_Font *font, const caryll_Options *options)
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
 		sds name;
 		if (j) {
-			name = sdscatfmt(sdsempty(), "glyph%u", j);
+			name = sdscatfmt(sdsempty(), "%sglyph%u", prefix, j);
 		} else {
-			name = sdsnew(".notdef");
+			name = sdscatfmt(sdsempty(), "%s.notdef", prefix);
 		}
 		caryll_setGlyphOrderByGID(glyph_order, j, name);
 	}
 
 	caryll_delete_GlyphOrder(aglfn);
+	sdsfree(prefix);
 	font->glyph_order = glyph_order;
 }
 

@@ -25,6 +25,8 @@ sds caryll_setGlyphOrderByGID(caryll_GlyphOrder *go, glyphid_t gid, sds name) {
 	caryll_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), s);
 	if (s) {
+		// gid is already in the order table.
+		// reject this naming suggestion.
 		sdsfree(name);
 		return s->name;
 	} else {
