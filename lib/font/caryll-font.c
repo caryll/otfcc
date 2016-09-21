@@ -56,7 +56,7 @@ void caryll_delete_Font(caryll_Font *font) {
 	if (font->GDEF) table_delete_GDEF(font->GDEF);
 	if (font->BASE) table_delete_BASE(font->BASE);
 	if (font->VORG) table_delete_VORG(font->VORG);
-	if (font->glyph_order && *font->glyph_order) { glyphorder_deleteMap(font->glyph_order); }
+	if (font->glyph_order) { caryll_delete_GlyphOrder(font->glyph_order); }
 	if (font) free(font);
 }
 
@@ -151,8 +151,8 @@ caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
 	caryll_Font *font = caryll_new_Font();
 	if (!font) return NULL;
 	font->subtype = caryll_decideFontSubtypeFromJson(root);
-	font->glyph_order = parse_glyphorder(root, options);
-	font->glyf = table_parse_glyf(root, *font->glyph_order, options);
+	font->glyph_order = caryll_parse_GlyphOrder(root, options);
+	font->glyf = table_parse_glyf(root, font->glyph_order, options);
 	font->head = table_parse_head(root, options);
 	font->hhea = table_parse_hhea(root, options);
 	font->OS_2 = table_parse_OS_2(root, options);

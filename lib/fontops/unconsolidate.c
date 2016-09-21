@@ -7,28 +7,32 @@
 //      (Separate?)
 static void caryll_name_glyphs(caryll_Font *font, const caryll_Options *options) {
 	if (!font->glyf) return;
-	glyphorder_Map *glyph_order = malloc(sizeof(glyphorder_Map));
-	*glyph_order = NULL;
-
-	glyphorder_Map *aglfn = malloc(sizeof(glyphorder_Map));
-	*aglfn = NULL;
+	caryll_GlyphOrder *glyph_order = caryll_new_GlyphOrder();
+	caryll_GlyphOrder *aglfn = caryll_new_GlyphOrder();
 	aglfn_setupNames(aglfn);
-
 	glyphid_t numGlyphs = font->glyf->numberGlyphs;
-
+	sds prefix;
+	if (options->glyph_name_prefix) {
+		prefix = sdsnew(options->glyph_name_prefix);
+	} else {
+		prefix = sdsempty();
+	}
 	// pass 1: Map to existing glyph names
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
 		if (font->glyf->glyphs[j]->name) {
-			glyphorder_tryAssignName(glyph_order, j, font->glyf->glyphs[j]->name);
-			font->glyf->glyphs[j]->name = NULL;
+			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, font->glyf->glyphs[j]->name);
+			sds sharedName = caryll_setGlyphOrderByGID(glyph_order, j, gname);
+			sdsfree(font->glyf->glyphs[j]->name);
+			font->glyf->glyphs[j]->name = sharedName;
 		}
 	}
 
 	// pass 2: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
-		glyphorder_Entry *s;
-		foreach_hash(s, *font->post->post_name_map) {
-			glyphorder_tryAssignName(glyph_order, s->gid, sdsdup(s->name));
+		caryll_GlyphOrderEntry *s, *tmp;
+		HASH_ITER(hhID, font->post->post_name_map->byGID, s, tmp) {
+			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, s->name);
+			caryll_setGlyphOrderByGID(glyph_order, s->gid, gname);
 		}
 	}
 
@@ -37,14 +41,13 @@ static void caryll_name_glyphs(caryll_Font *font, const caryll_Options *options)
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
 			sds name = NULL;
-			if (s->unicode < 0x10000) glyphorder_nameAnIndex(aglfn, s->unicode, &name);
+			caryll_nameAFieldUsingGlyphOrder(aglfn, s->unicode, &name);
 			if (name == NULL) {
-				name = sdscatprintf(sdsempty(), "uni%04X", s->unicode);
+				name = sdscatprintf(sdsempty(), "%suni%04X", prefix, s->unicode);
 			} else {
-				name = sdsdup(name);
+				name = sdscatprintf(sdsempty(), "%s%s", prefix, name);
 			}
-			int actuallyNamed = glyphorder_tryAssignName(glyph_order, s->glyph.index, name);
-			if (!actuallyNamed) sdsfree(name);
+			caryll_setGlyphOrderByGID(glyph_order, s->glyph.index, name);
 		}
 	}
 
@@ -56,20 +59,10 @@ static void caryll_name_glyphs(caryll_Font *font, const caryll_Options *options)
 		} else {
 			name = sdsnew(".notdef");
 		}
-		int actuallyNamed = glyphorder_tryAssignName(glyph_order, j, name);
-		if (!actuallyNamed) sdsfree(name);
+		caryll_setGlyphOrderByGID(glyph_order, j, name);
 	}
 
-	if (options->glyph_name_prefix) {
-		glyphorder_Entry *item;
-		foreach_hash(item, *glyph_order) {
-			sds oldname = item->name;
-			item->name = sdscatprintf(sdsempty(), "%s%s", options->glyph_name_prefix, oldname);
-			sdsfree(oldname);
-		}
-	}
-
-	glyphorder_deleteMap(aglfn);
+	caryll_delete_GlyphOrder(aglfn);
 	font->glyph_order = glyph_order;
 }
 
@@ -77,7 +70,7 @@ static void caryll_name_cmap_entries(caryll_Font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) {
-			glyphorder_nameAIndexedHandle(font->glyph_order, &s->glyph);
+			caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &s->glyph);
 		}
 	}
 }
@@ -86,11 +79,11 @@ static void caryll_name_glyf(caryll_Font *font) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_Glyph *g = font->glyf->glyphs[j];
 			sds glyphName = NULL;
-			glyphorder_nameAnIndex(font->glyph_order, j, &glyphName);
+			caryll_nameAFieldUsingGlyphOrder(font->glyph_order, j, &glyphName);
 			g->name = sdsdup(glyphName);
 			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (shapeid_t k = 0; k < g->numberOfReferences; k++) {
-					glyphorder_nameAIndexedHandle(font->glyph_order, &g->references[k].glyph);
+					caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &g->references[k].glyph);
 				}
 			}
 		}
@@ -99,13 +92,13 @@ static void caryll_name_glyf(caryll_Font *font) {
 static void name_coverage(caryll_Font *font, otl_Coverage *coverage) {
 	if (!coverage) return;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-		glyphorder_nameAIndexedHandle(font->glyph_order, &coverage->glyphs[j]);
+		caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &coverage->glyphs[j]);
 	}
 }
 static void name_classdef(caryll_Font *font, otl_ClassDef *cd) {
 	if (!cd) return;
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-		glyphorder_nameAIndexedHandle(font->glyph_order, &cd->glyphs[j]);
+		caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &cd->glyphs[j]);
 	}
 }
 static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_OTL *table) {

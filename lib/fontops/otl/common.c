@@ -7,8 +7,7 @@ static int by_gid(const void *a, const void *b) {
 void fontop_consolidateCoverage(caryll_Font *font, otl_Coverage *coverage, sds lookupName) {
 	if (!coverage) return;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-		glyphorder_Entry *ordentry;
-		HASH_FIND_STR(*font->glyph_order, coverage->glyphs[j].name, ordentry);
+		caryll_GlyphOrderEntry *ordentry = caryll_lookupName(font->glyph_order, coverage->glyphs[j].name);
 		if (ordentry) {
 			handle_consolidateTo(&coverage->glyphs[j], ordentry->gid, ordentry->name);
 		} else {
@@ -31,8 +30,7 @@ void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 void fontop_consolidateClassDef(caryll_Font *font, otl_ClassDef *cd, sds lookupName) {
 	if (!cd) return;
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-		glyphorder_Entry *ordentry;
-		HASH_FIND_STR(*font->glyph_order, cd->glyphs[j].name, ordentry);
+		caryll_GlyphOrderEntry *ordentry = caryll_lookupName(font->glyph_order, cd->glyphs[j].name);
 		if (ordentry) {
 			handle_consolidateTo(&cd->glyphs[j], ordentry->gid, ordentry->name);
 

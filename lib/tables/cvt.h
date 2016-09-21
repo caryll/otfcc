@@ -2,7 +2,6 @@
 #define CARYLL_TABLES_CVT_H
 
 #include <font/caryll-sfnt.h>
-#include <support/glyphorder.h>
 #include <support/util.h>
 
 typedef struct {

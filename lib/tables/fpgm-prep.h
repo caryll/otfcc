@@ -3,7 +3,6 @@
 
 #include <support/util.h>
 #include <font/caryll-sfnt.h>
-#include <support/glyphorder.h>
 #include <support/ttinstr.h>
 
 typedef struct {
