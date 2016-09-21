@@ -641,7 +641,7 @@ static void parse_masks(json_value *md, shapeid_t *count, glyf_PostscriptHintMas
 	}
 }
 
-static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, glyphorder_Entry *order_entry,
+static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOrderEntry *order_entry,
                                            const caryll_Options *options) {
 	glyf_Glyph *g = table_new_glyf_glyph();
 	g->name = sdsdup(order_entry->name);
@@ -665,7 +665,7 @@ static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, glyphorder_Ent
 	return g;
 }
 
-table_glyf *table_parse_glyf(json_value *root, glyphorder_Map glyph_order, const caryll_Options *options) {
+table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const caryll_Options *options) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -678,8 +678,8 @@ table_glyf *table_parse_glyf(json_value *root, glyphorder_Map glyph_order, const
 		for (glyphid_t j = 0; j < numGlyphs; j++) {
 			sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 			json_value *glyphdump = table->u.object.values[j].value;
-			glyphorder_Entry *order_entry;
-			HASH_FIND_STR(glyph_order, gname, order_entry);
+			caryll_GlyphOrderEntry *order_entry = NULL;
+			HASH_FIND(hhName, glyph_order->byName, gname, sdslen(gname), order_entry);
 			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
 				glyf->glyphs[order_entry->gid] = caryll_glyf_parse_glyph(glyphdump, order_entry, options);
 			}

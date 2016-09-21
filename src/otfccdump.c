@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
-					options->glyph_name_prefix = sdsnew(optarg);
+					options->glyph_name_prefix = strdup(optarg);
 				}
 				break;
 			case 'v':
@@ -205,9 +205,9 @@ int main(int argc, char *argv[]) {
 				exit(EXIT_FAILURE);
 			}
 			if (add_bom) {
-				fputc(0xEF, stdout);
-				fputc(0xBB, stdout);
-				fputc(0xBF, stdout);
+				fputc(0xEF, outputFile);
+				fputc(0xBB, outputFile);
+				fputc(0xBF, outputFile);
 			}
 			fputs(buf, outputFile);
 			fclose(outputFile);

@@ -6,7 +6,7 @@
 struct _caryll_font;
 typedef struct _caryll_font caryll_Font;
 
-#include <support/glyphorder.h>
+#include <support/glyph-order.h>
 
 #include <tables/OS_2.h>
 #include <tables/cmap.h>
@@ -68,7 +68,7 @@ struct _caryll_font {
 	table_GDEF *GDEF;
 	table_BASE *BASE;
 
-	glyphorder_Map *glyph_order;
+	caryll_GlyphOrder *glyph_order;
 };
 
 caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index);

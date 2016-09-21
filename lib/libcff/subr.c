@@ -3,7 +3,8 @@
 Type 2 CharString subroutinizer.
 This program uses SEQUITUR (Nevill-Manning algorithm) to construct a CFG from the input sequence of
 opcodes (in the minimum unit of a operator call. That is, operand* operator special*.)
-
+Kieffer-Yang optimization is unnecessary, given that in almost all payloads, there are no repeating
+subroutines.
 */
 
 static void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);

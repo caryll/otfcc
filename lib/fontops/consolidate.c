@@ -18,10 +18,10 @@ static int by_mask_pointindex(const void *a, const void *b) {
 void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
-		glyphorder_Entry *entry = NULL;
+		caryll_GlyphOrderEntry *entry = NULL;
 		glyf_ComponentReference *r = &(g->references[j]);
 		if (r->glyph.name) {
-			HASH_FIND_STR(*font->glyph_order, r->glyph.name, entry);
+			entry = caryll_lookupName(font->glyph_order, r->glyph.name);
 			if (entry) {
 				handle_consolidateTo(&r->glyph, entry->gid, entry->name);
 				nReferencesConsolidated += 1;
@@ -122,7 +122,7 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 }
 
 void caryll_font_consolidate_glyf(caryll_Font *font) {
-	if (!font->glyph_order || !*font->glyph_order || !font->glyf) return;
+	if (!font->glyph_order || !font->glyf) return;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]) {
 			caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
@@ -133,12 +133,11 @@ void caryll_font_consolidate_glyf(caryll_Font *font) {
 }
 
 void caryll_font_consolidate_cmap(caryll_Font *font) {
-	if (font->glyph_order && *font->glyph_order && font->cmap) {
+	if (font->glyph_order  && font->cmap) {
 		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
 			if (item->glyph.name) {
-				glyphorder_Entry *ordentry;
-				HASH_FIND_STR(*font->glyph_order, item->glyph.name, ordentry);
+				caryll_GlyphOrderEntry *ordentry = caryll_lookupName(font->glyph_order, item->glyph.name);
 				if (ordentry) {
 					handle_consolidateTo(&item->glyph, ordentry->gid, ordentry->name);
 				} else {

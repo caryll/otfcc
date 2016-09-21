@@ -8,12 +8,13 @@ The `otfcc` is a C library and utility used for parsing and writing OpenType fon
 * Building OpenType fonts from JSON.
 * Full support for OpenType features (`GSUB`, `GPOS` and `GDEF`), CID-keyed CFF, vertical metrics, and more.
 * **4× faster than `ttx` on CFF OTF, and 40× on TTF.**
+* **900× faster than `makeotf` for building a fully-optimized CFF OTF.**
 
-## Prebuilt installations
+## Installation
 
 ### Windows
 
-Click the “Releases” above, and download the archives in it.
+You can download the prebuilt binaries [here](https://github.com/caryll/otfcc/releases).
 
 ### Mac
 
@@ -29,6 +30,10 @@ Otherwise, you may need to click the “Releases” above, and download the arch
 ### Arch Linux
 
 The package `otfcc` can be found [here](https://aur.archlinux.org/packages/otfcc/).
+
+### Build from Source
+
+See below.
 
 ## Usage
 
