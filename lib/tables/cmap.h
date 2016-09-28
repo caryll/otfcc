@@ -12,6 +12,8 @@ typedef struct {
 } cmap_Entry;
 typedef cmap_Entry *table_cmap;
 
+void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid);
+void table_encodeCmapByName(table_cmap *map, int c, sds name);
 table_cmap *table_read_cmap(caryll_Packet packet);
 void table_delete_cmap(table_cmap *table);
 void table_dump_cmap(table_cmap *table, json_value *root, const caryll_Options *options);
