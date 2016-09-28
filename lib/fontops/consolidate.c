@@ -16,6 +16,8 @@ static int by_mask_pointindex(const void *a, const void *b) {
 	return ((glyf_PostscriptHintMask *)a)->pointsBefore - ((glyf_PostscriptHintMask *)b)->pointsBefore;
 }
 void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
+	// The name field of glyf_Glyph will not be consolidated with glyphOrder
+	// Consolidate references
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
 		caryll_GlyphOrderEntry *entry = NULL;
@@ -41,7 +43,8 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 			g->references = NULL;
 			g->numberOfReferences = 0;
 		} else {
-			glyf_ComponentReference *consolidatedReferences = calloc(nReferencesConsolidated, sizeof(glyf_ComponentReference));
+			glyf_ComponentReference *consolidatedReferences =
+			    calloc(nReferencesConsolidated, sizeof(glyf_ComponentReference));
 			for (shapeid_t j = 0, k = 0; j < g->numberOfReferences; j++) {
 				if (g->references[j].glyph.name) { consolidatedReferences[k++] = g->references[j]; }
 			}
@@ -133,7 +136,7 @@ void caryll_font_consolidate_glyf(caryll_Font *font) {
 }
 
 void caryll_font_consolidate_cmap(caryll_Font *font) {
-	if (font->glyph_order  && font->cmap) {
+	if (font->glyph_order && font->cmap) {
 		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
 			if (item->glyph.name) {
@@ -201,8 +204,7 @@ void caryll_consolidate_lookup(caryll_Font *font, table_OTL *table, otl_Lookup *
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, otl_delete_chaining);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, otl_delete_gpos_markToSingle);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, otl_delete_gpos_markToSingle);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
-	                    otl_delete_gpos_markToLigature);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature, otl_delete_gpos_markToLigature);
 }
 
 void caryll_font_consolidate_otl(caryll_Font *font) {
@@ -218,6 +220,21 @@ void caryll_font_consolidate_otl(caryll_Font *font) {
 }
 
 void caryll_font_consolidate(caryll_Font *font, const caryll_Options *options) {
+	// In case we don’t have a glyph order, make one.
+	if (font->glyf && !font->glyph_order) {
+		caryll_GlyphOrder *go = caryll_new_GlyphOrder();
+		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
+			sds name;
+			sds glyfName = font->glyf->glyphs[j]->name;
+			if (glyfName) {
+				name = sdsdup(glyfName);
+			} else {
+				name = sdscatprintf(sdsempty(), "__gid%d", j);
+				font->glyf->glyphs[j]->name = sdsdup(name);
+			}
+			caryll_setGlyphOrderByName(go, name, j);
+		}
+	}
 	caryll_font_consolidate_glyf(font);
 	caryll_font_consolidate_cmap(font);
 	if (font->glyf) caryll_font_consolidate_otl(font);
