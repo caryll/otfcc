@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
 
 	caryll_Font *font;
 	{
-		font = caryll_read_Font(sfnt, ttcindex);
+		font = caryll_read_Font(sfnt, ttcindex, options);
 		if (!font) {
 			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);

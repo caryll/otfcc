@@ -202,7 +202,7 @@ otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLeng
 
 table_OTL *table_new_otl();
 void table_delete_otl(table_OTL *table);
-table_OTL *table_read_otl(caryll_Packet packet, const uint32_t tag);
+table_OTL *table_read_otl(caryll_Packet packet, const caryll_Options *options, const uint32_t tag);
 void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *options, const char *tag);
 table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, const char *tag);
 caryll_buffer *table_build_otl(table_OTL *table, const caryll_Options *options, const char *tag);

@@ -68,7 +68,7 @@ caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, u
 	return FONTTYPE_TTF;
 }
 
-caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index) {
+caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, caryll_Options *options) {
 	if (sfnt->count - 1 < index)
 		return NULL;
 	else {
@@ -103,8 +103,8 @@ caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index) 
 			}
 		}
 		if (font->glyf) {
-			font->GSUB = table_read_otl(packet, 'GSUB');
-			font->GPOS = table_read_otl(packet, 'GPOS');
+			font->GSUB = table_read_otl(packet, options, 'GSUB');
+			font->GPOS = table_read_otl(packet, options, 'GPOS');
 			font->GDEF = table_read_GDEF(packet);
 		}
 		font->BASE = table_read_BASE(packet);
