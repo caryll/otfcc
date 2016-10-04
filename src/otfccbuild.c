@@ -88,8 +88,8 @@ void readEntireFile(char *inPath, char **_buffer, long *_length) {
 
 void readEntireStdin(char **_buffer, long *_length) {
 	freopen(NULL, "rb", stdin);
-	static const long BUF_SIZE = 0x400;
-	static const long BUF_MIN = 0x100;
+	static const long BUF_SIZE = 0x400000;
+	static const long BUF_MIN = 0x1000;
 	char *buffer = malloc(BUF_SIZE);
 	long length = 0;
 	long remain = BUF_SIZE;
