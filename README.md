@@ -78,6 +78,10 @@ Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
                                --ignore-glyph-order
                                --short-post
                                --merge-features
+     -O3                     Most aggressive opptimization strategy will be
+                             used. In this level, these options will be set:
+                               --force-cid
+                               --subroutinize
  --time                    : Time each substep.
  --verbose                 : Show more information when building.
 
@@ -98,6 +102,10 @@ Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
  --dont-merge-features     : Keep duplicate OpenType feature definitions.
  --merge-lookups           : Merge duplicate OpenType lookups.
  --dont-merge-lookups      : Keep duplicate OpenType lookups.
+ --force-cid               : Convert name-keyed CFF OTF into CID-keyed.
+ --subroutinize            : Subroutinize CFF table.
+ --stub-cmap4              : Create a stub `cmap` format 4 subtable if format
+                             12 subtable is present.
 ```
 
 ## Building
