@@ -335,7 +335,7 @@ caryll_buffer *table_build_cmap(table_cmap *cmap, const caryll_Options *options)
 	uint32_t offset = 4 + 8 * nTables;
 	size_t cp = 0;
 	caryll_buffer *format4;
-	if (!hasSMP) {
+	if (!hasSMP || !options->stub_cmap4) {
 		format4 = table_build_cmap_format4(cmap);
 	} else {
 		// Write a dummy
