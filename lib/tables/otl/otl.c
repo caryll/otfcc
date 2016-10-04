@@ -111,7 +111,8 @@ FAIL:
 	return;
 }
 
-static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base) {
+static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base,
+                                        const caryll_Options *options) {
 	table_OTL *table = table_new_otl();
 	if (!table) goto FAIL;
 	checkLength(10);
@@ -151,8 +152,13 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 			NEW(feature);
 			features[j] = feature;
 			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
-			features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-			                                 (tag >> 8) & 0xff, tag & 0xff, j);
+			if (options->glyph_name_prefix) {
+				features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%s_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+				                                 (tag >> 8) & 0xff, tag & 0xff, options->glyph_name_prefix, j);
+			} else {
+				features[j]->name = sdscatprintf(sdsempty(), "%c%c%c%c_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+				                                 (tag >> 8) & 0xff, tag & 0xff, j);
+			}
 			uint32_t featureOffset = featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
 
 			checkLength(featureOffset + 4);
@@ -165,9 +171,15 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 				if (lookupid < table->lookupCount) {
 					features[j]->lookups[k] = table->lookups[lookupid];
 					if (!features[j]->lookups[k]->name) {
-						features[j]->lookups[k]->name =
-						    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-						                 (tag >> 8) & 0xff, tag & 0xff, lnk++);
+						if (options->glyph_name_prefix) {
+							features[j]->lookups[k]->name = sdscatprintf(
+							    sdsempty(), "lookup_%s_%c%c%c%c_%d", options->glyph_name_prefix, (tag >> 24) & 0xFF,
+							    (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, lnk++);
+						} else {
+							features[j]->lookups[k]->name =
+							    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+							                 (tag >> 8) & 0xff, tag & 0xff, lnk++);
+						}
 					}
 				}
 			}
@@ -227,8 +239,14 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 	}
 	// name all lookups
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
-		if (!table->lookups[j]->name)
-			table->lookups[j]->name = sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups[j]->type, j);
+		if (!table->lookups[j]->name) {
+			if (options->glyph_name_prefix) {
+				table->lookups[j]->name = sdscatprintf(sdsempty(), "lookup_%s_%02x_%d", options->glyph_name_prefix,
+				                                       table->lookups[j]->type, j);
+			} else {
+				table->lookups[j]->name = sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups[j]->type, j);
+			}
+		}
 	}
 	return table;
 FAIL:
@@ -287,14 +305,15 @@ static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, 
 	if (lookup->type == otl_type_gpos_context) lookup->type = otl_type_gpos_chaining;
 }
 
-table_OTL *table_read_otl(caryll_Packet packet, uint32_t tag) {
+table_OTL *table_read_otl(caryll_Packet packet, const caryll_Options *options, uint32_t tag) {
 	table_OTL *otl = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		otl = table_read_otl_common(
 		    data, length,
-		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown));
+		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown),
+		    options);
 		if (!otl) goto FAIL;
 		for (tableid_t j = 0; j < otl->lookupCount; j++) {
 			table_read_otl_lookup(data, length, otl->lookups[j]);

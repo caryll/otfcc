@@ -572,12 +572,14 @@ void caryll_font_stat(caryll_Font *font, const caryll_Options *options) {
 	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
 	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
-	if (font->glyf && font->maxp && font->maxp->version == 0x10000) caryll_stat_maxp(font);
-	if (font->fpgm && font->maxp && font->fpgm->length > font->maxp->maxSizeOfInstructions) {
-		font->maxp->maxSizeOfInstructions = font->fpgm->length;
-	}
-	if (font->prep && font->maxp && font->prep->length > font->maxp->maxSizeOfInstructions) {
-		font->maxp->maxSizeOfInstructions = font->prep->length;
+	if (font->glyf && font->maxp && font->maxp->version == 0x10000) {
+		caryll_stat_maxp(font);
+		if (font->fpgm && font->fpgm->length > font->maxp->maxSizeOfInstructions) {
+			font->maxp->maxSizeOfInstructions = font->fpgm->length;
+		}
+		if (font->prep && font->prep->length > font->maxp->maxSizeOfInstructions) {
+			font->maxp->maxSizeOfInstructions = font->prep->length;
+		}
 	}
 	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, options);
 	if (font->subtype == FONTTYPE_TTF) {

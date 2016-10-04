@@ -75,7 +75,7 @@ caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, u
 caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root);
 caryll_Font *caryll_new_Font();
 void caryll_delete_Font(caryll_Font *font);
-caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index);
+caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, caryll_Options *options);
 json_value *caryll_dump_Font(caryll_Font *font, caryll_Options *options);
 caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options);
 caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options);

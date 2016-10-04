@@ -14,10 +14,8 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	fontop_consolidateCoverage(font, subtable->from, lookupName);
 	fontop_consolidateCoverage(font, subtable->to, lookupName);
-	glyphid_t len =subtable->to->numGlyphs;
-	if(subtable->from->numGlyphs < subtable->to->numGlyphs){
-		len = subtable->from->numGlyphs;
-	}
+	glyphid_t len = subtable->to->numGlyphs;
+	if (subtable->from->numGlyphs < subtable->to->numGlyphs) { len = subtable->from->numGlyphs; }
 	gsub_single_map_hash *h = NULL;
 	for (glyphid_t k = 0; k < len; k++) {
 		if (subtable->from->glyphs[k].name && subtable->to->glyphs[k].name) {
