@@ -40,9 +40,10 @@ void printHelp() {
 	                "                               --ignore-glyph-order\n"
 	                "                               --short-post\n"
 	                "                               --merge-features\n"
-	                // "     -O3                     Most aggressive opptimization strategy will be\n"
-	                // "                             used. In this level, these options will be set:\n"
-	                // "                               --merge-lookups\n"
+	                "     -O3                     Most aggressive opptimization strategy will be\n"
+	                "                             used. In this level, these options will be set:\n"
+	                "                               --force-cid\n"
+	                "                               --subroutinize\n"
 	                " --time                    : Time each substep.\n"
 	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
@@ -61,6 +62,10 @@ void printHelp() {
 	                " --dont-merge-features     : Keep duplicate OpenType feature definitions.\n"
 	                " --merge-lookups           : Merge duplicate OpenType lookups.\n"
 	                " --dont-merge-lookups      : Keep duplicate OpenType lookups.\n"
+	                " --force-cid               : Convert name-keyed CFF OTF into CID-keyed.\n"
+	                " --subroutinize            : Subroutinize CFF table.\n"
+	                " --stub-cmap4              : Create a stub `cmap` format 4 subtable if format\n"
+	                "                             12 subtable is present.\n"
 	                "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
@@ -88,8 +93,8 @@ void readEntireFile(char *inPath, char **_buffer, long *_length) {
 
 void readEntireStdin(char **_buffer, long *_length) {
 	freopen(NULL, "rb", stdin);
-	static const long BUF_SIZE = 0x400;
-	static const long BUF_MIN = 0x100;
+	static const long BUF_SIZE = 0x400000;
+	static const long BUF_MIN = 0x1000;
 	char *buffer = malloc(BUF_SIZE);
 	long length = 0;
 	long remain = BUF_SIZE;
@@ -150,6 +155,8 @@ int main(int argc, char *argv[]) {
 	                            {"dont-merge-features", no_argument, NULL, 0},
 	                            {"short-post", no_argument, NULL, 0},
 	                            {"force-cid", no_argument, NULL, 0},
+	                            {"subroutinize", no_argument, NULL, 0},
+	                            {"stub-cmap4", no_argument, NULL, 0},
 	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
@@ -191,6 +198,10 @@ int main(int argc, char *argv[]) {
 					options->short_post = true;
 				} else if (strcmp(longopts[option_index].name, "force-cid") == 0) {
 					options->force_cid = true;
+				} else if (strcmp(longopts[option_index].name, "subroutinize") == 0) {
+					options->cff_doSubroutinize = true;
+				} else if (strcmp(longopts[option_index].name, "stub-cmap4") == 0) {
+					options->stub_cmap4 = true;
 				} else if (strcmp(longopts[option_index].name, "ship") == 0) {
 					options->ignore_glyph_order = true;
 					options->short_post = true;

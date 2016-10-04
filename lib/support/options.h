@@ -23,6 +23,7 @@ typedef struct {
 	bool force_cid;
 	bool cff_rollCharString;
 	bool cff_doSubroutinize;
+	bool stub_cmap4;
 	char *glyph_name_prefix;
 } caryll_Options;
 

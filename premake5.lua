@@ -2,7 +2,7 @@ require "dep/premake-modules/xcode-alt"
 
 MAIN_VER = '0'
 SECONDARY_VER = '4'
-PATCH_VER = '1'
+PATCH_VER = '2'
 
 function cbuildoptions()
 	filter "action:vs2015"

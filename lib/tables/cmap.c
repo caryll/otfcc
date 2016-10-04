@@ -1,6 +1,6 @@
 #include "cmap.h"
 
-static void encode(table_cmap *map, int c, uint16_t gid) {
+void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
@@ -8,10 +8,28 @@ static void encode(table_cmap *map, int c, uint16_t gid) {
 		s->glyph = handle_fromIndex(gid);
 		s->unicode = c;
 		HASH_ADD_INT(*map, unicode, s);
+	} else {
+		// Override existing encoding
+		handle_delete(&s->glyph);
+		s->glyph = handle_fromIndex(gid);
+	}
+}
+void table_encodeCmapByName(table_cmap *map, int c, sds name) {
+	cmap_Entry *s;
+	HASH_FIND_INT(*map, &c, s);
+	if (s == NULL) {
+		s = malloc(sizeof(cmap_Entry));
+		s->glyph = handle_fromName(name);
+		s->unicode = c;
+		HASH_ADD_INT(*map, unicode, s);
+	} else {
+		// Override existing encoding
+		handle_delete(&s->glyph);
+		s->glyph = handle_fromName(name);
 	}
 }
 
-static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
+static void readFormat12(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
 	if (lengthLimit < 16) return;
 	uint32_t nGroups = read_32u(start + 12);
 	if (lengthLimit < 16 + 12 * nGroups) return;
@@ -20,12 +38,12 @@ static void caryll_read_format_12(font_file_pointer start, uint32_t lengthLimit,
 		uint32_t endCode = read_32u(start + 16 + 12 * j + 4);
 		uint32_t startGID = read_32u(start + 16 + 12 * j + 8);
 		for (uint32_t c = startCode; c <= endCode; c++) {
-			encode(map, c, (c - startCode) + startGID);
+			table_encodeCmapByIndex(map, c, (c - startCode) + startGID);
 		}
 	}
 }
 
-static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
+static void readFormat4(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
 	if (lengthLimit < 14) return;
 	uint16_t segmentsCount = read_16u(start + 6) / 2;
 	if (lengthLimit < 16 + segmentsCount * 8) return;
@@ -38,25 +56,25 @@ static void caryll_read_format_4(font_file_pointer start, uint32_t lengthLimit, 
 		if (idRangeOffset == 0) {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint16_t gid = (c + idDelta) & 0xFFFF;
-				encode(map, c, gid);
+				table_encodeCmapByIndex(map, c, gid);
 			}
 		} else {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
 				if (glyphOffset + 2 > lengthLimit) continue; // ignore this encoding slot when o-o-r
 				uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
-				encode(map, c, gid);
+				table_encodeCmapByIndex(map, c, gid);
 			}
 		}
 	}
 }
 
-static void caryll_read_mapping_table(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
+static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
 	uint16_t format = read_16u(start);
 	if (format == 4) {
-		caryll_read_format_4(start, lengthLimit, map);
+		readFormat4(start, lengthLimit, map);
 	} else if (format == 12) {
-		caryll_read_format_12(start, lengthLimit, map);
+		readFormat12(start, lengthLimit, map);
 	}
 }
 
@@ -83,7 +101,7 @@ table_cmap *table_read_cmap(caryll_Packet packet) {
 			if ((platform == 0 && encoding == 3) || (platform == 0 && encoding == 4) ||
 			    (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
 				uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
-				caryll_read_mapping_table(data + tableOffset, length - tableOffset, map);
+				readCmapMappingTable(data + tableOffset, length - tableOffset, map);
 			}
 		};
 		HASH_SORT(*map, by_unicode);
@@ -135,16 +153,7 @@ table_cmap *table_parse_cmap(json_value *root, const caryll_Options *options) {
 			sdsfree(unicodeStr);
 			if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
 				sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-				cmap_Entry *item = NULL;
-				HASH_FIND_INT(hash, &unicode, item);
-				if (!item) {
-					item = calloc(1, sizeof(cmap_Entry));
-					item->unicode = unicode;
-					item->glyph = handle_fromName(gname);
-					HASH_ADD_INT(hash, unicode, item);
-				} else {
-					sdsfree(gname);
-				}
+				table_encodeCmapByName(&hash, unicode, gname);
 			}
 		}
 	}
@@ -326,7 +335,7 @@ caryll_buffer *table_build_cmap(table_cmap *cmap, const caryll_Options *options)
 	uint32_t offset = 4 + 8 * nTables;
 	size_t cp = 0;
 	caryll_buffer *format4;
-	if (!hasSMP) {
+	if (!hasSMP || !options->stub_cmap4) {
 		format4 = table_build_cmap_format4(cmap);
 	} else {
 		// Write a dummy

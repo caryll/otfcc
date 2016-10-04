@@ -82,6 +82,14 @@ void caryll_setGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_
 		s->orderEntry = orderEntry;
 	}
 }
+static void caryll_escalateGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry) {
+	caryll_GlyphOrderEntry *s = NULL;
+	HASH_FIND(hhName, go->byName, name, sdslen(name), s);
+	if (s && s->orderType > orderType) {
+		s->orderType = orderType;
+		s->orderEntry = orderEntry;
+	}
+}
 
 static int compare_glyphorder_entry_b(caryll_GlyphOrderEntry *a, caryll_GlyphOrderEntry *b) {
 	if (a->orderType < b->orderType) return (-1);
@@ -118,7 +126,7 @@ static void placeOrderEntriesFromCmap(json_value *table, caryll_GlyphOrder *go) 
 		int32_t unicode = atoi(unicodeStr);
 		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-			caryll_setGlyphOrderByNameWithOrder(go, gname, ORD_CMAP, unicode);
+			caryll_escalateGlyphOrderByNameWithOrder(go, gname, ORD_CMAP, unicode);
 		}
 	}
 }
@@ -129,7 +137,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, caryll_GlyphOrder *
 		json_value *item = table->u.array.values[j];
 		if (item->type == json_string) {
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-			caryll_setGlyphOrderByNameWithOrder(go, gname, ORD_GLYPHORDER, j);
+			caryll_escalateGlyphOrderByNameWithOrder(go, gname, ORD_GLYPHORDER, j);
 		}
 	}
 }
