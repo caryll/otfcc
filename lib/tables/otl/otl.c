@@ -829,10 +829,26 @@ static bk_Block *writeOTLLookups(table_OTL *table, const caryll_Options *options
 
 static uint32_t featureNameToTag(sds name) {
 	uint32_t tag = 0;
-	if (sdslen(name) > 0) { tag |= ((uint8_t)name[0]) << 24; }
-	if (sdslen(name) > 1) { tag |= ((uint8_t)name[1]) << 16; }
-	if (sdslen(name) > 2) { tag |= ((uint8_t)name[2]) << 8; }
-	if (sdslen(name) > 3) { tag |= ((uint8_t)name[3]) << 0; }
+	if (sdslen(name) > 0) {
+		tag |= ((uint8_t)name[0]) << 24;
+	} else {
+		tag |= ((uint8_t)' ') << 24;
+	}
+	if (sdslen(name) > 1) {
+		tag |= ((uint8_t)name[1]) << 16;
+	} else {
+		tag |= ((uint8_t)' ') << 16;
+	}
+	if (sdslen(name) > 2) {
+		tag |= ((uint8_t)name[2]) << 8;
+	} else {
+		tag |= ((uint8_t)' ') << 8;
+	}
+	if (sdslen(name) > 3) {
+		tag |= ((uint8_t)name[3]) << 0;
+	} else {
+		tag |= ((uint8_t)' ') << 0;
+	}
 	return tag;
 }
 static bk_Block *writeOTLFeatures(table_OTL *table, const caryll_Options *options) {
