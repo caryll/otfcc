@@ -100,7 +100,8 @@ void readEntireStdin(char **_buffer, long *_length) {
 	long remain = BUF_SIZE;
 	while (!feof(stdin)) {
 		if (remain <= BUF_MIN) {
-			remain += (length >> 1) & 0xFFFF;
+			remain += (length >> 1) & 0xFFFFFF;
+			fprintf(stderr, "Reallocate %d\n", (uint32_t)(length+remain));
 			buffer = realloc(buffer, length + remain);
 		}
 

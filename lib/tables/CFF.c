@@ -483,7 +483,12 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 			g->contours[j].points[k].x = cx;
 			g->contours[j].points[k].y = cy;
 		}
+		if (g->contours[j].points[0].x == g->contours[j].points[g->contours[j].pointsCount - 1].x &&
+		    g->contours[j].points[0].y == g->contours[j].points[g->contours[j].pointsCount - 1].y) {
+			g->contours[j].pointsCount -= 1;
+		}
 	}
+
 	cff_close_Index(localSubrs);
 	FREE(stack.stack);
 	context->seed = bc.randx;

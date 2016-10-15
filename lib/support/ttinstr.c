@@ -30,7 +30,6 @@
 #include "ttinstr.h"
 #include <ctype.h>
 
-
 enum ttf_instructions {
 	ttf_npushb = 0x40,
 	ttf_npushw = 0x41,
@@ -153,7 +152,8 @@ enum ttf_instructions {
 	ttf_utp = 0x29,
 	ttf_wcvtf = 0x70,
 	ttf_wcvtp = 0x44,
-	ttf_ws = 0x42
+	ttf_ws = 0x42,
+	ttf_getvariation = 0x91
 };
 enum byte_types { bt_instr, bt_cnt, bt_byte, bt_wordhi, bt_wordlo, bt_impliedreturn };
 
@@ -308,7 +308,7 @@ const char *ff_ttf_instrnames[] = {"SVTCA[y-axis]",
                                    "INSTCTRL",
                                    "Unknown8F",
                                    "Unknown90",
-                                   "Unknown91",
+                                   "GETVARIATION",
                                    "Unknown92",
                                    "Unknown93",
                                    "Unknown94",
@@ -642,7 +642,7 @@ json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const caryll_Op
 }
 
 void parse_ttinstr(json_value *col, void *context, void (*Make)(void *, uint8_t *, uint32_t),
-                     void (*Wrong)(void *, char *, int)) {
+                   void (*Wrong)(void *, char *, int)) {
 	if (!col) {
 		Make(context, NULL, 0);
 	} else if (col->type == json_string) {
