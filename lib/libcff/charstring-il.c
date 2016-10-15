@@ -135,8 +135,23 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	pos_t y = 0;
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
-		uint16_t n = contour->pointsCount;
-		for (uint16_t j = 0; j < n; j++) {
+		shapeid_t n = contour->pointsCount;
+		if (n > 1) {
+			pos_t x0 = contour->points[0].x;
+			pos_t y0 = contour->points[0].y;
+			pos_t xlast = contour->points[n - 1].x;
+			pos_t ylast = contour->points[n - 1].y;
+			if (xlast != x0 || ylast != y0) {
+				// Duplicate first point.
+				n += 1;
+				contour->points = realloc(contour->points, n * sizeof(glyf_Point));
+				contour->points[n - 1].x = x0;
+				contour->points[n - 1].y = y0;
+				contour->points[n - 1].onCurve = true;
+				contour->pointsCount = n;
+			}
+		}
+		for (shapeid_t j = 0; j < n; j++) {
 			pos_t dx = contour->points[j].x - x;
 			pos_t dy = contour->points[j].y - y;
 			x = contour->points[j].x, y = contour->points[j].y;
@@ -153,13 +168,13 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
 	// Write contour
-	uint16_t pointsSofar = 0;
-	uint16_t jh = 0;
-	uint16_t jm = 0;
+	shapeid_t pointsSofar = 0;
+	shapeid_t jh = 0;
+	shapeid_t jm = 0;
 	if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
+	for (shapeid_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
-		uint16_t n = contour->pointsCount;
+		shapeid_t n = contour->pointsCount;
 		if (n == 0) continue;
 		il_push_operand(il, contour->points[0].x);
 		il_push_operand(il, contour->points[0].y);
@@ -167,7 +182,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 		pointsSofar++;
 		if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
 
-		for (uint16_t j = 1; j < n; j++) {
+		for (shapeid_t j = 1; j < n; j++) {
 			if (contour->points[j].onCurve) { // A line-to
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
 				pointsSofar++;
