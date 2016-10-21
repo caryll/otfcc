@@ -5,8 +5,8 @@
 
 // vf_Ket type
 typedef struct vf_KetMaster {
-	pos_t *start; // arity === implicit quantity of axes
-	pos_t *end;
+	pos_t *start; // arity === implicit quantity of axes; null for all -1
+	pos_t *end;   // null for all 1
 	pos_t *peak;
 } vf_KetMaster;
 typedef struct vf_Ket {

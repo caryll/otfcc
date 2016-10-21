@@ -3,7 +3,14 @@
 #include "support/util.h"
 
 // vf_Functional type
-typedef enum { vf_null = 0, vf_scalar = 1, vf_plus = 2, vf_minus = 3, vf_multply = 4, vf_gxblend = 5 } VF_OPERATOR;
+typedef enum {
+	vf_null = 0,     // zero scalar
+	vf_scalar = 1,   // simple scalar
+	vf_plus = 2,     // <plus z1 z2 | x> = <z1 | x> + <z2 | x>
+	vf_minus = 3,    // <minus z1 z2 | x> = <z1 | x> - <z2 | x>
+	vf_multiply = 4, // <multiply s z2 | x> = s <z2 | x>
+	vf_gxblend = 5   // <gxblend x d1 d2 ... dn | w1 w2 ... wn> = x + d1 * w1 + ... + dn * wn;
+} VF_OPERATOR;
 
 typedef struct vf_Functional {
 	VF_OPERATOR car;
