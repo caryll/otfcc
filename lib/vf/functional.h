@@ -9,7 +9,7 @@ typedef enum {
 	vf_plus = 2,     // <plus z1 z2 | x> = <z1 | x> + <z2 | x>
 	vf_minus = 3,    // <minus z1 z2 | x> = <z1 | x> - <z2 | x>
 	vf_multiply = 4, // <multiply s z2 | x> = s <z2 | x>
-	vf_gxblend = 5   // <gxblend x d1 d2 ... dn | w1 w2 ... wn> = x + <d1 | w> * w1 + ... + <dn | w> * wn;
+	vf_gxblend = 5   // <gxblend x d1 d2 ... dn | w1 w2 ... wn> = <x | w> + <d1 | w> * w1 + ... + <dn | w> * wn;
 } VF_OPERATOR;
 
 typedef struct vf_Functional {
@@ -23,6 +23,11 @@ typedef struct vf_Functional {
 	};
 } vf_Functional;
 
+void vf_delete_Functional(MOVE vf_Functional *form);
+vf_Functional *vf_new_Functional_scalar(pos_t scalar);
+vf_Functional *vf_Functional_add(MOVE vf_Functional *a, MOVE vf_Functional *b);
+vf_Functional *vf_Functional_minus(MOVE vf_Functional *a, MOVE vf_Functional *b);
+vf_Functional *vf_Functional_multi(MOVE vf_Functional *a, pos_t scalar);
 vf_Functional *vf_Functional_shrink(MOVE vf_Functional *form);
 
 #endif
