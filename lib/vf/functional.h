@@ -9,7 +9,7 @@ typedef enum {
 	vf_plus = 2,     // <plus z1 z2 | x> = <z1 | x> + <z2 | x>
 	vf_minus = 3,    // <minus z1 z2 | x> = <z1 | x> - <z2 | x>
 	vf_multiply = 4, // <multiply s z2 | x> = s <z2 | x>
-	vf_gxblend = 5   // <gxblend x d1 d2 ... dn | w1 w2 ... wn> = x + d1 * w1 + ... + dn * wn;
+	vf_gxblend = 5   // <gxblend x d1 d2 ... dn | w1 w2 ... wn> = x + <d1 | w> * w1 + ... + <dn | w> * wn;
 } VF_OPERATOR;
 
 typedef struct vf_Functional {
