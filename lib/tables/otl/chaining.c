@@ -129,7 +129,7 @@ FAIL:
 	return NULL;
 }
 
-otl_Subtable *otl_read_contextual(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	uint16_t format = 0;
 	otl_Subtable *_subtable;
 	NEW(_subtable);
@@ -283,7 +283,7 @@ FAIL:
 	return NULL;
 }
 
-otl_Subtable *otl_read_chaining(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	uint16_t format = 0;
 	otl_Subtable *_subtable;
 	NEW(_subtable);
@@ -388,8 +388,8 @@ FAIL:
 	return NULL;
 }
 
-json_value *otl_dump_chaining(otl_Subtable *_subtable) {
-	subtable_chaining *subtable = &(_subtable->chaining);
+json_value *otl_dump_chaining(const otl_Subtable *_subtable) {
+	const subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = subtable->rules[0];
 	json_value *_st = json_object_new(4);
 
@@ -413,7 +413,7 @@ json_value *otl_dump_chaining(otl_Subtable *_subtable) {
 	return _st;
 }
 
-otl_Subtable *otl_parse_chaining(json_value *_subtable) {
+otl_Subtable *otl_parse_chaining(const json_value *_subtable) {
 	json_value *_match = json_obj_get_type(_subtable, "match", json_array);
 	json_value *_apply = json_obj_get_type(_subtable, "apply", json_array);
 	if (!_match || !_apply) return NULL;
@@ -457,8 +457,8 @@ otl_Subtable *otl_parse_chaining(json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_chaining_coverage(otl_Subtable *_subtable) {
-	subtable_chaining *subtable = &(_subtable->chaining);
+caryll_buffer *caryll_build_chaining_coverage(const otl_Subtable *_subtable) {
+	const subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = subtable->rules[0];
 	tableid_t nBacktrack = rule->inputBegins;
 	tableid_t nInput = rule->inputEnds - rule->inputBegins;
@@ -491,8 +491,8 @@ caryll_buffer *caryll_build_chaining_coverage(otl_Subtable *_subtable) {
 	return bk_build_Block(root);
 }
 
-caryll_buffer *caryll_build_chaining_classes(otl_Subtable *_subtable) {
-	subtable_chaining *subtable = &(_subtable->chaining);
+caryll_buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
+	const subtable_chaining *subtable = &(_subtable->chaining);
 
 	otl_Coverage *coverage;
 	NEW(coverage);
@@ -563,7 +563,7 @@ caryll_buffer *caryll_build_chaining_classes(otl_Subtable *_subtable) {
 	return bk_build_Block(root);
 }
 
-caryll_buffer *caryll_build_chaining(otl_Subtable *_subtable) {
+caryll_buffer *caryll_build_chaining(const otl_Subtable *_subtable) {
 	if (_subtable->chaining.classified) {
 		return caryll_build_chaining_classes(_subtable);
 	} else {

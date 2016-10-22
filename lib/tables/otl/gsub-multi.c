@@ -45,8 +45,8 @@ FAIL:
 	return NULL;
 }
 
-json_value *otl_gsub_dump_multi(otl_Subtable *_subtable) {
-	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
+json_value *otl_gsub_dump_multi(const otl_Subtable *_subtable) {
+	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	json_value *st = json_object_new(subtable->from->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
 		json_object_push(st, subtable->from->glyphs[j].name, otl_dump_Coverage(subtable->to[j]));
@@ -54,7 +54,7 @@ json_value *otl_gsub_dump_multi(otl_Subtable *_subtable) {
 	return st;
 }
 
-otl_Subtable *otl_gsub_parse_multi(json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gsub_multi *st = &(_st->gsub_multi);
@@ -76,8 +76,8 @@ otl_Subtable *otl_gsub_parse_multi(json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gsub_multi_subtable(otl_Subtable *_subtable) {
-	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
+caryll_buffer *caryll_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
+	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 
 	bk_Block *root = bk_new_Block(b16, 1,                                                         // format
 	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage

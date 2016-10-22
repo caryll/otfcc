@@ -20,9 +20,10 @@ typedef struct {
 	name_record **records;
 } table_name;
 
-table_name *table_read_name(caryll_Packet packet);
 void table_delete_name(table_name *table);
-void table_dump_name(table_name *table, json_value *root, const caryll_Options *options);
-table_name *table_parse_name(json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_name(table_name *name, const caryll_Options *options);
+
+table_name *table_read_name(const caryll_Packet packet);
+void table_dump_name(const table_name *table, json_value *root, const caryll_Options *options);
+table_name *table_parse_name(const json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_name(const table_name *name, const caryll_Options *options);
 #endif

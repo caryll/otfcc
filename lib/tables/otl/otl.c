@@ -328,7 +328,7 @@ table_OTL *table_read_otl(caryll_Packet packet, const caryll_Options *options, u
 
 static const char *lookupFlagsLabels[] = {"rightToLeft", "ignoreBases", "ignoreLigatures", "ignoreMarks", NULL};
 
-static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_value *(*dumper)(otl_Subtable *st),
+static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_value *(*dumper)(const otl_Subtable *st),
                                    otl_Lookup *lookup, json_value *dump) {
 	if (lookup->type == llt) {
 		json_object_push(dump, "type", json_string_new(lt));
@@ -341,7 +341,7 @@ static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_valu
 	}
 }
 
-void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *options, const char *tag) {
+void table_dump_otl(const table_OTL *table, json_value *root, const caryll_Options *options, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
 	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
 
@@ -394,7 +394,7 @@ void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *op
 	json_object_push(root, tag, otl);
 }
 
-static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtable *(*parser)(json_value *),
+static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtable *(*parser)(const json_value *),
                                  json_value *_lookup, char *lookupName, lookup_hash **lh) {
 	json_value *type = json_obj_get_type(_lookup, "type", json_string);
 	if (!type || strcmp(type->u.string.ptr, lt)) return false;
@@ -644,7 +644,7 @@ static int by_feature_name(feature_hash *a, feature_hash *b) {
 static int by_language_name(language_hash *a, language_hash *b) {
 	return strcmp(a->name, b->name);
 }
-table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, const char *tag) {
+table_OTL *table_parse_otl(const json_value *root, const caryll_Options *options, const char *tag) {
 	table_OTL *otl = NULL;
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
@@ -740,7 +740,7 @@ FAIL:
 	return NULL;
 }
 
-static bool _declare_lookup_writer(otl_LookupType type, caryll_buffer *(*fn)(otl_Subtable *_subtable),
+static bool _declare_lookup_writer(otl_LookupType type, caryll_buffer *(*fn)(const otl_Subtable *_subtable),
                                    otl_Lookup *lookup, caryll_buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtables, lookup->subtableCount);
@@ -757,7 +757,7 @@ static bool _declare_lookup_writer(otl_LookupType type, caryll_buffer *(*fn)(otl
 // When writing lookups, otfcc will try to maintain everything correctly.
 // That is, we will use extended layout lookups automatically when the
 // offsets are too large.
-static bk_Block *writeOTLLookups(table_OTL *table, const caryll_Options *options, const char *tag) {
+static bk_Block *writeOTLLookups(const table_OTL *table, const caryll_Options *options, const char *tag) {
 	caryll_buffer ***subtables;
 	NEW_N(subtables, table->lookupCount);
 	bool *lookupWritten;
@@ -827,7 +827,7 @@ static bk_Block *writeOTLLookups(table_OTL *table, const caryll_Options *options
 	return root;
 }
 
-static uint32_t featureNameToTag(sds name) {
+static uint32_t featureNameToTag(const sds name) {
 	uint32_t tag = 0;
 	if (sdslen(name) > 0) {
 		tag |= ((uint8_t)name[0]) << 24;
@@ -851,7 +851,7 @@ static uint32_t featureNameToTag(sds name) {
 	}
 	return tag;
 }
-static bk_Block *writeOTLFeatures(table_OTL *table, const caryll_Options *options) {
+static bk_Block *writeOTLFeatures(const table_OTL *table, const caryll_Options *options) {
 	bk_Block *root = bk_new_Block(b16, table->featureCount, bkover);
 	for (tableid_t j = 0; j < table->featureCount; j++) {
 		bk_Block *fea = bk_new_Block(p16, NULL,                            // FeatureParams
@@ -881,12 +881,12 @@ typedef struct {
 	UT_hash_handle hh;
 } script_stat_hash;
 
-static tableid_t featureIndex(otl_Feature *feature, table_OTL *table) {
+static tableid_t featureIndex(otl_Feature *feature, const table_OTL *table) {
 	for (tableid_t j = 0; j < table->featureCount; j++)
 		if (table->features[j] == feature) { return j; }
 	return 0xFFFF;
 }
-static bk_Block *writeLanguage(otl_LanguageSystem *lang, table_OTL *table) {
+static bk_Block *writeLanguage(otl_LanguageSystem *lang, const table_OTL *table) {
 	if (!lang) return NULL;
 	bk_Block *root = bk_new_Block(p16, NULL,                                       // LookupOrder
 	                              b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
@@ -898,7 +898,7 @@ static bk_Block *writeLanguage(otl_LanguageSystem *lang, table_OTL *table) {
 	return root;
 }
 
-static bk_Block *writeScript(script_stat_hash *script, table_OTL *table) {
+static bk_Block *writeScript(script_stat_hash *script, const table_OTL *table) {
 	bk_Block *root = bk_new_Block(p16, writeLanguage(script->dl, table), // DefaultLangSys
 	                              b16, script->lc,                       // LangSysCount
 	                              bkover);
@@ -912,7 +912,7 @@ static bk_Block *writeScript(script_stat_hash *script, table_OTL *table) {
 	}
 	return root;
 }
-static bk_Block *writeOTLScriptAndLanguages(table_OTL *table, const caryll_Options *options) {
+static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const caryll_Options *options) {
 	script_stat_hash *h = NULL;
 	for (tableid_t j = 0; j < table->languageCount; j++) {
 		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
@@ -959,7 +959,7 @@ static bk_Block *writeOTLScriptAndLanguages(table_OTL *table, const caryll_Optio
 	return root;
 }
 
-caryll_buffer *table_build_otl(table_OTL *table, const caryll_Options *options, const char *tag) {
+caryll_buffer *table_build_otl(const table_OTL *table, const caryll_Options *options, const char *tag) {
 	bk_Block *root = bk_new_Block(b32, 0x10000,                                    // Version
 	                              p16, writeOTLScriptAndLanguages(table, options), // ScriptList
 	                              p16, writeOTLFeatures(table, options),           // FeatureList

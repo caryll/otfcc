@@ -8,7 +8,7 @@ void otl_delete_gpos_single(otl_Subtable *subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_single(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
@@ -46,15 +46,15 @@ OK:
 	return _subtable;
 }
 
-json_value *otl_gpos_dump_single(otl_Subtable *_subtable) {
-	subtable_gpos_single *subtable = &(_subtable->gpos_single);
+json_value *otl_gpos_dump_single(const otl_Subtable *_subtable) {
+	const subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	json_value *st = json_object_new(subtable->coverage->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 		json_object_push(st, subtable->coverage->glyphs[j].name, gpos_dump_value(subtable->values[j]));
 	}
 	return st;
 }
-otl_Subtable *otl_gpos_parse_single(json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_single(const json_value *_subtable) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_single *subtable = &(_st->gpos_single);
@@ -74,8 +74,8 @@ otl_Subtable *otl_gpos_parse_single(json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gpos_single(otl_Subtable *_subtable) {
-	subtable_gpos_single *subtable = &(_subtable->gpos_single);
+caryll_buffer *caryll_build_gpos_single(const otl_Subtable *_subtable) {
+	const subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	bool isConst = subtable->coverage->numGlyphs > 0;
 	uint16_t format = 0;
 	if (subtable->coverage->numGlyphs > 0) {

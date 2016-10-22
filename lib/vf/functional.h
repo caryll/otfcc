@@ -18,7 +18,7 @@ typedef struct vf_Functional {
 		pos_t scalar;
 		struct {
 			shapeid_t arity;
-			struct vf_Functional *cdr;
+			OWNING struct vf_Functional *cdr;
 		};
 	};
 } vf_Functional;

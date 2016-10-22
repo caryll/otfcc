@@ -11,7 +11,7 @@ static bool shouldDecodeAsBytes(const name_record *record) {
 	return record->platformID == 1 && record->encodingID == 0 && record->languageID == 0; // Mac Roman English - I hope
 }
 
-table_name *table_read_name(caryll_Packet packet) {
+table_name *table_read_name(const caryll_Packet packet) {
 	FOR_TABLE('name', table) {
 		table_name *name = NULL;
 		font_file_pointer data = table.data;
@@ -68,7 +68,7 @@ void table_delete_name(table_name *table) {
 	free(table);
 }
 
-void table_dump_name(table_name *table, json_value *root, const caryll_Options *options) {
+void table_dump_name(const table_name *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping name.\n");
 
@@ -93,7 +93,7 @@ static int name_record_sort(const void *_a, const void *_b) {
 	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
 	return (*a)->nameID - (*b)->nameID;
 }
-table_name *table_parse_name(json_value *root, const caryll_Options *options) {
+table_name *table_parse_name(const json_value *root, const caryll_Options *options) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
@@ -148,7 +148,7 @@ table_name *table_parse_name(json_value *root, const caryll_Options *options) {
 	}
 	return name;
 }
-caryll_buffer *table_build_name(table_name *name, const caryll_Options *options) {
+caryll_buffer *table_build_name(const table_name *name, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);

@@ -6,7 +6,11 @@ table_maxp *table_new_maxp() {
 	return maxp;
 }
 
-table_maxp *table_read_maxp(caryll_Packet packet) {
+void table_delete_maxp(MOVE table_maxp *maxp) {
+	FREE(maxp);
+}
+
+table_maxp *table_read_maxp(const caryll_Packet packet) {
 	FOR_TABLE('maxp', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -52,7 +56,7 @@ table_maxp *table_read_maxp(caryll_Packet packet) {
 	return NULL;
 }
 
-void table_dump_maxp(table_maxp *table, json_value *root, const caryll_Options *options) {
+void table_dump_maxp(const table_maxp *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping maxp.\n");
 	json_value *maxp = json_object_new(15);
@@ -75,7 +79,7 @@ void table_dump_maxp(table_maxp *table, json_value *root, const caryll_Options *
 	json_object_push(root, "maxp", maxp);
 }
 
-table_maxp *table_parse_maxp(json_value *root, const caryll_Options *options) {
+table_maxp *table_parse_maxp(const json_value *root, const caryll_Options *options) {
 	table_maxp *maxp = table_new_maxp();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {
@@ -92,7 +96,7 @@ table_maxp *table_parse_maxp(json_value *root, const caryll_Options *options) {
 	return maxp;
 }
 
-caryll_buffer *table_build_maxp(table_maxp *maxp, const caryll_Options *options) {
+caryll_buffer *table_build_maxp(const table_maxp *maxp, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!maxp) return buf;
 	bufwrite32b(buf, maxp->version);

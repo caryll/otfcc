@@ -12,7 +12,7 @@ void otl_delete_gsub_ligature(otl_Subtable *_subtable) {
 	free(subtable);
 }
 
-otl_Subtable *otl_read_gsub_ligature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
@@ -70,8 +70,8 @@ FAIL:
 	return NULL;
 }
 
-json_value *otl_gsub_dump_ligature(otl_Subtable *_subtable) {
-	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
+json_value *otl_gsub_dump_ligature(const otl_Subtable *_subtable) {
+	const subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	json_value *st = json_array_new(subtable->to->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->to->numGlyphs; j++) {
 		json_value *entry = json_object_new(2);
@@ -85,7 +85,7 @@ json_value *otl_gsub_dump_ligature(otl_Subtable *_subtable) {
 	return ret;
 }
 
-otl_Subtable *otl_gsub_parse_ligature(json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable) {
 	otl_Subtable *_st;
 	if (json_obj_get_type(_subtable, "substitutions", json_array)) {
 		_subtable = json_obj_get_type(_subtable, "substitutions", json_array);
@@ -140,8 +140,8 @@ static int by_gid(ligature_aggerator *a, ligature_aggerator *b) {
 	return a->gid - b->gid;
 }
 
-caryll_buffer *caryll_build_gsub_ligature_subtable(otl_Subtable *_subtable) {
-	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
+caryll_buffer *caryll_build_gsub_ligature_subtable(const otl_Subtable *_subtable) {
+	const subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 
 	ligature_aggerator *h = NULL, *s, *tmp;
 	glyphid_t nLigatures = subtable->to->numGlyphs;

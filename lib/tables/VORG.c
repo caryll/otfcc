@@ -1,5 +1,11 @@
 #include "VORG.h"
-table_VORG *table_read_VORG(caryll_Packet packet) {
+
+void table_delete_VORG(table_VORG *vorg) {
+	if (vorg) free(vorg->entries);
+	free(vorg);
+}
+
+table_VORG *table_read_VORG(const caryll_Packet packet) {
 	FOR_TABLE('VORG', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -21,12 +27,7 @@ table_VORG *table_read_VORG(caryll_Packet packet) {
 	return NULL;
 }
 
-void table_delete_VORG(table_VORG *vorg) {
-	if (vorg) free(vorg->entries);
-	free(vorg);
-}
-
-caryll_buffer *table_build_VORG(table_VORG *table, const caryll_Options *options) {
+caryll_buffer *table_build_VORG(const table_VORG *table, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite16b(buf, 1);

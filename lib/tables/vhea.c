@@ -4,7 +4,10 @@ table_vhea *table_new_vhea() {
 	vhea->version = 0x11000;
 	return vhea;
 }
-table_vhea *table_read_vhea(caryll_Packet packet) {
+void table_delete_vhea(MOVE table_vhea *table) {
+	FREE(table);
+}
+table_vhea *table_read_vhea(const caryll_Packet packet) {
 	table_vhea *vhea = NULL;
 	;
 	FOR_TABLE('vhea', table) {
@@ -35,7 +38,7 @@ table_vhea *table_read_vhea(caryll_Packet packet) {
 	}
 	return NULL;
 }
-void table_dump_vhea(table_vhea *table, json_value *root, const caryll_Options *options) {
+void table_dump_vhea(const table_vhea *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
 	if (options->verbose) fprintf(stderr, "Dumping vhea.\n");
@@ -54,7 +57,7 @@ void table_dump_vhea(table_vhea *table, json_value *root, const caryll_Options *
 	json_object_push(root, "vhea", vhea);
 }
 
-table_vhea *table_parse_vhea(json_value *root, const caryll_Options *options) {
+table_vhea *table_parse_vhea(const json_value *root, const caryll_Options *options) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
@@ -76,7 +79,7 @@ table_vhea *table_parse_vhea(json_value *root, const caryll_Options *options) {
 	return vhea;
 }
 
-caryll_buffer *table_build_vhea(table_vhea *vhea, const caryll_Options *options) {
+caryll_buffer *table_build_vhea(const table_vhea *vhea, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vhea) return buf;
 	bufwrite32b(buf, vhea->version);

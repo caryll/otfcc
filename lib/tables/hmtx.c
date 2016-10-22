@@ -1,6 +1,6 @@
 #include "hmtx.h"
 
-table_hmtx *table_read_hmtx(caryll_Packet packet, table_hhea *hhea, table_maxp *maxp) {
+table_hmtx *table_read_hmtx(const caryll_Packet packet, table_hhea *hhea, table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
 	FOR_TABLE('hmtx', table) {
 		font_file_pointer data = table.data;
@@ -40,7 +40,8 @@ void table_delete_hmtx(table_hmtx *table) {
 	free(table);
 }
 
-caryll_buffer *table_build_hmtx(table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k, const caryll_Options *options) {
+caryll_buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
+                                const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!hmtx) return buf;
 	if (hmtx->metrics) {

@@ -39,7 +39,7 @@
 
 #define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
 
-static INLINE json_value *json_obj_get(json_value *obj, const char *key) {
+static INLINE json_value *json_obj_get(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return NULL;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -47,30 +47,31 @@ static INLINE json_value *json_obj_get(json_value *obj, const char *key) {
 	}
 	return NULL;
 }
-static INLINE json_value *json_obj_get_type(json_value *obj, const char *key, json_type type) {
+static INLINE json_value *json_obj_get_type(const json_value *obj, const char *key, const json_type type) {
 	json_value *v = json_obj_get(obj, key);
 	if (v && v->type == type) return v;
 	return NULL;
 }
-static INLINE sds json_obj_getsds(json_value *obj, const char *key) {
+static INLINE sds json_obj_getsds(const json_value *obj, const char *key) {
 	json_value *v = json_obj_get_type(obj, key, json_string);
 	if (!v)
 		return NULL;
 	else
 		return sdsnewlen(v->u.string.ptr, v->u.string.length);
 }
-static INLINE char *json_obj_getstr_share(json_value *obj, const char *key) {
+static INLINE char *json_obj_getstr_share(const json_value *obj, const char *key) {
 	json_value *v = json_obj_get_type(obj, key, json_string);
 	if (!v)
 		return NULL;
 	else
 		return v->u.string.ptr;
 }
-static INLINE double json_numof(json_value *cv) {
+static INLINE double json_numof(const json_value *cv) {
 	if (cv && cv->type == json_integer) return cv->u.integer;
 	if (cv && cv->type == json_double) return cv->u.dbl;
 	return 0;
 }
+
 static INLINE json_value *json_new_position(pos_t z) {
 	if (round(z) == z) {
 		return json_integer_new(z);
@@ -79,7 +80,7 @@ static INLINE json_value *json_new_position(pos_t z) {
 	}
 }
 
-static INLINE double json_obj_getnum(json_value *obj, const char *key) {
+static INLINE double json_obj_getnum(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -91,7 +92,7 @@ static INLINE double json_obj_getnum(json_value *obj, const char *key) {
 	}
 	return 0.0;
 }
-static INLINE int32_t json_obj_getint(json_value *obj, const char *key) {
+static INLINE int32_t json_obj_getint(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -103,7 +104,7 @@ static INLINE int32_t json_obj_getint(json_value *obj, const char *key) {
 	}
 	return 0;
 }
-static INLINE double json_obj_getnum_fallback(json_value *obj, const char *key, double fallback) {
+static INLINE double json_obj_getnum_fallback(const json_value *obj, const char *key, double fallback) {
 	if (!obj || obj->type != json_object) return fallback;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -115,7 +116,7 @@ static INLINE double json_obj_getnum_fallback(json_value *obj, const char *key, 
 	}
 	return fallback;
 }
-static INLINE int32_t json_obj_getint_fallback(json_value *obj, const char *key, int32_t fallback) {
+static INLINE int32_t json_obj_getint_fallback(const json_value *obj, const char *key, int32_t fallback) {
 	if (!obj || obj->type != json_object) return fallback;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -127,11 +128,11 @@ static INLINE int32_t json_obj_getint_fallback(json_value *obj, const char *key,
 	}
 	return fallback;
 }
-static INLINE bool json_boolof(json_value *cv) {
+static INLINE bool json_boolof(const json_value *cv) {
 	if (cv && cv->type == json_boolean) return cv->u.boolean;
 	return false;
 }
-static INLINE bool json_obj_getbool(json_value *obj, const char *key) {
+static INLINE bool json_obj_getbool(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return false;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -142,7 +143,7 @@ static INLINE bool json_obj_getbool(json_value *obj, const char *key) {
 	}
 	return false;
 }
-static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, bool fallback) {
+static INLINE bool json_obj_getbool_fallback(const json_value *obj, const char *key, bool fallback) {
 	if (!obj || obj->type != json_object) return fallback;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
 		char *ck = obj->u.object.values[_k].name;
@@ -154,7 +155,7 @@ static INLINE bool json_obj_getbool_fallback(json_value *obj, const char *key, b
 	return fallback;
 }
 
-static INLINE json_value *json_from_sds(sds str) {
+static INLINE json_value *json_from_sds(const sds str) {
 	return json_string_new_length((uint32_t)sdslen(str), str);
 }
 
@@ -165,7 +166,7 @@ static INLINE json_value *caryll_dump_flags(int flags, const char *labels[]) {
 		if (flags & (1 << j)) { json_object_push(v, labels[j], json_boolean_new(true)); }
 	return v;
 }
-static INLINE uint32_t caryll_parse_flags(json_value *v, const char *labels[]) {
+static INLINE uint32_t caryll_parse_flags(const json_value *v, const char *labels[]) {
 	if (!v) return 0;
 	if (v->type == json_integer) {
 		return (uint32_t)v->u.integer;
@@ -339,7 +340,11 @@ typedef struct _caryll_handle glyph_handle;
 typedef struct _caryll_handle fd_handle;
 typedef struct _caryll_handle lookup_handle;
 
-#define MOVE /*move*/
+#define OWNING /*move*/
+#define MOVE   /*move*/
+#define OBSERVE /*shared*/ const
+#define MODIFY /*modify*/
+#define COPY   /*shared*/
 
 static INLINE json_value *preserialize(MOVE json_value *x) {
 #ifdef CARYLL_USE_PRE_SERIALIZED

@@ -1,6 +1,13 @@
 #include "vmtx.h"
 
-table_vmtx *table_read_vmtx(caryll_Packet packet, table_vhea *vhea, table_maxp *maxp) {
+void table_delete_vmtx(MOVE table_vmtx *table) {
+	if (!table) return;
+	if (table->metrics != NULL) free(table->metrics);
+	if (table->topSideBearing != NULL) free(table->topSideBearing);
+	free(table);
+}
+
+table_vmtx *table_read_vmtx(const caryll_Packet packet, table_vhea *vhea, table_maxp *maxp) {
 	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 || maxp->numGlyphs < vhea->numOfLongVerMetrics) return NULL;
 	FOR_TABLE('vmtx', table) {
 		font_file_pointer data = table.data;
@@ -33,14 +40,8 @@ table_vmtx *table_read_vmtx(caryll_Packet packet, table_vhea *vhea, table_maxp *
 	return NULL;
 }
 
-void table_delete_vmtx(table_vmtx *table) {
-	if (!table) return;
-	if (table->metrics != NULL) free(table->metrics);
-	if (table->topSideBearing != NULL) free(table->topSideBearing);
-	free(table);
-}
-
-caryll_buffer *table_build_vmtx(table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k, const caryll_Options *options) {
+caryll_buffer *table_build_vmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
+                                const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {

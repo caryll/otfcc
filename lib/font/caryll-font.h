@@ -24,7 +24,6 @@ typedef struct _caryll_font caryll_Font;
 #include "tables/CFF.h"
 
 #include "tables/LTSH.h"
-#include "tables/PCLT.h"
 #include "tables/hdmx.h"
 #include "tables/vhea.h"
 #include "tables/vmtx.h"

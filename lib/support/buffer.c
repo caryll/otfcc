@@ -139,7 +139,7 @@ void bufwrite_str(caryll_buffer *buf, const char *str) {
 	memcpy(buf->data + buf->cursor, str, len);
 	buf->cursor += len;
 }
-void bufwrite_bytes(caryll_buffer *buf, size_t len, uint8_t *str) {
+void bufwrite_bytes(caryll_buffer *buf, size_t len, const uint8_t *str) {
 	if (!str) return;
 	if (!len) return;
 	bufbeforewrite(buf, len);

@@ -33,7 +33,7 @@ void bufnwrite8(caryll_buffer *buf, uint32_t n, ...);
 
 void bufwrite_sds(caryll_buffer *buf, sds str);
 void bufwrite_str(caryll_buffer *buf, const char *str);
-void bufwrite_bytes(caryll_buffer *buf, size_t size, uint8_t *str);
+void bufwrite_bytes(caryll_buffer *buf, size_t size, const uint8_t *str);
 void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that);
 void bufwrite_bufdel(caryll_buffer *buf, caryll_buffer *that);
 

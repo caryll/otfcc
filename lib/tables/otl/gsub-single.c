@@ -7,7 +7,7 @@ void otl_delete_gsub_single(otl_Subtable *subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gsub_single(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
+otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
 	otl_Subtable *subtable;
 	NEW(subtable);
 	if (tableLength < subtableOffset + 6) goto FAIL;
@@ -49,8 +49,8 @@ OK:
 	return subtable;
 }
 
-json_value *otl_gsub_dump_single(otl_Subtable *_subtable) {
-	subtable_gsub_single *subtable = &(_subtable->gsub_single);
+json_value *otl_gsub_dump_single(const otl_Subtable *_subtable) {
+	const subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	json_value *st = json_object_new(subtable->from->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs && j < subtable->from->numGlyphs; j++) {
 		json_object_push(st, subtable->from->glyphs[j].name, json_string_new(subtable->to->glyphs[j].name));
@@ -58,7 +58,7 @@ json_value *otl_gsub_dump_single(otl_Subtable *_subtable) {
 	return st;
 }
 
-otl_Subtable *otl_gsub_parse_single(json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_single(const json_value *_subtable) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gsub_single *subtable = &(_st->gsub_single);
@@ -81,8 +81,8 @@ otl_Subtable *otl_gsub_parse_single(json_value *_subtable) {
 	return _st;
 };
 
-caryll_buffer *caryll_build_gsub_single_subtable(otl_Subtable *_subtable) {
-	subtable_gsub_single *subtable = &(_subtable->gsub_single);
+caryll_buffer *caryll_build_gsub_single_subtable(const otl_Subtable *_subtable) {
+	const subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	bool isConstantDifference = true;
 	if (subtable->from->numGlyphs > 1) {
 		int32_t difference = subtable->to->glyphs[0].index - subtable->from->glyphs[0].index;
