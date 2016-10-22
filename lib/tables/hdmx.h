@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_HDMX_H
 #define CARYLL_TABLES_HDMX_H
 
-#include <support/util.h>
-#include <font/caryll-sfnt.h>
+#include "support/util.h"
+#include "font/caryll-sfnt.h"
 
 #include "maxp.h"
 

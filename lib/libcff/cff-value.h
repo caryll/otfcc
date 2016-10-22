@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <support/util.h>
+#include "support/util.h"
 
 typedef enum {
 	cff_OPERATOR = 1,

@@ -1,6 +1,6 @@
 #ifndef CARYLL_FONTOPS_CONSOLIDATE_H
 #define CARYLL_FONTOPS_CONSOLIDATE_H
-#include <font/caryll-font.h>
+#include "font/caryll-font.h"
 
 #include "otl/gsub-single.h"
 #include "otl/gsub-multi.h"

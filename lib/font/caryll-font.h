@@ -1,34 +1,34 @@
 #ifndef CARYLL_FONT_H
 #define CARYLL_FONT_H
 #include "caryll-sfnt.h"
-#include <support/util.h>
+#include "support/util.h"
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_Font;
 
-#include <support/glyph-order.h>
+#include "support/glyph-order.h"
 
-#include <tables/OS_2.h>
-#include <tables/cmap.h>
-#include <tables/cvt.h>
-#include <tables/fpgm-prep.h>
-#include <tables/gasp.h>
-#include <tables/glyf.h>
-#include <tables/head.h>
-#include <tables/hhea.h>
-#include <tables/hmtx.h>
-#include <tables/maxp.h>
-#include <tables/name.h>
-#include <tables/post.h>
+#include "tables/OS_2.h"
+#include "tables/cmap.h"
+#include "tables/cvt.h"
+#include "tables/fpgm-prep.h"
+#include "tables/gasp.h"
+#include "tables/glyf.h"
+#include "tables/head.h"
+#include "tables/hhea.h"
+#include "tables/hmtx.h"
+#include "tables/maxp.h"
+#include "tables/name.h"
+#include "tables/post.h"
 
-#include <tables/CFF.h>
+#include "tables/CFF.h"
 
-#include <tables/LTSH.h>
-#include <tables/PCLT.h>
-#include <tables/hdmx.h>
-#include <tables/vhea.h>
-#include <tables/vmtx.h>
-#include <tables/VORG.h>
+#include "tables/LTSH.h"
+#include "tables/PCLT.h"
+#include "tables/hdmx.h"
+#include "tables/vhea.h"
+#include "tables/vmtx.h"
+#include "tables/VORG.h"
 
 #include <tables/otl/GDEF.h>
 #include <tables/otl/BASE.h>

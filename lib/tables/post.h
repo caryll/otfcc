@@ -1,9 +1,9 @@
 #ifndef CARYLL_TABLES_POST_H
 #define CARYLL_TABLES_POST_H
 
-#include <support/util.h>
-#include <font/caryll-sfnt.h>
-#include <support/glyph-order.h>
+#include "support/util.h"
+#include "font/caryll-sfnt.h"
+#include "support/glyph-order.h"
 
 typedef struct {
 	// PostScript information

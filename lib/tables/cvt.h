@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_CVT_H
 #define CARYLL_TABLES_CVT_H
 
-#include <font/caryll-sfnt.h>
-#include <support/util.h>
+#include "font/caryll-sfnt.h"
+#include "support/util.h"
 
 typedef struct {
 	uint32_t length;

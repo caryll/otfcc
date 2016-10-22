@@ -1,10 +1,10 @@
 #ifndef CARYLL_TABLES_GLYF_H
 #define CARYLL_TABLES_GLYF_H
 
-#include <font/caryll-sfnt.h>
-#include <support/glyph-order.h>
-#include <support/ttinstr.h>
-#include <support/util.h>
+#include "font/caryll-sfnt.h"
+#include "support/glyph-order.h"
+#include "support/ttinstr.h"
+#include "support/util.h"
 
 #include "head.h"
 #include "maxp.h"

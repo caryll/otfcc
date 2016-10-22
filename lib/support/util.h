@@ -19,10 +19,10 @@
 #include "buffer.h"
 #include "options.h"
 #include "json-ident.h"
-#include <extern/json-builder.h>
-#include <extern/json.h>
-#include <extern/sds.h>
-#include <extern/uthash.h>
+#include "extern/json-builder.h"
+#include "extern/json.h"
+#include "extern/sds.h"
+#include "extern/uthash.h"
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */

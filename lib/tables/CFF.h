@@ -3,11 +3,11 @@
 
 #include <math.h>
 #include <stdarg.h>
-#include <support/util.h>
-#include <libcff/libcff.h>
-#include <libcff/charstring-il.h>
-#include <libcff/subr.h>
-#include <font/caryll-sfnt.h>
+#include "support/util.h"
+#include "libcff/libcff.h"
+#include "libcff/charstring-il.h"
+#include "libcff/subr.h"
+#include "font/caryll-sfnt.h"
 #include "glyf.h"
 
 // The result of parsing CFF table contains both CFF metadata and glyph outline.

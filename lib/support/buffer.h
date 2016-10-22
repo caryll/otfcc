@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
-#include <extern/sds.h>
+#include "extern/sds.h"
 typedef struct {
 	size_t cursor;
 	size_t size;
