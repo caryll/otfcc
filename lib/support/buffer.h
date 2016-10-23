@@ -42,6 +42,8 @@ void bufping16bd(caryll_buffer *buf, size_t *offset, size_t *shift, size_t *cp);
 void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, size_t *cp);
 void bufpong(caryll_buffer *buf, size_t *offset, size_t *cp);
 
+void bufprint(caryll_buffer *buf);
+
 void buflongalign(caryll_buffer *buf);
 
 #endif

@@ -209,3 +209,12 @@ void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, siz
 	*offset = buf->cursor;
 	bufseek(buf, *cp);
 }
+
+void bufprint(caryll_buffer *buf) {
+	for (size_t j = 0; j < buf->size; j++) {
+		if (j % 16) fprintf(stderr, " ");
+		fprintf(stderr, "%02X", buf->data[j]);
+		if (j % 16 == 15) fprintf(stderr, "\n");
+	}
+	fprintf(stderr, "\n");
+}

@@ -210,9 +210,11 @@ caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	glyphid_t endGID = startGID;
 	glyphclass_t lastClass = r[0].cid;
 	glyphid_t nRanges = 0;
+	glyphid_t lastGID = startGID;
 	caryll_buffer *ranges = bufnew();
 	for (glyphid_t j = 1; j < jj; j++) {
 		glyphid_t current = r[j].gid;
+		if (current <= lastGID) continue;
 		if (current == endGID + 1 && r[j].cid == lastClass) {
 			endGID = current;
 		} else {
