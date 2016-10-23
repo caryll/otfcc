@@ -2,7 +2,7 @@
 #define CARYLL_cff_CHARSTRING_IL
 
 #include "libcff.h"
-#include <tables/glyf.h>
+#include "tables/glyf.h"
 
 typedef enum {
 	IL_ITEM_OPERAND,

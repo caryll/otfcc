@@ -83,7 +83,7 @@ static int by_unicode(cmap_Entry *a, cmap_Entry *b) {
 }
 
 // OTFCC will not support all `cmap` mappings.
-table_cmap *table_read_cmap(caryll_Packet packet) {
+table_cmap *table_read_cmap(const caryll_Packet packet) {
 	// the map is a reference to a hash table
 	table_cmap *map = NULL;
 	FOR_TABLE('cmap', table) {
@@ -125,7 +125,7 @@ void table_delete_cmap(table_cmap *table) {
 	free(table);
 }
 
-void table_dump_cmap(table_cmap *table, json_value *root, const caryll_Options *options) {
+void table_dump_cmap(const table_cmap *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping cmap.\n");
 
@@ -140,7 +140,7 @@ void table_dump_cmap(table_cmap *table, json_value *root, const caryll_Options *
 	json_object_push(root, "cmap", cmap);
 }
 
-table_cmap *table_parse_cmap(json_value *root, const caryll_Options *options) {
+table_cmap *table_parse_cmap(const json_value *root, const caryll_Options *options) {
 	if (root->type != json_object) return NULL;
 	table_cmap hash = NULL;
 	json_value *table = NULL;
@@ -177,7 +177,7 @@ table_cmap *table_parse_cmap(json_value *root, const caryll_Options *options) {
 		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                                        \
 	}                                                                                                                  \
 	segmentsCount += 1;
-caryll_buffer *table_build_cmap_format4(table_cmap *cmap) {
+caryll_buffer *table_build_cmap_format4(const table_cmap *cmap) {
 	caryll_buffer *buf = bufnew();
 	caryll_buffer *endCount = bufnew();
 	caryll_buffer *startCount = bufnew();
@@ -276,7 +276,7 @@ caryll_buffer *table_build_cmap_format4(table_cmap *cmap) {
 	buffree(glyphIdArray);
 	return buf;
 }
-caryll_buffer *table_build_cmap_format12(table_cmap *cmap) {
+caryll_buffer *table_build_cmap_format12(const table_cmap *cmap) {
 	caryll_buffer *buf = bufnew();
 	bufwrite16b(buf, 12);
 	bufwrite16b(buf, 0);
@@ -319,7 +319,7 @@ caryll_buffer *table_build_cmap_format12(table_cmap *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_buffer *table_build_cmap(table_cmap *cmap, const caryll_Options *options) {
+caryll_buffer *table_build_cmap(const table_cmap *cmap, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 

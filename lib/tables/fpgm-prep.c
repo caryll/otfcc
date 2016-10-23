@@ -1,6 +1,6 @@
 #include "fpgm-prep.h"
 
-table_fpgm_prep *table_read_fpgm_prep(caryll_Packet packet, uint32_t tag) {
+table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, uint32_t tag) {
 	table_fpgm_prep *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
@@ -26,7 +26,8 @@ void table_delete_fpgm_prep(table_fpgm_prep *table) {
 	free(table);
 }
 
-void table_fpgm_dump_prep(table_fpgm_prep *table, json_value *root, const caryll_Options *options, const char *tag) {
+void table_fpgm_dump_prep(const table_fpgm_prep *table, json_value *root, const caryll_Options *options,
+                          const char *tag) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
 
@@ -43,7 +44,7 @@ void wrongFpgmPrepInstr(void *_t, char *reason, int pos) {
 	fprintf(stderr, "[OTFCC] TrueType instructions parse error : %s, at %d in /%s\n", reason, pos, t->tag);
 }
 
-table_fpgm_prep *table_fpgm_parse_prep(json_value *root, const caryll_Options *options, const char *tag) {
+table_fpgm_prep *table_fpgm_parse_prep(const json_value *root, const caryll_Options *options, const char *tag) {
 	table_fpgm_prep *t = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get(root, tag))) {
@@ -55,7 +56,7 @@ table_fpgm_prep *table_fpgm_parse_prep(json_value *root, const caryll_Options *o
 	return t;
 }
 
-caryll_buffer *table_build_fpgm_prep(table_fpgm_prep *table, const caryll_Options *options) {
+caryll_buffer *table_build_fpgm_prep(const table_fpgm_prep *table, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite_bytes(buf, table->length, table->bytes);

@@ -9,7 +9,7 @@ void otl_delete_gpos_cursive(otl_Subtable *subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_cursive(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
@@ -45,8 +45,8 @@ OK:
 	return _subtable;
 }
 
-json_value *otl_gpos_dump_cursive(otl_Subtable *_subtable) {
-	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
+json_value *otl_gpos_dump_cursive(const otl_Subtable *_subtable) {
+	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 	json_value *st = json_object_new(subtable->coverage->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 		json_value *rec = json_object_new(2);
@@ -57,7 +57,7 @@ json_value *otl_gpos_dump_cursive(otl_Subtable *_subtable) {
 	return st;
 }
 
-otl_Subtable *otl_gpos_parse_cursive(json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_cursive *subtable = &(_st->gpos_cursive);
@@ -79,19 +79,18 @@ otl_Subtable *otl_gpos_parse_cursive(json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gpos_cursive(otl_Subtable *_subtable) {
-	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
+caryll_buffer *caryll_build_gpos_cursive(const otl_Subtable *_subtable) {
+	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 
-	bk_Block *root =
-	    bk_new_Block(b16, 1,                                                                  // format
-	                p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
-	                b16, subtable->coverage->numGlyphs,                                      // EntryExitCount
-	                bkover);
+	bk_Block *root = bk_new_Block(b16, 1,                                                             // format
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
+	                              b16, subtable->coverage->numGlyphs,                                 // EntryExitCount
+	                              bkover);
 	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 		bk_push(root,                                  // EntryExitRecord[.]
-		             p16, bkFromAnchor(subtable->enter[j]), // enter
-		             p16, bkFromAnchor(subtable->exit[j]),  // exit
-		             bkover);
+		        p16, bkFromAnchor(subtable->enter[j]), // enter
+		        p16, bkFromAnchor(subtable->exit[j]),  // exit
+		        bkover);
 	}
 
 	return bk_build_Block(root);

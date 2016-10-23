@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_HEAD_H
 #define CARYLL_TABLES_HEAD_H
 
-#include <support/util.h>
-#include <font/caryll-sfnt.h>
+#include "support/util.h"
+#include "font/caryll-sfnt.h"
 
 typedef struct {
 	// Font header
@@ -26,9 +26,9 @@ typedef struct {
 } table_head;
 
 table_head *table_new_head();
-table_head *table_read_head(caryll_Packet packet);
-void table_dump_head(table_head *table, json_value *root, const caryll_Options *options);
-table_head *table_parse_head(json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_head(table_head *head, const caryll_Options *options);
+table_head *table_read_head(const caryll_Packet packet);
+void table_dump_head(const table_head *table, json_value *root, const caryll_Options *options);
+table_head *table_parse_head(const json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_head(const table_head *head, const caryll_Options *options);
 
 #endif

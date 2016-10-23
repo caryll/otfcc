@@ -23,7 +23,7 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_ClassDef *otl_read_ClassDef(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_ClassDef *otl_read_ClassDef(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = 0;
@@ -142,7 +142,7 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 	return cd;
 }
 
-json_value *otl_dump_ClassDef(otl_ClassDef *cd) {
+json_value *otl_dump_ClassDef(const otl_ClassDef *cd) {
 	json_value *a = json_object_new(cd->numGlyphs);
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		json_object_push(a, cd->glyphs[j].name, json_integer_new(cd->classes[j]));
@@ -150,7 +150,7 @@ json_value *otl_dump_ClassDef(otl_ClassDef *cd) {
 	return preserialize(a);
 }
 
-otl_ClassDef *otl_parse_ClassDef(json_value *_cd) {
+otl_ClassDef *otl_parse_ClassDef(const json_value *_cd) {
 	if (!_cd || _cd->type != json_object) return NULL;
 	otl_ClassDef *cd;
 	NEW(cd);
@@ -181,7 +181,7 @@ typedef struct {
 static int by_gid(const void *a, const void *b) {
 	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
 }
-caryll_buffer *otl_build_ClassDef(otl_ClassDef *cd) {
+caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	caryll_buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
 	if (!cd->numGlyphs) { // no glyphs, return a blank classdef
@@ -210,9 +210,11 @@ caryll_buffer *otl_build_ClassDef(otl_ClassDef *cd) {
 	glyphid_t endGID = startGID;
 	glyphclass_t lastClass = r[0].cid;
 	glyphid_t nRanges = 0;
+	glyphid_t lastGID = startGID;
 	caryll_buffer *ranges = bufnew();
 	for (glyphid_t j = 1; j < jj; j++) {
 		glyphid_t current = r[j].gid;
+		if (current <= lastGID) continue;
 		if (current == endGID + 1 && r[j].cid == lastClass) {
 			endGID = current;
 		} else {

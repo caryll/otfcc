@@ -22,7 +22,7 @@ table_GDEF *table_new_GDEF() {
 	return gdef;
 }
 
-static otl_CaretValue readCaretValue(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+static otl_CaretValue readCaretValue(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_CaretValue v;
 	v.format = 0;
 	v.coordiante = 0;
@@ -38,7 +38,7 @@ static otl_CaretValue readCaretValue(font_file_pointer data, uint32_t tableLengt
 FAIL:
 	return v;
 }
-static otl_CaretValueRecord readLigCaretRecord(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+static otl_CaretValueRecord readLigCaretRecord(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	checkLength(offset + 2);
 	otl_CaretValueRecord g;
 	g.values = NULL;
@@ -55,7 +55,7 @@ FAIL:
 	return g;
 }
 
-table_GDEF *table_read_GDEF(caryll_Packet packet) {
+table_GDEF *table_read_GDEF(const caryll_Packet packet) {
 	table_GDEF *gdef = NULL;
 	FOR_TABLE('GDEF', table) {
 		font_file_pointer data = table.data;
@@ -97,7 +97,7 @@ table_GDEF *table_read_GDEF(caryll_Packet packet) {
 	return gdef;
 }
 
-void table_dump_GDEF(table_GDEF *gdef, json_value *root, const caryll_Options *options) {
+void table_dump_GDEF(const table_GDEF *gdef, json_value *root, const caryll_Options *options) {
 	if (!gdef) return;
 	if (options->verbose) fprintf(stderr, "Dumping GDEF.\n");
 
@@ -128,7 +128,7 @@ void table_dump_GDEF(table_GDEF *gdef, json_value *root, const caryll_Options *o
 	json_object_push(root, "GDEF", _gdef);
 }
 
-static otl_LigCaretTable *ligCaretFromJson(json_value *_carets) {
+static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
 	if (!_carets || _carets->type != json_object) return NULL;
 	otl_LigCaretTable *lc;
 	NEW(lc);
@@ -165,7 +165,7 @@ static otl_LigCaretTable *ligCaretFromJson(json_value *_carets) {
 	return lc;
 }
 
-table_GDEF *table_parse_GDEF(json_value *root, const caryll_Options *options) {
+table_GDEF *table_parse_GDEF(const json_value *root, const caryll_Options *options) {
 	table_GDEF *gdef = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
@@ -202,7 +202,7 @@ static bk_Block *writeLigCarets(otl_LigCaretTable *lc) {
 	return lct;
 }
 
-caryll_buffer *table_build_GDEF(table_GDEF *gdef, const caryll_Options *options) {
+caryll_buffer *table_build_GDEF(const table_GDEF *gdef, const caryll_Options *options) {
 	bk_Block *bGlyphClassDef = NULL;
 	bk_Block *bAttachList = NULL;
 	bk_Block *bLigCaretList = NULL;

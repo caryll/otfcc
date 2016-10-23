@@ -1,6 +1,6 @@
 #ifndef CARYLL_FONTOPS_OTL_COMMON_H
 #define CARYLL_FONTOPS_OTL_COMMON_H
-#include <font/caryll-font.h>
+#include "font/caryll-font.h"
 
 void fontop_consolidateCoverage(caryll_Font *font, otl_Coverage *coverage, sds lookupName);
 void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort);

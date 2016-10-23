@@ -29,7 +29,7 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_markToLigature(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
@@ -84,8 +84,8 @@ OK:
 	return _subtable;
 }
 
-json_value *otl_gpos_dump_markToLigature(otl_Subtable *st) {
-	subtable_gpos_markToLigature *subtable = &(st->gpos_markToLigature);
+json_value *otl_gpos_dump_markToLigature(const otl_Subtable *st) {
+	const subtable_gpos_markToLigature *subtable = &(st->gpos_markToLigature);
 	json_value *_subtable = json_object_new(3);
 	json_value *_marks = json_object_new(subtable->marks->numGlyphs);
 	json_value *_bases = json_object_new(subtable->bases->numGlyphs);
@@ -205,7 +205,7 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 		}
 	}
 }
-otl_Subtable *otl_gpos_parse_markToLigature(json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
@@ -226,8 +226,8 @@ otl_Subtable *otl_gpos_parse_markToLigature(json_value *_subtable) {
 	return st;
 }
 
-caryll_buffer *caryll_build_gpos_markToLigature(otl_Subtable *_subtable) {
-	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
+caryll_buffer *caryll_build_gpos_markToLigature(const otl_Subtable *_subtable) {
+	const subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	bk_Block *root = bk_new_Block(b16, 1,                                                          // format
 	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage
 	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->bases)), // baseCoverage

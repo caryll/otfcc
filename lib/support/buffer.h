@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
-#include <extern/sds.h>
+#include "extern/sds.h"
 typedef struct {
 	size_t cursor;
 	size_t size;
@@ -33,7 +33,7 @@ void bufnwrite8(caryll_buffer *buf, uint32_t n, ...);
 
 void bufwrite_sds(caryll_buffer *buf, sds str);
 void bufwrite_str(caryll_buffer *buf, const char *str);
-void bufwrite_bytes(caryll_buffer *buf, size_t size, uint8_t *str);
+void bufwrite_bytes(caryll_buffer *buf, size_t size, const uint8_t *str);
 void bufwrite_buf(caryll_buffer *buf, caryll_buffer *that);
 void bufwrite_bufdel(caryll_buffer *buf, caryll_buffer *that);
 
@@ -41,6 +41,8 @@ void bufping16b(caryll_buffer *buf, size_t *offset, size_t *cp);
 void bufping16bd(caryll_buffer *buf, size_t *offset, size_t *shift, size_t *cp);
 void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, size_t *cp);
 void bufpong(caryll_buffer *buf, size_t *offset, size_t *cp);
+
+void bufprint(caryll_buffer *buf);
 
 void buflongalign(caryll_buffer *buf);
 

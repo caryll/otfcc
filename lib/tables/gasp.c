@@ -18,7 +18,7 @@ void table_delete_gasp(table_gasp *table) {
 	if (table->records) free(table->records);
 	free(table);
 }
-table_gasp *table_read_gasp(caryll_Packet packet) {
+table_gasp *table_read_gasp(const caryll_Packet packet) {
 	table_gasp *gasp = NULL;
 	FOR_TABLE('gasp', table) {
 		font_file_pointer data = table.data;
@@ -49,7 +49,7 @@ table_gasp *table_read_gasp(caryll_Packet packet) {
 	}
 	return NULL;
 }
-void table_dump_gasp(table_gasp *table, json_value *root, const caryll_Options *options) {
+void table_dump_gasp(const table_gasp *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping gasp.\n");
 
@@ -66,7 +66,7 @@ void table_dump_gasp(table_gasp *table, json_value *root, const caryll_Options *
 	json_object_push(root, "gasp", t);
 }
 
-table_gasp *table_parse_gasp(json_value *root, const caryll_Options *options) {
+table_gasp *table_parse_gasp(const json_value *root, const caryll_Options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
@@ -92,7 +92,7 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *table_build_gasp(table_gasp *gasp, const caryll_Options *options) {
+caryll_buffer *table_build_gasp(const table_gasp *gasp, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);

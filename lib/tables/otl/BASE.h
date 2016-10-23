@@ -25,10 +25,10 @@ typedef struct {
 	otl_BaseAxis *vertical;
 } table_BASE;
 
-void table_delete_BASE(table_BASE *base);
-table_BASE *table_read_BASE(caryll_Packet packet);
-void table_dump_BASE(table_BASE *base, json_value *root, const caryll_Options *options);
-table_BASE *table_parse_BASE(json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_BASE(table_BASE *base, const caryll_Options *options);
+void table_delete_BASE(MOVE table_BASE *base);
+table_BASE *table_read_BASE(const caryll_Packet packet);
+void table_dump_BASE(const table_BASE *base, json_value *root, const caryll_Options *options);
+table_BASE *table_parse_BASE(const json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_BASE(const table_BASE *base, const caryll_Options *options);
 
 #endif

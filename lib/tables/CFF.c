@@ -399,6 +399,28 @@ static double callback_draw_getrand(void *_context) {
 	return a.d - q;
 }
 
+static cff_IOutlineBuilder conutContourPass = {.setWidth = NULL,
+                                               .newContour = callback_count_contour,
+                                               .lineTo = NULL,
+                                               .curveTo = NULL,
+                                               .setHint = NULL,
+                                               .setMask = NULL,
+                                               .getrand = NULL};
+static cff_IOutlineBuilder contourPointPass = {.setWidth = NULL,
+                                               .newContour = callback_countpoint_next_contour,
+                                               .lineTo = callback_countpoint_lineto,
+                                               .curveTo = callback_countpoint_curveto,
+                                               .setHint = callback_countpoint_sethint,
+                                               .setMask = callback_countpoint_setmask,
+                                               .getrand = NULL};
+static cff_IOutlineBuilder drawPass = {.setWidth = callback_draw_setwidth,
+                                       .newContour = callback_draw_next_contour,
+                                       .lineTo = callback_draw_lineto,
+                                       .curveTo = callback_draw_curveto,
+                                       .setHint = callback_draw_sethint,
+                                       .setMask = callback_draw_setmask,
+                                       .getrand = callback_draw_getrand};
+
 static void buildOutline(glyphid_t i, cff_extract_context *context) {
 	cff_File *f = context->cffFile;
 	glyf_Glyph *g = table_new_glyf_glyph();
@@ -413,17 +435,6 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 	stack.stem = 0;
 
 	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0};
-	cff_IOutlineBuilder pass1 = {NULL, callback_count_contour, NULL, NULL, NULL, NULL, NULL};
-	cff_IOutlineBuilder pass2 = {NULL,
-	                             callback_countpoint_next_contour,
-	                             callback_countpoint_lineto,
-	                             callback_countpoint_curveto,
-	                             callback_countpoint_sethint,
-	                             callback_countpoint_setmask,
-	                             NULL};
-	cff_IOutlineBuilder pass3 = {callback_draw_setwidth, callback_draw_next_contour, callback_draw_lineto,
-	                             callback_draw_curveto,  callback_draw_sethint,      callback_draw_setmask,
-	                             callback_draw_getrand};
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != cff_FDSELECT_UNSPECED)
@@ -446,14 +457,14 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 
 	// PASS 1 : Count contours
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, pass1);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass);
 	NEW_N(g->contours, g->numberOfContours);
 
 	// PASS 2 : Count points
 	stack.index = 0;
 	stack.stem = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, pass2);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass);
 	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
 		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
 	}
@@ -468,7 +479,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, pass3);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass);
 	g->numberOfContourMasks = bc.definedContourMasks;
 	g->numberOfHintMasks = bc.definedHintMasks;
 
@@ -550,7 +561,7 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 	}
 }
 
-table_CFFAndGlyf table_read_cff_and_glyf(caryll_Packet packet) {
+table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet) {
 	table_CFFAndGlyf ret;
 	ret.meta = NULL;
 	ret.glyphs = NULL;
@@ -622,7 +633,7 @@ static void pdDeltaToJson(json_value *target, const char *field, arity_t count, 
 	json_object_push(target, field, a);
 }
 
-static json_value *pdToJson(cff_PrivateDict *pd) {
+static json_value *pdToJson(const cff_PrivateDict *pd) {
 	json_value *_pd = json_object_new(24);
 	pdDeltaToJson(_pd, "blueValues", pd->blueValuesCount, pd->blueValues);
 	pdDeltaToJson(_pd, "otherBlues", pd->otherBluesCount, pd->otherBlues);
@@ -644,7 +655,7 @@ static json_value *pdToJson(cff_PrivateDict *pd) {
 	if (pd->nominalWidthX) json_object_push(_pd, "nominalWidthX", json_double_new(pd->nominalWidthX));
 	return _pd;
 }
-static json_value *fdToJson(table_CFF *table) {
+static json_value *fdToJson(const table_CFF *table) {
 	json_value *_CFF_ = json_object_new(24);
 
 	if (table->isCID) json_object_push(_CFF_, "isCID", json_boolean_new(table->isCID));
@@ -699,7 +710,7 @@ static json_value *fdToJson(table_CFF *table) {
 	return _CFF_;
 }
 
-void table_dump_cff(table_CFF *table, json_value *root, const caryll_Options *options) {
+void table_dump_cff(const table_CFF *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
 
@@ -1320,6 +1331,6 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	return blob;
 }
 
-caryll_buffer *table_build_CFF(table_CFFAndGlyf cffAndGlyf, const caryll_Options *options) {
+caryll_buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const caryll_Options *options) {
 	return writecff_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }

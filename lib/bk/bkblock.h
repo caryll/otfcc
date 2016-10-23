@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <support/buffer.h>
+#include "support/buffer.h"
 
 struct __caryll_bkblock;
 typedef enum {

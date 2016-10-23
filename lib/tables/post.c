@@ -8,7 +8,12 @@ table_post *table_new_post() {
 	post->version = 0x30000;
 	return post;
 }
-table_post *table_read_post(caryll_Packet packet) {
+void table_delete_post(MOVE table_post *table) {
+	if (table->post_name_map != NULL) { caryll_delete_GlyphOrder(table->post_name_map); }
+	free(table);
+}
+
+table_post *table_read_post(const caryll_Packet packet) {
 	FOR_TABLE('post', table) {
 		font_file_pointer data = table.data;
 
@@ -62,12 +67,7 @@ table_post *table_read_post(caryll_Packet packet) {
 	return NULL;
 }
 
-void table_delete_post(table_post *table) {
-	if (table->post_name_map != NULL) { caryll_delete_GlyphOrder(table->post_name_map); }
-	free(table);
-}
-
-void table_dump_post(table_post *table, json_value *root, const caryll_Options *options) {
+void table_dump_post(const table_post *table, json_value *root, const caryll_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping post.\n");
 
@@ -83,7 +83,7 @@ void table_dump_post(table_post *table, json_value *root, const caryll_Options *
 	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
 	json_object_push(root, "post", post);
 }
-table_post *table_parse_post(json_value *root, const caryll_Options *options) {
+table_post *table_parse_post(const json_value *root, const caryll_Options *options) {
 	table_post *post = table_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
@@ -104,7 +104,7 @@ table_post *table_parse_post(json_value *root, const caryll_Options *options) {
 	}
 	return post;
 }
-caryll_buffer *table_build_post(table_post *post, caryll_GlyphOrder *glyphorder, const caryll_Options *options) {
+caryll_buffer *table_build_post(const table_post *post, caryll_GlyphOrder *glyphorder, const caryll_Options *options) {
 	caryll_buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);

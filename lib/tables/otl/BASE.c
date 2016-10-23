@@ -1,6 +1,6 @@
 #include "BASE.h"
 
-static void deleteBaseAxis(otl_BaseAxis *axis) {
+static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {
 	if (!axis) return;
 	if (axis->entries) {
 		for (tableid_t j = 0; j < axis->scriptCount; j++) {
@@ -10,7 +10,7 @@ static void deleteBaseAxis(otl_BaseAxis *axis) {
 	}
 }
 
-void table_delete_BASE(table_BASE *base) {
+void table_delete_BASE(MOVE table_BASE *base) {
 	deleteBaseAxis(base->horizontal);
 	deleteBaseAxis(base->vertical);
 }
@@ -22,8 +22,8 @@ FAIL:
 	return 0;
 }
 
-static void readBaseScript(font_file_pointer data, uint32_t tableLength, uint16_t offset, otl_BaseScriptEntry *entry,
-                           uint32_t *baseTagList, uint16_t nBaseTags) {
+static void readBaseScript(const font_file_pointer data, uint32_t tableLength, uint16_t offset,
+                           otl_BaseScriptEntry *entry, uint32_t *baseTagList, uint16_t nBaseTags) {
 	entry->baseValuesCount = 0;
 	entry->baseValues = NULL;
 	entry->defaultBaselineTag = 0;
@@ -102,7 +102,7 @@ FAIL:
 	return axis;
 }
 
-table_BASE *table_read_BASE(caryll_Packet packet) {
+table_BASE *table_read_BASE(const caryll_Packet packet) {
 	table_BASE *base = NULL;
 	FOR_TABLE('BASE', table) {
 		font_file_pointer data = table.data;
@@ -120,7 +120,7 @@ table_BASE *table_read_BASE(caryll_Packet packet) {
 	return base;
 }
 
-static json_value *axisToJson(otl_BaseAxis *axis) {
+static json_value *axisToJson(const otl_BaseAxis *axis) {
 	json_value *_axis = json_object_new(axis->scriptCount);
 	for (tableid_t j = 0; j < axis->scriptCount; j++) {
 		if (!axis->entries[j].tag) continue;
@@ -141,7 +141,7 @@ static json_value *axisToJson(otl_BaseAxis *axis) {
 	return _axis;
 }
 
-void table_dump_BASE(table_BASE *base, json_value *root, const caryll_Options *options) {
+void table_dump_BASE(const table_BASE *base, json_value *root, const caryll_Options *options) {
 	if (!base) return;
 	if (options->verbose) fprintf(stderr, "Dumping BASE.\n");
 	json_value *_base = json_object_new(2);
@@ -150,7 +150,7 @@ void table_dump_BASE(table_BASE *base, json_value *root, const caryll_Options *o
 	json_object_push(root, "BASE", _base);
 }
 
-static void baseScriptFromJson(json_value *_sr, otl_BaseScriptEntry *entry) {
+static void baseScriptFromJson(const json_value *_sr, otl_BaseScriptEntry *entry) {
 	entry->defaultBaselineTag = str2tag(json_obj_getstr_share(_sr, "defaultBaseline"));
 	json_value *_basevalues = json_obj_get_type(_sr, "baselines", json_object);
 	if (!_basevalues) {
@@ -166,7 +166,7 @@ static void baseScriptFromJson(json_value *_sr, otl_BaseScriptEntry *entry) {
 	}
 }
 
-static otl_BaseAxis *axisFromJson(json_value *_axis) {
+static otl_BaseAxis *axisFromJson(const json_value *_axis) {
 	if (!_axis) return NULL;
 	otl_BaseAxis *axis;
 	NEW(axis);
@@ -184,7 +184,7 @@ static otl_BaseAxis *axisFromJson(json_value *_axis) {
 	return axis;
 }
 
-table_BASE *table_parse_BASE(json_value *root, const caryll_Options *options) {
+table_BASE *table_parse_BASE(const json_value *root, const caryll_Options *options) {
 	table_BASE *base = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "BASE", json_object))) {
@@ -196,7 +196,7 @@ table_BASE *table_parse_BASE(json_value *root, const caryll_Options *options) {
 	return base;
 }
 
-bk_Block *axisToBk(otl_BaseAxis *axis) {
+bk_Block *axisToBk(const otl_BaseAxis *axis) {
 	if (!axis) return NULL;
 	struct {
 		tableid_t size;
@@ -301,7 +301,7 @@ bk_Block *axisToBk(otl_BaseAxis *axis) {
 	                    bkover);
 }
 
-caryll_buffer *table_build_BASE(table_BASE *base, const caryll_Options *options) {
+caryll_buffer *table_build_BASE(const table_BASE *base, const caryll_Options *options) {
 	bk_Block *root = bk_new_Block(b32, 0x10000,                    // Version
 	                              p16, axisToBk(base->horizontal), // HorizAxis
 	                              p16, axisToBk(base->vertical),   // VertAxis

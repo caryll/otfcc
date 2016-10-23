@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_HHEA_H
 #define CARYLL_TABLES_HHEA_H
 
-#include <support/util.h>
-#include <font/caryll-sfnt.h>
+#include "support/util.h"
+#include "font/caryll-sfnt.h"
 
 typedef struct {
 	// Horizontal header
@@ -23,9 +23,9 @@ typedef struct {
 } table_hhea;
 
 table_hhea *table_new_hhea();
-table_hhea *table_read_hhea(caryll_Packet packet);
-void table_dump_hhea(table_hhea *table, json_value *root, const caryll_Options *options);
-table_hhea *table_parse_hhea(json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_hhea(table_hhea *hhea, const caryll_Options *options);
+table_hhea *table_read_hhea(const caryll_Packet packet);
+void table_dump_hhea(const table_hhea *table, json_value *root, const caryll_Options *options);
+table_hhea *table_parse_hhea(const json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_hhea(const table_hhea *hhea, const caryll_Options *options);
 
 #endif
