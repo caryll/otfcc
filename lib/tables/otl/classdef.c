@@ -225,6 +225,7 @@ caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 			startGID = endGID = current;
 			lastClass = r[j].cid;
 		}
+		lastGID = current;
 	}
 	bufwrite16b(ranges, startGID);
 	bufwrite16b(ranges, endGID);
