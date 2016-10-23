@@ -41,7 +41,7 @@ table_vmtx *table_read_vmtx(const caryll_Packet packet, table_vhea *vhea, table_
 }
 
 caryll_Buffer *table_build_vmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
-                                const caryll_Options *options) {
+                                const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {

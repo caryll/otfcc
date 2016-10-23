@@ -2,7 +2,7 @@
 #define CARYLL_TABLES_GLYF_H
 
 #include "font/caryll-sfnt.h"
-#include "support/glyph-order.h"
+#include "otfcc/glyph-order.h"
 #include "support/ttinstr.h"
 #include "support/util.h"
 
@@ -136,14 +136,14 @@ glyf_Glyph *table_new_glyf_glyph();
 void table_delete_glyf(table_glyf *table);
 
 table_glyf *table_read_glyf(const caryll_Packet packet, table_head *head, table_maxp *maxp);
-void table_dump_glyf(const table_glyf *table, json_value *root, const caryll_Options *options);
-table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const caryll_Options *options);
+void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options);
+table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const otfcc_Options *options);
 
 typedef struct {
 	caryll_Buffer *glyf;
 	caryll_Buffer *loca;
 } glyf_loca_bufpair;
 
-glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const caryll_Options *options);
+glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const otfcc_Options *options);
 
 #endif

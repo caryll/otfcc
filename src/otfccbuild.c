@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 
-	caryll_Options *options = options_new();
+	otfcc_Options *options = options_new();
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},

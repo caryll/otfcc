@@ -20,7 +20,7 @@ void table_delete_cvt(table_cvt *table) {
 	if (table->words) free(table->words);
 	free(table);
 }
-void table_dump_cvt(const table_cvt *table, json_value *root, const caryll_Options *options, const char *tag) {
+void table_dump_cvt(const table_cvt *table, json_value *root, const otfcc_Options *options, const char *tag) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping cvt.\n");
 
@@ -30,7 +30,7 @@ void table_dump_cvt(const table_cvt *table, json_value *root, const caryll_Optio
 	}
 	json_object_push(root, tag, arr);
 }
-table_cvt *table_parse_cvt(const json_value *root, const caryll_Options *options, const char *tag) {
+table_cvt *table_parse_cvt(const json_value *root, const otfcc_Options *options, const char *tag) {
 	table_cvt *t = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, tag, json_array))) {
@@ -65,7 +65,7 @@ table_cvt *table_parse_cvt(const json_value *root, const caryll_Options *options
 	return t;
 }
 
-caryll_Buffer *table_build_cvt(const table_cvt *table, const caryll_Options *options) {
+caryll_Buffer *table_build_cvt(const table_cvt *table, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) {

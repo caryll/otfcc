@@ -613,7 +613,7 @@ static int instr_typify(struct instrdata *id) {
 	return (lh);
 }
 
-json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const caryll_Options *options) {
+json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const otfcc_Options *options) {
 	if (options->instr_as_bytes) {
 		size_t len = 0;
 		uint8_t *buf = base64_encode(instructions, length, &len);

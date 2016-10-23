@@ -710,7 +710,7 @@ static json_value *fdToJson(const table_CFF *table) {
 	return _CFF_;
 }
 
-void table_dump_cff(const table_CFF *table, json_value *root, const caryll_Options *options) {
+void table_dump_cff(const table_CFF *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
 
@@ -750,7 +750,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 
 	return pd;
 }
-static table_CFF *fdFromJson(json_value *dump, const caryll_Options *options, bool topLevel) {
+static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, bool topLevel) {
 	table_CFF *table = table_new_CFF();
 	if (!dump || dump->type != json_object) return table;
 	// Names
@@ -830,7 +830,7 @@ static table_CFF *fdFromJson(json_value *dump, const caryll_Options *options, bo
 	if (table->isCID && !table->cidOrdering) { table->cidOrdering = sdsnew("OTFCCAUTOCID"); }
 	return table;
 }
-table_CFF *table_parse_cff(json_value *root, const caryll_Options *options) {
+table_CFF *table_parse_cff(json_value *root, const otfcc_Options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
 	if (!dump) {
 		return NULL;
@@ -844,7 +844,7 @@ typedef struct {
 	table_glyf *glyf;
 	uint16_t defaultWidth;
 	uint16_t nominalWidthX;
-	const caryll_Options *options;
+	const otfcc_Options *options;
 	cff_SubrGraph *graph;
 } cff_charstring_builder_context;
 typedef struct {
@@ -1163,7 +1163,7 @@ static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray, 
 	return cff_newIndexByCallback(&context, fdArrayCount, callback_makefd);
 }
 
-static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const caryll_Options *options) {
+static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const otfcc_Options *options) {
 	caryll_Buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;
@@ -1331,6 +1331,6 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	return blob;
 }
 
-caryll_Buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const caryll_Options *options) {
+caryll_Buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const otfcc_Options *options) {
 	return writecff_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }

@@ -43,7 +43,7 @@ static caryll_SFNTTableEntry *createSegment(uint32_t tag, caryll_Buffer *buffer)
 	return table;
 }
 
-caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, caryll_Options *options) {
+caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, otfcc_Options *options) {
 	caryll_SFNTBuilder *builder = malloc(sizeof(caryll_SFNTBuilder));
 	builder->count = 0;
 	builder->header = header;

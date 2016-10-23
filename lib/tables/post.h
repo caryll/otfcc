@@ -3,7 +3,7 @@
 
 #include "support/util.h"
 #include "font/caryll-sfnt.h"
-#include "support/glyph-order.h"
+#include "otfcc/glyph-order.h"
 
 typedef struct {
 	// PostScript information
@@ -22,8 +22,8 @@ typedef struct {
 table_post *table_new_post();
 void table_delete_post(MOVE table_post *table);
 table_post *table_read_post(const caryll_Packet packet);
-void table_dump_post(const table_post *table, json_value *root, const caryll_Options *options);
-table_post *table_parse_post(const json_value *root, const caryll_Options *options);
-caryll_Buffer *table_build_post(const table_post *post, caryll_GlyphOrder *glyphorder, const caryll_Options *options);
+void table_dump_post(const table_post *table, json_value *root, const otfcc_Options *options);
+table_post *table_parse_post(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *table_build_post(const table_post *post, caryll_GlyphOrder *glyphorder, const otfcc_Options *options);
 
 #endif

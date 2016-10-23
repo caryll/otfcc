@@ -1,5 +1,5 @@
-#ifndef CARYLL_SUPPORT_OPTIONS_H
-#define CARYLL_SUPPORT_OPTIONS_H
+#ifndef CARYLL_INCLUDE_OPTIONS_H
+#define CARYLL_INCLUDE_OPTIONS_H
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -25,10 +25,10 @@ typedef struct {
 	bool cff_doSubroutinize;
 	bool stub_cmap4;
 	char *glyph_name_prefix;
-} caryll_Options;
+} otfcc_Options;
 
-caryll_Options *options_new();
-void options_delete(caryll_Options *options);
-void options_optimizeTo(caryll_Options *options, uint8_t level);
+otfcc_Options *options_new();
+void options_delete(otfcc_Options *options);
+void options_optimizeTo(otfcc_Options *options, uint8_t level);
 
 #endif

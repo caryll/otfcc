@@ -141,7 +141,7 @@ static json_value *axisToJson(const otl_BaseAxis *axis) {
 	return _axis;
 }
 
-void table_dump_BASE(const table_BASE *base, json_value *root, const caryll_Options *options) {
+void table_dump_BASE(const table_BASE *base, json_value *root, const otfcc_Options *options) {
 	if (!base) return;
 	if (options->verbose) fprintf(stderr, "Dumping BASE.\n");
 	json_value *_base = json_object_new(2);
@@ -184,7 +184,7 @@ static otl_BaseAxis *axisFromJson(const json_value *_axis) {
 	return axis;
 }
 
-table_BASE *table_parse_BASE(const json_value *root, const caryll_Options *options) {
+table_BASE *table_parse_BASE(const json_value *root, const otfcc_Options *options) {
 	table_BASE *base = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "BASE", json_object))) {
@@ -301,7 +301,7 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 	                    bkover);
 }
 
-caryll_Buffer *table_build_BASE(const table_BASE *base, const caryll_Options *options) {
+caryll_Buffer *table_build_BASE(const table_BASE *base, const otfcc_Options *options) {
 	bk_Block *root = bk_new_Block(b32, 0x10000,                    // Version
 	                              p16, axisToBk(base->horizontal), // HorizAxis
 	                              p16, axisToBk(base->vertical),   // VertAxis

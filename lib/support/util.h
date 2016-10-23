@@ -13,17 +13,22 @@
 #include <string.h>
 #include <math.h>
 
-#include "otfcc/primitives.h"
-#include "aliases.h"
-
-#include "base64.h"
-#include "caryll/buffer.h"
-#include "options.h"
-#include "json-ident.h"
 #include "dep/json-builder.h"
 #include "dep/json.h"
 #include "dep/sds.h"
 #include "dep/uthash.h"
+
+#include "caryll/ownership.h"
+#include "caryll/buffer.h"
+
+#include "otfcc/handle.h"
+#include "otfcc/primitives.h"
+#include "otfcc/options.h"
+
+#include "aliases.h"
+
+#include "base64.h"
+#include "json-ident.h"
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
@@ -333,14 +338,6 @@ static INLINE double caryll_from_fixed(f16dot16 x) {
 static INLINE f16dot16 caryll_to_fixed(double x) {
 	return round(x * 65536.0);
 }
-
-#include "otfcc/handle.h"
-
-#define OWNING /*move*/
-#define MOVE   /*move*/
-#define OBSERVE /*shared*/ const
-#define MODIFY /*modify*/
-#define COPY   /*shared*/
 
 static INLINE json_value *preserialize(MOVE json_value *x) {
 #ifdef CARYLL_USE_PRE_SERIALIZED

@@ -125,7 +125,7 @@ void table_delete_cmap(table_cmap *table) {
 	free(table);
 }
 
-void table_dump_cmap(const table_cmap *table, json_value *root, const caryll_Options *options) {
+void table_dump_cmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping cmap.\n");
 
@@ -140,7 +140,7 @@ void table_dump_cmap(const table_cmap *table, json_value *root, const caryll_Opt
 	json_object_push(root, "cmap", cmap);
 }
 
-table_cmap *table_parse_cmap(const json_value *root, const caryll_Options *options) {
+table_cmap *table_parse_cmap(const json_value *root, const otfcc_Options *options) {
 	if (root->type != json_object) return NULL;
 	table_cmap hash = NULL;
 	json_value *table = NULL;
@@ -319,7 +319,7 @@ caryll_Buffer *table_build_cmap_format12(const table_cmap *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_Buffer *table_build_cmap(const table_cmap *cmap, const caryll_Options *options) {
+caryll_Buffer *table_build_cmap(const table_cmap *cmap, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 

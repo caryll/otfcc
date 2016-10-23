@@ -27,7 +27,7 @@ table_VORG *table_read_VORG(const caryll_Packet packet) {
 	return NULL;
 }
 
-caryll_Buffer *table_build_VORG(const table_VORG *table, const caryll_Options *options) {
+caryll_Buffer *table_build_VORG(const table_VORG *table, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite16b(buf, 1);

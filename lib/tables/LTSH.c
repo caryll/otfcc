@@ -18,7 +18,7 @@ table_LTSH *table_read_LTSH(const caryll_Packet packet) {
 	}
 	return NULL;
 }
-caryll_Buffer *table_build_LTSH(const table_LTSH *ltsh, const caryll_Options *options) {
+caryll_Buffer *table_build_LTSH(const table_LTSH *ltsh, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!ltsh) return buf;
 	bufwrite16b(buf, 0);

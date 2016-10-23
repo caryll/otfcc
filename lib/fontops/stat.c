@@ -137,7 +137,7 @@ void caryll_stat_maxp(caryll_Font *font) {
 	font->maxp->maxSizeOfInstructions = instSize;
 }
 
-static void caryll_font_stat_hmtx(caryll_Font *font, const caryll_Options *options) {
+static void caryll_font_stat_hmtx(caryll_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx = malloc(sizeof(table_hmtx) * 1);
 	if (!hmtx) return;
@@ -183,7 +183,7 @@ static void caryll_font_stat_hmtx(caryll_Font *font, const caryll_Options *optio
 	font->hhea->advanceWithMax = maxWidth;
 	font->hmtx = hmtx;
 }
-static void caryll_font_stat_vmtx(caryll_Font *font, const caryll_Options *options) {
+static void caryll_font_stat_vmtx(caryll_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	table_vmtx *vmtx = malloc(sizeof(table_vmtx) * 1);
 	if (!vmtx) return;
@@ -228,7 +228,7 @@ static void caryll_font_stat_vmtx(caryll_Font *font, const caryll_Options *optio
 	font->vhea->advanceHeightMax = maxHeight;
 	font->vmtx = vmtx;
 }
-static void caryll_font_stat_OS_2_unicodeRanges(caryll_Font *font, const caryll_Options *options) {
+static void caryll_font_stat_OS_2_unicodeRanges(caryll_Font *font, const otfcc_Options *options) {
 	cmap_Entry *item;
 	// Stat for OS/2.ulUnicodeRange.
 	uint32_t u1 = 0;
@@ -414,7 +414,7 @@ static void caryll_font_stat_OS_2_unicodeRanges(caryll_Font *font, const caryll_
 		font->OS_2->usLastCharIndex = 0xFFFF;
 	}
 }
-static void caryll_font_stat_OS_2_avgwidth(caryll_Font *font, const caryll_Options *options) {
+static void caryll_font_stat_OS_2_avgwidth(caryll_Font *font, const otfcc_Options *options) {
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
@@ -422,7 +422,7 @@ static void caryll_font_stat_OS_2_avgwidth(caryll_Font *font, const caryll_Optio
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
 }
-static void caryll_font_stat_OS_2(caryll_Font *font, const caryll_Options *options) {
+static void caryll_font_stat_OS_2(caryll_Font *font, const otfcc_Options *options) {
 	caryll_font_stat_OS_2_unicodeRanges(font, options);
 	caryll_font_stat_OS_2_avgwidth(font, options);
 }
@@ -526,7 +526,7 @@ static void caryll_stat_LTSH(caryll_Font *font) {
 	font->LTSH = ltsh;
 }
 
-void caryll_font_stat(caryll_Font *font, const caryll_Options *options) {
+void caryll_font_stat(caryll_Font *font, const otfcc_Options *options) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font);
 		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }

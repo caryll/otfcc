@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
 
-	caryll_Options *options = options_new();
+	otfcc_Options *options = options_new();
 
 	int option_index = 0;
 	int c;

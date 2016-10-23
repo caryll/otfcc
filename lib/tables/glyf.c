@@ -435,7 +435,7 @@ static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, shap
 	return a;
 }
 
-static json_value *glyf_dump_glyph(glyf_Glyph *g, const caryll_Options *options) {
+static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options) {
 	json_value *glyph = json_object_new(12);
 	json_object_push(glyph, "advanceWidth", json_new_position(g->advanceWidth));
 	if (options->has_vertical_metrics) {
@@ -476,7 +476,7 @@ void caryll_dump_glyphorder(const table_glyf *table, json_value *root) {
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
-void table_dump_glyf(const table_glyf *table, json_value *root, const caryll_Options *options) {
+void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping glyf.\n");
 
@@ -643,7 +643,7 @@ static void parse_masks(json_value *md, shapeid_t *count, glyf_PostscriptHintMas
 }
 
 static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOrderEntry *order_entry,
-                                           const caryll_Options *options) {
+                                           const otfcc_Options *options) {
 	glyf_Glyph *g = table_new_glyf_glyph();
 	g->name = sdsdup(order_entry->name);
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
@@ -666,7 +666,7 @@ static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOr
 	return g;
 }
 
-table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const caryll_Options *options) {
+table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const otfcc_Options *options) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -850,7 +850,7 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const caryll_Options *options) {
+glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const otfcc_Options *options) {
 	caryll_Buffer *bufglyf = bufnew();
 	caryll_Buffer *bufloca = bufnew();
 	if (table && head) {

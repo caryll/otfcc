@@ -31,7 +31,7 @@ bool instruction_eq(cff_CharstringInstruction *z1, cff_CharstringInstruction *z2
 
 // basic ops
 cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidth);
-void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options);
+void cff_optimizeIL(cff_CharstringIL *il, const otfcc_Options *options);
 cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il);
 void cff_ILmergeIL(cff_CharstringIL *self, cff_CharstringIL *il);
 caryll_Buffer *cff_build_IL(cff_CharstringIL *il);

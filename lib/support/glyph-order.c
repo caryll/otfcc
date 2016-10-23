@@ -1,4 +1,5 @@
-#include "glyph-order.h"
+#include "util.h"
+#include "otfcc/glyph-order.h"
 
 caryll_GlyphOrder *caryll_new_GlyphOrder() {
 	caryll_GlyphOrder *go;
@@ -82,7 +83,8 @@ void caryll_setGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_
 		s->orderEntry = orderEntry;
 	}
 }
-static void caryll_escalateGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry) {
+static void caryll_escalateGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType,
+                                                     uint32_t orderEntry) {
 	caryll_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhName, go->byName, name, sdslen(name), s);
 	if (s && s->orderType > orderType) {
@@ -142,7 +144,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, caryll_GlyphOrder *
 	}
 }
 
-caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, caryll_Options *options) {
+caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *options) {
 	caryll_GlyphOrder *go = caryll_new_GlyphOrder();
 	if (root->type != json_object) return go;
 	json_value *table;

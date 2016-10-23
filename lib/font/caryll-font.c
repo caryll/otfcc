@@ -68,7 +68,7 @@ caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, u
 	return FONTTYPE_TTF;
 }
 
-caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, caryll_Options *options) {
+caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, otfcc_Options *options) {
 	if (sfnt->count - 1 < index)
 		return NULL;
 	else {
@@ -112,7 +112,7 @@ caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, 
 	}
 }
 
-json_value *caryll_dump_Font(caryll_Font *font, caryll_Options *options) {
+json_value *caryll_dump_Font(caryll_Font *font, otfcc_Options *options) {
 	json_value *root = json_object_new(48);
 	options->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	options->export_fdselect = font->CFF_ && font->CFF_->isCID;
@@ -147,7 +147,7 @@ caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root) {
 		return FONTTYPE_TTF;
 	}
 }
-caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
+caryll_Font *caryll_parse_Font(json_value *root, otfcc_Options *options) {
 	caryll_Font *font = caryll_new_Font();
 	if (!font) return NULL;
 	font->subtype = caryll_decideFontSubtypeFromJson(root);
@@ -177,7 +177,7 @@ caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
 	return font;
 }
 
-caryll_Buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
+caryll_Buffer *caryll_build_Font(caryll_Font *font, otfcc_Options *options) {
 	caryll_SFNTBuilder *builder = caryll_new_SFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 
 	// Outline data

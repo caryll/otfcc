@@ -27,7 +27,7 @@ typedef struct {
 table_vhea *table_new_vhea();
 void table_delete_vhea(MOVE table_vhea *table);
 table_vhea *table_read_vhea(const caryll_Packet packet);
-void table_dump_vhea(const table_vhea *table, json_value *root, const caryll_Options *options);
-table_vhea *table_parse_vhea(const json_value *root, const caryll_Options *options);
-caryll_Buffer *table_build_vhea(const table_vhea *vhea, const caryll_Options *options);
+void table_dump_vhea(const table_vhea *table, json_value *root, const otfcc_Options *options);
+table_vhea *table_parse_vhea(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *table_build_vhea(const table_vhea *vhea, const otfcc_Options *options);
 #endif

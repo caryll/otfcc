@@ -5,7 +5,7 @@
 //   2. Replace all glyph IDs into glyph names. Note all glyph references with
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
-static void caryll_name_glyphs(caryll_Font *font, const caryll_Options *options) {
+static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	caryll_GlyphOrder *glyph_order = caryll_new_GlyphOrder();
 	caryll_GlyphOrder *aglfn = caryll_new_GlyphOrder();
@@ -320,7 +320,7 @@ static void applyCffMatrix(caryll_Font *font) {
 		}
 	}
 }
-void caryll_font_unconsolidate(caryll_Font *font, const caryll_Options *options) {
+void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options) {
 	// Apply CFF FontMatrix
 	applyCffMatrix(font);
 	// Merge metrics

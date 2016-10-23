@@ -219,7 +219,7 @@ void caryll_font_consolidate_otl(caryll_Font *font) {
 	consolidate_GDEF(font, font->GDEF, "GDEF");
 }
 
-void caryll_font_consolidate(caryll_Font *font, const caryll_Options *options) {
+void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options) {
 	// In case we don’t have a glyph order, make one.
 	if (font->glyf && !font->glyph_order) {
 		caryll_GlyphOrder *go = caryll_new_GlyphOrder();

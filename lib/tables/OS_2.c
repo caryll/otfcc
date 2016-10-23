@@ -218,7 +218,7 @@ const char *unicodeRangeLabels4[] = {"Buginese",
                                      "Domino_and_Mahjong_Tiles",
                                      NULL};
 
-void table_dump_OS_2(const table_OS_2 *table, json_value *root, const caryll_Options *options) {
+void table_dump_OS_2(const table_OS_2 *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping OS/2.\n");
 
@@ -275,7 +275,7 @@ void table_dump_OS_2(const table_OS_2 *table, json_value *root, const caryll_Opt
 	json_object_push(root, "OS_2", os_2);
 }
 
-table_OS_2 *table_parse_OS_2(const json_value *root, const caryll_Options *options) {
+table_OS_2 *table_parse_OS_2(const json_value *root, const otfcc_Options *options) {
 	table_OS_2 *os_2 = table_new_OS_2();
 	if (!os_2) return NULL;
 	json_value *table = NULL;
@@ -348,7 +348,7 @@ table_OS_2 *table_parse_OS_2(const json_value *root, const caryll_Options *optio
 	return os_2;
 }
 
-caryll_Buffer *table_build_OS_2(const table_OS_2 *os_2, const caryll_Options *options) {
+caryll_Buffer *table_build_OS_2(const table_OS_2 *os_2, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);

@@ -21,6 +21,6 @@ typedef struct {
 void table_delete_hmtx(table_hmtx *table);
 table_hmtx *table_read_hmtx(const caryll_Packet packet, table_hhea *hhea, table_maxp *maxp);
 caryll_Buffer *table_build_hmtx(const table_hmtx *table, glyphid_t count_a, glyphid_t count_k,
-                                const caryll_Options *options);
+                                const otfcc_Options *options);
 
 #endif

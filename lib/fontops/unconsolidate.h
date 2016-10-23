@@ -3,6 +3,6 @@
 #include "font/caryll-font.h"
 #include "support/aglfn.h"
 
-void caryll_font_unconsolidate(caryll_Font *font, const caryll_Options *options);
+void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options);
 
 #endif
