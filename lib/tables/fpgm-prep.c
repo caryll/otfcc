@@ -1,4 +1,6 @@
-#include "fpgm-prep.h"
+#include "support/util.h"
+#include "support/ttinstr.h"
+#include "otfcc/table/fpgm-prep.h"
 
 table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, uint32_t tag) {
 	table_fpgm_prep *t = NULL;

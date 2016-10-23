@@ -1,6 +1,6 @@
-#include "font/caryll-font.h"
-#include "font/caryll-sfnt.h"
-#include "fontops/fontop.h"
+#include "dep/json-builder.h"
+#include "otfcc/sfnt.h"
+#include "otfcc/font.h"
 
 #include "platform.h"
 #include "stopwatch.h"

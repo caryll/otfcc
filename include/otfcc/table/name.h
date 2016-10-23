@@ -1,9 +1,7 @@
-#ifndef CARYLL_TABLES_NAME_H
-#define CARYLL_TABLES_NAME_H
+#ifndef CARYLL_INCLUDE_TABLE_NAME_H
+#define CARYLL_INCLUDE_TABLE_NAME_H
 
-#include "support/util.h"
-#include "font/caryll-sfnt.h"
-#include "support/base64.h"
+#include "table-common.h"
 
 typedef struct {
 	uint16_t platformID;

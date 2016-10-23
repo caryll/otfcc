@@ -1,4 +1,5 @@
-#include "hmtx.h"
+#include "support/util.h"
+#include "otfcc/table/hmtx.h"
 
 table_hmtx *table_read_hmtx(const caryll_Packet packet, table_hhea *hhea, table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }

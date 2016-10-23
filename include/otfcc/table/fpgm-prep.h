@@ -1,9 +1,7 @@
-#ifndef CARYLL_TABLES_FPGM_PREP_H
-#define CARYLL_TABLES_FPGM_PREP_H
+#ifndef CARYLL_INCLUDE_TABLE_FPGM_PREP_H
+#define CARYLL_INCLUDE_TABLE_FPGM_PREP_H
 
-#include "support/util.h"
-#include "font/caryll-sfnt.h"
-#include "support/ttinstr.h"
+#include "table-common.h"
 
 typedef struct {
 	sds tag;

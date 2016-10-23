@@ -1,5 +1,5 @@
-#ifndef CARYLL_TABLES_OTL_GEDF_H
-#define CARYLL_TABLES_OTL_GEDF_H
+#ifndef CARYLL_INCLUDE_TABLE_GEDF_H
+#define CARYLL_INCLUDE_TABLE_GEDF_H
 
 #include "otl.h"
 

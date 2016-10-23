@@ -1,4 +1,5 @@
-#include "classdef.h"
+#include "support/util.h"
+#include "otfcc/table/otl/classdef.h"
 
 void otl_delete_ClassDef(otl_ClassDef *cd) {
 	if (cd) {
@@ -23,7 +24,7 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_ClassDef *otl_read_ClassDef(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
 	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = 0;

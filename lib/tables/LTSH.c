@@ -1,4 +1,5 @@
-#include "LTSH.h"
+#include "support/util.h"
+#include "otfcc/table/LTSH.h"
 
 void table_delete_LTSH(table_LTSH *ltsh) {
 	if (ltsh) { free(ltsh->yPels); }

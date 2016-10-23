@@ -1,4 +1,5 @@
-#include "maxp.h"
+#include "support/util.h"
+#include "otfcc/table/maxp.h"
 
 table_maxp *table_new_maxp() {
 	table_maxp *maxp = calloc(1, sizeof(table_maxp));

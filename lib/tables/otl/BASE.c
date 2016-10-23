@@ -1,4 +1,5 @@
-#include "BASE.h"
+#include "otl.h"
+#include "otfcc/table/BASE.h"
 
 static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {
 	if (!axis) return;

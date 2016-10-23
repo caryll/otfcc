@@ -1,4 +1,5 @@
-#include "GDEF.h"
+#include "otl.h"
+#include "otfcc/table/GDEF.h"
 
 void table_delete_GDEF(table_GDEF *gdef) {
 	if (!gdef) return;

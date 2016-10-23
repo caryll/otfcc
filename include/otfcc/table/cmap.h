@@ -1,14 +1,13 @@
-#ifndef CARYLL_TABLES_CMAP_H
-#define CARYLL_TABLES_CMAP_H
+#ifndef CARYLL_INCLUDE_TABLE_CMAP_H
+#define CARYLL_INCLUDE_TABLE_CMAP_H
 
-#include "support/util.h"
-#include "font/caryll-sfnt.h"
+#include "table-common.h"
 
 // We will support format 0, 4, 12 of CMAP only
 typedef struct {
 	UT_hash_handle hh;
 	int unicode;
-	glyph_handle glyph;
+	otfcc_GlyphHandle glyph;
 } cmap_Entry;
 typedef cmap_Entry *table_cmap;
 

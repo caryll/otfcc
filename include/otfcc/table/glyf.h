@@ -1,11 +1,7 @@
-#ifndef CARYLL_TABLES_GLYF_H
-#define CARYLL_TABLES_GLYF_H
+#ifndef CARYLL_INCLUDE_TABLE_GLYF_H
+#define CARYLL_INCLUDE_TABLE_GLYF_H
 
-#include "font/caryll-sfnt.h"
-#include "otfcc/glyph-order.h"
-#include "support/ttinstr.h"
-#include "support/util.h"
-
+#include "table-common.h"
 #include "head.h"
 #include "maxp.h"
 
@@ -40,7 +36,7 @@ typedef struct {
 } glyf_PostscriptHintMask;
 
 typedef struct {
-	glyph_handle glyph;
+	otfcc_GlyphHandle glyph;
 	// transformation term
 	pos_t a;
 	pos_t b;
@@ -97,7 +93,7 @@ typedef struct {
 	uint8_t yPel;
 
 	// CID FDSelect
-	fd_handle fdSelect;
+	otfcc_FDHandle fdSelect;
 
 	// Stats
 	glyf_GlyphStat stat;
@@ -107,30 +103,6 @@ typedef struct {
 	glyphid_t numberGlyphs;
 	glyf_Glyph **glyphs;
 } table_glyf;
-
-typedef enum {
-	GLYF_FLAG_ON_CURVE = 1,
-	GLYF_FLAG_X_SHORT = (1 << 1),
-	GLYF_FLAG_Y_SHORT = (1 << 2),
-	GLYF_FLAG_REPEAT = (1 << 3),
-	GLYF_FLAG_SAME_X = (1 << 4),
-	GLYF_FLAG_SAME_Y = (1 << 5),
-	GLYF_FLAG_POSITIVE_X = (1 << 4),
-	GLYF_FLAG_POSITIVE_Y = (1 << 5)
-} glyf_point_flag;
-
-typedef enum {
-	ARG_1_AND_2_ARE_WORDS = (1 << 0),
-	ARGS_ARE_XY_VALUES = (1 << 1),
-	ROUND_XY_TO_GRID = (1 << 2),
-	WE_HAVE_A_SCALE = (1 << 3),
-	MORE_COMPONENTS = (1 << 5),
-	WE_HAVE_AN_X_AND_Y_SCALE = (1 << 6),
-	WE_HAVE_A_TWO_BY_TWO = (1 << 7),
-	WE_HAVE_INSTRUCTIONS = (1 << 8),
-	USE_MY_METRICS = (1 << 9),
-	OVERLAP_COMPOUND = (1 << 10)
-} glyf_reference_flag;
 
 glyf_Glyph *table_new_glyf_glyph();
 void table_delete_glyf(table_glyf *table);

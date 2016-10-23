@@ -1,4 +1,5 @@
-#include "head.h"
+#include "support/util.h"
+#include "otfcc/table/head.h"
 
 table_head *table_new_head() {
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));

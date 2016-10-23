@@ -1,5 +1,5 @@
-#ifndef CARYLL_SFNT_H
-#define CARYLL_SFNT_H
+#ifndef CARYLL_INCLUDE_OTFCC_SFNT_H
+#define CARYLL_INCLUDE_OTFCC_SFNT_H
 
 #include <stdint.h>
 #include <stdio.h>

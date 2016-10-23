@@ -1,37 +1,37 @@
 #ifndef CARYLL_FONT_H
 #define CARYLL_FONT_H
-#include "caryll-sfnt.h"
-#include "support/util.h"
+
+#include "sfnt.h"
 
 struct _caryll_font;
 typedef struct _caryll_font caryll_Font;
 
 #include "otfcc/glyph-order.h"
 
-#include "tables/OS_2.h"
-#include "tables/cmap.h"
-#include "tables/cvt.h"
-#include "tables/fpgm-prep.h"
-#include "tables/gasp.h"
-#include "tables/glyf.h"
-#include "tables/head.h"
-#include "tables/hhea.h"
-#include "tables/hmtx.h"
-#include "tables/maxp.h"
-#include "tables/name.h"
-#include "tables/post.h"
+#include "otfcc/table/head.h"
+#include "otfcc/table/glyf.h"
+#include "otfcc/table/CFF.h"
+#include "otfcc/table/maxp.h"
+#include "otfcc/table/hhea.h"
+#include "otfcc/table/hmtx.h"
+#include "otfcc/table/hdmx.h"
+#include "otfcc/table/vhea.h"
+#include "otfcc/table/vmtx.h"
+#include "otfcc/table/OS_2.h"
+#include "otfcc/table/post.h"
+#include "otfcc/table/name.h"
 
-#include "tables/CFF.h"
+#include "otfcc/table/cmap.h"
+#include "otfcc/table/cvt.h"
+#include "otfcc/table/fpgm-prep.h"
+#include "otfcc/table/gasp.h"
 
-#include "tables/LTSH.h"
-#include "tables/hdmx.h"
-#include "tables/vhea.h"
-#include "tables/vmtx.h"
-#include "tables/VORG.h"
+#include "otfcc/table/LTSH.h"
+#include "otfcc/table/VORG.h"
 
-#include "tables/otl/GDEF.h"
-#include "tables/otl/BASE.h"
-#include "tables/otl/otl.h"
+#include "otfcc/table/GDEF.h"
+#include "otfcc/table/BASE.h"
+#include "otfcc/table/otl.h"
 
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } caryll_font_subtype;
 
@@ -74,9 +74,14 @@ caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, u
 caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root);
 caryll_Font *caryll_new_Font();
 void caryll_delete_Font(caryll_Font *font);
+
 caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, otfcc_Options *options);
 json_value *caryll_dump_Font(caryll_Font *font, otfcc_Options *options);
 caryll_Font *caryll_parse_Font(json_value *root, otfcc_Options *options);
 caryll_Buffer *caryll_build_Font(caryll_Font *font, otfcc_Options *options);
+
+void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options);
+void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options);
+void caryll_font_stat(caryll_Font *font, const otfcc_Options *options);
 
 #endif

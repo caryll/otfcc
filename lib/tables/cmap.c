@@ -1,4 +1,5 @@
-#include "cmap.h"
+#include "support/util.h"
+#include "otfcc/table/cmap.h"
 
 void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 	cmap_Entry *s;

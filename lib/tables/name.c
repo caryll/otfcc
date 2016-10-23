@@ -1,5 +1,7 @@
-#include "name.h"
+#include "support/util.h"
+#include "support/base64.h"
 #include "support/unicodeconv.h"
+#include "otfcc/table/name.h"
 
 static bool shouldDecodeAsUTF16(const name_record *record) {
 	return (record->platformID == 0)                               // Unicode, all

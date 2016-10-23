@@ -1,4 +1,5 @@
-#include "cvt.h"
+#include "support/util.h"
+#include "otfcc/table/cvt.h"
 
 table_cvt *table_read_cvt(const caryll_Packet packet, uint32_t tag) {
 	table_cvt *t = NULL;

@@ -1,4 +1,17 @@
-#include "consolidate.h"
+#include "support/util.h"
+#include "otfcc/font.h"
+
+#include "otl/gsub-single.h"
+#include "otl/gsub-multi.h"
+#include "otl/gsub-ligature.h"
+#include "otl/gsub-reverse.h"
+#include "otl/gpos-single.h"
+#include "otl/gpos-pair.h"
+#include "otl/gpos-cursive.h"
+#include "otl/chaining.h"
+#include "otl/mark.h"
+#include "otl/GDEF.h"
+
 // Consolidation
 // Replace name entries in json to ids and do some check
 static int by_stem_pos(const void *_a, const void *_b) {

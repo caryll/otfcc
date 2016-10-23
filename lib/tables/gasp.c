@@ -1,4 +1,5 @@
-#include "gasp.h"
+#include "support/util.h"
+#include "otfcc/table/gasp.h"
 
 #define GASP_DOGRAY 0x0002
 #define GASP_GRIDFIT 0x0001

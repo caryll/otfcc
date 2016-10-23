@@ -1,4 +1,5 @@
-#include "VORG.h"
+#include "support/util.h"
+#include "otfcc/table/VORG.h"
 
 void table_delete_VORG(table_VORG *vorg) {
 	if (vorg) free(vorg->entries);

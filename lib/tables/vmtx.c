@@ -1,4 +1,5 @@
-#include "vmtx.h"
+#include "support/util.h"
+#include "otfcc/table/vmtx.h"
 
 void table_delete_vmtx(MOVE table_vmtx *table) {
 	if (!table) return;

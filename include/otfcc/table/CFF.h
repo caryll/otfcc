@@ -1,18 +1,8 @@
-#ifndef CARYLL_TABLES_cff_H
-#define CARYLL_TABLES_cff_H
+#ifndef CARYLL_INCLUDE_TABLE_CFF_H
+#define CARYLL_INCLUDE_TABLE_CFF_H
 
-#include <math.h>
-#include <stdarg.h>
-#include "support/util.h"
-#include "libcff/libcff.h"
-#include "libcff/charstring-il.h"
-#include "libcff/subr.h"
-#include "font/caryll-sfnt.h"
+#include "table-common.h"
 #include "glyf.h"
-
-// The result of parsing CFF table contains both CFF metadata and glyph outline.
-// To simplify code and storage, the glyph outlines are stored inside glyf table.
-// and the CFF table contains CFF metadata only.
 
 typedef struct {
 	double a;

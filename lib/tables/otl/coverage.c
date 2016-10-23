@@ -1,4 +1,5 @@
-#include "coverage.h"
+#include "support/util.h"
+#include "otfcc/table/otl/coverage.h"
 
 void otl_delete_Coverage(MOVE otl_Coverage *coverage) {
 	if (coverage && coverage->glyphs) {
@@ -20,7 +21,7 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_Coverage *otl_read_Coverage(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
 	otl_Coverage *coverage;
 	NEW(coverage);
 	coverage->numGlyphs = 0;

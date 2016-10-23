@@ -1,4 +1,6 @@
-#include "vhea.h"
+#include "support/util.h"
+#include "otfcc/table/vhea.h"
+
 table_vhea *table_new_vhea() {
 	table_vhea *vhea = calloc(1, sizeof(table_vhea));
 	vhea->version = 0x11000;

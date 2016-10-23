@@ -1,4 +1,5 @@
-#include "OS_2.h"
+#include "support/util.h"
+#include "otfcc/table/OS_2.h"
 
 table_OS_2 *table_new_OS_2() {
 	table_OS_2 *os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));

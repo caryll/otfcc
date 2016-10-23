@@ -1,5 +1,5 @@
 #include "support/util.h"
-#include "caryll-sfnt.h"
+#include "otfcc/sfnt.h"
 
 static void caryll_read_packets(caryll_SplineFontContainer *font, FILE *file) {
 	for (uint32_t count = 0; count < font->count; count++) {

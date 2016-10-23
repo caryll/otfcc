@@ -1,7 +1,6 @@
-#include "font/caryll-font.h"
-#include "font/caryll-sfnt-builder.h"
-#include "font/caryll-sfnt.h"
-#include "fontops/fontop.h"
+#include "otfcc/sfnt.h"
+#include "otfcc/font.h"
+#include "otfcc/sfnt-builder.h"
 
 #include "platform.h"
 #include "stopwatch.h"

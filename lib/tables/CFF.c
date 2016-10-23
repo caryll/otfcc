@@ -1,4 +1,8 @@
-#include "CFF.h"
+#include "support/util.h"
+#include "libcff/libcff.h"
+#include "libcff/charstring-il.h"
+#include "libcff/subr.h"
+#include "otfcc/table/CFF.h"
 
 const double DEFAULT_BLUE_SCALE = 0.039625;
 const double DEFAULT_BLUE_SHIFT = 7;

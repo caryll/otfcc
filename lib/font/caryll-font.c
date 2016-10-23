@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "caryll-font.h"
-#include "caryll-sfnt-builder.h"
-#include "caryll-sfnt.h"
+#include "support/util.h"
+#include "otfcc/font.h"
+#include "otfcc/sfnt-builder.h"
 
 caryll_Font *caryll_new_Font() {
 	caryll_Font *font = calloc(1, sizeof(caryll_Font));

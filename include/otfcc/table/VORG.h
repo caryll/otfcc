@@ -1,8 +1,7 @@
-#ifndef CARYLL_TABLES_VORG_H
-#define CARYLL_TABLES_VORG_H
+#ifndef CARYLL_INCLUDE_TABLE_VORG_H
+#define CARYLL_INCLUDE_TABLE_VORG_H
 
-#include "font/caryll-sfnt.h"
-#include "support/util.h"
+#include "table-common.h"
 
 typedef struct {
 	glyphid_t gid;

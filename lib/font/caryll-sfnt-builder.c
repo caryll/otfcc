@@ -1,4 +1,5 @@
-#include "caryll-sfnt-builder.h"
+#include "support/util.h"
+#include "otfcc/sfnt-builder.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0

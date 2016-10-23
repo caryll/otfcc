@@ -1,4 +1,7 @@
-#include "unconsolidate.h"
+#include "support/util.h"
+#include "otfcc/font.h"
+#include "support/aglfn.h"
+
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:
 //   1. Merge hmtx data into glyf

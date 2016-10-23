@@ -1,8 +1,7 @@
-#ifndef CARYLL_TABLES_HHEA_H
-#define CARYLL_TABLES_HHEA_H
+#ifndef CARYLL_INCLUDE_TABLE_HHEA_H
+#define CARYLL_INCLUDE_TABLE_HHEA_H
 
-#include "support/util.h"
-#include "font/caryll-sfnt.h"
+#include "table-common.h"
 
 typedef struct {
 	// Horizontal header

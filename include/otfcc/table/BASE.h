@@ -1,5 +1,5 @@
-#ifndef CARYLL_TABLES_OTL_BASE_H
-#define CARYLL_TABLES_OTL_BASE_H
+#ifndef CARYLL_INCLUDE_TABLE_BASE_H
+#define CARYLL_INCLUDE_TABLE_BASE_H
 
 #include "otl.h"
 

@@ -1,8 +1,7 @@
-#ifndef CARYLL_TABLES_VHEA_H
-#define CARYLL_TABLES_VHEA_H
+#ifndef CARYLL_INCLUDE_TABLE_VHEA_H
+#define CARYLL_INCLUDE_TABLE_VHEA_H
 
-#include "support/util.h"
-#include "font/caryll-sfnt.h"
+#include "table-common.h"
 
 typedef struct {
 	f16dot16 version;

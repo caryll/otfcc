@@ -1,4 +1,5 @@
-#include "hhea.h"
+#include "support/util.h"
+#include "otfcc/table/hhea.h"
 
 table_hhea *table_new_hhea() {
 	table_hhea *hhea = (table_hhea *)calloc(1, sizeof(table_hhea));

@@ -1,8 +1,7 @@
-#ifndef CARYLL_TABLES_MAXP_H
-#define CARYLL_TABLES_MAXP_H
+#ifndef CARYLL_INCLUDE_TABLE_MAXP_H
+#define CARYLL_INCLUDE_TABLE_MAXP_H
 
-#include "support/util.h"
-#include "font/caryll-sfnt.h"
+#include "table-common.h"
 
 typedef struct {
 	// Maximum profile
@@ -29,4 +28,5 @@ table_maxp *table_read_maxp(const caryll_Packet packet);
 void table_dump_maxp(const table_maxp *table, json_value *root, const otfcc_Options *options);
 table_maxp *table_parse_maxp(const json_value *root, const otfcc_Options *options);
 caryll_Buffer *table_build_maxp(const table_maxp *maxp, const otfcc_Options *options);
+
 #endif
