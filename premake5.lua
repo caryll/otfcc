@@ -89,6 +89,17 @@ project "libotfcc"
 	kind "StaticLib"
 	language "C"
 	cbuildoptions()
+
+	links { "deps" }
+	
+	filter "action:gmake"
+		links "m"
+	filter {}
+
+	filter "action:xcode4"
+		links "m"
+	filter {}
+
 	files {
 		"lib/**.h",
 		"lib/**.c"
