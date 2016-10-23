@@ -35,7 +35,6 @@
  * https://github.com/udp/json-parser
  */
 #include "json.h"
-#include "emyg-dtoa/emyg-dtoa.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,14 +68,12 @@ json_value *json_object_push(json_value *object, const json_char *name, json_val
 
 /* Same as json_object_push, but doesn't call strlen() for you.
  */
-json_value *json_object_push_length(json_value *object, unsigned int name_length,
-                                    const json_char *name, json_value *);
+json_value *json_object_push_length(json_value *object, unsigned int name_length, const json_char *name, json_value *);
 
 /* Same as json_object_push_length, but doesn't copy the name buffer before
  * storing it in the value.  Use this micro-optimisation at your own risk.
  */
-json_value *json_object_push_nocopy(json_value *object, unsigned int name_length, json_char *name,
-                                    json_value *);
+json_value *json_object_push_nocopy(json_value *object, unsigned int name_length, json_char *name, json_value *);
 
 /* Merges all entries from objectB into objectA and destroys objectB.
  */
