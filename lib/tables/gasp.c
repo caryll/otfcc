@@ -92,8 +92,8 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *table_build_gasp(const table_gasp *gasp, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_gasp(const table_gasp *gasp, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);
 	bufwrite16b(buf, gasp->numRanges);

@@ -26,6 +26,6 @@ table_hhea *table_new_hhea();
 table_hhea *table_read_hhea(const caryll_Packet packet);
 void table_dump_hhea(const table_hhea *table, json_value *root, const caryll_Options *options);
 table_hhea *table_parse_hhea(const json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_hhea(const table_hhea *hhea, const caryll_Options *options);
+caryll_Buffer *table_build_hhea(const table_hhea *hhea, const caryll_Options *options);
 
 #endif

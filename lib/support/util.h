@@ -13,10 +13,11 @@
 #include <string.h>
 #include <math.h>
 
-#include "font-datatypes.h"
+#include "otfcc/primitives.h"
+#include "aliases.h"
 
 #include "base64.h"
-#include "buffer.h"
+#include "caryll/buffer.h"
 #include "options.h"
 #include "json-ident.h"
 #include "extern/json-builder.h"
@@ -333,12 +334,7 @@ static INLINE f16dot16 caryll_to_fixed(double x) {
 	return round(x * 65536.0);
 }
 
-#include "handle.h"
-
-// Handle types
-typedef struct _caryll_handle glyph_handle;
-typedef struct _caryll_handle fd_handle;
-typedef struct _caryll_handle lookup_handle;
+#include "otfcc/handle.h"
 
 #define OWNING /*move*/
 #define MOVE   /*move*/

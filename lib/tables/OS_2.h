@@ -52,6 +52,6 @@ void table_delete_OS_2(MOVE table_OS_2 *table);
 table_OS_2 *table_read_OS_2(const caryll_Packet packet);
 void table_dump_OS_2(const table_OS_2 *table, json_value *root, const caryll_Options *options);
 table_OS_2 *table_parse_OS_2(const json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_OS_2(const table_OS_2 *os_2, const caryll_Options *options);
+caryll_Buffer *table_build_OS_2(const table_OS_2 *os_2, const caryll_Options *options);
 
 #endif

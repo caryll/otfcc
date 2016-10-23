@@ -177,7 +177,7 @@ caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
 	return font;
 }
 
-caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
+caryll_Buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
 	caryll_SFNTBuilder *builder = caryll_new_SFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 
 	// Outline data
@@ -225,14 +225,14 @@ caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
 	if (font->BASE) caryll_pushTableToSfntBuilder(builder, 'BASE', table_build_BASE(font->BASE, options));
 
 	if (options->dummy_DSIG) {
-		caryll_buffer *dsig = bufnew();
+		caryll_Buffer *dsig = bufnew();
 		bufwrite32b(dsig, 0x00000001);
 		bufwrite16b(dsig, 0);
 		bufwrite16b(dsig, 0);
 		caryll_pushTableToSfntBuilder(builder, 'DSIG', dsig);
 	}
 
-	caryll_buffer *otf = caryll_serializeSFNT(builder);
+	caryll_Buffer *otf = caryll_serializeSFNT(builder);
 	caryll_delete_SFNTBuilder(builder);
 	return otf;
 }

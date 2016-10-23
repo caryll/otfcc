@@ -313,7 +313,7 @@ static bool try_untangle(bk_Graph *f, uint16_t passes) {
 	return didUntangle;
 }
 
-static void caryll_build_bkblock(caryll_buffer *buf, bk_Block *b, size_t *offsets) {
+static void caryll_build_bkblock(caryll_Buffer *buf, bk_Block *b, size_t *offsets) {
 	for (uint32_t j = 0; j < b->length; j++) {
 		switch (b->cells[j].t) {
 			case b8:
@@ -347,8 +347,8 @@ static void caryll_build_bkblock(caryll_buffer *buf, bk_Block *b, size_t *offset
 	}
 }
 
-caryll_buffer *bk_build_Graph(bk_Graph *f) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *bk_build_Graph(bk_Graph *f) {
+	caryll_Buffer *buf = bufnew();
 	size_t *offsets = calloc(f->length + 1, sizeof(size_t));
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
@@ -393,11 +393,11 @@ void bk_untangleGraph(/*BORROW*/ bk_Graph *f) {
 	} while (tangled && passes < 16);
 }
 
-caryll_buffer *bk_build_Block(/*MOVE*/ bk_Block *root) {
+caryll_Buffer *bk_build_Block(/*MOVE*/ bk_Block *root) {
 	bk_Graph *f = bk_newGraphFromRootBlock(root);
 	bk_minimizeGraph(f);
 	bk_untangleGraph(f);
-	caryll_buffer *buf = bk_build_Graph(f);
+	caryll_Buffer *buf = bk_build_Graph(f);
 	bk_delete_Graph(f);
 	return buf;
 }

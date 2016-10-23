@@ -42,7 +42,7 @@ workspace "otfcc"
 	platforms { "x32", "x64" }
 	
 	location "build"
-	includedirs { "dep", "lib" }
+	includedirs { "include", "dep", "lib" }
 	
 	defines {
 		'_CARYLL_USE_PRE_SERIALIZED',

@@ -62,7 +62,7 @@ void cff_extract_Charset(uint8_t *data, int32_t offset, uint16_t nchars, cff_Cha
 	}
 }
 
-caryll_buffer *cff_build_Charset(cff_Charset cset) {
+caryll_Buffer *cff_build_Charset(cff_Charset cset) {
 	switch (cset.t) {
 		case cff_CHARSET_ISOADOBE:
 		case cff_CHARSET_EXPERT:
@@ -70,7 +70,7 @@ caryll_buffer *cff_build_Charset(cff_Charset cset) {
 			return bufnew();
 		}
 		case cff_CHARSET_FORMAT0: {
-			caryll_buffer *blob = bufnew();
+			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 2;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 0;
@@ -80,7 +80,7 @@ caryll_buffer *cff_build_Charset(cff_Charset cset) {
 			return blob;
 		}
 		case cff_CHARSET_FORMAT1: {
-			caryll_buffer *blob = bufnew();
+			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 3;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 1;
@@ -91,7 +91,7 @@ caryll_buffer *cff_build_Charset(cff_Charset cset) {
 			return blob;
 		}
 		case cff_CHARSET_FORMAT2: {
-			caryll_buffer *blob = bufnew();
+			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 4;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 2;

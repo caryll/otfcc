@@ -148,13 +148,13 @@ table_name *table_parse_name(const json_value *root, const caryll_Options *optio
 	}
 	return name;
 }
-caryll_buffer *table_build_name(const table_name *name, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_name(const table_name *name, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, name->count);
 	bufwrite16b(buf, 0); // fill later
-	caryll_buffer *strings = bufnew();
+	caryll_Buffer *strings = bufnew();
 	for (uint16_t j = 0; j < name->count; j++) {
 		name_record *record = name->records[j];
 		bufwrite16b(buf, record->platformID);

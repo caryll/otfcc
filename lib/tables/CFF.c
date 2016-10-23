@@ -848,12 +848,12 @@ typedef struct {
 	cff_SubrGraph *graph;
 } cff_charstring_builder_context;
 typedef struct {
-	caryll_buffer *charStrings;
-	caryll_buffer *subroutines;
+	caryll_Buffer *charStrings;
+	caryll_Buffer *subroutines;
 } cff_charStringAndSubrs;
 
-static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_buffer **s, caryll_buffer **gs,
-                                 caryll_buffer **ls) {
+static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_Buffer **s, caryll_Buffer **gs,
+                                 caryll_Buffer **ls) {
 	*s = bufnew();
 	*gs = bufnew();
 	if (context->glyf->numberGlyphs == 0) { return; }
@@ -1021,13 +1021,13 @@ static cff_Dict *cff_make_private_dict(cff_PrivateDict *pd) {
 static int by_sid(cff_sid_entry *a, cff_sid_entry *b) {
 	return a->sid - b->sid;
 }
-static caryll_buffer *callback_makestringindex(void *context, uint32_t i) {
-	caryll_buffer **blobs = context;
+static caryll_Buffer *callback_makestringindex(void *context, uint32_t i) {
+	caryll_Buffer **blobs = context;
 	return blobs[i];
 }
-static caryll_buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
+static caryll_Buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 	HASH_SORT(*h, by_sid);
-	caryll_buffer **blobs;
+	caryll_Buffer **blobs;
 	uint32_t n = HASH_COUNT(*h);
 	NEW_N(blobs, n);
 	uint32_t j = 0;
@@ -1043,13 +1043,13 @@ static caryll_buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 
 	cff_Index *strings = cff_newIndexByCallback(blobs, n, callback_makestringindex);
 	free(blobs);
-	caryll_buffer *final_blob = cff_build_Index(*strings);
+	caryll_Buffer *final_blob = cff_build_Index(*strings);
 	cff_delete_Index(strings);
 	final_blob->cursor = final_blob->size;
 	return final_blob;
 }
 
-static caryll_buffer *cff_compile_nameindex(table_CFF *cff) {
+static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
 	cff_Index *nameIndex = cff_new_Index();
 	nameIndex->count = 1;
 	nameIndex->offSize = 4;
@@ -1060,7 +1060,7 @@ static caryll_buffer *cff_compile_nameindex(table_CFF *cff) {
 	NEW_N(nameIndex->data, 1 + sdslen(cff->fontName));
 	memcpy(nameIndex->data, cff->fontName, sdslen(cff->fontName));
 	// CFF Name INDEX
-	caryll_buffer *buf = cff_build_Index(*nameIndex);
+	caryll_Buffer *buf = cff_build_Index(*nameIndex);
 	cff_delete_Index(nameIndex);
 	if (cff->fontName) {
 		sdsfree(cff->fontName);
@@ -1069,7 +1069,7 @@ static caryll_buffer *cff_compile_nameindex(table_CFF *cff) {
 	return buf;
 }
 
-static caryll_buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid_entry **stringHash) {
+static caryll_Buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid_entry **stringHash) {
 	cff_Charset *charset;
 	NEW_CLEAN(charset);
 	if (glyf->numberGlyphs > 1) { // At least two glyphs
@@ -1090,13 +1090,13 @@ static caryll_buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid
 	} else {
 		charset->t = cff_CHARSET_ISOADOBE;
 	}
-	caryll_buffer *c = cff_build_Charset(*charset);
+	caryll_Buffer *c = cff_build_Charset(*charset);
 	if (charset->t == cff_CHARSET_FORMAT2) { FREE(charset->f2.range2); }
 	FREE(charset);
 	return c;
 }
 
-static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
+static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	if (!cff->isCID) return bufnew();
 	// We choose format 3 here
 	uint32_t ranges = 1;
@@ -1135,7 +1135,7 @@ static caryll_buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	fds->f3.nranges = ranges;
 	fds->f3.sentinel = glyf->numberGlyphs;
 done:;
-	caryll_buffer *e = cff_build_FDSelect(*fds);
+	caryll_Buffer *e = cff_build_FDSelect(*fds);
 	cff_close_FDSelect(*fds);
 	free(fds);
 	return e;
@@ -1145,10 +1145,10 @@ typedef struct {
 	table_CFF **fdArray;
 	cff_sid_entry **stringHash;
 } fdarray_compile_context;
-static caryll_buffer *callback_makefd(void *_context, uint32_t i) {
+static caryll_Buffer *callback_makefd(void *_context, uint32_t i) {
 	fdarray_compile_context *context = (fdarray_compile_context *)_context;
 	cff_Dict *fd = cff_make_fd_dict(context->fdArray[i], context->stringHash);
-	caryll_buffer *blob = cff_build_Dict(fd);
+	caryll_Buffer *blob = cff_build_Dict(fd);
 	bufwrite_bufdel(blob, cff_buildOffset(0xEEEEEEEE));
 	bufwrite_bufdel(blob, cff_buildOffset(0xFFFFFFFF));
 	bufwrite_bufdel(blob, cff_encodeCffOperator(op_Private));
@@ -1163,32 +1163,32 @@ static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray, 
 	return cff_newIndexByCallback(&context, fdArrayCount, callback_makefd);
 }
 
-static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const caryll_Options *options) {
-	caryll_buffer *blob = bufnew();
+static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const caryll_Options *options) {
+	caryll_Buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;
 
 	// CFF Header
-	caryll_buffer *h = cff_buildHeader();
-	caryll_buffer *n = cff_compile_nameindex(cff);
+	caryll_Buffer *h = cff_buildHeader();
+	caryll_Buffer *n = cff_compile_nameindex(cff);
 
 	// cff top DICT
 	cff_Dict *top = cff_make_fd_dict(cff, &stringHash);
-	caryll_buffer *t = cff_build_Dict(top);
+	caryll_Buffer *t = cff_build_Dict(top);
 	cff_delete_Dict(top);
 	// cff top PRIVATE
 	cff_Dict *top_pd = cff_make_private_dict(cff->privateDict);
-	caryll_buffer *p = cff_build_Dict(top_pd);
+	caryll_Buffer *p = cff_build_Dict(top_pd);
 	bufwrite_bufdel(p, cff_buildOffset(0xFFFFFFFF));
 	bufwrite_bufdel(p, cff_encodeCffOperator(op_Subrs));
 	cff_delete_Dict(top_pd);
 
 	// FDSelect
-	caryll_buffer *e = cff_make_fdselect(cff, glyf);
+	caryll_Buffer *e = cff_make_fdselect(cff, glyf);
 
 	// FDArray
 	cff_Index *fdArrayIndex = NULL;
-	caryll_buffer *r;
+	caryll_Buffer *r;
 	if (cff->isCID) {
 		fdArrayIndex = cff_make_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
 		r = cff_build_Index(*fdArrayIndex);
@@ -1197,15 +1197,15 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	}
 
 	// cff charset : Allocate string index terms for glyph names
-	caryll_buffer *c = cff_make_charset(cff, glyf, &stringHash);
+	caryll_Buffer *c = cff_make_charset(cff, glyf, &stringHash);
 
 	// CFF String Index
-	caryll_buffer *i = cffstrings_to_indexblob(&stringHash);
+	caryll_Buffer *i = cffstrings_to_indexblob(&stringHash);
 
 	// CFF Charstrings
-	caryll_buffer *s;
-	caryll_buffer *gs;
-	caryll_buffer *ls;
+	caryll_Buffer *s;
+	caryll_Buffer *gs;
+	caryll_Buffer *ls;
 	{
 		cff_charstring_builder_context g2cContext;
 		g2cContext.glyf = glyf;
@@ -1281,11 +1281,11 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	endingPositionOfPrivates[0] = blob->cursor;
 	if (cff->isCID) { // fdarray and fdarray privates
 		uint32_t fdArrayPrivatesStartOffset = off;
-		caryll_buffer **fdArrayPrivates;
+		caryll_Buffer **fdArrayPrivates;
 		NEW_N(fdArrayPrivates, cff->fdArrayCount);
 		for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 			cff_Dict *pd = cff_make_private_dict(cff->fdArray[j]->privateDict);
-			caryll_buffer *p = cff_build_Dict(pd);
+			caryll_Buffer *p = cff_build_Dict(pd);
 			bufwrite_bufdel(p, cff_buildOffset(0xFFFFFFFF));
 			bufwrite_bufdel(p, cff_encodeCffOperator(op_Subrs));
 			cff_delete_Dict(pd);
@@ -1331,6 +1331,6 @@ static caryll_buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	return blob;
 }
 
-caryll_buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const caryll_Options *options) {
+caryll_Buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const caryll_Options *options) {
 	return writecff_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }

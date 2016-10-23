@@ -177,13 +177,13 @@ table_cmap *table_parse_cmap(const json_value *root, const caryll_Options *optio
 		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                                        \
 	}                                                                                                                  \
 	segmentsCount += 1;
-caryll_buffer *table_build_cmap_format4(const table_cmap *cmap) {
-	caryll_buffer *buf = bufnew();
-	caryll_buffer *endCount = bufnew();
-	caryll_buffer *startCount = bufnew();
-	caryll_buffer *idDelta = bufnew();
-	caryll_buffer *idRangeOffset = bufnew();
-	caryll_buffer *glyphIdArray = bufnew();
+caryll_Buffer *table_build_cmap_format4(const table_cmap *cmap) {
+	caryll_Buffer *buf = bufnew();
+	caryll_Buffer *endCount = bufnew();
+	caryll_Buffer *startCount = bufnew();
+	caryll_Buffer *idDelta = bufnew();
+	caryll_Buffer *idRangeOffset = bufnew();
+	caryll_Buffer *glyphIdArray = bufnew();
 
 	bool started = false;
 	int lastUnicodeStart = 0xFFFFFF;
@@ -276,8 +276,8 @@ caryll_buffer *table_build_cmap_format4(const table_cmap *cmap) {
 	buffree(glyphIdArray);
 	return buf;
 }
-caryll_buffer *table_build_cmap_format12(const table_cmap *cmap) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_cmap_format12(const table_cmap *cmap) {
+	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 12);
 	bufwrite16b(buf, 0);
 	bufwrite32b(buf, 0); // fill later
@@ -319,8 +319,8 @@ caryll_buffer *table_build_cmap_format12(const table_cmap *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_buffer *table_build_cmap(const table_cmap *cmap, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_cmap(const table_cmap *cmap, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 
 	cmap_Entry *entry;
@@ -334,7 +334,7 @@ caryll_buffer *table_build_cmap(const table_cmap *cmap, const caryll_Options *op
 	bufwrite16b(buf, nTables);
 	uint32_t offset = 4 + 8 * nTables;
 	size_t cp = 0;
-	caryll_buffer *format4;
+	caryll_Buffer *format4;
 	if (!hasSMP || !options->stub_cmap4) {
 		format4 = table_build_cmap_format4(cmap);
 	} else {
@@ -372,7 +372,7 @@ caryll_buffer *table_build_cmap(const table_cmap *cmap, const caryll_Options *op
 	offset += buflen(format4);
 	buffree(format4);
 	if (hasSMP) {
-		caryll_buffer *format12 = table_build_cmap_format12(cmap);
+		caryll_Buffer *format12 = table_build_cmap_format12(cmap);
 		// Windows format 12;
 		bufwrite16b(buf, 3);
 		bufwrite16b(buf, 10);

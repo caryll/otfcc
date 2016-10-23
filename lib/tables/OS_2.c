@@ -348,8 +348,8 @@ table_OS_2 *table_parse_OS_2(const json_value *root, const caryll_Options *optio
 	return os_2;
 }
 
-caryll_buffer *table_build_OS_2(const table_OS_2 *os_2, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_OS_2(const table_OS_2 *os_2, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);
 	bufwrite16b(buf, os_2->xAvgCharWidth);

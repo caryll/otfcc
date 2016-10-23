@@ -205,7 +205,7 @@ void table_delete_otl(MOVE table_OTL *table);
 table_OTL *table_read_otl(const caryll_Packet packet, const caryll_Options *options, const uint32_t tag);
 void table_dump_otl(const table_OTL *table, json_value *root, const caryll_Options *options, const char *tag);
 table_OTL *table_parse_otl(const json_value *root, const caryll_Options *options, const char *tag);
-caryll_buffer *table_build_otl(const table_OTL *table, const caryll_Options *options, const char *tag);
+caryll_Buffer *table_build_otl(const table_OTL *table, const caryll_Options *options, const char *tag);
 
 #include "gsub-single.h"
 #include "gsub-multi.h"

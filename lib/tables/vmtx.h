@@ -19,7 +19,7 @@ typedef struct {
 
 void table_delete_vmtx(MOVE table_vmtx *table);
 table_vmtx *table_read_vmtx(const caryll_Packet packet, table_vhea *vhea, table_maxp *maxp);
-caryll_buffer *table_build_vmtx(const table_vmtx *table, glyphid_t count_a, glyphid_t count_k,
+caryll_Buffer *table_build_vmtx(const table_vmtx *table, glyphid_t count_a, glyphid_t count_k,
                                 const caryll_Options *options);
 
 #endif

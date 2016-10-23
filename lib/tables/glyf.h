@@ -140,8 +140,8 @@ void table_dump_glyf(const table_glyf *table, json_value *root, const caryll_Opt
 table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const caryll_Options *options);
 
 typedef struct {
-	caryll_buffer *glyf;
-	caryll_buffer *loca;
+	caryll_Buffer *glyf;
+	caryll_Buffer *loca;
 } glyf_loca_bufpair;
 
 glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const caryll_Options *options);

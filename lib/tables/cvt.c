@@ -65,8 +65,8 @@ table_cvt *table_parse_cvt(const json_value *root, const caryll_Options *options
 	return t;
 }
 
-caryll_buffer *table_build_cvt(const table_cvt *table, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_cvt(const table_cvt *table, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) {
 		bufwrite16b(buf, table->words[j]);

@@ -291,7 +291,7 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_build_Font(font, options);
+		caryll_Buffer *otf = caryll_build_Font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);

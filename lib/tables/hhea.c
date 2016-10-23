@@ -79,8 +79,8 @@ table_hhea *table_parse_hhea(const json_value *root, const caryll_Options *optio
 	return hhea;
 }
 
-caryll_buffer *table_build_hhea(const table_hhea *hhea, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_hhea(const table_hhea *hhea, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!hhea) return buf;
 	bufwrite32b(buf, hhea->version);
 	bufwrite16b(buf, hhea->ascender);

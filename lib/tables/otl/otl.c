@@ -31,7 +31,7 @@ otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLeng
                                       otl_LookupType lookupType);
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump);
 static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh);
-static bool _build_subtable(otl_Lookup *lookup, caryll_buffer ***subtables, size_t *lastOffset);
+static bool _build_subtable(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
 
 // COMMON PART
 table_OTL *table_new_otl() {
@@ -740,12 +740,12 @@ FAIL:
 	return NULL;
 }
 
-static bool _declare_lookup_writer(otl_LookupType type, caryll_buffer *(*fn)(const otl_Subtable *_subtable),
-                                   otl_Lookup *lookup, caryll_buffer ***subtables, size_t *lastOffset) {
+static bool _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
+                                   otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtables, lookup->subtableCount);
 		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-			caryll_buffer *buf = fn(lookup->subtables[j]);
+			caryll_Buffer *buf = fn(lookup->subtables[j]);
 			(*subtables)[j] = buf;
 			*lastOffset += buf->size;
 		}
@@ -758,7 +758,7 @@ static bool _declare_lookup_writer(otl_LookupType type, caryll_buffer *(*fn)(con
 // That is, we will use extended layout lookups automatically when the
 // offsets are too large.
 static bk_Block *writeOTLLookups(const table_OTL *table, const caryll_Options *options, const char *tag) {
-	caryll_buffer ***subtables;
+	caryll_Buffer ***subtables;
 	NEW_N(subtables, table->lookupCount);
 	bool *lookupWritten;
 	NEW_N(lookupWritten, table->lookupCount);
@@ -959,7 +959,7 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const caryll
 	return root;
 }
 
-caryll_buffer *table_build_otl(const table_OTL *table, const caryll_Options *options, const char *tag) {
+caryll_Buffer *table_build_otl(const table_OTL *table, const caryll_Options *options, const char *tag) {
 	bk_Block *root = bk_new_Block(b32, 0x10000,                                    // Version
 	                              p16, writeOTLScriptAndLanguages(table, options), // ScriptList
 	                              p16, writeOTLFeatures(table, options),           // FeatureList
@@ -1091,7 +1091,7 @@ static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh
 	return parsed;
 }
 
-static bool _build_subtable(otl_Lookup *lookup, caryll_buffer ***subtables, size_t *lastOffset) {
+static bool _build_subtable(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	bool written = false;
 	LOOKUP_WRITER(otl_type_gsub_single, caryll_build_gsub_single_subtable);
 	LOOKUP_WRITER(otl_type_gsub_multiple, caryll_build_gsub_multi_subtable);

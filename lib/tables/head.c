@@ -102,8 +102,8 @@ table_head *table_parse_head(const json_value *root, const caryll_Options *optio
 	return head;
 }
 
-caryll_buffer *table_build_head(const table_head *head, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_head(const table_head *head, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);
 	bufwrite32b(buf, head->fontRevison);

@@ -40,9 +40,9 @@ void table_delete_hmtx(table_hmtx *table) {
 	free(table);
 }
 
-caryll_buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
+caryll_Buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
                                 const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+	caryll_Buffer *buf = bufnew();
 	if (!hmtx) return buf;
 	if (hmtx->metrics) {
 		for (glyphid_t j = 0; j < count_a; j++) {

@@ -25,5 +25,5 @@ void table_delete_name(table_name *table);
 table_name *table_read_name(const caryll_Packet packet);
 void table_dump_name(const table_name *table, json_value *root, const caryll_Options *options);
 table_name *table_parse_name(const json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_name(const table_name *name, const caryll_Options *options);
+caryll_Buffer *table_build_name(const table_name *name, const caryll_Options *options);
 #endif

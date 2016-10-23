@@ -28,5 +28,5 @@ void table_delete_maxp(MOVE table_maxp *maxp);
 table_maxp *table_read_maxp(const caryll_Packet packet);
 void table_dump_maxp(const table_maxp *table, json_value *root, const caryll_Options *options);
 table_maxp *table_parse_maxp(const json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_maxp(const table_maxp *maxp, const caryll_Options *options);
+caryll_Buffer *table_build_maxp(const table_maxp *maxp, const caryll_Options *options);
 #endif

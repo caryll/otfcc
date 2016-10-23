@@ -301,7 +301,7 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 	                    bkover);
 }
 
-caryll_buffer *table_build_BASE(const table_BASE *base, const caryll_Options *options) {
+caryll_Buffer *table_build_BASE(const table_BASE *base, const caryll_Options *options) {
 	bk_Block *root = bk_new_Block(b32, 0x10000,                    // Version
 	                              p16, axisToBk(base->horizontal), // HorizAxis
 	                              p16, axisToBk(base->vertical),   // VertAxis

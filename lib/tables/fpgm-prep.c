@@ -56,8 +56,8 @@ table_fpgm_prep *table_fpgm_parse_prep(const json_value *root, const caryll_Opti
 	return t;
 }
 
-caryll_buffer *table_build_fpgm_prep(const table_fpgm_prep *table, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_fpgm_prep(const table_fpgm_prep *table, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite_bytes(buf, table->length, table->bytes);
 	return buf;

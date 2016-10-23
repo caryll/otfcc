@@ -457,7 +457,7 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_chaining_coverage(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_chaining_coverage(const otl_Subtable *_subtable) {
 	const subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = subtable->rules[0];
 	tableid_t nBacktrack = rule->inputBegins;
@@ -491,7 +491,7 @@ caryll_buffer *caryll_build_chaining_coverage(const otl_Subtable *_subtable) {
 	return bk_build_Block(root);
 }
 
-caryll_buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
 	const subtable_chaining *subtable = &(_subtable->chaining);
 
 	otl_Coverage *coverage;
@@ -563,7 +563,7 @@ caryll_buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
 	return bk_build_Block(root);
 }
 
-caryll_buffer *caryll_build_chaining(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_chaining(const otl_Subtable *_subtable) {
 	if (_subtable->chaining.classified) {
 		return caryll_build_chaining_classes(_subtable);
 	} else {

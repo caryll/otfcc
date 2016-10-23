@@ -81,7 +81,7 @@ otl_Subtable *otl_gsub_parse_single(const json_value *_subtable) {
 	return _st;
 };
 
-caryll_buffer *caryll_build_gsub_single_subtable(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 	const subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	bool isConstantDifference = true;
 	if (subtable->from->numGlyphs > 1) {

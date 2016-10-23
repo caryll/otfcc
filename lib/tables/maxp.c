@@ -96,8 +96,8 @@ table_maxp *table_parse_maxp(const json_value *root, const caryll_Options *optio
 	return maxp;
 }
 
-caryll_buffer *table_build_maxp(const table_maxp *maxp, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_maxp(const table_maxp *maxp, const caryll_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!maxp) return buf;
 	bufwrite32b(buf, maxp->version);
 	bufwrite16b(buf, maxp->numGlyphs);

@@ -336,7 +336,7 @@ bk_Block *caryll_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 	}
 	return root;
 }
-caryll_buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
 	bk_Block *format1 = caryll_build_gpos_pair_individual(_subtable);
 	bk_Block *format2 = caryll_build_gpos_pair_classes(_subtable);
 	bk_Graph *g1 = bk_newGraphFromRootBlock(format1);
@@ -347,14 +347,14 @@ caryll_buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
 		// Choose pair adjustment by classes
 		bk_delete_Graph(g1);
 		bk_untangleGraph(g2);
-		caryll_buffer *buf = bk_build_Graph(g2);
+		caryll_Buffer *buf = bk_build_Graph(g2);
 		bk_delete_Graph(g2);
 		return buf;
 	} else {
 		// Choose pair adjustment by individuals
 		bk_delete_Graph(g2);
 		bk_untangleGraph(g1);
-		caryll_buffer *buf = bk_build_Graph(g1);
+		caryll_Buffer *buf = bk_build_Graph(g1);
 		bk_delete_Graph(g1);
 		return buf;
 	}

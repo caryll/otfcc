@@ -202,7 +202,7 @@ static bk_Block *writeLigCarets(otl_LigCaretTable *lc) {
 	return lct;
 }
 
-caryll_buffer *table_build_GDEF(const table_GDEF *gdef, const caryll_Options *options) {
+caryll_Buffer *table_build_GDEF(const table_GDEF *gdef, const caryll_Options *options) {
 	bk_Block *bGlyphClassDef = NULL;
 	bk_Block *bAttachList = NULL;
 	bk_Block *bLigCaretList = NULL;

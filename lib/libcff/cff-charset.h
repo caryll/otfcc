@@ -57,6 +57,6 @@ typedef struct {
 
 void cff_close_Charset(cff_Charset cset);
 void cff_extract_Charset(uint8_t *data, int32_t offset, uint16_t nchars, cff_Charset *charsets);
-caryll_buffer *cff_build_Charset(cff_Charset cset);
+caryll_Buffer *cff_build_Charset(cff_Charset cset);
 
 #endif

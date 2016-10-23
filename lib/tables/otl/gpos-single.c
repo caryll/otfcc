@@ -74,7 +74,7 @@ otl_Subtable *otl_gpos_parse_single(const json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gpos_single(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_gpos_single(const otl_Subtable *_subtable) {
 	const subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	bool isConst = subtable->coverage->numGlyphs > 0;
 	uint16_t format = 0;

@@ -34,7 +34,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options);
 cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il);
 void cff_ILmergeIL(cff_CharstringIL *self, cff_CharstringIL *il);
-caryll_buffer *cff_build_IL(cff_CharstringIL *il);
+caryll_Buffer *cff_build_IL(cff_CharstringIL *il);
 bool cff_ilEqual(cff_CharstringIL *a, cff_CharstringIL *b);
 
 void il_push_operand(cff_CharstringIL *il, double x);

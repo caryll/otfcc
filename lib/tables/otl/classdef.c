@@ -181,8 +181,8 @@ typedef struct {
 static int by_gid(const void *a, const void *b) {
 	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
 }
-caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
+	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
 	if (!cd->numGlyphs) { // no glyphs, return a blank classdef
 		bufwrite16b(buf, 0);
@@ -211,7 +211,7 @@ caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	glyphclass_t lastClass = r[0].cid;
 	glyphid_t nRanges = 0;
 	glyphid_t lastGID = startGID;
-	caryll_buffer *ranges = bufnew();
+	caryll_Buffer *ranges = bufnew();
 	for (glyphid_t j = 1; j < jj; j++) {
 		glyphid_t current = r[j].gid;
 		if (current <= lastGID) continue;

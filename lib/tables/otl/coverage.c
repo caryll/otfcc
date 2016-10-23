@@ -138,10 +138,10 @@ otl_Coverage *otl_parse_Coverage(const json_value *cov) {
 static int by_gid(const void *a, const void *b) {
 	return *((glyphid_t *)a) - *((glyphid_t *)b);
 }
-caryll_buffer *otl_build_Coverage(const otl_Coverage *coverage) {
+caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 	// sort the gids in coverage
 	if (!coverage->numGlyphs) {
-		caryll_buffer *buf = bufnew();
+		caryll_Buffer *buf = bufnew();
 		bufwrite16b(buf, 2);
 		bufwrite16b(buf, 0);
 		return buf;
@@ -155,7 +155,7 @@ caryll_buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 	}
 	qsort(r, jj, sizeof(glyphid_t), by_gid);
 
-	caryll_buffer *format1 = bufnew();
+	caryll_Buffer *format1 = bufnew();
 	bufwrite16b(format1, 1);
 	bufwrite16b(format1, jj);
 	for (glyphid_t j = 0; j < jj; j++) {
@@ -166,9 +166,9 @@ caryll_buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 		return format1;
 	}
 
-	caryll_buffer *format2 = bufnew();
+	caryll_Buffer *format2 = bufnew();
 	bufwrite16b(format2, 2);
-	caryll_buffer *ranges = bufnew();
+	caryll_Buffer *ranges = bufnew();
 	glyphid_t startGID = r[0];
 	glyphid_t endGID = startGID;
 	glyphid_t lastGID = startGID;

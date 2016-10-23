@@ -99,6 +99,6 @@ void table_delete_CFF(MOVE table_CFF *table);
 table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet);
 void table_dump_cff(const table_CFF *table, MODIFY json_value *root, const caryll_Options *options);
 table_CFF *table_parse_cff(json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const caryll_Options *options);
+caryll_Buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const caryll_Options *options);
 
 #endif

@@ -25,8 +25,8 @@ uint32_t cff_lengthOfIndex(cff_Index i);
 
 void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in);
 
-cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t));
+cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t));
 
-caryll_buffer *cff_build_Index(cff_Index index);
+caryll_Buffer *cff_build_Index(cff_Index index);
 
 #endif
