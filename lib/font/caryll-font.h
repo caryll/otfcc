@@ -29,9 +29,9 @@ typedef struct _caryll_font caryll_Font;
 #include "tables/vmtx.h"
 #include "tables/VORG.h"
 
-#include <tables/otl/GDEF.h>
-#include <tables/otl/BASE.h>
-#include <tables/otl/otl.h>
+#include "tables/otl/GDEF.h"
+#include "tables/otl/BASE.h"
+#include "tables/otl/otl.h"
 
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } caryll_font_subtype;
 
