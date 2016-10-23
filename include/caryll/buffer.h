@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdarg.h>
-#include "extern/sds.h"
+#include "dep/sds.h"
 
 typedef struct caryll_Buffer {
 	size_t cursor;

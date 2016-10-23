@@ -74,6 +74,7 @@ project "deps"
 	kind "StaticLib"
 	language "C"
 	externcbuildoptions()
+	includedirs { "include/dep" }
 	files {
 		"dep/extern/**.h",
 		"dep/extern/**.c"

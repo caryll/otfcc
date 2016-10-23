@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "extern/sds.h"
+#include "dep/sds.h"
 
 #include "primitives.h"
 
