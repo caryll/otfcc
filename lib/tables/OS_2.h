@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_OS_2_H
 #define CARYLL_TABLES_OS_2_H
 
-#include <support/util.h>
-#include <font/caryll-sfnt.h>
+#include "support/util.h"
+#include "font/caryll-sfnt.h"
 
 typedef struct {
 	// OS/2 and Windows specific metrics
@@ -48,9 +48,10 @@ typedef struct {
 } table_OS_2;
 
 table_OS_2 *table_new_OS_2();
-table_OS_2 *table_read_OS_2(caryll_Packet packet);
-void table_dump_OS_2(table_OS_2 *table, json_value *root, const caryll_Options *options);
-table_OS_2 *table_parse_OS_2(json_value *root, const caryll_Options *options);
-caryll_buffer *table_build_OS_2(table_OS_2 *os_2, const caryll_Options *options);
+void table_delete_OS_2(MOVE table_OS_2 *table);
+table_OS_2 *table_read_OS_2(const caryll_Packet packet);
+void table_dump_OS_2(const table_OS_2 *table, json_value *root, const caryll_Options *options);
+table_OS_2 *table_parse_OS_2(const json_value *root, const caryll_Options *options);
+caryll_buffer *table_build_OS_2(const table_OS_2 *os_2, const caryll_Options *options);
 
 #endif

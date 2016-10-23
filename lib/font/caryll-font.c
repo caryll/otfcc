@@ -36,7 +36,7 @@ caryll_Font *caryll_new_Font() {
 void caryll_delete_Font(caryll_Font *font) {
 	if (font->head) free(font->head);
 	if (font->hhea) free(font->hhea);
-	if (font->maxp) free(font->maxp);
+	if (font->maxp) table_delete_maxp(font->maxp);
 	if (font->OS_2) free(font->OS_2);
 	if (font->name) table_delete_name(font->name);
 	if (font->hmtx) table_delete_hmtx(font->hmtx);

@@ -139,7 +139,7 @@ void bufwrite_str(caryll_buffer *buf, const char *str) {
 	memcpy(buf->data + buf->cursor, str, len);
 	buf->cursor += len;
 }
-void bufwrite_bytes(caryll_buffer *buf, size_t len, uint8_t *str) {
+void bufwrite_bytes(caryll_buffer *buf, size_t len, const uint8_t *str) {
 	if (!str) return;
 	if (!len) return;
 	bufbeforewrite(buf, len);
@@ -208,4 +208,13 @@ void bufpingpong16b(caryll_buffer *buf, caryll_buffer *that, size_t *offset, siz
 	bufwrite_bufdel(buf, that);
 	*offset = buf->cursor;
 	bufseek(buf, *cp);
+}
+
+void bufprint(caryll_buffer *buf) {
+	for (size_t j = 0; j < buf->size; j++) {
+		if (j % 16) fprintf(stderr, " ");
+		fprintf(stderr, "%02X", buf->data[j]);
+		if (j % 16 == 15) fprintf(stderr, "\n");
+	}
+	fprintf(stderr, "\n");
 }

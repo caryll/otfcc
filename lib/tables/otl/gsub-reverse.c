@@ -12,20 +12,20 @@ void otl_delete_gsub_reverse(otl_Subtable *_subtable) {
 	}
 }
 
-static void reverseBacktracks(subtable_gsub_reverse *subtable) {
-	if (subtable->inputIndex > 0) {
+static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
+	if (inputIndex > 0) {
 		tableid_t start = 0;
-		tableid_t end = subtable->inputIndex - 1;
+		tableid_t end = inputIndex - 1;
 		while (end > start) {
-			otl_Coverage *tmp = subtable->match[start];
-			subtable->match[start] = subtable->match[end];
-			subtable->match[end] = tmp;
+			otl_Coverage *tmp = match[start];
+			match[start] = match[end];
+			match[end] = tmp;
 			end--, start++;
 		}
 	}
 }
 
-otl_Subtable *otl_read_gsub_reverse(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
@@ -66,7 +66,7 @@ otl_Subtable *otl_read_gsub_reverse(font_file_pointer data, uint32_t tableLength
 	for (tableid_t j = 0; j < nReplacement; j++) {
 		subtable->to->glyphs[j] = handle_fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
 	}
-	reverseBacktracks(subtable);
+	reverseBacktracks(subtable->match, subtable->inputIndex);
 	return _subtable;
 
 FAIL:
@@ -74,8 +74,8 @@ FAIL:
 	return NULL;
 }
 
-json_value *otl_gsub_dump_reverse(otl_Subtable *_subtable) {
-	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
+json_value *otl_gsub_dump_reverse(const otl_Subtable *_subtable) {
+	const subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	json_value *_st = json_object_new(3);
 	json_value *_match = json_array_new(subtable->matchCount);
 	for (tableid_t j = 0; j < subtable->matchCount; j++) {
@@ -87,7 +87,7 @@ json_value *otl_gsub_dump_reverse(otl_Subtable *_subtable) {
 	return _st;
 }
 
-otl_Subtable *otl_gsub_parse_reverse(json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable) {
 	json_value *_match = json_obj_get_type(_subtable, "match", json_array);
 	json_value *_to = json_obj_get_type(_subtable, "to", json_array);
 	if (!_match || !_to) return NULL;
@@ -108,9 +108,9 @@ otl_Subtable *otl_gsub_parse_reverse(json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gsub_reverse(otl_Subtable *_subtable) {
-	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
-	reverseBacktracks(subtable);
+caryll_buffer *caryll_build_gsub_reverse(const otl_Subtable *_subtable) {
+	const subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
+	reverseBacktracks(subtable->match, subtable->inputIndex);
 
 	bk_Block *root =
 	    bk_new_Block(b16, 1,                                                                                // format

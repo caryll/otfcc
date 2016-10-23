@@ -1,7 +1,7 @@
-#include <font/caryll-font.h>
-#include <font/caryll-sfnt-builder.h>
-#include <font/caryll-sfnt.h>
-#include <fontops/fontop.h>
+#include "font/caryll-font.h"
+#include "font/caryll-sfnt-builder.h"
+#include "font/caryll-sfnt.h"
+#include "fontops/fontop.h"
 
 #include "platform.h"
 #include "stopwatch.h"
@@ -101,7 +101,6 @@ void readEntireStdin(char **_buffer, long *_length) {
 	while (!feof(stdin)) {
 		if (remain <= BUF_MIN) {
 			remain += (length >> 1) & 0xFFFFFF;
-			fprintf(stderr, "Reallocate %d\n", (uint32_t)(length+remain));
 			buffer = realloc(buffer, length + remain);
 		}
 

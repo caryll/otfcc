@@ -1,8 +1,8 @@
 #ifndef CARYLL_TABLES_OTL_H
 #define CARYLL_TABLES_OTL_H
-#include <support/util.h>
-#include <bk/bkgraph.h>
-#include <font/caryll-sfnt.h>
+#include "support/util.h"
+#include "bk/bkgraph.h"
+#include "font/caryll-sfnt.h"
 
 #include "coverage.h"
 #include "classdef.h"
@@ -198,14 +198,14 @@ typedef struct {
 } table_OTL;
 
 otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                       otl_LookupType lookupType);
+                                      otl_LookupType lookupType);
 
 table_OTL *table_new_otl();
-void table_delete_otl(table_OTL *table);
-table_OTL *table_read_otl(caryll_Packet packet, const caryll_Options *options, const uint32_t tag);
-void table_dump_otl(table_OTL *table, json_value *root, const caryll_Options *options, const char *tag);
-table_OTL *table_parse_otl(json_value *root, const caryll_Options *options, const char *tag);
-caryll_buffer *table_build_otl(table_OTL *table, const caryll_Options *options, const char *tag);
+void table_delete_otl(MOVE table_OTL *table);
+table_OTL *table_read_otl(const caryll_Packet packet, const caryll_Options *options, const uint32_t tag);
+void table_dump_otl(const table_OTL *table, json_value *root, const caryll_Options *options, const char *tag);
+table_OTL *table_parse_otl(const json_value *root, const caryll_Options *options, const char *tag);
+caryll_buffer *table_build_otl(const table_OTL *table, const caryll_Options *options, const char *tag);
 
 #include "gsub-single.h"
 #include "gsub-multi.h"

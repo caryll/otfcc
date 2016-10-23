@@ -1,6 +1,6 @@
-#include <font/caryll-font.h>
-#include <font/caryll-sfnt.h>
-#include <fontops/fontop.h>
+#include "font/caryll-font.h"
+#include "font/caryll-sfnt.h"
+#include "fontops/fontop.h"
 
 #include "platform.h"
 #include "stopwatch.h"

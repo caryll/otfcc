@@ -110,13 +110,18 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 			if (ss) return 0;
 		}
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
+			int gid = cov->glyphs[j].index;
 			classifier_hash *s;
-			NEW(s);
-			s->gid = cov->glyphs[j].index;
-			s->gname = cov->glyphs[j].name;
-			s->cls = *past + 1;
-			HASH_ADD_INT(*h, gid, s);
+			HASH_FIND_INT(*h, &gid, s);
+			if (!s) {
+				NEW(s);
+				s->gid = cov->glyphs[j].index;
+				s->gname = cov->glyphs[j].name;
+				s->cls = *past + 1;
+				HASH_ADD_INT(*h, gid, s);
+			}
 		}
+
 		*past += 1;
 		return 1;
 	}
@@ -265,12 +270,12 @@ FAIL:;
 	return;
 }
 void fontop_classifyChainings(otl_Lookup *lookup) {
-	// in this procedure we will replace the subtables' content to classes.
-	// This can massively reduce the size of the lookup.
-	// Remember, this process is completely automatic.
-	#ifndef DEBUG
+// in this procedure we will replace the subtables' content to classes.
+// This can massively reduce the size of the lookup.
+// Remember, this process is completely automatic.
+#ifndef DEBUG
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		classify_around(lookup, j);
 	}
-	#endif
+#endif
 }

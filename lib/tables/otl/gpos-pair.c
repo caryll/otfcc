@@ -29,7 +29,7 @@ typedef struct {
 	UT_hash_handle hh;
 } pair_classifier_hash;
 
-otl_Subtable *otl_read_gpos_pair(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
@@ -172,8 +172,8 @@ FAIL:
 	return NULL;
 }
 
-json_value *otl_gpos_dump_pair(otl_Subtable *_subtable) {
-	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
+json_value *otl_gpos_dump_pair(const otl_Subtable *_subtable) {
+	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	json_value *st = json_object_new(3);
 	json_object_push(st, "first", otl_dump_ClassDef(subtable->first));
 	json_object_push(st, "second", otl_dump_ClassDef(subtable->second));
@@ -203,7 +203,7 @@ json_value *otl_gpos_dump_pair(otl_Subtable *_subtable) {
 	json_object_push(st, "matrix", mat);
 	return st;
 }
-otl_Subtable *otl_gpos_parse_pair(json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_pair *subtable = &(_st->gpos_pair);
@@ -253,8 +253,8 @@ FAIL:
 	return NULL;
 }
 
-bk_Block *caryll_build_gpos_pair_individual(otl_Subtable *_subtable) {
-	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
+bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
+	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
 	glyphclass_t class1Count = subtable->first->maxclass + 1;
@@ -305,8 +305,8 @@ bk_Block *caryll_build_gpos_pair_individual(otl_Subtable *_subtable) {
 	FREE(pairCounts);
 	return root;
 }
-bk_Block *caryll_build_gpos_pair_classes(otl_Subtable *_subtable) {
-	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
+bk_Block *caryll_build_gpos_pair_classes(const otl_Subtable *_subtable) {
+	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
 	glyphclass_t class1Count = subtable->first->maxclass + 1;
@@ -336,7 +336,7 @@ bk_Block *caryll_build_gpos_pair_classes(otl_Subtable *_subtable) {
 	}
 	return root;
 }
-caryll_buffer *caryll_build_gpos_pair(otl_Subtable *_subtable) {
+caryll_buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
 	bk_Block *format1 = caryll_build_gpos_pair_individual(_subtable);
 	bk_Block *format2 = caryll_build_gpos_pair_classes(_subtable);
 	bk_Graph *g1 = bk_newGraphFromRootBlock(format1);
