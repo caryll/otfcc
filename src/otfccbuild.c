@@ -255,6 +255,7 @@ int main(int argc, char *argv[]) {
 		if (inPath) {
 			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", inPath, outputPath); }
 			readEntireFile(inPath, &buffer, &length);
+			sdsfree(inPath);
 		} else {
 			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", "[STDIN]", outputPath); }
 			readEntireStdin(&buffer, &length);
@@ -295,7 +296,7 @@ int main(int argc, char *argv[]) {
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);
-
+		sdsfree(outputPath);
 		buffree(otf);
 		caryll_delete_Font(font);
 		options_delete(options);

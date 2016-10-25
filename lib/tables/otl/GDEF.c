@@ -12,6 +12,7 @@ void table_delete_GDEF(table_GDEF *gdef) {
 		FREE(gdef->ligCarets->carets);
 		otl_delete_Coverage(gdef->ligCarets->coverage);
 	}
+	FREE(gdef);
 }
 
 table_GDEF *table_new_GDEF() {

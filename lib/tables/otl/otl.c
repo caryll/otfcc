@@ -720,7 +720,9 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	NEW_N(subtableQuantity, table->lookupCount);
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
-		if (options->verbose) { fprintf(stderr, "    Writing lookup %s\n", table->lookups[j]->name); }
+		if (options->verbose) {
+			fprintf(stderr, "    Writing lookup %s(%d/%d)\n", table->lookups[j]->name, j, table->lookupCount);
+		}
 		otl_Lookup *lookup = table->lookups[j];
 		subtables[j] = NULL;
 		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
@@ -736,7 +738,6 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 			if (subtableQuantity[j]) { headerSize += 8 * subtableQuantity[j]; }
 		}
 	}
-
 	bk_Block *root = bk_new_Block(b16, table->lookupCount, // LookupCount
 	                              bkover);
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
@@ -866,6 +867,7 @@ static bk_Block *writeScript(script_stat_hash *script, const table_OTL *table) {
 		bk_push(root, b32, featureNameToTag(tag),         // LangSysTag
 		        p16, writeLanguage(script->ll[j], table), // LangSys
 		        bkover);
+		sdsfree(tag);
 	}
 	return root;
 }
@@ -1049,17 +1051,11 @@ static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh
 }
 
 static tableid_t _build_lookup(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
-#if (!DEBUG)
-	// Once possible, we will use the classified way to generate chaining lookups
 	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
 		return caryll_classifiedBuildChaining(lookup, subtables, lastOffset);
 	}
-#endif
+
 	tableid_t written = 0;
-#if (DEBUG)
-	LOOKUP_WRITER(otl_type_gsub_chaining, caryll_build_chaining);
-	LOOKUP_WRITER(otl_type_gpos_chaining, caryll_build_chaining);
-#endif
 	LOOKUP_WRITER(otl_type_gsub_single, caryll_build_gsub_single_subtable);
 	LOOKUP_WRITER(otl_type_gsub_multiple, caryll_build_gsub_multi_subtable);
 	LOOKUP_WRITER(otl_type_gsub_alternate, caryll_build_gsub_multi_subtable);

@@ -126,9 +126,11 @@ static void placeOrderEntriesFromCmap(json_value *table, caryll_GlyphOrder *go) 
 		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
 		int32_t unicode = atoi(unicodeStr);
+		sdsfree(unicodeStr);
 		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 			caryll_escalateGlyphOrderByNameWithOrder(go, gname, ORD_CMAP, unicode);
+			sdsfree(gname);
 		}
 	}
 }
@@ -140,6 +142,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, caryll_GlyphOrder *
 		if (item->type == json_string) {
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 			caryll_escalateGlyphOrderByNameWithOrder(go, gname, ORD_GLYPHORDER, j);
+			sdsfree(gname);
 		}
 	}
 }

@@ -660,21 +660,16 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 	newRule->inputEnds = rule->inputEnds;
 	NEW_N(newRule->match, newRule->matchCount);
 	for (tableid_t m = 0; m < rule->matchCount; m++) {
+		NEW(newRule->match[m]);
+		newRule->match[m]->numGlyphs = 1;
+		NEW(newRule->match[m]->glyphs);
 		if (rule->match[m]->numGlyphs > 0) {
 			classifier_hash *h = (m < rule->inputBegins ? hb : m < rule->inputEnds ? hi : hf);
 			classifier_hash *s;
 			int gid = rule->match[m]->glyphs[0].index;
 			HASH_FIND_INT(h, &gid, s);
-			// otl_delete_Coverage(rule->match[m]);
-			NEW(newRule->match[m]);
-			newRule->match[m]->numGlyphs = 1;
-			NEW(newRule->match[m]->glyphs);
 			newRule->match[m]->glyphs[0] = handle_fromIndex(s->cls);
 		} else {
-			// otl_delete_Coverage(rule->match[m]);
-			NEW(newRule->match[m]);
-			newRule->match[m]->numGlyphs = 1;
-			NEW(newRule->match[m]->glyphs);
 			newRule->match[m]->glyphs[0] = handle_fromIndex(0);
 		}
 	}
@@ -757,12 +752,12 @@ endcheck:
 		// We've found multiple compatible subtables;
 		NEW(subtable0);
 		subtable0->rulesCount = compatibleCount + 1;
-		NEW_N(subtable0->rules, subtable0->rulesCount);
+		NEW_N(subtable0->rules, compatibleCount + 1);
 
 		subtable0->rules[0] = buildRule(rule0, hb, hi, hf);
 		// write other rules
 		tableid_t kk = 1;
-		for (tableid_t k = j + 1; k < lookup->subtableCount && kk <= compatibleCount + 1; k++) {
+		for (tableid_t k = j + 1; k < lookup->subtableCount && kk < compatibleCount + 1; k++) {
 			otl_ChainingRule *rule = lookup->subtables[k]->chaining.rules[0];
 			subtable0->rules[kk] = buildRule(rule, hb, hi, hf);
 			kk++;
@@ -796,6 +791,7 @@ FAIL:;
 			free(s);
 		}
 	}
+
 	if (compatibleCount > 1) {
 		return compatibleCount;
 	} else {
@@ -813,10 +809,10 @@ tableid_t caryll_classifiedBuildChaining(otl_Lookup *lookup, caryll_Buffer ***su
 		subtable_chaining *st = st0;
 		j += classify_around(lookup, j, &st);
 		caryll_Buffer *buf = caryll_build_chaining((otl_Subtable *)st);
+		if (st != st0) { otl_delete_chaining((otl_Subtable *)st); }
 		(*subtables)[subtablesWritten] = buf;
 		*lastOffset += buf->size;
 		subtablesWritten += 1;
-		if (st != st0) { otl_delete_chaining((otl_Subtable *)st); }
 	}
 	return subtablesWritten;
 }

@@ -34,7 +34,8 @@ static void consolidateMarkArray(caryll_Font *font, table_OTL *table, sds lookup
 	for (glyphid_t k = 0; k < marks->numGlyphs; k++) {
 		if (marks->glyphs[k].name) {
 			mark_hash *s = NULL;
-			HASH_FIND_INT(hm, &(marks->glyphs[k].index), s);
+			int gid = marks->glyphs[k].index;
+			HASH_FIND_INT(hm, &gid, s);
 			if (!s && markArray->records[k].anchor.present && markArray->records[k].markClass < classCount) {
 				NEW(s);
 				s->gid = marks->glyphs[k].index;
@@ -70,7 +71,8 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, sds lookup
 	for (glyphid_t k = 0; k < bases->numGlyphs; k++) {
 		if (bases->glyphs[k].name) {
 			base_hash *s = NULL;
-			HASH_FIND_INT(hm, &(bases->glyphs[k].index), s);
+			int gid = bases->glyphs[k].index;
+			HASH_FIND_INT(hm, &gid, s);
 			if (!s) {
 				NEW(s);
 				s->gid = bases->glyphs[k].index;
@@ -106,7 +108,8 @@ static void consolidateLigArray(caryll_Font *font, table_OTL *table, sds lookupN
 	for (glyphid_t k = 0; k < bases->numGlyphs; k++) {
 		if (bases->glyphs[k].name) {
 			lig_hash *s = NULL;
-			HASH_FIND_INT(hm, &(bases->glyphs[k].index), s);
+			int gid = bases->glyphs[k].index;
+			HASH_FIND_INT(hm, &gid, s);
 			if (!s) {
 				NEW(s);
 				s->gid = bases->glyphs[k].index;
