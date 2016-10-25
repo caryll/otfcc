@@ -89,7 +89,7 @@ caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, 
 			font->LTSH = table_read_LTSH(packet);
 			font->glyf = table_read_glyf(packet, font->head, font->maxp);
 		} else {
-			table_CFFAndGlyf cffpr = table_read_cff_and_glyf(packet);
+			table_CFFAndGlyf cffpr = table_read_cff_and_glyf(packet, font->head);
 			font->CFF_ = cffpr.meta;
 			font->glyf = cffpr.glyphs;
 			font->vhea = table_read_vhea(packet);

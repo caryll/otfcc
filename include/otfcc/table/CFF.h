@@ -2,6 +2,7 @@
 #define CARYLL_INCLUDE_TABLE_CFF_H
 
 #include "table-common.h"
+#include "head.h"
 #include "glyf.h"
 
 typedef struct {
@@ -86,7 +87,7 @@ typedef struct {
 
 table_CFF *table_new_CFF();
 void table_delete_CFF(MOVE table_CFF *table);
-table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet);
+table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const table_head *head);
 void table_dump_cff(const table_CFF *table, MODIFY json_value *root, const otfcc_Options *options);
 table_CFF *table_parse_cff(json_value *root, const otfcc_Options *options);
 caryll_Buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const otfcc_Options *options);

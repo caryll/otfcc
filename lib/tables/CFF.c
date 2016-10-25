@@ -565,7 +565,34 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 	}
 }
 
-table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet) {
+static double qround(double x) {
+	return round(x * 65536.0) / (65536.0);
+}
+static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *head) {
+	for (glyphid_t jj = 0; jj < glyf->numberGlyphs; jj++) {
+		glyf_Glyph *g = glyf->glyphs[jj];
+		table_CFF *fd = CFF_;
+		if (fd->fdArray && g->fdSelect.index < fd->fdArrayCount) { fd = fd->fdArray[g->fdSelect.index]; }
+		if (fd->fontMatrix) {
+			pos_t a = qround(head->unitsPerEm * fd->fontMatrix->a);
+			pos_t b = qround(head->unitsPerEm * fd->fontMatrix->b);
+			pos_t c = qround(head->unitsPerEm * fd->fontMatrix->c);
+			pos_t d = qround(head->unitsPerEm * fd->fontMatrix->d);
+			pos_t x = qround(head->unitsPerEm * fd->fontMatrix->x);
+			pos_t y = qround(head->unitsPerEm * fd->fontMatrix->y);
+			for (shapeid_t j = 0; j < g->numberOfContours; j++) {
+				for (shapeid_t k = 0; k < g->contours[j].pointsCount; k++) {
+					pos_t zx = g->contours[j].points[k].x;
+					pos_t zy = g->contours[j].points[k].y;
+					g->contours[j].points[k].x = a * zx + b * zy + x;
+					g->contours[j].points[k].y = c * zx + d * zy + y;
+				}
+			}
+		}
+	}
+}
+
+table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const table_head *head) {
 	table_CFFAndGlyf ret;
 	ret.meta = NULL;
 	ret.glyphs = NULL;
@@ -618,6 +645,8 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet) {
 		for (glyphid_t j = 0; j < glyphs->numberGlyphs; j++) {
 			buildOutline(j, &context);
 		}
+
+		applyCffMatrix(context.meta, context.glyphs, head);
 
 		// Name glyphs according charset
 		nameGlyphsAccordingToCFF(&context);

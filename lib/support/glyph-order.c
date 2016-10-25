@@ -160,30 +160,58 @@ caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *opti
 	return go;
 }
 
-void caryll_nameAFieldUsingGlyphOrder(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
+bool gord_nameAField(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
 	caryll_GlyphOrderEntry *t;
 	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
 	if (t != NULL) {
 		*field = t->name;
+		return true;
 	} else {
 		*field = NULL;
+		return false;
 	}
 }
 
-void caryll_nameAHandleUsingGlyphOrder(caryll_GlyphOrder *go, glyph_handle *h) {
+bool gord_nameAHandle(caryll_GlyphOrder *go, glyph_handle *h) {
 	if (h->state == HANDLE_STATE_NAME) sdsfree(h->name);
-	caryll_nameAFieldUsingGlyphOrder(go, h->index, &(h->name));
-	if (h->name) { h->state = HANDLE_STATE_CONSOLIDATED; }
-}
-
-void caryll_consolidateAHandleUsingGlyphOrder(caryll_GlyphOrder *go, glyph_handle *h) {
-	caryll_GlyphOrderEntry *t;
-	HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
-	if (t) {
-		handle_consolidateTo(h, t->gid, t->name);
+	gord_nameAField(go, h->index, &(h->name));
+	if (h->name) {
+		h->state = HANDLE_STATE_CONSOLIDATED;
+		return true;
 	} else {
 		handle_delete(h);
+		return false;
 	}
+}
+
+bool gord_consolidateHandle(caryll_GlyphOrder *go, glyph_handle *h) {
+	if (h->state == HANDLE_STATE_CONSOLIDATED) {
+		caryll_GlyphOrderEntry *t;
+		HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
+		if (t) {
+			handle_consolidateTo(h, t->gid, t->name);
+			return true;
+		}
+		HASH_FIND(hhName, go->byGID, &(h->index), sizeof(glyphid_t), t);
+		if (t) {
+			handle_consolidateTo(h, t->gid, t->name);
+			return true;
+		}
+	} else if (h->state == HANDLE_STATE_NAME) {
+		caryll_GlyphOrderEntry *t;
+		HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
+		if (t) {
+			handle_consolidateTo(h, t->gid, t->name);
+			return true;
+		}
+	} else if (h->state == HANDLE_STATE_INDEX) {
+		gord_nameAField(go, h->index, &(h->name));
+		if (h->name) {
+			h->state = HANDLE_STATE_CONSOLIDATED;
+			return true;
+		}
+	}
+	return false;
 }
 
 caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name) {

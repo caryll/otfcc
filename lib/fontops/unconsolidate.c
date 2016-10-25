@@ -44,7 +44,7 @@ static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) 
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
 			sds name = NULL;
-			caryll_nameAFieldUsingGlyphOrder(aglfn, s->unicode, &name);
+			gord_nameAField(aglfn, s->unicode, &name);
 			if (name == NULL) {
 				name = sdscatprintf(sdsempty(), "%suni%04X", prefix, s->unicode);
 			} else {
@@ -74,7 +74,7 @@ static void caryll_name_cmap_entries(caryll_Font *font) {
 	if (font->glyph_order != NULL && font->cmap != NULL) {
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) {
-			caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &s->glyph);
+			gord_consolidateHandle(font->glyph_order, &s->glyph);
 		}
 	}
 }
@@ -83,11 +83,11 @@ static void caryll_name_glyf(caryll_Font *font) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_Glyph *g = font->glyf->glyphs[j];
 			sds glyphName = NULL;
-			caryll_nameAFieldUsingGlyphOrder(font->glyph_order, j, &glyphName);
+			gord_nameAField(font->glyph_order, j, &glyphName);
 			g->name = sdsdup(glyphName);
 			if (g->numberOfReferences > 0 && g->references != NULL) {
 				for (shapeid_t k = 0; k < g->numberOfReferences; k++) {
-					caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &g->references[k].glyph);
+					gord_consolidateHandle(font->glyph_order, &g->references[k].glyph);
 				}
 			}
 		}
@@ -96,13 +96,13 @@ static void caryll_name_glyf(caryll_Font *font) {
 static void name_coverage(caryll_Font *font, otl_Coverage *coverage) {
 	if (!coverage) return;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-		caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &coverage->glyphs[j]);
+		gord_consolidateHandle(font->glyph_order, &coverage->glyphs[j]);
 	}
 }
 static void name_classdef(caryll_Font *font, otl_ClassDef *cd) {
 	if (!cd) return;
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-		caryll_nameAHandleUsingGlyphOrder(font->glyph_order, &cd->glyphs[j]);
+		gord_consolidateHandle(font->glyph_order, &cd->glyphs[j]);
 	}
 }
 static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_OTL *table) {
@@ -296,36 +296,7 @@ static void merge_LTSH(caryll_Font *font) {
 		}
 	}
 }
-static double qround(double x) {
-	return round(x * 65536.0) / (65536.0);
-}
-static void applyCffMatrix(caryll_Font *font) {
-	if (!font || !font->head || !font->glyf || !font->CFF_) return;
-	for (glyphid_t jj = 0; jj < font->glyf->numberGlyphs; jj++) {
-		glyf_Glyph *g = font->glyf->glyphs[jj];
-		table_CFF *fd = font->CFF_;
-		if (fd->fdArray && g->fdSelect.index < fd->fdArrayCount) { fd = fd->fdArray[g->fdSelect.index]; }
-		if (fd->fontMatrix) {
-			pos_t a = qround(font->head->unitsPerEm * fd->fontMatrix->a);
-			pos_t b = qround(font->head->unitsPerEm * fd->fontMatrix->b);
-			pos_t c = qround(font->head->unitsPerEm * fd->fontMatrix->c);
-			pos_t d = qround(font->head->unitsPerEm * fd->fontMatrix->d);
-			pos_t x = qround(font->head->unitsPerEm * fd->fontMatrix->x);
-			pos_t y = qround(font->head->unitsPerEm * fd->fontMatrix->y);
-			for (shapeid_t j = 0; j < g->numberOfContours; j++) {
-				for (shapeid_t k = 0; k < g->contours[j].pointsCount; k++) {
-					pos_t zx = g->contours[j].points[k].x;
-					pos_t zy = g->contours[j].points[k].y;
-					g->contours[j].points[k].x = a * zx + b * zy + x;
-					g->contours[j].points[k].y = c * zx + d * zy + y;
-				}
-			}
-		}
-	}
-}
 void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options) {
-	// Apply CFF FontMatrix
-	applyCffMatrix(font);
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);

@@ -29,9 +29,9 @@ glyphid_t caryll_setGlyphOrderByName(caryll_GlyphOrder *go, sds name, glyphid_t 
 void caryll_setGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry);
 void caryll_orderGlyphs(caryll_GlyphOrder *go);
 caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *options);
-void caryll_nameAFieldUsingGlyphOrder(caryll_GlyphOrder *go, glyphid_t gid, sds *field);
-void caryll_nameAHandleUsingGlyphOrder(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
-void caryll_consolidateAHandleUsingGlyphOrder(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
+bool gord_nameAField(caryll_GlyphOrder *go, glyphid_t gid, sds *field);
+bool gord_nameAHandle(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
+bool gord_consolidateHandle(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
 caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name);
 
 #endif
