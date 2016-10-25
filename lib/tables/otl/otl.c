@@ -6,7 +6,6 @@ typedef enum { LOOKUP_ORDER_FORCE, LOOKUP_ORDER_FILE } lookup_order_type;
 
 typedef struct {
 	char *name;
-	bool alias;
 	otl_Lookup *lookup;
 	UT_hash_handle hh;
 	lookup_order_type orderType;
@@ -31,7 +30,7 @@ otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLeng
                                       otl_LookupType lookupType);
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump);
 static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh);
-static bool _build_subtable(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
+static tableid_t _build_lookup(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
 
 // COMMON PART
 table_OTL *table_new_otl() {
@@ -43,8 +42,6 @@ table_OTL *table_new_otl() {
 	table->features = NULL;
 	table->lookupCount = 0;
 	table->lookups = NULL;
-	table->lookupAliasesCount = 0;
-	table->lookupAliases = NULL;
 	return table;
 }
 
@@ -71,13 +68,6 @@ void table_delete_otl(table_OTL *table) {
 			caryll_delete_lookup(table->lookups[j]);
 		}
 		free(table->lookups);
-	}
-	if (table->lookupAliases) {
-		for (tableid_t j = 0; j < table->lookupAliasesCount; j++) {
-			sdsfree(table->lookupAliases[j].from);
-			sdsfree(table->lookupAliases[j].to);
-		}
-		free(table->lookupAliases);
 	}
 	free(table);
 }
@@ -425,7 +415,6 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtabl
 
 	NEW(item);
 	item->name = sdsnew(lookupName);
-	item->alias = false;
 	lookup->name = sdsdup(item->name);
 	item->lookup = lookup;
 	item->orderType = LOOKUP_ORDER_FILE;
@@ -456,29 +445,9 @@ static void feature_merger_activate(json_value *d, const bool sametag, const cha
 	}
 }
 
-static void replace_aliased_lookup_names(json_value *features, lookup_hash *lh) {
-	for (uint32_t j = 0; j < features->u.object.length; j++) {
-		json_value *_feature = features->u.object.values[j].value;
-		if (_feature->type != json_array) continue;
-		for (tableid_t k = 0; k < _feature->u.array.length; k++) {
-			json_value *term = _feature->u.array.values[k];
-			if (term->type != json_string) continue;
-
-			lookup_hash *item = NULL;
-			HASH_FIND_STR(lh, term->u.string.ptr, item);
-			if (item && item->alias) {
-				json_value_free(term);
-				term = _feature->u.array.values[k] = json_string_new(item->lookup->name);
-			}
-		}
-	}
-}
-
 static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag,
                                                const otfcc_Options *options) {
 	feature_hash *fh = NULL;
-	// Replace aliased lookup names
-	replace_aliased_lookup_names(features, lh);
 	// Remove duplicates
 	if (options->merge_features) { feature_merger_activate(features, true, "feature", options); }
 	// Resolve features
@@ -605,7 +574,6 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 
 static lookup_hash *figureOutLookupsFromJSON(json_value *lookups, const otfcc_Options *options) {
 	lookup_hash *lh = NULL;
-	if (options->merge_lookups) { feature_merger_activate(lookups, false, "lookup", options); }
 
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
 		char *lookupName = lookups->u.object.values[j].name;
@@ -621,7 +589,6 @@ static lookup_hash *figureOutLookupsFromJSON(json_value *lookups, const otfcc_Op
 				lookup_hash *dup;
 				NEW(dup);
 				dup->name = sdsnew(lookupName);
-				dup->alias = true;
 				dup->lookup = s->lookup;
 				dup->orderType = LOOKUP_ORDER_FILE;
 				dup->orderVal = HASH_COUNT(lh);
@@ -681,26 +648,15 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 	{
 		lookup_hash *s, *tmp;
 		otl->lookupCount = HASH_COUNT(lh);
-		otl->lookupAliasesCount = HASH_COUNT(lh);
 		NEW_N(otl->lookups, otl->lookupCount);
-		NEW_N(otl->lookupAliases, otl->lookupAliasesCount);
 		tableid_t j = 0;
-		tableid_t ja = 0;
 		HASH_ITER(hh, lh, s, tmp) {
-			if (!s->alias) {
-				otl->lookups[j] = s->lookup;
-				j++;
-			} else {
-				otl->lookupAliases[ja].from = sdsdup(s->name);
-				otl->lookupAliases[ja].to = sdsdup(s->lookup->name);
-				ja++;
-			}
+			otl->lookups[j] = s->lookup;
+			j++;
 			HASH_DEL(lh, s);
 			sdsfree(s->name);
 			free(s);
 		}
-		otl->lookupCount = j;
-		otl->lookupAliasesCount = ja;
 	}
 	{
 		feature_hash *s, *tmp;
@@ -740,8 +696,8 @@ FAIL:
 	return NULL;
 }
 
-static bool _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
-                                   otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
+static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
+                                        otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtables, lookup->subtableCount);
 		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
@@ -749,9 +705,9 @@ static bool _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(con
 			(*subtables)[j] = buf;
 			*lastOffset += buf->size;
 		}
-		return true;
+		return lookup->subtableCount;
 	}
-	return false;
+	return 0;
 }
 
 // When writing lookups, otfcc will try to maintain everything correctly.
@@ -760,30 +716,31 @@ static bool _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(con
 static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *options, const char *tag) {
 	caryll_Buffer ***subtables;
 	NEW_N(subtables, table->lookupCount);
-	bool *lookupWritten;
-	NEW_N(lookupWritten, table->lookupCount);
+	tableid_t *subtableQuantity;
+	NEW_N(subtableQuantity, table->lookupCount);
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		if (options->verbose) { fprintf(stderr, "    Writing lookup %s\n", table->lookups[j]->name); }
+		otl_Lookup *lookup = table->lookups[j];
 		subtables[j] = NULL;
-		lookupWritten[j] = _build_subtable(table->lookups[j], &(subtables[j]), &lastOffset);
+		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
 	}
 	size_t headerSize = 2 + 2 * table->lookupCount;
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
-		if (lookupWritten[j]) { headerSize += 6 + 2 * table->lookups[j]->subtableCount; }
+		if (subtableQuantity[j]) { headerSize += 6 + 2 * subtableQuantity[j]; }
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
 		if (options->verbose) { fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag); }
 		for (tableid_t j = 0; j < table->lookupCount; j++) {
-			if (lookupWritten[j]) { headerSize += 8 * table->lookups[j]->subtableCount; }
+			if (subtableQuantity[j]) { headerSize += 8 * subtableQuantity[j]; }
 		}
 	}
 
 	bk_Block *root = bk_new_Block(b16, table->lookupCount, // LookupCount
 	                              bkover);
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
-		if (!lookupWritten[j]) {
+		if (!subtableQuantity[j]) {
 			fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name);
 			continue;
 		}
@@ -797,11 +754,11 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		               ? lookup->type - otl_type_gpos_unknown
 		               : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0);
 
-		bk_Block *blk = bk_new_Block(b16, lookupType,            // LookupType
-		                             b16, lookup->flags,         // LookupFlag
-		                             b16, lookup->subtableCount, // SubTableCount
+		bk_Block *blk = bk_new_Block(b16, lookupType,          // LookupType
+		                             b16, lookup->flags,       // LookupFlag
+		                             b16, subtableQuantity[j], // SubTableCount
 		                             bkover);
-		for (tableid_t k = 0; k < lookup->subtableCount; k++) {
+		for (tableid_t k = 0; k < subtableQuantity[j]; k++) {
 			if (useExtended) {
 				uint16_t extensionLookupType =
 				    lookup->type > otl_type_gpos_unknown
@@ -823,7 +780,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		free(subtables[j]);
 	}
 	free(subtables);
-	free(lookupWritten);
+	free(subtableQuantity);
 	return root;
 }
 
@@ -1091,18 +1048,26 @@ static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh
 	return parsed;
 }
 
-static bool _build_subtable(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
-	bool written = false;
+static tableid_t _build_lookup(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
+#if (!DEBUG)
+	// Once possible, we will use the classified way to generate chaining lookups
+	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
+		return caryll_classifiedBuildChaining(lookup, subtables, lastOffset);
+	}
+#endif
+	tableid_t written = 0;
+#if (DEBUG)
+	LOOKUP_WRITER(otl_type_gsub_chaining, caryll_build_chaining);
+	LOOKUP_WRITER(otl_type_gpos_chaining, caryll_build_chaining);
+#endif
 	LOOKUP_WRITER(otl_type_gsub_single, caryll_build_gsub_single_subtable);
 	LOOKUP_WRITER(otl_type_gsub_multiple, caryll_build_gsub_multi_subtable);
 	LOOKUP_WRITER(otl_type_gsub_alternate, caryll_build_gsub_multi_subtable);
 	LOOKUP_WRITER(otl_type_gsub_ligature, caryll_build_gsub_ligature_subtable);
-	LOOKUP_WRITER(otl_type_gsub_chaining, caryll_build_chaining);
 	LOOKUP_WRITER(otl_type_gsub_reverse, caryll_build_gsub_reverse);
 	LOOKUP_WRITER(otl_type_gpos_single, caryll_build_gpos_single);
 	LOOKUP_WRITER(otl_type_gpos_pair, caryll_build_gpos_pair);
 	LOOKUP_WRITER(otl_type_gpos_cursive, caryll_build_gpos_cursive);
-	LOOKUP_WRITER(otl_type_gpos_chaining, caryll_build_chaining);
 	LOOKUP_WRITER(otl_type_gpos_markToBase, caryll_build_gpos_markToSingle);
 	LOOKUP_WRITER(otl_type_gpos_markToMark, caryll_build_gpos_markToSingle);
 	LOOKUP_WRITER(otl_type_gpos_markToLigature, caryll_build_gpos_markToLigature);

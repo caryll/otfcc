@@ -68,6 +68,7 @@ typedef struct {
 typedef struct {
 	tableid_t rulesCount;
 	otl_ChainingRule **rules;
+	// these fields are for classified intermediate subtables.
 	bool classified;
 	otl_ClassDef *bc;
 	otl_ClassDef *ic;
@@ -191,8 +192,6 @@ typedef struct {
 	otl_Feature **features;
 	tableid_t lookupCount;
 	otl_Lookup **lookups;
-	tableid_t lookupAliasesCount;
-	otl_LookupAliasingRecord *lookupAliases;
 } table_OTL;
 
 otl_Subtable *table_read_otl_subtable(uint8_t *data, uint32_t tableLength, uint32_t subtableOffset,

@@ -16,6 +16,7 @@ struct otfcc_Handle {
 };
 
 struct otfcc_Handle handle_new();
+struct otfcc_Handle handle_copy(struct otfcc_Handle h);
 struct otfcc_Handle handle_fromIndex(glyphid_t id);
 struct otfcc_Handle handle_fromName(sds s);
 struct otfcc_Handle handle_fromConsolidated(glyphid_t id, sds s);

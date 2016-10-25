@@ -33,21 +33,13 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	// Consolidate references
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
-		caryll_GlyphOrderEntry *entry = NULL;
-		glyf_ComponentReference *r = &(g->references[j]);
-		if (r->glyph.name) {
-			entry = caryll_lookupName(font->glyph_order, r->glyph.name);
-			if (entry) {
-				handle_consolidateTo(&r->glyph, entry->gid, entry->name);
-				nReferencesConsolidated += 1;
-			} else {
-				fprintf(stderr, "[Consolidate] Ignored absent glyph component "
-				                "reference /%s within /%s.\n",
-				        r->glyph.name, g->name);
-				handle_delete(&r->glyph);
-			}
+		if (!gord_consolidateHandle(font->glyph_order, &g->references[j].glyph)) {
+			fprintf(stderr, "[Consolidate] Ignored absent glyph component "
+			                "reference /%s within /%s.\n",
+			        g->references[j].glyph.name, g->name);
+			handle_delete(&g->references[j].glyph);
 		} else {
-			handle_delete(&r->glyph);
+			nReferencesConsolidated += 1;
 		}
 	}
 	if (nReferencesConsolidated < g->numberOfReferences) {
@@ -118,7 +110,10 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	free(hmap);
 	free(vmap);
 	// Consolidate fdSelect
-	if (g->fdSelect.name && font->CFF_ && font->CFF_->fdArray) {
+	if (g->fdSelect.state == HANDLE_STATE_INDEX && font->CFF_ && font->CFF_->fdArray) {
+		if (g->fdSelect.index >= font->CFF_->fdArrayCount) { g->fdSelect.index = 0; }
+		g->fdSelect = handle_fromConsolidated(g->fdSelect.index, font->CFF_->fdArray[g->fdSelect.index]->fontName);
+	} else if (g->fdSelect.name && font->CFF_ && font->CFF_->fdArray) {
 		bool found = false;
 		for (tableid_t j = 0; j < font->CFF_->fdArrayCount; j++) {
 			if (strcmp(g->fdSelect.name, font->CFF_->fdArray[j]->fontName) == 0) {
@@ -152,17 +147,9 @@ void caryll_font_consolidate_cmap(caryll_Font *font) {
 	if (font->glyph_order && font->cmap) {
 		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
-			if (item->glyph.name) {
-				caryll_GlyphOrderEntry *ordentry = caryll_lookupName(font->glyph_order, item->glyph.name);
-				if (ordentry) {
-					handle_consolidateTo(&item->glyph, ordentry->gid, ordentry->name);
-				} else {
-					fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to "
-					                "non-existent glyph /%s.\n",
-					        item->unicode, item->glyph.name);
-					handle_delete(&item->glyph);
-				}
-			} else {
+			if (!gord_consolidateHandle(font->glyph_order, &item->glyph)) {
+				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
+				        item->glyph.name);
 				handle_delete(&item->glyph);
 			}
 		}
@@ -191,16 +178,6 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 			if (lookup->subtables[j]) { lookup->subtables[k++] = lookup->subtables[j]; }
 		}
 		lookup->subtableCount = k;
-
-		if (lookup->subtableCount &&
-		    (lookup->type == otl_type_gsub_chaining || lookup->type == otl_type_gpos_chaining)) {
-			fontop_classifyChainings(lookup);
-			tableid_t k = 0;
-			for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-				if (lookup->subtables[j]) { lookup->subtables[k++] = lookup->subtables[j]; }
-			}
-			lookup->subtableCount = k;
-		}
 	}
 }
 
