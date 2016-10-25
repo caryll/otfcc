@@ -219,3 +219,23 @@ caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name) {
 	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
 	return t;
 }
+
+otfcc_GlyphHandle gord_formIndexedHandle(caryll_GlyphOrder *go, glyphid_t gid) {
+	caryll_GlyphOrderEntry *t;
+	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
+	if (t) {
+		return handle_fromConsolidated(t->gid, t->name);
+	} else {
+		return handle_new();
+	}
+}
+
+otfcc_GlyphHandle gord_formNamedHandle(caryll_GlyphOrder *go, const sds name) {
+	caryll_GlyphOrderEntry *t;
+	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
+	if (t) {
+		return handle_fromConsolidated(t->gid, t->name);
+	} else {
+		return handle_new();
+	}
+}

@@ -4,6 +4,7 @@
 #include "dep/sds.h"
 #include "dep/json.h"
 #include "dep/uthash.h"
+#include "caryll/ownership.h"
 #include "otfcc/primitives.h"
 #include "otfcc/handle.h"
 #include "otfcc/options.h"
@@ -33,5 +34,8 @@ bool gord_nameAField(caryll_GlyphOrder *go, glyphid_t gid, sds *field);
 bool gord_nameAHandle(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
 bool gord_consolidateHandle(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
 caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name);
+
+otfcc_GlyphHandle gord_formIndexedHandle(caryll_GlyphOrder *go, glyphid_t gid);
+otfcc_GlyphHandle gord_formNamedHandle(caryll_GlyphOrder *go, const sds name);
 
 #endif
