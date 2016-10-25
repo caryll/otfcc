@@ -30,7 +30,7 @@ otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLeng
                                       otl_LookupType lookupType);
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump);
 static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh);
-static tableid_t _build_lookup(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
+static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
 
 // COMMON PART
 table_OTL *table_new_otl() {
@@ -697,7 +697,7 @@ FAIL:
 }
 
 static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
-                                        otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
+                                        const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW_N(*subtables, lookup->subtableCount);
 		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
@@ -1050,7 +1050,7 @@ static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh
 	return parsed;
 }
 
-static tableid_t _build_lookup(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
+static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
 		return caryll_classifiedBuildChaining(lookup, subtables, lastOffset);
 	}

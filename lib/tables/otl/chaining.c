@@ -705,7 +705,7 @@ static otl_ClassDef *toClass(classifier_hash *h) {
 	cd->maxclass = maxclass;
 	return cd;
 }
-tableid_t classify_around(otl_Lookup *lookup, tableid_t j, subtable_chaining **classifiedST) {
+tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j, OUT subtable_chaining **classifiedST) {
 	tableid_t compatibleCount = 0;
 	classifier_hash *hb = NULL;
 	classifier_hash *hi = NULL;
@@ -798,19 +798,18 @@ FAIL:;
 		return 0;
 	}
 }
-tableid_t caryll_classifiedBuildChaining(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
-	// in this procedure we will replace the subtables' content to classes.
-	// This can massively reduce the size of the lookup.
-	// Remember, this process is completely automatic.
+tableid_t caryll_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
+                                         MODIFY size_t *lastOffset) {
 	tableid_t subtablesWritten = 0;
-	NEW_N(*subtables, lookup->subtableCount);
+	NEW_N(*subtableBuffers, lookup->subtableCount);
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		subtable_chaining *st0 = &(lookup->subtables[j]->chaining);
 		subtable_chaining *st = st0;
-		j += classify_around(lookup, j, &st);
+		// Try to classify subtables after j into j
+		j += tryClassifyAround(lookup, j, &st);
 		caryll_Buffer *buf = caryll_build_chaining((otl_Subtable *)st);
 		if (st != st0) { otl_delete_chaining((otl_Subtable *)st); }
-		(*subtables)[subtablesWritten] = buf;
+		(*subtableBuffers)[subtablesWritten] = buf;
 		*lastOffset += buf->size;
 		subtablesWritten += 1;
 	}

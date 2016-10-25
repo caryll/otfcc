@@ -6,5 +6,6 @@
 #define OBSERVE /*shared*/ const
 #define MODIFY /*modify*/
 #define COPY   /*shared*/
+#define OUT    /*shared*/
 
 #endif

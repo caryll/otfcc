@@ -16,5 +16,7 @@ json_value *otl_dump_chaining(const otl_Subtable *_subtable);
 otl_Subtable *otl_parse_chaining(const json_value *_subtable);
 caryll_Buffer *caryll_build_chaining(const otl_Subtable *_subtable);
 
-tableid_t caryll_classifiedBuildChaining(otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
+tableid_t caryll_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
+                                         MODIFY size_t *lastOffset);
+
 #endif
