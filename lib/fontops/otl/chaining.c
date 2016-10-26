@@ -25,7 +25,7 @@ bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_su
 			if (!foundLookup && rule->apply[j].lookup.name) {
 				fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n",
 				        rule->apply[j].lookup.name, lookupName);
-				handle_delete(&rule->apply[j].lookup);
+				handle_dispose(&rule->apply[j].lookup);
 			}
 		} else if (h->state == HANDLE_STATE_INDEX) {
 			if (h->index >= table->lookupCount) h->index = 0;

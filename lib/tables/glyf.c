@@ -74,7 +74,7 @@ static void table_delete_glyf_glyph(glyf_Glyph *g) {
 	}
 	if (g->numberOfReferences > 0 && g->references != NULL) {
 		for (shapeid_t k = 0; k < g->numberOfReferences; k++) {
-			handle_delete(&g->references[k].glyph);
+			handle_dispose(&g->references[k].glyph);
 		}
 		free(g->references);
 	}
@@ -83,7 +83,7 @@ static void table_delete_glyf_glyph(glyf_Glyph *g) {
 	if (g->stemV) FREE(g->stemV);
 	if (g->hintMasks) FREE(g->hintMasks);
 	if (g->contourMasks) FREE(g->contourMasks);
-	handle_delete(&g->fdSelect);
+	handle_dispose(&g->fdSelect);
 	g->name = NULL;
 	free(g);
 }

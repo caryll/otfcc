@@ -6,7 +6,7 @@ void fontop_consolidateCoverage(caryll_Font *font, otl_Coverage *coverage, sds l
 		glyph_handle *h = &(coverage->glyphs[j]);
 		if (!gord_consolidateHandle(font->glyph_order, h)) {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", h->name, lookupName);
-			handle_delete(h);
+			handle_dispose(h);
 		}
 	}
 }
@@ -17,7 +17,7 @@ void fontop_consolidateClassDef(caryll_Font *font, otl_ClassDef *cd, sds lookupN
 		glyph_handle *h = &(cd->glyphs[j]);
 		if (!gord_consolidateHandle(font->glyph_order, h)) {
 			fprintf(stderr, "[Consolidate] Ignored missing glyph /%s in lookup %s.\n", h->name, lookupName);
-			handle_delete(h);
+			handle_dispose(h);
 		}
 	}
 }

@@ -5,7 +5,7 @@ void otl_delete_ClassDef(otl_ClassDef *cd) {
 	if (cd) {
 		if (cd->glyphs) {
 			for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-				handle_delete(&cd->glyphs[j]);
+				handle_dispose(&cd->glyphs[j]);
 			}
 			free(cd->glyphs);
 		}
@@ -246,7 +246,7 @@ void fontop_shrinkClassDef(otl_ClassDef *cd) {
 			cd->classes[k] = cd->classes[j];
 			k++;
 		} else {
-			handle_delete(&cd->glyphs[j]);
+			handle_dispose(&cd->glyphs[j]);
 		}
 	}
 	cd->numGlyphs = k;

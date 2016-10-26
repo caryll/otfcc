@@ -25,7 +25,7 @@ struct otfcc_Handle handle_fromConsolidated(glyphid_t id, sds s) {
 	struct otfcc_Handle h = {HANDLE_STATE_CONSOLIDATED, id, sdsdup(s)};
 	return h;
 }
-void handle_delete(struct otfcc_Handle *h) {
+void handle_dispose(struct otfcc_Handle *h) {
 	if (h->name) {
 		sdsfree(h->name);
 		h->name = NULL;
@@ -33,9 +33,12 @@ void handle_delete(struct otfcc_Handle *h) {
 	h->index = 0;
 	h->state = HANDLE_STATE_EMPTY;
 }
-
+void handle_delete(struct otfcc_Handle *h) {
+	handle_dispose(h);
+	free(h);
+}
 void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name) {
-	handle_delete(h);
+	handle_dispose(h);
 	h->state = HANDLE_STATE_CONSOLIDATED;
 	h->index = id;
 	h->name = sdsdup(name);

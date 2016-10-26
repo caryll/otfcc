@@ -4,7 +4,7 @@
 void otl_delete_Coverage(MOVE otl_Coverage *coverage) {
 	if (coverage && coverage->glyphs) {
 		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-			handle_delete(&coverage->glyphs[j]);
+			handle_dispose(&coverage->glyphs[j]);
 		}
 		free(coverage->glyphs);
 	}
@@ -216,7 +216,7 @@ void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 		if (coverage->glyphs[j].name) {
 			coverage->glyphs[k++] = coverage->glyphs[j];
 		} else {
-			handle_delete(&coverage->glyphs[j]);
+			handle_dispose(&coverage->glyphs[j]);
 		}
 	}
 	if (dosort) {
@@ -224,7 +224,7 @@ void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 		glyphid_t skip = 0;
 		for (glyphid_t rear = 1; rear < coverage->numGlyphs; rear++) {
 			if (coverage->glyphs[rear].index == coverage->glyphs[rear - skip - 1].index) {
-				handle_delete(&coverage->glyphs[rear]);
+				handle_dispose(&coverage->glyphs[rear]);
 				skip += 1;
 			} else {
 				coverage->glyphs[rear - skip] = coverage->glyphs[rear];

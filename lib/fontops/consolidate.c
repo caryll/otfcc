@@ -37,7 +37,7 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 			fprintf(stderr, "[Consolidate] Ignored absent glyph component "
 			                "reference /%s within /%s.\n",
 			        g->references[j].glyph.name, g->name);
-			handle_delete(&g->references[j].glyph);
+			handle_dispose(&g->references[j].glyph);
 		} else {
 			nReferencesConsolidated += 1;
 		}
@@ -125,10 +125,10 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 		if (!found) {
 			fprintf(stderr, "[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name,
 			        g->name);
-			handle_delete(&(g->fdSelect));
+			handle_dispose(&(g->fdSelect));
 		}
 	} else if (g->fdSelect.name) {
-		handle_delete(&(g->fdSelect));
+		handle_dispose(&(g->fdSelect));
 	}
 }
 
@@ -150,7 +150,7 @@ void caryll_font_consolidate_cmap(caryll_Font *font) {
 			if (!gord_consolidateHandle(font->glyph_order, &item->glyph)) {
 				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
 				        item->glyph.name);
-				handle_delete(&item->glyph);
+				handle_dispose(&item->glyph);
 			}
 		}
 	}

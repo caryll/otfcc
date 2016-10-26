@@ -8,7 +8,7 @@ static void closeRule(otl_ChainingRule *rule) {
 	}
 	if (rule && rule->apply) {
 		for (tableid_t j = 0; j < rule->applyCount; j++) {
-			handle_delete(&rule->apply[j].lookup);
+			handle_dispose(&rule->apply[j].lookup);
 		}
 		FREE(rule->apply);
 	}

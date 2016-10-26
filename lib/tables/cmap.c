@@ -11,7 +11,7 @@ void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 		HASH_ADD_INT(*map, unicode, s);
 	} else {
 		// Override existing encoding
-		handle_delete(&s->glyph);
+		handle_dispose(&s->glyph);
 		s->glyph = handle_fromIndex(gid);
 	}
 }
@@ -25,7 +25,7 @@ void table_encodeCmapByName(table_cmap *map, int c, sds name) {
 		HASH_ADD_INT(*map, unicode, s);
 	} else {
 		// Override existing encoding
-		handle_delete(&s->glyph);
+		handle_dispose(&s->glyph);
 		s->glyph = handle_fromName(name);
 	}
 }
@@ -119,7 +119,7 @@ void table_delete_cmap(table_cmap *table) {
 	cmap_Entry *s, *tmp;
 	HASH_ITER(hh, *(table), s, tmp) {
 		// delete and free all cmap entries
-		handle_delete(&s->glyph);
+		handle_dispose(&s->glyph);
 		HASH_DEL(*(table), s);
 		free(s);
 	}

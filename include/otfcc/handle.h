@@ -18,8 +18,9 @@ struct otfcc_Handle {
 struct otfcc_Handle handle_new();
 struct otfcc_Handle handle_copy(struct otfcc_Handle h);
 struct otfcc_Handle handle_fromIndex(glyphid_t id);
-struct otfcc_Handle handle_fromName(sds s);
-struct otfcc_Handle handle_fromConsolidated(glyphid_t id, sds s);
+struct otfcc_Handle handle_fromName(MOVE sds s);
+struct otfcc_Handle handle_fromConsolidated(glyphid_t id, COPY sds s);
+void handle_dispose(struct otfcc_Handle *h);
 void handle_delete(struct otfcc_Handle *h);
 void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name);
 
