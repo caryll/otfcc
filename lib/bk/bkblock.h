@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "caryll/buffer.h"
 
 struct __caryll_bkblock;
@@ -19,7 +20,7 @@ typedef enum {
 	sp32 = 0x81,    // 32-bit offset, p = pointer to block, marked as compact
 	bkcopy = 0xFE,  // Embed another block
 	bkembed = 0xFF, // Embed another block
-	__bk_force_width = 0xFFFFFF
+	__bk_force_width = INT_MAX
 } bk_CellType;
 typedef enum { VISIT_WHITE, VISIT_GRAY, VISIT_BLACK } bk_cell_visit_state;
 
