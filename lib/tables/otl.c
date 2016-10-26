@@ -1,4 +1,4 @@
-#include "otl.h"
+#include "otl/otl-private.h"
 
 static const char SCRIPT_LANGUAGE_SEPARATOR = '_';
 

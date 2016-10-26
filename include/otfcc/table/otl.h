@@ -106,7 +106,6 @@ typedef struct {
 } otl_Anchor;
 
 typedef struct {
-	otl_Coverage *coverage;
 	otl_ClassDef *first;
 	otl_ClassDef *second;
 	otl_PositionValue **firstValues;

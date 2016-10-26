@@ -204,3 +204,33 @@ caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 		return format2;
 	}
 }
+
+static int byHandleGID(const void *a, const void *b) {
+	return ((glyph_handle *)a)->index - ((glyph_handle *)b)->index;
+}
+
+void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
+	if (!coverage) return;
+	glyphid_t k = 0;
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
+		if (coverage->glyphs[j].name) {
+			coverage->glyphs[k++] = coverage->glyphs[j];
+		} else {
+			handle_delete(&coverage->glyphs[j]);
+		}
+	}
+	if (dosort) {
+		qsort(coverage->glyphs, k, sizeof(glyph_handle), byHandleGID);
+		glyphid_t skip = 0;
+		for (glyphid_t rear = 1; rear < coverage->numGlyphs; rear++) {
+			if (coverage->glyphs[rear].index == coverage->glyphs[rear - skip - 1].index) {
+				handle_delete(&coverage->glyphs[rear]);
+				skip += 1;
+			} else {
+				coverage->glyphs[rear - skip] = coverage->glyphs[rear];
+			}
+		}
+		k -= skip;
+	}
+	coverage->numGlyphs = k;
+}

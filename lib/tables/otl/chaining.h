@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLE_OTL_CHAINING_H
 #define CARYLL_TABLE_OTL_CHAINING_H
 
-#include "otl.h"
+#include "otl-private.h"
 
 // This file supports four formats
 // GSUB contextual

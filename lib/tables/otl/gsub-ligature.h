@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLE_OTL_GSUB_LIGATURE_H
 #define CARYLL_TABLE_OTL_GSUB_LIGATURE_H
 
-#include "otl.h"
+#include "otl-private.h"
 
 void otl_delete_gsub_ligature(otl_Subtable *subtable);
 otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset);

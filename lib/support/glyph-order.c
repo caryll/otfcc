@@ -163,7 +163,7 @@ caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *opti
 	return go;
 }
 
-bool gord_nameAField(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
+bool gord_nameAFieldShared(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
 	caryll_GlyphOrderEntry *t;
 	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
 	if (t != NULL) {
@@ -171,18 +171,6 @@ bool gord_nameAField(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
 		return true;
 	} else {
 		*field = NULL;
-		return false;
-	}
-}
-
-bool gord_nameAHandle(caryll_GlyphOrder *go, glyph_handle *h) {
-	if (h->state == HANDLE_STATE_NAME) sdsfree(h->name);
-	gord_nameAField(go, h->index, &(h->name));
-	if (h->name) {
-		h->state = HANDLE_STATE_CONSOLIDATED;
-		return true;
-	} else {
-		handle_delete(h);
 		return false;
 	}
 }
@@ -208,9 +196,10 @@ bool gord_consolidateHandle(caryll_GlyphOrder *go, glyph_handle *h) {
 			return true;
 		}
 	} else if (h->state == HANDLE_STATE_INDEX) {
-		gord_nameAField(go, h->index, &(h->name));
-		if (h->name) {
-			h->state = HANDLE_STATE_CONSOLIDATED;
+		sds name = NULL;
+		gord_nameAFieldShared(go, h->index, &name);
+		if (name) {
+			handle_consolidateTo(h, h->index, name);
 			return true;
 		}
 	}

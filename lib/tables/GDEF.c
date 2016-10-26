@@ -1,4 +1,4 @@
-#include "otl.h"
+#include "otl/otl-private.h"
 #include "otfcc/table/GDEF.h"
 
 void table_delete_GDEF(table_GDEF *gdef) {

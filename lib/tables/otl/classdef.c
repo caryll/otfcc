@@ -237,3 +237,17 @@ caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	free(r);
 	return buf;
 }
+
+void fontop_shrinkClassDef(otl_ClassDef *cd) {
+	glyphid_t k = 0;
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
+		if (cd->glyphs[j].name) {
+			cd->glyphs[k] = cd->glyphs[j];
+			cd->classes[k] = cd->classes[j];
+			k++;
+		} else {
+			handle_delete(&cd->glyphs[j]);
+		}
+	}
+	cd->numGlyphs = k;
+}

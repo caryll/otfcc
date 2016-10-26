@@ -44,7 +44,7 @@ static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) 
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
 			sds name = NULL;
-			gord_nameAField(aglfn, s->unicode, &name);
+			gord_nameAFieldShared(aglfn, s->unicode, &name);
 			if (name == NULL) {
 				name = sdscatprintf(sdsempty(), "%suni%04X", prefix, s->unicode);
 			} else {
@@ -75,7 +75,7 @@ static void caryll_name_glyf(caryll_Font *font) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_Glyph *g = font->glyf->glyphs[j];
 			sds glyphName = NULL;
-			gord_nameAField(font->glyph_order, j, &glyphName);
+			gord_nameAFieldShared(font->glyph_order, j, &glyphName);
 			g->name = sdsdup(glyphName);
 		}
 	}

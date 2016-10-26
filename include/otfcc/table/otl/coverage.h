@@ -13,5 +13,6 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 json_value *otl_dump_Coverage(const otl_Coverage *coverage);
 otl_Coverage *otl_parse_Coverage(const json_value *cov);
 caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage);
+void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort);
 
 #endif

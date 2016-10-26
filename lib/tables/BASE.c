@@ -1,4 +1,4 @@
-#include "otl.h"
+#include "otl/otl-private.h"
 #include "otfcc/table/BASE.h"
 
 static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {

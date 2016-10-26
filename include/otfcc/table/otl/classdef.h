@@ -16,5 +16,6 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd);
 json_value *otl_dump_ClassDef(const otl_ClassDef *cd);
 otl_ClassDef *otl_parse_ClassDef(const json_value *_cd);
 caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd);
+void fontop_shrinkClassDef(otl_ClassDef *cd);
 
 #endif
