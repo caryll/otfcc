@@ -53,6 +53,13 @@ typedef struct {
 	otl_Coverage *to;
 } subtable_gsub_ligature;
 
+typedef enum {
+	otl_chaining_canonical = 0, // The canonical form of chaining contextual substitution, one rule per subtable.
+	otl_chaining_poly = 1,      // The multi-rule form, right after reading OTF. N rule per subtable.
+	otl_chaining_classified = 2 // The classified intermediate form, for building TTF with compression.
+	                            // N rules, has classdefs, and coverage GID interpreted as class number.
+} otl_chaining_type;
+
 typedef struct {
 	tableid_t index;
 	otfcc_LookupHandle lookup;
@@ -66,13 +73,17 @@ typedef struct {
 	otl_ChainLookupApplication *apply;
 } otl_ChainingRule;
 typedef struct {
-	tableid_t rulesCount;
-	otl_ChainingRule **rules;
-	// these fields are for classified intermediate subtables.
-	bool classified;
-	otl_ClassDef *bc;
-	otl_ClassDef *ic;
-	otl_ClassDef *fc;
+	otl_chaining_type type;
+	union {
+		otl_ChainingRule rule; // for type = otl_chaining_canonical
+		struct {               // for type = otl_chaining_poly or otl_chaining_classified
+			tableid_t rulesCount;
+			otl_ChainingRule **rules;
+			otl_ClassDef *bc;
+			otl_ClassDef *ic;
+			otl_ClassDef *fc;
+		};
+	};
 } subtable_chaining;
 
 typedef struct {

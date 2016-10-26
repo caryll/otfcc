@@ -83,25 +83,33 @@ static void caryll_name_glyf(caryll_Font *font) {
 
 static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_OTL *table) {
 	tableid_t totalRules = 0;
-	for (tableid_t j = 0; j < lookup->subtableCount; j++)
-		if (lookup->subtables[j]) { totalRules += lookup->subtables[j]->chaining.rulesCount; }
+	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
+		if (!lookup->subtables[j]) continue;
+		if (lookup->subtables[j]->chaining.type == otl_chaining_poly) {
+			totalRules += lookup->subtables[j]->chaining.rulesCount;
+		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
+			totalRules += 1;
+		}
+	}
 	otl_Subtable **newsts;
 	NEW_N(newsts, totalRules);
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		if (lookup->subtables[j]) {
+		if (!lookup->subtables[j]) continue;
+		if (lookup->subtables[j]->chaining.type == otl_chaining_poly) {
 			for (tableid_t k = 0; k < lookup->subtables[j]->chaining.rulesCount; k++) {
 				NEW(newsts[jj]);
-				newsts[jj]->chaining.rulesCount = 1;
-				newsts[jj]->chaining.bc = NULL;
-				newsts[jj]->chaining.ic = NULL;
-				newsts[jj]->chaining.fc = NULL;
-				NEW(newsts[jj]->chaining.rules);
-				newsts[jj]->chaining.rules[0] = lookup->subtables[j]->chaining.rules[k];
+				newsts[jj]->chaining.type = otl_chaining_canonical;
+				newsts[jj]->chaining.rule = *(lookup->subtables[j]->chaining.rules[k]);
 				jj += 1;
 			}
 			free(lookup->subtables[j]->chaining.rules);
 			free(lookup->subtables[j]);
+		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
+			NEW(newsts[jj]);
+			newsts[jj]->chaining.type = otl_chaining_canonical;
+			newsts[jj]->chaining.rule = lookup->subtables[j]->chaining.rule;
+			jj += 1;
 		}
 	}
 	lookup->subtableCount = totalRules;

@@ -2,7 +2,11 @@
 
 bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
 	subtable_chaining *subtable = &(_subtable->chaining);
-	otl_ChainingRule *rule = subtable->rules[0];
+	if (subtable->type) {
+		fprintf(stderr, "[Consolidate] Ignoring non-canonical chaining subtable in %s. Reject.\n", lookupName);
+		return false;
+	}
+	otl_ChainingRule *rule = &(subtable->rule);
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		fontop_consolidateCoverage(font, rule->match[j], lookupName);
 		fontop_shrinkCoverage(rule->match[j], true);
