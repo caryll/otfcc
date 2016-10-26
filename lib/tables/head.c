@@ -1,4 +1,5 @@
-#include "head.h"
+#include "support/util.h"
+#include "otfcc/table/head.h"
 
 table_head *table_new_head() {
 	table_head *head = (table_head *)calloc(1, sizeof(table_head));
@@ -56,7 +57,7 @@ static const char *headFlagsLabels[] = {"baselineAtY_0",
                                         "lastResortFont"};
 static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow", "condensed", "extended"};
 
-void table_dump_head(const table_head *table, json_value *root, const caryll_Options *options) {
+void table_dump_head(const table_head *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping head.\n");
 	json_value *head = json_object_new(15);
@@ -78,7 +79,7 @@ void table_dump_head(const table_head *table, json_value *root, const caryll_Opt
 	json_object_push(root, "head", head);
 }
 
-table_head *table_parse_head(const json_value *root, const caryll_Options *options) {
+table_head *table_parse_head(const json_value *root, const otfcc_Options *options) {
 	table_head *head = table_new_head();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
@@ -102,8 +103,8 @@ table_head *table_parse_head(const json_value *root, const caryll_Options *optio
 	return head;
 }
 
-caryll_buffer *table_build_head(const table_head *head, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_head(const table_head *head, const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);
 	bufwrite32b(buf, head->fontRevison);

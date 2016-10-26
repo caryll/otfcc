@@ -1,5 +1,30 @@
-#include "glyf.h"
-#include <math.h>
+#include "support/util.h"
+#include "support/ttinstr.h"
+#include "otfcc/table/glyf.h"
+
+typedef enum {
+	GLYF_FLAG_ON_CURVE = 1,
+	GLYF_FLAG_X_SHORT = (1 << 1),
+	GLYF_FLAG_Y_SHORT = (1 << 2),
+	GLYF_FLAG_REPEAT = (1 << 3),
+	GLYF_FLAG_SAME_X = (1 << 4),
+	GLYF_FLAG_SAME_Y = (1 << 5),
+	GLYF_FLAG_POSITIVE_X = (1 << 4),
+	GLYF_FLAG_POSITIVE_Y = (1 << 5)
+} glyf_point_flag;
+
+typedef enum {
+	ARG_1_AND_2_ARE_WORDS = (1 << 0),
+	ARGS_ARE_XY_VALUES = (1 << 1),
+	ROUND_XY_TO_GRID = (1 << 2),
+	WE_HAVE_A_SCALE = (1 << 3),
+	MORE_COMPONENTS = (1 << 5),
+	WE_HAVE_AN_X_AND_Y_SCALE = (1 << 6),
+	WE_HAVE_A_TWO_BY_TWO = (1 << 7),
+	WE_HAVE_INSTRUCTIONS = (1 << 8),
+	USE_MY_METRICS = (1 << 9),
+	OVERLAP_COMPOUND = (1 << 10)
+} glyf_reference_flag;
 
 typedef enum { MASK_ON_CURVE = 1 } glyf_oncurve_mask;
 
@@ -49,7 +74,7 @@ static void table_delete_glyf_glyph(glyf_Glyph *g) {
 	}
 	if (g->numberOfReferences > 0 && g->references != NULL) {
 		for (shapeid_t k = 0; k < g->numberOfReferences; k++) {
-			handle_delete(&g->references[k].glyph);
+			handle_dispose(&g->references[k].glyph);
 		}
 		free(g->references);
 	}
@@ -58,7 +83,7 @@ static void table_delete_glyf_glyph(glyf_Glyph *g) {
 	if (g->stemV) FREE(g->stemV);
 	if (g->hintMasks) FREE(g->hintMasks);
 	if (g->contourMasks) FREE(g->contourMasks);
-	handle_delete(&g->fdSelect);
+	handle_dispose(&g->fdSelect);
 	g->name = NULL;
 	free(g);
 }
@@ -435,7 +460,7 @@ static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, shap
 	return a;
 }
 
-static json_value *glyf_dump_glyph(glyf_Glyph *g, const caryll_Options *options) {
+static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options) {
 	json_value *glyph = json_object_new(12);
 	json_object_push(glyph, "advanceWidth", json_new_position(g->advanceWidth));
 	if (options->has_vertical_metrics) {
@@ -476,7 +501,7 @@ void caryll_dump_glyphorder(const table_glyf *table, json_value *root) {
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
-void table_dump_glyf(const table_glyf *table, json_value *root, const caryll_Options *options) {
+void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping glyf.\n");
 
@@ -643,7 +668,7 @@ static void parse_masks(json_value *md, shapeid_t *count, glyf_PostscriptHintMas
 }
 
 static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOrderEntry *order_entry,
-                                           const caryll_Options *options) {
+                                           const otfcc_Options *options) {
 	glyf_Glyph *g = table_new_glyf_glyph();
 	g->name = sdsdup(order_entry->name);
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
@@ -666,7 +691,7 @@ static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOr
 	return g;
 }
 
-table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const caryll_Options *options) {
+table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const otfcc_Options *options) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -693,9 +718,9 @@ table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, c
 	return NULL;
 }
 
-caryll_buffer *shrinkFlags(caryll_buffer *flags) {
+caryll_Buffer *shrinkFlags(caryll_Buffer *flags) {
 	if (!buflen(flags)) return (flags);
-	caryll_buffer *shrunk = bufnew();
+	caryll_Buffer *shrunk = bufnew();
 	bufwrite8(shrunk, flags->data[0]);
 	int repeating = 0;
 	for (size_t j = 1; j < buflen(flags); j++) {
@@ -722,10 +747,10 @@ caryll_buffer *shrinkFlags(caryll_buffer *flags) {
 
 // serialize
 #define EPSILON (1e-5)
-static void glyf_build_simple(const glyf_Glyph *g, caryll_buffer *gbuf) {
-	caryll_buffer *flags = bufnew();
-	caryll_buffer *xs = bufnew();
-	caryll_buffer *ys = bufnew();
+static void glyf_build_simple(const glyf_Glyph *g, caryll_Buffer *gbuf) {
+	caryll_Buffer *flags = bufnew();
+	caryll_Buffer *xs = bufnew();
+	caryll_Buffer *ys = bufnew();
 
 	bufwrite16b(gbuf, g->numberOfContours);
 	bufwrite16b(gbuf, (int16_t)g->stat.xMin);
@@ -799,7 +824,7 @@ static void glyf_build_simple(const glyf_Glyph *g, caryll_buffer *gbuf) {
 	buffree(xs);
 	buffree(ys);
 }
-static void glyf_build_composite(const glyf_Glyph *g, caryll_buffer *gbuf) {
+static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 	bufwrite16b(gbuf, (-1));
 	bufwrite16b(gbuf, (int16_t)g->stat.xMin);
 	bufwrite16b(gbuf, (int16_t)g->stat.yMin);
@@ -850,11 +875,11 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const caryll_Options *options) {
-	caryll_buffer *bufglyf = bufnew();
-	caryll_buffer *bufloca = bufnew();
+glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const otfcc_Options *options) {
+	caryll_Buffer *bufglyf = bufnew();
+	caryll_Buffer *bufloca = bufnew();
 	if (table && head) {
-		caryll_buffer *gbuf = bufnew();
+		caryll_Buffer *gbuf = bufnew();
 		uint32_t *loca = malloc((table->numberGlyphs + 1) * sizeof(uint32_t));
 		for (glyphid_t j = 0; j < table->numberGlyphs; j++) {
 			loca[j] = (uint32_t)bufglyf->cursor;

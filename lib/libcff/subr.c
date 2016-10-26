@@ -356,7 +356,7 @@ static void appendNodeToGraph(cff_SubrGraph *g, cff_SubrNode *n) {
 }
 
 void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
-	caryll_buffer *blob = bufnew();
+	caryll_Buffer *blob = bufnew();
 	bool flush = false;
 	bool last = false;
 	for (uint32_t j = 0; j < il->length; j++) {
@@ -460,13 +460,13 @@ static bool endsWithEndChar(cff_SubrRule *rule) {
 	}
 }
 
-static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll_buffer *gsubrs, uint32_t maxGSubrs,
-                                  caryll_buffer *lsubrs, uint32_t maxLSubrs) {
+static void serializeNodeToBuffer(cff_SubrNode *node, caryll_Buffer *buf, caryll_Buffer *gsubrs, uint32_t maxGSubrs,
+                                  caryll_Buffer *lsubrs, uint32_t maxLSubrs) {
 	if (node->rule) {
 		if (node->rule->numbered && node->rule->number < maxLSubrs + maxGSubrs &&
 		    node->rule->height < type2_subr_nesting) {
 			// A call.
-			caryll_buffer *target;
+			caryll_Buffer *target;
 			if (node->rule->number < maxLSubrs) {
 				int32_t stacknum = node->rule->number - subroutineBias(maxLSubrs);
 				target = lsubrs + node->rule->number;
@@ -499,13 +499,13 @@ static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll
 	}
 }
 
-static caryll_buffer *from_array(void *_context, uint32_t j) {
-	caryll_buffer *context = (caryll_buffer *)_context;
-	caryll_buffer *blob = bufnew();
+static caryll_Buffer *from_array(void *_context, uint32_t j) {
+	caryll_Buffer *context = (caryll_Buffer *)_context;
+	caryll_Buffer *blob = bufnew();
 	bufwrite_buf(blob, context + j);
 	return blob;
 }
-void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs, caryll_buffer **ls) {
+void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **gs, caryll_Buffer **ls) {
 	cff_statHeight(g->root, 0);
 	uint32_t maxSubroutines = cff_numberSubroutines(g);
 	uint32_t maxLSubrs = maxSubroutines;
@@ -521,7 +521,7 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **g
 		maxLSubrs = total / 2;
 		maxGSubrs = total - maxLSubrs;
 	}
-	caryll_buffer *charStrings, *gsubrs, *lsubrs;
+	caryll_Buffer *charStrings, *gsubrs, *lsubrs;
 	NEW_N(charStrings, g->totalCharStrings + 1);
 	NEW_N(lsubrs, maxLSubrs + 1);
 	NEW_N(gsubrs, maxGSubrs + 1);

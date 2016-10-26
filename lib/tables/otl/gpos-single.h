@@ -1,12 +1,12 @@
-#ifndef CARYLL_TABLES_OTL_GPOS_SINGLE_H
-#define CARYLL_TABLES_OTL_GPOS_SINGLE_H
+#ifndef CARYLL_TABLE_OTL_GPOS_SINGLE_H
+#define CARYLL_TABLE_OTL_GPOS_SINGLE_H
 
-#include "otl.h"
+#include "otl-private.h"
 
 void otl_delete_gpos_single(otl_Subtable *subtable);
 otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset);
 json_value *otl_gpos_dump_single(const otl_Subtable *_subtable);
 otl_Subtable *otl_gpos_parse_single(const json_value *_subtable);
-caryll_buffer *caryll_build_gpos_single(const otl_Subtable *_subtable);
+caryll_Buffer *caryll_build_gpos_single(const otl_Subtable *_subtable);
 
 #endif

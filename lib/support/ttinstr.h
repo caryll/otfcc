@@ -33,6 +33,6 @@
 
 void parse_ttinstr(json_value *col, void *context, void (*Make)(void *, uint8_t *, uint32_t),
                      void (*Wrong)(void *, char *, int));
-json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const caryll_Options *options);
+json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const otfcc_Options *options);
 
 #endif

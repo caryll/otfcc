@@ -1,4 +1,5 @@
-#include "glyph-order.h"
+#include "util.h"
+#include "otfcc/glyph-order.h"
 
 caryll_GlyphOrder *caryll_new_GlyphOrder() {
 	caryll_GlyphOrder *go;
@@ -82,7 +83,8 @@ void caryll_setGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_
 		s->orderEntry = orderEntry;
 	}
 }
-static void caryll_escalateGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry) {
+static void caryll_escalateGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType,
+                                                     uint32_t orderEntry) {
 	caryll_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhName, go->byName, name, sdslen(name), s);
 	if (s && s->orderType > orderType) {
@@ -124,9 +126,11 @@ static void placeOrderEntriesFromCmap(json_value *table, caryll_GlyphOrder *go) 
 		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
 		int32_t unicode = atoi(unicodeStr);
+		sdsfree(unicodeStr);
 		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 			caryll_escalateGlyphOrderByNameWithOrder(go, gname, ORD_CMAP, unicode);
+			sdsfree(gname);
 		}
 	}
 }
@@ -138,11 +142,12 @@ static void placeOrderEntriesFromSubtable(json_value *table, caryll_GlyphOrder *
 		if (item->type == json_string) {
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 			caryll_escalateGlyphOrderByNameWithOrder(go, gname, ORD_GLYPHORDER, j);
+			sdsfree(gname);
 		}
 	}
 }
 
-caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, caryll_Options *options) {
+caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *options) {
 	caryll_GlyphOrder *go = caryll_new_GlyphOrder();
 	if (root->type != json_object) return go;
 	json_value *table;
@@ -158,34 +163,71 @@ caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, caryll_Options *opt
 	return go;
 }
 
-void caryll_nameAFieldUsingGlyphOrder(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
+bool gord_nameAFieldShared(caryll_GlyphOrder *go, glyphid_t gid, sds *field) {
 	caryll_GlyphOrderEntry *t;
 	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
 	if (t != NULL) {
 		*field = t->name;
+		return true;
 	} else {
 		*field = NULL;
+		return false;
 	}
 }
 
-void caryll_nameAHandleUsingGlyphOrder(caryll_GlyphOrder *go, glyph_handle *h) {
-	if (h->state == HANDLE_STATE_NAME) sdsfree(h->name);
-	caryll_nameAFieldUsingGlyphOrder(go, h->index, &(h->name));
-	if (h->name) { h->state = HANDLE_STATE_CONSOLIDATED; }
-}
-
-void caryll_consolidateAHandleUsingGlyphOrder(caryll_GlyphOrder *go, glyph_handle *h) {
-	caryll_GlyphOrderEntry *t;
-	HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
-	if (t) {
-		handle_consolidateTo(h, t->gid, t->name);
-	} else {
-		handle_delete(h);
+bool gord_consolidateHandle(caryll_GlyphOrder *go, glyph_handle *h) {
+	if (h->state == HANDLE_STATE_CONSOLIDATED) {
+		caryll_GlyphOrderEntry *t;
+		HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
+		if (t) {
+			handle_consolidateTo(h, t->gid, t->name);
+			return true;
+		}
+		HASH_FIND(hhName, go->byGID, &(h->index), sizeof(glyphid_t), t);
+		if (t) {
+			handle_consolidateTo(h, t->gid, t->name);
+			return true;
+		}
+	} else if (h->state == HANDLE_STATE_NAME) {
+		caryll_GlyphOrderEntry *t;
+		HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
+		if (t) {
+			handle_consolidateTo(h, t->gid, t->name);
+			return true;
+		}
+	} else if (h->state == HANDLE_STATE_INDEX) {
+		sds name = NULL;
+		gord_nameAFieldShared(go, h->index, &name);
+		if (name) {
+			handle_consolidateTo(h, h->index, name);
+			return true;
+		}
 	}
+	return false;
 }
 
 caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name) {
 	caryll_GlyphOrderEntry *t = NULL;
 	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
 	return t;
+}
+
+otfcc_GlyphHandle gord_formIndexedHandle(caryll_GlyphOrder *go, glyphid_t gid) {
+	caryll_GlyphOrderEntry *t;
+	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
+	if (t) {
+		return handle_fromConsolidated(t->gid, t->name);
+	} else {
+		return handle_new();
+	}
+}
+
+otfcc_GlyphHandle gord_formNamedHandle(caryll_GlyphOrder *go, const sds name) {
+	caryll_GlyphOrderEntry *t;
+	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
+	if (t) {
+		return handle_fromConsolidated(t->gid, t->name);
+	} else {
+		return handle_new();
+	}
 }

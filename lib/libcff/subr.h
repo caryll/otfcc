@@ -8,7 +8,7 @@ typedef struct __cff_SubrRule cff_SubrRule;
 typedef struct __cff_SubrNode cff_SubrNode;
 
 struct __cff_SubrNode {
-	caryll_buffer *terminal;
+	caryll_Buffer *terminal;
 	cff_SubrRule *rule;
 	cff_SubrNode *prev;
 	cff_SubrNode *next;
@@ -46,6 +46,6 @@ typedef struct {
 
 cff_SubrGraph *cff_new_Graph();
 void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il);
-void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs, caryll_buffer **ls);
+void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **gs, caryll_Buffer **ls);
 void cff_delete_Graph(cff_SubrGraph *g);
 #endif

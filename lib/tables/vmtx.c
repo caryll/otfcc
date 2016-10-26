@@ -1,4 +1,5 @@
-#include "vmtx.h"
+#include "support/util.h"
+#include "otfcc/table/vmtx.h"
 
 void table_delete_vmtx(MOVE table_vmtx *table) {
 	if (!table) return;
@@ -40,9 +41,9 @@ table_vmtx *table_read_vmtx(const caryll_Packet packet, table_vhea *vhea, table_
 	return NULL;
 }
 
-caryll_buffer *table_build_vmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
-                                const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_vmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
+                                const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {
 		for (glyphid_t j = 0; j < count_a; j++) {

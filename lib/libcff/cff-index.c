@@ -64,7 +64,7 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 	}
 }
 
-cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t)) {
+cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t)) {
 	cff_Index *idx = cff_new_Index();
 	idx->count = length;
 	NEW_N(idx->offset, idx->count + 1);
@@ -74,7 +74,7 @@ cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer 
 	size_t used = 0;
 	size_t blank = 0;
 	for (uint32_t i = 0; i < length; i++) {
-		caryll_buffer *blob = fn(context, i);
+		caryll_Buffer *blob = fn(context, i);
 		if (blank < blob->size) {
 			used += blob->size;
 			blank = (used >> 1) & 0xFFFFFF;
@@ -91,8 +91,8 @@ cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer 
 	return idx;
 }
 
-caryll_buffer *cff_build_Index(cff_Index index) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_build_Index(cff_Index index) {
+	caryll_Buffer *blob = bufnew();
 	if (!index.count) {
 		bufwrite8(blob, 0);
 		bufwrite8(blob, 0);

@@ -29,6 +29,7 @@
  */
 
 #include "json-builder.h"
+#include "emyg-dtoa/emyg-dtoa.h"
 
 #include <string.h>
 #include <assert.h>
@@ -68,8 +69,7 @@ static int builderize(json_value *value) {
 			json_char *name_copy;
 			json_object_entry *entry = &value->u.object.values[i];
 
-			if (!(name_copy = (json_char *)malloc((entry->name_length + 1) * sizeof(json_char))))
-				return 0;
+			if (!(name_copy = (json_char *)malloc((entry->name_length + 1) * sizeof(json_char)))) return 0;
 
 			memcpy(name_copy, entry->name, entry->name_length + 1);
 			entry->name = name_copy;
@@ -136,8 +136,8 @@ json_value *json_array_push(json_value *array, json_value *value) {
 	if (((json_builder_value *)array)->additional_length_allocated > 0) {
 		--((json_builder_value *)array)->additional_length_allocated;
 	} else {
-		json_value **values_new = (json_value **)realloc(
-		    array->u.array.values, sizeof(json_value *) * (array->u.array.length + 1));
+		json_value **values_new =
+		    (json_value **)realloc(array->u.array.values, sizeof(json_value *) * (array->u.array.length + 1));
 
 		if (!values_new) return NULL;
 
@@ -161,8 +161,7 @@ json_value *json_object_new(size_t length) {
 
 	value->type = json_object;
 
-	if (!(value->u.object.values =
-	          (json_object_entry *)calloc(length, sizeof(*value->u.object.values)))) {
+	if (!(value->u.object.values = (json_object_entry *)calloc(length, sizeof(*value->u.object.values)))) {
 		free(value);
 		return NULL;
 	}
@@ -176,8 +175,8 @@ json_value *json_object_push(json_value *object, const json_char *name, json_val
 	return json_object_push_length(object, strlen(name), name, value);
 }
 
-json_value *json_object_push_length(json_value *object, unsigned int name_length,
-                                    const json_char *name, json_value *value) {
+json_value *json_object_push_length(json_value *object, unsigned int name_length, const json_char *name,
+                                    json_value *value) {
 	json_char *name_copy;
 
 	assert(object->type == json_object);
@@ -195,8 +194,7 @@ json_value *json_object_push_length(json_value *object, unsigned int name_length
 	return value;
 }
 
-json_value *json_object_push_nocopy(json_value *object, unsigned int name_length, json_char *name,
-                                    json_value *value) {
+json_value *json_object_push_nocopy(json_value *object, unsigned int name_length, json_char *name, json_value *value) {
 	json_object_entry *entry;
 
 	assert(object->type == json_object);
@@ -207,8 +205,7 @@ json_value *json_object_push_nocopy(json_value *object, unsigned int name_length
 		--((json_builder_value *)object)->additional_length_allocated;
 	} else {
 		json_object_entry *values_new = (json_object_entry *)realloc(
-		    object->u.object.values,
-		    sizeof(*object->u.object.values) * (object->u.object.length + 1));
+		    object->u.object.values, sizeof(*object->u.object.values) * (object->u.object.length + 1));
 
 		if (!values_new) return NULL;
 
@@ -355,12 +352,10 @@ json_value *json_object_merge(json_value *objectA, json_value *objectB) {
 	} else {
 		json_object_entry *values_new;
 
-		unsigned int alloc = objectA->u.object.length +
-		                     ((json_builder_value *)objectA)->additional_length_allocated +
+		unsigned int alloc = objectA->u.object.length + ((json_builder_value *)objectA)->additional_length_allocated +
 		                     objectB->u.object.length;
 
-		if (!(values_new = (json_object_entry *)realloc(objectA->u.object.values,
-		                                                sizeof(json_object_entry) * alloc))) {
+		if (!(values_new = (json_object_entry *)realloc(objectA->u.object.values, sizeof(json_object_entry) * alloc))) {
 			return NULL;
 		}
 
@@ -411,10 +406,10 @@ static size_t measure_string(unsigned int length, const json_char *str) {
 	return measured_length;
 }
 
-#define PRINT_ESCAPED(c)                                                                           \
-	do {                                                                                           \
-		*buf++ = '\\';                                                                             \
-		*buf++ = (c);                                                                              \
+#define PRINT_ESCAPED(c)                                                                                               \
+	do {                                                                                                               \
+		*buf++ = '\\';                                                                                                 \
+		*buf++ = (c);                                                                                                  \
 	} while (0);
 
 static size_t serialize_string(json_char *buf, unsigned int length, const json_char *str) {
@@ -457,12 +452,14 @@ static size_t serialize_string(json_char *buf, unsigned int length, const json_c
 	return buf - orig_buf;
 }
 
-size_t json_measure(json_value *value) { return json_measure_ex(value, default_opts); }
+size_t json_measure(json_value *value) {
+	return json_measure_ex(value, default_opts);
+}
 
-#define MEASURE_NEWLINE()                                                                          \
-	do {                                                                                           \
-		++newlines;                                                                                \
-		indents += depth;                                                                          \
+#define MEASURE_NEWLINE()                                                                                              \
+	do {                                                                                                               \
+		++newlines;                                                                                                    \
+		indents += depth;                                                                                              \
 	} while (0);
 
 size_t json_measure_ex(json_value *value, json_serialize_opts opts) {
@@ -621,25 +618,26 @@ void json_serialize(json_char *buf, json_value *value) {
 	json_serialize_ex(buf, value, default_opts);
 }
 
-#define PRINT_NEWLINE()                                                                            \
-	do {                                                                                           \
-		if (opts.mode == json_serialize_mode_multiline) {                                          \
-			if (opts.opts & json_serialize_opt_CRLF) *buf++ = '\r';                                \
-			*buf++ = '\n';                                                                         \
-			for (i = 0; i < indent; ++i) *buf++ = indent_char;                                     \
-		}                                                                                          \
+#define PRINT_NEWLINE()                                                                                                \
+	do {                                                                                                               \
+		if (opts.mode == json_serialize_mode_multiline) {                                                              \
+			if (opts.opts & json_serialize_opt_CRLF) *buf++ = '\r';                                                    \
+			*buf++ = '\n';                                                                                             \
+			for (i = 0; i < indent; ++i)                                                                               \
+				*buf++ = indent_char;                                                                                  \
+		}                                                                                                              \
 	} while (0);
 
-#define PRINT_OPENING_BRACKET(c)                                                                   \
-	do {                                                                                           \
-		*buf++ = (c);                                                                              \
-		if (flags & f_spaces_around_brackets) *buf++ = ' ';                                        \
+#define PRINT_OPENING_BRACKET(c)                                                                                       \
+	do {                                                                                                               \
+		*buf++ = (c);                                                                                                  \
+		if (flags & f_spaces_around_brackets) *buf++ = ' ';                                                            \
 	} while (0);
 
-#define PRINT_CLOSING_BRACKET(c)                                                                   \
-	do {                                                                                           \
-		if (flags & f_spaces_around_brackets) *buf++ = ' ';                                        \
-		*buf++ = (c);                                                                              \
+#define PRINT_CLOSING_BRACKET(c)                                                                                       \
+	do {                                                                                                               \
+		if (flags & f_spaces_around_brackets) *buf++ = ' ';                                                            \
+		*buf++ = (c);                                                                                                  \
 	} while (0);
 
 void json_serialize_ex(json_char *buf, json_value *value, json_serialize_opts opts) {
@@ -772,7 +770,9 @@ void json_serialize_ex(json_char *buf, json_value *value, json_serialize_opts op
 				integer = orig_integer;
 				ptr = buf;
 
-				do { *--ptr = "0123456789"[integer % 10]; } while ((integer /= 10) > 0);
+				do {
+					*--ptr = "0123456789"[integer % 10];
+				} while ((integer /= 10) > 0);
 
 				break;
 

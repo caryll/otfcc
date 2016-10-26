@@ -42,7 +42,7 @@ workspace "otfcc"
 	platforms { "x32", "x64" }
 	
 	location "build"
-	includedirs { "dep", "lib" }
+	includedirs { "include", "dep", "lib" }
 	
 	defines {
 		'_CARYLL_USE_PRE_SERIALIZED',
@@ -74,6 +74,7 @@ project "deps"
 	kind "StaticLib"
 	language "C"
 	externcbuildoptions()
+	includedirs { "include/dep" }
 	files {
 		"dep/extern/**.h",
 		"dep/extern/**.c"
@@ -89,6 +90,17 @@ project "libotfcc"
 	kind "StaticLib"
 	language "C"
 	cbuildoptions()
+
+	links { "deps" }
+	
+	filter "action:gmake"
+		links "m"
+	filter {}
+
+	filter "action:xcode4"
+		links "m"
+	filter {}
+
 	files {
 		"lib/**.h",
 		"lib/**.c"

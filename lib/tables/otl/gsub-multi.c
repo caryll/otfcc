@@ -76,7 +76,7 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
 	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 
 	bk_Block *root = bk_new_Block(b16, 1,                                                         // format

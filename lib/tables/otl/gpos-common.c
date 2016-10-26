@@ -131,7 +131,7 @@ uint8_t required_position_format(otl_PositionValue v) {
 	       (v.dHeight ? FORMAT_DHEIGHT : 0);
 }
 // Write gpos position value
-void write_gpos_value(caryll_buffer *buf, otl_PositionValue v, uint16_t format) {
+void write_gpos_value(caryll_Buffer *buf, otl_PositionValue v, uint16_t format) {
 	if (format & FORMAT_DX) bufwrite16b(buf, (int16_t)v.dx);
 	if (format & FORMAT_DY) bufwrite16b(buf, (int16_t)v.dy);
 	if (format & FORMAT_DWIDTH) bufwrite16b(buf, (int16_t)v.dWidth);

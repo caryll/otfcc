@@ -13,13 +13,13 @@ void cff_close_FDSelect(cff_FDSelect fds) {
 	}
 }
 
-caryll_buffer *cff_build_FDSelect(cff_FDSelect fd) {
+caryll_Buffer *cff_build_FDSelect(cff_FDSelect fd) {
 	switch (fd.t) {
 		case cff_FDSELECT_UNSPECED: {
 			return bufnew();
 		}
 		case cff_FDSELECT_FORMAT0: {
-			caryll_buffer *blob = bufnew();
+			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + fd.s;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			for (uint16_t j = 0; j < fd.s; j++) {
@@ -28,7 +28,7 @@ caryll_buffer *cff_build_FDSelect(cff_FDSelect fd) {
 			return blob;
 		}
 		case cff_FDSELECT_FORMAT3: {
-			caryll_buffer *blob = bufnew();
+			caryll_Buffer *blob = bufnew();
 			blob->size = 5 + fd.f3.nranges * 3;
 			blob->data = calloc(blob->size, sizeof(uint8_t));
 			blob->data[0] = 3;

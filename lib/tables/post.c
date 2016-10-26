@@ -1,4 +1,5 @@
-#include "post.h"
+#include "support/util.h"
+#include "otfcc/table/post.h"
 
 // clang-format off
 const char *standardMacNames[258] = {".notdef", ".null", "nonmarkingreturn", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis", "Aring", "Ccedilla", "Eacute", "Ntilde", "Odieresis", "Udieresis", "aacute", "agrave", "acircumflex", "adieresis", "atilde", "aring", "ccedilla", "eacute", "egrave", "ecircumflex", "edieresis", "iacute", "igrave", "icircumflex", "idieresis", "ntilde", "oacute", "ograve", "ocircumflex", "odieresis", "otilde", "uacute", "ugrave", "ucircumflex", "udieresis", "dagger", "degree", "cent", "sterling", "section", "bullet", "paragraph", "germandbls", "registered", "copyright", "trademark", "acute", "dieresis", "notequal", "AE", "Oslash", "infinity", "plusminus", "lessequal", "greaterequal", "yen", "mu", "partialdiff", "summation", "product", "pi", "integral", "ordfeminine", "ordmasculine", "Omega", "ae", "oslash", "questiondown", "exclamdown", "logicalnot", "radical", "florin", "approxequal", "Delta", "guillemotleft", "guillemotright", "ellipsis", "nonbreakingspace", "Agrave", "Atilde", "Otilde", "OE", "oe", "endash", "emdash", "quotedblleft", "quotedblright", "quoteleft", "quoteright", "divide", "lozenge", "ydieresis", "Ydieresis", "fraction", "currency", "guilsinglleft", "guilsinglright", "fi", "fl", "daggerdbl", "periodcentered", "quotesinglbase", "quotedblbase", "perthousand", "Acircumflex", "Ecircumflex", "Aacute", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Oacute", "Ocircumflex", "apple", "Ograve", "Uacute", "Ucircumflex", "Ugrave", "dotlessi", "circumflex", "tilde", "macron", "breve", "dotaccent", "ring", "cedilla", "hungarumlaut", "ogonek", "caron", "Lslash", "lslash", "Scaron", "scaron", "Zcaron", "zcaron", "brokenbar", "Eth", "eth", "Yacute", "yacute", "Thorn", "thorn", "minus", "multiply", "onesuperior", "twosuperior", "threesuperior", "onehalf", "onequarter", "threequarters", "franc", "Gbreve", "gbreve", "Idotaccent", "Scedilla", "scedilla", "Cacute", "cacute", "Ccaron", "ccaron", "dcroat"};
@@ -67,7 +68,7 @@ table_post *table_read_post(const caryll_Packet packet) {
 	return NULL;
 }
 
-void table_dump_post(const table_post *table, json_value *root, const caryll_Options *options) {
+void table_dump_post(const table_post *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping post.\n");
 
@@ -83,7 +84,7 @@ void table_dump_post(const table_post *table, json_value *root, const caryll_Opt
 	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
 	json_object_push(root, "post", post);
 }
-table_post *table_parse_post(const json_value *root, const caryll_Options *options) {
+table_post *table_parse_post(const json_value *root, const otfcc_Options *options) {
 	table_post *post = table_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
@@ -104,8 +105,8 @@ table_post *table_parse_post(const json_value *root, const caryll_Options *optio
 	}
 	return post;
 }
-caryll_buffer *table_build_post(const table_post *post, caryll_GlyphOrder *glyphorder, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_post(const table_post *post, caryll_GlyphOrder *glyphorder, const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);
 	bufwrite32b(buf, post->italicAngle);

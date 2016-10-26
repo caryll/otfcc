@@ -1,9 +1,10 @@
-#include "coverage.h"
+#include "support/util.h"
+#include "otfcc/table/otl/coverage.h"
 
 void otl_delete_Coverage(MOVE otl_Coverage *coverage) {
 	if (coverage && coverage->glyphs) {
 		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-			handle_delete(&coverage->glyphs[j]);
+			handle_dispose(&coverage->glyphs[j]);
 		}
 		free(coverage->glyphs);
 	}
@@ -20,7 +21,7 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_Coverage *otl_read_Coverage(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
 	otl_Coverage *coverage;
 	NEW(coverage);
 	coverage->numGlyphs = 0;
@@ -135,23 +136,47 @@ otl_Coverage *otl_parse_Coverage(const json_value *cov) {
 	return c;
 }
 
-caryll_buffer *otl_build_Coverage(const otl_Coverage *coverage) {
-	caryll_buffer *format1 = bufnew();
-	bufwrite16b(format1, 1);
-	bufwrite16b(format1, coverage->numGlyphs);
-	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-		bufwrite16b(format1, coverage->glyphs[j].index);
+static int by_gid(const void *a, const void *b) {
+	return *((glyphid_t *)a) - *((glyphid_t *)b);
+}
+caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
+	// sort the gids in coverage
+	if (!coverage->numGlyphs) {
+		caryll_Buffer *buf = bufnew();
+		bufwrite16b(buf, 2);
+		bufwrite16b(buf, 0);
+		return buf;
 	}
-	if (coverage->numGlyphs < 2) return format1;
+	glyphid_t *r;
+	NEW_N(r, coverage->numGlyphs);
+	glyphid_t jj = 0;
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
+		r[jj] = coverage->glyphs[j].index;
+		jj++;
+	}
+	qsort(r, jj, sizeof(glyphid_t), by_gid);
 
-	caryll_buffer *format2 = bufnew();
+	caryll_Buffer *format1 = bufnew();
+	bufwrite16b(format1, 1);
+	bufwrite16b(format1, jj);
+	for (glyphid_t j = 0; j < jj; j++) {
+		bufwrite16b(format1, r[j]);
+	}
+	if (jj < 2) {
+		free(r);
+		return format1;
+	}
+
+	caryll_Buffer *format2 = bufnew();
 	bufwrite16b(format2, 2);
-	caryll_buffer *ranges = bufnew();
-	glyphid_t startGID = coverage->glyphs[0].index;
+	caryll_Buffer *ranges = bufnew();
+	glyphid_t startGID = r[0];
 	glyphid_t endGID = startGID;
+	glyphid_t lastGID = startGID;
 	glyphid_t nRanges = 0;
-	for (glyphid_t j = 1; j < coverage->numGlyphs; j++) {
-		glyphid_t current = coverage->glyphs[j].index;
+	for (glyphid_t j = 1; j < jj; j++) {
+		glyphid_t current = r[j];
+		if (current <= lastGID) continue;
 		if (current == endGID + 1) {
 			endGID = current;
 		} else {
@@ -161,18 +186,51 @@ caryll_buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 			nRanges += 1;
 			startGID = endGID = current;
 		}
+		lastGID = current;
 	}
 	bufwrite16b(ranges, startGID);
 	bufwrite16b(ranges, endGID);
-	bufwrite16b(ranges, coverage->numGlyphs + startGID - endGID - 1);
+	bufwrite16b(ranges, jj + startGID - endGID - 1);
 	nRanges += 1;
 	bufwrite16b(format2, nRanges);
 	bufwrite_bufdel(format2, ranges);
 	if (buflen(format1) < buflen(format2)) {
 		buffree(format2);
+		free(r);
 		return format1;
 	} else {
 		buffree(format1);
+		free(r);
 		return format2;
 	}
+}
+
+static int byHandleGID(const void *a, const void *b) {
+	return ((glyph_handle *)a)->index - ((glyph_handle *)b)->index;
+}
+
+void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
+	if (!coverage) return;
+	glyphid_t k = 0;
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
+		if (coverage->glyphs[j].name) {
+			coverage->glyphs[k++] = coverage->glyphs[j];
+		} else {
+			handle_dispose(&coverage->glyphs[j]);
+		}
+	}
+	if (dosort) {
+		qsort(coverage->glyphs, k, sizeof(glyph_handle), byHandleGID);
+		glyphid_t skip = 0;
+		for (glyphid_t rear = 1; rear < coverage->numGlyphs; rear++) {
+			if (coverage->glyphs[rear].index == coverage->glyphs[rear - skip - 1].index) {
+				handle_dispose(&coverage->glyphs[rear]);
+				skip += 1;
+			} else {
+				coverage->glyphs[rear - skip] = coverage->glyphs[rear];
+			}
+		}
+		k -= skip;
+	}
+	coverage->numGlyphs = k;
 }

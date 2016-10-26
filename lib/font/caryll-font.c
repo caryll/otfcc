@@ -1,10 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "caryll-font.h"
-#include "caryll-sfnt-builder.h"
-#include "caryll-sfnt.h"
+#include "support/util.h"
+#include "otfcc/font.h"
+#include "otfcc/sfnt-builder.h"
 
 caryll_Font *caryll_new_Font() {
 	caryll_Font *font = calloc(1, sizeof(caryll_Font));
@@ -68,7 +64,7 @@ caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, u
 	return FONTTYPE_TTF;
 }
 
-caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, caryll_Options *options) {
+caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, otfcc_Options *options) {
 	if (sfnt->count - 1 < index)
 		return NULL;
 	else {
@@ -93,7 +89,7 @@ caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, 
 			font->LTSH = table_read_LTSH(packet);
 			font->glyf = table_read_glyf(packet, font->head, font->maxp);
 		} else {
-			table_CFFAndGlyf cffpr = table_read_cff_and_glyf(packet);
+			table_CFFAndGlyf cffpr = table_read_cff_and_glyf(packet, font->head);
 			font->CFF_ = cffpr.meta;
 			font->glyf = cffpr.glyphs;
 			font->vhea = table_read_vhea(packet);
@@ -112,7 +108,7 @@ caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, 
 	}
 }
 
-json_value *caryll_dump_Font(caryll_Font *font, caryll_Options *options) {
+json_value *caryll_dump_Font(caryll_Font *font, otfcc_Options *options) {
 	json_value *root = json_object_new(48);
 	options->has_vertical_metrics = !!(font->vhea) && !!(font->vmtx);
 	options->export_fdselect = font->CFF_ && font->CFF_->isCID;
@@ -147,7 +143,7 @@ caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root) {
 		return FONTTYPE_TTF;
 	}
 }
-caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
+caryll_Font *caryll_parse_Font(json_value *root, otfcc_Options *options) {
 	caryll_Font *font = caryll_new_Font();
 	if (!font) return NULL;
 	font->subtype = caryll_decideFontSubtypeFromJson(root);
@@ -177,7 +173,7 @@ caryll_Font *caryll_parse_Font(json_value *root, caryll_Options *options) {
 	return font;
 }
 
-caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
+caryll_Buffer *caryll_build_Font(caryll_Font *font, otfcc_Options *options) {
 	caryll_SFNTBuilder *builder = caryll_new_SFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 
 	// Outline data
@@ -225,14 +221,14 @@ caryll_buffer *caryll_build_Font(caryll_Font *font, caryll_Options *options) {
 	if (font->BASE) caryll_pushTableToSfntBuilder(builder, 'BASE', table_build_BASE(font->BASE, options));
 
 	if (options->dummy_DSIG) {
-		caryll_buffer *dsig = bufnew();
+		caryll_Buffer *dsig = bufnew();
 		bufwrite32b(dsig, 0x00000001);
 		bufwrite16b(dsig, 0);
 		bufwrite16b(dsig, 0);
 		caryll_pushTableToSfntBuilder(builder, 'DSIG', dsig);
 	}
 
-	caryll_buffer *otf = caryll_serializeSFNT(builder);
+	caryll_Buffer *otf = caryll_serializeSFNT(builder);
 	caryll_delete_SFNTBuilder(builder);
 	return otf;
 }

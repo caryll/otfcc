@@ -1,7 +1,6 @@
-#include "font/caryll-font.h"
-#include "font/caryll-sfnt-builder.h"
-#include "font/caryll-sfnt.h"
-#include "fontops/fontop.h"
+#include "otfcc/sfnt.h"
+#include "otfcc/font.h"
+#include "otfcc/sfnt-builder.h"
 
 #include "platform.h"
 #include "stopwatch.h"
@@ -137,7 +136,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 
-	caryll_Options *options = options_new();
+	otfcc_Options *options = options_new();
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -256,6 +255,7 @@ int main(int argc, char *argv[]) {
 		if (inPath) {
 			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", inPath, outputPath); }
 			readEntireFile(inPath, &buffer, &length);
+			sdsfree(inPath);
 		} else {
 			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", "[STDIN]", outputPath); }
 			readEntireStdin(&buffer, &length);
@@ -291,12 +291,12 @@ int main(int argc, char *argv[]) {
 		if (show_time) push_stopwatch("Stating", &begin);
 	}
 	{
-		caryll_buffer *otf = caryll_build_Font(font, options);
+		caryll_Buffer *otf = caryll_build_Font(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		if (show_time) push_stopwatch("Write OpenType", &begin);
-
+		sdsfree(outputPath);
 		buffree(otf);
 		caryll_delete_Font(font);
 		options_delete(options);

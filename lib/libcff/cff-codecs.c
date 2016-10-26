@@ -19,7 +19,7 @@
   * 30 (double)
 */
 
-caryll_buffer *cff_encodeCffOperator(int32_t val) {
+caryll_Buffer *cff_encodeCffOperator(int32_t val) {
 	if (val > 256) {
 		return bufninit(2, val / 256, val % 256);
 	} else {
@@ -27,7 +27,7 @@ caryll_buffer *cff_encodeCffOperator(int32_t val) {
 	}
 }
 
-caryll_buffer *cff_encodeCffInteger(int32_t val) {
+caryll_Buffer *cff_encodeCffInteger(int32_t val) {
 	if (val >= -107 && val <= 107) {
 		return bufninit(1, val + 139);
 	} else if (val >= 108 && val <= 1131) {
@@ -46,8 +46,8 @@ caryll_buffer *cff_encodeCffInteger(int32_t val) {
 
 // -2.25       -> 1e e2 a2 5f
 // 0.140541E-3 -> 1e 0a 14 05 41 c3 ff
-caryll_buffer *cff_encodeCffFloat(double val) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_encodeCffFloat(double val) {
+	caryll_Buffer *blob = bufnew();
 	uint32_t i, j = 0;
 	uint8_t temp[32] = {0};
 

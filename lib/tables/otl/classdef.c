@@ -1,10 +1,11 @@
-#include "classdef.h"
+#include "support/util.h"
+#include "otfcc/table/otl/classdef.h"
 
 void otl_delete_ClassDef(otl_ClassDef *cd) {
 	if (cd) {
 		if (cd->glyphs) {
 			for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-				handle_delete(&cd->glyphs[j]);
+				handle_dispose(&cd->glyphs[j]);
 			}
 			free(cd->glyphs);
 		}
@@ -23,7 +24,7 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_ClassDef *otl_read_ClassDef(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
 	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = 0;
@@ -181,8 +182,8 @@ typedef struct {
 static int by_gid(const void *a, const void *b) {
 	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
 }
-caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
+	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
 	if (!cd->numGlyphs) { // no glyphs, return a blank classdef
 		bufwrite16b(buf, 0);
@@ -211,7 +212,7 @@ caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	glyphclass_t lastClass = r[0].cid;
 	glyphid_t nRanges = 0;
 	glyphid_t lastGID = startGID;
-	caryll_buffer *ranges = bufnew();
+	caryll_Buffer *ranges = bufnew();
 	for (glyphid_t j = 1; j < jj; j++) {
 		glyphid_t current = r[j].gid;
 		if (current <= lastGID) continue;
@@ -225,6 +226,7 @@ caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 			startGID = endGID = current;
 			lastClass = r[j].cid;
 		}
+		lastGID = current;
 	}
 	bufwrite16b(ranges, startGID);
 	bufwrite16b(ranges, endGID);
@@ -234,4 +236,18 @@ caryll_buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	bufwrite_bufdel(buf, ranges);
 	free(r);
 	return buf;
+}
+
+void fontop_shrinkClassDef(otl_ClassDef *cd) {
+	glyphid_t k = 0;
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
+		if (cd->glyphs[j].name) {
+			cd->glyphs[k] = cd->glyphs[j];
+			cd->classes[k] = cd->classes[j];
+			k++;
+		} else {
+			handle_dispose(&cd->glyphs[j]);
+		}
+	}
+	cd->numGlyphs = k;
 }

@@ -1,4 +1,6 @@
-#include "vhea.h"
+#include "support/util.h"
+#include "otfcc/table/vhea.h"
+
 table_vhea *table_new_vhea() {
 	table_vhea *vhea = calloc(1, sizeof(table_vhea));
 	vhea->version = 0x11000;
@@ -38,7 +40,7 @@ table_vhea *table_read_vhea(const caryll_Packet packet) {
 	}
 	return NULL;
 }
-void table_dump_vhea(const table_vhea *table, json_value *root, const caryll_Options *options) {
+void table_dump_vhea(const table_vhea *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
 	if (options->verbose) fprintf(stderr, "Dumping vhea.\n");
@@ -57,7 +59,7 @@ void table_dump_vhea(const table_vhea *table, json_value *root, const caryll_Opt
 	json_object_push(root, "vhea", vhea);
 }
 
-table_vhea *table_parse_vhea(const json_value *root, const caryll_Options *options) {
+table_vhea *table_parse_vhea(const json_value *root, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
@@ -79,8 +81,8 @@ table_vhea *table_parse_vhea(const json_value *root, const caryll_Options *optio
 	return vhea;
 }
 
-caryll_buffer *table_build_vhea(const table_vhea *vhea, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_vhea(const table_vhea *vhea, const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!vhea) return buf;
 	bufwrite32b(buf, vhea->version);
 	bufwrite16b(buf, vhea->ascent);

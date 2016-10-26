@@ -13,16 +13,22 @@
 #include <string.h>
 #include <math.h>
 
-#include "font-datatypes.h"
+#include "dep/json-builder.h"
+#include "dep/json.h"
+#include "dep/sds.h"
+#include "dep/uthash.h"
+
+#include "caryll/ownership.h"
+#include "caryll/buffer.h"
+
+#include "otfcc/handle.h"
+#include "otfcc/primitives.h"
+#include "otfcc/options.h"
+
+#include "aliases.h"
 
 #include "base64.h"
-#include "buffer.h"
-#include "options.h"
 #include "json-ident.h"
-#include "extern/json-builder.h"
-#include "extern/json.h"
-#include "extern/sds.h"
-#include "extern/uthash.h"
 
 #ifdef _MSC_VER
 #define INLINE __forceinline /* use __forceinline (VC++ specific) */
@@ -276,22 +282,22 @@ static INLINE uint64_t caryll_get64u(FILE *file) {
 }
 
 // data reader
-static INLINE uint8_t read_8u(uint8_t *src) {
+static INLINE uint8_t read_8u(const uint8_t *src) {
 	return src[0];
 }
-static INLINE uint16_t read_16u(uint8_t *src) {
+static INLINE uint16_t read_16u(const uint8_t *src) {
 	uint16_t b0 = ((uint16_t)src[0]) << 8;
 	uint16_t b1 = ((uint16_t)src[1]);
 	return (b0 | b1);
 }
-static INLINE uint32_t read_32u(uint8_t *src) {
+static INLINE uint32_t read_32u(const uint8_t *src) {
 	uint32_t b0 = ((uint32_t)src[0]) << 24;
 	uint32_t b1 = ((uint32_t)src[1]) << 16;
 	uint32_t b2 = ((uint32_t)src[2]) << 8;
 	uint32_t b3 = ((uint32_t)src[3]);
 	return (b0 | b1 | b2 | b3);
 }
-static INLINE uint64_t read_64u(uint8_t *src) {
+static INLINE uint64_t read_64u(const uint8_t *src) {
 	uint64_t b0 = ((uint64_t)src[0]) << 56;
 	uint64_t b1 = ((uint64_t)src[1]) << 48;
 	uint64_t b2 = ((uint64_t)src[2]) << 40;
@@ -302,49 +308,36 @@ static INLINE uint64_t read_64u(uint8_t *src) {
 	uint64_t b7 = ((uint64_t)src[7]);
 	return (b0 | b1 | b2 | b3 | b4 | b5 | b6 | b7);
 }
-static INLINE int8_t read_8s(uint8_t *src) {
+static INLINE int8_t read_8s(const uint8_t *src) {
 	return (int8_t)read_8u(src);
 }
-static INLINE int16_t read_16s(uint8_t *src) {
+static INLINE int16_t read_16s(const uint8_t *src) {
 	return (int16_t)read_16u(src);
 }
-static INLINE int32_t read_32s(uint8_t *src) {
+static INLINE int32_t read_32s(const uint8_t *src) {
 	return (int32_t)read_32u(src);
 }
-static INLINE int64_t read_64s(uint8_t *src) {
+static INLINE int64_t read_64s(const uint8_t *src) {
 	return (int64_t)read_64u(src);
 }
 
 // f2dot14 type
 typedef int16_t f2dot14;
-static INLINE double caryll_from_f2dot14(int16_t x) {
+static INLINE double caryll_from_f2dot14(const f2dot14 x) {
 	return x / 16384.0;
 }
-static INLINE int16_t caryll_to_f2dot14(double x) {
+static INLINE int16_t caryll_to_f2dot14(const double x) {
 	return round(x * 16384.0);
 }
 
 // F16.16 (fixed) type
 typedef int32_t f16dot16;
-static INLINE double caryll_from_fixed(f16dot16 x) {
+static INLINE double caryll_from_fixed(const f16dot16 x) {
 	return x / 65536.0;
 }
-static INLINE f16dot16 caryll_to_fixed(double x) {
+static INLINE f16dot16 caryll_to_fixed(const double x) {
 	return round(x * 65536.0);
 }
-
-#include "handle.h"
-
-// Handle types
-typedef struct _caryll_handle glyph_handle;
-typedef struct _caryll_handle fd_handle;
-typedef struct _caryll_handle lookup_handle;
-
-#define OWNING /*move*/
-#define MOVE   /*move*/
-#define OBSERVE /*shared*/ const
-#define MODIFY /*modify*/
-#define COPY   /*shared*/
 
 static INLINE json_value *preserialize(MOVE json_value *x) {
 #ifdef CARYLL_USE_PRE_SERIALIZED

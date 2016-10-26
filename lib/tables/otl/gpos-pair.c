@@ -4,7 +4,6 @@
 void otl_delete_gpos_pair(otl_Subtable *_subtable) {
 	if (_subtable) {
 		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-		if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
 		if (subtable->firstValues) {
 			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
 				free(subtable->firstValues[j]);
@@ -33,7 +32,6 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-	subtable->coverage = NULL;
 	subtable->first = NULL;
 	subtable->second = NULL;
 	subtable->firstValues = NULL;
@@ -207,7 +205,6 @@ otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_pair *subtable = &(_st->gpos_pair);
-	subtable->coverage = NULL;
 	subtable->first = NULL;
 	subtable->second = NULL;
 	subtable->firstValues = NULL;
@@ -252,6 +249,16 @@ FAIL:
 	otl_delete_gpos_pair(_st);
 	return NULL;
 }
+static otl_Coverage *covFromCD(otl_ClassDef *cd) {
+	otl_Coverage *cov;
+	NEW(cov);
+	cov->numGlyphs = cd->numGlyphs;
+	NEW_N(cov->glyphs, cd->numGlyphs);
+	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
+		cov->glyphs[j] = handle_copy(cd->glyphs[j]);
+	}
+	return cov;
+}
 
 bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
@@ -279,12 +286,12 @@ bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 			}
 		}
 	}
-
-	bk_Block *root = bk_new_Block(b16, 1,                                                             // PosFormat
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
-	                              b16, format1,                                                       // ValueFormat1
-	                              b16, format2,                                                       // ValueFormat2
-	                              b16, subtable->first->numGlyphs,                                    // PairSetCount
+	otl_Coverage *cov = covFromCD(subtable->first);
+	bk_Block *root = bk_new_Block(b16, 1,                                              // PosFormat
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(cov)), // Coverage
+	                              b16, format1,                                        // ValueFormat1
+	                              b16, format2,                                        // ValueFormat2
+	                              b16, subtable->first->numGlyphs,                     // PairSetCount
 	                              bkover);
 	for (glyphid_t j = 0; j < subtable->first->numGlyphs; j++) {
 		bk_Block *pairSet = bk_new_Block(b16, pairCounts[j], // PairValueCount
@@ -302,6 +309,7 @@ bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 		bk_push(root, p16, pairSet, bkover);
 	}
+	DELETE(otl_delete_Coverage, cov);
 	FREE(pairCounts);
 	return root;
 }
@@ -318,14 +326,15 @@ bk_Block *caryll_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 			format2 |= required_position_format(subtable->secondValues[j][k]);
 		}
 	}
-	bk_Block *root = bk_new_Block(b16, 2,                                                             // PosFormat
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
-	                              b16, format1,                                                       // ValueFormat1
-	                              b16, format2,                                                       // ValueFormat2
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->first)),    // ClassDef1
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->second)),   // ClassDef2
-	                              b16, class1Count,                                                   // Class1Count
-	                              b16, class2Count,                                                   // Class2Count
+	otl_Coverage *cov = covFromCD(subtable->first);
+	bk_Block *root = bk_new_Block(b16, 2,                                                           // PosFormat
+	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(cov)),              // Coverage
+	                              b16, format1,                                                     // ValueFormat1
+	                              b16, format2,                                                     // ValueFormat2
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->first)),  // ClassDef1
+	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->second)), // ClassDef2
+	                              b16, class1Count,                                                 // Class1Count
+	                              b16, class2Count,                                                 // Class2Count
 	                              bkover);
 	for (glyphclass_t j = 0; j < class1Count; j++) {
 		for (glyphclass_t k = 0; k < class2Count; k++) {
@@ -334,9 +343,10 @@ bk_Block *caryll_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 			        bkover);
 		}
 	}
+	DELETE(otl_delete_Coverage, cov);
 	return root;
 }
-caryll_buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
 	bk_Block *format1 = caryll_build_gpos_pair_individual(_subtable);
 	bk_Block *format2 = caryll_build_gpos_pair_classes(_subtable);
 	bk_Graph *g1 = bk_newGraphFromRootBlock(format1);
@@ -347,14 +357,14 @@ caryll_buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
 		// Choose pair adjustment by classes
 		bk_delete_Graph(g1);
 		bk_untangleGraph(g2);
-		caryll_buffer *buf = bk_build_Graph(g2);
+		caryll_Buffer *buf = bk_build_Graph(g2);
 		bk_delete_Graph(g2);
 		return buf;
 	} else {
 		// Choose pair adjustment by individuals
 		bk_delete_Graph(g2);
 		bk_untangleGraph(g1);
-		caryll_buffer *buf = bk_build_Graph(g1);
+		caryll_Buffer *buf = bk_build_Graph(g1);
 		bk_delete_Graph(g1);
 		return buf;
 	}

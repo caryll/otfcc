@@ -396,7 +396,7 @@ static uint8_t decideAdvance(cff_CharstringIL *il, uint32_t j, uint8_t optimizeL
 	return 1;                                                                 // nothing match
 }
 
-void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
+void cff_optimizeIL(cff_CharstringIL *il, const otfcc_Options *options) {
 	if (!options->cff_rollCharString) return;
 	uint32_t j = 0;
 	while (j < il->length) {
@@ -405,8 +405,8 @@ void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
 }
 
 // IL to buffer conversion
-caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_build_IL(cff_CharstringIL *il) {
+	caryll_Buffer *blob = bufnew();
 
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {

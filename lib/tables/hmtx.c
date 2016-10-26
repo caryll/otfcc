@@ -1,4 +1,5 @@
-#include "hmtx.h"
+#include "support/util.h"
+#include "otfcc/table/hmtx.h"
 
 table_hmtx *table_read_hmtx(const caryll_Packet packet, table_hhea *hhea, table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
@@ -40,9 +41,9 @@ void table_delete_hmtx(table_hmtx *table) {
 	free(table);
 }
 
-caryll_buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
-                                const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
+                                const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!hmtx) return buf;
 	if (hmtx->metrics) {
 		for (glyphid_t j = 0; j < count_a; j++) {

@@ -1,5 +1,7 @@
-#include "name.h"
+#include "support/util.h"
+#include "support/base64.h"
 #include "support/unicodeconv.h"
+#include "otfcc/table/name.h"
 
 static bool shouldDecodeAsUTF16(const name_record *record) {
 	return (record->platformID == 0)                               // Unicode, all
@@ -68,7 +70,7 @@ void table_delete_name(table_name *table) {
 	free(table);
 }
 
-void table_dump_name(const table_name *table, json_value *root, const caryll_Options *options) {
+void table_dump_name(const table_name *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping name.\n");
 
@@ -93,7 +95,7 @@ static int name_record_sort(const void *_a, const void *_b) {
 	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
 	return (*a)->nameID - (*b)->nameID;
 }
-table_name *table_parse_name(const json_value *root, const caryll_Options *options) {
+table_name *table_parse_name(const json_value *root, const otfcc_Options *options) {
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
@@ -148,13 +150,13 @@ table_name *table_parse_name(const json_value *root, const caryll_Options *optio
 	}
 	return name;
 }
-caryll_buffer *table_build_name(const table_name *name, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_name(const table_name *name, const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, name->count);
 	bufwrite16b(buf, 0); // fill later
-	caryll_buffer *strings = bufnew();
+	caryll_Buffer *strings = bufnew();
 	for (uint16_t j = 0; j < name->count; j++) {
 		name_record *record = name->records[j];
 		bufwrite16b(buf, record->platformID);

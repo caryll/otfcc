@@ -107,11 +107,11 @@ cff_Value cff_parseDictKey(uint8_t *data, uint32_t len, uint32_t op, uint32_t id
 	return context.res;
 }
 
-caryll_buffer *cff_build_Dict(cff_Dict *dict) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_build_Dict(cff_Dict *dict) {
+	caryll_Buffer *blob = bufnew();
 	for (uint32_t i = 0; i < dict->count; i++) {
 		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
-			caryll_buffer *blob_val;
+			caryll_Buffer *blob_val;
 			if (dict->ents[i].vals[j].t == cff_INTEGER) {
 				blob_val = cff_encodeCffInteger(dict->ents[i].vals[j].i);
 			} else if (dict->ents[i].vals[j].t == cff_DOUBLE) {

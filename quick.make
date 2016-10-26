@@ -41,57 +41,57 @@ $(TEST_OPCODES_TARGETS) : cffopcodetest-% : tests/payload/cffspecial/cff.%.otf
 
 TTF_ROUNDTRIP_PAYLOADS = NotoNastaliqUrdu-Regular iosevka-r
 TTF_ROUNDTRIP_TARGETS = $(foreach f,$(TTF_ROUNDTRIP_PAYLOADS),ttfroundtriptest-$(f))
-TTF_ROUNDTRIP_TARGETS_O3 = $(foreach f,$(TTF_ROUNDTRIP_PAYLOADS),ttfroundtriptest-$(f)-o3)
 
-ttfroundtriptest: $(TTF_ROUNDTRIP_TARGETS) $(TTF_ROUNDTRIP_TARGETS_O3)
+ttfroundtriptest: $(TTF_ROUNDTRIP_TARGETS)
 $(TTF_ROUNDTRIP_TARGETS) : ttfroundtriptest-% : tests/payload/%.ttf
-	@bin/Release-x64/otfccdump $< -o build/$(basename $(notdir $<)).1.json --pretty
-	@bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2.ttf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2.ttf -o build/$(basename $(notdir $<)).3.json --pretty
-	@bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).3.json -o build/$(basename $(notdir $<)).4.ttf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4.ttf -o build/$(basename $(notdir $<)).5.json --pretty
-	@node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5.json build/$(basename $(notdir $<)).3.json
-$(TTF_ROUNDTRIP_TARGETS_O3) : ttfroundtriptest-%-o3 : tests/payload/%.ttf ttfroundtriptest-%
-	@bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2o3.ttf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2o3.ttf -o build/$(basename $(notdir $<)).3o3.json --pretty
-	@bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).3o3.json -o build/$(basename $(notdir $<)).4o3.ttf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4o3.ttf -o build/$(basename $(notdir $<)).5o3.json --pretty
-	@node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5o3.json build/$(basename $(notdir $<)).3o3.json
+	bin/Release-x64/otfccdump $< -o build/$(basename $(notdir $<)).1.json --pretty
+	bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2.ttf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2.ttf -o build/$(basename $(notdir $<)).3.json --pretty
+	bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).3.json -o build/$(basename $(notdir $<)).4.ttf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4.ttf -o build/$(basename $(notdir $<)).5.json --pretty
+	node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5.json build/$(basename $(notdir $<)).3.json
+	-@rm build/$(basename $(notdir $<)).2.ttf build/$(basename $(notdir $<)).3.json build/$(basename $(notdir $<)).4.ttf build/$(basename $(notdir $<)).5.json
+	bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2o3.ttf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2o3.ttf -o build/$(basename $(notdir $<)).3o3.json --pretty
+	bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).3o3.json -o build/$(basename $(notdir $<)).4o3.ttf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4o3.ttf -o build/$(basename $(notdir $<)).5o3.json --pretty
+	node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5o3.json build/$(basename $(notdir $<)).3o3.json
+	-@rm build/$(basename $(notdir $<)).1.json build/$(basename $(notdir $<)).2o3.ttf build/$(basename $(notdir $<)).3o3.json build/$(basename $(notdir $<)).4o3.ttf build/$(basename $(notdir $<)).5o3.json
 
 
 CFF_ROUNDTRIP_PAYLOADS = Cormorant-Medium WorkSans-Regular
 CFF_ROUNDTRIP_PAYLOADS_FJ = WorkSans-Regular
 CFF_ROUNDTRIP_TARGETS = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS),cffroundtriptest-$(f))
-CFF_ROUNDTRIP_TARGETS_O3 = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS),cffroundtriptest-$(f)-o3)
 CFF_ROUNDTRIP_TARGETS_FJ = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS_FJ),cffroundtriptest-fj-$(f))
-CFF_ROUNDTRIP_TARGETS_FJ_O3 = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS_FJ),cffroundtriptest-fj-$(f)-o3)
-cffroundtriptest: $(CFF_ROUNDTRIP_TARGETS) $(CFF_ROUNDTRIP_TARGETS_O3) $(CFF_ROUNDTRIP_TARGETS_FJ) $(CFF_ROUNDTRIP_TARGETS_FJ_O3)
+cffroundtriptest: $(CFF_ROUNDTRIP_TARGETS) $(CFF_ROUNDTRIP_TARGETS_FJ)
 
 $(CFF_ROUNDTRIP_TARGETS) : cffroundtriptest-% : tests/payload/%.otf
-	@bin/Release-x64/otfccdump $< -o build/$(basename $(notdir $<)).1.json --pretty
-	@bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2.otf -o build/$(basename $(notdir $<)).3.json --pretty
-	@bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).3.json -o build/$(basename $(notdir $<)).4.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4.otf -o build/$(basename $(notdir $<)).5.json --pretty
-	@node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5.json build/$(basename $(notdir $<)).3.json
-$(CFF_ROUNDTRIP_TARGETS_O3) : cffroundtriptest-%-o3 : tests/payload/%.otf cffroundtriptest-%
-	@bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2o3.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2o3.otf -o build/$(basename $(notdir $<)).3o3.json --pretty
-	@bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).3o3.json -o build/$(basename $(notdir $<)).4o3.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4o3.otf -o build/$(basename $(notdir $<)).5o3.json --pretty
-	@node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5o3.json build/$(basename $(notdir $<)).3o3.json
+	bin/Release-x64/otfccdump $< -o build/$(basename $(notdir $<)).1.json --pretty
+	bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2.otf -o build/$(basename $(notdir $<)).3.json --pretty
+	bin/Release-x64/otfccbuild build/$(basename $(notdir $<)).3.json -o build/$(basename $(notdir $<)).4.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4.otf -o build/$(basename $(notdir $<)).5.json --pretty
+	node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5.json build/$(basename $(notdir $<)).3.json
+	-@rm build/$(basename $(notdir $<)).2.otf build/$(basename $(notdir $<)).3.json build/$(basename $(notdir $<)).4.otf build/$(basename $(notdir $<)).5.json
+	bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).1.json -o build/$(basename $(notdir $<)).2o3.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).2o3.otf -o build/$(basename $(notdir $<)).3o3.json --pretty
+	bin/Release-x64/otfccbuild -O3 build/$(basename $(notdir $<)).3o3.json -o build/$(basename $(notdir $<)).4o3.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/$(basename $(notdir $<)).4o3.otf -o build/$(basename $(notdir $<)).5o3.json --pretty
+	node tests/ttf-roundtrip-test.js build/$(basename $(notdir $<)).5o3.json build/$(basename $(notdir $<)).3o3.json
+	-@rm build/$(basename $(notdir $<)).1.json build/$(basename $(notdir $<)).2o3.otf build/$(basename $(notdir $<)).3o3.json build/$(basename $(notdir $<)).4o3.otf build/$(basename $(notdir $<)).5o3.json
 
 $(CFF_ROUNDTRIP_TARGETS_FJ) : cffroundtriptest-fj-% : tests/payload/%.json
-	@bin/Release-x64/otfccbuild $< -o build/fj-$(basename $(notdir $<)).2.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).2.otf -o build/fj-$(basename $(notdir $<)).3.json --pretty
-	@bin/Release-x64/otfccbuild build/fj-$(basename $(notdir $<)).3.json -o build/fj-$(basename $(notdir $<)).4.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).4.otf -o build/fj-$(basename $(notdir $<)).5.json --pretty
-	@node tests/ttf-roundtrip-test.js build/fj-$(basename $(notdir $<)).5.json build/fj-$(basename $(notdir $<)).3.json
-$(CFF_ROUNDTRIP_TARGETS_FJ_O3) : cffroundtriptest-fj-%-o3 : tests/payload/%.json cffroundtriptest-fj-%
-	@bin/Release-x64/otfccbuild -O3 $< -o build/fj-$(basename $(notdir $<)).2o3.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).2o3.otf -o build/fj-$(basename $(notdir $<)).3o3.json  --pretty
-	@bin/Release-x64/otfccbuild -O3 build/fj-$(basename $(notdir $<)).3o3.json -o build/fj-$(basename $(notdir $<)).4o3.otf --keep-average-char-width --keep-modified-time
-	@bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).4o3.otf -o build/fj-$(basename $(notdir $<)).5o3.json  --pretty
-	@node tests/ttf-roundtrip-test.js build/fj-$(basename $(notdir $<)).5o3.json build/fj-$(basename $(notdir $<)).3o3.json
+	bin/Release-x64/otfccbuild $< -o build/fj-$(basename $(notdir $<)).2.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).2.otf -o build/fj-$(basename $(notdir $<)).3.json --pretty
+	bin/Release-x64/otfccbuild build/fj-$(basename $(notdir $<)).3.json -o build/fj-$(basename $(notdir $<)).4.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).4.otf -o build/fj-$(basename $(notdir $<)).5.json --pretty
+	node tests/ttf-roundtrip-test.js build/fj-$(basename $(notdir $<)).5.json build/fj-$(basename $(notdir $<)).3.json
+	-@rm build/fj-$(basename $(notdir $<)).2.otf build/fj-$(basename $(notdir $<)).3.json build/fj-$(basename $(notdir $<)).4.otf build/fj-$(basename $(notdir $<)).5.json
+	bin/Release-x64/otfccbuild -O3 $< -o build/fj-$(basename $(notdir $<)).2o3.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).2o3.otf -o build/fj-$(basename $(notdir $<)).3o3.json  --pretty
+	bin/Release-x64/otfccbuild -O3 build/fj-$(basename $(notdir $<)).3o3.json -o build/fj-$(basename $(notdir $<)).4o3.otf --keep-average-char-width --keep-modified-time
+	bin/Release-x64/otfccdump build/fj-$(basename $(notdir $<)).4o3.otf -o build/fj-$(basename $(notdir $<)).5o3.json  --pretty
+	node tests/ttf-roundtrip-test.js build/fj-$(basename $(notdir $<)).5o3.json build/fj-$(basename $(notdir $<)).3o3.json
+	-@rm build/fj-$(basename $(notdir $<)).2o3.otf build/fj-$(basename $(notdir $<)).3o3.json build/fj-$(basename $(notdir $<)).4o3.otf build/fj-$(basename $(notdir $<)).5o3.json
 
 test: cffopcodetest ttfroundtriptest cffroundtriptest

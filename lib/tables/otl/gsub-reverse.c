@@ -108,7 +108,7 @@ otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable) {
 	return _st;
 }
 
-caryll_buffer *caryll_build_gsub_reverse(const otl_Subtable *_subtable) {
+caryll_Buffer *caryll_build_gsub_reverse(const otl_Subtable *_subtable) {
 	const subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	reverseBacktracks(subtable->match, subtable->inputIndex);
 

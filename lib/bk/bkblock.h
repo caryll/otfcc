@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "support/buffer.h"
+#include "caryll/buffer.h"
 
 struct __caryll_bkblock;
 typedef enum {
@@ -43,7 +43,7 @@ typedef struct __caryll_bkblock {
 bk_Block *_bkblock_init();
 bk_Block *bk_new_Block(bk_CellType type0, ...);
 bk_Block *bk_push(bk_Block *b, bk_CellType type0, ...);
-bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_buffer *buf);
+bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_Buffer *buf);
 bool bk_cellIsPointer(bk_Cell *cell);
 void bk_printBlock(bk_Block *b);
 

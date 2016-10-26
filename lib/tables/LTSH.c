@@ -1,4 +1,5 @@
-#include "LTSH.h"
+#include "support/util.h"
+#include "otfcc/table/LTSH.h"
 
 void table_delete_LTSH(table_LTSH *ltsh) {
 	if (ltsh) { free(ltsh->yPels); }
@@ -18,8 +19,8 @@ table_LTSH *table_read_LTSH(const caryll_Packet packet) {
 	}
 	return NULL;
 }
-caryll_buffer *table_build_LTSH(const table_LTSH *ltsh, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_LTSH(const table_LTSH *ltsh, const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!ltsh) return buf;
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, ltsh->numGlyphs);

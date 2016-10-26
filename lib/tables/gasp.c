@@ -1,4 +1,5 @@
-#include "gasp.h"
+#include "support/util.h"
+#include "otfcc/table/gasp.h"
 
 #define GASP_DOGRAY 0x0002
 #define GASP_GRIDFIT 0x0001
@@ -49,7 +50,7 @@ table_gasp *table_read_gasp(const caryll_Packet packet) {
 	}
 	return NULL;
 }
-void table_dump_gasp(const table_gasp *table, json_value *root, const caryll_Options *options) {
+void table_dump_gasp(const table_gasp *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	if (options->verbose) fprintf(stderr, "Dumping gasp.\n");
 
@@ -66,7 +67,7 @@ void table_dump_gasp(const table_gasp *table, json_value *root, const caryll_Opt
 	json_object_push(root, "gasp", t);
 }
 
-table_gasp *table_parse_gasp(const json_value *root, const caryll_Options *options) {
+table_gasp *table_parse_gasp(const json_value *root, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
@@ -92,8 +93,8 @@ FAIL:
 	return NULL;
 }
 
-caryll_buffer *table_build_gasp(const table_gasp *gasp, const caryll_Options *options) {
-	caryll_buffer *buf = bufnew();
+caryll_Buffer *table_build_gasp(const table_gasp *gasp, const otfcc_Options *options) {
+	caryll_Buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);
 	bufwrite16b(buf, gasp->numRanges);
