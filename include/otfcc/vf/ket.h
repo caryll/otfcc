@@ -1,7 +1,8 @@
 #ifndef CARYLL_VF_KET_H
 #define CARYLL_VF_KET_H
 
-#include "support/util.h"
+#include "caryll/ownership.h"
+#include "otfcc/primitives.h"
 
 // vf_Ket type
 typedef struct vf_KetMaster {
