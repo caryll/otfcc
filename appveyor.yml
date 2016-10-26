@@ -6,6 +6,8 @@ configuration:
   - Release
 install:
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  - set PATH=C:\msys64\usr\bin;%PATH%
+
 build_script:
   - dep\bin-win\premake5.exe vs2015
   - cmd /c _vcbuild64.bat /property:Configuration=Release
