@@ -31,6 +31,18 @@ static int by_mask_pointindex(const void *a, const void *b) {
 void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	// The name field of glyf_Glyph will not be consolidated with glyphOrder
 	// Consolidate references
+	shapeid_t nContoursConsolidated = 0;
+	shapeid_t skip = 0;
+	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
+		if (g->contours[j].pointsCount) {
+			g->contours[j - skip] = g->contours[j];
+			nContoursConsolidated += 1;
+		} else {
+			fprintf(stderr, "[Consolidate] Removed empty contour #%d in glyph %s.\n", j, g->name);
+			skip += 1;
+		}
+	}
+	g->numberOfContours = nContoursConsolidated;
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
 		if (!gord_consolidateHandle(font->glyph_order, &g->references[j].glyph)) {
