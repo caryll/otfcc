@@ -65,7 +65,7 @@ workspace "otfcc"
 	
 	filter "configurations:Debug"
 		defines { "DEBUG" }
-		flags { "Symbols" }
+		symbols "on"
 	filter "configurations:Release"
 		defines { "NDEBUG" }
 		optimize "Full"
