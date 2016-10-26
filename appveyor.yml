@@ -9,3 +9,4 @@ install:
 build_script:
   - dep\bin-win\premake5.exe vs2015
   - cmd /c _vcbuild64.bat /property:Configuration=Release
+  - make test
