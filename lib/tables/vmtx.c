@@ -8,7 +8,8 @@ void table_delete_vmtx(MOVE table_vmtx *table) {
 	free(table);
 }
 
-table_vmtx *table_read_vmtx(const caryll_Packet packet, table_vhea *vhea, table_maxp *maxp) {
+table_vmtx *table_read_vmtx(const caryll_Packet packet, const otfcc_Options *options, table_vhea *vhea,
+                            table_maxp *maxp) {
 	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 || maxp->numGlyphs < vhea->numOfLongVerMetrics) return NULL;
 	FOR_TABLE('vmtx', table) {
 		font_file_pointer data = table.data;
@@ -35,7 +36,7 @@ table_vmtx *table_read_vmtx(const caryll_Packet packet, table_vhea *vhea, table_
 
 		return vmtx;
 	vmtx_CORRUPTED:
-		fprintf(stderr, "Table 'vmtx' corrupted.\n");
+		logWarning("Table 'vmtx' corrupted.\n");
 		if (vmtx) { table_delete_vmtx(vmtx), vmtx = NULL; }
 	}
 	return NULL;

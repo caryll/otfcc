@@ -19,7 +19,7 @@ void table_delete_gasp(table_gasp *table) {
 	if (table->records) free(table->records);
 	free(table);
 }
-table_gasp *table_read_gasp(const caryll_Packet packet) {
+table_gasp *table_read_gasp(const caryll_Packet packet, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
 	FOR_TABLE('gasp', table) {
 		font_file_pointer data = table.data;
@@ -44,7 +44,7 @@ table_gasp *table_read_gasp(const caryll_Packet packet) {
 		return gasp;
 
 	FAIL:
-		fprintf(stderr, "table 'head' corrupted.\n");
+		logWarning("table 'gasp' corrupted.\n");
 		table_delete_gasp(gasp);
 		gasp = NULL;
 	}
@@ -52,39 +52,40 @@ table_gasp *table_read_gasp(const caryll_Packet packet) {
 }
 void table_dump_gasp(const table_gasp *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping gasp.\n");
-
-	json_value *t = json_array_new(table->numRanges);
-	for (uint16_t j = 0; j < table->numRanges; j++) {
-		json_value *rec = json_object_new(5);
-		json_object_push(rec, "rangeMaxPPEM", json_integer_new(table->records[j].rangeMaxPPEM));
-		json_object_push(rec, "dogray", json_boolean_new(table->records[j].dogray));
-		json_object_push(rec, "gridfit", json_boolean_new(table->records[j].gridfit));
-		json_object_push(rec, "symmetric_smoothing", json_boolean_new(table->records[j].symmetric_smoothing));
-		json_object_push(rec, "symmetric_gridfit", json_boolean_new(table->records[j].symmetric_gridfit));
-		json_array_push(t, rec);
+	loggedStep("gasp") {
+		json_value *t = json_array_new(table->numRanges);
+		for (uint16_t j = 0; j < table->numRanges; j++) {
+			json_value *rec = json_object_new(5);
+			json_object_push(rec, "rangeMaxPPEM", json_integer_new(table->records[j].rangeMaxPPEM));
+			json_object_push(rec, "dogray", json_boolean_new(table->records[j].dogray));
+			json_object_push(rec, "gridfit", json_boolean_new(table->records[j].gridfit));
+			json_object_push(rec, "symmetric_smoothing", json_boolean_new(table->records[j].symmetric_smoothing));
+			json_object_push(rec, "symmetric_gridfit", json_boolean_new(table->records[j].symmetric_gridfit));
+			json_array_push(t, rec);
+		}
+		json_object_push(root, "gasp", t);
 	}
-	json_object_push(root, "gasp", t);
 }
 
 table_gasp *table_parse_gasp(const json_value *root, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
-		if (options->verbose) fprintf(stderr, "Parsing gasp.\n");
 		gasp = table_new_gasp();
 		if (!gasp) goto FAIL;
-		gasp->numRanges = table->u.array.length;
-		gasp->records = malloc(gasp->numRanges * sizeof(gasp_Record));
-		if (!gasp->records) goto FAIL;
-		for (uint16_t j = 0; j < gasp->numRanges; j++) {
-			json_value *r = table->u.array.values[j];
-			if (!r || r->type != json_object) goto FAIL;
-			gasp->records[j].rangeMaxPPEM = json_obj_getint_fallback(r, "rangeMaxPPEM", 0xFFFF);
-			gasp->records[j].dogray = json_obj_getbool(r, "dogray");
-			gasp->records[j].gridfit = json_obj_getbool(r, "gridfit");
-			gasp->records[j].symmetric_smoothing = json_obj_getbool(r, "symmetric_smoothing");
-			gasp->records[j].symmetric_gridfit = json_obj_getbool(r, "symmetric_gridfit");
+		loggedStep("gasp") {
+			gasp->numRanges = table->u.array.length;
+			gasp->records = malloc(gasp->numRanges * sizeof(gasp_Record));
+			if (!gasp->records) goto FAIL;
+			for (uint16_t j = 0; j < gasp->numRanges; j++) {
+				json_value *r = table->u.array.values[j];
+				if (!r || r->type != json_object) goto FAIL;
+				gasp->records[j].rangeMaxPPEM = json_obj_getint_fallback(r, "rangeMaxPPEM", 0xFFFF);
+				gasp->records[j].dogray = json_obj_getbool(r, "dogray");
+				gasp->records[j].gridfit = json_obj_getbool(r, "gridfit");
+				gasp->records[j].symmetric_smoothing = json_obj_getbool(r, "symmetric_smoothing");
+				gasp->records[j].symmetric_gridfit = json_obj_getbool(r, "symmetric_gridfit");
+			}
 		}
 	}
 	return gasp;

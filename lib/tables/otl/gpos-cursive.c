@@ -57,7 +57,7 @@ json_value *otl_gpos_dump_cursive(const otl_Subtable *_subtable) {
 	return st;
 }
 
-otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Options *options) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_cursive *subtable = &(_st->gpos_cursive);

@@ -103,7 +103,7 @@ FAIL:
 	return axis;
 }
 
-table_BASE *table_read_BASE(const caryll_Packet packet) {
+table_BASE *table_read_BASE(const caryll_Packet packet, const otfcc_Options *options) {
 	table_BASE *base = NULL;
 	FOR_TABLE('BASE', table) {
 		font_file_pointer data = table.data;
@@ -116,6 +116,7 @@ table_BASE *table_read_BASE(const caryll_Packet packet) {
 		if (offsetV) base->vertical = readAxis(data, tableLength, offsetV);
 		return base;
 	FAIL:
+		logWarning("Table 'BASE' Corrupted");
 		DELETE(table_delete_BASE, base);
 	}
 	return base;
@@ -144,11 +145,12 @@ static json_value *axisToJson(const otl_BaseAxis *axis) {
 
 void table_dump_BASE(const table_BASE *base, json_value *root, const otfcc_Options *options) {
 	if (!base) return;
-	if (options->verbose) fprintf(stderr, "Dumping BASE.\n");
-	json_value *_base = json_object_new(2);
-	if (base->horizontal) json_object_push(_base, "horizontal", axisToJson(base->horizontal));
-	if (base->vertical) json_object_push(_base, "vertical", axisToJson(base->vertical));
-	json_object_push(root, "BASE", _base);
+	loggedStep("BASE") {
+		json_value *_base = json_object_new(2);
+		if (base->horizontal) json_object_push(_base, "horizontal", axisToJson(base->horizontal));
+		if (base->vertical) json_object_push(_base, "vertical", axisToJson(base->vertical));
+		json_object_push(root, "BASE", _base);
+	}
 }
 
 static void baseScriptFromJson(const json_value *_sr, otl_BaseScriptEntry *entry) {
@@ -189,10 +191,11 @@ table_BASE *table_parse_BASE(const json_value *root, const otfcc_Options *option
 	table_BASE *base = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "BASE", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing BASE.\n");
-		NEW(base);
-		base->horizontal = axisFromJson(json_obj_get_type(table, "horizontal", json_object));
-		base->vertical = axisFromJson(json_obj_get_type(table, "vertical", json_object));
+		loggedStep("BASE") {
+			NEW(base);
+			base->horizontal = axisFromJson(json_obj_get_type(table, "horizontal", json_object));
+			base->vertical = axisFromJson(json_obj_get_type(table, "vertical", json_object));
+		}
 	}
 	return base;
 }

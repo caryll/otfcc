@@ -107,7 +107,8 @@ typedef struct {
 glyf_Glyph *table_new_glyf_glyph();
 void table_delete_glyf(table_glyf *table);
 
-table_glyf *table_read_glyf(const caryll_Packet packet, table_head *head, table_maxp *maxp);
+table_glyf *table_read_glyf(const caryll_Packet packet, const otfcc_Options *options, table_head *head,
+                            table_maxp *maxp);
 void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options);
 table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const otfcc_Options *options);
 

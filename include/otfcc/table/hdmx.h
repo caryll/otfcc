@@ -18,7 +18,7 @@ typedef struct {
 	device_record *records;
 } table_hdmx;
 
-table_hdmx *table_read_hdmx(caryll_Packet packet, table_maxp *maxp);
+table_hdmx *table_read_hdmx(caryll_Packet packet, const otfcc_Options *options, table_maxp *maxp);
 void table_delete_hdmx(table_hdmx *table);
 
 #endif

@@ -5,7 +5,7 @@ void table_delete_LTSH(table_LTSH *ltsh) {
 	if (ltsh) { free(ltsh->yPels); }
 	free(ltsh);
 }
-table_LTSH *table_read_LTSH(const caryll_Packet packet) {
+table_LTSH *table_read_LTSH(const caryll_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('LTSH', table) {
 		font_file_pointer data = table.data;
 

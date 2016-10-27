@@ -85,7 +85,7 @@ json_value *otl_gsub_dump_ligature(const otl_Subtable *_subtable) {
 	return ret;
 }
 
-otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_Options *options) {
 	otl_Subtable *_st;
 	if (json_obj_get_type(_subtable, "substitutions", json_array)) {
 		_subtable = json_obj_get_type(_subtable, "substitutions", json_array);

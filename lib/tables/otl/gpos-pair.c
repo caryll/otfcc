@@ -201,7 +201,7 @@ json_value *otl_gpos_dump_pair(const otl_Subtable *_subtable) {
 	json_object_push(st, "matrix", mat);
 	return st;
 }
-otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable, const otfcc_Options *options) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gpos_pair *subtable = &(_st->gpos_pair);

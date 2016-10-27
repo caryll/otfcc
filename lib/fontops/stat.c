@@ -8,15 +8,14 @@
 typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
 
 glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr, stat_status *stated, uint8_t depth,
-                                 glyphid_t topj) {
+                                 glyphid_t topj, const otfcc_Options *options) {
 	glyf_GlyphStat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 	glyphid_t j = gr->glyph.index;
 	if (depth >= 0xFF) return stat;
 	if (stated[j] == stat_doing) {
 		// We have a circular reference
-		fprintf(stderr, "[Stat] Circular glyph reference found in gid %d to "
-		                "gid %d. The reference will be dropped.\n",
-		        topj, j);
+		logWarning("[Stat] Circular glyph reference found in gid %d to gid %d. The reference will be dropped.\n",
+		           topj, j);
 		stated[j] = stat_completed;
 		return stat;
 	}
@@ -59,7 +58,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
 		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
 
-		glyf_GlyphStat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj);
+		glyf_GlyphStat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj, options);
 		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
 		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
 		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
@@ -81,7 +80,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	return stat;
 }
 
-void caryll_stat_glyf(caryll_Font *font) {
+void caryll_stat_glyf(caryll_Font *font, const otfcc_Options *options) {
 	stat_status *stated = calloc(font->glyf->numberGlyphs, sizeof(stat_status));
 	pos_t xmin = 0xFFFFFFFF;
 	pos_t xmax = -0xFFFFFFFF;
@@ -96,7 +95,8 @@ void caryll_stat_glyf(caryll_Font *font) {
 		gr.b = 0;
 		gr.c = 0;
 		gr.d = 1;
-		glyf_GlyphStat thatstat = font->glyf->glyphs[j]->stat = stat_single_glyph(font->glyf, &gr, stated, 0, j);
+		glyf_GlyphStat thatstat = font->glyf->glyphs[j]->stat =
+		    stat_single_glyph(font->glyf, &gr, stated, 0, j, options);
 		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
 		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
 		if (thatstat.yMin < ymin) ymin = thatstat.yMin;
@@ -530,7 +530,7 @@ static void caryll_stat_LTSH(caryll_Font *font) {
 
 void caryll_font_stat(caryll_Font *font, const otfcc_Options *options) {
 	if (font->glyf && font->head) {
-		caryll_stat_glyf(font);
+		caryll_stat_glyf(font, options);
 		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
 	}
 	if (font->head && font->CFF_) {

@@ -57,7 +57,7 @@ FAIL:
 	return g;
 }
 
-table_GDEF *table_read_GDEF(const caryll_Packet packet) {
+table_GDEF *table_read_GDEF(const caryll_Packet packet, const otfcc_Options *options) {
 	table_GDEF *gdef = NULL;
 	FOR_TABLE('GDEF', table) {
 		font_file_pointer data = table.data;
@@ -99,35 +99,39 @@ table_GDEF *table_read_GDEF(const caryll_Packet packet) {
 	return gdef;
 }
 
+static json_value *dumpGDEFLigCarets(const table_GDEF *gdef) {
+	json_value *_carets = json_object_new(gdef->ligCarets->coverage->numGlyphs);
+	for (glyphid_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
+		sds name = gdef->ligCarets->coverage->glyphs[j].name;
+		json_value *_record = json_array_new(gdef->ligCarets->carets[j].caretCount);
+
+		for (glyphid_t k = 0; k < gdef->ligCarets->carets[j].caretCount; k++) {
+			json_value *_cv = json_object_new(1);
+			if (gdef->ligCarets->carets[j].values[k].format == 2) {
+				json_object_push(_cv, "atPoint", json_integer_new(gdef->ligCarets->carets[j].values[k].pointIndex));
+			} else {
+				json_object_push(_cv, "at", json_integer_new(gdef->ligCarets->carets[j].values[k].coordiante));
+			}
+			json_array_push(_record, _cv);
+		}
+		json_object_push(_carets, name, preserialize(_record));
+	}
+	return _carets;
+}
+
 void table_dump_GDEF(const table_GDEF *gdef, json_value *root, const otfcc_Options *options) {
 	if (!gdef) return;
-	if (options->verbose) fprintf(stderr, "Dumping GDEF.\n");
-
-	json_value *_gdef = json_object_new(4);
-	if (gdef->glyphClassDef) { json_object_push(_gdef, "glyphClassDef", otl_dump_ClassDef(gdef->glyphClassDef)); }
-	if (gdef->markAttachClassDef) {
-		json_object_push(_gdef, "markAttachClassDef", otl_dump_ClassDef(gdef->markAttachClassDef));
-	}
-	if (gdef->ligCarets && gdef->ligCarets->coverage && gdef->ligCarets->coverage->numGlyphs) {
-		json_value *_carets = json_object_new(gdef->ligCarets->coverage->numGlyphs);
-		for (glyphid_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
-			sds name = gdef->ligCarets->coverage->glyphs[j].name;
-			json_value *_record = json_array_new(gdef->ligCarets->carets[j].caretCount);
-
-			for (glyphid_t k = 0; k < gdef->ligCarets->carets[j].caretCount; k++) {
-				json_value *_cv = json_object_new(1);
-				if (gdef->ligCarets->carets[j].values[k].format == 2) {
-					json_object_push(_cv, "atPoint", json_integer_new(gdef->ligCarets->carets[j].values[k].pointIndex));
-				} else {
-					json_object_push(_cv, "at", json_integer_new(gdef->ligCarets->carets[j].values[k].coordiante));
-				}
-				json_array_push(_record, _cv);
-			}
-			json_object_push(_carets, name, preserialize(_record));
+	loggedStep("GDEF") {
+		json_value *_gdef = json_object_new(4);
+		if (gdef->glyphClassDef) { json_object_push(_gdef, "glyphClassDef", otl_dump_ClassDef(gdef->glyphClassDef)); }
+		if (gdef->markAttachClassDef) {
+			json_object_push(_gdef, "markAttachClassDef", otl_dump_ClassDef(gdef->markAttachClassDef));
 		}
-		json_object_push(_gdef, "ligCarets", _carets);
+		if (gdef->ligCarets && gdef->ligCarets->coverage && gdef->ligCarets->coverage->numGlyphs) {
+			json_object_push(_gdef, "ligCarets", dumpGDEFLigCarets(gdef));
+		}
+		json_object_push(root, "GDEF", _gdef);
 	}
-	json_object_push(root, "GDEF", _gdef);
 }
 
 static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
@@ -171,11 +175,12 @@ table_GDEF *table_parse_GDEF(const json_value *root, const otfcc_Options *option
 	table_GDEF *gdef = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing GDEF.\n");
-		gdef = table_new_GDEF();
-		gdef->glyphClassDef = otl_parse_ClassDef(json_obj_get(table, "glyphClassDef"));
-		gdef->markAttachClassDef = otl_parse_ClassDef(json_obj_get(table, "markAttachClassDef"));
-		gdef->ligCarets = ligCaretFromJson(json_obj_get(table, "ligCarets"));
+		loggedStep("GDEF") {
+			gdef = table_new_GDEF();
+			gdef->glyphClassDef = otl_parse_ClassDef(json_obj_get(table, "glyphClassDef"));
+			gdef->markAttachClassDef = otl_parse_ClassDef(json_obj_get(table, "markAttachClassDef"));
+			gdef->ligCarets = ligCaretFromJson(json_obj_get(table, "ligCarets"));
+		}
 	}
 	return gdef;
 }

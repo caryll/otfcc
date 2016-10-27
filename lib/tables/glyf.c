@@ -325,7 +325,8 @@ static glyf_Glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	return g;
 }
 
-table_glyf *table_read_glyf(const caryll_Packet packet, table_head *head, table_maxp *maxp) {
+table_glyf *table_read_glyf(const caryll_Packet packet, const otfcc_Options *options, table_head *head,
+                            table_maxp *maxp) {
 	if (head == NULL || maxp == NULL) return NULL;
 	uint32_t *offsets = NULL;
 	table_glyf *glyf = NULL;
@@ -352,7 +353,7 @@ table_glyf *table_read_glyf(const caryll_Packet packet, table_head *head, table_
 		foundLoca = true;
 		break;
 	LOCA_CORRUPTED:
-		fprintf(stderr, "table 'loca' corrupted.\n");
+		logWarning("table 'loca' corrupted.\n");
 		if (offsets) { free(offsets), offsets = NULL; }
 		continue;
 	}
@@ -377,7 +378,7 @@ table_glyf *table_read_glyf(const caryll_Packet packet, table_head *head, table_
 		}
 		goto PRESENT;
 	GLYF_CORRUPTED:
-		fprintf(stderr, "table 'glyf' corrupted.\n");
+		logWarning("table 'glyf' corrupted.\n");
 		if (glyf) { table_delete_glyf(glyf), glyf = NULL; }
 	}
 	goto ABSENT;
@@ -503,16 +504,15 @@ void caryll_dump_glyphorder(const table_glyf *table, json_value *root) {
 }
 void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping glyf.\n");
-
-	json_value *glyf = json_object_new(table->numberGlyphs);
-	for (glyphid_t j = 0; j < table->numberGlyphs; j++) {
-		glyf_Glyph *g = table->glyphs[j];
-		json_object_push(glyf, g->name, glyf_dump_glyph(g, options));
+	loggedStep("glyf") {
+		json_value *glyf = json_object_new(table->numberGlyphs);
+		for (glyphid_t j = 0; j < table->numberGlyphs; j++) {
+			glyf_Glyph *g = table->glyphs[j];
+			json_object_push(glyf, g->name, glyf_dump_glyph(g, options));
+		}
+		json_object_push(root, "glyf", glyf);
+		if (!options->ignore_glyph_order) caryll_dump_glyphorder(table, root);
 	}
-	json_object_push(root, "glyf", glyf);
-
-	if (!options->ignore_glyph_order) caryll_dump_glyphorder(table, root);
 }
 
 // from json
@@ -599,8 +599,10 @@ static void makeInstrsForGlyph(void *_g, uint8_t *instrs, uint32_t len) {
 	g->instructions = instrs;
 }
 static void wrongInstrsForGlyph(void *_g, char *reason, int pos) {
+	/*
 	glyf_Glyph *g = (glyf_Glyph *)_g;
 	fprintf(stderr, "[OTFCC] TrueType instructions parse error : %s, at %d in /%s\n", reason, pos, g->name);
+	*/
 }
 
 static void parse_stems(json_value *sd, shapeid_t *count, glyf_PostscriptStemDef **arr) {
@@ -696,22 +698,23 @@ table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, c
 	table_glyf *glyf = NULL;
 	json_value *table;
 	if ((table = json_obj_get_type(root, "glyf", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing glyf.\n");
-		glyphid_t numGlyphs = table->u.object.length;
-		glyf = malloc(sizeof(table_glyf));
-		glyf->numberGlyphs = numGlyphs;
-		glyf->glyphs = calloc(numGlyphs, sizeof(glyf_Glyph *));
-		for (glyphid_t j = 0; j < numGlyphs; j++) {
-			sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
-			json_value *glyphdump = table->u.object.values[j].value;
-			caryll_GlyphOrderEntry *order_entry = NULL;
-			HASH_FIND(hhName, glyph_order->byName, gname, sdslen(gname), order_entry);
-			if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
-				glyf->glyphs[order_entry->gid] = caryll_glyf_parse_glyph(glyphdump, order_entry, options);
+		loggedStep("glyf") {
+			glyphid_t numGlyphs = table->u.object.length;
+			glyf = malloc(sizeof(table_glyf));
+			glyf->numberGlyphs = numGlyphs;
+			glyf->glyphs = calloc(numGlyphs, sizeof(glyf_Glyph *));
+			for (glyphid_t j = 0; j < numGlyphs; j++) {
+				sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+				json_value *glyphdump = table->u.object.values[j].value;
+				caryll_GlyphOrderEntry *order_entry = NULL;
+				HASH_FIND(hhName, glyph_order->byName, gname, sdslen(gname), order_entry);
+				if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
+					glyf->glyphs[order_entry->gid] = caryll_glyf_parse_glyph(glyphdump, order_entry, options);
+				}
+				json_value_free(glyphdump);
+				table->u.object.values[j].value = NULL;
+				sdsfree(gname);
 			}
-			json_value_free(glyphdump);
-			table->u.object.values[j].value = NULL;
-			sdsfree(gname);
 		}
 		return glyf;
 	}

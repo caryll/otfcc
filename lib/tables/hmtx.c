@@ -1,7 +1,8 @@
 #include "support/util.h"
 #include "otfcc/table/hmtx.h"
 
-table_hmtx *table_read_hmtx(const caryll_Packet packet, table_hhea *hhea, table_maxp *maxp) {
+table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *options, table_hhea *hhea,
+                            table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
 	FOR_TABLE('hmtx', table) {
 		font_file_pointer data = table.data;
@@ -28,7 +29,7 @@ table_hmtx *table_read_hmtx(const caryll_Packet packet, table_hhea *hhea, table_
 
 		return hmtx;
 	HMTX_CORRUPTED:
-		fprintf(stderr, "Table 'hmtx' corrupted.\n");
+		logWarning("Table 'hmtx' corrupted.\n");
 		if (hmtx) { table_delete_hmtx(hmtx), hmtx = NULL; }
 	}
 	return NULL;

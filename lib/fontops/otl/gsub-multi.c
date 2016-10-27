@@ -10,11 +10,12 @@ static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_multi(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_gsub_multi(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                            const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
-	fontop_consolidateCoverage(font, subtable->from, lookupName);
+	fontop_consolidateCoverage(font, subtable->from, options);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
-		fontop_consolidateCoverage(font, subtable->to[j], lookupName);
+		fontop_consolidateCoverage(font, subtable->to[j], options);
 		fontop_shrinkCoverage(subtable->to[j], false);
 	}
 	gsub_multi_hash *h = NULL;

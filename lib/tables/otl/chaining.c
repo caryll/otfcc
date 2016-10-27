@@ -421,7 +421,7 @@ json_value *otl_dump_chaining(const otl_Subtable *_subtable) {
 	return _st;
 }
 
-otl_Subtable *otl_parse_chaining(const json_value *_subtable) {
+otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_match = json_obj_get_type(_subtable, "match", json_array);
 	json_value *_apply = json_obj_get_type(_subtable, "apply", json_array);
 	if (!_match || !_apply) return NULL;

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "logger.h"
 
 typedef struct {
 	bool ignore_glyph_order;
@@ -25,6 +26,7 @@ typedef struct {
 	bool cff_doSubroutinize;
 	bool stub_cmap4;
 	char *glyph_name_prefix;
+	otfcc_ILogger *logger;
 } otfcc_Options;
 
 otfcc_Options *options_new();

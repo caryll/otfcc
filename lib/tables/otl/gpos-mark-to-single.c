@@ -100,7 +100,8 @@ typedef struct {
 static int compare_classHash(classname_hash *a, classname_hash *b) {
 	return strcmp(a->className, b->className);
 }
-static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable, classname_hash **h) {
+static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable, classname_hash **h,
+                       const otfcc_Options *options) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
 	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
@@ -157,7 +158,8 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable,
 		sdsfree(className);
 	}
 }
-static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable, classname_hash **h) {
+static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable, classname_hash **h,
+                       const otfcc_Options *options) {
 	glyphclass_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
@@ -178,9 +180,8 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 			classname_hash *s;
 			HASH_FIND_STR(*h, className, s);
 			if (!s) {
-				fprintf(stderr, "[OTFCC-fea] Invalid anchor class name <%s> "
-				                "for /%s. This base anchor is ignored.\n",
-				        className, gname);
+				logWarning("[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n",
+				           className, gname);
 				goto NEXT;
 			}
 			subtable->baseArray[j][s->classID] = otl_parse_anchor(baseRecord->u.object.values[k].value);
@@ -189,16 +190,16 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 		}
 	}
 }
-otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
 	otl_Subtable *st;
 	NEW(st);
 	classname_hash *h = NULL;
-	parseMarks(_marks, &(st->gpos_markToSingle), &h);
+	parseMarks(_marks, &(st->gpos_markToSingle), &h, options);
 	st->gpos_markToSingle.classCount = HASH_COUNT(h);
-	parseBases(_bases, &(st->gpos_markToSingle), &h);
+	parseBases(_bases, &(st->gpos_markToSingle), &h, options);
 
 	classname_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {

@@ -592,7 +592,8 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 	}
 }
 
-table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const table_head *head) {
+table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc_Options *options,
+                                         const table_head *head) {
 	table_CFFAndGlyf ret;
 	ret.meta = NULL;
 	ret.glyphs = NULL;
@@ -745,9 +746,9 @@ static json_value *fdToJson(const table_CFF *table) {
 
 void table_dump_cff(const table_CFF *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
-
-	json_object_push(root, "CFF_", fdToJson(table));
+	loggedStep("CFF") {
+		json_object_push(root, "CFF_", fdToJson(table));
+	}
 }
 
 static void pdDeltaFromJson(json_value *dump, arity_t *count, double **array) {
@@ -868,8 +869,11 @@ table_CFF *table_parse_cff(json_value *root, const otfcc_Options *options) {
 	if (!dump) {
 		return NULL;
 	} else {
-		if (options->verbose) fprintf(stderr, "Parsing CFF.\n");
-		return fdFromJson(dump, options, true);
+		table_CFF *cff = NULL;
+		loggedStep("CFF") {
+			cff = fdFromJson(dump, options, true);
+		}
+		return cff;
 	}
 }
 

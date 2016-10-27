@@ -58,7 +58,7 @@ json_value *otl_gsub_dump_single(const otl_Subtable *_subtable) {
 	return st;
 }
 
-otl_Subtable *otl_gsub_parse_single(const json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_single(const json_value *_subtable, const otfcc_Options *options) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gsub_single *subtable = &(_st->gsub_single);

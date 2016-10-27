@@ -9,7 +9,7 @@ typedef struct {
 	uint8_t *yPels;
 } table_LTSH;
 
-table_LTSH *table_read_LTSH(const caryll_Packet packet);
+table_LTSH *table_read_LTSH(const caryll_Packet packet, const otfcc_Options *options);
 void table_delete_LTSH(table_LTSH *ltsh);
 caryll_Buffer *table_build_LTSH(const table_LTSH *ltsh, const otfcc_Options *options);
 

@@ -28,7 +28,7 @@ static int by_stem_pos(const void *_a, const void *_b) {
 static int by_mask_pointindex(const void *a, const void *b) {
 	return ((glyf_PostscriptHintMask *)a)->pointsBefore - ((glyf_PostscriptHintMask *)b)->pointsBefore;
 }
-void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
+void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font, const otfcc_Options *options) {
 	// The name field of glyf_Glyph will not be consolidated with glyphOrder
 	// Consolidate references
 	shapeid_t nContoursConsolidated = 0;
@@ -38,7 +38,7 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 			g->contours[j - skip] = g->contours[j];
 			nContoursConsolidated += 1;
 		} else {
-			fprintf(stderr, "[Consolidate] Removed empty contour #%d in glyph %s.\n", j, g->name);
+			logWarning("[Consolidate] Removed empty contour #%d in glyph %s.\n", j, g->name);
 			skip += 1;
 		}
 	}
@@ -46,9 +46,8 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
 		if (!gord_consolidateHandle(font->glyph_order, &g->references[j].glyph)) {
-			fprintf(stderr, "[Consolidate] Ignored absent glyph component "
-			                "reference /%s within /%s.\n",
-			        g->references[j].glyph.name, g->name);
+			logWarning("[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
+			           g->references[j].glyph.name, g->name);
 			handle_dispose(&g->references[j].glyph);
 		} else {
 			nReferencesConsolidated += 1;
@@ -135,8 +134,7 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 			}
 		}
 		if (!found) {
-			fprintf(stderr, "[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name,
-			        g->name);
+			logWarning("[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name, g->name);
 			handle_dispose(&(g->fdSelect));
 		}
 	} else if (g->fdSelect.name) {
@@ -144,44 +142,50 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font) {
 	}
 }
 
-void caryll_font_consolidate_glyf(caryll_Font *font) {
+void caryll_font_consolidate_glyf(caryll_Font *font, const otfcc_Options *options) {
 	if (!font->glyph_order || !font->glyf) return;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]) {
-			caryll_font_consolidate_glyph(font->glyf->glyphs[j], font);
+			caryll_font_consolidate_glyph(font->glyf->glyphs[j], font, options);
 		} else {
 			font->glyf->glyphs[j] = table_new_glyf_glyph();
 		}
 	}
 }
 
-void caryll_font_consolidate_cmap(caryll_Font *font) {
+void caryll_font_consolidate_cmap(caryll_Font *font, const otfcc_Options *options) {
 	if (font->glyph_order && font->cmap) {
 		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
 			if (!gord_consolidateHandle(font->glyph_order, &item->glyph)) {
-				fprintf(stderr, "[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
-				        item->glyph.name);
+				logWarning("[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
+				           item->glyph.name);
 				handle_dispose(&item->glyph);
 			}
 		}
 	}
 }
 
-typedef bool (*otl_consolidation_function)(caryll_Font *, table_OTL *, otl_Subtable *, sds);
+typedef bool (*otl_consolidation_function)(caryll_Font *, table_OTL *, otl_Subtable *, const otfcc_Options *);
 typedef void (*subtable_remover)(otl_Subtable *);
-#define LOOKUP_CONSOLIDATOR(llt, fn, fndel) __declare_otl_consolidation(llt, fn, fndel, font, table, lookup);
+#define LOOKUP_CONSOLIDATOR(llt, fn, fndel) __declare_otl_consolidation(llt, fn, fndel, font, table, lookup, options);
 
 static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn, subtable_remover fndel,
-                                        caryll_Font *font, table_OTL *table, otl_Lookup *lookup) {
+                                        caryll_Font *font, table_OTL *table, otl_Lookup *lookup,
+                                        const otfcc_Options *options) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
-		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-			if (lookup->subtables[j]) {
-				bool subtableRemoved = fn(font, table, lookup->subtables[j], lookup->name);
-				if (subtableRemoved) {
-					fndel(lookup->subtables[j]);
-					lookup->subtables[j] = NULL;
-					fprintf(stderr, "[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+		loggedStep(lookup->name) {
+			for (tableid_t j = 0; j < lookup->subtableCount; j++) {
+				if (lookup->subtables[j]) {
+					bool subtableRemoved;
+					loggedStep("Subtable %d", j) {
+						subtableRemoved = fn(font, table, lookup->subtables[j], options);
+					}
+					if (subtableRemoved) {
+						fndel(lookup->subtables[j]);
+						lookup->subtables[j] = NULL;
+						logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+					}
 				}
 			}
 		}
@@ -193,7 +197,7 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 	}
 }
 
-void caryll_consolidate_lookup(caryll_Font *font, table_OTL *table, otl_Lookup *lookup) {
+void caryll_consolidate_lookup(caryll_Font *font, table_OTL *table, otl_Lookup *lookup, const otfcc_Options *options) {
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, otl_delete_gsub_single);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, otl_delete_gsub_multi);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, otl_delete_gsub_multi);
@@ -209,16 +213,24 @@ void caryll_consolidate_lookup(caryll_Font *font, table_OTL *table, otl_Lookup *
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature, otl_delete_gpos_markToLigature);
 }
 
-void caryll_font_consolidate_otl(caryll_Font *font) {
-	if (font->glyph_order && font->GSUB)
-		for (tableid_t j = 0; j < font->GSUB->lookupCount; j++) {
-			caryll_consolidate_lookup(font, font->GSUB, font->GSUB->lookups[j]);
+void caryll_font_consolidate_otl(caryll_Font *font, const otfcc_Options *options) {
+	loggedStep("GSUB") {
+		if (font->glyph_order && font->GSUB) {
+			for (tableid_t j = 0; j < font->GSUB->lookupCount; j++) {
+				caryll_consolidate_lookup(font, font->GSUB, font->GSUB->lookups[j], options);
+			}
 		}
-	if (font->glyph_order && font->GPOS)
-		for (tableid_t j = 0; j < font->GPOS->lookupCount; j++) {
-			caryll_consolidate_lookup(font, font->GPOS, font->GPOS->lookups[j]);
+	}
+	loggedStep("GPOS") {
+		if (font->glyph_order && font->GPOS) {
+			for (tableid_t j = 0; j < font->GPOS->lookupCount; j++) {
+				caryll_consolidate_lookup(font, font->GPOS, font->GPOS->lookups[j], options);
+			}
 		}
-	consolidate_GDEF(font, font->GDEF, "GDEF");
+	}
+	loggedStep("GDEF") {
+		consolidate_GDEF(font, font->GDEF, options);
+	}
 }
 
 void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options) {
@@ -237,7 +249,11 @@ void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options) {
 			caryll_setGlyphOrderByName(go, name, j);
 		}
 	}
-	caryll_font_consolidate_glyf(font);
-	caryll_font_consolidate_cmap(font);
-	if (font->glyf) caryll_font_consolidate_otl(font);
+	loggedStep("glyf") {
+		caryll_font_consolidate_glyf(font, options);
+	}
+	loggedStep("cmap") {
+		caryll_font_consolidate_cmap(font, options);
+	}
+	if (font->glyf) caryll_font_consolidate_otl(font, options);
 }

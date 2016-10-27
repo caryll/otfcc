@@ -9,12 +9,12 @@ typedef struct {
 static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) {
 	return a->gid - b->gid;
 }
-void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, char *tableName) {
+void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, const otfcc_Options *options) {
 	if (!font || !font->glyph_order || !gdef) return;
-	if (gdef->glyphClassDef) fontop_consolidateClassDef(font, gdef->glyphClassDef, tableName);
-	if (gdef->markAttachClassDef) fontop_consolidateClassDef(font, gdef->markAttachClassDef, tableName);
+	if (gdef->glyphClassDef) fontop_consolidateClassDef(font, gdef->glyphClassDef, options);
+	if (gdef->markAttachClassDef) fontop_consolidateClassDef(font, gdef->markAttachClassDef, options);
 	if (gdef->ligCarets) {
-		fontop_consolidateCoverage(font, gdef->ligCarets->coverage, tableName);
+		fontop_consolidateCoverage(font, gdef->ligCarets->coverage, options);
 		GDEF_ligcaret_hash *h = NULL;
 		for (glyphid_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
 			GDEF_ligcaret_hash *s;
@@ -29,6 +29,7 @@ void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, char *tableName) {
 					s->cr = gdef->ligCarets->carets[j];
 					HASH_ADD_INT(h, gid, s);
 				} else {
+					logWarning("[Consolidate] Detected caret value double-mapping about glyph %s", gname);
 					free(gdef->ligCarets->carets[j].values);
 				}
 			}

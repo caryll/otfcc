@@ -95,11 +95,12 @@ static void timespec_diff(struct timespec *start, struct timespec *stop, struct 
 	return;
 }
 
-void push_stopwatch(const char *reason, struct timespec *sofar) {
+sds push_stopwatch(struct timespec *sofar) {
 	struct timespec ends;
 	time_now(&ends);
 	struct timespec diff;
 	timespec_diff(sofar, &ends, &diff);
 	*sofar = ends;
-	fprintf(stderr, "Done %s (%gs).\n", reason, diff.tv_sec + diff.tv_nsec / (double)BILLION);
+	sds log = sdscatprintf(sdsempty(), "Done in %gs.\n", diff.tv_sec + diff.tv_nsec / (double)BILLION);
+	return log;
 }

@@ -29,7 +29,7 @@ void caryll_delete_lookup(otl_Lookup *lookup);
 otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                       otl_LookupType lookupType);
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump);
-static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh);
+static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Options *options, lookup_hash **lh);
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
 
 // COMMON PART
@@ -333,59 +333,61 @@ static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_valu
 
 void table_dump_otl(const table_OTL *table, json_value *root, const otfcc_Options *options, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
-	if (options->verbose) fprintf(stderr, "Dumping %s.\n", tag);
-
-	json_value *otl = json_object_new(3);
-	{
-		// dump script list
-		json_value *languages = json_object_new(table->languageCount);
-		for (tableid_t j = 0; j < table->languageCount; j++) {
-			json_value *language = json_object_new(5);
-			if (table->languages[j]->requiredFeature) {
-				json_object_push(language, "requiredFeature",
-				                 json_string_new(table->languages[j]->requiredFeature->name));
+	loggedStep("%s", tag) {
+		json_value *otl = json_object_new(3);
+		loggedStep("Languages") {
+			// dump script list
+			json_value *languages = json_object_new(table->languageCount);
+			for (tableid_t j = 0; j < table->languageCount; j++) {
+				json_value *language = json_object_new(5);
+				if (table->languages[j]->requiredFeature) {
+					json_object_push(language, "requiredFeature",
+					                 json_string_new(table->languages[j]->requiredFeature->name));
+				}
+				json_value *features = json_array_new(table->languages[j]->featureCount);
+				for (tableid_t k = 0; k < table->languages[j]->featureCount; k++)
+					if (table->languages[j]->features[k]) {
+						json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
+					}
+				json_object_push(language, "features", preserialize(features));
+				json_object_push(languages, table->languages[j]->name, language);
 			}
-			json_value *features = json_array_new(table->languages[j]->featureCount);
-			for (tableid_t k = 0; k < table->languages[j]->featureCount; k++)
-				if (table->languages[j]->features[k]) {
-					json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
-				}
-			json_object_push(language, "features", preserialize(features));
-			json_object_push(languages, table->languages[j]->name, language);
+			json_object_push(otl, "languages", languages);
 		}
-		json_object_push(otl, "languages", languages);
-	}
-	{
-		// dump feature list
-		json_value *features = json_object_new(table->featureCount);
-		for (tableid_t j = 0; j < table->featureCount; j++) {
-			json_value *feature = json_array_new(table->features[j]->lookupCount);
-			for (tableid_t k = 0; k < table->features[j]->lookupCount; k++)
-				if (table->features[j]->lookups[k]) {
-					json_array_push(feature, json_string_new(table->features[j]->lookups[k]->name));
-				}
-			json_object_push(features, table->features[j]->name, preserialize(feature));
+		loggedStep("Features") {
+			// dump feature list
+			json_value *features = json_object_new(table->featureCount);
+			for (tableid_t j = 0; j < table->featureCount; j++) {
+				json_value *feature = json_array_new(table->features[j]->lookupCount);
+				for (tableid_t k = 0; k < table->features[j]->lookupCount; k++)
+					if (table->features[j]->lookups[k]) {
+						json_array_push(feature, json_string_new(table->features[j]->lookups[k]->name));
+					}
+				json_object_push(features, table->features[j]->name, preserialize(feature));
+			}
+			json_object_push(otl, "features", features);
 		}
-		json_object_push(otl, "features", features);
-	}
-	{
-		// dump lookups
-		json_value *lookups = json_object_new(table->lookupCount);
-		json_value *lookupOrder = json_array_new(table->lookupCount);
-		for (tableid_t j = 0; j < table->lookupCount; j++) {
-			json_value *lookup = json_object_new(5);
-			_dump_lookup(table->lookups[j], lookup);
-			json_object_push(lookups, table->lookups[j]->name, lookup);
-			json_array_push(lookupOrder, json_string_new(table->lookups[j]->name));
+		loggedStep("Lookups") {
+			// dump lookups
+			json_value *lookups = json_object_new(table->lookupCount);
+			json_value *lookupOrder = json_array_new(table->lookupCount);
+			for (tableid_t j = 0; j < table->lookupCount; j++) {
+				json_value *lookup = json_object_new(5);
+				_dump_lookup(table->lookups[j], lookup);
+				json_object_push(lookups, table->lookups[j]->name, lookup);
+				json_array_push(lookupOrder, json_string_new(table->lookups[j]->name));
+			}
+			json_object_push(otl, "lookups", lookups);
+			json_object_push(otl, "lookupOrder", lookupOrder);
 		}
-		json_object_push(otl, "lookups", lookups);
-		json_object_push(otl, "lookupOrder", lookupOrder);
+		json_object_push(root, tag, otl);
 	}
-	json_object_push(root, tag, otl);
 }
 
-static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtable *(*parser)(const json_value *),
-                                 json_value *_lookup, char *lookupName, lookup_hash **lh) {
+static bool _declareLookupParser(const char *lt, otl_LookupType llt,
+                                 otl_Subtable *(*parser)(const json_value *, const otfcc_Options *options),
+                                 json_value *_lookup, char *lookupName, const otfcc_Options *options,
+                                 lookup_hash **lh) {
 	json_value *type = json_obj_get_type(_lookup, "type", json_string);
 	if (!type || strcmp(type->u.string.ptr, lt)) return false;
 	lookup_hash *item = NULL;
@@ -404,11 +406,13 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt, otl_Subtabl
 	lookup->subtableCount = _subtables->u.array.length;
 	NEW_N(lookup->subtables, lookup->subtableCount);
 	tableid_t jj = 0;
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		json_value *_subtable = _subtables->u.array.values[j];
-		if (_subtable && _subtable->type == json_object) {
-			otl_Subtable *_st = parser(_subtable);
-			if (_st) { lookup->subtables[jj++] = _st; }
+	loggedStep("%s", lookupName) {
+		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
+			json_value *_subtable = _subtables->u.array.values[j];
+			if (_subtable && _subtable->type == json_object) {
+				otl_Subtable *_st = parser(_subtable, options);
+				if (_st) { lookup->subtables[jj++] = _st; }
+			}
 		}
 	}
 	lookup->subtableCount = jj;
@@ -437,9 +441,7 @@ static void feature_merger_activate(json_value *d, const bool sametag, const cha
 			if (json_ident(jthis, jthat) && (sametag ? strncmp(kthis, kthat, 4) == 0 : true)) {
 				json_value_free(jthat);
 				d->u.object.values[k].value = json_string_new_length(nkthis, kthis);
-				if (options->verbose) {
-					fprintf(stderr, "[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat, kthis);
-				}
+				logNotice("[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat, kthis);
 			}
 		}
 	}
@@ -478,16 +480,16 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 					s->feature->lookups = al;
 					HASH_ADD_STR(fh, name, s);
 				} else {
-					fprintf(stderr, "[OTFCC-fea] Duplicate feature for [%s/%s]. This feature will "
-					                "be ignored.\n",
-					        tag, featureName);
+					logWarning("[OTFCC-fea] Duplicate feature for [%s/%s]. This feature will "
+					           "be ignored.\n",
+					           tag, featureName);
 					FREE(al);
 				}
 			} else {
-				fprintf(stderr, "[OTFCC-fea] There is no valid lookup "
-				                "assignments for [%s/%s]. This feature will be "
-				                "ignored.\n",
-				        tag, featureName);
+				logWarning("[OTFCC-fea] There is no valid lookup "
+				           "assignments for [%s/%s]. This feature will be "
+				           "ignored.\n",
+				           tag, featureName);
 				FREE(al);
 			}
 		} else if (_feature->type == json_string) {
@@ -554,16 +556,16 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 					s->script->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
-					fprintf(stderr, "[OTFCC-fea] Duplicate language item [%s/%s]. This language "
-					                "term will be ignored.\n",
-					        tag, languageName);
+					logWarning("[OTFCC-fea] Duplicate language item [%s/%s]. This language "
+					           "term will be ignored.\n",
+					           tag, languageName);
 					if (af) { FREE(af); }
 				}
 			} else {
-				fprintf(stderr, "[OTFCC-fea] There is no valid feature "
-				                "assignments for [%s/%s]. This language term "
-				                "will be ignored.\n",
-				        tag, languageName);
+				logWarning("[OTFCC-fea] There is no valid feature "
+				           "assignments for [%s/%s]. This language term "
+				           "will be ignored.\n",
+				           tag, languageName);
 
 				if (af) { FREE(af); }
 			}
@@ -578,8 +580,8 @@ static lookup_hash *figureOutLookupsFromJSON(json_value *lookups, const otfcc_Op
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
 		char *lookupName = lookups->u.object.values[j].name;
 		if (lookups->u.object.values[j].value->type == json_object) {
-			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, &lh);
-			if (!parsed) { fprintf(stderr, "[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
+			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, options, &lh);
+			if (!parsed) { logWarning("[OTFCC-fea] Ignoring unknown or unsupported lookup %s.\n", lookupName); }
 			FREE(lookups->u.object.values[j].value);
 		} else if (lookups->u.object.values[j].value->type == json_string) {
 			char *thatname = lookups->u.object.values[j].value->u.string.ptr;
@@ -615,82 +617,85 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 	table_OTL *otl = NULL;
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
-
-	if (options->verbose) fprintf(stderr, "Parsing %s.\n", tag);
 	otl = table_new_otl();
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
 	if (!languages || !features || !lookups) goto FAIL;
 
-	lookup_hash *lh = figureOutLookupsFromJSON(lookups, options);
-	json_value *lookupOrder = json_obj_get_type(table, "lookupOrder", json_array);
-	if (lookupOrder) {
-		for (tableid_t j = 0; j < lookupOrder->u.array.length; j++) {
-			json_value *_ln = lookupOrder->u.array.values[j];
-			if (_ln && _ln->type == json_string) {
-				lookup_hash *item = NULL;
-				HASH_FIND_STR(lh, _ln->u.string.ptr, item);
-				if (item) {
-					item->orderType = LOOKUP_ORDER_FORCE;
-					item->orderVal = j;
+	loggedStep("%s", tag) {
+		lookup_hash *lh = figureOutLookupsFromJSON(lookups, options);
+		json_value *lookupOrder = json_obj_get_type(table, "lookupOrder", json_array);
+		if (lookupOrder) {
+			for (tableid_t j = 0; j < lookupOrder->u.array.length; j++) {
+				json_value *_ln = lookupOrder->u.array.values[j];
+				if (_ln && _ln->type == json_string) {
+					lookup_hash *item = NULL;
+					HASH_FIND_STR(lh, _ln->u.string.ptr, item);
+					if (item) {
+						item->orderType = LOOKUP_ORDER_FORCE;
+						item->orderVal = j;
+					}
 				}
 			}
 		}
-	}
-	HASH_SORT(lh, by_lookup_order);
-	feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag, options);
-	HASH_SORT(fh, by_feature_name);
-	language_hash *sh = figureOutLanguagesFromJson(languages, fh, tag, options);
-	HASH_SORT(sh, by_language_name);
-	if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) goto FAIL;
-
-	{
-		lookup_hash *s, *tmp;
-		otl->lookupCount = HASH_COUNT(lh);
-		NEW_N(otl->lookups, otl->lookupCount);
-		tableid_t j = 0;
-		HASH_ITER(hh, lh, s, tmp) {
-			otl->lookups[j] = s->lookup;
-			j++;
-			HASH_DEL(lh, s);
-			sdsfree(s->name);
-			free(s);
+		HASH_SORT(lh, by_lookup_order);
+		feature_hash *fh = figureOutFeaturesFromJSON(features, lh, tag, options);
+		HASH_SORT(fh, by_feature_name);
+		language_hash *sh = figureOutLanguagesFromJson(languages, fh, tag, options);
+		HASH_SORT(sh, by_language_name);
+		if (!HASH_COUNT(lh) || !HASH_COUNT(fh) || !HASH_COUNT(sh)) {
+			options->logger->dedent(options->logger);
+			goto FAIL;
 		}
-	}
-	{
-		feature_hash *s, *tmp;
-		otl->featureCount = HASH_COUNT(fh);
-		NEW_N(otl->features, otl->featureCount);
-		tableid_t j = 0;
-		HASH_ITER(hh, fh, s, tmp) {
-			if (!s->alias) {
-				otl->features[j] = s->feature;
+
+		{
+			lookup_hash *s, *tmp;
+			otl->lookupCount = HASH_COUNT(lh);
+			NEW_N(otl->lookups, otl->lookupCount);
+			tableid_t j = 0;
+			HASH_ITER(hh, lh, s, tmp) {
+				otl->lookups[j] = s->lookup;
+				j++;
+				HASH_DEL(lh, s);
+				sdsfree(s->name);
+				free(s);
+			}
+		}
+		{
+			feature_hash *s, *tmp;
+			otl->featureCount = HASH_COUNT(fh);
+			NEW_N(otl->features, otl->featureCount);
+			tableid_t j = 0;
+			HASH_ITER(hh, fh, s, tmp) {
+				if (!s->alias) {
+					otl->features[j] = s->feature;
+					j++;
+				}
+				HASH_DEL(fh, s);
+				sdsfree(s->name);
+				free(s);
+			}
+			otl->featureCount = j;
+		}
+		{
+			language_hash *s, *tmp;
+			otl->languageCount = HASH_COUNT(sh);
+			NEW_N(otl->languages, otl->languageCount);
+			tableid_t j = 0;
+			HASH_ITER(hh, sh, s, tmp) {
+				otl->languages[j] = s->script;
+				HASH_DEL(sh, s);
+				sdsfree(s->name);
+				free(s);
 				j++;
 			}
-			HASH_DEL(fh, s);
-			sdsfree(s->name);
-			free(s);
-		}
-		otl->featureCount = j;
-	}
-	{
-		language_hash *s, *tmp;
-		otl->languageCount = HASH_COUNT(sh);
-		NEW_N(otl->languages, otl->languageCount);
-		tableid_t j = 0;
-		HASH_ITER(hh, sh, s, tmp) {
-			otl->languages[j] = s->script;
-			HASH_DEL(sh, s);
-			sdsfree(s->name);
-			free(s);
-			j++;
 		}
 	}
 	return otl;
 FAIL:
 	if (otl) {
-		fprintf(stderr, "[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
+		logWarning("[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
 		table_delete_otl(otl);
 	}
 	return NULL;
@@ -720,9 +725,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	NEW_N(subtableQuantity, table->lookupCount);
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
-		if (options->verbose) {
-			fprintf(stderr, "    Writing lookup %s(%d/%d)\n", table->lookups[j]->name, j, table->lookupCount);
-		}
+		logProgress("Building lookup %s (%u/%u)\n", table->lookups[j]->name, j, table->lookupCount);
 		otl_Lookup *lookup = table->lookups[j];
 		subtables[j] = NULL;
 		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
@@ -733,7 +736,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
-		if (options->verbose) { fprintf(stderr, "[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag); }
+		logNotice("[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag);
 		for (tableid_t j = 0; j < table->lookupCount; j++) {
 			if (subtableQuantity[j]) { headerSize += 8 * subtableQuantity[j]; }
 		}
@@ -742,7 +745,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	                              bkover);
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		if (!subtableQuantity[j]) {
-			fprintf(stderr, "Lookup %s not written.\n", table->lookups[j]->name);
+			logNotice("Lookup %s not written.\n", table->lookups[j]->name);
 			continue;
 		}
 		otl_Lookup *lookup = table->lookups[j];
@@ -919,12 +922,16 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 }
 
 caryll_Buffer *table_build_otl(const table_OTL *table, const otfcc_Options *options, const char *tag) {
-	bk_Block *root = bk_new_Block(b32, 0x10000,                                    // Version
-	                              p16, writeOTLScriptAndLanguages(table, options), // ScriptList
-	                              p16, writeOTLFeatures(table, options),           // FeatureList
-	                              p16, writeOTLLookups(table, options, tag),       // LookupList
-	                              bkover);
-	return bk_build_Block(root);
+	caryll_Buffer *buf;
+	loggedStep("%s", tag) {
+		bk_Block *root = bk_new_Block(b32, 0x10000,                                    // Version
+		                              p16, writeOTLScriptAndLanguages(table, options), // ScriptList
+		                              p16, writeOTLFeatures(table, options),           // FeatureList
+		                              p16, writeOTLLookups(table, options, tag),       // LookupList
+		                              bkover);
+		buf = bk_build_Block(root);
+	}
+	return buf;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -940,7 +947,7 @@ caryll_Buffer *table_build_otl(const table_OTL *table, const otfcc_Options *opti
 		return fn(data, tableLength, subtableOffset);
 #define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
 #define LOOKUP_PARSER(llt, parser)                                                                                     \
-	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, lh); }
+	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, options, lh); }
 #define LOOKUP_WRITER(type, fn)                                                                                        \
 	if (!written) written = _declare_lookup_writer(type, fn, lookup, subtables, lastOffset);
 static const char *tableNames[] = {[otl_type_unknown] = "unknown",
@@ -1032,7 +1039,7 @@ static void _dump_lookup(otl_Lookup *lookup, json_value *dump) {
 	LOOKUP_DUMPER(otl_type_gpos_markToLigature, otl_gpos_dump_markToLigature);
 }
 
-static bool _parse_lookup(json_value *lookup, char *lookupName, lookup_hash **lh) {
+static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Options *options, lookup_hash **lh) {
 	bool parsed = false;
 	LOOKUP_PARSER(otl_type_gsub_single, otl_gsub_parse_single);
 	LOOKUP_PARSER(otl_type_gsub_multiple, otl_gsub_parse_multi);

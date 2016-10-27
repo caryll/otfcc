@@ -205,10 +205,12 @@ static size_t caryll_bkblock_size(bk_Block *b) {
 static uint32_t getoffset(size_t *offsets, bk_Block *ref, bk_Block *target, uint8_t bits) {
 	size_t offref = offsets[ref->_index];
 	size_t offtgt = offsets[target->_index];
+	/*
 	if (offtgt < offref || (offtgt - offref) >> bits) {
-		fprintf(stderr, "[otfcc-fea] Warning : Unable to fit offset %d into %d bits.\n", (int32_t)(offtgt - offref),
-		        bits);
+	    fprintf(stderr, "[otfcc-fea] Warning : Unable to fit offset %d into %d bits.\n", (int32_t)(offtgt - offref),
+	            bits);
 	}
+	*/
 	return (uint32_t)(offtgt - offref);
 }
 static int64_t getoffset_untangle(size_t *offsets, bk_Block *ref, bk_Block *target) {
@@ -269,11 +271,6 @@ static bool try_untabgle_block(bk_Graph *f, bk_Block *b, size_t *offsets, uint16
 				if (b->cells[j].p) {
 					int64_t offset = getoffset_untangle(offsets, b, b->cells[j].p);
 					if (offset < 0 || offset > 0xFFFF) {
-						// Once we found a long link B ------------> C -> ..., we are going to this scanerio with
-						// a shallow copy of C, forming a B -> C' -> ...
-						fprintf(stderr, "[OTFCC-fea] Untangle : Did a shallow copy of block %d to avoid offset "
-						                "overflow for %d in pass %d\n",
-						        b->cells[j].p->_index, (int)offset, passes);
 						bk_GraphNode *e = _bkgraph_grow(f);
 						e->order = 0;
 						e->alias = 0;
