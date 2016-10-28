@@ -44,8 +44,8 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 	subtable->to->numGlyphs = HASH_COUNT(h);
 	FREE(subtable->from->glyphs);
 	FREE(subtable->to->glyphs);
-	NEW_N(subtable->from->glyphs, subtable->from->numGlyphs);
-	NEW_N(subtable->to->glyphs, subtable->to->numGlyphs);
+	NEW(subtable->from->glyphs, subtable->from->numGlyphs);
+	NEW(subtable->to->glyphs, subtable->to->numGlyphs);
 	{
 		gsub_single_map_hash *s, *tmp;
 		glyphid_t j = 0;
@@ -54,7 +54,7 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	return (subtable->from->numGlyphs == 0);

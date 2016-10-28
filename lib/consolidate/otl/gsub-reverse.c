@@ -50,7 +50,7 @@ bool consolidate_gsub_reverse(caryll_Font *font, table_OTL *table, otl_Subtable 
 			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	return false;

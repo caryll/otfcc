@@ -5,7 +5,7 @@ void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
-		s = malloc(sizeof(cmap_Entry));
+		NEW(s);
 		s->glyph = handle_fromIndex(gid);
 		s->unicode = c;
 		HASH_ADD_INT(*map, unicode, s);
@@ -19,7 +19,7 @@ void table_encodeCmapByName(table_cmap *map, int c, sds name) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
-		s = malloc(sizeof(cmap_Entry));
+		NEW(s);
 		s->glyph = handle_fromName(name);
 		s->unicode = c;
 		HASH_ADD_INT(*map, unicode, s);
@@ -92,7 +92,7 @@ table_cmap *table_read_cmap(const caryll_Packet packet, const otfcc_Options *opt
 		uint32_t length = table.length;
 		if (length < 4) goto CMAP_CORRUPTED;
 
-		map = malloc(sizeof(table_cmap));
+		NEW(map);
 		*map = NULL; // intialize to empty hashtable
 		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
@@ -110,7 +110,7 @@ table_cmap *table_read_cmap(const caryll_Packet packet, const otfcc_Options *opt
 
 	CMAP_CORRUPTED:
 		logWarning("table 'cmap' corrupted.\n");
-		if (map != NULL) { free(map), map = NULL; }
+		if (map != NULL) { FREE(map), map = NULL; }
 	}
 	return NULL;
 }
@@ -121,9 +121,9 @@ void table_delete_cmap(table_cmap *table) {
 		// delete and free all cmap entries
 		handle_dispose(&s->glyph);
 		HASH_DEL(*(table), s);
-		free(s);
+		FREE(s);
 	}
-	free(table);
+	FREE(table);
 }
 
 void table_dump_cmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
@@ -160,7 +160,8 @@ table_cmap *table_parse_cmap(const json_value *root, const otfcc_Options *option
 	}
 	if (hash) {
 		HASH_SORT(hash, by_unicode);
-		table_cmap *map = malloc(sizeof(table_cmap *));
+		table_cmap *map;
+		NEW(map);
 		*map = hash;
 		return map;
 	}

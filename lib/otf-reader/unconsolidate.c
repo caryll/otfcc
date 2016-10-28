@@ -1,6 +1,6 @@
+#include "unconsolidate.h"
 #include "support/util.h"
-#include "otfcc/font.h"
-#include "support/aglfn.h"
+#include "support/aglfn/aglfn.h"
 
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:
@@ -92,7 +92,7 @@ static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_
 		}
 	}
 	otl_Subtable **newsts;
-	NEW_N(newsts, totalRules);
+	NEW(newsts, totalRules);
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		if (!lookup->subtables[j]) continue;
@@ -103,8 +103,8 @@ static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_
 				newsts[jj]->chaining.rule = *(lookup->subtables[j]->chaining.rules[k]);
 				jj += 1;
 			}
-			free(lookup->subtables[j]->chaining.rules);
-			free(lookup->subtables[j]);
+			FREE(lookup->subtables[j]->chaining.rules);
+			FREE(lookup->subtables[j]);
 		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
 			NEW(newsts[jj]);
 			newsts[jj]->chaining.type = otl_chaining_canonical;
@@ -184,7 +184,7 @@ static void merge_LTSH(caryll_Font *font) {
 		}
 	}
 }
-void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options) {
+void otfcc_unconsolidateFont(caryll_Font *font, const otfcc_Options *options) {
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);
@@ -194,5 +194,4 @@ void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options) 
 	// Name glyphs
 	caryll_name_glyphs(font, options);
 	caryll_name_glyf(font);
-	caryll_font_consolidate(font, options);
 }

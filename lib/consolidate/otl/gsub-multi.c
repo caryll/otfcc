@@ -47,7 +47,7 @@ bool consolidate_gsub_multi(caryll_Font *font, table_OTL *table, otl_Subtable *_
 			subtable->to[j] = s->to;
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	return (subtable->from->numGlyphs == 0);

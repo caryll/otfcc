@@ -7,8 +7,8 @@
 #define GASP_SYMMETRIC_SMOOTHING 0x0008
 
 table_gasp *table_new_gasp() {
-	table_gasp *gasp = malloc(sizeof(table_gasp));
-	if (!gasp) return NULL;
+	table_gasp *gasp;
+	NEW(gasp);
 	gasp->version = 1;
 	gasp->numRanges = 0;
 	gasp->records = NULL;
@@ -16,8 +16,8 @@ table_gasp *table_new_gasp() {
 }
 void table_delete_gasp(table_gasp *table) {
 	if (!table) return;
-	if (table->records) free(table->records);
-	free(table);
+	if (table->records) FREE(table->records);
+	FREE(table);
 }
 table_gasp *table_read_gasp(const caryll_Packet packet, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
@@ -25,12 +25,12 @@ table_gasp *table_read_gasp(const caryll_Packet packet, const otfcc_Options *opt
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 4) { goto FAIL; }
-		gasp = malloc(sizeof(table_gasp));
+		NEW(gasp);
 		gasp->version = read_16u(data);
 		gasp->numRanges = read_16u(data + 2);
 		if (length < 4 + gasp->numRanges * 4) { goto FAIL; }
 
-		gasp->records = malloc(gasp->numRanges * sizeof(gasp_Record));
+		NEW(gasp->records, gasp->numRanges);
 		if (!gasp->records) goto FAIL;
 
 		for (uint32_t j = 0; j < gasp->numRanges; j++) {
@@ -75,7 +75,7 @@ table_gasp *table_parse_gasp(const json_value *root, const otfcc_Options *option
 		if (!gasp) goto FAIL;
 		loggedStep("gasp") {
 			gasp->numRanges = table->u.array.length;
-			gasp->records = malloc(gasp->numRanges * sizeof(gasp_Record));
+			NEW(gasp->records, gasp->numRanges);
 			if (!gasp->records) goto FAIL;
 			for (uint16_t j = 0; j < gasp->numRanges; j++) {
 				json_value *r = table->u.array.values[j];

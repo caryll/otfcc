@@ -7,11 +7,7 @@ static bk_GraphNode *_bkgraph_grow(bk_Graph *f) {
 	} else {
 		f->length = f->length + 1;
 		f->free = (f->length >> 1) & 0xFFFFFF;
-		if (f->entries) {
-			f->entries = realloc(f->entries, (f->length + f->free) * sizeof(bk_GraphNode));
-		} else {
-			f->entries = malloc((f->length + f->free) * sizeof(bk_GraphNode));
-		}
+		RESIZE(f->entries, f->length + f->free);
 	}
 	return &(f->entries[f->length - 1]);
 }
@@ -55,7 +51,8 @@ static int _by_order(const void *_a, const void *_b) {
 }
 
 bk_Graph *bk_newGraphFromRootBlock(bk_Block *b) {
-	bk_Graph *forest = calloc(1, sizeof(bk_Graph));
+	bk_Graph *forest;
+	NEW(forest);
 	uint32_t tsOrder = 0;
 	dfs_insert_cells(b, forest, &tsOrder);
 	qsort(forest->entries, forest->length, sizeof(bk_GraphNode), _by_height);
@@ -70,11 +67,11 @@ void bk_delete_Graph(bk_Graph *f) {
 	if (!f || !f->entries) return;
 	for (uint32_t j = 0; j < f->length; j++) {
 		bk_Block *b = f->entries[j].block;
-		if (b && b->cells) free(b->cells);
-		free(b);
+		if (b && b->cells) FREE(b->cells);
+		FREE(b);
 	}
-	free(f->entries);
-	free(f);
+	FREE(f->entries);
+	FREE(f);
 }
 
 static uint32_t gethash(bk_Block *b) {
@@ -289,7 +286,8 @@ static bool try_untabgle_block(bk_Graph *f, bk_Block *b, size_t *offsets, uint16
 }
 
 static bool try_untangle(bk_Graph *f, uint16_t passes) {
-	size_t *offsets = calloc(f->length + 1, sizeof(size_t));
+	size_t *offsets;
+	NEW(offsets, f->length + 1);
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
@@ -306,7 +304,7 @@ static bool try_untangle(bk_Graph *f, uint16_t passes) {
 			didUntangle = didUntangle || didCopy;
 		}
 	}
-	free(offsets);
+	FREE(offsets);
 	return didUntangle;
 }
 
@@ -346,7 +344,9 @@ static void caryll_build_bkblock(caryll_Buffer *buf, bk_Block *b, size_t *offset
 
 caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 	caryll_Buffer *buf = bufnew();
-	size_t *offsets = calloc(f->length + 1, sizeof(size_t));
+	size_t *offsets;
+	NEW(offsets, f->length + 1);
+
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
@@ -360,12 +360,14 @@ caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 			caryll_build_bkblock(buf, f->entries[j].block, offsets);
 		}
 	}
-	free(offsets);
+	FREE(offsets);
 	return buf;
 }
 
 size_t bk_estimateSizeOfGraph(bk_Graph *f) {
-	size_t *offsets = calloc(f->length + 1, sizeof(size_t));
+	size_t *offsets;
+	NEW(offsets, f->length + 1);
+
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
@@ -375,7 +377,7 @@ size_t bk_estimateSizeOfGraph(bk_Graph *f) {
 		}
 	}
 	size_t estimatedSize = offsets[f->length];
-	free(offsets);
+	FREE(offsets);
 	return estimatedSize;
 }
 

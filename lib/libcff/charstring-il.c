@@ -4,11 +4,7 @@
 static void ensureThereIsSpace(cff_CharstringIL *il) {
 	if (il->free) return;
 	il->free = 0x100;
-	if (il->instr) {
-		il->instr = realloc(il->instr, sizeof(cff_CharstringInstruction) * (il->length + il->free));
-	} else {
-		il->instr = malloc(sizeof(cff_CharstringInstruction) * (il->length + il->free));
-	}
+	RESIZE(il->instr, il->length + il->free);
 }
 
 void il_push_operand(cff_CharstringIL *il, double x) {
@@ -129,7 +125,7 @@ static void il_push_stems(cff_CharstringIL *il, glyf_Glyph *g, bool hasmask, boo
 }
 cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
 	cff_CharstringIL *il;
-	NEW_CLEAN(il);
+	NEW(il);
 	// Convert absolute positions to deltas
 	pos_t x = 0;
 	pos_t y = 0;
@@ -144,7 +140,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 			if (xlast != x0 || ylast != y0) {
 				// Duplicate first point.
 				n += 1;
-				contour->points = realloc(contour->points, n * sizeof(glyf_Point));
+				RESIZE(contour->points, n);
 				contour->points[n - 1].x = x0;
 				contour->points[n - 1].y = y0;
 				contour->points[n - 1].onCurve = true;
@@ -431,7 +427,7 @@ caryll_Buffer *cff_build_IL(cff_CharstringIL *il) {
 
 cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il) {
 	cff_CharstringIL *out;
-	NEW_CLEAN(out);
+	NEW(out);
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {

@@ -6,9 +6,9 @@ void otl_delete_Coverage(MOVE otl_Coverage *coverage) {
 		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 			handle_dispose(&coverage->glyphs[j]);
 		}
-		free(coverage->glyphs);
+		FREE(coverage->glyphs);
 	}
-	if (coverage) free(coverage);
+	if (coverage) FREE(coverage);
 }
 
 typedef struct {
@@ -47,14 +47,14 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
 			if (coverage->numGlyphs) {
-				NEW_N(coverage->glyphs, coverage->numGlyphs);
+				NEW(coverage->glyphs, coverage->numGlyphs);
 				{
 					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
 						coverage->glyphs[j] = handle_fromIndex(e->gid);
 						HASH_DEL(hash, e);
-						free(e);
+						FREE(e);
 						j++;
 					}
 				}
@@ -83,14 +83,14 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
 			if (coverage->numGlyphs) {
-				NEW_N(coverage->glyphs, coverage->numGlyphs);
+				NEW(coverage->glyphs, coverage->numGlyphs);
 				{
 					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
 						coverage->glyphs[j] = handle_fromIndex(e->gid);
 						HASH_DEL(hash, e);
-						free(e);
+						FREE(e);
 						j++;
 					}
 				}
@@ -123,7 +123,7 @@ otl_Coverage *otl_parse_Coverage(const json_value *cov) {
 		c->glyphs = NULL;
 		return c;
 	}
-	NEW_N(c->glyphs, c->numGlyphs);
+	NEW(c->glyphs, c->numGlyphs);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
@@ -148,7 +148,7 @@ caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 		return buf;
 	}
 	glyphid_t *r;
-	NEW_N(r, coverage->numGlyphs);
+	NEW(r, coverage->numGlyphs);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 		r[jj] = coverage->glyphs[j].index;
@@ -163,7 +163,7 @@ caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 		bufwrite16b(format1, r[j]);
 	}
 	if (jj < 2) {
-		free(r);
+		FREE(r);
 		return format1;
 	}
 
@@ -196,11 +196,11 @@ caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 	bufwrite_bufdel(format2, ranges);
 	if (buflen(format1) < buflen(format2)) {
 		buffree(format2);
-		free(r);
+		FREE(r);
 		return format1;
 	} else {
 		buffree(format1);
-		free(r);
+		FREE(r);
 		return format2;
 	}
 }

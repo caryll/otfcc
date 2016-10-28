@@ -29,10 +29,10 @@
 
 #ifndef CARYLL_SUPPORT_TTINSTR_H
 #define CARYLL_SUPPORT_TTINSTR_H
-#include "util.h"
+#include "../util.h"
 
 void parse_ttinstr(json_value *col, void *context, void (*Make)(void *, uint8_t *, uint32_t),
-                     void (*Wrong)(void *, char *, int));
+                   void (*Wrong)(void *, char *, int));
 json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const otfcc_Options *options);
 
 #endif

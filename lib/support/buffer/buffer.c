@@ -1,17 +1,15 @@
 #include "caryll/buffer.h"
+#include "support/otfcc-alloc.h"
 
 caryll_Buffer *bufnew() {
-	caryll_Buffer *buf = malloc(sizeof(caryll_Buffer));
-	buf->size = 0;
-	buf->free = 0;
-	buf->cursor = 0;
-	buf->data = NULL;
+	caryll_Buffer *buf;
+	NEW(buf);
 	return buf;
 }
 void buffree(caryll_Buffer *buf) {
 	if (!buf) return;
-	if (buf->data) free(buf->data);
-	free(buf);
+	if (buf->data) FREE(buf->data);
+	FREE(buf);
 }
 size_t buflen(caryll_Buffer *buf) {
 	return buf->size;
@@ -44,11 +42,7 @@ static void bufbeforewrite(caryll_Buffer *buf, size_t towrite) {
 		buf->size = required;
 		buf->free = required; // Double growth
 		if (buf->free > 0x1000000) { buf->free = 0x1000000; }
-		if (buf->data) {
-			buf->data = realloc(buf->data, sizeof(uint8_t) * (buf->size + buf->free));
-		} else {
-			buf->data = calloc(buf->size + buf->free, sizeof(uint8_t));
-		}
+		RESIZE(buf->data, buf->size + buf->free);
 	}
 }
 void bufwrite8(caryll_Buffer *buf, uint8_t byte) {

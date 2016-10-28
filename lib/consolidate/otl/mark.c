@@ -58,7 +58,7 @@ static void consolidateMarkArray(caryll_Font *font, table_OTL *table, const otfc
 		markArray->records[k] = s->markrec;
 		k++;
 		HASH_DEL(hm, s);
-		free(s);
+		FREE(s);
 	}
 }
 
@@ -78,11 +78,11 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, const otfc
 				s->anchors = baseArray[k];
 				HASH_ADD_INT(hm, gid, s);
 			} else {
-				free(baseArray[k]);
+				FREE(baseArray[k]);
 				logWarning("[Consolidate] Ignored anchor  double-definition for /%s.", bases->glyphs[k].name);
 			}
 		} else {
-			free(baseArray[k]);
+			FREE(baseArray[k]);
 		}
 	}
 	HASH_SORT(hm, base_by_gid);
@@ -94,7 +94,7 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, const otfc
 		baseArray[k] = s->anchors;
 		k++;
 		HASH_DEL(hm, s);
-		free(s);
+		FREE(s);
 	}
 }
 
@@ -129,7 +129,7 @@ static void consolidateLigArray(caryll_Font *font, table_OTL *table, const otfcc
 		ligArray[k] = s->ligAttachment;
 		k++;
 		HASH_DEL(hm, s);
-		free(s);
+		FREE(s);
 	}
 }
 

@@ -2,7 +2,8 @@
 #include "otfcc/table/vhea.h"
 
 table_vhea *table_new_vhea() {
-	table_vhea *vhea = calloc(1, sizeof(table_vhea));
+	table_vhea *vhea;
+	NEW(vhea);
 	vhea->version = 0x11000;
 	return vhea;
 }
@@ -16,7 +17,7 @@ table_vhea *table_read_vhea(const caryll_Packet packet, const otfcc_Options *opt
 		font_file_pointer data = table.data;
 		size_t length = table.length;
 		if (length >= 36) {
-			vhea = (table_vhea *)malloc(sizeof(table_vhea) * 1);
+			NEW(vhea);
 			vhea->version = read_32s(data);
 			vhea->ascent = read_16s(data + 4);
 			vhea->descent = read_16s(data + 6);

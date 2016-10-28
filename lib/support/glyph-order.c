@@ -147,7 +147,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, caryll_GlyphOrder *
 	}
 }
 
-caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *options) {
+caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, const otfcc_Options *options) {
 	caryll_GlyphOrder *go = caryll_new_GlyphOrder();
 	if (root->type != json_object) return go;
 	json_value *table;

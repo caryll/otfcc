@@ -30,7 +30,7 @@ void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, const otfcc_Options *
 					HASH_ADD_INT(h, gid, s);
 				} else {
 					logWarning("[Consolidate] Detected caret value double-mapping about glyph %s", gname);
-					free(gdef->ligCarets->carets[j].values);
+					FREE(gdef->ligCarets->carets[j].values);
 				}
 			}
 		}
@@ -43,7 +43,7 @@ void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, const otfcc_Options *
 			gdef->ligCarets->carets[j] = s->cr;
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 }

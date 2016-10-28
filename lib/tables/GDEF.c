@@ -46,7 +46,7 @@ static otl_CaretValueRecord readLigCaretRecord(const font_file_pointer data, uin
 	g.values = NULL;
 	g.caretCount = read_16u(data + offset);
 	checkLength(offset + 2 + g.caretCount * 2);
-	NEW_N(g.values, g.caretCount);
+	NEW(g.values, g.caretCount);
 
 	for (glyphid_t j = 0; j < g.caretCount; j++) {
 		g.values[j] = readCaretValue(data, tableLength, offset + read_16u(data + offset + 2 + j * 2));
@@ -77,7 +77,7 @@ table_GDEF *table_read_GDEF(const caryll_Packet packet, const otfcc_Options *opt
 			checkLength(ligCaretOffset + 4 + cov->numGlyphs * 2);
 			if (cov->numGlyphs) {
 				gdef->ligCarets->coverage = cov;
-				NEW_N(gdef->ligCarets->carets, cov->numGlyphs);
+				NEW(gdef->ligCarets->carets, cov->numGlyphs);
 				for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 					gdef->ligCarets->carets[j] = readLigCaretRecord(
 					    data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
@@ -140,8 +140,8 @@ static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
 	NEW(lc);
 	NEW(lc->coverage);
 	lc->coverage->numGlyphs = _carets->u.object.length;
-	NEW_N(lc->coverage->glyphs, lc->coverage->numGlyphs);
-	NEW_N(lc->carets, lc->coverage->numGlyphs);
+	NEW(lc->coverage->glyphs, lc->coverage->numGlyphs);
+	NEW(lc->carets, lc->coverage->numGlyphs);
 
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < lc->coverage->numGlyphs; j++) {
@@ -150,7 +150,7 @@ static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
 		lc->coverage->glyphs[jj] =
 		    handle_fromName(sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length));
 		lc->carets[jj].caretCount = a->u.array.length;
-		NEW_N(lc->carets[jj].values, lc->carets[jj].caretCount);
+		NEW(lc->carets[jj].values, lc->carets[jj].caretCount);
 		for (glyphid_t k = 0; k < lc->carets[jj].caretCount; k++) {
 			lc->carets[jj].values[k].format = 1;
 			lc->carets[jj].values[k].coordiante = 0;

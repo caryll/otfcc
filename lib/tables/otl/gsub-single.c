@@ -3,7 +3,7 @@ void otl_delete_gsub_single(otl_Subtable *subtable) {
 	if (subtable) {
 		otl_delete_Coverage(subtable->gsub_single.from);
 		otl_delete_Coverage(subtable->gsub_single.to);
-		free(subtable);
+		FREE(subtable);
 	}
 }
 
@@ -21,7 +21,7 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 		otl_Coverage *to;
 		NEW(to);
 		to->numGlyphs = from->numGlyphs;
-		NEW_N(to->glyphs, to->numGlyphs);
+		NEW(to->glyphs, to->numGlyphs);
 
 		uint16_t delta = read_16u(data + subtableOffset + 4);
 		for (glyphid_t j = 0; j < from->numGlyphs; j++) {
@@ -34,7 +34,7 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 		otl_Coverage *to;
 		NEW(to);
 		to->numGlyphs = toglyphs;
-		NEW_N(to->glyphs, to->numGlyphs);
+		NEW(to->glyphs, to->numGlyphs);
 
 		for (glyphid_t j = 0; j < to->numGlyphs; j++) {
 			to->glyphs[j] = handle_fromIndex(read_16u(data + subtableOffset + 6 + j * 2));
@@ -66,8 +66,8 @@ otl_Subtable *otl_gsub_parse_single(const json_value *_subtable, const otfcc_Opt
 	NEW(subtable->from);
 	NEW(subtable->to);
 	subtable->from->numGlyphs = subtable->to->numGlyphs = _subtable->u.object.length;
-	NEW_N(subtable->from->glyphs, subtable->from->numGlyphs);
-	NEW_N(subtable->to->glyphs, subtable->to->numGlyphs);
+	NEW(subtable->from->glyphs, subtable->from->numGlyphs);
+	NEW(subtable->to->glyphs, subtable->to->numGlyphs);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_string) {

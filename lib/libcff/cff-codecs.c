@@ -53,7 +53,7 @@ caryll_Buffer *cff_encodeCffFloat(double val) {
 
 	if (val == 0.0) {
 		blob->size = 2;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
+		NEW(blob->data, blob->size);
 		blob->data[0] = 30;
 		blob->data[1] = 0x0f;
 	} else {
@@ -75,14 +75,14 @@ caryll_Buffer *cff_encodeCffFloat(double val) {
 		}
 
 		blob->size = 2 + niblen / 2;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
+		NEW(blob->data, blob->size);
 		blob->data[0] = 30;
 
 		if (niblen % 2 != 0) {
-			array = calloc((niblen + 1), sizeof(uint8_t));
+			NEW(array, (niblen + 1));
 			array[niblen] = 0x0f;
 		} else {
-			array = calloc((niblen + 2), sizeof(uint8_t));
+			NEW(array, (niblen + 2));
 			array[niblen + 1] = 0x0f;
 			array[niblen] = 0x0f;
 		}
@@ -104,7 +104,7 @@ caryll_Buffer *cff_encodeCffFloat(double val) {
 			blob->data[i] = array[(i - 1) * 2] * 16 + array[(i - 1) * 2 + 1];
 		}
 
-		free(array);
+		FREE(array);
 	}
 
 	return blob;

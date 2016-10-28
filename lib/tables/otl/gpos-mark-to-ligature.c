@@ -5,10 +5,10 @@ void delete_lig_attachment(otl_MarkToLigatureBase *att) {
 	if (!att) return;
 	if (att->anchors) {
 		for (glyphid_t k = 0; k < att->componentCount; k++)
-			free(att->anchors[k]);
-		free(att->anchors);
+			FREE(att->anchors[k]);
+		FREE(att->anchors);
 	}
-	free(att);
+	FREE(att);
 }
 
 void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
@@ -21,11 +21,11 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 				for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 					delete_lig_attachment(subtable->ligArray[j]);
 				}
-				free(subtable->ligArray);
+				FREE(subtable->ligArray);
 			}
 			otl_delete_Coverage(subtable->bases);
 		}
-		free(_subtable);
+		FREE(_subtable);
 	}
 }
 
@@ -47,7 +47,7 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 	uint32_t ligArrayOffset = offset + read_16u(data + offset + 10);
 	checkLength(ligArrayOffset + 2 + 2 * subtable->bases->numGlyphs);
 	if (read_16u(data + ligArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
-	NEW_N(subtable->ligArray, subtable->bases->numGlyphs);
+	NEW(subtable->ligArray, subtable->bases->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 		subtable->ligArray[j] = NULL;
 	}
@@ -59,11 +59,11 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 		subtable->ligArray[j]->componentCount = read_16u(data + ligAttachOffset);
 
 		checkLength(ligAttachOffset + 2 + 2 * subtable->ligArray[j]->componentCount * subtable->classCount);
-		NEW_N(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
+		NEW(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
 
 		uint32_t _offset = ligAttachOffset + 2;
 		for (glyphid_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
-			NEW_N(subtable->ligArray[j]->anchors[k], subtable->classCount);
+			NEW(subtable->ligArray[j]->anchors[k], subtable->classCount);
 			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
 				uint32_t anchorOffset = read_16u(data + _offset);
 				if (anchorOffset) {
@@ -133,10 +133,10 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtabl
                        const otfcc_Options *options) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
-	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
+	NEW(subtable->marks->glyphs, subtable->marks->numGlyphs);
 	NEW(subtable->markArray);
 	subtable->markArray->markCount = _marks->u.object.length;
-	NEW_N(subtable->markArray->records, subtable->markArray->markCount);
+	NEW(subtable->markArray->records, subtable->markArray->markCount);
 	for (glyphid_t j = 0; j < _marks->u.object.length; j++) {
 		char *gname = _marks->u.object.values[j].name;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
@@ -171,8 +171,8 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 	glyphclass_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
-	NEW_N(subtable->bases->glyphs, subtable->bases->numGlyphs);
-	NEW_N(subtable->ligArray, _bases->u.object.length);
+	NEW(subtable->bases->glyphs, subtable->bases->numGlyphs);
+	NEW(subtable->ligArray, _bases->u.object.length);
 	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
 		char *gname = _bases->u.object.values[j].name;
 		subtable->bases->glyphs[j] =
@@ -185,11 +185,11 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 		if (!baseRecord || baseRecord->type != json_array) continue;
 		subtable->ligArray[j]->componentCount = baseRecord->u.array.length;
 
-		NEW_N(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
+		NEW(subtable->ligArray[j]->anchors, subtable->ligArray[j]->componentCount);
 
 		for (glyphid_t k = 0; k < subtable->ligArray[j]->componentCount; k++) {
 			json_value *_componentRecord = baseRecord->u.array.values[k];
-			NEW_N(subtable->ligArray[j]->anchors[k], classCount);
+			NEW(subtable->ligArray[j]->anchors[k], classCount);
 			for (glyphclass_t m = 0; m < classCount; m++) {
 				subtable->ligArray[j]->anchors[k][m] = otl_anchor_absent();
 			}
@@ -228,7 +228,7 @@ otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const o
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		sdsfree(s->className);
-		free(s);
+		FREE(s);
 	}
 
 	return st;

@@ -6,7 +6,7 @@
 #include "stopwatch.h"
 
 #include <getopt.h>
-#include "support/aliases.h"
+#include "aliases.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -274,28 +274,28 @@ int main(int argc, char *argv[]) {
 
 	caryll_Font *font;
 	loggedStep("Parse") {
-		font = caryll_parse_Font(root, options);
+		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
+		font = parser->create(root, 0, options);
 		if (!font) {
 			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
+		parser->dispose(parser);
 		json_value_free(root);
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
 		caryll_font_consolidate(font, options);
-		caryll_font_stat(font, options);
 		logStepTime;
 	}
 	loggedStep("Build") {
-		caryll_Buffer *otf = caryll_build_Font(font, options);
+		otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
+		caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		logStepTime;
-		sdsfree(outputPath);
-		buffree(otf);
-		caryll_delete_Font(font);
+		buffree(otf), writer->dispose(writer), caryll_delete_Font(font), sdsfree(outputPath);
 	}
 	options_delete(options);
 	return 0;

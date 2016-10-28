@@ -3,8 +3,8 @@
 void otl_delete_gpos_single(otl_Subtable *subtable) {
 	if (subtable) {
 		otl_delete_Coverage(subtable->gpos_single.coverage);
-		free(subtable->gpos_single.values);
-		free(subtable);
+		FREE(subtable->gpos_single.values);
+		FREE(subtable);
 	}
 }
 
@@ -20,7 +20,7 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 	uint16_t subtableFormat = read_16u(data + offset);
 	subtable->coverage = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
-	NEW_N(subtable->values, subtable->coverage->numGlyphs);
+	NEW(subtable->values, subtable->coverage->numGlyphs);
 
 	if (subtableFormat == 1) {
 		otl_PositionValue v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
@@ -41,7 +41,7 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 	goto OK;
 FAIL:
 	if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
-	if (subtable->values) free(subtable->values);
+	if (subtable->values) FREE(subtable->values);
 	_subtable = NULL;
 OK:
 	return _subtable;
@@ -60,8 +60,8 @@ otl_Subtable *otl_gpos_parse_single(const json_value *_subtable, const otfcc_Opt
 	NEW(_st);
 	subtable_gpos_single *subtable = &(_st->gpos_single);
 	NEW(subtable->coverage);
-	NEW_N(subtable->coverage->glyphs, _subtable->u.object.length);
-	NEW_N(subtable->values, _subtable->u.object.length);
+	NEW(subtable->coverage->glyphs, _subtable->u.object.length);
+	NEW(subtable->values, _subtable->u.object.length);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {

@@ -2,17 +2,18 @@
 #include "otfcc/table/LTSH.h"
 
 void table_delete_LTSH(table_LTSH *ltsh) {
-	if (ltsh) { free(ltsh->yPels); }
-	free(ltsh);
+	if (ltsh) { FREE(ltsh->yPels); }
+	FREE(ltsh);
 }
 table_LTSH *table_read_LTSH(const caryll_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('LTSH', table) {
 		font_file_pointer data = table.data;
 
-		table_LTSH *LTSH = (table_LTSH *)malloc(sizeof(table_LTSH) * 1);
+		table_LTSH *LTSH;
+		NEW(LTSH);
 		LTSH->version = read_16u(data);
 		LTSH->numGlyphs = read_16u(data + 2);
-		LTSH->yPels = (uint8_t *)malloc(sizeof(uint8_t) * LTSH->numGlyphs);
+		NEW(LTSH->yPels, LTSH->numGlyphs);
 		memcpy(LTSH->yPels, data + 4, LTSH->numGlyphs);
 
 		return LTSH;

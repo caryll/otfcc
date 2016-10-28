@@ -6,19 +6,19 @@ void otl_delete_gpos_pair(otl_Subtable *_subtable) {
 		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 		if (subtable->firstValues) {
 			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-				free(subtable->firstValues[j]);
+				FREE(subtable->firstValues[j]);
 			}
-			free(subtable->firstValues);
+			FREE(subtable->firstValues);
 		}
 		if (subtable->secondValues) {
 			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-				free(subtable->secondValues[j]);
+				FREE(subtable->secondValues[j]);
 			}
-			free(subtable->secondValues);
+			FREE(subtable->secondValues);
 		}
 		otl_delete_ClassDef(subtable->first);
 		otl_delete_ClassDef(subtable->second);
-		free(_subtable);
+		FREE(_subtable);
 	}
 }
 
@@ -47,11 +47,11 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		subtable->first->numGlyphs = cov->numGlyphs;
 		subtable->first->maxclass = cov->numGlyphs - 1;
 		subtable->first->glyphs = cov->glyphs;
-		NEW_N(subtable->first->classes, cov->numGlyphs);
+		NEW(subtable->first->classes, cov->numGlyphs);
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			subtable->first->classes[j] = j;
 		}
-		free(cov);
+		FREE(cov);
 
 		uint16_t format1 = read_16u(data + offset + 4);
 		uint16_t format2 = read_16u(data + offset + 6);
@@ -90,15 +90,15 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		NEW(subtable->second);
 		subtable->second->numGlyphs = HASH_COUNT(h);
 		subtable->second->maxclass = HASH_COUNT(h);
-		NEW_N(subtable->second->classes, subtable->second->numGlyphs);
-		NEW_N(subtable->second->glyphs, subtable->second->numGlyphs);
+		NEW(subtable->second->classes, subtable->second->numGlyphs);
+		NEW(subtable->second->glyphs, subtable->second->numGlyphs);
 		glyphclass_t class2Count = subtable->second->maxclass + 1;
 
-		NEW_N(subtable->firstValues, subtable->first->maxclass + 1);
-		NEW_N(subtable->secondValues, subtable->first->maxclass + 1);
+		NEW(subtable->firstValues, subtable->first->maxclass + 1);
+		NEW(subtable->secondValues, subtable->first->maxclass + 1);
 		for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-			NEW_N(subtable->firstValues[j], class2Count);
-			NEW_N(subtable->secondValues[j], class2Count);
+			NEW(subtable->firstValues[j], class2Count);
+			NEW(subtable->secondValues[j], class2Count);
 			for (glyphclass_t k = 0; k < class2Count; k++) {
 				subtable->firstValues[j][k] = position_zero();
 				subtable->secondValues[j][k] = position_zero();
@@ -127,7 +127,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 			subtable->second->classes[jj] = s->cid;
 			jj++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 		return _subtable;
 	} else if (subtableFormat == 2) {
@@ -150,12 +150,12 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 
 		checkLength(offset + 16 + class1Count * class2Count * (len1 + len2));
 		// read the matrix
-		NEW_N(subtable->firstValues, class1Count);
-		NEW_N(subtable->secondValues, class1Count);
+		NEW(subtable->firstValues, class1Count);
+		NEW(subtable->secondValues, class1Count);
 
 		for (glyphclass_t j = 0; j < class1Count; j++) {
-			NEW_N(subtable->firstValues[j], class2Count);
-			NEW_N(subtable->secondValues[j], class2Count);
+			NEW(subtable->firstValues[j], class2Count);
+			NEW(subtable->secondValues[j], class2Count);
 			for (glyphclass_t k = 0; k < class2Count; k++) {
 				subtable->firstValues[j][k] =
 				    read_gpos_value(data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2), format1);
@@ -219,12 +219,12 @@ otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable, const otfcc_Optio
 	glyphclass_t class1Count = subtable->first->maxclass + 1;
 	glyphclass_t class2Count = subtable->second->maxclass + 1;
 
-	NEW_N(subtable->firstValues, class1Count);
-	NEW_N(subtable->secondValues, class1Count);
+	NEW(subtable->firstValues, class1Count);
+	NEW(subtable->secondValues, class1Count);
 
 	for (glyphclass_t j = 0; j < class1Count; j++) {
-		NEW_N(subtable->firstValues[j], class2Count);
-		NEW_N(subtable->secondValues[j], class2Count);
+		NEW(subtable->firstValues[j], class2Count);
+		NEW(subtable->secondValues[j], class2Count);
 		for (glyphclass_t k = 0; k < class2Count; k++) {
 			subtable->firstValues[j][k] = position_zero();
 			subtable->secondValues[j][k] = position_zero();
@@ -254,7 +254,7 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	otl_Coverage *cov;
 	NEW(cov);
 	cov->numGlyphs = cd->numGlyphs;
-	NEW_N(cov->glyphs, cd->numGlyphs);
+	NEW(cov->glyphs, cd->numGlyphs);
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		cov->glyphs[j] = handle_copy(cd->glyphs[j]);
 	}
@@ -275,7 +275,7 @@ bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 	}
 	glyphid_t *pairCounts;
-	NEW_N(pairCounts, subtable->first->numGlyphs);
+	NEW(pairCounts, subtable->first->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->first->numGlyphs; j++) {
 		pairCounts[j] = 0;
 		for (glyphid_t k = 0; k < subtable->second->numGlyphs; k++) {

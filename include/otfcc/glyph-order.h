@@ -29,7 +29,7 @@ sds caryll_setGlyphOrderByGID(caryll_GlyphOrder *go, glyphid_t gid, sds name);
 glyphid_t caryll_setGlyphOrderByName(caryll_GlyphOrder *go, sds name, glyphid_t gid);
 void caryll_setGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry);
 void caryll_orderGlyphs(caryll_GlyphOrder *go);
-caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, otfcc_Options *options);
+caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, const otfcc_Options *options);
 bool gord_nameAFieldShared(caryll_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
 bool gord_consolidateHandle(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
 caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name);

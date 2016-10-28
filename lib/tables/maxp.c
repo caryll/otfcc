@@ -2,7 +2,8 @@
 #include "otfcc/table/maxp.h"
 
 table_maxp *table_new_maxp() {
-	table_maxp *maxp = calloc(1, sizeof(table_maxp));
+	table_maxp *maxp;
+	NEW(maxp);
 	maxp->version = 0x00010000;
 	return maxp;
 }
@@ -19,7 +20,8 @@ table_maxp *table_read_maxp(const caryll_Packet packet, const otfcc_Options *opt
 		if (length != 32 && length != 6) {
 			logWarning("table 'maxp' corrupted.\n");
 		} else {
-			table_maxp *maxp = (table_maxp *)malloc(sizeof(table_maxp) * 1);
+			table_maxp *maxp;
+			NEW(maxp);
 			maxp->version = read_32s(data);
 			maxp->numGlyphs = read_16u(data + 4);
 			if (maxp->version == 0x00010000) { // TrueType Format 1
