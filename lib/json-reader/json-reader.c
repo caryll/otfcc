@@ -29,7 +29,7 @@ static void setOrderByName(otfcc_GlyphOrder *go, sds name, uint8_t orderType, ui
 	}
 }
 
-static int compare_glyphorder_entry_b(otfcc_GlyphOrderEntry *a, otfcc_GlyphOrderEntry *b) {
+static int _byOrder(otfcc_GlyphOrderEntry *a, otfcc_GlyphOrderEntry *b) {
 	if (a->orderType < b->orderType) return (-1);
 	if (a->orderType > b->orderType) return (1);
 	if (a->orderEntry < b->orderEntry) return (-1);
@@ -39,7 +39,7 @@ static int compare_glyphorder_entry_b(otfcc_GlyphOrderEntry *a, otfcc_GlyphOrder
 
 // Complete ClyphOrder
 static void orderGlyphs(otfcc_GlyphOrder *go) {
-	HASH_SRT(hhName, go->byName, compare_glyphorder_entry_b);
+	HASH_SRT(hhName, go->byName, _byOrder);
 	otfcc_GlyphOrderEntry *current, *temp;
 	glyphid_t gid = 0;
 	HASH_ITER(hhName, go->byName, current, temp) {
