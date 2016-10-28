@@ -44,7 +44,6 @@ void printHelp() {
 	                "                             used. In this level, these options will be set:\n"
 	                "                               --force-cid\n"
 	                "                               --subroutinize\n"
-	                " --time                    : Time each substep.\n"
 	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
