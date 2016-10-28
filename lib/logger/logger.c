@@ -13,10 +13,10 @@ typedef struct Logger {
 
 const char *otfcc_LoggerTypeNames[3] = {"[ERROR]", "[WARNING]", "[NOTE]"};
 
-static void loggerIndent(void *_self, const char *segment) {
+static void loggerIndent(otfcc_ILogger *_self, const char *segment) {
 	((otfcc_ILogger *)_self)->indentSDS(_self, sdsnew(segment));
 }
-static void loggerIndentSDS(void *_self, MOVE sds segment) {
+static void loggerIndentSDS(otfcc_ILogger *_self, MOVE sds segment) {
 	Logger *self = (Logger *)_self;
 	uint8_t newLevel = self->level + 1;
 	if (newLevel > self->levelCap) {
@@ -27,28 +27,28 @@ static void loggerIndentSDS(void *_self, MOVE sds segment) {
 	self->indents[self->level - 1] = segment;
 }
 
-static void loggerDedent(void *_self) {
+static void loggerDedent(otfcc_ILogger *_self) {
 	Logger *self = (Logger *)_self;
 	if (!self->level) return;
 	sdsfree(self->indents[self->level - 1]);
 	self->level -= 1;
 	if (self->level < self->lastLoggedLevel) { self->lastLoggedLevel = self->level; }
 }
-static void loggerStart(void *_self, const char *segment) {
+static void loggerStart(otfcc_ILogger *_self, const char *segment) {
 	((otfcc_ILogger *)_self)
 	    ->logSDS(_self, log_vl_progress + ((Logger *)_self)->level, log_type_progress, sdsnew(segment));
 	((otfcc_ILogger *)_self)->indentSDS(_self, sdsnew(segment));
 }
-static void loggerStartSDS(void *_self, MOVE sds segment) {
+static void loggerStartSDS(otfcc_ILogger *_self, MOVE sds segment) {
 	((otfcc_ILogger *)_self)
 	    ->logSDS(_self, log_vl_progress + ((Logger *)_self)->level, log_type_progress, sdsdup(segment));
 	((otfcc_ILogger *)_self)->indentSDS(_self, segment);
 }
-static void loggerLog(void *_self, uint8_t verbosity, otfcc_LoggerType type, const char *data) {
+static void loggerLog(otfcc_ILogger *_self, uint8_t verbosity, otfcc_LoggerType type, const char *data) {
 	((otfcc_ILogger *)_self)->logSDS(_self, verbosity, type, sdsnew(data));
 }
 
-static void loggerLogSDS(void *_self, uint8_t verbosity, otfcc_LoggerType type, MOVE sds data) {
+static void loggerLogSDS(otfcc_ILogger *_self, uint8_t verbosity, otfcc_LoggerType type, MOVE sds data) {
 	Logger *self = (Logger *)_self;
 	sds demand = sdsempty();
 	for (uint16_t level = 0; level < self->level; level++) {
@@ -65,27 +65,27 @@ static void loggerLogSDS(void *_self, uint8_t verbosity, otfcc_LoggerType type, 
 	}
 	sdsfree(data);
 	if (verbosity <= self->verbosityLimit) {
-		((otfcc_ILogger *)self)->getTarget(self)->push(self->target, demand);
+		_self->getTarget(_self)->push(self->target, demand);
 		self->lastLoggedLevel = self->level;
 	} else {
 		sdsfree(demand);
 	}
 }
 
-static otfcc_ILoggerTarget *loggerGetTarget(void *_self) {
+static otfcc_ILoggerTarget *loggerGetTarget(otfcc_ILogger *_self) {
 	Logger *self = (Logger *)_self;
 	return (otfcc_ILoggerTarget *)self->target;
 }
 
-static void loggerSetVerbosity(void *_self, uint8_t verbosity) {
+static void loggerSetVerbosity(otfcc_ILogger *_self, uint8_t verbosity) {
 	Logger *self = (Logger *)_self;
 	self->verbosityLimit = verbosity;
 }
 
-static void loggerDispose(void *_self) {
+static void loggerDispose(otfcc_ILogger *_self) {
 	Logger *self = (Logger *)_self;
 	if (!self) return;
-	otfcc_ILoggerTarget *target = ((otfcc_ILogger *)self)->getTarget(self);
+	otfcc_ILoggerTarget *target = _self->getTarget(_self);
 	target->dispose(target);
 	for (uint16_t level = 0; level < self->level; level++) {
 		sdsfree(self->indents[level]);
@@ -117,13 +117,13 @@ otfcc_ILogger *otfcc_new_Logger(otfcc_ILoggerTarget *target) {
 
 typedef struct StderrTarget { otfcc_ILoggerTarget vtable; } StderrTarget;
 
-void stderrTargetDispose(void *_self) {
+void stderrTargetDispose(otfcc_ILoggerTarget *_self) {
 	StderrTarget *self = (StderrTarget *)_self;
 	if (!self) return;
 	FREE(self);
 }
 
-void stderrTargetPush(void *_self, MOVE sds data) {
+void stderrTargetPush(otfcc_ILoggerTarget *_self, MOVE sds data) {
 	fprintf(stderr, "%s", data);
 	if (data[sdslen(data) - 1] != '\n') fprintf(stderr, "\n");
 	sdsfree(data);
