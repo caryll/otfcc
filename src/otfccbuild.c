@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 
-	otfcc_Options *options = options_new();
+	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccbuild");
 
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
 				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				options_optimizeTo(options, atoi(optarg));
+				otfcc_Options_optimizeTo(options, atoi(optarg));
 				break;
 		}
 	}
@@ -296,6 +296,6 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 		buffree(otf), writer->dispose(writer), otfcc_deleteFont(font), sdsfree(outputPath);
 	}
-	options_delete(options);
+	otfcc_deleteOptions(options);
 	return 0;
 }

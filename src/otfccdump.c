@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
 
-	otfcc_Options *options = options_new();
+	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccdump");
 
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 	loggedStep("Read SFNT") {
 		logProgress("From file %s", inPath);
 		FILE *file = u8fopen(inPath, "rb");
-		sfnt = otfcc_read_SFNT(file);
+		sfnt = otfcc_readSFNT(file);
 		if (!sfnt || sfnt->count == 0) {
 			logError("Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -265,6 +265,6 @@ int main(int argc, char *argv[]) {
 		if (outputPath) sdsfree(outputPath);
 		logStepTime;
 	}
-	options_delete(options);
+	otfcc_deleteOptions(options);
 	return 0;
 }

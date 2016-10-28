@@ -28,7 +28,7 @@ typedef struct {
 	otfcc_Packet *packets;
 } otfcc_SplineFontContainer;
 
-otfcc_SplineFontContainer *otfcc_read_SFNT(FILE *file);
+otfcc_SplineFontContainer *otfcc_readSFNT(FILE *file);
 void otfcc_deleteSFNT(otfcc_SplineFontContainer *font);
 
 #endif
