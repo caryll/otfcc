@@ -21,7 +21,7 @@ caryll_Buffer *cff_build_FDSelect(cff_FDSelect fd) {
 		case cff_FDSELECT_FORMAT0: {
 			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + fd.s;
-			NEW_N(blob->data, blob->size);
+			NEW(blob->data, blob->size);
 			for (uint16_t j = 0; j < fd.s; j++) {
 				blob->data[j] = fd.f0.fds[j];
 			}
@@ -30,7 +30,7 @@ caryll_Buffer *cff_build_FDSelect(cff_FDSelect fd) {
 		case cff_FDSELECT_FORMAT3: {
 			caryll_Buffer *blob = bufnew();
 			blob->size = 5 + fd.f3.nranges * 3;
-			NEW_N(blob->data, blob->size);
+			NEW(blob->data, blob->size);
 			blob->data[0] = 3;
 			blob->data[1] = fd.f3.nranges / 256;
 			blob->data[2] = fd.f3.nranges % 256;
@@ -52,7 +52,7 @@ void cff_extract_FDSelect(uint8_t *data, int32_t offset, uint16_t nchars, cff_FD
 			fdselect->t = cff_FDSELECT_FORMAT0;
 			fdselect->f0.format = 0;
 			fdselect->s = nchars;
-			NEW_N(fdselect->f0.fds, nchars);
+			NEW(fdselect->f0.fds, nchars);
 
 			for (uint32_t i = 0; i < nchars; i++) {
 				fdselect->f0.fds[i] = gu1(data, offset + 1 + i);
@@ -63,7 +63,7 @@ void cff_extract_FDSelect(uint8_t *data, int32_t offset, uint16_t nchars, cff_FD
 			fdselect->t = cff_FDSELECT_FORMAT3;
 			fdselect->f3.format = 3;
 			fdselect->f3.nranges = gu2(data, offset + 1);
-			NEW_N(fdselect->f3.range3, fdselect->f3.nranges);
+			NEW(fdselect->f3.range3, fdselect->f3.nranges);
 
 			for (uint32_t i = 0; i < fdselect->f3.nranges; i++) {
 				fdselect->f3.range3[i].first = gu2(data, offset + 3 + i * 3);

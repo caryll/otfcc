@@ -10,12 +10,12 @@ table_hdmx *table_read_hdmx(caryll_Packet packet, const otfcc_Options *options, 
 		hdmx->version = read_16u(data);
 		hdmx->numRecords = read_16u(data + 2);
 		hdmx->sizeDeviceRecord = read_32u(data + 4);
-		NEW_N(hdmx->records, hdmx->numRecords);
+		NEW(hdmx->records, hdmx->numRecords);
 
 		for (uint32_t i = 0; i < hdmx->numRecords; i++) {
 			hdmx->records[i].pixelSize = *(data + 8 + i * (2 + maxp->numGlyphs));
 			hdmx->records[i].maxWidth = *(data + 8 + i * (2 + maxp->numGlyphs) + 1);
-			NEW_N(hdmx->records[i].widths, maxp->numGlyphs);
+			NEW(hdmx->records[i].widths, maxp->numGlyphs);
 			memcpy(hdmx->records[i].widths, data + 8 + i * (2 + maxp->numGlyphs) + 2, maxp->numGlyphs);
 		}
 

@@ -10,14 +10,14 @@ static void caryll_read_packets(caryll_SplineFontContainer *font, FILE *file) {
 		font->packets[count].searchRange = caryll_get16u(file);
 		font->packets[count].entrySelector = caryll_get16u(file);
 		font->packets[count].rangeShift = caryll_get16u(file);
-		NEW_N(font->packets[count].pieces, font->packets[count].numTables);
+		NEW(font->packets[count].pieces, font->packets[count].numTables);
 
 		for (uint32_t i = 0; i < font->packets[count].numTables; i++) {
 			font->packets[count].pieces[i].tag = caryll_get32u(file);
 			font->packets[count].pieces[i].checkSum = caryll_get32u(file);
 			font->packets[count].pieces[i].offset = caryll_get32u(file);
 			font->packets[count].pieces[i].length = caryll_get32u(file);
-			NEW_N(font->packets[count].pieces[i].data, font->packets[count].pieces[i].length);
+			NEW(font->packets[count].pieces[i].data, font->packets[count].pieces[i].length);
 		}
 
 		for (uint32_t i = 0; i < font->packets[0].numTables; i++) {
@@ -40,8 +40,8 @@ caryll_SplineFontContainer *caryll_read_SFNT(FILE *file) {
 		case 'true':
 		case 'typ1':
 			font->count = 1;
-			NEW_N(font->offsets, font->count);
-			NEW_N(font->packets, font->count);
+			NEW(font->offsets, font->count);
+			NEW(font->packets, font->count);
 			font->offsets[0] = 0;
 			caryll_read_packets(font, file);
 			break;
@@ -49,8 +49,8 @@ caryll_SplineFontContainer *caryll_read_SFNT(FILE *file) {
 		case 'ttcf':
 			(void)caryll_get32u(file);
 			font->count = caryll_get32u(file);
-			NEW_N(font->offsets, font->count);
-			NEW_N(font->packets, font->count);
+			NEW(font->offsets, font->count);
+			NEW(font->packets, font->count);
 
 			for (uint32_t i = 0; i < font->count; i++) {
 				font->offsets[i] = caryll_get32u(file);

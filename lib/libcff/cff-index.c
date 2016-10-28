@@ -38,7 +38,7 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 	in->offSize = gu1(data, pos + 2);
 
 	if (in->count > 0) {
-		NEW_N(in->offset, in->count + 1);
+		NEW(in->offset, in->count + 1);
 
 		for (int i = 0; i <= in->count; i++) {
 			switch (in->offSize) {
@@ -57,7 +57,7 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 			}
 		}
 
-		NEW_N(in->data, in->offset[in->count] - 1);
+		NEW(in->data, in->offset[in->count] - 1);
 		memcpy(in->data, data + pos + 3 + (in->count + 1) * in->offSize, in->offset[in->count] - 1);
 	} else {
 		in->offset = NULL;
@@ -68,7 +68,7 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t)) {
 	cff_Index *idx = cff_new_Index();
 	idx->count = length;
-	NEW_N(idx->offset, idx->count + 1);
+	NEW(idx->offset, idx->count + 1);
 	idx->offset[0] = 1;
 	idx->data = NULL;
 
@@ -118,7 +118,7 @@ caryll_Buffer *cff_build_Index(cff_Index index) {
 	else
 		blob->size = 3;
 
-	NEW_N(blob->data, blob->size);
+	NEW(blob->data, blob->size);
 	blob->data[0] = index.count / 256;
 	blob->data[1] = index.count % 256;
 	blob->data[2] = index.offSize;

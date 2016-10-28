@@ -15,7 +15,7 @@ void cff_extract_Charset(uint8_t *data, int32_t offset, uint16_t nchars, cff_Cha
 				charsets->t = cff_CHARSET_FORMAT0;
 				{
 					charsets->s = nchars - 1;
-					NEW_N(charsets->f0.glyph, nchars - 1);
+					NEW(charsets->f0.glyph, nchars - 1);
 
 					for (i = 0; i < charsets->s; i++)
 						charsets->f0.glyph[i] = gu2(data, offset + 1 + i * 2);
@@ -32,7 +32,7 @@ void cff_extract_Charset(uint8_t *data, int32_t offset, uint16_t nchars, cff_Cha
 
 					size = i;
 					charsets->s = size;
-					NEW_N(charsets->f1.range1, i + 1);
+					NEW(charsets->f1.range1, i + 1);
 					for (i = 0; i < size; i++) {
 						charsets->f1.range1[i].first = gu2(data, offset + 1 + i * 3);
 						charsets->f1.range1[i].nleft = gu1(data, offset + 3 + i * 3);
@@ -50,7 +50,7 @@ void cff_extract_Charset(uint8_t *data, int32_t offset, uint16_t nchars, cff_Cha
 
 					size = i;
 					charsets->s = size;
-					NEW_N(charsets->f2.range2, i + 1);
+					NEW(charsets->f2.range2, i + 1);
 
 					for (i = 0; i < size; i++) {
 						charsets->f2.range2[i].first = gu2(data, offset + 1 + i * 4);
@@ -72,7 +72,7 @@ caryll_Buffer *cff_build_Charset(cff_Charset cset) {
 		case cff_CHARSET_FORMAT0: {
 			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 2;
-			NEW_N(blob->data, blob->size);
+			NEW(blob->data, blob->size);
 			blob->data[0] = 0;
 			for (uint32_t i = 0; i < cset.s; i++)
 				blob->data[1 + 2 * i] = cset.f0.glyph[i] / 256, blob->data[2 + 2 * i] = cset.f0.glyph[i] % 256;
@@ -82,7 +82,7 @@ caryll_Buffer *cff_build_Charset(cff_Charset cset) {
 		case cff_CHARSET_FORMAT1: {
 			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 3;
-			NEW_N(blob->data, blob->size);
+			NEW(blob->data, blob->size);
 			blob->data[0] = 1;
 			for (uint32_t i = 0; i < cset.s; i++)
 				blob->data[1 + 3 * i] = cset.f1.range1[i].first / 256,
@@ -93,7 +93,7 @@ caryll_Buffer *cff_build_Charset(cff_Charset cset) {
 		case cff_CHARSET_FORMAT2: {
 			caryll_Buffer *blob = bufnew();
 			blob->size = 1 + cset.s * 4;
-			NEW_N(blob->data, blob->size);
+			NEW(blob->data, blob->size);
 			blob->data[0] = 2;
 			for (uint32_t i = 0; i < cset.s; i++)
 				blob->data[1 + 4 * i] = cset.f2.range2[i].first / 256,

@@ -18,7 +18,7 @@ table_VORG *table_read_VORG(const caryll_Packet packet, const otfcc_Options *opt
 		NEW(vorg);
 		vorg->defaultVerticalOrigin = read_16s(data + 4);
 		vorg->numVertOriginYMetrics = numVertOriginYMetrics;
-		NEW_N(vorg->entries, numVertOriginYMetrics);
+		NEW(vorg->entries, numVertOriginYMetrics);
 		for (uint16_t j = 0; j < numVertOriginYMetrics; j++) {
 			vorg->entries[j].gid = read_16u(data + 8 + 4 * j);
 			vorg->entries[j].verticalOrigin = read_16s(data + 8 + 4 * j + 2);

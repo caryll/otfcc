@@ -13,7 +13,7 @@ table_LTSH *table_read_LTSH(const caryll_Packet packet, const otfcc_Options *opt
 		NEW(LTSH);
 		LTSH->version = read_16u(data);
 		LTSH->numGlyphs = read_16u(data + 2);
-		NEW_N(LTSH->yPels, LTSH->numGlyphs);
+		NEW(LTSH->yPels, LTSH->numGlyphs);
 		memcpy(LTSH->yPels, data + 4, LTSH->numGlyphs);
 
 		return LTSH;

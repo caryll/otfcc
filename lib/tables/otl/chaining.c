@@ -80,7 +80,7 @@ otl_Coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16
 	}
 	if (!count) return cov;
 	cov->numGlyphs = count;
-	NEW_N(cov->glyphs, count);
+	NEW(cov->glyphs, count);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j] == cls) { cov->glyphs[jj++] = cd->glyphs[j]; }
@@ -113,7 +113,7 @@ otl_ChainingRule *GeneralReadContextualRule(font_file_pointer data, uint32_t tab
 	rule->inputBegins = 0;
 	rule->inputEnds = nInput;
 
-	NEW_N(rule->match, rule->matchCount);
+	NEW(rule->match, rule->matchCount);
 	uint16_t jj = 0;
 	if (minusOne) { rule->match[jj++] = fn(data, tableLength, startGID, offset, 2, userdata); }
 	for (uint16_t j = 0; j < nInput - minusOneQ; j++) {
@@ -121,7 +121,7 @@ otl_ChainingRule *GeneralReadContextualRule(font_file_pointer data, uint32_t tab
 		rule->match[jj++] = fn(data, tableLength, gid, offset, 2, userdata);
 	}
 	rule->applyCount = nApply;
-	NEW_N(rule->apply, rule->applyCount);
+	NEW(rule->apply, rule->applyCount);
 	for (tableid_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
@@ -155,7 +155,7 @@ static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, con
 		checkLength(srsOffset + 2 + 2 * read_16u(data + srsOffset));
 	}
 	subtable->rulesCount = totalRules;
-	NEW_N(subtable->rules, totalRules);
+	NEW(subtable->rules, totalRules);
 
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
@@ -195,7 +195,7 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 		if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
 	}
 	subtable->rulesCount = totalRules;
-	NEW_N(subtable->rules, totalRules);
+	NEW(subtable->rules, totalRules);
 
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
@@ -240,7 +240,7 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 	} else if (format == 3) {
 		// Contextual Substitution Subtable, Coverage based.
 		subtable->rulesCount = 1;
-		NEW_N(subtable->rules, 1);
+		NEW(subtable->rules, 1);
 		subtable->rules[0] = GeneralReadContextualRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
 		return _subtable;
 	}
@@ -273,7 +273,7 @@ otl_ChainingRule *GeneralReadChainingRule(font_file_pointer data, uint32_t table
 	rule->inputBegins = nBack;
 	rule->inputEnds = nBack + nInput;
 
-	NEW_N(rule->match, rule->matchCount);
+	NEW(rule->match, rule->matchCount);
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < nBack; j++) {
 		uint32_t gid = read_16u(data + offset + 2 + j * 2);
@@ -289,7 +289,7 @@ otl_ChainingRule *GeneralReadChainingRule(font_file_pointer data, uint32_t table
 		rule->match[jj++] = fn(data, tableLength, gid, offset, 3, userdata);
 	}
 	rule->applyCount = nApply;
-	NEW_N(rule->apply, rule->applyCount);
+	NEW(rule->apply, rule->applyCount);
 	for (tableid_t j = 0; j < nApply; j++) {
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
@@ -323,7 +323,7 @@ static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const
 		checkLength(srsOffset + 2 + 2 * read_16u(data + srsOffset));
 	}
 	subtable->rulesCount = totalRules;
-	NEW_N(subtable->rules, totalRules);
+	NEW(subtable->rules, totalRules);
 
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
@@ -363,7 +363,7 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 		if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
 	}
 	subtable->rulesCount = totalRules;
-	NEW_N(subtable->rules, totalRules);
+	NEW(subtable->rules, totalRules);
 
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
@@ -412,7 +412,7 @@ otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLeng
 		// Chaining Contextual Substitution Subtable, Coverage based.
 		// This table has exactly one rule within it, and i love it.
 		subtable->rulesCount = 1;
-		NEW_N(subtable->rules, 1);
+		NEW(subtable->rules, 1);
 		subtable->rules[0] = GeneralReadChainingRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
 		return _subtable;
 	}
@@ -461,9 +461,9 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 	otl_ChainingRule *rule = &subtable->rule;
 
 	rule->matchCount = _match->u.array.length;
-	NEW_N(rule->match, rule->matchCount);
+	NEW(rule->match, rule->matchCount);
 	rule->applyCount = _apply->u.array.length;
-	NEW_N(rule->apply, rule->applyCount);
+	NEW(rule->apply, rule->applyCount);
 
 	rule->inputBegins = json_obj_getnum_fallback(_subtable, "inputBegins", 0);
 	rule->inputEnds = json_obj_getnum_fallback(_subtable, "inputEnds", rule->matchCount);
@@ -537,7 +537,7 @@ caryll_Buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
 	                              bkover);
 
 	glyphclass_t *rcpg;
-	NEW_N(rcpg, subtable->ic->maxclass + 1);
+	NEW(rcpg, subtable->ic->maxclass + 1);
 	for (glyphclass_t j = 0; j <= subtable->ic->maxclass; j++) {
 		rcpg[j] = 0;
 	}
@@ -687,7 +687,7 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 	newRule->matchCount = rule->matchCount;
 	newRule->inputBegins = rule->inputBegins;
 	newRule->inputEnds = rule->inputEnds;
-	NEW_N(newRule->match, newRule->matchCount);
+	NEW(newRule->match, newRule->matchCount);
 	for (tableid_t m = 0; m < rule->matchCount; m++) {
 		NEW(newRule->match[m]);
 		newRule->match[m]->numGlyphs = 1;
@@ -703,7 +703,7 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 		}
 	}
 	newRule->applyCount = rule->applyCount;
-	NEW_N(newRule->apply, newRule->applyCount);
+	NEW(newRule->apply, newRule->applyCount);
 	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		newRule->apply[j].index = rule->apply[j].index;
 		newRule->apply[j].lookup = handle_copy(rule->apply[j].lookup);
@@ -719,8 +719,8 @@ static otl_ClassDef *toClass(classifier_hash *h) {
 		cd->classes = NULL;
 		return cd;
 	}
-	NEW_N(cd->glyphs, cd->numGlyphs);
-	NEW_N(cd->classes, cd->numGlyphs);
+	NEW(cd->glyphs, cd->numGlyphs);
+	NEW(cd->classes, cd->numGlyphs);
 	classifier_hash *item;
 	glyphclass_t maxclass = 0;
 	glyphid_t j = 0;
@@ -781,7 +781,7 @@ endcheck:
 		// We've found multiple compatible subtables;
 		NEW(subtable0);
 		subtable0->rulesCount = compatibleCount + 1;
-		NEW_N(subtable0->rules, compatibleCount + 1);
+		NEW(subtable0->rules, compatibleCount + 1);
 
 		subtable0->rules[0] = buildRule(rule0, hb, hi, hf);
 		// write other rules
@@ -830,7 +830,7 @@ FAIL:;
 tableid_t caryll_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
                                          MODIFY size_t *lastOffset) {
 	tableid_t subtablesWritten = 0;
-	NEW_N(*subtableBuffers, lookup->subtableCount);
+	NEW(*subtableBuffers, lookup->subtableCount);
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		subtable_chaining *st0 = &(lookup->subtables[j]->chaining);
 		if (st0->type) continue;

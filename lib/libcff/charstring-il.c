@@ -125,7 +125,7 @@ static void il_push_stems(cff_CharstringIL *il, glyf_Glyph *g, bool hasmask, boo
 }
 cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
 	cff_CharstringIL *il;
-	NEW_CLEAN(il);
+	NEW(il);
 	// Convert absolute positions to deltas
 	pos_t x = 0;
 	pos_t y = 0;
@@ -427,7 +427,7 @@ caryll_Buffer *cff_build_IL(cff_CharstringIL *il) {
 
 cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il) {
 	cff_CharstringIL *out;
-	NEW_CLEAN(out);
+	NEW(out);
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {

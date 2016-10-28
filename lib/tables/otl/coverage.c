@@ -47,7 +47,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
 			if (coverage->numGlyphs) {
-				NEW_N(coverage->glyphs, coverage->numGlyphs);
+				NEW(coverage->glyphs, coverage->numGlyphs);
 				{
 					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
@@ -83,7 +83,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 			HASH_SORT(hash, by_covIndex);
 			coverage->numGlyphs = HASH_COUNT(hash);
 			if (coverage->numGlyphs) {
-				NEW_N(coverage->glyphs, coverage->numGlyphs);
+				NEW(coverage->glyphs, coverage->numGlyphs);
 				{
 					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
@@ -123,7 +123,7 @@ otl_Coverage *otl_parse_Coverage(const json_value *cov) {
 		c->glyphs = NULL;
 		return c;
 	}
-	NEW_N(c->glyphs, c->numGlyphs);
+	NEW(c->glyphs, c->numGlyphs);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
@@ -148,7 +148,7 @@ caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
 		return buf;
 	}
 	glyphid_t *r;
-	NEW_N(r, coverage->numGlyphs);
+	NEW(r, coverage->numGlyphs);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 		r[jj] = coverage->glyphs[j].index;

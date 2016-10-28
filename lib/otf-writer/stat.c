@@ -82,7 +82,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 
 void caryll_stat_glyf(caryll_Font *font, const otfcc_Options *options) {
 	stat_status *stated;
-	NEW_N(stated, font->glyf->numberGlyphs);
+	NEW(stated, font->glyf->numberGlyphs);
 	pos_t xmin = 0xFFFFFFFF;
 	pos_t xmax = -0xFFFFFFFF;
 	pos_t ymin = 0xFFFFFFFF;
@@ -155,8 +155,8 @@ static void caryll_font_stat_hmtx(caryll_Font *font, const otfcc_Options *option
 		}
 		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	NEW_N(hmtx->metrics, count_a);
-	NEW_N(hmtx->leftSideBearing, count_k);
+	NEW(hmtx->metrics, count_a);
+	NEW(hmtx->leftSideBearing, count_k);
 
 	pos_t minLSB = 0x7FFF;
 	pos_t minRSB = 0x7FFF;
@@ -201,8 +201,8 @@ static void caryll_font_stat_vmtx(caryll_Font *font, const otfcc_Options *option
 		}
 		count_k = font->glyf->numberGlyphs - count_a;
 	}
-	NEW_N(vmtx->metrics, count_a);
-	NEW_N(vmtx->topSideBearing, count_k);
+	NEW(vmtx->metrics, count_a);
+	NEW(vmtx->topSideBearing, count_k);
 
 	pos_t minTSB = 0x7FFF;
 	pos_t minBSB = 0x7FFF;
@@ -435,7 +435,7 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 	if (!font->glyf || !font->CFF_) return;
 	// Stat the most frequent character width
 	uint32_t *frequency;
-	NEW_N(frequency, MAX_STAT_METRIC);
+	NEW(frequency, MAX_STAT_METRIC);
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		uint16_t intWidth = (uint16_t)font->glyf->glyphs[j]->advanceWidth;
 		if (intWidth < MAX_STAT_METRIC) { frequency[intWidth] += 1; }
@@ -475,7 +475,7 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 static void caryll_stat_cff_vorgs(caryll_Font *font) {
 	if (!font->glyf || !font->CFF_ || !font->vhea || !font->vmtx) return;
 	uint32_t *frequency;
-	NEW_N(frequency, MAX_STAT_METRIC);
+	NEW(frequency, MAX_STAT_METRIC);
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]->verticalOrigin >= 0 && font->glyf->glyphs[j]->verticalOrigin < MAX_STAT_METRIC) {
 			frequency[(uint16_t)(font->glyf->glyphs[j]->verticalOrigin)] += 1;
@@ -500,7 +500,7 @@ static void caryll_stat_cff_vorgs(caryll_Font *font) {
 		if (font->glyf->glyphs[j]->verticalOrigin != maxj) { nVertOrigs += 1; }
 	}
 	vorg->numVertOriginYMetrics = nVertOrigs;
-	NEW_N(vorg->entries, nVertOrigs);
+	NEW(vorg->entries, nVertOrigs);
 
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
@@ -524,7 +524,7 @@ static void caryll_stat_LTSH(caryll_Font *font) {
 	table_LTSH *ltsh;
 	NEW(ltsh);
 	ltsh->numGlyphs = font->glyf->numberGlyphs;
-	NEW_N(ltsh->yPels, ltsh->numGlyphs);
+	NEW(ltsh->yPels, ltsh->numGlyphs);
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		ltsh->yPels[j] = font->glyf->glyphs[j]->yPel;
 	}

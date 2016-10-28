@@ -27,7 +27,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				{
 					enc->f0.format = 0;
 					enc->f0.ncodes = data[offset + 1];
-					NEW_N(enc->f0.code, enc->f0.ncodes);
+					NEW(enc->f0.code, enc->f0.ncodes);
 
 					for (uint32_t i = 0; i < enc->f0.ncodes; i++)
 						enc->f0.code[i] = data[offset + 2 + i];
@@ -38,7 +38,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				{
 					enc->f1.format = 1;
 					enc->f1.nranges = data[offset + 1];
-					NEW_N(enc->f1.range1, enc->f1.nranges);
+					NEW(enc->f1.range1, enc->f1.nranges);
 
 					for (uint32_t i = 0; i < enc->f1.nranges; i++)
 						enc->f1.range1[i].first = data[offset + 2 + i * 2],
@@ -49,7 +49,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				enc->t = cff_ENC_FORMAT_SUPPLEMENT;
 				{
 					enc->ns.nsup = data[offset];
-					NEW_N(enc->ns.supplement, enc->ns.nsup);
+					NEW(enc->ns.supplement, enc->ns.nsup);
 
 					for (uint32_t i = 0; i < enc->ns.nsup; i++)
 						enc->ns.supplement[i].code = data[offset + 1 + i * 3],
@@ -182,7 +182,7 @@ cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *optio
 	cff_File *file;
 	NEW(file);
 
-	NEW_N(file->raw_data, len);
+	NEW(file->raw_data, len);
 	memcpy(file->raw_data, data, len);
 	file->raw_length = len;
 	file->cnt_glyph = 0;
@@ -370,7 +370,7 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						}
 						uint32_t maskLength = (stack->stem + 7) >> 3;
 						bool *mask;
-						NEW_N(mask, stack->stem + 7);
+						NEW(mask, stack->stem + 7);
 						for (uint32_t byte = 0; byte < maskLength; byte++) {
 							uint8_t maskByte = start[advance + byte];
 							mask[(byte << 3) + 0] = maskByte >> 7 & 1;

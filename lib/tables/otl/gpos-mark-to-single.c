@@ -37,10 +37,10 @@ otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t 
 	uint32_t baseArrayOffset = subtableOffset + read_16u(data + subtableOffset + 10);
 	checkLength(baseArrayOffset + 2 + 2 * subtable->bases->numGlyphs * subtable->classCount);
 	if (read_16u(data + baseArrayOffset) != subtable->bases->numGlyphs) goto FAIL;
-	NEW_N(subtable->baseArray, subtable->bases->numGlyphs);
+	NEW(subtable->baseArray, subtable->bases->numGlyphs);
 	uint32_t _offset = baseArrayOffset + 2;
 	for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
-		NEW_N(subtable->baseArray[j], subtable->classCount);
+		NEW(subtable->baseArray[j], subtable->classCount);
 		for (glyphclass_t k = 0; k < subtable->classCount; k++) {
 			if (read_16u(data + _offset)) {
 				subtable->baseArray[j][k] =
@@ -105,10 +105,10 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable,
                        const otfcc_Options *options) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
-	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
+	NEW(subtable->marks->glyphs, subtable->marks->numGlyphs);
 	NEW(subtable->markArray);
 	subtable->markArray->markCount = _marks->u.object.length;
-	NEW_N(subtable->markArray->records, subtable->markArray->markCount);
+	NEW(subtable->markArray->records, subtable->markArray->markCount);
 	for (glyphid_t j = 0; j < _marks->u.object.length; j++) {
 		char *gname = _marks->u.object.values[j].name;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
@@ -164,12 +164,12 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 	glyphclass_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
-	NEW_N(subtable->bases->glyphs, subtable->bases->numGlyphs);
-	NEW_N(subtable->baseArray, _bases->u.object.length);
+	NEW(subtable->bases->glyphs, subtable->bases->numGlyphs);
+	NEW(subtable->baseArray, _bases->u.object.length);
 	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
 		char *gname = _bases->u.object.values[j].name;
 		subtable->bases->glyphs[j] = handle_fromName(sdsnewlen(gname, _bases->u.object.values[j].name_length));
-		NEW_N(subtable->baseArray[j], classCount);
+		NEW(subtable->baseArray[j], classCount);
 		for (glyphclass_t k = 0; k < classCount; k++) {
 			subtable->baseArray[j][k] = otl_anchor_absent();
 		}

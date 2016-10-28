@@ -37,8 +37,8 @@ otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tabl
 
 	NEW(subtable->to);
 	subtable->to->numGlyphs = ligatureCount;
-	NEW_N(subtable->to->glyphs, ligatureCount);
-	NEW_N(subtable->from, ligatureCount);
+	NEW(subtable->to->glyphs, ligatureCount);
+	NEW(subtable->from, ligatureCount);
 	for (uint16_t j = 0; j < ligatureCount; j++) {
 		subtable->from[j] = NULL;
 	};
@@ -56,7 +56,7 @@ otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tabl
 
 			NEW(subtable->from[jj]);
 			subtable->from[jj]->numGlyphs = ligComponents;
-			NEW_N(subtable->from[jj]->glyphs, ligComponents);
+			NEW(subtable->from[jj]->glyphs, ligComponents);
 			subtable->from[jj]->glyphs[0] = handle_fromIndex(startCoverage->glyphs[j].index);
 			for (glyphid_t m = 1; m < ligComponents; m++) {
 				subtable->from[jj]->glyphs[m] = handle_fromIndex(read_16u(data + ligOffset + 2 + m * 2));
@@ -95,8 +95,8 @@ otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_O
 		subtable_gsub_ligature *st = &(_st->gsub_ligature);
 		NEW(st->to);
 		st->to->numGlyphs = _subtable->u.array.length;
-		NEW_N(st->to->glyphs, st->to->numGlyphs);
-		NEW_N(st->from, st->to->numGlyphs);
+		NEW(st->to->glyphs, st->to->numGlyphs);
+		NEW(st->from, st->to->numGlyphs);
 
 		glyphid_t jj = 0;
 		for (glyphid_t k = 0; k < st->to->numGlyphs; k++) {
@@ -115,8 +115,8 @@ otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_O
 		subtable_gsub_ligature *st = &(_st->gsub_ligature);
 		NEW(st->to);
 		st->to->numGlyphs = _subtable->u.object.length;
-		NEW_N(st->to->glyphs, st->to->numGlyphs);
-		NEW_N(st->from, st->to->numGlyphs);
+		NEW(st->to->glyphs, st->to->numGlyphs);
+		NEW(st->from, st->to->numGlyphs);
 
 		glyphid_t jj = 0;
 		for (glyphid_t k = 0; k < st->to->numGlyphs; k++) {
@@ -161,7 +161,7 @@ caryll_Buffer *caryll_build_gsub_ligature_subtable(const otl_Subtable *_subtable
 	otl_Coverage *startcov;
 	NEW(startcov);
 	startcov->numGlyphs = HASH_COUNT(h);
-	NEW_N(startcov->glyphs, startcov->numGlyphs);
+	NEW(startcov->glyphs, startcov->numGlyphs);
 
 	glyphid_t jj = 0;
 	foreach_hash(s, h) {

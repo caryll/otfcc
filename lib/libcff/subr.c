@@ -19,7 +19,7 @@ static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 
 	*len = 3 + l1 + 1;
 	uint8_t *key;
-	NEW_N(key, *len);
+	NEW(key, *len);
 	key[0] = '1';
 	key[1] = (n->rule ? '1' : '0');
 	key[2] = '0';
@@ -47,7 +47,7 @@ static uint8_t *getDoubletHashKey(cff_SubrNode *n, size_t *len) {
 	}
 	*len = 3 + l1 + l2 + 1;
 	uint8_t *key;
-	NEW_N(key, *len);
+	NEW(key, *len);
 	key[0] = '2';
 	key[1] = (n->rule ? '1' : '0');
 	key[2] = (n->next->rule ? '1' : '0');
@@ -79,7 +79,7 @@ static void delete_Node(cff_SubrNode *x) {
 
 static cff_SubrNode *cff_new_Node() {
 	cff_SubrNode *n;
-	NEW_CLEAN(n);
+	NEW(n);
 	n->rule = NULL;
 	n->terminal = NULL;
 	n->guard = false;
@@ -91,7 +91,7 @@ static cff_SubrNode *cff_new_Node() {
 
 static cff_SubrRule *cff_new_Rule() {
 	cff_SubrRule *r;
-	NEW_CLEAN(r);
+	NEW(r);
 	r->refcount = 0;
 	r->guard = cff_new_Node();
 	r->guard->prev = r->guard;
@@ -104,7 +104,7 @@ static cff_SubrRule *cff_new_Rule() {
 
 cff_SubrGraph *cff_new_Graph() {
 	cff_SubrGraph *g;
-	NEW_CLEAN(g);
+	NEW(g);
 	g->root = cff_new_Rule();
 	return g;
 }
@@ -524,9 +524,9 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 		maxGSubrs = total - maxLSubrs;
 	}
 	caryll_Buffer *charStrings, *gsubrs, *lsubrs;
-	NEW_N(charStrings, g->totalCharStrings + 1);
-	NEW_N(lsubrs, maxLSubrs + 1);
-	NEW_N(gsubrs, maxGSubrs + 1);
+	NEW(charStrings, g->totalCharStrings + 1);
+	NEW(lsubrs, maxLSubrs + 1);
+	NEW(gsubrs, maxGSubrs + 1);
 	uint32_t j = 0;
 	cff_SubrRule *r = g->root;
 	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {

@@ -25,7 +25,7 @@ cff_Dict *cff_extract_Dict(uint8_t *data, uint32_t len) {
 				RESIZE(dict->ents, dict->count + 1);
 				dict->ents[dict->count].op = val.i;
 				dict->ents[dict->count].cnt = index;
-				NEW_N(dict->ents[dict->count].vals, index);
+				NEW(dict->ents[dict->count].vals, index);
 				memcpy(dict->ents[dict->count].vals, stack, sizeof(cff_Value) * index);
 				dict->count++;
 				index = 0;

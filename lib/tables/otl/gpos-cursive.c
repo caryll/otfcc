@@ -21,8 +21,8 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 
 	subtable->coverage = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
-	NEW_N(subtable->enter, subtable->coverage->numGlyphs);
-	NEW_N(subtable->exit, subtable->coverage->numGlyphs);
+	NEW(subtable->enter, subtable->coverage->numGlyphs);
+	NEW(subtable->exit, subtable->coverage->numGlyphs);
 
 	glyphid_t valueCount = read_16u(data + offset + 4);
 	checkLength(offset + 6 + 4 * valueCount);
@@ -63,9 +63,9 @@ otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Op
 	NEW(_st);
 	subtable_gpos_cursive *subtable = &(_st->gpos_cursive);
 	NEW(subtable->coverage);
-	NEW_N(subtable->coverage->glyphs, _subtable->u.object.length);
-	NEW_N(subtable->enter, _subtable->u.object.length);
-	NEW_N(subtable->exit, _subtable->u.object.length);
+	NEW(subtable->coverage->glyphs, _subtable->u.object.length);
+	NEW(subtable->enter, _subtable->u.object.length);
+	NEW(subtable->exit, _subtable->u.object.length);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {

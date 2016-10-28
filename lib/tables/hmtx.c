@@ -15,8 +15,8 @@ table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *opt
 		if (length < count_a * 4 + count_k * 2) goto HMTX_CORRUPTED;
 
 		NEW(hmtx);
-		NEW_N(hmtx->metrics, count_a);
-		NEW_N(hmtx->leftSideBearing, count_k);
+		NEW(hmtx->metrics, count_a);
+		NEW(hmtx->leftSideBearing, count_k);
 
 		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			hmtx->metrics[ia].advanceWidth = read_16u(data + ia * 4);

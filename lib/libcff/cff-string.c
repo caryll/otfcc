@@ -404,7 +404,7 @@ char *get_cff_sid(uint16_t idx, cff_Index str) {
 	if (idx <= 390) return strdup(string_standard[idx]);
 	if (str.count > 0 && idx - 391 < str.count) {
 		char *dup;
-		NEW_N(dup, str.offset[idx - 390] - str.offset[idx - 391] + 1);
+		NEW(dup, str.offset[idx - 390] - str.offset[idx - 391] + 1);
 		strncpy(dup, (const char *)str.data + str.offset[idx - 391] - 1, str.offset[idx - 390] - str.offset[idx - 391]);
 		return dup;
 	} else

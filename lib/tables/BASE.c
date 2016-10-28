@@ -38,7 +38,7 @@ static void readBaseScript(const font_file_pointer data, uint32_t tableLength, u
 		entry->baseValuesCount = read_16u(data + baseValuesOffset + 2);
 		if (entry->baseValuesCount != nBaseTags) goto FAIL;
 		checkLength(baseValuesOffset + 4 + 2 * entry->baseValuesCount);
-		NEW_N(entry->baseValues, entry->baseValuesCount);
+		NEW(entry->baseValues, entry->baseValuesCount);
 		for (tableid_t j = 0; j < entry->baseValuesCount; j++) {
 			entry->baseValues[j].tag = baseTagList[j];
 			uint16_t _valOffset = read_16u(data + baseValuesOffset + 4 + 2 * j);
@@ -70,7 +70,7 @@ static otl_BaseAxis *readAxis(font_file_pointer data, uint32_t tableLength, uint
 	uint16_t nBaseTags = read_16u(data + baseTagListOffset);
 	if (!nBaseTags) goto FAIL;
 	checkLength(baseTagListOffset + 2 + 4 * nBaseTags);
-	NEW_N(baseTagList, nBaseTags);
+	NEW(baseTagList, nBaseTags);
 	for (uint16_t j = 0; j < nBaseTags; j++) {
 		baseTagList[j] = read_32u(data + baseTagListOffset + 2 + j * 4);
 	}
@@ -82,7 +82,7 @@ static otl_BaseAxis *readAxis(font_file_pointer data, uint32_t tableLength, uint
 	checkLength(baseScriptListOffset + 2 + 6 * nBaseScripts);
 	NEW(axis);
 	axis->scriptCount = nBaseScripts;
-	NEW_N(axis->entries, nBaseScripts);
+	NEW(axis->entries, nBaseScripts);
 	for (tableid_t j = 0; j < nBaseScripts; j++) {
 		axis->entries[j].tag = read_32u(data + baseScriptListOffset + 2 + 6 * j);
 		uint16_t baseScriptOffset = read_16u(data + baseScriptListOffset + 2 + 6 * j + 4);
@@ -109,7 +109,7 @@ table_BASE *table_read_BASE(const caryll_Packet packet, const otfcc_Options *opt
 		font_file_pointer data = table.data;
 		uint32_t tableLength = table.length;
 		checkLength(8);
-		NEW_CLEAN(base);
+		NEW(base);
 		uint16_t offsetH = read_16u(data + 4);
 		if (offsetH) base->horizontal = readAxis(data, tableLength, offsetH);
 		uint16_t offsetV = read_16u(data + 6);
@@ -161,7 +161,7 @@ static void baseScriptFromJson(const json_value *_sr, otl_BaseScriptEntry *entry
 		entry->baseValues = NULL;
 	} else {
 		entry->baseValuesCount = _basevalues->u.object.length;
-		NEW_N(entry->baseValues, entry->baseValuesCount);
+		NEW(entry->baseValues, entry->baseValuesCount);
 		for (tableid_t j = 0; j < entry->baseValuesCount; j++) {
 			entry->baseValues[j].tag = str2tag(_basevalues->u.object.values[j].name);
 			entry->baseValues[j].coordinate = json_numof(_basevalues->u.object.values[j].value);
@@ -174,7 +174,7 @@ static otl_BaseAxis *axisFromJson(const json_value *_axis) {
 	otl_BaseAxis *axis;
 	NEW(axis);
 	axis->scriptCount = _axis->u.object.length;
-	NEW_N(axis->entries, axis->scriptCount);
+	NEW(axis->entries, axis->scriptCount);
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < axis->scriptCount; j++) {
 		if (_axis->u.object.values[j].value && _axis->u.object.values[j].value->type == json_object) {

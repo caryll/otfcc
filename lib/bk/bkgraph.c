@@ -287,7 +287,7 @@ static bool try_untabgle_block(bk_Graph *f, bk_Block *b, size_t *offsets, uint16
 
 static bool try_untangle(bk_Graph *f, uint16_t passes) {
 	size_t *offsets;
-	NEW_N(offsets, f->length + 1);
+	NEW(offsets, f->length + 1);
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
@@ -345,7 +345,7 @@ static void caryll_build_bkblock(caryll_Buffer *buf, bk_Block *b, size_t *offset
 caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 	caryll_Buffer *buf = bufnew();
 	size_t *offsets;
-	NEW_N(offsets, f->length + 1);
+	NEW(offsets, f->length + 1);
 
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
@@ -366,7 +366,7 @@ caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 
 size_t bk_estimateSizeOfGraph(bk_Graph *f) {
 	size_t *offsets;
-	NEW_N(offsets, f->length + 1);
+	NEW(offsets, f->length + 1);
 
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {

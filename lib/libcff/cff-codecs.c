@@ -53,7 +53,7 @@ caryll_Buffer *cff_encodeCffFloat(double val) {
 
 	if (val == 0.0) {
 		blob->size = 2;
-		NEW_N(blob->data, blob->size);
+		NEW(blob->data, blob->size);
 		blob->data[0] = 30;
 		blob->data[1] = 0x0f;
 	} else {
@@ -75,14 +75,14 @@ caryll_Buffer *cff_encodeCffFloat(double val) {
 		}
 
 		blob->size = 2 + niblen / 2;
-		NEW_N(blob->data, blob->size);
+		NEW(blob->data, blob->size);
 		blob->data[0] = 30;
 
 		if (niblen % 2 != 0) {
-			NEW_N(array, (niblen + 1));
+			NEW(array, (niblen + 1));
 			array[niblen] = 0x0f;
 		} else {
-			NEW_N(array, (niblen + 2));
+			NEW(array, (niblen + 2));
 			array[niblen + 1] = 0x0f;
 			array[niblen] = 0x0f;
 		}

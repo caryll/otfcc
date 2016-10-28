@@ -10,7 +10,7 @@ table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, const otfcc_Op
 		NEW(t);
 		t->tag = NULL;
 		t->length = length;
-		NEW_N(t->bytes, length);
+		NEW(t->bytes, length);
 		if (!t->bytes) goto FAIL;
 		memcpy(t->bytes, data, length);
 		return t;

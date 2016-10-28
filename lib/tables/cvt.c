@@ -8,7 +8,7 @@ table_cvt *table_read_cvt(const caryll_Packet packet, const otfcc_Options *optio
 		uint32_t length = table.length;
 		NEW(t);
 		t->length = length >> 1;
-		NEW_N(t->words, (t->length + 1));
+		NEW(t->words, (t->length + 1));
 		for (uint16_t j = 0; j < t->length; j++) {
 			t->words[j] = read_16u(data + 2 * j);
 		}
@@ -39,7 +39,7 @@ table_cvt *table_parse_cvt(const json_value *root, const otfcc_Options *options,
 			// Meaningful CVT dump
 			NEW(t);
 			t->length = table->u.array.length;
-			NEW_N(t->words, (t->length + 1));
+			NEW(t->words, (t->length + 1));
 			for (uint16_t j = 0; j < t->length; j++) {
 				json_value *record = table->u.array.values[j];
 				if (record->type == json_integer) {
@@ -58,7 +58,7 @@ table_cvt *table_parse_cvt(const json_value *root, const otfcc_Options *options,
 			size_t len;
 			uint8_t *raw = base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
 			t->length = (uint32_t)(len >> 1);
-			NEW_N(t->words, (t->length + 1));
+			NEW(t->words, (t->length + 1));
 			for (uint16_t j = 0; j < t->length; j++) {
 				t->words[j] = read_16u(raw + 2 * j);
 			}

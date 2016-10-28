@@ -37,8 +37,8 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 		glyphid_t count = read_16u(data + offset + 4);
 		if (count && tableLength >= offset + 6 + count * 2) {
 			cd->numGlyphs = count;
-			NEW_N(cd->glyphs, count);
-			NEW_N(cd->classes, count);
+			NEW(cd->glyphs, count);
+			NEW(cd->classes, count);
 			uint16_t maxclass = 0;
 			for (glyphid_t j = 0; j < count; j++) {
 				cd->glyphs[j] = handle_fromIndex(startGID + j);
@@ -72,8 +72,8 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 		HASH_SORT(hash, by_covIndex);
 		cd->numGlyphs = HASH_COUNT(hash);
 		if (cd->numGlyphs) {
-			NEW_N(cd->glyphs, cd->numGlyphs);
-			NEW_N(cd->classes, cd->numGlyphs);
+			NEW(cd->glyphs, cd->numGlyphs);
+			NEW(cd->classes, cd->numGlyphs);
 			{
 				glyphid_t j = 0;
 				glyphclass_t maxclass = 0;
@@ -123,8 +123,8 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 	}
 	cd->numGlyphs = HASH_COUNT(hash);
 	HASH_SORT(hash, by_covIndex);
-	NEW_N(cd->glyphs, cd->numGlyphs);
-	NEW_N(cd->classes, cd->numGlyphs);
+	NEW(cd->glyphs, cd->numGlyphs);
+	NEW(cd->classes, cd->numGlyphs);
 	{
 		glyphid_t j = 0;
 		glyphclass_t maxclass = 0;
@@ -156,8 +156,8 @@ otl_ClassDef *otl_parse_ClassDef(const json_value *_cd) {
 	otl_ClassDef *cd;
 	NEW(cd);
 	cd->numGlyphs = _cd->u.object.length;
-	NEW_N(cd->glyphs, cd->numGlyphs);
-	NEW_N(cd->classes, cd->numGlyphs);
+	NEW(cd->glyphs, cd->numGlyphs);
+	NEW(cd->classes, cd->numGlyphs);
 	glyphclass_t maxclass = 0;
 	for (glyphid_t j = 0; j < _cd->u.object.length; j++) {
 		cd->glyphs[j] = handle_fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
@@ -191,7 +191,7 @@ caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	}
 
 	classdef_sortrecord *r;
-	NEW_N(r, cd->numGlyphs);
+	NEW(r, cd->numGlyphs);
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->classes[j]) {

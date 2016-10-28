@@ -11,7 +11,7 @@ const double DEFAULT_EXPANSION_FACTOR = 0.06;
 
 static cff_PrivateDict *table_new_cff_private() {
 	cff_PrivateDict *pd = NULL;
-	NEW_CLEAN(pd);
+	NEW(pd);
 	pd->blueFuzz = DEFAULT_BLUE_FUZZ;
 	pd->blueScale = DEFAULT_BLUE_SCALE;
 	pd->blueShift = DEFAULT_BLUE_SHIFT;
@@ -20,7 +20,7 @@ static cff_PrivateDict *table_new_cff_private() {
 }
 table_CFF *table_new_CFF() {
 	table_CFF *table = NULL;
-	NEW_CLEAN(table);
+	NEW(table);
 	table->underlinePosition = -100;
 	table->underlineThickness = 50;
 	return table;
@@ -79,7 +79,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		// DELTAs
 		case op_BlueValues: {
 			pd->blueValuesCount = top;
-			NEW_N(pd->blueValues, pd->blueValuesCount);
+			NEW(pd->blueValues, pd->blueValuesCount);
 			for (arity_t j = 0; j < pd->blueValuesCount; j++) {
 				pd->blueValues[j] = cffnum(stack[j]);
 			}
@@ -87,7 +87,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		}
 		case op_OtherBlues: {
 			pd->otherBluesCount = top;
-			NEW_N(pd->otherBlues, pd->otherBluesCount);
+			NEW(pd->otherBlues, pd->otherBluesCount);
 			for (arity_t j = 0; j < pd->otherBluesCount; j++) {
 				pd->otherBlues[j] = cffnum(stack[j]);
 			}
@@ -95,7 +95,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		}
 		case op_FamilyBlues: {
 			pd->familyBluesCount = top;
-			NEW_N(pd->familyBlues, pd->familyBluesCount);
+			NEW(pd->familyBlues, pd->familyBluesCount);
 			for (arity_t j = 0; j < pd->familyBluesCount; j++) {
 				pd->familyBlues[j] = cffnum(stack[j]);
 			}
@@ -103,7 +103,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		}
 		case op_FamilyOtherBlues: {
 			pd->familyOtherBluesCount = top;
-			NEW_N(pd->familyOtherBlues, pd->familyOtherBluesCount);
+			NEW(pd->familyOtherBlues, pd->familyOtherBluesCount);
 			for (arity_t j = 0; j < pd->familyOtherBluesCount; j++) {
 				pd->familyOtherBlues[j] = cffnum(stack[j]);
 			}
@@ -111,7 +111,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		}
 		case op_StemSnapH: {
 			pd->stemSnapHCount = top;
-			NEW_N(pd->stemSnapH, pd->stemSnapHCount);
+			NEW(pd->stemSnapH, pd->stemSnapHCount);
 			for (arity_t j = 0; j < pd->stemSnapHCount; j++) {
 				pd->stemSnapH[j] = cffnum(stack[j]);
 			}
@@ -119,7 +119,7 @@ static void callback_extract_private(uint32_t op, uint8_t top, cff_Value *stack,
 		}
 		case op_StemSnapV: {
 			pd->stemSnapVCount = top;
-			NEW_N(pd->stemSnapV, pd->stemSnapVCount);
+			NEW(pd->stemSnapV, pd->stemSnapVCount);
 			for (arity_t j = 0; j < pd->stemSnapVCount; j++) {
 				pd->stemSnapV[j] = cffnum(stack[j]);
 			}
@@ -434,7 +434,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	cff_Index localSubrs;
 	cff_Stack stack;
 	stack.max = 0x10000;
-	NEW_N(stack.stack, stack.max);
+	NEW(stack.stack, stack.max);
 	stack.index = 0;
 	stack.stem = 0;
 
@@ -463,7 +463,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	bc.randx = seed;
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass,
 	                 options);
-	NEW_N(g->contours, g->numberOfContours);
+	NEW(g->contours, g->numberOfContours);
 
 	// PASS 2 : Count points
 	stack.index = 0;
@@ -472,12 +472,12 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass,
 	                 options);
 	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
-		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
+		NEW(g->contours[j].points, g->contours[j].pointsCount);
 	}
-	NEW_N(g->stemH, g->numberOfStemH);
-	NEW_N(g->stemV, g->numberOfStemV);
-	NEW_N(g->hintMasks, g->numberOfHintMasks);
-	NEW_N(g->contourMasks, g->numberOfContourMasks);
+	NEW(g->stemH, g->numberOfStemH);
+	NEW(g->stemV, g->numberOfStemV);
+	NEW(g->hintMasks, g->numberOfHintMasks);
+	NEW(g->contourMasks, g->numberOfContourMasks);
 
 	// PASS 3 : Draw points
 	stack.index = 0;
@@ -621,7 +621,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc
 		// We have FDArray
 		if (cffFile->font_dict.count) {
 			context.meta->fdArrayCount = cffFile->font_dict.count;
-			NEW_N(context.meta->fdArray, context.meta->fdArrayCount);
+			NEW(context.meta->fdArray, context.meta->fdArrayCount);
 			for (tableid_t j = 0; j < context.meta->fdArrayCount; j++) {
 				context.meta->fdArray[j] = table_new_CFF();
 				context.fdArrayIndex = j;
@@ -644,7 +644,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc
 		NEW(glyphs);
 		context.glyphs = glyphs;
 		glyphs->numberGlyphs = cffFile->char_strings.count;
-		NEW_N(glyphs->glyphs, glyphs->numberGlyphs);
+		NEW(glyphs->glyphs, glyphs->numberGlyphs);
 		for (glyphid_t j = 0; j < glyphs->numberGlyphs; j++) {
 			buildOutline(j, &context, options);
 		}
@@ -756,7 +756,7 @@ void table_dump_cff(const table_CFF *table, json_value *root, const otfcc_Option
 static void pdDeltaFromJson(json_value *dump, arity_t *count, double **array) {
 	if (!dump || dump->type != json_array) return;
 	*count = dump->u.array.length;
-	NEW_N(*array, *count);
+	NEW(*array, *count);
 	for (arity_t j = 0; j < *count; j++) {
 		(*array)[j] = json_numof(dump->u.array.values[j]);
 	}
@@ -841,7 +841,7 @@ static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, boo
 	if (fdarraydump) {
 		table->isCID = true;
 		table->fdArrayCount = fdarraydump->u.object.length;
-		NEW_N(table->fdArray, table->fdArrayCount);
+		NEW(table->fdArray, table->fdArrayCount);
 		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
 			table->fdArray[j] = fdFromJson(fdarraydump->u.object.values[j].value, options, false);
 			if (table->fdArray[j]->fontName) { sdsfree(table->fdArray[j]->fontName); }
@@ -854,7 +854,7 @@ static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, boo
 	// Deal with force-cid
 	if (topLevel && options->force_cid && !table->fdArray) {
 		table->fdArrayCount = 1;
-		NEW_N(table->fdArray, table->fdArrayCount);
+		NEW(table->fdArray, table->fdArrayCount);
 		table->fdArray[0] = table_new_CFF();
 		table_CFF *fd0 = table->fdArray[0];
 		fd0->privateDict = table->privateDict;
@@ -939,7 +939,7 @@ static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;
 	last->cnt = arity;
-	NEW_N(last->vals, arity);
+	NEW(last->vals, arity);
 
 	va_list ap;
 	va_start(ap, arity);
@@ -966,7 +966,7 @@ static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, a
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;
 	last->cnt = arity;
-	NEW_N(last->vals, arity);
+	NEW(last->vals, arity);
 	for (arity_t j = 0; j < arity; j++) {
 		double x = arr[j];
 		if (t == cff_DOUBLE) {
@@ -986,7 +986,7 @@ static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, a
 
 static cff_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	cff_Dict *dict;
-	NEW_CLEAN(dict);
+	NEW(dict);
 	// ROS
 	if (fd->cidRegistry && fd->cidOrdering) {
 		cffdict_input(dict, op_ROS, cff_INTEGER, 3, sidof(h, fd->cidRegistry), sidof(h, fd->cidOrdering),
@@ -1025,7 +1025,7 @@ static cff_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 
 static cff_Dict *cff_make_private_dict(cff_PrivateDict *pd) {
 	cff_Dict *dict;
-	NEW_CLEAN(dict);
+	NEW(dict);
 	if (!pd) return dict;
 	// DELTA arrays
 	cffdict_input_array(dict, op_BlueValues, cff_DOUBLE, pd->blueValuesCount, pd->blueValues);
@@ -1064,7 +1064,7 @@ static caryll_Buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 	HASH_SORT(*h, by_sid);
 	caryll_Buffer **blobs;
 	uint32_t n = HASH_COUNT(*h);
-	NEW_N(blobs, n);
+	NEW(blobs, n);
 	uint32_t j = 0;
 	cff_sid_entry *item, *tmp;
 	HASH_ITER(hh, *h, item, tmp) {
@@ -1088,11 +1088,11 @@ static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
 	cff_Index *nameIndex = cff_new_Index();
 	nameIndex->count = 1;
 	nameIndex->offSize = 4;
-	NEW_N(nameIndex->offset, 2);
+	NEW(nameIndex->offset, 2);
 	if (!cff->fontName) { cff->fontName = sdsnew("Caryll-CFF-FONT"); }
 	nameIndex->offset[0] = 1;
 	nameIndex->offset[1] = (uint32_t)(sdslen(cff->fontName) + 1);
-	NEW_N(nameIndex->data, 1 + sdslen(cff->fontName));
+	NEW(nameIndex->data, 1 + sdslen(cff->fontName));
 	memcpy(nameIndex->data, cff->fontName, sdslen(cff->fontName));
 	// CFF Name INDEX
 	caryll_Buffer *buf = cff_build_Index(*nameIndex);
@@ -1106,7 +1106,7 @@ static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
 
 static caryll_Buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid_entry **stringHash) {
 	cff_Charset *charset;
-	NEW_CLEAN(charset);
+	NEW(charset);
 	if (glyf->numberGlyphs > 1) { // At least two glyphs
 		charset->t = cff_CHARSET_FORMAT2;
 		charset->s = 1; // One segment only
@@ -1137,7 +1137,7 @@ static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	uint32_t ranges = 1;
 	uint8_t current = 0;
 	cff_FDSelect *fds;
-	NEW_CLEAN(fds);
+	NEW(fds);
 	fds->t = cff_FDSELECT_UNSPECED;
 	if (!glyf->numberGlyphs) goto done;
 	uint8_t fdi0 = glyf->glyphs[0]->fdSelect.index;
@@ -1151,7 +1151,7 @@ static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 			ranges++;
 		}
 	}
-	NEW_N(fds->f3.range3, ranges);
+	NEW(fds->f3.range3, ranges);
 	fds->f3.range3[0].first = 0;
 	fds->f3.range3[0].fd = current = fdi0;
 	for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
@@ -1228,7 +1228,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 		fdArrayIndex = cff_make_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
 		r = cff_build_Index(*fdArrayIndex);
 	} else {
-		NEW_CLEAN(r);
+		NEW(r);
 	}
 
 	// cff charset : Allocate string index terms for glyph names
@@ -1308,16 +1308,16 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	bufwrite_bufdel(blob, e);  // fdselect
 	bufwrite_bufdel(blob, s);  // charstring
 	size_t *startingPositionOfPrivates;
-	NEW_N(startingPositionOfPrivates, 1 + cff->fdArrayCount);
+	NEW(startingPositionOfPrivates, 1 + cff->fdArrayCount);
 	startingPositionOfPrivates[0] = blob->cursor;
 	bufwrite_bufdel(blob, p); // top private
 	size_t *endingPositionOfPrivates;
-	NEW_N(endingPositionOfPrivates, 1 + cff->fdArrayCount);
+	NEW(endingPositionOfPrivates, 1 + cff->fdArrayCount);
 	endingPositionOfPrivates[0] = blob->cursor;
 	if (cff->isCID) { // fdarray and fdarray privates
 		uint32_t fdArrayPrivatesStartOffset = off;
 		caryll_Buffer **fdArrayPrivates;
-		NEW_N(fdArrayPrivates, cff->fdArrayCount);
+		NEW(fdArrayPrivates, cff->fdArrayCount);
 		for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 			cff_Dict *pd = cff_make_private_dict(cff->fdArray[j]->privateDict);
 			caryll_Buffer *p = cff_build_Dict(pd);

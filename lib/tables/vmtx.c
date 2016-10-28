@@ -22,8 +22,8 @@ table_vmtx *table_read_vmtx(const caryll_Packet packet, const otfcc_Options *opt
 		if (length < count_a * 4 + count_k * 2) goto vmtx_CORRUPTED;
 
 		NEW(vmtx);
-		NEW_N(vmtx->metrics, count_a);
-		NEW_N(vmtx->topSideBearing, count_k);
+		NEW(vmtx->metrics, count_a);
+		NEW(vmtx->topSideBearing, count_k);
 
 		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			vmtx->metrics[ia].advanceHeight = read_16u(data + ia * 4);

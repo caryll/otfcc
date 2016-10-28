@@ -440,7 +440,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 	char *end, *bend, *brack;
 	int icnt = 0, imax = (int)(strlen(text) / 2), val;
 	uint8_t *instrs;
-	NEW_N(instrs, imax);
+	NEW(instrs, imax);
 
 	for (pt = text; *pt; ++pt) {
 		npos = 0;
@@ -573,7 +573,7 @@ static int instr_typify(struct instrdata *id) {
 	uint8_t *instrs = id->instrs;
 	uint8_t *bts;
 
-	if (id->bts == NULL) NEW_N(id->bts, len + 1);
+	if (id->bts == NULL) NEW(id->bts, len + 1);
 	bts = id->bts;
 	for (i = lh = 0; i < len; ++i) {
 		bts[i] = bt_instr;

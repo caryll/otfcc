@@ -27,13 +27,13 @@ otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, 
 	if (seqCount != subtable->from->numGlyphs) goto FAIL;
 	checkLength(offset + 6 + seqCount * 2);
 
-	NEW_N(subtable->to, seqCount);
+	NEW(subtable->to, seqCount);
 	for (glyphid_t j = 0; j < seqCount; j++) {
 		uint32_t seqOffset = offset + read_16u(data + offset + 6 + j * 2);
 		otl_Coverage *cov;
 		NEW(cov);
 		cov->numGlyphs = read_16u(data + seqOffset);
-		NEW_N(cov->glyphs, cov->numGlyphs);
+		NEW(cov->glyphs, cov->numGlyphs);
 		for (glyphid_t k = 0; k < cov->numGlyphs; k++) {
 			cov->glyphs[k] = handle_fromIndex(read_16u(data + seqOffset + 2 + k * 2));
 		}
@@ -61,8 +61,8 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 	subtable_gsub_multi *st = &(_st->gsub_multi);
 	NEW(st->from);
 	st->from->numGlyphs = _subtable->u.object.length;
-	NEW_N(st->from->glyphs, st->from->numGlyphs);
-	NEW_N(st->to, st->from->numGlyphs);
+	NEW(st->from->glyphs, st->from->numGlyphs);
+	NEW(st->to, st->from->numGlyphs);
 
 	glyphid_t jj = 0;
 	for (glyphid_t k = 0; k < st->from->numGlyphs; k++) {

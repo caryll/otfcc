@@ -44,7 +44,7 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 	checkLength(offset + 10 + (nBacktrack + nForward + nReplacement) * 2);
 
 	subtable->matchCount = nBacktrack + nForward + 1;
-	NEW_N(subtable->match, subtable->matchCount);
+	NEW(subtable->match, subtable->matchCount);
 	subtable->inputIndex = nBacktrack;
 
 	for (tableid_t j = 0; j < nBacktrack; j++) {
@@ -63,7 +63,7 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 
 	NEW(subtable->to);
 	subtable->to->numGlyphs = nReplacement;
-	NEW_N(subtable->to->glyphs, nReplacement);
+	NEW(subtable->to->glyphs, nReplacement);
 	for (tableid_t j = 0; j < nReplacement; j++) {
 		subtable->to->glyphs[j] = handle_fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
 	}
@@ -98,7 +98,7 @@ otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable, const otfcc_Op
 	subtable_gsub_reverse *subtable = &(_st->gsub_reverse);
 
 	subtable->matchCount = _match->u.array.length;
-	NEW_N(subtable->match, subtable->matchCount);
+	NEW(subtable->match, subtable->matchCount);
 
 	subtable->inputIndex = json_obj_getnum_fallback(_subtable, "inputIndex", 0);
 

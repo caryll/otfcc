@@ -30,7 +30,7 @@ table_gasp *table_read_gasp(const caryll_Packet packet, const otfcc_Options *opt
 		gasp->numRanges = read_16u(data + 2);
 		if (length < 4 + gasp->numRanges * 4) { goto FAIL; }
 
-		NEW_N(gasp->records, gasp->numRanges);
+		NEW(gasp->records, gasp->numRanges);
 		if (!gasp->records) goto FAIL;
 
 		for (uint32_t j = 0; j < gasp->numRanges; j++) {
@@ -75,7 +75,7 @@ table_gasp *table_parse_gasp(const json_value *root, const otfcc_Options *option
 		if (!gasp) goto FAIL;
 		loggedStep("gasp") {
 			gasp->numRanges = table->u.array.length;
-			NEW_N(gasp->records, gasp->numRanges);
+			NEW(gasp->records, gasp->numRanges);
 			if (!gasp->records) goto FAIL;
 			for (uint16_t j = 0; j < gasp->numRanges; j++) {
 				json_value *r = table->u.array.values[j];

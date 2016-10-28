@@ -84,7 +84,7 @@ static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t
 	lang->featureCount = read_16u(data + base + 4);
 	checkLength(base + 6 + lang->featureCount * 2);
 
-	NEW_N(lang->features, lang->featureCount);
+	NEW(lang->features, lang->featureCount);
 	for (tableid_t j = 0; j < lang->featureCount; j++) {
 		tableid_t featureIndex = read_16u(data + base + 6 + 2 * j);
 		if (featureIndex < featureCount) {
@@ -118,7 +118,7 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 		tableid_t lookupCount = read_16u(data + lookupListOffset);
 		checkLength(lookupListOffset + 2 + lookupCount * 2);
 		otl_Lookup **lookups;
-		NEW_N(lookups, lookupCount);
+		NEW(lookups, lookupCount);
 		for (tableid_t j = 0; j < lookupCount; j++) {
 			NEW(lookups[j]);
 			lookups[j]->name = NULL;
@@ -135,7 +135,7 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 		tableid_t featureCount = read_16u(data + featureListOffset);
 		checkLength(featureListOffset + 2 + featureCount * 6);
 		otl_Feature **features;
-		NEW_N(features, featureCount);
+		NEW(features, featureCount);
 		tableid_t lnk = 0;
 		for (tableid_t j = 0; j < featureCount; j++) {
 			otl_Feature *feature;
@@ -155,7 +155,7 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 			tableid_t lookupCount = read_16u(data + featureOffset + 2);
 			checkLength(featureOffset + 4 + lookupCount * 2);
 			features[j]->lookupCount = lookupCount;
-			NEW_N(features[j]->lookups, lookupCount);
+			NEW(features[j]->lookups, lookupCount);
 			for (tableid_t k = 0; k < lookupCount; k++) {
 				tableid_t lookupid = read_16u(data + featureOffset + 4 + k * 2);
 				if (lookupid < table->lookupCount) {
@@ -194,7 +194,7 @@ static table_OTL *table_read_otl_common(font_file_pointer data, uint32_t tableLe
 
 		table->languageCount = nLanguageCombinations;
 		otl_LanguageSystem **languages;
-		NEW_N(languages, nLanguageCombinations);
+		NEW(languages, nLanguageCombinations);
 
 		tableid_t currentLang = 0;
 		for (tableid_t j = 0; j < scriptCount; j++) {
@@ -254,7 +254,7 @@ static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, 
 		lookup->subtables = NULL;
 		return;
 	}
-	NEW_N(lookup->subtables, lookup->subtableCount);
+	NEW(lookup->subtables, lookup->subtableCount);
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
 		lookup->subtables[j] = table_read_otl_subtable(data, tableLength, subtableOffset, lookup->type, options);
@@ -280,7 +280,7 @@ static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, 
 					NEW(temp);
 					temp->type = lookup->subtables[j]->extend.type;
 					temp->subtableCount = 1;
-					NEW_N(temp->subtables, 1);
+					NEW(temp->subtables, 1);
 					temp->subtables[0] = lookup->subtables[j]->extend.subtable;
 					DELETE(caryll_delete_lookup, temp);
 					FREE(lookup->subtables[j]);
@@ -405,7 +405,7 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt,
 	uint16_t markAttachmentType = json_obj_getint(_lookup, "markAttachmentType");
 	if (markAttachmentType) { lookup->flags |= markAttachmentType << 8; }
 	lookup->subtableCount = _subtables->u.array.length;
-	NEW_N(lookup->subtables, lookup->subtableCount);
+	NEW(lookup->subtables, lookup->subtableCount);
 	tableid_t jj = 0;
 	loggedStep("%s", lookupName) {
 		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
@@ -460,7 +460,7 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 		if (_feature->type == json_array) {
 			tableid_t nal = 0;
 			otl_Lookup **al;
-			NEW_N(al, _feature->u.array.length);
+			NEW(al, _feature->u.array.length);
 			for (tableid_t k = 0; k < _feature->u.array.length; k++) {
 				json_value *term = _feature->u.array.values[k];
 				if (term->type != json_string) continue;
@@ -534,7 +534,7 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 			otl_Feature **af = NULL;
 			json_value *_features = json_obj_get_type(_language, "features", json_array);
 			if (_features) {
-				NEW_N(af, _features->u.array.length);
+				NEW(af, _features->u.array.length);
 				for (tableid_t k = 0; k < _features->u.array.length; k++) {
 					json_value *term = _features->u.array.values[k];
 					if (term->type == json_string) {
@@ -653,7 +653,7 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 		{
 			lookup_hash *s, *tmp;
 			otl->lookupCount = HASH_COUNT(lh);
-			NEW_N(otl->lookups, otl->lookupCount);
+			NEW(otl->lookups, otl->lookupCount);
 			tableid_t j = 0;
 			HASH_ITER(hh, lh, s, tmp) {
 				otl->lookups[j] = s->lookup;
@@ -666,7 +666,7 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 		{
 			feature_hash *s, *tmp;
 			otl->featureCount = HASH_COUNT(fh);
-			NEW_N(otl->features, otl->featureCount);
+			NEW(otl->features, otl->featureCount);
 			tableid_t j = 0;
 			HASH_ITER(hh, fh, s, tmp) {
 				if (!s->alias) {
@@ -682,7 +682,7 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 		{
 			language_hash *s, *tmp;
 			otl->languageCount = HASH_COUNT(sh);
-			NEW_N(otl->languages, otl->languageCount);
+			NEW(otl->languages, otl->languageCount);
 			tableid_t j = 0;
 			HASH_ITER(hh, sh, s, tmp) {
 				otl->languages[j] = s->script;
@@ -705,7 +705,7 @@ FAIL:
 static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
                                         const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
-		NEW_N(*subtables, lookup->subtableCount);
+		NEW(*subtables, lookup->subtableCount);
 		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 			caryll_Buffer *buf = fn(lookup->subtables[j]);
 			(*subtables)[j] = buf;
@@ -721,9 +721,9 @@ static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn
 // offsets are too large.
 static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *options, const char *tag) {
 	caryll_Buffer ***subtables;
-	NEW_N(subtables, table->lookupCount);
+	NEW(subtables, table->lookupCount);
 	tableid_t *subtableQuantity;
-	NEW_N(subtableQuantity, table->lookupCount);
+	NEW(subtableQuantity, table->lookupCount);
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookupCount; j++) {
 		logProgress("Building lookup %s (%u/%u)\n", table->lookups[j]->name, j, table->lookupCount);
@@ -895,7 +895,7 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 			NEW(s);
 			s->tag = scriptTag;
 			s->dl = NULL;
-			NEW_N(s->ll, table->languageCount);
+			NEW(s->ll, table->languageCount);
 			if (isDefault) {
 				s->dl = table->languages[j];
 				s->lc = 0;

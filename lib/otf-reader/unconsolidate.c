@@ -92,7 +92,7 @@ static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_
 		}
 	}
 	otl_Subtable **newsts;
-	NEW_N(newsts, totalRules);
+	NEW(newsts, totalRules);
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		if (!lookup->subtables[j]) continue;

@@ -25,7 +25,7 @@ table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *opt
 		name->stringOffset = read_16u(data + 4);
 		if (length < 6 + 12 * name->count) goto TABLE_NAME_CORRUPTED;
 
-		NEW_N(name->records, name->count);
+		NEW(name->records, name->count);
 		for (uint16_t j = 0; j < name->count; j++) {
 			name_record *record;
 			NEW(record);
@@ -125,7 +125,7 @@ table_name *table_parse_name(const json_value *root, const otfcc_Options *option
 				}
 			}
 			name->count = validCount;
-			NEW_N(name->records, validCount);
+			NEW(name->records, validCount);
 			int jj = 0;
 			for (uint32_t j = 0; j < table->u.array.length; j++) {
 				if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
