@@ -49,7 +49,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	for (shapeid_t r = 0; r < g->numberOfReferences; r++) {
 		glyf_ComponentReference ref;
 		glyf_ComponentReference *rr = &(g->references[r]);
-		ref.glyph = handle_fromIndex(g->references[r].glyph.index);
+		ref.glyph = Handle.fromIndex(g->references[r].glyph.index);
 		// composite affine transformations
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
@@ -89,7 +89,7 @@ void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	pos_t ymax = -0xFFFFFFFF;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_ComponentReference gr;
-		gr.glyph = handle_fromIndex(j);
+		gr.glyph = Handle.fromIndex(j);
 		gr.x = 0;
 		gr.y = 0;
 		gr.a = 1;

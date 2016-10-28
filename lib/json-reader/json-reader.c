@@ -91,7 +91,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, otfcc_GlyphOrder *g
 }
 
 static otfcc_GlyphOrder *parseGlyphOrder(json_value *root, const otfcc_Options *options) {
-	otfcc_GlyphOrder *go = otfcc_newGlyphOrder();
+	otfcc_GlyphOrder *go = GlyphOrder.create();
 	if (root->type != json_object) return go;
 	json_value *table;
 

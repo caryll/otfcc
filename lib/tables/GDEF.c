@@ -148,7 +148,7 @@ static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
 		json_value *a = _carets->u.object.values[j].value;
 		if (!a || a->type != json_array) continue;
 		lc->coverage->glyphs[jj] =
-		    handle_fromName(sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length));
+		    Handle.fromName(sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length));
 		lc->carets[jj].caretCount = a->u.array.length;
 		NEW(lc->carets[jj].values, lc->carets[jj].caretCount);
 		for (glyphid_t k = 0; k < lc->carets[jj].caretCount; k++) {

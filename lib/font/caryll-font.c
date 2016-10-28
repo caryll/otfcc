@@ -32,6 +32,6 @@ void otfcc_deleteFont(otfcc_Font *font) {
 	if (font->GDEF) DELETE(otfcc_deleteGDEF, font->GDEF);
 	if (font->BASE) DELETE(otfcc_deleteBASE, font->BASE);
 	if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
-	if (font->glyph_order) { DELETE(otfcc_deleteGlyphOrder, font->glyph_order); }
+	if (font->glyph_order) { DELETE(GlyphOrder.free, font->glyph_order); }
 	if (font) FREE(font);
 }

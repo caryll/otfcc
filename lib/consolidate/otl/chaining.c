@@ -20,16 +20,16 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 			for (tableid_t k = 0; k < table->lookupCount; k++) {
 				if (strcmp(table->lookups[k]->name, h->name) != 0) continue;
 				foundLookup = true;
-				handle_consolidateTo(h, k, table->lookups[k]->name);
+				Handle.consolidateTo(h, k, table->lookups[k]->name);
 			}
 			if (!foundLookup && rule->apply[j].lookup.name) {
 				logWarning("[Consolidate] Quoting an invalid lookup %s. This lookup application is ignored.",
 				           rule->apply[j].lookup.name);
-				handle_dispose(&rule->apply[j].lookup);
+				Handle.dispose(&rule->apply[j].lookup);
 			}
 		} else if (h->state == HANDLE_STATE_INDEX) {
 			if (h->index >= table->lookupCount) h->index = 0;
-			handle_consolidateTo(h, h->index, table->lookups[h->index]->name);
+			Handle.consolidateTo(h, h->index, table->lookups[h->index]->name);
 		}
 	}
 	// If a rule is designed to have no lookup application, it may be a ignoration

@@ -41,7 +41,7 @@ bool consolidate_gpos_cursive(otfcc_Font *font, table_OTL *table, otl_Subtable *
 		gpos_cursive_hash *s, *tmp;
 		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->coverage->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
+			subtable->coverage->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
 			subtable->enter[j] = s->enter;
 			subtable->exit[j] = s->exit;
 			j++;

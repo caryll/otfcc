@@ -65,7 +65,7 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 	subtable->to->numGlyphs = nReplacement;
 	NEW(subtable->to->glyphs, nReplacement);
 	for (tableid_t j = 0; j < nReplacement; j++) {
-		subtable->to->glyphs[j] = handle_fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
+		subtable->to->glyphs[j] = Handle.fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
 	}
 	reverseBacktracks(subtable->match, subtable->inputIndex);
 	return _subtable;

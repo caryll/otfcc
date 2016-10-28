@@ -10,8 +10,8 @@
 //      (Separate?)
 static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
-	otfcc_GlyphOrder *glyph_order = otfcc_newGlyphOrder();
-	otfcc_GlyphOrder *aglfn = otfcc_newGlyphOrder();
+	otfcc_GlyphOrder *glyph_order = GlyphOrder.create();
+	otfcc_GlyphOrder *aglfn = GlyphOrder.create();
 	aglfn_setupNames(aglfn);
 	glyphid_t numGlyphs = font->glyf->numberGlyphs;
 	sds prefix;
@@ -24,7 +24,7 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
 		if (font->glyf->glyphs[j]->name) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, font->glyf->glyphs[j]->name);
-			sds sharedName = otfcc_setGlyphOrderByGID(glyph_order, j, gname);
+			sds sharedName = GlyphOrder.setByGID(glyph_order, j, gname);
 			sdsfree(font->glyf->glyphs[j]->name);
 			font->glyf->glyphs[j]->name = sharedName;
 		}
@@ -35,7 +35,7 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_GlyphOrderEntry *s, *tmp;
 		HASH_ITER(hhID, font->post->post_name_map->byGID, s, tmp) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, s->name);
-			otfcc_setGlyphOrderByGID(glyph_order, s->gid, gname);
+			GlyphOrder.setByGID(glyph_order, s->gid, gname);
 		}
 	}
 
@@ -44,13 +44,13 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
 			sds name = NULL;
-			otfcc_gordNameAFieldShared(aglfn, s->unicode, &name);
+			GlyphOrder.nameAField_Shared(aglfn, s->unicode, &name);
 			if (name == NULL) {
 				name = sdscatprintf(sdsempty(), "%suni%04X", prefix, s->unicode);
 			} else {
 				name = sdscatprintf(sdsempty(), "%s%s", prefix, name);
 			}
-			otfcc_setGlyphOrderByGID(glyph_order, s->glyph.index, name);
+			GlyphOrder.setByGID(glyph_order, s->glyph.index, name);
 		}
 	}
 
@@ -62,10 +62,10 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 		} else {
 			name = sdscatfmt(sdsempty(), "%s.notdef", prefix);
 		}
-		otfcc_setGlyphOrderByGID(glyph_order, j, name);
+		GlyphOrder.setByGID(glyph_order, j, name);
 	}
 
-	otfcc_deleteGlyphOrder(aglfn);
+	GlyphOrder.free(aglfn);
 	sdsfree(prefix);
 	font->glyph_order = glyph_order;
 }
@@ -75,7 +75,7 @@ static void nameGlyphs(otfcc_Font *font) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_Glyph *g = font->glyf->glyphs[j];
 			sds glyphName = NULL;
-			otfcc_gordNameAFieldShared(font->glyph_order, j, &glyphName);
+			GlyphOrder.nameAField_Shared(font->glyph_order, j, &glyphName);
 			g->name = sdsdup(glyphName);
 		}
 	}

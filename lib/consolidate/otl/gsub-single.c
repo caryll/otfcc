@@ -50,8 +50,8 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 		gsub_single_map_hash *s, *tmp;
 		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
-			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);
+			subtable->from->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
+			subtable->to->glyphs[j] = Handle.fromConsolidated(s->toid, s->toname);
 			j++;
 			HASH_DEL(h, s);
 			FREE(s);

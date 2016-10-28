@@ -23,15 +23,15 @@ typedef struct {
 	otfcc_GlyphOrderEntry *byName;
 } otfcc_GlyphOrder;
 
-otfcc_GlyphOrder *otfcc_newGlyphOrder();
-void otfcc_deleteGlyphOrder(otfcc_GlyphOrder *go);
-sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds name);
-glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
-bool otfcc_gordNameAFieldShared(otfcc_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
-bool otfcc_gordConsolidateHandle(otfcc_GlyphOrder *go, otfcc_GlyphHandle *h);
-otfcc_GlyphOrderEntry *otfcc_lookupName(otfcc_GlyphOrder *go, sds name);
+struct otfcc_GlyphOrderPackage {
+	otfcc_GlyphOrder *(*create)();
+	void (*free)(otfcc_GlyphOrder *go);
+	sds (*setByGID)(otfcc_GlyphOrder *go, glyphid_t gid, sds name);
+	glyphid_t (*setByName)(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
+	bool (*nameAField_Shared)(otfcc_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
+	bool (*consolidateHandle)(otfcc_GlyphOrder *go, otfcc_GlyphHandle *h);
+};
 
-otfcc_GlyphHandle otfcc_gordFormIndexedHandle(otfcc_GlyphOrder *go, glyphid_t gid);
-otfcc_GlyphHandle otfcc_gordFormNamedHandle(otfcc_GlyphOrder *go, const sds name);
+extern const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder;
 
 #endif

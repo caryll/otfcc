@@ -11,7 +11,7 @@ table_post *otfcc_newPost() {
 	return post;
 }
 void otfcc_deletePost(MOVE table_post *table) {
-	if (table->post_name_map != NULL) { otfcc_deleteGlyphOrder(table->post_name_map); }
+	if (table->post_name_map != NULL) { GlyphOrder.free(table->post_name_map); }
 	FREE(table);
 }
 
@@ -33,7 +33,7 @@ table_post *otfcc_readPost(const otfcc_Packet packet, const otfcc_Options *optio
 		post->post_name_map = NULL;
 		// Foamt 2 additional glyph names
 		if (post->version == 0x20000) {
-			otfcc_GlyphOrder *map = otfcc_newGlyphOrder();
+			otfcc_GlyphOrder *map = GlyphOrder.create();
 
 			sds pendingNames[0x10000];
 			memset(pendingNames, 0, sizeof(pendingNames));
@@ -55,9 +55,9 @@ table_post *otfcc_readPost(const otfcc_Packet packet, const otfcc_Options *optio
 			for (uint16_t j = 0; j < numberGlyphs; j++) {
 				uint16_t nameMap = read_16u(data + 34 + 2 * j);
 				if (nameMap >= 258) { // Custom glyph name
-					otfcc_setGlyphOrderByGID(map, j, sdsdup(pendingNames[nameMap - 258]));
+					GlyphOrder.setByGID(map, j, sdsdup(pendingNames[nameMap - 258]));
 				} else { // Standard Macintosh glyph name
-					otfcc_setGlyphOrderByGID(map, j, sdsnew(standardMacNames[nameMap]));
+					GlyphOrder.setByGID(map, j, sdsnew(standardMacNames[nameMap]));
 				}
 			}
 			for (uint32_t j = 0; j < pendingNameIndex; j++) {

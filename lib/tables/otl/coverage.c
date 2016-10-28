@@ -4,7 +4,7 @@
 void otl_delete_Coverage(MOVE otl_Coverage *coverage) {
 	if (coverage && coverage->glyphs) {
 		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-			handle_dispose(&coverage->glyphs[j]);
+			Handle.dispose(&coverage->glyphs[j]);
 		}
 		FREE(coverage->glyphs);
 	}
@@ -52,7 +52,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
-						coverage->glyphs[j] = handle_fromIndex(e->gid);
+						coverage->glyphs[j] = Handle.fromIndex(e->gid);
 						HASH_DEL(hash, e);
 						FREE(e);
 						j++;
@@ -88,7 +88,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 					glyphid_t j = 0;
 					coverage_entry *e, *tmp;
 					HASH_ITER(hh, hash, e, tmp) {
-						coverage->glyphs[j] = handle_fromIndex(e->gid);
+						coverage->glyphs[j] = Handle.fromIndex(e->gid);
 						HASH_DEL(hash, e);
 						FREE(e);
 						j++;
@@ -127,7 +127,7 @@ otl_Coverage *otl_parse_Coverage(const json_value *cov) {
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < c->numGlyphs; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
-			c->glyphs[jj] = handle_fromName(
+			c->glyphs[jj] = Handle.fromName(
 			    sdsnewlen(cov->u.array.values[j]->u.string.ptr, cov->u.array.values[j]->u.string.length));
 			jj++;
 		}
@@ -216,7 +216,7 @@ void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 		if (coverage->glyphs[j].name) {
 			coverage->glyphs[k++] = coverage->glyphs[j];
 		} else {
-			handle_dispose(&coverage->glyphs[j]);
+			Handle.dispose(&coverage->glyphs[j]);
 		}
 	}
 	if (dosort) {
@@ -224,7 +224,7 @@ void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 		glyphid_t skip = 0;
 		for (glyphid_t rear = 1; rear < coverage->numGlyphs; rear++) {
 			if (coverage->glyphs[rear].index == coverage->glyphs[rear - skip - 1].index) {
-				handle_dispose(&coverage->glyphs[rear]);
+				Handle.dispose(&coverage->glyphs[rear]);
 				skip += 1;
 			} else {
 				coverage->glyphs[rear - skip] = coverage->glyphs[rear];

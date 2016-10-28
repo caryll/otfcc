@@ -49,7 +49,7 @@ glyf_Glyph *otfcc_newGlyf_glyph() {
 	g->stemV = NULL;
 	g->hintMasks = NULL;
 	g->contourMasks = NULL;
-	g->fdSelect = handle_new();
+	g->fdSelect = Handle.empty();
 	g->yPel = 0;
 
 	g->stat.xMin = 0;
@@ -75,7 +75,7 @@ static void otfcc_deleteGlyf_glyph(glyf_Glyph *g) {
 	}
 	if (g->numberOfReferences > 0 && g->references != NULL) {
 		for (shapeid_t k = 0; k < g->numberOfReferences; k++) {
-			handle_dispose(&g->references[k].glyph);
+			Handle.dispose(&g->references[k].glyph);
 		}
 		FREE(g->references);
 	}
@@ -84,7 +84,7 @@ static void otfcc_deleteGlyf_glyph(glyf_Glyph *g) {
 	if (g->stemV) FREE(g->stemV);
 	if (g->hintMasks) FREE(g->hintMasks);
 	if (g->contourMasks) FREE(g->contourMasks);
-	handle_dispose(&g->fdSelect);
+	Handle.dispose(&g->fdSelect);
 	g->name = NULL;
 	FREE(g);
 }
@@ -285,7 +285,7 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start) {
 			d = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
-		g->references[j].glyph = handle_fromIndex(index);
+		g->references[j].glyph = Handle.fromIndex(index);
 		g->references[j].a = a;
 		g->references[j].b = b;
 		g->references[j].c = c;
@@ -541,7 +541,7 @@ static void glyf_parse_point(glyf_Point *point, json_value *pointdump) {
 static void glyf_parse_reference(glyf_ComponentReference *ref, json_value *refdump) {
 	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
 	if (_gname) {
-		ref->glyph = handle_fromName(sdsnewlen(_gname->u.string.ptr, _gname->u.string.length));
+		ref->glyph = Handle.fromName(sdsnewlen(_gname->u.string.ptr, _gname->u.string.length));
 		ref->x = json_obj_getnum_fallback(refdump, "x", 0.0);
 		ref->y = json_obj_getnum_fallback(refdump, "y", 0.0);
 		ref->a = json_obj_getnum_fallback(refdump, "a", 1.0);
@@ -692,7 +692,7 @@ static glyf_Glyph *otfcc_glyf_parse_glyph(json_value *glyphdump, otfcc_GlyphOrde
 		            &(g->contourMasks));
 	}
 	// Glyph data of other tables
-	g->fdSelect = handle_fromName(json_obj_getsds(glyphdump, "CFF_fdSelect"));
+	g->fdSelect = Handle.fromName(json_obj_getsds(glyphdump, "CFF_fdSelect"));
 	g->yPel = json_obj_getint(glyphdump, "LTSH_yPel");
 	if (!g->yPel) { g->yPel = json_obj_getint(glyphdump, "yPel"); }
 	return g;

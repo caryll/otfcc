@@ -66,7 +66,7 @@ otl_Subtable *otl_gpos_parse_single(const json_value *_subtable, const otfcc_Opt
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
 			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
-			subtable->coverage->glyphs[jj] = handle_fromName(gname);
+			subtable->coverage->glyphs[jj] = Handle.fromName(gname);
 			subtable->values[jj] = gpos_parse_value(_subtable->u.object.values[j].value);
 			jj++;
 		}

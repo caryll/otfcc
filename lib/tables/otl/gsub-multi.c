@@ -35,7 +35,7 @@ otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, 
 		cov->numGlyphs = read_16u(data + seqOffset);
 		NEW(cov->glyphs, cov->numGlyphs);
 		for (glyphid_t k = 0; k < cov->numGlyphs; k++) {
-			cov->glyphs[k] = handle_fromIndex(read_16u(data + seqOffset + 2 + k * 2));
+			cov->glyphs[k] = Handle.fromIndex(read_16u(data + seqOffset + 2 + k * 2));
 		}
 		subtable->to[j] = cov;
 	}
@@ -69,7 +69,7 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 		json_value *_to = _subtable->u.object.values[k].value;
 		if (!_to || _to->type != json_array) continue;
 		st->from->glyphs[jj] =
-		    handle_fromName(sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
+		    Handle.fromName(sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
 		st->to[jj] = otl_parse_Coverage(_to);
 		jj += 1;
 	}

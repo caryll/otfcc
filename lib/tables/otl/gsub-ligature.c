@@ -52,14 +52,14 @@ otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tabl
 			glyphid_t ligComponents = read_16u(data + ligOffset + 2);
 			checkLength(ligOffset + 2 + ligComponents * 2);
 
-			subtable->to->glyphs[jj] = handle_fromIndex(read_16u(data + ligOffset));
+			subtable->to->glyphs[jj] = Handle.fromIndex(read_16u(data + ligOffset));
 
 			NEW(subtable->from[jj]);
 			subtable->from[jj]->numGlyphs = ligComponents;
 			NEW(subtable->from[jj]->glyphs, ligComponents);
-			subtable->from[jj]->glyphs[0] = handle_fromIndex(startCoverage->glyphs[j].index);
+			subtable->from[jj]->glyphs[0] = Handle.fromIndex(startCoverage->glyphs[j].index);
 			for (glyphid_t m = 1; m < ligComponents; m++) {
-				subtable->from[jj]->glyphs[m] = handle_fromIndex(read_16u(data + ligOffset + 2 + m * 2));
+				subtable->from[jj]->glyphs[m] = Handle.fromIndex(read_16u(data + ligOffset + 2 + m * 2));
 			}
 			jj++;
 		}
@@ -104,7 +104,7 @@ otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_O
 			json_value *_from = json_obj_get_type(entry, "from", json_array);
 			json_value *_to = json_obj_get_type(entry, "to", json_string);
 			if (!_from || !_to) continue;
-			st->to->glyphs[jj] = handle_fromName(sdsnewlen(_to->u.string.ptr, _to->u.string.length));
+			st->to->glyphs[jj] = Handle.fromName(sdsnewlen(_to->u.string.ptr, _to->u.string.length));
 			st->from[jj] = otl_parse_Coverage(_from);
 			jj += 1;
 		}
@@ -122,7 +122,7 @@ otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_O
 		for (glyphid_t k = 0; k < st->to->numGlyphs; k++) {
 			json_value *_from = _subtable->u.object.values[k].value;
 			if (!_from || _from->type != json_array) continue;
-			st->to->glyphs[jj] = handle_fromName(
+			st->to->glyphs[jj] = Handle.fromName(
 			    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
 			st->from[jj] = otl_parse_Coverage(_from);
 			jj += 1;
@@ -166,7 +166,7 @@ caryll_Buffer *otfcc_build_gsub_ligature_subtable(const otl_Subtable *_subtable)
 	glyphid_t jj = 0;
 	foreach_hash(s, h) {
 		s->ligid = jj;
-		startcov->glyphs[jj] = handle_fromIndex(s->gid);
+		startcov->glyphs[jj] = Handle.fromIndex(s->gid);
 		jj++;
 	}
 

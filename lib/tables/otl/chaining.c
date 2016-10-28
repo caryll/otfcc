@@ -8,7 +8,7 @@ static void closeRule(otl_ChainingRule *rule) {
 	}
 	if (rule && rule->apply) {
 		for (tableid_t j = 0; j < rule->applyCount; j++) {
-			handle_dispose(&rule->apply[j].lookup);
+			Handle.dispose(&rule->apply[j].lookup);
 		}
 		FREE(rule->apply);
 	}
@@ -63,7 +63,7 @@ otl_Coverage *singleCoverage(font_file_pointer data, uint32_t tableLength, uint1
 	NEW(cov);
 	cov->numGlyphs = 1;
 	NEW(cov->glyphs);
-	cov->glyphs[0] = handle_fromIndex((glyphid_t)gid);
+	cov->glyphs[0] = Handle.fromIndex((glyphid_t)gid);
 	return cov;
 }
 otl_Coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16_t cls, uint32_t _offset, uint16_t kind,
@@ -126,7 +126,7 @@ otl_ChainingRule *GeneralReadContextualRule(font_file_pointer data, uint32_t tab
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4);
 		rule->apply[j].lookup =
-		    handle_fromIndex(read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2));
+		    Handle.fromIndex(read_16u(data + offset + 4 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2));
 	}
 	reverseBacktracks(rule);
 	return rule;
@@ -294,7 +294,7 @@ otl_ChainingRule *GeneralReadChainingRule(font_file_pointer data, uint32_t table
 		rule->apply[j].index =
 		    rule->inputBegins + read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4);
 		rule->apply[j].lookup =
-		    handle_fromIndex(read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2));
+		    Handle.fromIndex(read_16u(data + offset + 8 + 2 * (rule->matchCount - minusOneQ) + j * 4 + 2));
 	}
 	reverseBacktracks(rule);
 	return rule;
@@ -473,12 +473,12 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 	}
 	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		rule->apply[j].index = 0;
-		rule->apply[j].lookup = handle_new();
+		rule->apply[j].lookup = Handle.empty();
 		json_value *_application = _apply->u.array.values[j];
 		if (_application->type == json_object) {
 			json_value *_ln = json_obj_get_type(_application, "lookup", json_string);
 			if (_ln) {
-				rule->apply[j].lookup = handle_fromName(sdsnewlen(_ln->u.string.ptr, _ln->u.string.length));
+				rule->apply[j].lookup = Handle.fromName(sdsnewlen(_ln->u.string.ptr, _ln->u.string.length));
 				rule->apply[j].index = json_obj_getnum(_application, "at");
 			}
 		}
@@ -697,16 +697,16 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 			classifier_hash *s;
 			int gid = rule->match[m]->glyphs[0].index;
 			HASH_FIND_INT(h, &gid, s);
-			newRule->match[m]->glyphs[0] = handle_fromIndex(s->cls);
+			newRule->match[m]->glyphs[0] = Handle.fromIndex(s->cls);
 		} else {
-			newRule->match[m]->glyphs[0] = handle_fromIndex(0);
+			newRule->match[m]->glyphs[0] = Handle.fromIndex(0);
 		}
 	}
 	newRule->applyCount = rule->applyCount;
 	NEW(newRule->apply, newRule->applyCount);
 	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		newRule->apply[j].index = rule->apply[j].index;
-		newRule->apply[j].lookup = handle_copy(rule->apply[j].lookup);
+		newRule->apply[j].lookup = Handle.copy(rule->apply[j].lookup);
 	}
 	return newRule;
 }
@@ -726,7 +726,7 @@ static otl_ClassDef *toClass(classifier_hash *h) {
 	glyphid_t j = 0;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
-		cd->glyphs[j] = handle_fromConsolidated(item->gid, item->gname);
+		cd->glyphs[j] = Handle.fromConsolidated(item->gid, item->gname);
 		cd->classes[j] = item->cls;
 		if (item->cls > maxclass) maxclass = item->cls;
 		j++;
@@ -828,7 +828,7 @@ FAIL:;
 	}
 }
 tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
-                                         MODIFY size_t *lastOffset) {
+                                        MODIFY size_t *lastOffset) {
 	tableid_t subtablesWritten = 0;
 	NEW(*subtableBuffers, lookup->subtableCount);
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {

@@ -5,7 +5,7 @@ void otl_delete_ClassDef(otl_ClassDef *cd) {
 	if (cd) {
 		if (cd->glyphs) {
 			for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-				handle_dispose(&cd->glyphs[j]);
+				Handle.dispose(&cd->glyphs[j]);
 			}
 			FREE(cd->glyphs);
 		}
@@ -41,7 +41,7 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 			NEW(cd->classes, count);
 			uint16_t maxclass = 0;
 			for (glyphid_t j = 0; j < count; j++) {
-				cd->glyphs[j] = handle_fromIndex(startGID + j);
+				cd->glyphs[j] = Handle.fromIndex(startGID + j);
 				cd->classes[j] = read_16u(data + offset + 6 + j * 2);
 				if (cd->classes[j] > maxclass) maxclass = cd->classes[j];
 			}
@@ -79,7 +79,7 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 				glyphclass_t maxclass = 0;
 				coverage_entry *e, *tmp;
 				HASH_ITER(hh, hash, e, tmp) {
-					cd->glyphs[j] = handle_fromIndex(e->gid);
+					cd->glyphs[j] = Handle.fromIndex(e->gid);
 					cd->classes[j] = e->covIndex;
 					if (e->covIndex > maxclass) maxclass = e->covIndex;
 					HASH_DEL(hash, e);
@@ -130,7 +130,7 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 		glyphclass_t maxclass = 0;
 		coverage_entry *e, *tmp;
 		HASH_ITER(hh, hash, e, tmp) {
-			cd->glyphs[j] = handle_fromIndex(e->gid);
+			cd->glyphs[j] = Handle.fromIndex(e->gid);
 			cd->classes[j] = e->covIndex;
 			if (e->covIndex > maxclass) maxclass = e->covIndex;
 			HASH_DEL(hash, e);
@@ -160,7 +160,7 @@ otl_ClassDef *otl_parse_ClassDef(const json_value *_cd) {
 	NEW(cd->classes, cd->numGlyphs);
 	glyphclass_t maxclass = 0;
 	for (glyphid_t j = 0; j < _cd->u.object.length; j++) {
-		cd->glyphs[j] = handle_fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
+		cd->glyphs[j] = Handle.fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
 		json_value *_cid = _cd->u.object.values[j].value;
 		if (_cid->type == json_integer) {
 			cd->classes[j] = _cid->u.integer;
@@ -246,7 +246,7 @@ void fontop_shrinkClassDef(otl_ClassDef *cd) {
 			cd->classes[k] = cd->classes[j];
 			k++;
 		} else {
-			handle_dispose(&cd->glyphs[j]);
+			Handle.dispose(&cd->glyphs[j]);
 		}
 	}
 	cd->numGlyphs = k;

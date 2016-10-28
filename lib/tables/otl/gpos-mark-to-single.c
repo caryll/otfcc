@@ -112,7 +112,7 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToSingle *subtable,
 	for (glyphid_t j = 0; j < _marks->u.object.length; j++) {
 		char *gname = _marks->u.object.values[j].name;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
-		subtable->marks->glyphs[j] = handle_fromName(sdsnewlen(gname, _marks->u.object.values[j].name_length));
+		subtable->marks->glyphs[j] = Handle.fromName(sdsnewlen(gname, _marks->u.object.values[j].name_length));
 
 		subtable->markArray->records[j].markClass = 0;
 		subtable->markArray->records[j].anchor = otl_anchor_absent();
@@ -168,7 +168,7 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 	NEW(subtable->baseArray, _bases->u.object.length);
 	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
 		char *gname = _bases->u.object.values[j].name;
-		subtable->bases->glyphs[j] = handle_fromName(sdsnewlen(gname, _bases->u.object.values[j].name_length));
+		subtable->bases->glyphs[j] = Handle.fromName(sdsnewlen(gname, _bases->u.object.values[j].name_length));
 		NEW(subtable->baseArray[j], classCount);
 		for (glyphclass_t k = 0; k < classCount; k++) {
 			subtable->baseArray[j][k] = otl_anchor_absent();

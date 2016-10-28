@@ -39,7 +39,7 @@ void consolidate_GDEF(otfcc_Font *font, table_GDEF *gdef, const otfcc_Options *o
 		GDEF_ligcaret_hash *s, *tmp;
 		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			gdef->ligCarets->coverage->glyphs[j] = handle_fromConsolidated(s->gid, s->name);
+			gdef->ligCarets->coverage->glyphs[j] = Handle.fromConsolidated(s->gid, s->name);
 			gdef->ligCarets->carets[j] = s->cr;
 			j++;
 			HASH_DEL(h, s);

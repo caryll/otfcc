@@ -123,7 +123,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		pair_classifier_hash *s, *tmp;
 		glyphid_t jj = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->second->glyphs[jj] = handle_fromIndex(s->gid);
+			subtable->second->glyphs[jj] = Handle.fromIndex(s->gid);
 			subtable->second->classes[jj] = s->cid;
 			jj++;
 			HASH_DEL(h, s);
@@ -256,7 +256,7 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	cov->numGlyphs = cd->numGlyphs;
 	NEW(cov->glyphs, cd->numGlyphs);
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-		cov->glyphs[j] = handle_copy(cd->glyphs[j]);
+		cov->glyphs[j] = Handle.copy(cd->glyphs[j]);
 	}
 	return cov;
 }

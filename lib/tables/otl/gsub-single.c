@@ -25,7 +25,7 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 
 		uint16_t delta = read_16u(data + subtableOffset + 4);
 		for (glyphid_t j = 0; j < from->numGlyphs; j++) {
-			to->glyphs[j] = handle_fromIndex(from->glyphs[j].index + delta);
+			to->glyphs[j] = Handle.fromIndex(from->glyphs[j].index + delta);
 		}
 		subtable->gsub_single.to = to;
 	} else {
@@ -37,7 +37,7 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 		NEW(to->glyphs, to->numGlyphs);
 
 		for (glyphid_t j = 0; j < to->numGlyphs; j++) {
-			to->glyphs[j] = handle_fromIndex(read_16u(data + subtableOffset + 6 + j * 2));
+			to->glyphs[j] = Handle.fromIndex(read_16u(data + subtableOffset + 6 + j * 2));
 		}
 		subtable->gsub_single.to = to;
 	}
@@ -71,9 +71,9 @@ otl_Subtable *otl_gsub_parse_single(const json_value *_subtable, const otfcc_Opt
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_string) {
-			subtable->from->glyphs[jj] = handle_fromName(
+			subtable->from->glyphs[jj] = Handle.fromName(
 			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length));
-			subtable->to->glyphs[jj] = handle_fromName(sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
+			subtable->to->glyphs[jj] = Handle.fromName(sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
 			                                                     _subtable->u.object.values[j].value->u.string.length));
 			jj++;
 		}

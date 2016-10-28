@@ -446,7 +446,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	else
 		fd = cff_parseSubr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
-	g->fdSelect = handle_fromIndex(fd);
+	g->fdSelect = Handle.fromIndex(fd);
 	if (context->meta->fdArray && fd < context->meta->fdArrayCount && context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
 		bc.nominalWidthX = context->meta->fdArray[fd]->privateDict->nominalWidthX;

@@ -1,7 +1,7 @@
 #include "util.h"
 #include "otfcc/glyph-order.h"
 
-otfcc_GlyphOrder *otfcc_newGlyphOrder() {
+static otfcc_GlyphOrder *otfcc_newGlyphOrder() {
 	otfcc_GlyphOrder *go;
 	NEW(go);
 	go->byGID = NULL;
@@ -9,7 +9,7 @@ otfcc_GlyphOrder *otfcc_newGlyphOrder() {
 	return go;
 }
 
-void otfcc_deleteGlyphOrder(otfcc_GlyphOrder *go) {
+static void otfcc_deleteGlyphOrder(otfcc_GlyphOrder *go) {
 	if (!go) return;
 	otfcc_GlyphOrderEntry *current, *temp;
 	HASH_ITER(hhID, go->byGID, current, temp) {
@@ -22,7 +22,7 @@ void otfcc_deleteGlyphOrder(otfcc_GlyphOrder *go) {
 }
 
 // Register a gid->name map
-sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds name) {
+static sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds name) {
 	otfcc_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), s);
 	if (s) {
@@ -48,7 +48,7 @@ sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds name) {
 }
 
 // Register a name->gid map
-glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gid) {
+static glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gid) {
 	otfcc_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhName, go->byName, name, sdslen(name), s);
 	if (s) {
@@ -67,7 +67,7 @@ glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gi
 	}
 }
 
-bool otfcc_gordNameAFieldShared(otfcc_GlyphOrder *go, glyphid_t gid, sds *field) {
+static bool otfcc_gordNameAFieldShared(otfcc_GlyphOrder *go, glyphid_t gid, sds *field) {
 	otfcc_GlyphOrderEntry *t;
 	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
 	if (t != NULL) {
@@ -79,59 +79,42 @@ bool otfcc_gordNameAFieldShared(otfcc_GlyphOrder *go, glyphid_t gid, sds *field)
 	}
 }
 
-bool otfcc_gordConsolidateHandle(otfcc_GlyphOrder *go, glyph_handle *h) {
+static bool otfcc_gordConsolidateHandle(otfcc_GlyphOrder *go, glyph_handle *h) {
 	if (h->state == HANDLE_STATE_CONSOLIDATED) {
 		otfcc_GlyphOrderEntry *t;
 		HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
 		if (t) {
-			handle_consolidateTo(h, t->gid, t->name);
+			Handle.consolidateTo(h, t->gid, t->name);
 			return true;
 		}
 		HASH_FIND(hhName, go->byGID, &(h->index), sizeof(glyphid_t), t);
 		if (t) {
-			handle_consolidateTo(h, t->gid, t->name);
+			Handle.consolidateTo(h, t->gid, t->name);
 			return true;
 		}
 	} else if (h->state == HANDLE_STATE_NAME) {
 		otfcc_GlyphOrderEntry *t;
 		HASH_FIND(hhName, go->byName, h->name, sdslen(h->name), t);
 		if (t) {
-			handle_consolidateTo(h, t->gid, t->name);
+			Handle.consolidateTo(h, t->gid, t->name);
 			return true;
 		}
 	} else if (h->state == HANDLE_STATE_INDEX) {
 		sds name = NULL;
 		otfcc_gordNameAFieldShared(go, h->index, &name);
 		if (name) {
-			handle_consolidateTo(h, h->index, name);
+			Handle.consolidateTo(h, h->index, name);
 			return true;
 		}
 	}
 	return false;
 }
 
-otfcc_GlyphOrderEntry *otfcc_lookupName(otfcc_GlyphOrder *go, sds name) {
-	otfcc_GlyphOrderEntry *t = NULL;
-	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
-	return t;
-}
-
-otfcc_GlyphHandle otfcc_gordFormIndexedHandle(otfcc_GlyphOrder *go, glyphid_t gid) {
-	otfcc_GlyphOrderEntry *t;
-	HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
-	if (t) {
-		return handle_fromConsolidated(t->gid, t->name);
-	} else {
-		return handle_new();
-	}
-}
-
-otfcc_GlyphHandle otfcc_gordFormNamedHandle(otfcc_GlyphOrder *go, const sds name) {
-	otfcc_GlyphOrderEntry *t;
-	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
-	if (t) {
-		return handle_fromConsolidated(t->gid, t->name);
-	} else {
-		return handle_new();
-	}
-}
+const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder = {
+    .create = otfcc_newGlyphOrder,
+    .free = otfcc_deleteGlyphOrder,
+    .setByGID = otfcc_setGlyphOrderByGID,
+    .setByName = otfcc_setGlyphOrderByName,
+    .nameAField_Shared = otfcc_gordNameAFieldShared,
+    .consolidateHandle = otfcc_gordConsolidateHandle,
+};
