@@ -70,8 +70,6 @@ struct _caryll_font {
 	caryll_GlyphOrder *glyph_order;
 };
 
-caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index);
-caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root);
 caryll_Font *caryll_new_Font();
 void caryll_delete_Font(caryll_Font *font);
 

@@ -56,7 +56,7 @@ void caryll_delete_Font(caryll_Font *font) {
 	if (font) free(font);
 }
 
-caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index) {
+static caryll_font_subtype caryll_decideFontSubtype(caryll_SplineFontContainer *sfnt, uint32_t index) {
 	caryll_Packet packet = sfnt->packets[index];
 	FOR_TABLE('CFF ', table) {
 		return FONTTYPE_CFF;
@@ -136,7 +136,7 @@ json_value *caryll_dump_Font(caryll_Font *font, otfcc_Options *options) {
 	return root;
 }
 
-caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root) {
+static caryll_font_subtype caryll_decideFontSubtypeFromJson(json_value *root) {
 	if (json_obj_get_type(root, "CFF_", json_object) != NULL) {
 		return FONTTYPE_CFF;
 	} else {
