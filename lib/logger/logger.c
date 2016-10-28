@@ -105,7 +105,7 @@ const otfcc_ILogger VTABLE_LOGGER = {.dispose = loggerDispose,
                                      .getTarget = loggerGetTarget,
                                      .setVerbosity = loggerSetVerbosity};
 
-otfcc_ILogger *otfcc_new_Logger(otfcc_ILoggerTarget *target) {
+otfcc_ILogger *otfcc_newLogger(otfcc_ILoggerTarget *target) {
 	Logger *logger;
 	NEW(logger);
 	logger->target = target;
@@ -131,7 +131,7 @@ void stderrTargetPush(otfcc_ILoggerTarget *_self, MOVE sds data) {
 
 const otfcc_ILoggerTarget VTABLE_STDERR_TARGET = {.dispose = stderrTargetDispose, .push = stderrTargetPush};
 
-otfcc_ILoggerTarget *otfcc_new_StdErrTarget() {
+otfcc_ILoggerTarget *otfcc_newStdErrTarget() {
 	StderrTarget *target;
 	NEW(target);
 	target->vtable = VTABLE_STDERR_TARGET;

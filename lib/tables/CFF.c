@@ -9,7 +9,7 @@ const double DEFAULT_BLUE_SHIFT = 7;
 const double DEFAULT_BLUE_FUZZ = 1;
 const double DEFAULT_EXPANSION_FACTOR = 0.06;
 
-static cff_PrivateDict *otfcc_newTablecff_private() {
+static cff_PrivateDict *otfcc_newCff_private() {
 	cff_PrivateDict *pd = NULL;
 	NEW(pd);
 	pd->blueFuzz = DEFAULT_BLUE_FUZZ;
@@ -18,7 +18,7 @@ static cff_PrivateDict *otfcc_newTablecff_private() {
 	pd->expansionFactor = DEFAULT_EXPANSION_FACTOR;
 	return pd;
 }
-table_CFF *otfcc_newTableCFF() {
+table_CFF *otfcc_newCFF() {
 	table_CFF *table = NULL;
 	NEW(table);
 	table->underlinePosition = -100;
@@ -37,7 +37,7 @@ static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	FREE(priv->stemSnapV);
 	FREE(priv);
 }
-void otfcc_deleteTableCFF(table_CFF *table) {
+void otfcc_deleteCFF(table_CFF *table) {
 	if (!table) return;
 	sdsfree(table->version);
 	sdsfree(table->notice);
@@ -54,7 +54,7 @@ void otfcc_deleteTableCFF(table_CFF *table) {
 	otfcc_delete_privatedict(table->privateDict);
 	if (table->fdArray) {
 		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
-			otfcc_deleteTableCFF(table->fdArray[j]);
+			otfcc_deleteCFF(table->fdArray[j]);
 		}
 		FREE(table->fdArray);
 	}
@@ -231,7 +231,7 @@ static void callback_extract_fd(uint32_t op, uint8_t top, cff_Value *stack, void
 			if (top >= 2) {
 				uint32_t privateLength = cffnum(stack[top - 2]);
 				uint32_t privateOffset = cffnum(stack[top - 1]);
-				meta->privateDict = otfcc_newTablecff_private();
+				meta->privateDict = otfcc_newCff_private();
 				cff_extract_DictByCallback(file->raw_data + privateOffset, privateLength, context,
 				                           callback_extract_private);
 			}
@@ -427,7 +427,7 @@ static cff_IOutlineBuilder drawPass = {.setWidth = callback_draw_setwidth,
 
 static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_Options *options) {
 	cff_File *f = context->cffFile;
-	glyf_Glyph *g = otfcc_newTableglyf_glyph();
+	glyf_Glyph *g = otfcc_newGlyf_glyph();
 	context->glyphs->glyphs[i] = g;
 	uint64_t seed = context->seed;
 
@@ -594,8 +594,8 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 	}
 }
 
-table_CFFAndGlyf otfcc_readTablecff_and_glyf(const otfcc_Packet packet, const otfcc_Options *options,
-                                         const table_head *head) {
+table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otfcc_Options *options,
+                                            const table_head *head) {
 	table_CFFAndGlyf ret;
 	ret.meta = NULL;
 	ret.glyphs = NULL;
@@ -610,7 +610,7 @@ table_CFFAndGlyf otfcc_readTablecff_and_glyf(const otfcc_Packet packet, const ot
 		uint32_t length = table.length;
 		cff_File *cffFile = cff_openStream(data, length, options);
 		context.cffFile = cffFile;
-		context.meta = otfcc_newTableCFF();
+		context.meta = otfcc_newCFF();
 
 		// Extract data in TOP DICT
 		cff_extract_DictByCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
@@ -623,7 +623,7 @@ table_CFFAndGlyf otfcc_readTablecff_and_glyf(const otfcc_Packet packet, const ot
 			context.meta->fdArrayCount = cffFile->font_dict.count;
 			NEW(context.meta->fdArray, context.meta->fdArrayCount);
 			for (tableid_t j = 0; j < context.meta->fdArrayCount; j++) {
-				context.meta->fdArray[j] = otfcc_newTableCFF();
+				context.meta->fdArray[j] = otfcc_newCFF();
 				context.fdArrayIndex = j;
 				cff_extract_DictByCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
 				                           cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
@@ -746,7 +746,7 @@ static json_value *fdToJson(const table_CFF *table) {
 	return _CFF_;
 }
 
-void otfcc_dumpTablecff(const table_CFF *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpCFF(const table_CFF *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("CFF") {
 		json_object_push(root, "CFF_", fdToJson(table));
@@ -763,7 +763,7 @@ static void pdDeltaFromJson(json_value *dump, arity_t *count, double **array) {
 }
 static cff_PrivateDict *pdFromJson(json_value *dump) {
 	if (!dump || dump->type != json_object) return NULL;
-	cff_PrivateDict *pd = otfcc_newTablecff_private();
+	cff_PrivateDict *pd = otfcc_newCff_private();
 	pdDeltaFromJson(json_obj_get(dump, "blueValues"), &(pd->blueValuesCount), &(pd->blueValues));
 	pdDeltaFromJson(json_obj_get(dump, "otherBlues"), &(pd->otherBluesCount), &(pd->otherBlues));
 	pdDeltaFromJson(json_obj_get(dump, "familyBlues"), &(pd->familyBluesCount), &(pd->familyBlues));
@@ -787,7 +787,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 	return pd;
 }
 static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, bool topLevel) {
-	table_CFF *table = otfcc_newTableCFF();
+	table_CFF *table = otfcc_newCFF();
 	if (!dump || dump->type != json_object) return table;
 	// Names
 	table->version = json_obj_getsds(dump, "version");
@@ -850,15 +850,15 @@ static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, boo
 		}
 	}
 	if (!table->fontName) table->fontName = sdsnew("CARYLL_CFFFONT");
-	if (!table->privateDict) table->privateDict = otfcc_newTablecff_private();
+	if (!table->privateDict) table->privateDict = otfcc_newCff_private();
 	// Deal with force-cid
 	if (topLevel && options->force_cid && !table->fdArray) {
 		table->fdArrayCount = 1;
 		NEW(table->fdArray, table->fdArrayCount);
-		table->fdArray[0] = otfcc_newTableCFF();
+		table->fdArray[0] = otfcc_newCFF();
 		table_CFF *fd0 = table->fdArray[0];
 		fd0->privateDict = table->privateDict;
-		table->privateDict = otfcc_newTablecff_private();
+		table->privateDict = otfcc_newCff_private();
 		fd0->fontName = sdscat(sdsdup(table->fontName), "-subfont0");
 		table->isCID = true;
 	}
@@ -866,7 +866,7 @@ static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, boo
 	if (table->isCID && !table->cidOrdering) { table->cidOrdering = sdsnew("OTFCCAUTOCID"); }
 	return table;
 }
-table_CFF *otfcc_parseTablecff(json_value *root, const otfcc_Options *options) {
+table_CFF *otfcc_parseCFF(json_value *root, const otfcc_Options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
 	if (!dump) {
 		return NULL;
@@ -1366,6 +1366,6 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	return blob;
 }
 
-caryll_Buffer *otfcc_buildTableCFF(const table_CFFAndGlyf cffAndGlyf, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildCFF(const table_CFFAndGlyf cffAndGlyf, const otfcc_Options *options) {
 	return writecff_CIDKeyed(cffAndGlyf.meta, cffAndGlyf.glyphs, options);
 }

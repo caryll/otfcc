@@ -6,7 +6,7 @@
 #define GASP_SYMMETRIC_GRIDFIT 0x0004
 #define GASP_SYMMETRIC_SMOOTHING 0x0008
 
-table_gasp *otfcc_newTablegasp() {
+table_gasp *otfcc_newGasp() {
 	table_gasp *gasp;
 	NEW(gasp);
 	gasp->version = 1;
@@ -14,12 +14,12 @@ table_gasp *otfcc_newTablegasp() {
 	gasp->records = NULL;
 	return gasp;
 }
-void otfcc_deleteTablegasp(table_gasp *table) {
+void otfcc_deleteGasp(table_gasp *table) {
 	if (!table) return;
 	if (table->records) FREE(table->records);
 	FREE(table);
 }
-table_gasp *otfcc_readTablegasp(const otfcc_Packet packet, const otfcc_Options *options) {
+table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
 	FOR_TABLE('gasp', table) {
 		font_file_pointer data = table.data;
@@ -45,12 +45,12 @@ table_gasp *otfcc_readTablegasp(const otfcc_Packet packet, const otfcc_Options *
 
 	FAIL:
 		logWarning("table 'gasp' corrupted.\n");
-		otfcc_deleteTablegasp(gasp);
+		otfcc_deleteGasp(gasp);
 		gasp = NULL;
 	}
 	return NULL;
 }
-void otfcc_dumpTablegasp(const table_gasp *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpGasp(const table_gasp *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("gasp") {
 		json_value *t = json_array_new(table->numRanges);
@@ -67,11 +67,11 @@ void otfcc_dumpTablegasp(const table_gasp *table, json_value *root, const otfcc_
 	}
 }
 
-table_gasp *otfcc_parseTablegasp(const json_value *root, const otfcc_Options *options) {
+table_gasp *otfcc_parseGasp(const json_value *root, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
-		gasp = otfcc_newTablegasp();
+		gasp = otfcc_newGasp();
 		if (!gasp) goto FAIL;
 		loggedStep("gasp") {
 			gasp->numRanges = table->u.array.length;
@@ -90,11 +90,11 @@ table_gasp *otfcc_parseTablegasp(const json_value *root, const otfcc_Options *op
 	}
 	return gasp;
 FAIL:
-	if (gasp) otfcc_deleteTablegasp(gasp);
+	if (gasp) otfcc_deleteGasp(gasp);
 	return NULL;
 }
 
-caryll_Buffer *otfcc_buildTablegasp(const table_gasp *gasp, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildGasp(const table_gasp *gasp, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!gasp || !gasp->records) return buf;
 	bufwrite16b(buf, 1);

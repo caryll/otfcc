@@ -23,7 +23,7 @@ typedef struct {
 
 otfcc_SFNTBuilder *otfcc_newSFNTBuilder(uint32_t header, const otfcc_Options *options);
 void otfcc_SFNTBuilder_pushTable(otfcc_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer);
-void otfcc_delete_SFNTBuilder(otfcc_SFNTBuilder *builder);
+void otfcc_deleteSFNTBuilder(otfcc_SFNTBuilder *builder);
 
 caryll_Buffer *otfcc_SFNTBuilder_serialize(otfcc_SFNTBuilder *builder);
 

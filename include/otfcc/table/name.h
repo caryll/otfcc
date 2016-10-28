@@ -9,19 +9,19 @@ typedef struct {
 	uint16_t languageID;
 	uint16_t nameID;
 	sds nameString;
-} name_record;
+} otfcc_NameRecord;
 
 typedef struct {
 	uint16_t format;
 	uint16_t count;
 	uint16_t stringOffset;
-	name_record **records;
+	otfcc_NameRecord **records;
 } table_name;
 
-void otfcc_deleteTablename(table_name *table);
+void otfcc_deleteName(table_name *table);
 
-table_name *otfcc_readTablename(const otfcc_Packet packet, const otfcc_Options *options);
-void otfcc_dumpTablename(const table_name *table, json_value *root, const otfcc_Options *options);
-table_name *otfcc_parseTablename(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *otfcc_buildTablename(const table_name *name, const otfcc_Options *options);
+table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpName(const table_name *table, json_value *root, const otfcc_Options *options);
+table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *options);
 #endif

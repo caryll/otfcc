@@ -84,7 +84,7 @@ static int by_unicode(cmap_Entry *a, cmap_Entry *b) {
 }
 
 // OTFCC will not support all `cmap` mappings.
-table_cmap *otfcc_readTablecmap(const otfcc_Packet packet, const otfcc_Options *options) {
+table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *options) {
 	// the map is a reference to a hash table
 	table_cmap *map = NULL;
 	FOR_TABLE('cmap', table) {
@@ -115,7 +115,7 @@ table_cmap *otfcc_readTablecmap(const otfcc_Packet packet, const otfcc_Options *
 	return NULL;
 }
 
-void otfcc_deleteTablecmap(table_cmap *table) {
+void otfcc_deleteCmap(table_cmap *table) {
 	cmap_Entry *s, *tmp;
 	HASH_ITER(hh, *(table), s, tmp) {
 		// delete and free all cmap entries
@@ -126,7 +126,7 @@ void otfcc_deleteTablecmap(table_cmap *table) {
 	FREE(table);
 }
 
-void otfcc_dumpTablecmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("cmap") {
 		json_value *cmap = json_object_new(HASH_COUNT(*table));
@@ -140,7 +140,7 @@ void otfcc_dumpTablecmap(const table_cmap *table, json_value *root, const otfcc_
 	}
 }
 
-table_cmap *otfcc_parseTablecmap(const json_value *root, const otfcc_Options *options) {
+table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options) {
 	if (root->type != json_object) return NULL;
 	table_cmap hash = NULL;
 	json_value *table = NULL;
@@ -179,7 +179,7 @@ table_cmap *otfcc_parseTablecmap(const json_value *root, const otfcc_Options *op
 		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                                        \
 	}                                                                                                                  \
 	segmentsCount += 1;
-caryll_Buffer *otfcc_buildTablecmap_format4(const table_cmap *cmap) {
+caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 	caryll_Buffer *buf = bufnew();
 	caryll_Buffer *endCount = bufnew();
 	caryll_Buffer *startCount = bufnew();
@@ -278,7 +278,7 @@ caryll_Buffer *otfcc_buildTablecmap_format4(const table_cmap *cmap) {
 	buffree(glyphIdArray);
 	return buf;
 }
-caryll_Buffer *otfcc_buildTablecmap_format12(const table_cmap *cmap) {
+caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 12);
 	bufwrite16b(buf, 0);
@@ -321,7 +321,7 @@ caryll_Buffer *otfcc_buildTablecmap_format12(const table_cmap *cmap) {
 	bufwrite32b(buf, nGroups);
 	return buf;
 }
-caryll_Buffer *otfcc_buildTablecmap(const table_cmap *cmap, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!cmap || !*cmap) return buf;
 
@@ -338,7 +338,7 @@ caryll_Buffer *otfcc_buildTablecmap(const table_cmap *cmap, const otfcc_Options 
 	size_t cp = 0;
 	caryll_Buffer *format4;
 	if (!hasSMP || !options->stub_cmap4) {
-		format4 = otfcc_buildTablecmap_format4(cmap);
+		format4 = otfcc_buildCmap_format4(cmap);
 	} else {
 		// Write a dummy
 		format4 = bufnew();
@@ -374,7 +374,7 @@ caryll_Buffer *otfcc_buildTablecmap(const table_cmap *cmap, const otfcc_Options 
 	offset += buflen(format4);
 	buffree(format4);
 	if (hasSMP) {
-		caryll_Buffer *format12 = otfcc_buildTablecmap_format12(cmap);
+		caryll_Buffer *format12 = otfcc_buildCmap_format12(cmap);
 		// Windows format 12;
 		bufwrite16b(buf, 3);
 		bufwrite16b(buf, 10);

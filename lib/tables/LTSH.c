@@ -1,11 +1,11 @@
 #include "support/util.h"
 #include "otfcc/table/LTSH.h"
 
-void otfcc_deleteTableLTSH(table_LTSH *ltsh) {
+void otfcc_deleteLTSH(table_LTSH *ltsh) {
 	if (ltsh) { FREE(ltsh->yPels); }
 	FREE(ltsh);
 }
-table_LTSH *otfcc_readTableLTSH(const otfcc_Packet packet, const otfcc_Options *options) {
+table_LTSH *otfcc_readLTSH(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('LTSH', table) {
 		font_file_pointer data = table.data;
 
@@ -20,7 +20,7 @@ table_LTSH *otfcc_readTableLTSH(const otfcc_Packet packet, const otfcc_Options *
 	}
 	return NULL;
 }
-caryll_Buffer *otfcc_buildTableLTSH(const table_LTSH *ltsh, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildLTSH(const table_LTSH *ltsh, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!ltsh) return buf;
 	bufwrite16b(buf, 0);

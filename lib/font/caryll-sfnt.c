@@ -71,7 +71,7 @@ otfcc_SplineFontContainer *otfcc_read_SFNT(FILE *file) {
 	return font;
 }
 
-void otfcc_delete_SFNT(otfcc_SplineFontContainer *font) {
+void otfcc_deleteSFNT(otfcc_SplineFontContainer *font) {
 	if (font->count > 0) {
 		for (uint32_t count = 0; count < font->count; count++) {
 			for (int i = 0; i < font->packets[count].numTables; i++) {

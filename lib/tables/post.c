@@ -4,18 +4,18 @@
 // clang-format off
 const char *standardMacNames[258] = {".notdef", ".null", "nonmarkingreturn", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis", "Aring", "Ccedilla", "Eacute", "Ntilde", "Odieresis", "Udieresis", "aacute", "agrave", "acircumflex", "adieresis", "atilde", "aring", "ccedilla", "eacute", "egrave", "ecircumflex", "edieresis", "iacute", "igrave", "icircumflex", "idieresis", "ntilde", "oacute", "ograve", "ocircumflex", "odieresis", "otilde", "uacute", "ugrave", "ucircumflex", "udieresis", "dagger", "degree", "cent", "sterling", "section", "bullet", "paragraph", "germandbls", "registered", "copyright", "trademark", "acute", "dieresis", "notequal", "AE", "Oslash", "infinity", "plusminus", "lessequal", "greaterequal", "yen", "mu", "partialdiff", "summation", "product", "pi", "integral", "ordfeminine", "ordmasculine", "Omega", "ae", "oslash", "questiondown", "exclamdown", "logicalnot", "radical", "florin", "approxequal", "Delta", "guillemotleft", "guillemotright", "ellipsis", "nonbreakingspace", "Agrave", "Atilde", "Otilde", "OE", "oe", "endash", "emdash", "quotedblleft", "quotedblright", "quoteleft", "quoteright", "divide", "lozenge", "ydieresis", "Ydieresis", "fraction", "currency", "guilsinglleft", "guilsinglright", "fi", "fl", "daggerdbl", "periodcentered", "quotesinglbase", "quotedblbase", "perthousand", "Acircumflex", "Ecircumflex", "Aacute", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Oacute", "Ocircumflex", "apple", "Ograve", "Uacute", "Ucircumflex", "Ugrave", "dotlessi", "circumflex", "tilde", "macron", "breve", "dotaccent", "ring", "cedilla", "hungarumlaut", "ogonek", "caron", "Lslash", "lslash", "Scaron", "scaron", "Zcaron", "zcaron", "brokenbar", "Eth", "eth", "Yacute", "yacute", "Thorn", "thorn", "minus", "multiply", "onesuperior", "twosuperior", "threesuperior", "onehalf", "onequarter", "threequarters", "franc", "Gbreve", "gbreve", "Idotaccent", "Scedilla", "scedilla", "Cacute", "cacute", "Ccaron", "ccaron", "dcroat"};
 // clang-format on
-table_post *otfcc_newTablepost() {
+table_post *otfcc_newPost() {
 	table_post *post;
 	NEW(post);
 	post->version = 0x30000;
 	return post;
 }
-void otfcc_deleteTablepost(MOVE table_post *table) {
-	if (table->post_name_map != NULL) { otfcc_delete_GlyphOrder(table->post_name_map); }
+void otfcc_deletePost(MOVE table_post *table) {
+	if (table->post_name_map != NULL) { otfcc_deleteGlyphOrder(table->post_name_map); }
 	FREE(table);
 }
 
-table_post *otfcc_readTablepost(const otfcc_Packet packet, const otfcc_Options *options) {
+table_post *otfcc_readPost(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('post', table) {
 		font_file_pointer data = table.data;
 
@@ -33,7 +33,7 @@ table_post *otfcc_readTablepost(const otfcc_Packet packet, const otfcc_Options *
 		post->post_name_map = NULL;
 		// Foamt 2 additional glyph names
 		if (post->version == 0x20000) {
-			otfcc_GlyphOrder *map = otfcc_new_GlyphOrder();
+			otfcc_GlyphOrder *map = otfcc_newGlyphOrder();
 
 			sds pendingNames[0x10000];
 			memset(pendingNames, 0, sizeof(pendingNames));
@@ -70,7 +70,7 @@ table_post *otfcc_readTablepost(const otfcc_Packet packet, const otfcc_Options *
 	return NULL;
 }
 
-void otfcc_dumpTablepost(const table_post *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpPost(const table_post *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("post") {
 		json_value *post = json_object_new(10);
@@ -86,8 +86,8 @@ void otfcc_dumpTablepost(const table_post *table, json_value *root, const otfcc_
 		json_object_push(root, "post", post);
 	}
 }
-table_post *otfcc_parseTablepost(const json_value *root, const otfcc_Options *options) {
-	table_post *post = otfcc_newTablepost();
+table_post *otfcc_parsePost(const json_value *root, const otfcc_Options *options) {
+	table_post *post = otfcc_newPost();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
 		loggedStep("post") {
@@ -108,7 +108,7 @@ table_post *otfcc_parseTablepost(const json_value *root, const otfcc_Options *op
 	}
 	return post;
 }
-caryll_Buffer *otfcc_buildTablepost(const table_post *post, otfcc_GlyphOrder *glyphorder, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildPost(const table_post *post, otfcc_GlyphOrder *glyphorder, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!post) return buf;
 	bufwrite32b(buf, post->version);

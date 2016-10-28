@@ -1,17 +1,17 @@
 #include "support/util.h"
 #include "otfcc/table/OS_2.h"
 
-table_OS_2 *otfcc_newTableOS_2() {
+table_OS_2 *otfcc_newOS_2() {
 	table_OS_2 *os_2;
 	NEW(os_2);
 	return os_2;
 }
 
-void otfcc_deleteTableOS_2(MOVE table_OS_2 *table) {
+void otfcc_deleteOS_2(MOVE table_OS_2 *table) {
 	FREE(table);
 }
 
-table_OS_2 *otfcc_readTableOS_2(const otfcc_Packet packet, const otfcc_Options *options) {
+table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_OS_2 *os_2 = NULL;
 	FOR_TABLE('OS/2', table) {
 		font_file_pointer data = table.data;
@@ -220,7 +220,7 @@ const char *unicodeRangeLabels4[] = {"Buginese",
                                      "Domino_and_Mahjong_Tiles",
                                      NULL};
 
-void otfcc_dumpTableOS_2(const table_OS_2 *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpOS_2(const table_OS_2 *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("OS/2") {
 		json_value *os_2 = json_object_new(30);
@@ -277,8 +277,8 @@ void otfcc_dumpTableOS_2(const table_OS_2 *table, json_value *root, const otfcc_
 	}
 }
 
-table_OS_2 *otfcc_parseTableOS_2(const json_value *root, const otfcc_Options *options) {
-	table_OS_2 *os_2 = otfcc_newTableOS_2();
+table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options) {
+	table_OS_2 *os_2 = otfcc_newOS_2();
 	if (!os_2) return NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "OS_2", json_object))) {
@@ -351,7 +351,7 @@ table_OS_2 *otfcc_parseTableOS_2(const json_value *root, const otfcc_Options *op
 	return os_2;
 }
 
-caryll_Buffer *otfcc_buildTableOS_2(const table_OS_2 *os_2, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildOS_2(const table_OS_2 *os_2, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);

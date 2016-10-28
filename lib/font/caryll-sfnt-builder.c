@@ -55,7 +55,7 @@ otfcc_SFNTBuilder *otfcc_newSFNTBuilder(uint32_t header, const otfcc_Options *op
 	return builder;
 }
 
-void otfcc_delete_SFNTBuilder(otfcc_SFNTBuilder *builder) {
+void otfcc_deleteSFNTBuilder(otfcc_SFNTBuilder *builder) {
 	if (!builder) return;
 	otfcc_SFNTTableEntry *item, *tmp;
 	HASH_ITER(hh, builder->tables, item, tmp) {

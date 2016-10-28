@@ -15,42 +15,42 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 	if (sfnt->count - 1 < index) {
 		return NULL;
 	} else {
-		otfcc_Font *font = otfcc_new_Font();
+		otfcc_Font *font = otfcc_newFont();
 		otfcc_Packet packet = sfnt->packets[index];
 		font->subtype = decideFontSubtypeOTF(sfnt, index);
-		font->head = otfcc_readTablehead(packet, options);
-		font->maxp = otfcc_readTablemaxp(packet, options);
-		font->name = otfcc_readTablename(packet, options);
-		font->OS_2 = otfcc_readTableOS_2(packet, options);
-		font->post = otfcc_readTablepost(packet, options);
-		font->hhea = otfcc_readTablehhea(packet, options);
-		font->cmap = otfcc_readTablecmap(packet, options);
+		font->head = otfcc_readHead(packet, options);
+		font->maxp = otfcc_readMaxp(packet, options);
+		font->name = otfcc_readName(packet, options);
+		font->OS_2 = otfcc_readOS_2(packet, options);
+		font->post = otfcc_readPost(packet, options);
+		font->hhea = otfcc_readHhea(packet, options);
+		font->cmap = otfcc_readCmap(packet, options);
 		if (font->subtype == FONTTYPE_TTF) {
-			font->hmtx = otfcc_readTablehmtx(packet, options, font->hhea, font->maxp);
-			font->vhea = otfcc_readTablevhea(packet, options);
-			if (font->vhea) font->vmtx = otfcc_readTablevmtx(packet, options, font->vhea, font->maxp);
-			font->fpgm = otfcc_readTablefpgm_prep(packet, options, 'fpgm');
-			font->prep = otfcc_readTablefpgm_prep(packet, options, 'prep');
-			font->cvt_ = otfcc_readTablecvt(packet, options, 'cvt ');
-			font->gasp = otfcc_readTablegasp(packet, options);
-			font->LTSH = otfcc_readTableLTSH(packet, options);
-			font->glyf = otfcc_readTableglyf(packet, options, font->head, font->maxp);
+			font->hmtx = otfcc_readHmtx(packet, options, font->hhea, font->maxp);
+			font->vhea = otfcc_readVhea(packet, options);
+			if (font->vhea) font->vmtx = otfcc_readVmtx(packet, options, font->vhea, font->maxp);
+			font->fpgm = otfcc_readFpgmPrep(packet, options, 'fpgm');
+			font->prep = otfcc_readFpgmPrep(packet, options, 'prep');
+			font->cvt_ = otfcc_readCvt(packet, options, 'cvt ');
+			font->gasp = otfcc_readGasp(packet, options);
+			font->LTSH = otfcc_readLTSH(packet, options);
+			font->glyf = otfcc_readGlyf(packet, options, font->head, font->maxp);
 		} else {
-			table_CFFAndGlyf cffpr = otfcc_readTablecff_and_glyf(packet, options, font->head);
+			table_CFFAndGlyf cffpr = otfcc_readCFFAndGlyfTables(packet, options, font->head);
 			font->CFF_ = cffpr.meta;
 			font->glyf = cffpr.glyphs;
-			font->vhea = otfcc_readTablevhea(packet, options);
+			font->vhea = otfcc_readVhea(packet, options);
 			if (font->vhea) {
-				font->vmtx = otfcc_readTablevmtx(packet, options, font->vhea, font->maxp);
-				font->VORG = otfcc_readTableVORG(packet, options);
+				font->vmtx = otfcc_readVmtx(packet, options, font->vhea, font->maxp);
+				font->VORG = otfcc_readVORG(packet, options);
 			}
 		}
 		if (font->glyf) {
-			font->GSUB = otfcc_readTableotl(packet, options, 'GSUB');
-			font->GPOS = otfcc_readTableotl(packet, options, 'GPOS');
-			font->GDEF = otfcc_readTableGDEF(packet, options);
+			font->GSUB = otfcc_readOtl(packet, options, 'GSUB');
+			font->GPOS = otfcc_readOtl(packet, options, 'GPOS');
+			font->GDEF = otfcc_readGDEF(packet, options);
 		}
-		font->BASE = otfcc_readTableBASE(packet, options);
+		font->BASE = otfcc_readBASE(packet, options);
 		otfcc_unconsolidateFont(font, options);
 		return font;
 	}

@@ -10,8 +10,8 @@
 //      (Separate?)
 static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
-	otfcc_GlyphOrder *glyph_order = otfcc_new_GlyphOrder();
-	otfcc_GlyphOrder *aglfn = otfcc_new_GlyphOrder();
+	otfcc_GlyphOrder *glyph_order = otfcc_newGlyphOrder();
+	otfcc_GlyphOrder *aglfn = otfcc_newGlyphOrder();
 	aglfn_setupNames(aglfn);
 	glyphid_t numGlyphs = font->glyf->numberGlyphs;
 	sds prefix;
@@ -44,7 +44,7 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 		cmap_Entry *s;
 		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
 			sds name = NULL;
-			gord_nameAFieldShared(aglfn, s->unicode, &name);
+			otfcc_gordNameAFieldShared(aglfn, s->unicode, &name);
 			if (name == NULL) {
 				name = sdscatprintf(sdsempty(), "%suni%04X", prefix, s->unicode);
 			} else {
@@ -65,7 +65,7 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_setGlyphOrderByGID(glyph_order, j, name);
 	}
 
-	otfcc_delete_GlyphOrder(aglfn);
+	otfcc_deleteGlyphOrder(aglfn);
 	sdsfree(prefix);
 	font->glyph_order = glyph_order;
 }
@@ -75,7 +75,7 @@ static void nameGlyphs(otfcc_Font *font) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_Glyph *g = font->glyf->glyphs[j];
 			sds glyphName = NULL;
-			gord_nameAFieldShared(font->glyph_order, j, &glyphName);
+			otfcc_gordNameAFieldShared(font->glyph_order, j, &glyphName);
 			g->name = sdsdup(glyphName);
 		}
 	}

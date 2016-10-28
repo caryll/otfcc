@@ -45,7 +45,7 @@ void otfcc_consolidateTableglyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Op
 	g->numberOfContours = nContoursConsolidated;
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
-		if (!gord_consolidateHandle(font->glyph_order, &g->references[j].glyph)) {
+		if (!otfcc_gordConsolidateHandle(font->glyph_order, &g->references[j].glyph)) {
 			logWarning("[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
 			           g->references[j].glyph.name, g->name);
 			handle_dispose(&g->references[j].glyph);
@@ -148,7 +148,7 @@ void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 		if (font->glyf->glyphs[j]) {
 			otfcc_consolidateTableglyph(font->glyf->glyphs[j], font, options);
 		} else {
-			font->glyf->glyphs[j] = otfcc_newTableglyf_glyph();
+			font->glyf->glyphs[j] = otfcc_newGlyf_glyph();
 		}
 	}
 }
@@ -157,7 +157,7 @@ void consolidateCmap(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyph_order && font->cmap) {
 		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
-			if (!gord_consolidateHandle(font->glyph_order, &item->glyph)) {
+			if (!otfcc_gordConsolidateHandle(font->glyph_order, &item->glyph)) {
 				logWarning("[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
 				           item->glyph.name);
 				handle_dispose(&item->glyph);
@@ -236,7 +236,7 @@ void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// In case we don’t have a glyph order, make one.
 	if (font->glyf && !font->glyph_order) {
-		otfcc_GlyphOrder *go = otfcc_new_GlyphOrder();
+		otfcc_GlyphOrder *go = otfcc_newGlyphOrder();
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			sds name;
 			sds glyfName = font->glyf->glyphs[j]->name;
