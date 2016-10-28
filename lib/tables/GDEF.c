@@ -1,7 +1,7 @@
 #include "otl/otl-private.h"
 #include "otfcc/table/GDEF.h"
 
-void otfcc_deleteTableGDEF(table_GDEF *gdef) {
+void otfcc_deleteGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
 	if (gdef->glyphClassDef) otl_delete_ClassDef(gdef->glyphClassDef);
 	if (gdef->markAttachClassDef) otl_delete_ClassDef(gdef->markAttachClassDef);
@@ -15,7 +15,7 @@ void otfcc_deleteTableGDEF(table_GDEF *gdef) {
 	FREE(gdef);
 }
 
-table_GDEF *otfcc_newTableGDEF() {
+table_GDEF *otfcc_newGDEF() {
 	table_GDEF *gdef;
 	NEW(gdef);
 	gdef->glyphClassDef = NULL;
@@ -57,13 +57,13 @@ FAIL:
 	return g;
 }
 
-table_GDEF *otfcc_readTableGDEF(const otfcc_Packet packet, const otfcc_Options *options) {
+table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_GDEF *gdef = NULL;
 	FOR_TABLE('GDEF', table) {
 		font_file_pointer data = table.data;
 		uint32_t tableLength = table.length;
 		checkLength(12);
-		gdef = otfcc_newTableGDEF();
+		gdef = otfcc_newGDEF();
 		uint16_t classdefOffset = read_16u(data + 4);
 		if (classdefOffset) { gdef->glyphClassDef = otl_read_ClassDef(data, tableLength, classdefOffset); }
 		uint16_t ligCaretOffset = read_16u(data + 8);
@@ -94,7 +94,7 @@ table_GDEF *otfcc_readTableGDEF(const otfcc_Packet packet, const otfcc_Options *
 		return gdef;
 
 	FAIL:
-		DELETE(otfcc_deleteTableGDEF, gdef);
+		DELETE(otfcc_deleteGDEF, gdef);
 	}
 	return gdef;
 }
@@ -119,7 +119,7 @@ static json_value *dumpGDEFLigCarets(const table_GDEF *gdef) {
 	return _carets;
 }
 
-void otfcc_dumpTableGDEF(const table_GDEF *gdef, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpGDEF(const table_GDEF *gdef, json_value *root, const otfcc_Options *options) {
 	if (!gdef) return;
 	loggedStep("GDEF") {
 		json_value *_gdef = json_object_new(4);
@@ -171,12 +171,12 @@ static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
 	return lc;
 }
 
-table_GDEF *otfcc_parseTableGDEF(const json_value *root, const otfcc_Options *options) {
+table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options) {
 	table_GDEF *gdef = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
 		loggedStep("GDEF") {
-			gdef = otfcc_newTableGDEF();
+			gdef = otfcc_newGDEF();
 			gdef->glyphClassDef = otl_parse_ClassDef(json_obj_get(table, "glyphClassDef"));
 			gdef->markAttachClassDef = otl_parse_ClassDef(json_obj_get(table, "markAttachClassDef"));
 			gdef->ligCarets = ligCaretFromJson(json_obj_get(table, "ligCarets"));
@@ -209,7 +209,7 @@ static bk_Block *writeLigCarets(otl_LigCaretTable *lc) {
 	return lct;
 }
 
-caryll_Buffer *otfcc_buildTableGDEF(const table_GDEF *gdef, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildGDEF(const table_GDEF *gdef, const otfcc_Options *options) {
 	bk_Block *bGlyphClassDef = NULL;
 	bk_Block *bAttachList = NULL;
 	bk_Block *bLigCaretList = NULL;

@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
 	                            {0, 0, 0, 0}};
 
 	otfcc_Options *options = options_new();
-	options->logger = otfcc_new_Logger(otfcc_new_StdErrTarget());
+	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccdump");
 
 	int option_index = 0;
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		reader->dispose(reader);
-		if (sfnt) otfcc_delete_SFNT(sfnt);
+		if (sfnt) otfcc_deleteSFNT(sfnt);
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
 
 	loggedStep("Finalize") {
 		free(buf);
-		if (font) otfcc_delete_Font(font);
+		if (font) otfcc_deleteFont(font);
 		if (root) json_builder_free(root);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);

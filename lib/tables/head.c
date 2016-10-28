@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/head.h"
 
-table_head *otfcc_newTablehead() {
+table_head *otfcc_newHead() {
 	table_head *head;
 	NEW(head);
 	head->magicNumber = 0x5f0f3cf5;
@@ -9,7 +9,7 @@ table_head *otfcc_newTablehead() {
 	return head;
 }
 
-table_head *otfcc_readTablehead(const otfcc_Packet packet, const otfcc_Options *options) {
+table_head *otfcc_readHead(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('head', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -59,7 +59,7 @@ static const char *headFlagsLabels[] = {"baselineAtY_0",
                                         "lastResortFont"};
 static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow", "condensed", "extended"};
 
-void otfcc_dumpTablehead(const table_head *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpHead(const table_head *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("head") {
 		json_value *head = json_object_new(15);
@@ -82,8 +82,8 @@ void otfcc_dumpTablehead(const table_head *table, json_value *root, const otfcc_
 	}
 }
 
-table_head *otfcc_parseTablehead(const json_value *root, const otfcc_Options *options) {
-	table_head *head = otfcc_newTablehead();
+table_head *otfcc_parseHead(const json_value *root, const otfcc_Options *options) {
+	table_head *head = otfcc_newHead();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
 		loggedStep("head") {
@@ -107,7 +107,7 @@ table_head *otfcc_parseTablehead(const json_value *root, const otfcc_Options *op
 	return head;
 }
 
-caryll_Buffer *otfcc_buildTablehead(const table_head *head, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildHead(const table_head *head, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);

@@ -26,14 +26,14 @@ typedef struct {
 } language_hash;
 
 void otfcc_delete_lookup(otl_Lookup *lookup);
-otl_Subtable *otfcc_readTableotl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                      otl_LookupType lookupType, const otfcc_Options *options);
+otl_Subtable *otfcc_readOtl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                     otl_LookupType lookupType, const otfcc_Options *options);
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump);
 static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Options *options, lookup_hash **lh);
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
 
 // COMMON PART
-table_OTL *otfcc_newTableotl() {
+table_OTL *otfcc_newOtl() {
 	table_OTL *table;
 	NEW(table);
 	table->languageCount = 0;
@@ -45,7 +45,7 @@ table_OTL *otfcc_newTableotl() {
 	return table;
 }
 
-void otfcc_deleteTableotl(table_OTL *table) {
+void otfcc_deleteOtl(table_OTL *table) {
 	if (!table) return;
 	if (table->languages) {
 		for (tableid_t j = 0; j < table->languageCount; j++) {
@@ -101,9 +101,9 @@ FAIL:
 	return;
 }
 
-static table_OTL *otfcc_readTableotl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base,
-                                        const otfcc_Options *options) {
-	table_OTL *table = otfcc_newTableotl();
+static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base,
+                                       const otfcc_Options *options) {
+	table_OTL *table = otfcc_newOtl();
 	if (!table) goto FAIL;
 	checkLength(10);
 	uint32_t scriptListOffset = read_16u(data + 4);
@@ -240,12 +240,12 @@ static table_OTL *otfcc_readTableotl_common(font_file_pointer data, uint32_t tab
 	}
 	return table;
 FAIL:
-	if (table) otfcc_deleteTableotl(table);
+	if (table) otfcc_deleteOtl(table);
 	return NULL;
 }
 
-static void otfcc_readTableotl_lookup(font_file_pointer data, uint32_t tableLength, otl_Lookup *lookup,
-                                  const otfcc_Options *options) {
+static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, otl_Lookup *lookup,
+                                 const otfcc_Options *options) {
 	lookup->flags = read_16u(data + lookup->_offset + 2);
 	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
 	if (!lookup->subtableCount || tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
@@ -257,7 +257,7 @@ static void otfcc_readTableotl_lookup(font_file_pointer data, uint32_t tableLeng
 	NEW(lookup->subtables, lookup->subtableCount);
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
-		lookup->subtables[j] = otfcc_readTableotl_subtable(data, tableLength, subtableOffset, lookup->type, options);
+		lookup->subtables[j] = otfcc_readOtl_subtable(data, tableLength, subtableOffset, lookup->type, options);
 	}
 	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
 		lookup->type = 0;
@@ -296,22 +296,22 @@ static void otfcc_readTableotl_lookup(font_file_pointer data, uint32_t tableLeng
 	if (lookup->type == otl_type_gpos_context) lookup->type = otl_type_gpos_chaining;
 }
 
-table_OTL *otfcc_readTableotl(otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
+table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_OTL *otl = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		otl = otfcc_readTableotl_common(
+		otl = otfcc_readOtl_common(
 		    data, length,
 		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown),
 		    options);
 		if (!otl) goto FAIL;
 		for (tableid_t j = 0; j < otl->lookupCount; j++) {
-			otfcc_readTableotl_lookup(data, length, otl->lookups[j], options);
+			otfcc_readOtl_lookup(data, length, otl->lookups[j], options);
 		}
 		return otl;
 	FAIL:
-		if (otl) otfcc_deleteTableotl(otl);
+		if (otl) otfcc_deleteOtl(otl);
 		otl = NULL;
 	}
 	return NULL;
@@ -332,7 +332,7 @@ static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_valu
 	}
 }
 
-void otfcc_dumpTableotl(const table_OTL *table, json_value *root, const otfcc_Options *options, const char *tag) {
+void otfcc_dumpOtl(const table_OTL *table, json_value *root, const otfcc_Options *options, const char *tag) {
 	if (!table || !table->languages || !table->lookups || !table->features) return;
 	loggedStep("%s", tag) {
 		json_value *otl = json_object_new(3);
@@ -614,11 +614,11 @@ static int by_feature_name(feature_hash *a, feature_hash *b) {
 static int by_language_name(language_hash *a, language_hash *b) {
 	return strcmp(a->name, b->name);
 }
-table_OTL *otfcc_parseTableotl(const json_value *root, const otfcc_Options *options, const char *tag) {
+table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, const char *tag) {
 	table_OTL *otl = NULL;
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
-	otl = otfcc_newTableotl();
+	otl = otfcc_newOtl();
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
@@ -697,7 +697,7 @@ table_OTL *otfcc_parseTableotl(const json_value *root, const otfcc_Options *opti
 FAIL:
 	if (otl) {
 		logWarning("[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
-		otfcc_deleteTableotl(otl);
+		otfcc_deleteOtl(otl);
 	}
 	return NULL;
 }
@@ -922,7 +922,7 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 	return root;
 }
 
-caryll_Buffer *otfcc_buildTableotl(const table_OTL *table, const otfcc_Options *options, const char *tag) {
+caryll_Buffer *otfcc_buildOtl(const table_OTL *table, const otfcc_Options *options, const char *tag) {
 	caryll_Buffer *buf;
 	loggedStep("%s", tag) {
 		bk_Block *root = bk_new_Block(b32, 0x10000,                                    // Version
@@ -999,8 +999,8 @@ void otfcc_delete_lookup(otl_Lookup *lookup) {
 	FREE(lookup);
 }
 
-otl_Subtable *otfcc_readTableotl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                      otl_LookupType lookupType, const otfcc_Options *options) {
+otl_Subtable *otfcc_readOtl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                     otl_LookupType lookupType, const otfcc_Options *options) {
 	switch (lookupType) {
 		LOOKUP_READER(otl_type_gsub_single, otl_read_gsub_single);
 		LOOKUP_READER(otl_type_gsub_multiple, otl_read_gsub_multi);
@@ -1017,8 +1017,8 @@ otl_Subtable *otfcc_readTableotl_subtable(font_file_pointer data, uint32_t table
 		LOOKUP_READER(otl_type_gpos_markToBase, otl_read_gpos_markToSingle);
 		LOOKUP_READER(otl_type_gpos_markToMark, otl_read_gpos_markToSingle);
 		LOOKUP_READER(otl_type_gpos_markToLigature, otl_read_gpos_markToLigature);
-		LOOKUP_READER(otl_type_gsub_extend, otfcc_readTableotl_gsub_extend);
-		LOOKUP_READER(otl_type_gpos_extend, otfcc_readTableotl_gpos_extend);
+		LOOKUP_READER(otl_type_gsub_extend, otfcc_readOtl_gsub_extend);
+		LOOKUP_READER(otl_type_gpos_extend, otfcc_readOtl_gpos_extend);
 		default:
 			return NULL;
 	}

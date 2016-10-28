@@ -70,8 +70,8 @@ struct _caryll_font {
 	otfcc_GlyphOrder *glyph_order;
 };
 
-otfcc_Font *otfcc_new_Font();
-void otfcc_delete_Font(otfcc_Font *font);
+otfcc_Font *otfcc_newFont();
+void otfcc_deleteFont(otfcc_Font *font);
 
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
 

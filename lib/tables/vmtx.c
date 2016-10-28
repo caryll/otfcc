@@ -1,15 +1,15 @@
 #include "support/util.h"
 #include "otfcc/table/vmtx.h"
 
-void otfcc_deleteTablevmtx(MOVE table_vmtx *table) {
+void otfcc_deleteVmtx(MOVE table_vmtx *table) {
 	if (!table) return;
 	if (table->metrics != NULL) FREE(table->metrics);
 	if (table->topSideBearing != NULL) FREE(table->topSideBearing);
 	FREE(table);
 }
 
-table_vmtx *otfcc_readTablevmtx(const otfcc_Packet packet, const otfcc_Options *options, table_vhea *vhea,
-                            table_maxp *maxp) {
+table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *options, table_vhea *vhea,
+                           table_maxp *maxp) {
 	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 || maxp->numGlyphs < vhea->numOfLongVerMetrics) return NULL;
 	FOR_TABLE('vmtx', table) {
 		font_file_pointer data = table.data;
@@ -37,13 +37,13 @@ table_vmtx *otfcc_readTablevmtx(const otfcc_Packet packet, const otfcc_Options *
 		return vmtx;
 	vmtx_CORRUPTED:
 		logWarning("Table 'vmtx' corrupted.\n");
-		if (vmtx) { otfcc_deleteTablevmtx(vmtx), vmtx = NULL; }
+		if (vmtx) { otfcc_deleteVmtx(vmtx), vmtx = NULL; }
 	}
 	return NULL;
 }
 
-caryll_Buffer *otfcc_buildTablevmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
-                                const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildVmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
+                               const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!vmtx) return buf;
 	if (vmtx->metrics) {

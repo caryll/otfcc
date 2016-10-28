@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/hdmx.h"
 
-table_hdmx *otfcc_readTablehdmx(otfcc_Packet packet, const otfcc_Options *options, table_maxp *maxp) {
+table_hdmx *otfcc_readHdmx(otfcc_Packet packet, const otfcc_Options *options, table_maxp *maxp) {
 	FOR_TABLE('hdmx', table) {
 		font_file_pointer data = table.data;
 
@@ -24,7 +24,7 @@ table_hdmx *otfcc_readTablehdmx(otfcc_Packet packet, const otfcc_Options *option
 	return NULL;
 }
 
-void otfcc_deleteTablehdmx(table_hdmx *table) {
+void otfcc_deleteHdmx(table_hdmx *table) {
 	if (table->records != NULL) {
 		for (uint32_t i = 0; i < table->numRecords; i++) {
 			if (table->records[i].widths != NULL) FREE(table->records[i].widths);

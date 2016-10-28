@@ -27,7 +27,7 @@ typedef struct otfcc_ILogger {
 	otfcc_ILoggerTarget *(*getTarget)(struct otfcc_ILogger *self);       // query target
 } otfcc_ILogger;
 
-otfcc_ILogger *otfcc_new_Logger(otfcc_ILoggerTarget *target);
-otfcc_ILoggerTarget *otfcc_new_StdErrTarget();
+otfcc_ILogger *otfcc_newLogger(otfcc_ILoggerTarget *target);
+otfcc_ILoggerTarget *otfcc_newStdErrTarget();
 
 #endif

@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 	int c;
 
 	otfcc_Options *options = options_new();
-	options->logger = otfcc_new_Logger(otfcc_new_StdErrTarget());
+	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccbuild");
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
@@ -294,7 +294,7 @@ int main(int argc, char *argv[]) {
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		logStepTime;
-		buffree(otf), writer->dispose(writer), otfcc_delete_Font(font), sdsfree(outputPath);
+		buffree(otf), writer->dispose(writer), otfcc_deleteFont(font), sdsfree(outputPath);
 	}
 	options_delete(options);
 	return 0;

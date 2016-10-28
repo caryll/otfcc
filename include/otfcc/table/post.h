@@ -17,11 +17,11 @@ typedef struct {
 	otfcc_GlyphOrder *post_name_map;
 } table_post;
 
-table_post *otfcc_newTablepost();
-void otfcc_deleteTablepost(MOVE table_post *table);
-table_post *otfcc_readTablepost(const otfcc_Packet packet, const otfcc_Options *options);
-void otfcc_dumpTablepost(const table_post *table, json_value *root, const otfcc_Options *options);
-table_post *otfcc_parseTablepost(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *otfcc_buildTablepost(const table_post *post, otfcc_GlyphOrder *glyphorder, const otfcc_Options *options);
+table_post *otfcc_newPost();
+void otfcc_deletePost(MOVE table_post *table);
+table_post *otfcc_readPost(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpPost(const table_post *table, json_value *root, const otfcc_Options *options);
+table_post *otfcc_parsePost(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildPost(const table_post *post, otfcc_GlyphOrder *glyphorder, const otfcc_Options *options);
 
 #endif

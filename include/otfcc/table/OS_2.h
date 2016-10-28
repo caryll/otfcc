@@ -46,11 +46,11 @@ typedef struct {
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
 
-table_OS_2 *otfcc_newTableOS_2();
-void otfcc_deleteTableOS_2(MOVE table_OS_2 *table);
-table_OS_2 *otfcc_readTableOS_2(const otfcc_Packet packet, const otfcc_Options *options);
-void otfcc_dumpTableOS_2(const table_OS_2 *table, json_value *root, const otfcc_Options *options);
-table_OS_2 *otfcc_parseTableOS_2(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *otfcc_buildTableOS_2(const table_OS_2 *os_2, const otfcc_Options *options);
+table_OS_2 *otfcc_newOS_2();
+void otfcc_deleteOS_2(MOVE table_OS_2 *table);
+table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpOS_2(const table_OS_2 *table, json_value *root, const otfcc_Options *options);
+table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildOS_2(const table_OS_2 *os_2, const otfcc_Options *options);
 
 #endif
