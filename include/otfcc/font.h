@@ -73,13 +73,19 @@ struct _caryll_font {
 caryll_Font *caryll_new_Font();
 void caryll_delete_Font(caryll_Font *font);
 
-caryll_Font *caryll_read_Font(caryll_SplineFontContainer *sfnt, uint32_t index, otfcc_Options *options);
-json_value *caryll_dump_Font(caryll_Font *font, otfcc_Options *options);
-caryll_Font *caryll_parse_Font(json_value *root, otfcc_Options *options);
-caryll_Buffer *caryll_build_Font(caryll_Font *font, otfcc_Options *options);
-
 void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options);
-void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options);
-void caryll_font_stat(caryll_Font *font, const otfcc_Options *options);
+
+typedef struct otfcc_IFontBuilder {
+	caryll_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
+} otfcc_IFontBuilder;
+
+typedef struct otfcc_IFontSerializer {
+	void *(*serialize)(caryll_Font *font, const otfcc_Options *options);
+} otfcc_IFontSerializer;
+
+otfcc_IFontBuilder *otfcc_newOTFReader();
+otfcc_IFontBuilder *otfcc_newJsonReader();
+otfcc_IFontSerializer *otfcc_newJsonWriter();
+otfcc_IFontSerializer *otfcc_newOTFWriter();
 
 #endif

@@ -168,23 +168,30 @@ int main(int argc, char *argv[]) {
 
 	caryll_Font *font;
 	loggedStep("Read Font") {
-		font = caryll_read_Font(sfnt, ttcindex, options);
+		otfcc_IFontBuilder *reader = otfcc_newOTFReader();
+		font = reader->create(sfnt, ttcindex, options);
 		if (!font) {
 			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		caryll_font_unconsolidate(font, options);
+		free(reader);
+		if (sfnt) caryll_delete_SFNT(sfnt);
 		logStepTime;
 	}
-
+	loggedStep("Consolidate") {
+		caryll_font_consolidate(font, options);
+		logStepTime;
+	}
 	json_value *root;
 	loggedStep("Dump") {
-		root = caryll_dump_Font(font, options);
+		otfcc_IFontSerializer *dumper = otfcc_newJsonWriter();
+		root = (json_value *)dumper->serialize(font, options);
 		if (!root) {
 			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
 		logStepTime;
+		free(dumper);
 	}
 
 	char *buf;
@@ -255,7 +262,6 @@ int main(int argc, char *argv[]) {
 		free(buf);
 		if (font) caryll_delete_Font(font);
 		if (root) json_builder_free(root);
-		if (sfnt) caryll_delete_SFNT(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);
 		logStepTime;

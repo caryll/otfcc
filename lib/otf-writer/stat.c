@@ -14,8 +14,8 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	if (depth >= 0xFF) return stat;
 	if (stated[j] == stat_doing) {
 		// We have a circular reference
-		logWarning("[Stat] Circular glyph reference found in gid %d to gid %d. The reference will be dropped.\n",
-		           topj, j);
+		logWarning("[Stat] Circular glyph reference found in gid %d to gid %d. The reference will be dropped.\n", topj,
+		           j);
 		stated[j] = stat_completed;
 		return stat;
 	}
@@ -528,7 +528,7 @@ static void caryll_stat_LTSH(caryll_Font *font) {
 	font->LTSH = ltsh;
 }
 
-void caryll_font_stat(caryll_Font *font, const otfcc_Options *options) {
+void otfcc_statFont(caryll_Font *font, const otfcc_Options *options) {
 	if (font->glyf && font->head) {
 		caryll_stat_glyf(font, options);
 		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
@@ -595,4 +595,12 @@ void caryll_font_stat(caryll_Font *font, const otfcc_Options *options) {
 		caryll_stat_cff_vorgs(font);
 	}
 	caryll_stat_LTSH(font);
+}
+
+void otfcc_unstatFont(caryll_Font *font, const otfcc_Options *options) {
+	if (font->hdmx) DELETE(table_delete_hdmx, font->hdmx);
+	if (font->hmtx) DELETE(table_delete_hmtx, font->hmtx);
+	if (font->VORG) DELETE(table_delete_VORG, font->VORG);
+	if (font->vmtx) DELETE(table_delete_vmtx, font->vmtx);
+	if (font->LTSH) DELETE(table_delete_LTSH, font->LTSH);
 }

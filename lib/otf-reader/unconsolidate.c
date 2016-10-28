@@ -1,5 +1,5 @@
+#include "unconsolidate.h"
 #include "support/util.h"
-#include "otfcc/font.h"
 #include "support/aglfn.h"
 
 // Unconsolidation: Remove redundent data and de-couple internal data
@@ -184,7 +184,7 @@ static void merge_LTSH(caryll_Font *font) {
 		}
 	}
 }
-void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options) {
+void otfcc_unconsolidateFont(caryll_Font *font, const otfcc_Options *options) {
 	// Merge metrics
 	merge_hmtx(font);
 	merge_vmtx(font);
@@ -194,5 +194,4 @@ void caryll_font_unconsolidate(caryll_Font *font, const otfcc_Options *options) 
 	// Name glyphs
 	caryll_name_glyphs(font, options);
 	caryll_name_glyf(font);
-	caryll_font_consolidate(font, options);
 }

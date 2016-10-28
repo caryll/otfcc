@@ -461,10 +461,11 @@ static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, shap
 	return a;
 }
 
-static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options) {
+static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options, bool hasVerticalMetrics,
+                                   bool exportFDSelect) {
 	json_value *glyph = json_object_new(12);
 	json_object_push(glyph, "advanceWidth", json_new_position(g->advanceWidth));
-	if (options->has_vertical_metrics) {
+	if (hasVerticalMetrics) {
 		json_object_push(glyph, "advanceHeight", json_new_position(g->advanceHeight));
 		json_object_push(glyph, "verticalOrigin", json_new_position(g->verticalOrigin));
 	}
@@ -489,7 +490,7 @@ static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options) 
 		                 preserialize(glyf_glyph_dump_maskdefs(g->contourMasks, g->numberOfContourMasks,
 		                                                       g->numberOfStemH, g->numberOfStemV)));
 	}
-	if (options->export_fdselect) { json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name)); }
+	if (exportFDSelect) { json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name)); }
 	if (g->yPel) { json_object_push(glyph, "LTSH_yPel", json_integer_new(g->yPel)); }
 	return glyph;
 }
@@ -502,13 +503,14 @@ void caryll_dump_glyphorder(const table_glyf *table, json_value *root) {
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
-void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options) {
+void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options, bool hasVerticalMetrics,
+                     bool exportFDSelect) {
 	if (!table) return;
 	loggedStep("glyf") {
 		json_value *glyf = json_object_new(table->numberGlyphs);
 		for (glyphid_t j = 0; j < table->numberGlyphs; j++) {
 			glyf_Glyph *g = table->glyphs[j];
-			json_object_push(glyf, g->name, glyf_dump_glyph(g, options));
+			json_object_push(glyf, g->name, glyf_dump_glyph(g, options, hasVerticalMetrics, exportFDSelect));
 		}
 		json_object_push(root, "glyf", glyf);
 		if (!options->ignore_glyph_order) caryll_dump_glyphorder(table, root);
