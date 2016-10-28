@@ -26,12 +26,12 @@ void otl_delete_chaining(otl_Subtable *_subtable) {
 				for (tableid_t j = 0; j < subtable->rulesCount; j++) {
 					deleteRule(subtable->rules[j]);
 				}
-				free(subtable->rules);
+				FREE(subtable->rules);
 			}
 			if (subtable->bc) { otl_delete_ClassDef(subtable->bc); }
 			if (subtable->ic) { otl_delete_ClassDef(subtable->ic); }
 			if (subtable->fc) { otl_delete_ClassDef(subtable->fc); }
-			free(_subtable);
+			FREE(_subtable);
 		} else {
 			closeRule(&subtable->rule);
 		}
@@ -211,9 +211,9 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 		}
 	}
 
-	if (cds && cds->ic && cds->ic->glyphs) free(cds->ic->glyphs);
-	if (cds && cds->ic && cds->ic->classes) free(cds->ic->classes);
-	if (cds && cds->ic) free(cds->ic);
+	if (cds && cds->ic && cds->ic->glyphs) FREE(cds->ic->glyphs);
+	if (cds && cds->ic && cds->ic->classes) FREE(cds->ic->classes);
+	if (cds && cds->ic) FREE(cds->ic);
 	return subtable;
 FAIL:
 	otl_delete_chaining((otl_Subtable *)subtable);
@@ -587,8 +587,8 @@ caryll_Buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
 		}
 	}
 
-	free(coverage);
-	free(rcpg);
+	FREE(coverage);
+	FREE(rcpg);
 	return bk_build_Block(root);
 }
 
@@ -652,7 +652,7 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 		}
 		HASH_ITER(hh, revh, ss, tmp) {
 			HASH_DEL(revh, ss);
-			free(ss);
+			FREE(ss);
 		}
 		return allcheck ? s->cls : 0;
 	} else {
@@ -803,21 +803,21 @@ FAIL:;
 		classifier_hash *s, *tmp;
 		HASH_ITER(hh, hb, s, tmp) {
 			HASH_DEL(hb, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	if (hi) {
 		classifier_hash *s, *tmp;
 		HASH_ITER(hh, hi, s, tmp) {
 			HASH_DEL(hi, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	if (hf) {
 		classifier_hash *s, *tmp;
 		HASH_ITER(hh, hf, s, tmp) {
 			HASH_DEL(hf, s);
-			free(s);
+			FREE(s);
 		}
 	}
 

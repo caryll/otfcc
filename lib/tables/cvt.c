@@ -18,8 +18,8 @@ table_cvt *table_read_cvt(const caryll_Packet packet, const otfcc_Options *optio
 }
 void table_delete_cvt(table_cvt *table) {
 	if (!table) return;
-	if (table->words) free(table->words);
-	free(table);
+	if (table->words) FREE(table->words);
+	FREE(table);
 }
 void table_dump_cvt(const table_cvt *table, json_value *root, const otfcc_Options *options, const char *tag) {
 	if (!table) return;

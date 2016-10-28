@@ -8,7 +8,7 @@ void otl_delete_gsub_reverse(otl_Subtable *_subtable) {
 				otl_delete_Coverage(subtable->match[j]);
 			}
 		if (subtable->to) otl_delete_Coverage(subtable->to);
-		free(_subtable);
+		FREE(_subtable);
 	}
 }
 

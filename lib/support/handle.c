@@ -1,4 +1,5 @@
 #include "otfcc/handle.h"
+#include "support/otfcc-alloc.h"
 
 struct otfcc_Handle handle_new() {
 	struct otfcc_Handle h = {HANDLE_STATE_EMPTY, 0, NULL};
@@ -35,7 +36,7 @@ void handle_dispose(struct otfcc_Handle *h) {
 }
 void handle_delete(struct otfcc_Handle *h) {
 	handle_dispose(h);
-	free(h);
+	FREE(h);
 }
 void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name) {
 	handle_dispose(h);

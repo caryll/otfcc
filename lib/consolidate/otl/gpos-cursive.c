@@ -46,7 +46,7 @@ bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable 
 			subtable->exit[j] = s->exit;
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	return (subtable->coverage->numGlyphs == 0);

@@ -2,7 +2,8 @@
 #include "otfcc/table/OS_2.h"
 
 table_OS_2 *table_new_OS_2() {
-	table_OS_2 *os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));
+	table_OS_2 *os_2;
+	NEW(os_2);
 	return os_2;
 }
 
@@ -16,7 +17,7 @@ table_OS_2 *table_read_OS_2(const caryll_Packet packet, const otfcc_Options *opt
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 2) goto OS_2_CORRUPTED;
-		os_2 = (table_OS_2 *)calloc(1, sizeof(table_OS_2));
+		NEW(os_2);
 		os_2->version = read_16u(data);
 		// version 1
 		if (os_2->version == 0 || (os_2->version >= 1 && length < 86)) goto OS_2_CORRUPTED;
@@ -72,7 +73,7 @@ table_OS_2 *table_read_OS_2(const caryll_Packet packet, const otfcc_Options *opt
 
 	OS_2_CORRUPTED:
 		logWarning("table 'OS/2' corrupted.\n");
-		if (os_2 != NULL) free(os_2);
+		if (os_2 != NULL) FREE(os_2);
 	}
 	return NULL;
 }

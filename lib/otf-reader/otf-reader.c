@@ -55,10 +55,13 @@ static caryll_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *op
 		return font;
 	}
 }
-
+static void disposeReader(otfcc_IFontBuilder *self) {
+	free(self);
+}
 otfcc_IFontBuilder *otfcc_newOTFReader() {
 	otfcc_IFontBuilder *reader;
 	NEW(reader);
 	reader->create = readOtf;
+	reader->dispose = disposeReader;
 	return reader;
 }

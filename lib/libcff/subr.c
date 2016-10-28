@@ -18,7 +18,8 @@ static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 	}
 
 	*len = 3 + l1 + 1;
-	uint8_t *key = malloc(*len);
+	uint8_t *key;
+	NEW_N(key, *len);
 	key[0] = '1';
 	key[1] = (n->rule ? '1' : '0');
 	key[2] = '0';
@@ -45,7 +46,8 @@ static uint8_t *getDoubletHashKey(cff_SubrNode *n, size_t *len) {
 		l2 = buflen(n->next->terminal) * sizeof(uint8_t);
 	}
 	*len = 3 + l1 + l2 + 1;
-	uint8_t *key = malloc(*len);
+	uint8_t *key;
+	NEW_N(key, *len);
 	key[0] = '2';
 	key[1] = (n->rule ? '1' : '0');
 	key[2] = (n->next->rule ? '1' : '0');
@@ -537,16 +539,16 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 	cff_Index *ils = cff_newIndexByCallback(lsubrs, maxLSubrs, from_array);
 
 	for (uint32_t j = 0; j < g->totalCharStrings; j++) {
-		free((charStrings + j)->data);
+		FREE((charStrings + j)->data);
 	}
 	for (uint32_t j = 0; j < maxGSubrs; j++) {
-		free((gsubrs + j)->data);
+		FREE((gsubrs + j)->data);
 	}
 	for (uint32_t j = 0; j < maxLSubrs; j++) {
-		free((lsubrs + j)->data);
+		FREE((lsubrs + j)->data);
 	}
-	free(charStrings);
-	free(gsubrs);
+	FREE(charStrings);
+	FREE(gsubrs);
 
 	*s = cff_build_Index(*is);
 	*gs = cff_build_Index(*igs);
@@ -565,11 +567,11 @@ static void deleteFullRule(cff_SubrRule *r) {
 			if (e->rule->refcount < 1) deleteFullRule(e->rule);
 		}
 		if (e->terminal) buffree(e->terminal);
-		free(e);
+		FREE(e);
 		e = next;
 	}
-	free(r->guard);
-	free(r);
+	FREE(r->guard);
+	FREE(r);
 }
 
 void cff_delete_Graph(cff_SubrGraph *g) {

@@ -439,7 +439,8 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 	char *pt;
 	char *end, *bend, *brack;
 	int icnt = 0, imax = (int)(strlen(text) / 2), val;
-	uint8_t *instrs = malloc(imax);
+	uint8_t *instrs;
+	NEW_N(instrs, imax);
 
 	for (pt = text; *pt; ++pt) {
 		npos = 0;
@@ -563,7 +564,8 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 		if (*pt == '\0') break;
 	}
 	*len = icnt;
-	return (realloc(instrs, icnt == 0 ? 1 : icnt)); /* some versions of realloc abort on 0 */
+	RESIZE(instrs, icnt == 0 ? 1 : icnt);
+	return instrs; /* some versions of realloc abort on 0 */
 }
 
 static int instr_typify(struct instrdata *id) {
@@ -571,7 +573,7 @@ static int instr_typify(struct instrdata *id) {
 	uint8_t *instrs = id->instrs;
 	uint8_t *bts;
 
-	if (id->bts == NULL) id->bts = malloc(len + 1);
+	if (id->bts == NULL) NEW_N(id->bts, len + 1);
 	bts = id->bts;
 	for (i = lh = 0; i < len; ++i) {
 		bts[i] = bt_instr;
@@ -636,7 +638,7 @@ json_value *dump_ttinstr(uint8_t *instructions, uint32_t length, const otfcc_Opt
 				json_array_push(ret, json_string_new(ff_ttf_instrnames[id.instrs[i]]));
 			}
 		}
-		free(id.bts);
+		FREE(id.bts);
 		return preserialize(ret);
 	}
 }

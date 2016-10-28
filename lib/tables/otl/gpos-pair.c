@@ -6,19 +6,19 @@ void otl_delete_gpos_pair(otl_Subtable *_subtable) {
 		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 		if (subtable->firstValues) {
 			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-				free(subtable->firstValues[j]);
+				FREE(subtable->firstValues[j]);
 			}
-			free(subtable->firstValues);
+			FREE(subtable->firstValues);
 		}
 		if (subtable->secondValues) {
 			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-				free(subtable->secondValues[j]);
+				FREE(subtable->secondValues[j]);
 			}
-			free(subtable->secondValues);
+			FREE(subtable->secondValues);
 		}
 		otl_delete_ClassDef(subtable->first);
 		otl_delete_ClassDef(subtable->second);
-		free(_subtable);
+		FREE(_subtable);
 	}
 }
 
@@ -51,7 +51,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			subtable->first->classes[j] = j;
 		}
-		free(cov);
+		FREE(cov);
 
 		uint16_t format1 = read_16u(data + offset + 4);
 		uint16_t format2 = read_16u(data + offset + 6);
@@ -127,7 +127,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 			subtable->second->classes[jj] = s->cid;
 			jj++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 		return _subtable;
 	} else if (subtableFormat == 2) {

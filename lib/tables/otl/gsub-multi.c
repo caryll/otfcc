@@ -6,10 +6,10 @@ void otl_delete_gsub_multi(otl_Subtable *_subtable) {
 		for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
 			otl_delete_Coverage(subtable->to[j]);
 		}
-		free(subtable->to);
+		FREE(subtable->to);
 	}
 	otl_delete_Coverage(subtable->from);
-	free(subtable);
+	FREE(subtable);
 }
 
 otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset,

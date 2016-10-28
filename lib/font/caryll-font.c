@@ -3,29 +3,8 @@
 #include "otfcc/sfnt-builder.h"
 
 caryll_Font *caryll_new_Font() {
-	caryll_Font *font = calloc(1, sizeof(caryll_Font));
-	if (!font) return NULL;
-	font->head = NULL;
-	font->hhea = NULL;
-	font->maxp = NULL;
-	font->hmtx = NULL;
-	font->post = NULL;
-	font->name = NULL;
-	font->hdmx = NULL;
-	font->glyf = NULL;
-	font->cmap = NULL;
-	font->glyph_order = NULL;
-	font->fpgm = NULL;
-	font->prep = NULL;
-	font->cvt_ = NULL;
-	font->gasp = NULL;
-	font->vhea = NULL;
-	font->vmtx = NULL;
-	font->GSUB = NULL;
-	font->GPOS = NULL;
-	font->GDEF = NULL;
-	font->BASE = NULL;
-	font->VORG = NULL;
+	caryll_Font *font;
+	NEW(font);
 	return font;
 }
 
@@ -54,5 +33,5 @@ void caryll_delete_Font(caryll_Font *font) {
 	if (font->BASE) DELETE(table_delete_BASE, font->BASE);
 	if (font->VORG) DELETE(table_delete_VORG, font->VORG);
 	if (font->glyph_order) { DELETE(caryll_delete_GlyphOrder, font->glyph_order); }
-	if (font) free(font);
+	if (font) FREE(font);
 }

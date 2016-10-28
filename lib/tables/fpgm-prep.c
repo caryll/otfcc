@@ -1,5 +1,5 @@
 #include "support/util.h"
-#include "support/ttinstr.h"
+#include "support/ttinstr/ttinstr.h"
 #include "otfcc/table/fpgm-prep.h"
 
 table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, const otfcc_Options *options, uint32_t tag) {
@@ -10,7 +10,7 @@ table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, const otfcc_Op
 		NEW(t);
 		t->tag = NULL;
 		t->length = length;
-		t->bytes = malloc(sizeof(uint8_t) * length);
+		NEW_N(t->bytes, length);
 		if (!t->bytes) goto FAIL;
 		memcpy(t->bytes, data, length);
 		return t;
@@ -24,8 +24,8 @@ table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, const otfcc_Op
 void table_delete_fpgm_prep(table_fpgm_prep *table) {
 	if (!table) return;
 	if (table->tag) sdsfree(table->tag);
-	if (table->bytes) free(table->bytes);
-	free(table);
+	if (table->bytes) FREE(table->bytes);
+	FREE(table);
 }
 
 void table_fpgm_dump_prep(const table_fpgm_prep *table, json_value *root, const otfcc_Options *options,

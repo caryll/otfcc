@@ -56,7 +56,7 @@ void table_delete_CFF(table_CFF *table) {
 		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
 			table_delete_CFF(table->fdArray[j]);
 		}
-		free(table->fdArray);
+		FREE(table->fdArray);
 	}
 	FREE(table);
 }
@@ -301,7 +301,7 @@ static void callback_countpoint_setmask(void *_context, bool isContourMask, bool
 	} else {
 		context->g->numberOfHintMasks += 1;
 	}
-	free(mask);
+	FREE(mask);
 }
 
 static void callback_draw_setwidth(void *_context, double width) {
@@ -376,7 +376,7 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 		mask->maskV[j] = j < context->g->numberOfStemV ? maskArray[j + context->g->numberOfStemH] : 0;
 	}
 
-	free(maskArray);
+	FREE(maskArray);
 	if (duplicateMask) return;
 	if (isContourMask) {
 		context->definedContourMasks += 1;
@@ -567,8 +567,8 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 	}
 }
 
-static double qround(double x) {
-	return round(x * 65536.0) / (65536.0);
+static double qround(const double x) {
+	return caryll_from_fixed(caryll_to_fixed(x));
 }
 static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *head) {
 	for (glyphid_t jj = 0; jj < glyf->numberGlyphs; jj++) {
@@ -902,8 +902,8 @@ static void cff_make_charstrings(cff_charstring_builder_context *context, caryll
 		    cff_compileGlyphToIL(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
 		cff_optimizeIL(il, context->options);
 		cff_insertILToGraph(context->graph, il);
-		free(il->instr);
-		free(il);
+		FREE(il->instr);
+		FREE(il);
 	}
 	cff_ilGraphToBuffers(context->graph, s, gs, ls);
 	DELETE(cff_delete_Graph, context->graph);
@@ -932,11 +932,7 @@ static int sidof(cff_sid_entry **h, sds s) {
 
 static cff_DictEntry *cffdict_givemeablank(cff_Dict *dict) {
 	dict->count++;
-	if (dict->ents) {
-		dict->ents = realloc(dict->ents, dict->count * sizeof(cff_DictEntry));
-	} else {
-		dict->ents = calloc(dict->count, sizeof(cff_DictEntry));
-	}
+	RESIZE(dict->ents, dict->count);
 	return &(dict->ents[dict->count - 1]);
 }
 static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t arity, ...) {
@@ -1076,12 +1072,12 @@ static caryll_Buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 		bufwrite_sds(blobs[j], item->str);
 		HASH_DEL(*h, item);
 		sdsfree(item->str);
-		free(item);
+		FREE(item);
 		j++;
 	}
 
 	cff_Index *strings = cff_newIndexByCallback(blobs, n, callback_makestringindex);
-	free(blobs);
+	FREE(blobs);
 	caryll_Buffer *final_blob = cff_build_Index(*strings);
 	cff_delete_Index(strings);
 	final_blob->cursor = final_blob->size;
@@ -1176,7 +1172,7 @@ static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 done:;
 	caryll_Buffer *e = cff_build_FDSelect(*fds);
 	cff_close_FDSelect(*fds);
-	free(fds);
+	FREE(fds);
 	return e;
 }
 
@@ -1350,7 +1346,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 			bufwrite_bufdel(blob, fdArrayPrivates[j]);
 			endingPositionOfPrivates[j + 1] = blob->cursor;
 		}
-		free(fdArrayPrivates);
+		FREE(fdArrayPrivates);
 	} else {
 		bufwrite_bufdel(blob, r);
 	}

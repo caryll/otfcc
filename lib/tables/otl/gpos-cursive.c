@@ -3,9 +3,9 @@
 void otl_delete_gpos_cursive(otl_Subtable *subtable) {
 	if (subtable) {
 		otl_delete_Coverage(subtable->gpos_cursive.coverage);
-		free(subtable->gpos_cursive.enter);
-		free(subtable->gpos_cursive.exit);
-		free(subtable);
+		FREE(subtable->gpos_cursive.enter);
+		FREE(subtable->gpos_cursive.exit);
+		FREE(subtable);
 	}
 }
 
@@ -39,8 +39,8 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 	goto OK;
 FAIL:
 	if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
-	if (subtable->enter) free(subtable->enter);
-	if (subtable->exit) free(subtable->exit);
+	if (subtable->enter) FREE(subtable->enter);
+	if (subtable->exit) FREE(subtable->exit);
 	_subtable = NULL;
 OK:
 	return _subtable;

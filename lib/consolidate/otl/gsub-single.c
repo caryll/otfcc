@@ -54,7 +54,7 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 			subtable->to->glyphs[j] = handle_fromConsolidated(s->toid, s->toname);
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	return (subtable->from->numGlyphs == 0);

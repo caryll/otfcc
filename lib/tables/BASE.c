@@ -5,9 +5,9 @@ static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {
 	if (!axis) return;
 	if (axis->entries) {
 		for (tableid_t j = 0; j < axis->scriptCount; j++) {
-			if (axis->entries[j].baseValues) free(axis->entries[j].baseValues);
+			if (axis->entries[j].baseValues) FREE(axis->entries[j].baseValues);
 		}
-		free(axis->entries);
+		FREE(axis->entries);
 	}
 }
 
@@ -52,7 +52,7 @@ static void readBaseScript(const font_file_pointer data, uint32_t tableLength, u
 	}
 FAIL:
 	entry->baseValuesCount = 0;
-	if (entry->baseValues) free(entry->baseValues);
+	if (entry->baseValues) FREE(entry->baseValues);
 	entry->baseValues = NULL;
 	entry->defaultBaselineTag = 0;
 	return;
@@ -221,10 +221,7 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 			}
 			if (!found) {
 				taglist.size += 1;
-				if (taglist.items)
-					taglist.items = realloc(taglist.items, taglist.size * sizeof(uint32_t));
-				else
-					taglist.items = malloc(taglist.size * sizeof(uint32_t));
+				RESIZE(taglist.items, taglist.size);
 				taglist.items[taglist.size - 1] = entry->defaultBaselineTag;
 			}
 		}
@@ -239,10 +236,7 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 			}
 			if (!found) {
 				taglist.size += 1;
-				if (taglist.items)
-					taglist.items = realloc(taglist.items, taglist.size * sizeof(uint32_t));
-				else
-					taglist.items = malloc(taglist.size * sizeof(uint32_t));
+				RESIZE(taglist.items, taglist.size);
 				taglist.items[taglist.size - 1] = tag;
 			}
 		}
@@ -299,7 +293,7 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 		        p16, scriptRecord,               // BaseScript
 		        bkover);
 	}
-	free(taglist.items);
+	FREE(taglist.items);
 	return bk_new_Block(p16, baseTagList,    // BaseTagList
 	                    p16, baseScriptList, // BaseScriptList
 	                    bkover);

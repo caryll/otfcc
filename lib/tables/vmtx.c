@@ -3,9 +3,9 @@
 
 void table_delete_vmtx(MOVE table_vmtx *table) {
 	if (!table) return;
-	if (table->metrics != NULL) free(table->metrics);
-	if (table->topSideBearing != NULL) free(table->topSideBearing);
-	free(table);
+	if (table->metrics != NULL) FREE(table->metrics);
+	if (table->topSideBearing != NULL) FREE(table->topSideBearing);
+	FREE(table);
 }
 
 table_vmtx *table_read_vmtx(const caryll_Packet packet, const otfcc_Options *options, table_vhea *vhea,
@@ -21,9 +21,9 @@ table_vmtx *table_read_vmtx(const caryll_Packet packet, const otfcc_Options *opt
 		glyphid_t count_k = maxp->numGlyphs - vhea->numOfLongVerMetrics;
 		if (length < count_a * 4 + count_k * 2) goto vmtx_CORRUPTED;
 
-		vmtx = malloc(sizeof(table_vmtx) * 1);
-		vmtx->metrics = malloc(sizeof(vertical_metric) * count_a);
-		vmtx->topSideBearing = malloc(sizeof(pos_t) * count_k);
+		NEW(vmtx);
+		NEW_N(vmtx->metrics, count_a);
+		NEW_N(vmtx->topSideBearing, count_k);
 
 		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			vmtx->metrics[ia].advanceHeight = read_16u(data + ia * 4);

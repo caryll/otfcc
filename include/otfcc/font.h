@@ -77,10 +77,12 @@ void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options);
 
 typedef struct otfcc_IFontBuilder {
 	caryll_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
+	void (*dispose)(struct otfcc_IFontBuilder *self);
 } otfcc_IFontBuilder;
 
 typedef struct otfcc_IFontSerializer {
 	void *(*serialize)(caryll_Font *font, const otfcc_Options *options);
+	void (*dispose)(struct otfcc_IFontSerializer *self);
 } otfcc_IFontSerializer;
 
 otfcc_IFontBuilder *otfcc_newOTFReader();

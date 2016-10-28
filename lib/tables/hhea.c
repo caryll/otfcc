@@ -2,7 +2,8 @@
 #include "otfcc/table/hhea.h"
 
 table_hhea *table_new_hhea() {
-	table_hhea *hhea = (table_hhea *)calloc(1, sizeof(table_hhea));
+	table_hhea *hhea;
+	NEW(hhea);
 	return hhea;
 }
 
@@ -14,7 +15,8 @@ table_hhea *table_read_hhea(const caryll_Packet packet, const otfcc_Options *opt
 		if (length < 36) {
 			logWarning("table 'hhea' corrupted.\n");
 		} else {
-			table_hhea *hhea = (table_hhea *)malloc(sizeof(table_hhea) * 1);
+			table_hhea *hhea;
+			NEW(hhea);
 			hhea->version = read_32s(data);
 			hhea->ascender = read_16u(data + 4);
 			hhea->descender = read_16u(data + 6);

@@ -21,11 +21,7 @@ static void loggerIndentSDS(void *_self, MOVE sds segment) {
 	uint8_t newLevel = self->level + 1;
 	if (newLevel > self->levelCap) {
 		self->levelCap += self->levelCap / 2 + 1;
-		if (self->indents) {
-			self->indents = realloc(self->indents, sizeof(sds) * self->levelCap);
-		} else {
-			self->indents = calloc(sizeof(sds), self->levelCap);
-		}
+		RESIZE(self->indents, self->levelCap);
 	}
 	self->level++;
 	self->indents[self->level - 1] = segment;
@@ -94,8 +90,8 @@ static void loggerDispose(void *_self) {
 	for (uint16_t level = 0; level < self->level; level++) {
 		sdsfree(self->indents[level]);
 	}
-	free(self->indents);
-	free(self);
+	FREE(self->indents);
+	FREE(self);
 }
 
 const otfcc_ILogger VTABLE_LOGGER = {.dispose = loggerDispose,
@@ -124,7 +120,7 @@ typedef struct StderrTarget { otfcc_ILoggerTarget vtable; } StderrTarget;
 void stderrTargetDispose(void *_self) {
 	StderrTarget *self = (StderrTarget *)_self;
 	if (!self) return;
-	free(self);
+	FREE(self);
 }
 
 void stderrTargetPush(void *_self, MOVE sds data) {

@@ -3,8 +3,8 @@
 void otl_delete_gpos_single(otl_Subtable *subtable) {
 	if (subtable) {
 		otl_delete_Coverage(subtable->gpos_single.coverage);
-		free(subtable->gpos_single.values);
-		free(subtable);
+		FREE(subtable->gpos_single.values);
+		FREE(subtable);
 	}
 }
 
@@ -41,7 +41,7 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 	goto OK;
 FAIL:
 	if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
-	if (subtable->values) free(subtable->values);
+	if (subtable->values) FREE(subtable->values);
 	_subtable = NULL;
 OK:
 	return _subtable;

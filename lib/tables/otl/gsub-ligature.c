@@ -6,10 +6,10 @@ void otl_delete_gsub_ligature(otl_Subtable *_subtable) {
 		for (glyphid_t j = 0; j < subtable->to->numGlyphs; j++) {
 			otl_delete_Coverage(subtable->from[j]);
 		}
-		free(subtable->from);
+		FREE(subtable->from);
 	}
 	otl_delete_Coverage(subtable->to);
-	free(subtable);
+	FREE(subtable);
 }
 
 otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
@@ -198,7 +198,7 @@ caryll_Buffer *caryll_build_gsub_ligature_subtable(const otl_Subtable *_subtable
 	otl_delete_Coverage(startcov);
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
-		free(s);
+		FREE(s);
 	}
 	return bk_build_Block(root);
 }

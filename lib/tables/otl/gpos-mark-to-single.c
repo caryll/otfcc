@@ -9,13 +9,13 @@ void otl_delete_gpos_markToSingle(otl_Subtable *_subtable) {
 		if (subtable->bases) {
 			if (subtable->baseArray) {
 				for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
-					if (subtable->baseArray[j]) free(subtable->baseArray[j]);
+					if (subtable->baseArray[j]) FREE(subtable->baseArray[j]);
 				}
-				free(subtable->baseArray);
+				FREE(subtable->baseArray);
 			}
 			otl_delete_Coverage(subtable->bases);
 		}
-		free(_subtable);
+		FREE(_subtable);
 	}
 }
 
@@ -206,7 +206,7 @@ otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable, const otf
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		sdsfree(s->className);
-		free(s);
+		FREE(s);
 	}
 
 	return st;

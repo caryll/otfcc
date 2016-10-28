@@ -2,7 +2,8 @@
 #include "otfcc/table/head.h"
 
 table_head *table_new_head() {
-	table_head *head = (table_head *)calloc(1, sizeof(table_head));
+	table_head *head;
+	NEW(head);
 	head->magicNumber = 0x5f0f3cf5;
 	head->unitsPerEm = 1000;
 	return head;
@@ -16,7 +17,8 @@ table_head *table_read_head(const caryll_Packet packet, const otfcc_Options *opt
 		if (length < 54) {
 			logWarning("table 'head' corrupted.\n");
 		} else {
-			table_head *head = (table_head *)malloc(sizeof(table_head) * 1);
+			table_head *head;
+			NEW(head);
 			head->version = read_32s(data);
 			head->fontRevison = read_32u(data + 4);
 			head->checkSumAdjustment = read_32u(data + 8);

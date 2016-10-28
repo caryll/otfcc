@@ -1,6 +1,5 @@
 #include "support/util.h"
-#include "support/base64.h"
-#include "support/unicodeconv.h"
+#include "support/unicodeconv/unicodeconv.h"
 #include "otfcc/table/name.h"
 
 static bool shouldDecodeAsUTF16(const name_record *record) {
@@ -20,16 +19,16 @@ table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *opt
 		uint32_t length = table.length;
 		if (length < 6) goto TABLE_NAME_CORRUPTED;
 
-		name = calloc(1, sizeof(table_name));
-		if (!name) goto TABLE_NAME_CORRUPTED;
+		NEW(name);
 		name->format = read_16u(data);
 		name->count = read_16u(data + 2);
 		name->stringOffset = read_16u(data + 4);
 		if (length < 6 + 12 * name->count) goto TABLE_NAME_CORRUPTED;
 
-		name->records = calloc(name->count, sizeof(name_record *));
+		NEW_N(name->records, name->count);
 		for (uint16_t j = 0; j < name->count; j++) {
-			name_record *record = calloc(1, sizeof(name_record));
+			name_record *record;
+			NEW(record);
 			record->platformID = read_16u(data + 6 + j * 12);
 			record->encodingID = read_16u(data + 6 + j * 12 + 2);
 			record->languageID = read_16u(data + 6 + j * 12 + 4);
@@ -56,7 +55,7 @@ table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *opt
 		return name;
 	TABLE_NAME_CORRUPTED:
 		logWarning("table 'name' corrupted.\n");
-		if (name) { free(name), name = NULL; }
+		if (name) { FREE(name), name = NULL; }
 	}
 	return NULL;
 }
@@ -64,10 +63,10 @@ table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *opt
 void table_delete_name(table_name *table) {
 	for (uint16_t j = 0; j < table->count; j++) {
 		if (table->records[j]->nameString) sdsfree(table->records[j]->nameString);
-		free(table->records[j]);
+		FREE(table->records[j]);
 	}
-	free(table->records);
-	free(table);
+	FREE(table->records);
+	FREE(table);
 }
 
 void table_dump_name(const table_name *table, json_value *root, const otfcc_Options *options) {
@@ -97,7 +96,8 @@ static int name_record_sort(const void *_a, const void *_b) {
 	return (*a)->nameID - (*b)->nameID;
 }
 table_name *table_parse_name(const json_value *root, const otfcc_Options *options) {
-	table_name *name = calloc(1, sizeof(table_name));
+	table_name *name;
+	NEW(name);
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
 		loggedStep("name") {
@@ -170,7 +170,7 @@ caryll_Buffer *table_build_name(const table_name *name, const otfcc_Options *opt
 			size_t words;
 			uint8_t *u16 = utf8toutf16be(record->nameString, &words);
 			bufwrite_bytes(strings, words, u16);
-			free(u16);
+			FREE(u16);
 		} else if (shouldDecodeAsBytes(record)) {
 			bufwrite_bytes(strings, sdslen(record->nameString), (uint8_t *)record->nameString);
 		} else {

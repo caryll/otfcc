@@ -55,16 +55,16 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font, const otfcc
 	}
 	if (nReferencesConsolidated < g->numberOfReferences) {
 		if (nReferencesConsolidated == 0) {
-			free(g->references);
+			FREE(g->references);
 			g->references = NULL;
 			g->numberOfReferences = 0;
 		} else {
-			glyf_ComponentReference *consolidatedReferences =
-			    calloc(nReferencesConsolidated, sizeof(glyf_ComponentReference));
+			glyf_ComponentReference *consolidatedReferences;
+			NEW_N(consolidatedReferences, nReferencesConsolidated);
 			for (shapeid_t j = 0, k = 0; j < g->numberOfReferences; j++) {
 				if (g->references[j].glyph.name) { consolidatedReferences[k++] = g->references[j]; }
 			}
-			free(g->references);
+			FREE(g->references);
 			g->references = consolidatedReferences;
 			g->numberOfReferences = nReferencesConsolidated;
 		}
@@ -118,8 +118,8 @@ void caryll_font_consolidate_glyph(glyf_Glyph *g, caryll_Font *font, const otfcc
 			}
 		}
 	}
-	free(hmap);
-	free(vmap);
+	FREE(hmap);
+	FREE(vmap);
 	// Consolidate fdSelect
 	if (g->fdSelect.state == HANDLE_STATE_INDEX && font->CFF_ && font->CFF_->fdArray) {
 		if (g->fdSelect.index >= font->CFF_->fdArrayCount) { g->fdSelect.index = 0; }

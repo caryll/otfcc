@@ -38,10 +38,13 @@ static caryll_Font *readJson(void *_root, uint32_t index, const otfcc_Options *o
 	font->BASE = table_parse_BASE(root, options);
 	return font;
 }
-
+static void disposeReader(otfcc_IFontBuilder *self) {
+	free(self);
+}
 otfcc_IFontBuilder *otfcc_newJsonReader() {
 	otfcc_IFontBuilder *reader;
 	NEW(reader);
 	reader->create = readJson;
+	reader->dispose = disposeReader;
 	return reader;
 }

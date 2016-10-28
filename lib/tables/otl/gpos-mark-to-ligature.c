@@ -5,10 +5,10 @@ void delete_lig_attachment(otl_MarkToLigatureBase *att) {
 	if (!att) return;
 	if (att->anchors) {
 		for (glyphid_t k = 0; k < att->componentCount; k++)
-			free(att->anchors[k]);
-		free(att->anchors);
+			FREE(att->anchors[k]);
+		FREE(att->anchors);
 	}
-	free(att);
+	FREE(att);
 }
 
 void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
@@ -21,11 +21,11 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 				for (glyphid_t j = 0; j < subtable->bases->numGlyphs; j++) {
 					delete_lig_attachment(subtable->ligArray[j]);
 				}
-				free(subtable->ligArray);
+				FREE(subtable->ligArray);
 			}
 			otl_delete_Coverage(subtable->bases);
 		}
-		free(_subtable);
+		FREE(_subtable);
 	}
 }
 
@@ -228,7 +228,7 @@ otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const o
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		sdsfree(s->className);
-		free(s);
+		FREE(s);
 	}
 
 	return st;

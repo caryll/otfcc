@@ -2,8 +2,8 @@
 #include "otfcc/table/VORG.h"
 
 void table_delete_VORG(table_VORG *vorg) {
-	if (vorg) free(vorg->entries);
-	free(vorg);
+	if (vorg) FREE(vorg->entries);
+	FREE(vorg);
 }
 
 table_VORG *table_read_VORG(const caryll_Packet packet, const otfcc_Options *options) {

@@ -6,7 +6,7 @@
 #include "stopwatch.h"
 
 #include <getopt.h>
-#include "support/aliases.h"
+#include "aliases.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		free(reader);
+		reader->dispose(reader);
 		if (sfnt) caryll_delete_SFNT(sfnt);
 		logStepTime;
 	}
@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		logStepTime;
-		free(dumper);
+		dumper->dispose(dumper);
 	}
 
 	char *buf;

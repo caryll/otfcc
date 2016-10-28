@@ -6,7 +6,7 @@
 #include "stopwatch.h"
 
 #include <getopt.h>
-#include "support/aliases.h"
+#include "aliases.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
 			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		free(parser);
+		parser->dispose(parser);
 		json_value_free(root);
 		logStepTime;
 	}
@@ -295,7 +295,7 @@ int main(int argc, char *argv[]) {
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		logStepTime;
-		buffree(otf), free(writer), caryll_delete_Font(font), sdsfree(outputPath);
+		buffree(otf), writer->dispose(writer), caryll_delete_Font(font), sdsfree(outputPath);
 	}
 	options_delete(options);
 	return 0;

@@ -26,7 +26,8 @@ static uint32_t buf_checksum(caryll_Buffer *buffer) {
 }
 
 static caryll_SFNTTableEntry *createSegment(uint32_t tag, caryll_Buffer *buffer) {
-	caryll_SFNTTableEntry *table = malloc(sizeof(caryll_SFNTTableEntry));
+	caryll_SFNTTableEntry *table;
+	NEW(table);
 	table->tag = tag;
 	table->length = (uint32_t)buflen(buffer);
 	buflongalign(buffer);
@@ -45,7 +46,8 @@ static caryll_SFNTTableEntry *createSegment(uint32_t tag, caryll_Buffer *buffer)
 }
 
 caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, const otfcc_Options *options) {
-	caryll_SFNTBuilder *builder = malloc(sizeof(caryll_SFNTBuilder));
+	caryll_SFNTBuilder *builder;
+	NEW(builder);
 	builder->count = 0;
 	builder->header = header;
 	builder->tables = NULL;
@@ -59,9 +61,9 @@ void caryll_delete_SFNTBuilder(caryll_SFNTBuilder *builder) {
 	HASH_ITER(hh, builder->tables, item, tmp) {
 		HASH_DEL(builder->tables, item);
 		buffree(item->buffer);
-		free(item);
+		FREE(item);
 	}
-	free(builder);
+	FREE(builder);
 }
 
 void caryll_pushTableToSfntBuilder(caryll_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer) {

@@ -29,10 +29,13 @@ static void *serializeToJson(caryll_Font *font, const otfcc_Options *options) {
 	table_dump_BASE(font->BASE, root, options);
 	return root;
 }
-
+static void dispose(otfcc_IFontSerializer *self) {
+	free(self);
+}
 otfcc_IFontSerializer *otfcc_newJsonWriter() {
 	otfcc_IFontSerializer *writer;
 	NEW(writer);
 	writer->serialize = serializeToJson;
+	writer->dispose = dispose;
 	return writer;
 }

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <limits.h>
+#include "support/otfcc-alloc.h"
 #include "caryll/buffer.h"
 
 struct __caryll_bkblock;

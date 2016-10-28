@@ -2,8 +2,8 @@
 
 void otl_delete_mark_array(otl_MarkArray *array) {
 	if (array) {
-		if (array->records) free(array->records);
-		free(array);
+		if (array->records) FREE(array->records);
+		FREE(array);
 	};
 }
 otl_Anchor otl_anchor_absent() {

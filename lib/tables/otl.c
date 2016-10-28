@@ -50,26 +50,26 @@ void table_delete_otl(table_OTL *table) {
 	if (table->languages) {
 		for (tableid_t j = 0; j < table->languageCount; j++) {
 			if (table->languages[j]->name) sdsfree(table->languages[j]->name);
-			if (table->languages[j]->features) free(table->languages[j]->features);
-			free(table->languages[j]);
+			if (table->languages[j]->features) FREE(table->languages[j]->features);
+			FREE(table->languages[j]);
 		}
-		free(table->languages);
+		FREE(table->languages);
 	}
 	if (table->features) {
 		for (tableid_t j = 0; j < table->featureCount; j++) {
 			if (table->features[j]->name) sdsfree(table->features[j]->name);
-			if (table->features[j]->lookups) free(table->features[j]->lookups);
-			free(table->features[j]);
+			if (table->features[j]->lookups) FREE(table->features[j]->lookups);
+			FREE(table->features[j]);
 		}
-		free(table->features);
+		FREE(table->features);
 	}
 	if (table->lookups) {
 		for (tableid_t j = 0; j < table->lookupCount; j++) {
 			caryll_delete_lookup(table->lookups[j]);
 		}
-		free(table->lookups);
+		FREE(table->lookups);
 	}
-	free(table);
+	FREE(table);
 }
 
 static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, otl_LanguageSystem *lang,
@@ -95,7 +95,7 @@ static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t
 	}
 	return;
 FAIL:
-	if (lang->features) free(lang->features);
+	if (lang->features) FREE(lang->features);
 	lang->featureCount = 0;
 	lang->requiredFeature = NULL;
 	return;
@@ -660,7 +660,7 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 				j++;
 				HASH_DEL(lh, s);
 				sdsfree(s->name);
-				free(s);
+				FREE(s);
 			}
 		}
 		{
@@ -675,7 +675,7 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 				}
 				HASH_DEL(fh, s);
 				sdsfree(s->name);
-				free(s);
+				FREE(s);
 			}
 			otl->featureCount = j;
 		}
@@ -688,7 +688,7 @@ table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options,
 				otl->languages[j] = s->script;
 				HASH_DEL(sh, s);
 				sdsfree(s->name);
-				free(s);
+				FREE(s);
 				j++;
 			}
 		}
@@ -782,10 +782,10 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		bk_push(blk, b16, 0, // MarkFilteringSet
 		        bkover);
 		bk_push(root, p16, blk, bkover);
-		free(subtables[j]);
+		FREE(subtables[j]);
 	}
-	free(subtables);
-	free(subtableQuantity);
+	FREE(subtables);
+	FREE(subtableQuantity);
 	return root;
 }
 
@@ -916,8 +916,8 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 		        bkover);
 		HASH_DEL(h, s);
 		sdsfree(s->tag);
-		free(s->ll);
-		free(s);
+		FREE(s->ll);
+		FREE(s);
 	}
 	return root;
 }
@@ -945,7 +945,7 @@ caryll_Buffer *table_build_otl(const table_OTL *table, const otfcc_Options *opti
 		break;
 #define LOOKUP_READER(llt, fn)                                                                                         \
 	case llt:                                                                                                          \
-		return fn(data, tableLength, subtableOffset,options);
+		return fn(data, tableLength, subtableOffset, options);
 #define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
 #define LOOKUP_PARSER(llt, parser)                                                                                     \
 	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, options, lh); }
@@ -993,10 +993,10 @@ void caryll_delete_lookup(otl_Lookup *lookup) {
 				default:;
 			}
 		}
-		free(lookup->subtables);
+		FREE(lookup->subtables);
 		sdsfree(lookup->name);
 	}
-	free(lookup);
+	FREE(lookup);
 }
 
 otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,

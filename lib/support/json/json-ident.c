@@ -1,4 +1,5 @@
 #include "json-ident.h"
+#include "support/otfcc-alloc.h"
 
 static bool compare_json_arrays(const json_value *a, const json_value *b) {
 	for (uint16_t j = 0; j < a->u.array.length; j++) {
@@ -20,7 +21,7 @@ static bool compare_json_objects(const json_value *a, const json_value *b) {
 		json_obj_entry *e = NULL;
 		HASH_FIND_STR(h, k, e);
 		if (!e) {
-			e = calloc(1, sizeof(json_obj_entry));
+			NEW(e);
 			e->key = strdup(k);
 			e->val = a->u.object.values[j].value;
 			e->check = false;
@@ -49,8 +50,8 @@ static bool compare_json_objects(const json_value *a, const json_value *b) {
 	HASH_ITER(hh, h, e, tmp) {
 		allcheck = allcheck && e->check;
 		HASH_DEL(h, e);
-		free(e->key);
-		free(e);
+		FREE(e->key);
+		FREE(e);
 	}
 	return allcheck;
 }

@@ -1,16 +1,5 @@
-#ifndef CARYLL_SUPPORT_ALIASES_H
-#define CARYLL_SUPPORT_ALIASES_H
-
-#include "otfcc/handle.h"
-
-#define FOR_TABLE(name, table)                                                                                         \
-	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
-	     keep = !keep, count++)                                                                                        \
-		for (caryll_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                    \
-			if (table.tag == (name))                                                                                   \
-				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
-
-#define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
+#ifndef CARYLL_SRC_ALIASES_H
+#define CARYLL_SRC_ALIASES_H
 
 #define loggedStep(...)                                                                                                \
 	for (bool ___loggedstep_v =                                                                                        \
@@ -24,11 +13,5 @@
 	options->logger->logSDS(options->logger, log_vl_notice, log_type_info, sdscatprintf(sdsempty(), __VA_ARGS__));
 #define logProgress(...)                                                                                               \
 	options->logger->logSDS(options->logger, log_vl_progress, log_type_progress, sdscatprintf(sdsempty(), __VA_ARGS__));
-
-typedef otfcc_GlyphHandle glyph_handle;
-typedef otfcc_FDHandle fd_handle;
-typedef otfcc_LookupHandle lookup_handle;
-
-typedef uint8_t *font_file_pointer;
 
 #endif

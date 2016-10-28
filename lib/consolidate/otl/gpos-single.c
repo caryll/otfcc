@@ -43,7 +43,7 @@ bool consolidate_gpos_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 			subtable->values[j] = s->v;
 			j++;
 			HASH_DEL(h, s);
-			free(s);
+			FREE(s);
 		}
 	}
 	return (subtable->coverage->numGlyphs == 0);

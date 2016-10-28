@@ -3,7 +3,7 @@ void otl_delete_gsub_single(otl_Subtable *subtable) {
 	if (subtable) {
 		otl_delete_Coverage(subtable->gsub_single.from);
 		otl_delete_Coverage(subtable->gsub_single.to);
-		free(subtable);
+		FREE(subtable);
 	}
 }
 

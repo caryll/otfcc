@@ -65,10 +65,13 @@ static void *serializeToOTF(caryll_Font *font, const otfcc_Options *options) {
 	otfcc_unstatFont(font, options);
 	return otf;
 }
-
+static void dispose(otfcc_IFontSerializer *self) {
+	free(self);
+}
 otfcc_IFontSerializer *otfcc_newOTFWriter() {
 	otfcc_IFontSerializer *writer;
 	NEW(writer);
 	writer->serialize = serializeToOTF;
+	writer->dispose = dispose;
 	return writer;
 }

@@ -14,9 +14,9 @@ table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *opt
 		glyphid_t count_k = maxp->numGlyphs - hhea->numberOfMetrics;
 		if (length < count_a * 4 + count_k * 2) goto HMTX_CORRUPTED;
 
-		hmtx = malloc(sizeof(table_hmtx) * 1);
-		hmtx->metrics = malloc(sizeof(horizontal_metric) * count_a);
-		hmtx->leftSideBearing = malloc(sizeof(pos_t) * count_k);
+		NEW(hmtx);
+		NEW_N(hmtx->metrics, count_a);
+		NEW_N(hmtx->leftSideBearing, count_k);
 
 		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			hmtx->metrics[ia].advanceWidth = read_16u(data + ia * 4);
@@ -37,9 +37,9 @@ table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *opt
 
 void table_delete_hmtx(table_hmtx *table) {
 	if (!table) return;
-	if (table->metrics != NULL) free(table->metrics);
-	if (table->leftSideBearing != NULL) free(table->leftSideBearing);
-	free(table);
+	if (table->metrics != NULL) FREE(table->metrics);
+	if (table->leftSideBearing != NULL) FREE(table->leftSideBearing);
+	FREE(table);
 }
 
 caryll_Buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,

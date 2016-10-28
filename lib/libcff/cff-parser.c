@@ -27,7 +27,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				{
 					enc->f0.format = 0;
 					enc->f0.ncodes = data[offset + 1];
-					enc->f0.code = calloc(enc->f0.ncodes, sizeof(uint8_t));
+					NEW_N(enc->f0.code, enc->f0.ncodes);
 
 					for (uint32_t i = 0; i < enc->f0.ncodes; i++)
 						enc->f0.code[i] = data[offset + 2 + i];
@@ -38,7 +38,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				{
 					enc->f1.format = 1;
 					enc->f1.nranges = data[offset + 1];
-					enc->f1.range1 = calloc(enc->f1.nranges, sizeof(cff_EncodingRangeFormat1));
+					NEW_N(enc->f1.range1, enc->f1.nranges);
 
 					for (uint32_t i = 0; i < enc->f1.nranges; i++)
 						enc->f1.range1[i].first = data[offset + 2 + i * 2],
@@ -49,7 +49,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				enc->t = cff_ENC_FORMAT_SUPPLEMENT;
 				{
 					enc->ns.nsup = data[offset];
-					enc->ns.supplement = calloc(enc->ns.nsup, sizeof(cff_EncodingSupplement));
+					NEW_N(enc->ns.supplement, enc->ns.nsup);
 
 					for (uint32_t i = 0; i < enc->ns.nsup; i++)
 						enc->ns.supplement[i].code = data[offset + 1 + i * 3],
@@ -179,9 +179,10 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 }
 
 cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *options) {
-	cff_File *file = calloc(1, sizeof(cff_File));
+	cff_File *file;
+	NEW(file);
 
-	file->raw_data = calloc(len, sizeof(uint8_t));
+	NEW_N(file->raw_data, len);
 	memcpy(file->raw_data, data, len);
 	file->raw_length = len;
 	file->cnt_glyph = 0;
@@ -192,7 +193,7 @@ cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *optio
 
 void cff_close(cff_File *file) {
 	if (file != NULL) {
-		if (file->raw_data != NULL) free(file->raw_data);
+		if (file->raw_data != NULL) FREE(file->raw_data);
 
 		cff_close_Index(file->name);
 		cff_close_Index(file->top_dict);
@@ -208,20 +209,20 @@ void cff_close(cff_File *file) {
 			case cff_ENC_UNSPECED:
 				break;
 			case cff_ENC_FORMAT0:
-				if (file->encodings.f0.code != NULL) free(file->encodings.f0.code);
+				if (file->encodings.f0.code != NULL) FREE(file->encodings.f0.code);
 				break;
 			case cff_ENC_FORMAT1:
-				if (file->encodings.f1.range1 != NULL) free(file->encodings.f1.range1);
+				if (file->encodings.f1.range1 != NULL) FREE(file->encodings.f1.range1);
 				break;
 			case cff_ENC_FORMAT_SUPPLEMENT:
-				if (file->encodings.ns.supplement != NULL) free(file->encodings.ns.supplement);
+				if (file->encodings.ns.supplement != NULL) FREE(file->encodings.ns.supplement);
 				break;
 		}
 
 		cff_close_Charset(file->charsets);
 		cff_close_FDSelect(file->fdselect);
 
-		free(file);
+		FREE(file);
 	}
 }
 
