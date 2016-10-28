@@ -9,7 +9,7 @@ table_vhea *table_new_vhea() {
 void table_delete_vhea(MOVE table_vhea *table) {
 	FREE(table);
 }
-table_vhea *table_read_vhea(const caryll_Packet packet) {
+table_vhea *table_read_vhea(const caryll_Packet packet, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
 	;
 	FOR_TABLE('vhea', table) {
@@ -34,8 +34,9 @@ table_vhea *table_read_vhea(const caryll_Packet packet) {
 			vhea->dummy3 = 0;
 			vhea->metricDataFormat = 0;
 			vhea->numOfLongVerMetrics = read_16u(data + 34);
-
 			return vhea;
+		} else {
+			logWarning("Table 'vhea' corrupted.")
 		}
 	}
 	return NULL;
@@ -43,40 +44,41 @@ table_vhea *table_read_vhea(const caryll_Packet packet) {
 void table_dump_vhea(const table_vhea *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
-	if (options->verbose) fprintf(stderr, "Dumping vhea.\n");
-
-	json_object_push(vhea, "ascent", json_integer_new(table->ascent));
-	json_object_push(vhea, "descent", json_integer_new(table->descent));
-	json_object_push(vhea, "lineGap", json_integer_new(table->lineGap));
-	json_object_push(vhea, "advanceHeightMax", json_integer_new(table->advanceHeightMax));
-	json_object_push(vhea, "minTop", json_integer_new(table->minTop));
-	json_object_push(vhea, "minBottom", json_integer_new(table->minBottom));
-	json_object_push(vhea, "yMaxExtent", json_integer_new(table->yMaxExtent));
-	json_object_push(vhea, "caretSlopeRise", json_integer_new(table->caretSlopeRise));
-	json_object_push(vhea, "caretSlopeRun", json_integer_new(table->caretSlopeRun));
-	json_object_push(vhea, "caretOffset", json_integer_new(table->caretOffset));
-	json_object_push(vhea, "numOfLongVerMetrics", json_integer_new(table->numOfLongVerMetrics));
-	json_object_push(root, "vhea", vhea);
+	loggedStep("vhea") {
+		json_object_push(vhea, "ascent", json_integer_new(table->ascent));
+		json_object_push(vhea, "descent", json_integer_new(table->descent));
+		json_object_push(vhea, "lineGap", json_integer_new(table->lineGap));
+		json_object_push(vhea, "advanceHeightMax", json_integer_new(table->advanceHeightMax));
+		json_object_push(vhea, "minTop", json_integer_new(table->minTop));
+		json_object_push(vhea, "minBottom", json_integer_new(table->minBottom));
+		json_object_push(vhea, "yMaxExtent", json_integer_new(table->yMaxExtent));
+		json_object_push(vhea, "caretSlopeRise", json_integer_new(table->caretSlopeRise));
+		json_object_push(vhea, "caretSlopeRun", json_integer_new(table->caretSlopeRun));
+		json_object_push(vhea, "caretOffset", json_integer_new(table->caretOffset));
+		json_object_push(vhea, "numOfLongVerMetrics", json_integer_new(table->numOfLongVerMetrics));
+		json_object_push(root, "vhea", vhea);
+	}
 }
 
 table_vhea *table_parse_vhea(const json_value *root, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing vhea.\n");
 		vhea = table_new_vhea();
 		if (!vhea) return NULL;
-		vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);
-		vhea->descent = json_obj_getnum_fallback(table, "descent", 0);
-		vhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);
-		vhea->advanceHeightMax = json_obj_getnum_fallback(table, "advanceHeightMax", 0);
-		vhea->minTop = json_obj_getnum_fallback(table, "minTop", 0);
-		vhea->minBottom = json_obj_getnum_fallback(table, "minBottom", 0);
-		vhea->yMaxExtent = json_obj_getnum_fallback(table, "yMaxExtent", 0);
-		vhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
-		vhea->caretSlopeRun = json_obj_getnum_fallback(table, "caretSlopeRun", 0);
-		vhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
-		vhea->numOfLongVerMetrics = json_obj_getnum_fallback(table, "numOfLongVerMetrics", 0);
+		loggedStep("vhea") {
+			vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);
+			vhea->descent = json_obj_getnum_fallback(table, "descent", 0);
+			vhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);
+			vhea->advanceHeightMax = json_obj_getnum_fallback(table, "advanceHeightMax", 0);
+			vhea->minTop = json_obj_getnum_fallback(table, "minTop", 0);
+			vhea->minBottom = json_obj_getnum_fallback(table, "minBottom", 0);
+			vhea->yMaxExtent = json_obj_getnum_fallback(table, "yMaxExtent", 0);
+			vhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
+			vhea->caretSlopeRun = json_obj_getnum_fallback(table, "caretSlopeRun", 0);
+			vhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
+			vhea->numOfLongVerMetrics = json_obj_getnum_fallback(table, "numOfLongVerMetrics", 0);
+		}
 	}
 	return vhea;
 }

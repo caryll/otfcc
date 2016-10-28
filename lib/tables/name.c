@@ -13,7 +13,7 @@ static bool shouldDecodeAsBytes(const name_record *record) {
 	return record->platformID == 1 && record->encodingID == 0 && record->languageID == 0; // Mac Roman English - I hope
 }
 
-table_name *table_read_name(const caryll_Packet packet) {
+table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('name', table) {
 		table_name *name = NULL;
 		font_file_pointer data = table.data;
@@ -55,7 +55,7 @@ table_name *table_read_name(const caryll_Packet packet) {
 		}
 		return name;
 	TABLE_NAME_CORRUPTED:
-		fprintf(stderr, "table 'name' corrupted.\n");
+		logWarning("table 'name' corrupted.\n");
 		if (name) { free(name), name = NULL; }
 	}
 	return NULL;
@@ -72,20 +72,21 @@ void table_delete_name(table_name *table) {
 
 void table_dump_name(const table_name *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping name.\n");
-
-	json_value *name = json_array_new(table->count);
-	for (uint16_t j = 0; j < table->count; j++) {
-		name_record *r = table->records[j];
-		json_value *record = json_object_new(5);
-		json_object_push(record, "platformID", json_integer_new(r->platformID));
-		json_object_push(record, "encodingID", json_integer_new(r->encodingID));
-		json_object_push(record, "languageID", json_integer_new(r->languageID));
-		json_object_push(record, "nameID", json_integer_new(r->nameID));
-		json_object_push(record, "nameString", json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
-		json_array_push(name, record);
+	loggedStep("name") {
+		json_value *name = json_array_new(table->count);
+		for (uint16_t j = 0; j < table->count; j++) {
+			name_record *r = table->records[j];
+			json_value *record = json_object_new(5);
+			json_object_push(record, "platformID", json_integer_new(r->platformID));
+			json_object_push(record, "encodingID", json_integer_new(r->encodingID));
+			json_object_push(record, "languageID", json_integer_new(r->languageID));
+			json_object_push(record, "nameID", json_integer_new(r->nameID));
+			json_object_push(record, "nameString",
+			                 json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
+			json_array_push(name, record);
+		}
+		json_object_push(root, "name", name);
 	}
-	json_object_push(root, "name", name);
 }
 static int name_record_sort(const void *_a, const void *_b) {
 	const name_record **a = (const name_record **)_a;
@@ -99,54 +100,55 @@ table_name *table_parse_name(const json_value *root, const otfcc_Options *option
 	table_name *name = calloc(1, sizeof(table_name));
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
-		if (options->verbose) fprintf(stderr, "Parsing name.\n");
-		int validCount = 0;
-		for (uint32_t j = 0; j < table->u.array.length; j++) {
-			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
-				json_value *record = table->u.array.values[j];
-				if (!json_obj_get_type(record, "platformID", json_integer))
-					fprintf(stderr, "Missing or invalid platformID for name entry %d\n", j);
-				if (!json_obj_get_type(record, "encodingID", json_integer))
-					fprintf(stderr, "Missing or invalid encodingID for name entry %d\n", j);
-				if (!json_obj_get_type(record, "languageID", json_integer))
-					fprintf(stderr, "Missing or invalid languageID for name entry %d\n", j);
-				if (!json_obj_get_type(record, "nameID", json_integer))
-					fprintf(stderr, "Missing or invalid nameID for name entry %d\n", j);
-				if (!json_obj_get_type(record, "nameString", json_string))
-					fprintf(stderr, "Missing or invalid nameString for name entry %d\n", j);
-				if (json_obj_get_type(record, "platformID", json_integer) &&
-				    json_obj_get_type(record, "encodingID", json_integer) &&
-				    json_obj_get_type(record, "languageID", json_integer) &&
-				    json_obj_get_type(record, "nameID", json_integer) &&
-				    json_obj_get_type(record, "nameString", json_string)) {
-					validCount += 1;
+		loggedStep("name") {
+			int validCount = 0;
+			for (uint32_t j = 0; j < table->u.array.length; j++) {
+				if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
+					json_value *record = table->u.array.values[j];
+					if (!json_obj_get_type(record, "platformID", json_integer))
+						logWarning("Missing or invalid platformID for name entry %d\n", j);
+					if (!json_obj_get_type(record, "encodingID", json_integer))
+						logWarning("Missing or invalid encodingID for name entry %d\n", j);
+					if (!json_obj_get_type(record, "languageID", json_integer))
+						logWarning("Missing or invalid languageID for name entry %d\n", j);
+					if (!json_obj_get_type(record, "nameID", json_integer))
+						logWarning("Missing or invalid nameID for name entry %d\n", j);
+					if (!json_obj_get_type(record, "nameString", json_string))
+						logWarning("Missing or invalid nameString for name entry %d\n", j);
+					if (json_obj_get_type(record, "platformID", json_integer) &&
+					    json_obj_get_type(record, "encodingID", json_integer) &&
+					    json_obj_get_type(record, "languageID", json_integer) &&
+					    json_obj_get_type(record, "nameID", json_integer) &&
+					    json_obj_get_type(record, "nameString", json_string)) {
+						validCount += 1;
+					}
 				}
 			}
-		}
-		name->count = validCount;
-		NEW_N(name->records, validCount);
-		int jj = 0;
-		for (uint32_t j = 0; j < table->u.array.length; j++) {
-			if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
-				json_value *record = table->u.array.values[j];
-				if (json_obj_get_type(record, "platformID", json_integer) &&
-				    json_obj_get_type(record, "encodingID", json_integer) &&
-				    json_obj_get_type(record, "languageID", json_integer) &&
-				    json_obj_get_type(record, "nameID", json_integer) &&
-				    json_obj_get_type(record, "nameString", json_string)) {
-					NEW(name->records[jj]);
-					name->records[jj]->platformID = json_obj_getint(record, "platformID");
-					name->records[jj]->encodingID = json_obj_getint(record, "encodingID");
-					name->records[jj]->languageID = json_obj_getint(record, "languageID");
-					name->records[jj]->nameID = json_obj_getint(record, "nameID");
+			name->count = validCount;
+			NEW_N(name->records, validCount);
+			int jj = 0;
+			for (uint32_t j = 0; j < table->u.array.length; j++) {
+				if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
+					json_value *record = table->u.array.values[j];
+					if (json_obj_get_type(record, "platformID", json_integer) &&
+					    json_obj_get_type(record, "encodingID", json_integer) &&
+					    json_obj_get_type(record, "languageID", json_integer) &&
+					    json_obj_get_type(record, "nameID", json_integer) &&
+					    json_obj_get_type(record, "nameString", json_string)) {
+						NEW(name->records[jj]);
+						name->records[jj]->platformID = json_obj_getint(record, "platformID");
+						name->records[jj]->encodingID = json_obj_getint(record, "encodingID");
+						name->records[jj]->languageID = json_obj_getint(record, "languageID");
+						name->records[jj]->nameID = json_obj_getint(record, "nameID");
 
-					json_value *str = json_obj_get_type(record, "nameString", json_string);
-					name->records[jj]->nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
-					jj += 1;
+						json_value *str = json_obj_get_type(record, "nameString", json_string);
+						name->records[jj]->nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
+						jj += 1;
+					}
 				}
 			}
+			qsort(name->records, validCount, sizeof(name_record *), name_record_sort);
 		}
-		qsort(name->records, validCount, sizeof(name_record *), name_record_sort);
 	}
 	return name;
 }

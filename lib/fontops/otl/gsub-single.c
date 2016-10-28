@@ -10,10 +10,11 @@ typedef struct {
 static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
 	return a->fromid - b->fromid;
 }
-bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                             const otfcc_Options *options) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
-	fontop_consolidateCoverage(font, subtable->from, lookupName);
-	fontop_consolidateCoverage(font, subtable->to, lookupName);
+	fontop_consolidateCoverage(font, subtable->from, options);
+	fontop_consolidateCoverage(font, subtable->to, options);
 	glyphid_t len = subtable->to->numGlyphs;
 	if (subtable->from->numGlyphs < subtable->to->numGlyphs) { len = subtable->from->numGlyphs; }
 	gsub_single_map_hash *h = NULL;
@@ -23,9 +24,8 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 			int fromid = subtable->from->glyphs[k].index;
 			HASH_FIND_INT(h, &fromid, s);
 			if (s) {
-				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
-				                "single substitution /%s.\n",
-				        subtable->from->glyphs[k].name);
+				logWarning("[Consolidate] Double-mapping a glyph in a single substitution /%s.\n",
+				           subtable->from->glyphs[k].name);
 			} else {
 				NEW(s);
 				s->fromid = subtable->from->glyphs[k].index;
@@ -38,9 +38,7 @@ bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 	}
 	HASH_SORT(h, by_from_id);
 	if (HASH_COUNT(h) != subtable->from->numGlyphs || HASH_COUNT(h) != subtable->to->numGlyphs) {
-		fprintf(stderr, "[Consolidate] In single subsitution lookup %s, some "
-		                "mappings are ignored.\n",
-		        lookupName);
+		logWarning("[Consolidate] In this lookup, some mappings are ignored.\n");
 	}
 	subtable->from->numGlyphs = HASH_COUNT(h);
 	subtable->to->numGlyphs = HASH_COUNT(h);

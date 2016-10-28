@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/hdmx.h"
 
-table_hdmx *table_read_hdmx(caryll_Packet packet, table_maxp *maxp) {
+table_hdmx *table_read_hdmx(caryll_Packet packet, const otfcc_Options *options, table_maxp *maxp) {
 	FOR_TABLE('hdmx', table) {
 		font_file_pointer data = table.data;
 

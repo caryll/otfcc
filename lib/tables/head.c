@@ -8,13 +8,13 @@ table_head *table_new_head() {
 	return head;
 }
 
-table_head *table_read_head(const caryll_Packet packet) {
+table_head *table_read_head(const caryll_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('head', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 
 		if (length < 54) {
-			fprintf(stderr, "table 'head' corrupted.\n");
+			logWarning("table 'head' corrupted.\n");
 		} else {
 			table_head *head = (table_head *)malloc(sizeof(table_head) * 1);
 			head->version = read_32s(data);
@@ -59,46 +59,48 @@ static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline",
 
 void table_dump_head(const table_head *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping head.\n");
-	json_value *head = json_object_new(15);
-	json_object_push(head, "version", json_double_new(caryll_from_fixed(table->version)));
-	json_object_push(head, "fontRevison", json_double_new(caryll_from_fixed(table->fontRevison)));
-	json_object_push(head, "flags", caryll_dump_flags(table->flags, headFlagsLabels));
-	json_object_push(head, "unitsPerEm", json_integer_new(table->unitsPerEm));
-	json_object_push(head, "created", json_integer_new(table->created));
-	json_object_push(head, "modified", json_integer_new(table->modified));
-	json_object_push(head, "xMin", json_integer_new(table->xMin));
-	json_object_push(head, "xMax", json_integer_new(table->xMax));
-	json_object_push(head, "yMin", json_integer_new(table->yMin));
-	json_object_push(head, "yMax", json_integer_new(table->yMax));
-	json_object_push(head, "macStyle", caryll_dump_flags(table->macStyle, macStyleLabels));
-	json_object_push(head, "lowestRecPPEM", json_integer_new(table->lowestRecPPEM));
-	json_object_push(head, "fontDirectoryHint", json_integer_new(table->fontDirectoryHint));
-	json_object_push(head, "indexToLocFormat", json_integer_new(table->indexToLocFormat));
-	json_object_push(head, "glyphDataFormat", json_integer_new(table->glyphDataFormat));
-	json_object_push(root, "head", head);
+	loggedStep("head") {
+		json_value *head = json_object_new(15);
+		json_object_push(head, "version", json_double_new(caryll_from_fixed(table->version)));
+		json_object_push(head, "fontRevison", json_double_new(caryll_from_fixed(table->fontRevison)));
+		json_object_push(head, "flags", caryll_dump_flags(table->flags, headFlagsLabels));
+		json_object_push(head, "unitsPerEm", json_integer_new(table->unitsPerEm));
+		json_object_push(head, "created", json_integer_new(table->created));
+		json_object_push(head, "modified", json_integer_new(table->modified));
+		json_object_push(head, "xMin", json_integer_new(table->xMin));
+		json_object_push(head, "xMax", json_integer_new(table->xMax));
+		json_object_push(head, "yMin", json_integer_new(table->yMin));
+		json_object_push(head, "yMax", json_integer_new(table->yMax));
+		json_object_push(head, "macStyle", caryll_dump_flags(table->macStyle, macStyleLabels));
+		json_object_push(head, "lowestRecPPEM", json_integer_new(table->lowestRecPPEM));
+		json_object_push(head, "fontDirectoryHint", json_integer_new(table->fontDirectoryHint));
+		json_object_push(head, "indexToLocFormat", json_integer_new(table->indexToLocFormat));
+		json_object_push(head, "glyphDataFormat", json_integer_new(table->glyphDataFormat));
+		json_object_push(root, "head", head);
+	}
 }
 
 table_head *table_parse_head(const json_value *root, const otfcc_Options *options) {
 	table_head *head = table_new_head();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing head.\n");
-		head->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
-		head->fontRevison = caryll_to_fixed(json_obj_getnum_fallback(table, "fontRevison", 0));
-		head->flags = caryll_parse_flags(json_obj_get(table, "flags"), headFlagsLabels);
-		head->unitsPerEm = json_obj_getnum_fallback(table, "unitsPerEm", 0);
-		head->created = json_obj_getnum_fallback(table, "created", 0);
-		head->modified = json_obj_getnum_fallback(table, "modified", 0);
-		head->xMin = json_obj_getnum_fallback(table, "xMin", 0);
-		head->xMax = json_obj_getnum_fallback(table, "xMax", 0);
-		head->yMin = json_obj_getnum_fallback(table, "yMin", 0);
-		head->yMax = json_obj_getnum_fallback(table, "yMax", 0);
-		head->macStyle = caryll_parse_flags(json_obj_get(table, "macStyle"), macStyleLabels);
-		head->lowestRecPPEM = json_obj_getnum_fallback(table, "lowestRecPPEM", 0);
-		head->fontDirectoryHint = json_obj_getnum_fallback(table, "fontDirectoryHint", 0);
-		head->indexToLocFormat = json_obj_getnum_fallback(table, "indexToLocFormat", 0);
-		head->glyphDataFormat = json_obj_getnum_fallback(table, "glyphDataFormat", 0);
+		loggedStep("head") {
+			head->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
+			head->fontRevison = caryll_to_fixed(json_obj_getnum_fallback(table, "fontRevison", 0));
+			head->flags = caryll_parse_flags(json_obj_get(table, "flags"), headFlagsLabels);
+			head->unitsPerEm = json_obj_getnum_fallback(table, "unitsPerEm", 0);
+			head->created = json_obj_getnum_fallback(table, "created", 0);
+			head->modified = json_obj_getnum_fallback(table, "modified", 0);
+			head->xMin = json_obj_getnum_fallback(table, "xMin", 0);
+			head->xMax = json_obj_getnum_fallback(table, "xMax", 0);
+			head->yMin = json_obj_getnum_fallback(table, "yMin", 0);
+			head->yMax = json_obj_getnum_fallback(table, "yMax", 0);
+			head->macStyle = caryll_parse_flags(json_obj_get(table, "macStyle"), macStyleLabels);
+			head->lowestRecPPEM = json_obj_getnum_fallback(table, "lowestRecPPEM", 0);
+			head->fontDirectoryHint = json_obj_getnum_fallback(table, "fontDirectoryHint", 0);
+			head->indexToLocFormat = json_obj_getnum_fallback(table, "indexToLocFormat", 0);
+			head->glyphDataFormat = json_obj_getnum_fallback(table, "glyphDataFormat", 0);
+		}
 	}
 	return head;
 }

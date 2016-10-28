@@ -12,7 +12,8 @@ void otl_delete_gsub_ligature(otl_Subtable *_subtable) {
 	free(subtable);
 }
 
-otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                     const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
@@ -85,7 +86,7 @@ json_value *otl_gsub_dump_ligature(const otl_Subtable *_subtable) {
 	return ret;
 }
 
-otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_Options *options) {
 	otl_Subtable *_st;
 	if (json_obj_get_type(_subtable, "substitutions", json_array)) {
 		_subtable = json_obj_get_type(_subtable, "substitutions", json_array);

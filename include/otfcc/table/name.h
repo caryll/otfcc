@@ -20,7 +20,7 @@ typedef struct {
 
 void table_delete_name(table_name *table);
 
-table_name *table_read_name(const caryll_Packet packet);
+table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *options);
 void table_dump_name(const table_name *table, json_value *root, const otfcc_Options *options);
 table_name *table_parse_name(const json_value *root, const otfcc_Options *options);
 caryll_Buffer *table_build_name(const table_name *name, const otfcc_Options *options);

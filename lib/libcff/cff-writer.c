@@ -34,7 +34,6 @@ void cff_mergeCS2Int(caryll_Buffer *blob, int32_t val) {
 		if (val >= -32768 && val <= 32767) {
 			bufnwrite8(blob, 3, 28, (uint8_t)(val >> 8), (uint8_t)((val << 8) >> 8));
 		} else {
-			fprintf(stderr, "Error: Illegal Number (%d) in Type2 CharString.\n", val);
 			cff_mergeCS2Int(blob, 0);
 		}
 	}

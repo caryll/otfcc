@@ -22,7 +22,7 @@ typedef struct {
 } table_hhea;
 
 table_hhea *table_new_hhea();
-table_hhea *table_read_hhea(const caryll_Packet packet);
+table_hhea *table_read_hhea(const caryll_Packet packet, const otfcc_Options *options);
 void table_dump_hhea(const table_hhea *table, json_value *root, const otfcc_Options *options);
 table_hhea *table_parse_hhea(const json_value *root, const otfcc_Options *options);
 caryll_Buffer *table_build_hhea(const table_hhea *hhea, const otfcc_Options *options);

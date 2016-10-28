@@ -24,7 +24,7 @@ typedef struct {
 } table_GDEF;
 
 void table_delete_GDEF(MOVE table_GDEF *gdef);
-table_GDEF *table_read_GDEF(const caryll_Packet packet);
+table_GDEF *table_read_GDEF(const caryll_Packet packet, const otfcc_Options *options);
 void table_dump_GDEF(const table_GDEF *gdef, json_value *root, const otfcc_Options *options);
 table_GDEF *table_parse_GDEF(const json_value *root, const otfcc_Options *options);
 caryll_Buffer *table_build_GDEF(const table_GDEF *gdef, const otfcc_Options *options);

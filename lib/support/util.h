@@ -36,6 +36,7 @@
 #define INLINE inline /* use standard inline */
 #endif
 
+
 #define FOR_TABLE(name, table)                                                                                         \
 	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
 	     keep = !keep, count++)                                                                                        \

@@ -25,7 +25,7 @@ typedef struct {
 } table_head;
 
 table_head *table_new_head();
-table_head *table_read_head(const caryll_Packet packet);
+table_head *table_read_head(const caryll_Packet packet, const otfcc_Options *options);
 void table_dump_head(const table_head *table, json_value *root, const otfcc_Options *options);
 table_head *table_parse_head(const json_value *root, const otfcc_Options *options);
 caryll_Buffer *table_build_head(const table_head *head, const otfcc_Options *options);

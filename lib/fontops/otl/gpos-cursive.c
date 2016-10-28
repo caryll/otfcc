@@ -10,9 +10,10 @@ typedef struct {
 static int gpos_cursive_by_from_id(gpos_cursive_hash *a, gpos_cursive_hash *b) {
 	return a->fromid - b->fromid;
 }
-bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                              const otfcc_Options *options) {
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
-	fontop_consolidateCoverage(font, subtable->coverage, lookupName);
+	fontop_consolidateCoverage(font, subtable->coverage, options);
 	gpos_cursive_hash *h = NULL;
 	for (glyphid_t k = 0; k < subtable->coverage->numGlyphs; k++) {
 		if (subtable->coverage->glyphs[k].name) {
@@ -20,9 +21,9 @@ bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable 
 			int fromid = subtable->coverage->glyphs[k].index;
 			HASH_FIND_INT(h, &fromid, s);
 			if (s) {
-				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
-				                "single substitution /%s.\n",
-				        subtable->coverage->glyphs[k].name);
+				logWarning("[Consolidate] Double-mapping a glyph in a "
+				           "single substitution /%s.\n",
+				           subtable->coverage->glyphs[k].name);
 			} else {
 				NEW(s);
 				s->fromid = subtable->coverage->glyphs[k].index;

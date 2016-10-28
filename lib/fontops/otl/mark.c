@@ -28,7 +28,7 @@ static int lig_by_gid(lig_hash *a, lig_hash *b) {
 	return a->gid - b->gid;
 }
 
-static void consolidateMarkArray(caryll_Font *font, table_OTL *table, sds lookupName, otl_Coverage *marks,
+static void consolidateMarkArray(caryll_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *marks,
                                  otl_MarkArray *markArray, glyphclass_t classCount) {
 	mark_hash *hm = NULL;
 	for (glyphid_t k = 0; k < marks->numGlyphs; k++) {
@@ -43,10 +43,8 @@ static void consolidateMarkArray(caryll_Font *font, table_OTL *table, sds lookup
 				s->markrec = markArray->records[k];
 				HASH_ADD_INT(hm, gid, s);
 			} else {
-				fprintf(stderr, "[Consolidate] Ignored invalid or "
-				                "double-mapping mark definition for /%s in "
-				                "lookup %s.\n",
-				        marks->glyphs[k].name, lookupName);
+				logWarning("[Consolidate] Ignored invalid or double-mapping mark definition for /%s.",
+				           marks->glyphs[k].name);
 			}
 		}
 	}
@@ -64,7 +62,7 @@ static void consolidateMarkArray(caryll_Font *font, table_OTL *table, sds lookup
 	}
 }
 
-static void consolidateBaseArray(caryll_Font *font, table_OTL *table, sds lookupName, otl_Coverage *bases,
+static void consolidateBaseArray(caryll_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *bases,
                                  otl_Anchor **baseArray) {
 	// consolidate bases
 	base_hash *hm = NULL;
@@ -81,9 +79,7 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, sds lookup
 				HASH_ADD_INT(hm, gid, s);
 			} else {
 				free(baseArray[k]);
-				fprintf(stderr, "[Consolidate] Ignored anchor "
-				                "double-definition for /%s in lookup %s.\n",
-				        bases->glyphs[k].name, lookupName);
+				logWarning("[Consolidate] Ignored anchor  double-definition for /%s.", bases->glyphs[k].name);
 			}
 		} else {
 			free(baseArray[k]);
@@ -102,7 +98,7 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, sds lookup
 	}
 }
 
-static void consolidateLigArray(caryll_Font *font, table_OTL *table, sds lookupName, otl_Coverage *bases,
+static void consolidateLigArray(caryll_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *bases,
                                 otl_MarkToLigatureBase **ligArray) {
 	lig_hash *hm = NULL;
 	for (glyphid_t k = 0; k < bases->numGlyphs; k++) {
@@ -118,9 +114,7 @@ static void consolidateLigArray(caryll_Font *font, table_OTL *table, sds lookupN
 				HASH_ADD_INT(hm, gid, s);
 			} else {
 				delete_lig_attachment(ligArray[k]);
-				fprintf(stderr, "[Consolidate] Ignored anchor "
-				                "double-definition for /%s in lookup %s.\n",
-				        bases->glyphs[k].name, lookupName);
+				logWarning("[Consolidate] Ignored anchor double-definition for /%s.", bases->glyphs[k].name);
 			}
 		} else {
 			delete_lig_attachment(ligArray[k]);
@@ -139,20 +133,22 @@ static void consolidateLigArray(caryll_Font *font, table_OTL *table, sds lookupN
 	}
 }
 
-bool consolidate_mark_to_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_mark_to_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                                const otfcc_Options *options) {
 	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
-	fontop_consolidateCoverage(font, subtable->marks, lookupName);
-	fontop_consolidateCoverage(font, subtable->bases, lookupName);
-	consolidateMarkArray(font, table, lookupName, subtable->marks, subtable->markArray, subtable->classCount);
-	consolidateBaseArray(font, table, lookupName, subtable->bases, subtable->baseArray);
+	fontop_consolidateCoverage(font, subtable->marks, options);
+	fontop_consolidateCoverage(font, subtable->bases, options);
+	consolidateMarkArray(font, table, options, subtable->marks, subtable->markArray, subtable->classCount);
+	consolidateBaseArray(font, table, options, subtable->bases, subtable->baseArray);
 	return false;
 }
 
-bool consolidate_mark_to_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_mark_to_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                                  const otfcc_Options *options) {
 	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
-	fontop_consolidateCoverage(font, subtable->marks, lookupName);
-	fontop_consolidateCoverage(font, subtable->bases, lookupName);
-	consolidateMarkArray(font, table, lookupName, subtable->marks, subtable->markArray, subtable->classCount);
-	consolidateLigArray(font, table, lookupName, subtable->bases, subtable->ligArray);
+	fontop_consolidateCoverage(font, subtable->marks, options);
+	fontop_consolidateCoverage(font, subtable->bases, options);
+	consolidateMarkArray(font, table, options, subtable->marks, subtable->markArray, subtable->classCount);
+	consolidateLigArray(font, table, options, subtable->bases, subtable->ligArray);
 	return false;
 }

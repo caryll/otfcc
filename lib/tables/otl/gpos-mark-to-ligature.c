@@ -29,7 +29,8 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                           const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
@@ -128,7 +129,8 @@ typedef struct {
 	glyphclass_t classID;
 	UT_hash_handle hh;
 } classname_hash;
-static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtable, classname_hash **h) {
+static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtable, classname_hash **h,
+                       const otfcc_Options *options) {
 	NEW(subtable->marks);
 	subtable->marks->numGlyphs = _marks->u.object.length;
 	NEW_N(subtable->marks->glyphs, subtable->marks->numGlyphs);
@@ -164,13 +166,15 @@ static void parseMarks(json_value *_marks, subtable_gpos_markToLigature *subtabl
 		subtable->markArray->records[j].anchor.y = json_obj_getnum(anchorRecord, "y");
 	}
 }
-static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtable, classname_hash **h) {
+static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtable, classname_hash **h,
+                       const otfcc_Options *options) {
 	glyphclass_t classCount = HASH_COUNT(*h);
 	NEW(subtable->bases);
 	subtable->bases->numGlyphs = _bases->u.object.length;
 	NEW_N(subtable->bases->glyphs, subtable->bases->numGlyphs);
 	NEW_N(subtable->ligArray, _bases->u.object.length);
 	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
+		char *gname = _bases->u.object.values[j].name;
 		subtable->bases->glyphs[j] =
 		    handle_fromName(sdsnewlen(_bases->u.object.values[j].name, _bases->u.object.values[j].name_length));
 		NEW(subtable->ligArray[j]);
@@ -195,7 +199,11 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 				                          _componentRecord->u.object.values[m].name_length);
 				classname_hash *s;
 				HASH_FIND_STR(*h, className, s);
-				if (!s) goto NEXT;
+				if (!s) {
+					logWarning("[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n",
+					           className, gname);
+					goto NEXT;
+				}
 				subtable->ligArray[j]->anchors[k][s->classID] =
 				    otl_parse_anchor(_componentRecord->u.object.values[m].value);
 
@@ -205,16 +213,16 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 		}
 	}
 }
-otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable) {
+otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
 	otl_Subtable *st;
 	NEW(st);
 	classname_hash *h = NULL;
-	parseMarks(_marks, &(st->gpos_markToLigature), &h);
+	parseMarks(_marks, &(st->gpos_markToLigature), &h, options);
 	st->gpos_markToLigature.classCount = HASH_COUNT(h);
-	parseBases(_bases, &(st->gpos_markToLigature), &h);
+	parseBases(_bases, &(st->gpos_markToLigature), &h, options);
 
 	classname_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {

@@ -6,13 +6,13 @@ void table_delete_VORG(table_VORG *vorg) {
 	free(vorg);
 }
 
-table_VORG *table_read_VORG(const caryll_Packet packet) {
+table_VORG *table_read_VORG(const caryll_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('VORG', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		if (length < 8) return NULL;
+		if (length < 8) goto VORG_CORRUPTED;
 		uint16_t numVertOriginYMetrics = read_16u(data + 6);
-		if (length < 8 + 4 * numVertOriginYMetrics) return NULL;
+		if (length < 8 + 4 * numVertOriginYMetrics) goto VORG_CORRUPTED;
 
 		table_VORG *vorg;
 		NEW(vorg);
@@ -24,6 +24,8 @@ table_VORG *table_read_VORG(const caryll_Packet packet) {
 			vorg->entries[j].verticalOrigin = read_16s(data + 8 + 4 * j + 2);
 		}
 		return vorg;
+	VORG_CORRUPTED:
+		logWarning("Table 'VORG' corrupted.");
 	}
 	return NULL;
 }

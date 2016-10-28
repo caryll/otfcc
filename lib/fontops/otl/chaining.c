@@ -1,14 +1,14 @@
 #include "chaining.h"
 
-bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	if (subtable->type) {
-		fprintf(stderr, "[Consolidate] Ignoring non-canonical chaining subtable in %s. Reject.\n", lookupName);
+		logWarning("[Consolidate] Ignoring non-canonical chaining subtable.");
 		return false;
 	}
 	otl_ChainingRule *rule = &(subtable->rule);
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
-		fontop_consolidateCoverage(font, rule->match[j], lookupName);
+		fontop_consolidateCoverage(font, rule->match[j], options);
 		fontop_shrinkCoverage(rule->match[j], true);
 	}
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
@@ -23,8 +23,8 @@ bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_su
 				handle_consolidateTo(h, k, table->lookups[k]->name);
 			}
 			if (!foundLookup && rule->apply[j].lookup.name) {
-				fprintf(stderr, "[Consolidate] Quoting an invalid lookup %s in lookup %s.\n",
-				        rule->apply[j].lookup.name, lookupName);
+				logWarning("[Consolidate] Quoting an invalid lookup %s. This lookup application is ignored.",
+				           rule->apply[j].lookup.name);
 				handle_dispose(&rule->apply[j].lookup);
 			}
 		} else if (h->state == HANDLE_STATE_INDEX) {

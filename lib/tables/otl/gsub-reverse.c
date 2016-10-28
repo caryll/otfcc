@@ -25,7 +25,8 @@ static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	}
 }
 
-otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                    const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
@@ -87,7 +88,7 @@ json_value *otl_gsub_dump_reverse(const otl_Subtable *_subtable) {
 	return _st;
 }
 
-otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_match = json_obj_get_type(_subtable, "match", json_array);
 	json_value *_to = json_obj_get_type(_subtable, "to", json_array);
 	if (!_match || !_to) return NULL;

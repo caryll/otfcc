@@ -84,7 +84,7 @@ static int by_unicode(cmap_Entry *a, cmap_Entry *b) {
 }
 
 // OTFCC will not support all `cmap` mappings.
-table_cmap *table_read_cmap(const caryll_Packet packet) {
+table_cmap *table_read_cmap(const caryll_Packet packet, const otfcc_Options *options) {
 	// the map is a reference to a hash table
 	table_cmap *map = NULL;
 	FOR_TABLE('cmap', table) {
@@ -109,7 +109,7 @@ table_cmap *table_read_cmap(const caryll_Packet packet) {
 		return map;
 
 	CMAP_CORRUPTED:
-		fprintf(stderr, "table 'cmap' corrupted.\n");
+		logWarning("table 'cmap' corrupted.\n");
 		if (map != NULL) { free(map), map = NULL; }
 	}
 	return NULL;
@@ -128,17 +128,16 @@ void table_delete_cmap(table_cmap *table) {
 
 void table_dump_cmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping cmap.\n");
-
-	json_value *cmap = json_object_new(HASH_COUNT(*table));
-
-	cmap_Entry *item;
-	foreach_hash(item, *table) if (item->glyph.name) {
-		sds key = sdsfromlonglong(item->unicode);
-		json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
-		sdsfree(key);
+	loggedStep("cmap") {
+		json_value *cmap = json_object_new(HASH_COUNT(*table));
+		cmap_Entry *item;
+		foreach_hash(item, *table) if (item->glyph.name) {
+			sds key = sdsfromlonglong(item->unicode);
+			json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
+			sdsfree(key);
+		}
+		json_object_push(root, "cmap", cmap);
 	}
-	json_object_push(root, "cmap", cmap);
 }
 
 table_cmap *table_parse_cmap(const json_value *root, const otfcc_Options *options) {
@@ -146,15 +145,16 @@ table_cmap *table_parse_cmap(const json_value *root, const otfcc_Options *option
 	table_cmap hash = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing cmap.\n");
-		for (uint32_t j = 0; j < table->u.object.length; j++) {
-			sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
-			json_value *item = table->u.object.values[j].value;
-			int32_t unicode = atoi(unicodeStr);
-			sdsfree(unicodeStr);
-			if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
-				sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-				table_encodeCmapByName(&hash, unicode, gname);
+		loggedStep("cmap") {
+			for (uint32_t j = 0; j < table->u.object.length; j++) {
+				sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+				json_value *item = table->u.object.values[j].value;
+				int32_t unicode = atoi(unicodeStr);
+				sdsfree(unicodeStr);
+				if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
+					sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
+					table_encodeCmapByName(&hash, unicode, gname);
+				}
 			}
 		}
 	}

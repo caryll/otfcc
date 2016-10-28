@@ -12,7 +12,8 @@ void otl_delete_gsub_multi(otl_Subtable *_subtable) {
 	free(subtable);
 }
 
-otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                  const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
@@ -54,7 +55,7 @@ json_value *otl_gsub_dump_multi(const otl_Subtable *_subtable) {
 	return st;
 }
 
-otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable) {
+otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Options *options) {
 	otl_Subtable *_st;
 	NEW(_st);
 	subtable_gsub_multi *st = &(_st->gsub_multi);

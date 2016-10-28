@@ -10,9 +10,10 @@ static int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gpos_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_gpos_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                             const otfcc_Options *options) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
-	fontop_consolidateCoverage(font, subtable->coverage, lookupName);
+	fontop_consolidateCoverage(font, subtable->coverage, options);
 	gpos_single_hash *h = NULL;
 	for (glyphid_t k = 0; k < subtable->coverage->numGlyphs; k++) {
 		if (subtable->coverage->glyphs[k].name) {
@@ -20,9 +21,8 @@ bool consolidate_gpos_single(caryll_Font *font, table_OTL *table, otl_Subtable *
 			int fromid = subtable->coverage->glyphs[k].index;
 			HASH_FIND_INT(h, &fromid, s);
 			if (s) {
-				fprintf(stderr, "[Consolidate] Double-mapping a glyph in a "
-				                "single substitution /%s.\n",
-				        subtable->coverage->glyphs[k].name);
+				logWarning("[Consolidate] Detected glyph double-mapping about /%s.\n",
+				           subtable->coverage->glyphs[k].name);
 			} else {
 				NEW(s);
 				s->fromid = subtable->coverage->glyphs[k].index;

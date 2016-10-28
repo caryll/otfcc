@@ -135,8 +135,92 @@ FAIL:
 	DELETE(deleteRule, rule);
 	return NULL;
 }
+static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, const font_file_pointer data,
+                                                uint32_t tableLength, uint32_t offset) {
+	// Contextual Substitution Subtable, Simple.
+	checkLength(offset + 6);
 
-otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	uint16_t covOffset = offset + read_16u(data + offset + 2);
+	otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
+
+	tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
+	if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
+	checkLength(offset + 6 + 2 * chainSubRuleSetCount);
+
+	tableid_t totalRules = 0;
+	for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
+		uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
+		checkLength(srsOffset + 2);
+		totalRules += read_16u(data + srsOffset);
+		checkLength(srsOffset + 2 + 2 * read_16u(data + srsOffset));
+	}
+	subtable->rulesCount = totalRules;
+	NEW_N(subtable->rules, totalRules);
+
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
+		uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
+		tableid_t srsCount = read_16u(data + srsOffset);
+		for (tableid_t k = 0; k < srsCount; k++) {
+			uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
+			subtable->rules[jj] = GeneralReadContextualRule(data, tableLength, srOffset, firstCoverage->glyphs[j].index,
+			                                                true, singleCoverage, NULL);
+			jj += 1;
+		}
+	}
+
+	otl_delete_Coverage(firstCoverage);
+	return subtable;
+FAIL:
+	otl_delete_chaining((otl_Subtable *)subtable);
+	return NULL;
+}
+static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, const font_file_pointer data,
+                                                uint32_t tableLength, uint32_t offset) {
+	// Contextual Substitution Subtable, Class based.
+	checkLength(offset + 8);
+
+	classdefs *cds;
+	NEW(cds);
+	cds->bc = NULL;
+	cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
+	cds->fc = NULL;
+
+	tableid_t chainSubClassSetCnt = read_16u(data + offset + 6);
+	checkLength(offset + 12 + 2 * chainSubClassSetCnt);
+
+	tableid_t totalRules = 0;
+	for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+		uint32_t srcOffset = read_16u(data + offset + 8 + j * 2);
+		if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
+	}
+	subtable->rulesCount = totalRules;
+	NEW_N(subtable->rules, totalRules);
+
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+		uint32_t srcOffset = read_16u(data + offset + 8 + j * 2);
+		if (srcOffset) {
+			tableid_t srsCount = read_16u(data + offset + srcOffset);
+			for (tableid_t k = 0; k < srsCount; k++) {
+				uint32_t srOffset = offset + srcOffset + read_16u(data + offset + srcOffset + 2 + k * 2);
+				subtable->rules[jj] =
+				    GeneralReadContextualRule(data, tableLength, srOffset, j, true, classCoverage, cds);
+				jj += 1;
+			}
+		}
+	}
+
+	if (cds && cds->ic && cds->ic->glyphs) free(cds->ic->glyphs);
+	if (cds && cds->ic && cds->ic->classes) free(cds->ic->classes);
+	if (cds && cds->ic) free(cds->ic);
+	return subtable;
+FAIL:
+	otl_delete_chaining((otl_Subtable *)subtable);
+	return NULL;
+}
+otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                  const otfcc_Options *options) {
 	uint16_t format = 0;
 	otl_Subtable *_subtable;
 	NEW(_subtable);
@@ -150,79 +234,9 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 	checkLength(offset + 2);
 	format = read_16u(data + offset);
 	if (format == 1) {
-		// Contextual Substitution Subtable, Simple.
-		checkLength(offset + 6);
-
-		uint16_t covOffset = offset + read_16u(data + offset + 2);
-		otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
-
-		tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
-		if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
-		checkLength(offset + 6 + 2 * chainSubRuleSetCount);
-
-		tableid_t totalRules = 0;
-		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
-			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
-			checkLength(srsOffset + 2);
-			totalRules += read_16u(data + srsOffset);
-			checkLength(srsOffset + 2 + 2 * read_16u(data + srsOffset));
-		}
-		subtable->rulesCount = totalRules;
-		NEW_N(subtable->rules, totalRules);
-
-		tableid_t jj = 0;
-		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
-			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
-			tableid_t srsCount = read_16u(data + srsOffset);
-			for (tableid_t k = 0; k < srsCount; k++) {
-				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
-				subtable->rules[jj] = GeneralReadContextualRule(
-				    data, tableLength, srOffset, firstCoverage->glyphs[j].index, true, singleCoverage, NULL);
-				jj += 1;
-			}
-		}
-
-		otl_delete_Coverage(firstCoverage);
-		return _subtable;
+		return (otl_Subtable *)readContextualFormat1(subtable, data, tableLength, offset);
 	} else if (format == 2) {
-		// Contextual Substitution Subtable, Class based.
-		checkLength(offset + 8);
-
-		classdefs *cds;
-		NEW(cds);
-		cds->bc = NULL;
-		cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
-		cds->fc = NULL;
-
-		tableid_t chainSubClassSetCnt = read_16u(data + offset + 6);
-		checkLength(offset + 12 + 2 * chainSubClassSetCnt);
-
-		tableid_t totalRules = 0;
-		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint32_t srcOffset = read_16u(data + offset + 8 + j * 2);
-			if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
-		}
-		subtable->rulesCount = totalRules;
-		NEW_N(subtable->rules, totalRules);
-
-		tableid_t jj = 0;
-		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint32_t srcOffset = read_16u(data + offset + 8 + j * 2);
-			if (srcOffset) {
-				tableid_t srsCount = read_16u(data + offset + srcOffset);
-				for (tableid_t k = 0; k < srsCount; k++) {
-					uint32_t srOffset = offset + srcOffset + read_16u(data + offset + srcOffset + 2 + k * 2);
-					subtable->rules[jj] =
-					    GeneralReadContextualRule(data, tableLength, srOffset, j, true, classCoverage, cds);
-					jj += 1;
-				}
-			}
-		}
-
-		if (cds && cds->ic && cds->ic->glyphs) free(cds->ic->glyphs);
-		if (cds && cds->ic && cds->ic->classes) free(cds->ic->classes);
-		if (cds && cds->ic) free(cds->ic);
-		return _subtable;
+		return (otl_Subtable *)readContextualFormat2(subtable, data, tableLength, offset);
 	} else if (format == 3) {
 		// Contextual Substitution Subtable, Coverage based.
 		subtable->rulesCount = 1;
@@ -231,7 +245,7 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 		return _subtable;
 	}
 FAIL:
-	fprintf(stderr, "Unsupported format %d.\n", format);
+	logWarning("Unsupported format %d.\n", format);
 	DELETE(otl_delete_chaining, _subtable);
 	return NULL;
 }
@@ -289,8 +303,94 @@ FAIL:
 	DELETE(deleteRule, rule);
 	return NULL;
 }
+static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const font_file_pointer data,
+                                              uint32_t tableLength, uint32_t offset) {
+	// Contextual Substitution Subtable, Simple.
+	checkLength(offset + 6);
 
-otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+	uint16_t covOffset = offset + read_16u(data + offset + 2);
+	otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
+
+	tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
+	if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
+	checkLength(offset + 6 + 2 * chainSubRuleSetCount);
+
+	tableid_t totalRules = 0;
+	for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
+		uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
+		checkLength(srsOffset + 2);
+		totalRules += read_16u(data + srsOffset);
+		checkLength(srsOffset + 2 + 2 * read_16u(data + srsOffset));
+	}
+	subtable->rulesCount = totalRules;
+	NEW_N(subtable->rules, totalRules);
+
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
+		uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
+		tableid_t srsCount = read_16u(data + srsOffset);
+		for (tableid_t k = 0; k < srsCount; k++) {
+			uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
+			subtable->rules[jj] = GeneralReadChainingRule(data, tableLength, srOffset, firstCoverage->glyphs[j].index,
+			                                              true, singleCoverage, NULL);
+			jj += 1;
+		}
+	}
+
+	otl_delete_Coverage(firstCoverage);
+	return subtable;
+FAIL:
+	otl_delete_chaining((otl_Subtable *)subtable);
+	return NULL;
+}
+static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const font_file_pointer data,
+                                              uint32_t tableLength, uint32_t offset) {
+	// Chaining Contextual Substitution Subtable, Class based.
+	checkLength(offset + 12);
+
+	classdefs *cds;
+	NEW(cds);
+	cds->bc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
+	cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 6));
+	cds->fc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 8));
+
+	tableid_t chainSubClassSetCnt = read_16u(data + offset + 10);
+	checkLength(offset + 12 + 2 * chainSubClassSetCnt);
+
+	tableid_t totalRules = 0;
+	for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+		uint32_t srcOffset = read_16u(data + offset + 12 + j * 2);
+		if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
+	}
+	subtable->rulesCount = totalRules;
+	NEW_N(subtable->rules, totalRules);
+
+	tableid_t jj = 0;
+	for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
+		uint32_t srcOffset = read_16u(data + offset + 12 + j * 2);
+		if (srcOffset) {
+			tableid_t srsCount = read_16u(data + offset + srcOffset);
+			for (tableid_t k = 0; k < srsCount; k++) {
+				uint32_t dsrOffset = read_16u(data + offset + srcOffset + 2 + k * 2);
+				uint32_t srOffset = offset + srcOffset + dsrOffset;
+				subtable->rules[jj] = GeneralReadChainingRule(data, tableLength, srOffset, j, true, classCoverage, cds);
+				jj += 1;
+			}
+		}
+	}
+
+	if (cds) {
+		if (cds->bc) otl_delete_ClassDef(cds->bc);
+		if (cds->ic) otl_delete_ClassDef(cds->ic);
+		if (cds->fc) otl_delete_ClassDef(cds->fc);
+	}
+	return subtable;
+FAIL:
+	otl_delete_chaining((otl_Subtable *)subtable);
+	return NULL;
+}
+otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                const otfcc_Options *options) {
 	uint16_t format = 0;
 	otl_Subtable *_subtable;
 	NEW(_subtable);
@@ -305,82 +405,9 @@ otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLeng
 	checkLength(offset + 2);
 	format = read_16u(data + offset);
 	if (format == 1) {
-		// Contextual Substitution Subtable, Simple.
-		checkLength(offset + 6);
-
-		uint16_t covOffset = offset + read_16u(data + offset + 2);
-		otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
-
-		tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
-		if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
-		checkLength(offset + 6 + 2 * chainSubRuleSetCount);
-
-		tableid_t totalRules = 0;
-		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
-			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
-			checkLength(srsOffset + 2);
-			totalRules += read_16u(data + srsOffset);
-			checkLength(srsOffset + 2 + 2 * read_16u(data + srsOffset));
-		}
-		subtable->rulesCount = totalRules;
-		NEW_N(subtable->rules, totalRules);
-
-		tableid_t jj = 0;
-		for (tableid_t j = 0; j < chainSubRuleSetCount; j++) {
-			uint32_t srsOffset = offset + read_16u(data + offset + 6 + j * 2);
-			tableid_t srsCount = read_16u(data + srsOffset);
-			for (tableid_t k = 0; k < srsCount; k++) {
-				uint32_t srOffset = srsOffset + read_16u(data + srsOffset + 2 + k * 2);
-				subtable->rules[jj] = GeneralReadChainingRule(
-				    data, tableLength, srOffset, firstCoverage->glyphs[j].index, true, singleCoverage, NULL);
-				jj += 1;
-			}
-		}
-
-		otl_delete_Coverage(firstCoverage);
-		return _subtable;
+		return (otl_Subtable *)readChainingFormat1(subtable, data, tableLength, offset);
 	} else if (format == 2) {
-		// Chaining Contextual Substitution Subtable, Class based.
-		checkLength(offset + 12);
-
-		classdefs *cds;
-		NEW(cds);
-		cds->bc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
-		cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 6));
-		cds->fc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 8));
-
-		tableid_t chainSubClassSetCnt = read_16u(data + offset + 10);
-		checkLength(offset + 12 + 2 * chainSubClassSetCnt);
-
-		tableid_t totalRules = 0;
-		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint32_t srcOffset = read_16u(data + offset + 12 + j * 2);
-			if (srcOffset) { totalRules += read_16u(data + offset + srcOffset); }
-		}
-		subtable->rulesCount = totalRules;
-		NEW_N(subtable->rules, totalRules);
-
-		tableid_t jj = 0;
-		for (tableid_t j = 0; j < chainSubClassSetCnt; j++) {
-			uint32_t srcOffset = read_16u(data + offset + 12 + j * 2);
-			if (srcOffset) {
-				tableid_t srsCount = read_16u(data + offset + srcOffset);
-				for (tableid_t k = 0; k < srsCount; k++) {
-					uint32_t dsrOffset = read_16u(data + offset + srcOffset + 2 + k * 2);
-					uint32_t srOffset = offset + srcOffset + dsrOffset;
-					subtable->rules[jj] =
-					    GeneralReadChainingRule(data, tableLength, srOffset, j, true, classCoverage, cds);
-					jj += 1;
-				}
-			}
-		}
-
-		if (cds) {
-			if (cds->bc) otl_delete_ClassDef(cds->bc);
-			if (cds->ic) otl_delete_ClassDef(cds->ic);
-			if (cds->fc) otl_delete_ClassDef(cds->fc);
-		}
-		return _subtable;
+		return (otl_Subtable *)readChainingFormat2(subtable, data, tableLength, offset);
 	} else if (format == 3) {
 		// Chaining Contextual Substitution Subtable, Coverage based.
 		// This table has exactly one rule within it, and i love it.
@@ -390,7 +417,7 @@ otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLeng
 		return _subtable;
 	}
 FAIL:
-	fprintf(stderr, "Unsupported format %d.\n", format);
+	logWarning("Unsupported format %d.\n", format);
 	DELETE(otl_delete_chaining, _subtable);
 	return NULL;
 }
@@ -421,7 +448,7 @@ json_value *otl_dump_chaining(const otl_Subtable *_subtable) {
 	return _st;
 }
 
-otl_Subtable *otl_parse_chaining(const json_value *_subtable) {
+otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_match = json_obj_get_type(_subtable, "match", json_array);
 	json_value *_apply = json_obj_get_type(_subtable, "apply", json_array);
 	if (!_match || !_apply) return NULL;

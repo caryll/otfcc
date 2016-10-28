@@ -6,7 +6,10 @@ otfcc_Options *options_new() {
 	return options;
 }
 void options_delete(otfcc_Options *options) {
-	if (options) { free(options->glyph_name_prefix); }
+	if (options) {
+		free(options->glyph_name_prefix);
+		if (options->logger) options->logger->dispose(options->logger);
+	}
 	free(options);
 }
 void options_optimizeTo(otfcc_Options *options, uint8_t level) {

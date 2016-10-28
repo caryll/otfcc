@@ -1,10 +1,11 @@
 #include "gsub-ligature.h"
 
-bool consolidate_gsub_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, sds lookupName) {
+bool consolidate_gsub_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                               const otfcc_Options *options) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
-	fontop_consolidateCoverage(font, subtable->to, lookupName);
+	fontop_consolidateCoverage(font, subtable->to, options);
 	for (glyphid_t j = 0; j < subtable->to->numGlyphs; j++) {
-		fontop_consolidateCoverage(font, subtable->from[j], lookupName);
+		fontop_consolidateCoverage(font, subtable->from[j], options);
 		fontop_shrinkCoverage(subtable->from[j], false);
 	}
 	glyphid_t jj = 0;
@@ -18,5 +19,5 @@ bool consolidate_gsub_ligature(caryll_Font *font, table_OTL *table, otl_Subtable
 		}
 	}
 	subtable->to->numGlyphs = jj;
-	return (subtable->to->numGlyphs==0);
+	return (subtable->to->numGlyphs == 0);
 }

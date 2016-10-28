@@ -425,7 +425,7 @@ static cff_IOutlineBuilder drawPass = {.setWidth = callback_draw_setwidth,
                                        .setMask = callback_draw_setmask,
                                        .getrand = callback_draw_getrand};
 
-static void buildOutline(glyphid_t i, cff_extract_context *context) {
+static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_Options *options) {
 	cff_File *f = context->cffFile;
 	glyf_Glyph *g = table_new_glyf_glyph();
 	context->glyphs->glyphs[i] = g;
@@ -461,14 +461,16 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 
 	// PASS 1 : Count contours
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass,
+	                 options);
 	NEW_N(g->contours, g->numberOfContours);
 
 	// PASS 2 : Count points
 	stack.index = 0;
 	stack.stem = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass,
+	                 options);
 	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
 		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
 	}
@@ -483,7 +485,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass, options);
 	g->numberOfContourMasks = bc.definedContourMasks;
 	g->numberOfHintMasks = bc.definedHintMasks;
 
@@ -592,7 +594,8 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 	}
 }
 
-table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const table_head *head) {
+table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc_Options *options,
+                                         const table_head *head) {
 	table_CFFAndGlyf ret;
 	ret.meta = NULL;
 	ret.glyphs = NULL;
@@ -605,7 +608,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const table
 	FOR_TABLE('CFF ', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		cff_File *cffFile = cff_openStream(data, length);
+		cff_File *cffFile = cff_openStream(data, length, options);
 		context.cffFile = cffFile;
 		context.meta = table_new_CFF();
 
@@ -643,7 +646,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const table
 		glyphs->numberGlyphs = cffFile->char_strings.count;
 		NEW_N(glyphs->glyphs, glyphs->numberGlyphs);
 		for (glyphid_t j = 0; j < glyphs->numberGlyphs; j++) {
-			buildOutline(j, &context);
+			buildOutline(j, &context, options);
 		}
 
 		applyCffMatrix(context.meta, context.glyphs, head);
@@ -745,9 +748,9 @@ static json_value *fdToJson(const table_CFF *table) {
 
 void table_dump_cff(const table_CFF *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping CFF.\n");
-
-	json_object_push(root, "CFF_", fdToJson(table));
+	loggedStep("CFF") {
+		json_object_push(root, "CFF_", fdToJson(table));
+	}
 }
 
 static void pdDeltaFromJson(json_value *dump, arity_t *count, double **array) {
@@ -868,8 +871,11 @@ table_CFF *table_parse_cff(json_value *root, const otfcc_Options *options) {
 	if (!dump) {
 		return NULL;
 	} else {
-		if (options->verbose) fprintf(stderr, "Parsing CFF.\n");
-		return fdFromJson(dump, options, true);
+		table_CFF *cff = NULL;
+		loggedStep("CFF") {
+			cff = fdFromJson(dump, options, true);
+		}
+		return cff;
 	}
 }
 

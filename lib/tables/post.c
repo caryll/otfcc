@@ -14,7 +14,7 @@ void table_delete_post(MOVE table_post *table) {
 	free(table);
 }
 
-table_post *table_read_post(const caryll_Packet packet) {
+table_post *table_read_post(const caryll_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('post', table) {
 		font_file_pointer data = table.data;
 
@@ -70,38 +70,39 @@ table_post *table_read_post(const caryll_Packet packet) {
 
 void table_dump_post(const table_post *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
-	if (options->verbose) fprintf(stderr, "Dumping post.\n");
-
-	json_value *post = json_object_new(10);
-	json_object_push(post, "version", json_double_new(caryll_from_fixed(table->version)));
-	json_object_push(post, "italicAngle", json_integer_new(caryll_from_fixed(table->italicAngle)));
-	json_object_push(post, "underlinePosition", json_integer_new(table->underlinePosition));
-	json_object_push(post, "underlineThickness", json_integer_new(table->underlineThickness));
-	json_object_push(post, "isFixedPitch", json_boolean_new(table->isFixedPitch));
-	json_object_push(post, "minMemType42", json_integer_new(table->minMemType42));
-	json_object_push(post, "maxMemType42", json_integer_new(table->maxMemType42));
-	json_object_push(post, "minMemType1", json_integer_new(table->minMemType1));
-	json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
-	json_object_push(root, "post", post);
+	loggedStep("post") {
+		json_value *post = json_object_new(10);
+		json_object_push(post, "version", json_double_new(caryll_from_fixed(table->version)));
+		json_object_push(post, "italicAngle", json_integer_new(caryll_from_fixed(table->italicAngle)));
+		json_object_push(post, "underlinePosition", json_integer_new(table->underlinePosition));
+		json_object_push(post, "underlineThickness", json_integer_new(table->underlineThickness));
+		json_object_push(post, "isFixedPitch", json_boolean_new(table->isFixedPitch));
+		json_object_push(post, "minMemType42", json_integer_new(table->minMemType42));
+		json_object_push(post, "maxMemType42", json_integer_new(table->maxMemType42));
+		json_object_push(post, "minMemType1", json_integer_new(table->minMemType1));
+		json_object_push(post, "maxMemType1", json_integer_new(table->maxMemType1));
+		json_object_push(root, "post", post);
+	}
 }
 table_post *table_parse_post(const json_value *root, const otfcc_Options *options) {
 	table_post *post = table_new_post();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
-		if (options->verbose) fprintf(stderr, "Parsing post.\n");
-		if (options->short_post) {
-			post->version = 0x30000;
-		} else {
-			post->version = caryll_to_fixed(json_obj_getnum(table, "version"));
+		loggedStep("post") {
+			if (options->short_post) {
+				post->version = 0x30000;
+			} else {
+				post->version = caryll_to_fixed(json_obj_getnum(table, "version"));
+			}
+			post->italicAngle = caryll_to_fixed(json_obj_getnum(table, "italicAngle"));
+			post->underlinePosition = json_obj_getnum(table, "underlinePosition");
+			post->underlineThickness = json_obj_getnum(table, "underlineThickness");
+			post->isFixedPitch = json_obj_getbool(table, "isFixedPitch");
+			post->minMemType42 = json_obj_getnum(table, "minMemType42");
+			post->maxMemType42 = json_obj_getnum(table, "maxMemType42");
+			post->minMemType1 = json_obj_getnum(table, "minMemType1");
+			post->maxMemType1 = json_obj_getnum(table, "maxMemType1");
 		}
-		post->italicAngle = caryll_to_fixed(json_obj_getnum(table, "italicAngle"));
-		post->underlinePosition = json_obj_getnum(table, "underlinePosition");
-		post->underlineThickness = json_obj_getnum(table, "underlineThickness");
-		post->isFixedPitch = json_obj_getbool(table, "isFixedPitch");
-		post->minMemType42 = json_obj_getnum(table, "minMemType42");
-		post->maxMemType42 = json_obj_getnum(table, "maxMemType42");
-		post->minMemType1 = json_obj_getnum(table, "minMemType1");
-		post->maxMemType1 = json_obj_getnum(table, "maxMemType1");
 	}
 	return post;
 }
