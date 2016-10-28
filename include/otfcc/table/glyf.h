@@ -115,8 +115,8 @@ table_glyf *otfcc_parseGlyf(json_value *root, otfcc_GlyphOrder *glyph_order, con
 typedef struct {
 	caryll_Buffer *glyf;
 	caryll_Buffer *loca;
-} glyf_loca_bufpair;
+} table_GlyfAndLocaBuffers;
 
-glyf_loca_bufpair otfcc_buildGlyf(const table_glyf *table, table_head *head, const otfcc_Options *options);
+table_GlyfAndLocaBuffers otfcc_buildGlyf(const table_glyf *table, table_head *head, const otfcc_Options *options);
 
 #endif

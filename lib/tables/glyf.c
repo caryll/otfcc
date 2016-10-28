@@ -883,7 +883,7 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-glyf_loca_bufpair otfcc_buildGlyf(const table_glyf *table, table_head *head, const otfcc_Options *options) {
+table_GlyfAndLocaBuffers otfcc_buildGlyf(const table_glyf *table, table_head *head, const otfcc_Options *options) {
 	caryll_Buffer *bufglyf = bufnew();
 	caryll_Buffer *bufloca = bufnew();
 	if (table && head) {
@@ -920,6 +920,6 @@ glyf_loca_bufpair otfcc_buildGlyf(const table_glyf *table, table_head *head, con
 		buffree(gbuf);
 		FREE(loca);
 	}
-	glyf_loca_bufpair pair = {bufglyf, bufloca};
+	table_GlyfAndLocaBuffers pair = {bufglyf, bufloca};
 	return pair;
 }

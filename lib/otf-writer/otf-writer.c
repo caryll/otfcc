@@ -10,7 +10,7 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_SFNTBuilder *builder = otfcc_newSFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 	// Outline data
 	if (font->subtype == FONTTYPE_TTF) {
-		glyf_loca_bufpair pair = otfcc_buildGlyf(font->glyf, font->head, options);
+		table_GlyfAndLocaBuffers pair = otfcc_buildGlyf(font->glyf, font->head, options);
 		otfcc_SFNTBuilder_pushTable(builder, 'glyf', pair.glyf);
 		otfcc_SFNTBuilder_pushTable(builder, 'loca', pair.loca);
 	} else {
