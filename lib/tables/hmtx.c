@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/hmtx.h"
 
-table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *options, table_hhea *hhea,
+table_hmtx *otfcc_readTablehmtx(const otfcc_Packet packet, const otfcc_Options *options, table_hhea *hhea,
                             table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
 	FOR_TABLE('hmtx', table) {
@@ -30,19 +30,19 @@ table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *opt
 		return hmtx;
 	HMTX_CORRUPTED:
 		logWarning("Table 'hmtx' corrupted.\n");
-		if (hmtx) { table_delete_hmtx(hmtx), hmtx = NULL; }
+		if (hmtx) { otfcc_deleteTablehmtx(hmtx), hmtx = NULL; }
 	}
 	return NULL;
 }
 
-void table_delete_hmtx(table_hmtx *table) {
+void otfcc_deleteTablehmtx(table_hmtx *table) {
 	if (!table) return;
 	if (table->metrics != NULL) FREE(table->metrics);
 	if (table->leftSideBearing != NULL) FREE(table->leftSideBearing);
 	FREE(table);
 }
 
-caryll_Buffer *table_build_hmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
+caryll_Buffer *otfcc_buildTablehmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,
                                 const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!hmtx) return buf;

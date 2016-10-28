@@ -14,7 +14,7 @@ typedef struct {
 	VORG_entry *entries;
 } table_VORG;
 
-void table_delete_VORG(MOVE table_VORG *vorg);
-table_VORG *table_read_VORG(const caryll_Packet packet, const otfcc_Options *options);
-caryll_Buffer *table_build_VORG(const table_VORG *table, const otfcc_Options *options);
+void otfcc_deleteTableVORG(MOVE table_VORG *vorg);
+table_VORG *otfcc_readTableVORG(const otfcc_Packet packet, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildTableVORG(const table_VORG *table, const otfcc_Options *options);
 #endif

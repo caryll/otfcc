@@ -22,11 +22,11 @@ typedef struct {
 	uint16_t maxComponentDepth;
 } table_maxp;
 
-table_maxp *table_new_maxp();
-void table_delete_maxp(MOVE table_maxp *maxp);
-table_maxp *table_read_maxp(const caryll_Packet packet, const otfcc_Options *options);
-void table_dump_maxp(const table_maxp *table, json_value *root, const otfcc_Options *options);
-table_maxp *table_parse_maxp(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *table_build_maxp(const table_maxp *maxp, const otfcc_Options *options);
+table_maxp *otfcc_newTablemaxp();
+void otfcc_deleteTablemaxp(MOVE table_maxp *maxp);
+table_maxp *otfcc_readTablemaxp(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpTablemaxp(const table_maxp *table, json_value *root, const otfcc_Options *options);
+table_maxp *otfcc_parseTablemaxp(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildTablemaxp(const table_maxp *maxp, const otfcc_Options *options);
 
 #endif

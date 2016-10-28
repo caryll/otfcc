@@ -85,12 +85,12 @@ typedef struct {
 	OWNING table_glyf *glyphs;
 } table_CFFAndGlyf;
 
-table_CFF *table_new_CFF();
-void table_delete_CFF(MOVE table_CFF *table);
-table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc_Options *options,
+table_CFF *otfcc_newTableCFF();
+void otfcc_deleteTableCFF(MOVE table_CFF *table);
+table_CFFAndGlyf otfcc_readTablecff_and_glyf(const otfcc_Packet packet, const otfcc_Options *options,
                                          const table_head *head);
-void table_dump_cff(const table_CFF *table, MODIFY json_value *root, const otfcc_Options *options);
-table_CFF *table_parse_cff(json_value *root, const otfcc_Options *options);
-caryll_Buffer *table_build_CFF(const table_CFFAndGlyf cffAndGlyf, const otfcc_Options *options);
+void otfcc_dumpTablecff(const table_CFF *table, MODIFY json_value *root, const otfcc_Options *options);
+table_CFF *otfcc_parseTablecff(json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildTableCFF(const table_CFFAndGlyf cffAndGlyf, const otfcc_Options *options);
 
 #endif

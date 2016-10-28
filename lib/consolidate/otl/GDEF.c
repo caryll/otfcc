@@ -9,7 +9,7 @@ typedef struct {
 static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) {
 	return a->gid - b->gid;
 }
-void consolidate_GDEF(caryll_Font *font, table_GDEF *gdef, const otfcc_Options *options) {
+void consolidate_GDEF(otfcc_Font *font, table_GDEF *gdef, const otfcc_Options *options) {
 	if (!font || !font->glyph_order || !gdef) return;
 	if (gdef->glyphClassDef) fontop_consolidateClassDef(font, gdef->glyphClassDef, options);
 	if (gdef->markAttachClassDef) fontop_consolidateClassDef(font, gdef->markAttachClassDef, options);

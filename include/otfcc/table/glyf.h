@@ -104,20 +104,20 @@ typedef struct {
 	glyf_Glyph **glyphs;
 } table_glyf;
 
-glyf_Glyph *table_new_glyf_glyph();
-void table_delete_glyf(table_glyf *table);
+glyf_Glyph *otfcc_newTableglyf_glyph();
+void otfcc_deleteTableglyf(table_glyf *table);
 
-table_glyf *table_read_glyf(const caryll_Packet packet, const otfcc_Options *options, table_head *head,
+table_glyf *otfcc_readTableglyf(const otfcc_Packet packet, const otfcc_Options *options, table_head *head,
                             table_maxp *maxp);
-void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options, bool hasVerticalMetrics,
+void otfcc_dumpTableglyf(const table_glyf *table, json_value *root, const otfcc_Options *options, bool hasVerticalMetrics,
                      bool exportFDSelect);
-table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const otfcc_Options *options);
+table_glyf *otfcc_parseTableglyf(json_value *root, otfcc_GlyphOrder *glyph_order, const otfcc_Options *options);
 
 typedef struct {
 	caryll_Buffer *glyf;
 	caryll_Buffer *loca;
 } glyf_loca_bufpair;
 
-glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const otfcc_Options *options);
+glyf_loca_bufpair otfcc_buildTableglyf(const table_glyf *table, table_head *head, const otfcc_Options *options);
 
 #endif

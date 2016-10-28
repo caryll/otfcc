@@ -3,65 +3,67 @@
 #include "otfcc/sfnt-builder.h"
 #include "stat.h"
 
-static void *serializeToOTF(caryll_Font *font, const otfcc_Options *options) {
+static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 	// do stat before serialize
 	otfcc_statFont(font, options);
 
-	caryll_SFNTBuilder *builder = caryll_new_SFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
+	otfcc_SFNTBuilder *builder = otfcc_newSFNTBuilder(font->subtype == FONTTYPE_CFF ? 'OTTO' : 0x00010000, options);
 	// Outline data
 	if (font->subtype == FONTTYPE_TTF) {
-		glyf_loca_bufpair pair = table_build_glyf(font->glyf, font->head, options);
-		caryll_pushTableToSfntBuilder(builder, 'glyf', pair.glyf);
-		caryll_pushTableToSfntBuilder(builder, 'loca', pair.loca);
+		glyf_loca_bufpair pair = otfcc_buildTableglyf(font->glyf, font->head, options);
+		otfcc_SFNTBuilder_pushTable(builder, 'glyf', pair.glyf);
+		otfcc_SFNTBuilder_pushTable(builder, 'loca', pair.loca);
 	} else {
 		table_CFFAndGlyf r = {font->CFF_, font->glyf};
-		caryll_pushTableToSfntBuilder(builder, 'CFF ', table_build_CFF(r, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'CFF ', otfcc_buildTableCFF(r, options));
 	}
 
-	caryll_pushTableToSfntBuilder(builder, 'head', table_build_head(font->head, options));
-	caryll_pushTableToSfntBuilder(builder, 'hhea', table_build_hhea(font->hhea, options));
-	caryll_pushTableToSfntBuilder(builder, 'OS/2', table_build_OS_2(font->OS_2, options));
-	caryll_pushTableToSfntBuilder(builder, 'maxp', table_build_maxp(font->maxp, options));
-	caryll_pushTableToSfntBuilder(builder, 'name', table_build_name(font->name, options));
-	caryll_pushTableToSfntBuilder(builder, 'post', table_build_post(font->post, font->glyph_order, options));
-	caryll_pushTableToSfntBuilder(builder, 'cmap', table_build_cmap(font->cmap, options));
-	if (font->gasp) caryll_pushTableToSfntBuilder(builder, 'gasp', table_build_gasp(font->gasp, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'head', otfcc_buildTablehead(font->head, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'hhea', otfcc_buildTablehhea(font->hhea, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'OS/2', otfcc_buildTableOS_2(font->OS_2, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'maxp', otfcc_buildTablemaxp(font->maxp, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'name', otfcc_buildTablename(font->name, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'post', otfcc_buildTablepost(font->post, font->glyph_order, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'cmap', otfcc_buildTablecmap(font->cmap, options));
+	if (font->gasp) otfcc_SFNTBuilder_pushTable(builder, 'gasp', otfcc_buildTablegasp(font->gasp, options));
 
 	if (font->subtype == FONTTYPE_TTF) {
-		if (font->fpgm) caryll_pushTableToSfntBuilder(builder, 'fpgm', table_build_fpgm_prep(font->fpgm, options));
-		if (font->prep) caryll_pushTableToSfntBuilder(builder, 'prep', table_build_fpgm_prep(font->prep, options));
-		if (font->cvt_) caryll_pushTableToSfntBuilder(builder, 'cvt ', table_build_cvt(font->cvt_, options));
-		if (font->LTSH) caryll_pushTableToSfntBuilder(builder, 'LTSH', table_build_LTSH(font->LTSH, options));
+		if (font->fpgm) otfcc_SFNTBuilder_pushTable(builder, 'fpgm', otfcc_buildTablefpgm_prep(font->fpgm, options));
+		if (font->prep) otfcc_SFNTBuilder_pushTable(builder, 'prep', otfcc_buildTablefpgm_prep(font->prep, options));
+		if (font->cvt_) otfcc_SFNTBuilder_pushTable(builder, 'cvt ', otfcc_buildTablecvt(font->cvt_, options));
+		if (font->LTSH) otfcc_SFNTBuilder_pushTable(builder, 'LTSH', otfcc_buildTableLTSH(font->LTSH, options));
 	}
 
 	if (font->hhea && font->maxp && font->hmtx) {
 		uint16_t hmtx_counta = font->hhea->numberOfMetrics;
 		uint16_t hmtx_countk = font->maxp->numGlyphs - font->hhea->numberOfMetrics;
-		caryll_pushTableToSfntBuilder(builder, 'hmtx', table_build_hmtx(font->hmtx, hmtx_counta, hmtx_countk, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'hmtx',
+		                            otfcc_buildTablehmtx(font->hmtx, hmtx_counta, hmtx_countk, options));
 	}
-	if (font->vhea) caryll_pushTableToSfntBuilder(builder, 'vhea', table_build_vhea(font->vhea, options));
+	if (font->vhea) otfcc_SFNTBuilder_pushTable(builder, 'vhea', otfcc_buildTablevhea(font->vhea, options));
 	if (font->vhea && font->maxp && font->vmtx) {
 		uint16_t vmtx_counta = font->vhea->numOfLongVerMetrics;
 		uint16_t vmtx_countk = font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics;
-		caryll_pushTableToSfntBuilder(builder, 'vmtx', table_build_vmtx(font->vmtx, vmtx_counta, vmtx_countk, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'vmtx',
+		                            otfcc_buildTablevmtx(font->vmtx, vmtx_counta, vmtx_countk, options));
 	}
-	if (font->VORG) { caryll_pushTableToSfntBuilder(builder, 'VORG', table_build_VORG(font->VORG, options)); }
+	if (font->VORG) { otfcc_SFNTBuilder_pushTable(builder, 'VORG', otfcc_buildTableVORG(font->VORG, options)); }
 
-	if (font->GSUB) caryll_pushTableToSfntBuilder(builder, 'GSUB', table_build_otl(font->GSUB, options, "GSUB"));
-	if (font->GPOS) caryll_pushTableToSfntBuilder(builder, 'GPOS', table_build_otl(font->GPOS, options, "GPOS"));
-	if (font->GDEF) caryll_pushTableToSfntBuilder(builder, 'GDEF', table_build_GDEF(font->GDEF, options));
-	if (font->BASE) caryll_pushTableToSfntBuilder(builder, 'BASE', table_build_BASE(font->BASE, options));
+	if (font->GSUB) otfcc_SFNTBuilder_pushTable(builder, 'GSUB', otfcc_buildTableotl(font->GSUB, options, "GSUB"));
+	if (font->GPOS) otfcc_SFNTBuilder_pushTable(builder, 'GPOS', otfcc_buildTableotl(font->GPOS, options, "GPOS"));
+	if (font->GDEF) otfcc_SFNTBuilder_pushTable(builder, 'GDEF', otfcc_buildTableGDEF(font->GDEF, options));
+	if (font->BASE) otfcc_SFNTBuilder_pushTable(builder, 'BASE', otfcc_buildTableBASE(font->BASE, options));
 
 	if (options->dummy_DSIG) {
 		caryll_Buffer *dsig = bufnew();
 		bufwrite32b(dsig, 0x00000001);
 		bufwrite16b(dsig, 0);
 		bufwrite16b(dsig, 0);
-		caryll_pushTableToSfntBuilder(builder, 'DSIG', dsig);
+		otfcc_SFNTBuilder_pushTable(builder, 'DSIG', dsig);
 	}
 
-	caryll_Buffer *otf = caryll_serializeSFNT(builder);
-	caryll_delete_SFNTBuilder(builder);
+	caryll_Buffer *otf = otfcc_SFNTBuilder_serialize(builder);
+	otfcc_delete_SFNTBuilder(builder);
 	otfcc_unstatFont(font, options);
 	return otf;
 }

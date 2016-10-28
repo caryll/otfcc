@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	caryll_Font *font;
+	otfcc_Font *font;
 	loggedStep("Parse") {
 		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
 		font = parser->create(root, 0, options);
@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
-		caryll_font_consolidate(font, options);
+		otfcc_consolidateFont(font, options);
 		logStepTime;
 	}
 	loggedStep("Build") {
@@ -294,7 +294,7 @@ int main(int argc, char *argv[]) {
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		logStepTime;
-		buffree(otf), writer->dispose(writer), caryll_delete_Font(font), sdsfree(outputPath);
+		buffree(otf), writer->dispose(writer), otfcc_delete_Font(font), sdsfree(outputPath);
 	}
 	options_delete(options);
 	return 0;

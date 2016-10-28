@@ -2,7 +2,7 @@
 #include "support/ttinstr/ttinstr.h"
 #include "otfcc/table/fpgm-prep.h"
 
-table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, const otfcc_Options *options, uint32_t tag) {
+table_fpgm_prep *otfcc_readTablefpgm_prep(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_fpgm_prep *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
@@ -15,13 +15,13 @@ table_fpgm_prep *table_read_fpgm_prep(const caryll_Packet packet, const otfcc_Op
 		memcpy(t->bytes, data, length);
 		return t;
 	FAIL:
-		table_delete_fpgm_prep(t);
+		otfcc_deleteTablefpgm_prep(t);
 		t = NULL;
 	}
 	return NULL;
 }
 
-void table_delete_fpgm_prep(table_fpgm_prep *table) {
+void otfcc_deleteTablefpgm_prep(table_fpgm_prep *table) {
 	if (!table) return;
 	if (table->tag) sdsfree(table->tag);
 	if (table->bytes) FREE(table->bytes);
@@ -61,7 +61,7 @@ table_fpgm_prep *table_fpgm_parse_prep(const json_value *root, const otfcc_Optio
 	return t;
 }
 
-caryll_Buffer *table_build_fpgm_prep(const table_fpgm_prep *table, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildTablefpgm_prep(const table_fpgm_prep *table, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite_bytes(buf, table->length, table->bytes);

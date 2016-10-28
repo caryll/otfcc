@@ -204,14 +204,14 @@ typedef struct {
 	otl_Lookup **lookups;
 } table_OTL;
 
-otl_Subtable *table_read_otl_subtable(uint8_t *data, uint32_t tableLength, uint32_t subtableOffset,
+otl_Subtable *otfcc_readTableotl_subtable(uint8_t *data, uint32_t tableLength, uint32_t subtableOffset,
                                       otl_LookupType lookupType, const otfcc_Options *options);
 
-table_OTL *table_new_otl();
-void table_delete_otl(MOVE table_OTL *table);
-table_OTL *table_read_otl(const caryll_Packet packet, const otfcc_Options *options, const uint32_t tag);
-void table_dump_otl(const table_OTL *table, json_value *root, const otfcc_Options *options, const char *tag);
-table_OTL *table_parse_otl(const json_value *root, const otfcc_Options *options, const char *tag);
-caryll_Buffer *table_build_otl(const table_OTL *table, const otfcc_Options *options, const char *tag);
+table_OTL *otfcc_newTableotl();
+void otfcc_deleteTableotl(MOVE table_OTL *table);
+table_OTL *otfcc_readTableotl(const otfcc_Packet packet, const otfcc_Options *options, const uint32_t tag);
+void otfcc_dumpTableotl(const table_OTL *table, json_value *root, const otfcc_Options *options, const char *tag);
+table_OTL *otfcc_parseTableotl(const json_value *root, const otfcc_Options *options, const char *tag);
+caryll_Buffer *otfcc_buildTableotl(const table_OTL *table, const otfcc_Options *options, const char *tag);
 
 #endif

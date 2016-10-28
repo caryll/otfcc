@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/cvt.h"
 
-table_cvt *table_read_cvt(const caryll_Packet packet, const otfcc_Options *options, uint32_t tag) {
+table_cvt *otfcc_readTablecvt(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_cvt *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
@@ -16,12 +16,12 @@ table_cvt *table_read_cvt(const caryll_Packet packet, const otfcc_Options *optio
 	}
 	return NULL;
 }
-void table_delete_cvt(table_cvt *table) {
+void otfcc_deleteTablecvt(table_cvt *table) {
 	if (!table) return;
 	if (table->words) FREE(table->words);
 	FREE(table);
 }
-void table_dump_cvt(const table_cvt *table, json_value *root, const otfcc_Options *options, const char *tag) {
+void otfcc_dumpTablecvt(const table_cvt *table, json_value *root, const otfcc_Options *options, const char *tag) {
 	if (!table) return;
 	loggedStep("cvt") {
 		json_value *arr = json_array_new(table->length);
@@ -31,7 +31,7 @@ void table_dump_cvt(const table_cvt *table, json_value *root, const otfcc_Option
 		json_object_push(root, tag, arr);
 	}
 }
-table_cvt *table_parse_cvt(const json_value *root, const otfcc_Options *options, const char *tag) {
+table_cvt *otfcc_parseTablecvt(const json_value *root, const otfcc_Options *options, const char *tag) {
 	table_cvt *t = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, tag, json_array))) {
@@ -68,7 +68,7 @@ table_cvt *table_parse_cvt(const json_value *root, const otfcc_Options *options,
 	return t;
 }
 
-caryll_Buffer *table_build_cvt(const table_cvt *table, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildTablecvt(const table_cvt *table, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) {

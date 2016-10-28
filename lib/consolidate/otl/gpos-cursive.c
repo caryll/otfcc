@@ -10,7 +10,7 @@ typedef struct {
 static int gpos_cursive_by_from_id(gpos_cursive_hash *a, gpos_cursive_hash *b) {
 	return a->fromid - b->fromid;
 }
-bool consolidate_gpos_cursive(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_gpos_cursive(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                               const otfcc_Options *options) {
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 	fontop_consolidateCoverage(font, subtable->coverage, options);

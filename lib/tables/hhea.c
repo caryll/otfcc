@@ -1,13 +1,13 @@
 #include "support/util.h"
 #include "otfcc/table/hhea.h"
 
-table_hhea *table_new_hhea() {
+table_hhea *otfcc_newTablehhea() {
 	table_hhea *hhea;
 	NEW(hhea);
 	return hhea;
 }
 
-table_hhea *table_read_hhea(const caryll_Packet packet, const otfcc_Options *options) {
+table_hhea *otfcc_readTablehhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('hhea', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -40,11 +40,11 @@ table_hhea *table_read_hhea(const caryll_Packet packet, const otfcc_Options *opt
 	return NULL;
 }
 
-void table_dump_hhea(const table_hhea *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpTablehhea(const table_hhea *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("hhea") {
 		json_value *hhea = json_object_new(13);
-		json_object_push(hhea, "version", json_double_new(caryll_from_fixed(table->version)));
+		json_object_push(hhea, "version", json_double_new(otfcc_from_fixed(table->version)));
 		json_object_push(hhea, "ascender", json_integer_new(table->ascender));
 		json_object_push(hhea, "descender", json_integer_new(table->descender));
 		json_object_push(hhea, "lineGap", json_integer_new(table->lineGap));
@@ -61,12 +61,12 @@ void table_dump_hhea(const table_hhea *table, json_value *root, const otfcc_Opti
 	}
 }
 
-table_hhea *table_parse_hhea(const json_value *root, const otfcc_Options *options) {
-	table_hhea *hhea = table_new_hhea();
+table_hhea *otfcc_parseTablehhea(const json_value *root, const otfcc_Options *options) {
+	table_hhea *hhea = otfcc_newTablehhea();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
 		loggedStep("hhea") {
-			hhea->version = caryll_to_fixed(json_obj_getnum_fallback(table, "version", 0));
+			hhea->version = otfcc_to_fixed(json_obj_getnum_fallback(table, "version", 0));
 			hhea->ascender = json_obj_getnum_fallback(table, "ascender", 0);
 			hhea->descender = json_obj_getnum_fallback(table, "descender", 0);
 			hhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);
@@ -84,7 +84,7 @@ table_hhea *table_parse_hhea(const json_value *root, const otfcc_Options *option
 	return hhea;
 }
 
-caryll_Buffer *table_build_hhea(const table_hhea *hhea, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildTablehhea(const table_hhea *hhea, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!hhea) return buf;
 	bufwrite32b(buf, hhea->version);

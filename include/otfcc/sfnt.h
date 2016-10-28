@@ -10,7 +10,7 @@ typedef struct {
 	uint32_t offset;
 	uint32_t length;
 	uint8_t *data;
-} caryll_PacketPiece;
+} otfcc_PacketPiece;
 
 typedef struct {
 	uint32_t sfnt_version;
@@ -18,17 +18,17 @@ typedef struct {
 	uint16_t searchRange;
 	uint16_t entrySelector;
 	uint16_t rangeShift;
-	caryll_PacketPiece *pieces;
-} caryll_Packet;
+	otfcc_PacketPiece *pieces;
+} otfcc_Packet;
 
 typedef struct {
 	uint32_t type;
 	uint32_t count;
 	uint32_t *offsets;
-	caryll_Packet *packets;
-} caryll_SplineFontContainer;
+	otfcc_Packet *packets;
+} otfcc_SplineFontContainer;
 
-caryll_SplineFontContainer *caryll_read_SFNT(FILE *file);
-void caryll_delete_SFNT(caryll_SplineFontContainer *font);
+otfcc_SplineFontContainer *otfcc_read_SFNT(FILE *file);
+void otfcc_delete_SFNT(otfcc_SplineFontContainer *font);
 
 #endif

@@ -10,7 +10,7 @@ static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_multi(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                             const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	fontop_consolidateCoverage(font, subtable->from, options);

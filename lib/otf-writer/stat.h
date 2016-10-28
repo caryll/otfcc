@@ -2,6 +2,6 @@
 #define CARYLL_OTF_WRITER_STAT_H
 
 #include "otfcc/font.h"
-void otfcc_statFont(caryll_Font *font, const otfcc_Options *options);
-void otfcc_unstatFont(caryll_Font *font, const otfcc_Options *options);
+void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options);
+void otfcc_unstatFont(otfcc_Font *font, const otfcc_Options *options);
 #endif

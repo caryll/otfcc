@@ -140,13 +140,13 @@ static INLINE json_value *json_from_sds(const sds str) {
 }
 
 // flags reader and writer
-static INLINE json_value *caryll_dump_flags(int flags, const char *labels[]) {
+static INLINE json_value *otfcc_dump_flags(int flags, const char *labels[]) {
 	json_value *v = json_object_new(0);
 	for (uint16_t j = 0; labels[j]; j++)
 		if (flags & (1 << j)) { json_object_push(v, labels[j], json_boolean_new(true)); }
 	return v;
 }
-static INLINE uint32_t caryll_parse_flags(const json_value *v, const char *labels[]) {
+static INLINE uint32_t otfcc_parse_flags(const json_value *v, const char *labels[]) {
 	if (!v) return 0;
 	if (v->type == json_integer) {
 		return (uint32_t)v->u.integer;

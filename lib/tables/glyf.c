@@ -28,7 +28,7 @@ typedef enum {
 
 typedef enum { MASK_ON_CURVE = 1 } glyf_oncurve_mask;
 
-glyf_Glyph *table_new_glyf_glyph() {
+glyf_Glyph *otfcc_newTableglyf_glyph() {
 	glyf_Glyph *g;
 	NEW(g);
 	g->numberOfContours = 0;
@@ -64,7 +64,7 @@ glyf_Glyph *table_new_glyf_glyph() {
 	return g;
 }
 
-static void table_delete_glyf_glyph(glyf_Glyph *g) {
+static void otfcc_deleteTableglyf_glyph(glyf_Glyph *g) {
 	if (!g) return;
 	sdsfree(g->name);
 	if (g->numberOfContours > 0 && g->contours != NULL) {
@@ -89,10 +89,10 @@ static void table_delete_glyf_glyph(glyf_Glyph *g) {
 	FREE(g);
 }
 
-void table_delete_glyf(table_glyf *table) {
+void otfcc_deleteTableglyf(table_glyf *table) {
 	if (table->glyphs) {
 		for (glyphid_t j = 0; j < table->numberGlyphs; j++) {
-			table_delete_glyf_glyph(table->glyphs[j]);
+			otfcc_deleteTableglyf_glyph(table->glyphs[j]);
 		}
 		FREE(table->glyphs);
 	}
@@ -107,8 +107,8 @@ static glyf_Point *next_point(glyf_Contour *contours, shapeid_t *cc, shapeid_t *
 	return &contours[*cc].points[(*cp)++];
 }
 
-static glyf_Glyph *caryll_read_simple_glyph(font_file_pointer start, shapeid_t numberOfContours) {
-	glyf_Glyph *g = table_new_glyf_glyph();
+static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t numberOfContours) {
+	glyf_Glyph *g = otfcc_newTableglyf_glyph();
 	g->numberOfContours = numberOfContours;
 	g->numberOfReferences = 0;
 
@@ -220,8 +220,8 @@ static glyf_Glyph *caryll_read_simple_glyph(font_file_pointer start, shapeid_t n
 	return g;
 }
 
-static glyf_Glyph *caryll_read_composite_glyph(font_file_pointer start) {
-	glyf_Glyph *g = table_new_glyf_glyph();
+static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start) {
+	glyf_Glyph *g = otfcc_newTableglyf_glyph();
 	g->numberOfContours = 0;
 	// pass 1, read references quantity
 	uint16_t flags;
@@ -272,17 +272,17 @@ static glyf_Glyph *caryll_read_composite_glyph(font_file_pointer start) {
 		double c = 0.0;
 		double d = 1.0;
 		if (flags & WE_HAVE_A_SCALE) {
-			a = d = caryll_from_f2dot14(read_16s(start + offset));
+			a = d = otfcc_from_f2dot14(read_16s(start + offset));
 			offset += 2;
 		} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
-			a = caryll_from_f2dot14(read_16s(start + offset));
-			d = caryll_from_f2dot14(read_16s(start + offset + 2));
+			a = otfcc_from_f2dot14(read_16s(start + offset));
+			d = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			offset += 4;
 		} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
-			a = caryll_from_f2dot14(read_16s(start + offset));
-			b = caryll_from_f2dot14(read_16s(start + offset + 2));
-			c = caryll_from_f2dot14(read_16s(start + offset + 4));
-			d = caryll_from_f2dot14(read_16s(start + offset + 2));
+			a = otfcc_from_f2dot14(read_16s(start + offset));
+			b = otfcc_from_f2dot14(read_16s(start + offset + 2));
+			c = otfcc_from_f2dot14(read_16s(start + offset + 4));
+			d = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
 		g->references[j].glyph = handle_fromIndex(index);
@@ -312,14 +312,14 @@ static glyf_Glyph *caryll_read_composite_glyph(font_file_pointer start) {
 	return g;
 }
 
-static glyf_Glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
+static glyf_Glyph *otfcc_read_glyph(font_file_pointer data, uint32_t offset) {
 	font_file_pointer start = data + offset;
 	int16_t numberOfContours = read_16u(start);
 	glyf_Glyph *g;
 	if (numberOfContours > 0) {
-		g = caryll_read_simple_glyph(start + 10, numberOfContours);
+		g = otfcc_read_simple_glyph(start + 10, numberOfContours);
 	} else {
-		g = caryll_read_composite_glyph(start + 10);
+		g = otfcc_read_composite_glyph(start + 10);
 	}
 	g->stat.xMin = read_16s(start + 2);
 	g->stat.yMin = read_16s(start + 4);
@@ -328,7 +328,7 @@ static glyf_Glyph *caryll_read_glyph(font_file_pointer data, uint32_t offset) {
 	return g;
 }
 
-table_glyf *table_read_glyf(const caryll_Packet packet, const otfcc_Options *options, table_head *head,
+table_glyf *otfcc_readTableglyf(const otfcc_Packet packet, const otfcc_Options *options, table_head *head,
                             table_maxp *maxp) {
 	if (head == NULL || maxp == NULL) return NULL;
 	uint32_t *offsets = NULL;
@@ -374,15 +374,15 @@ table_glyf *table_read_glyf(const caryll_Packet packet, const otfcc_Options *opt
 
 		for (glyphid_t j = 0; j < numGlyphs; j++) {
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
-				glyf->glyphs[j] = caryll_read_glyph(data, offsets[j]);
+				glyf->glyphs[j] = otfcc_read_glyph(data, offsets[j]);
 			} else { // space glyph
-				glyf->glyphs[j] = table_new_glyf_glyph();
+				glyf->glyphs[j] = otfcc_newTableglyf_glyph();
 			}
 		}
 		goto PRESENT;
 	GLYF_CORRUPTED:
 		logWarning("table 'glyf' corrupted.\n");
-		if (glyf) { table_delete_glyf(glyf), glyf = NULL; }
+		if (glyf) { otfcc_deleteTableglyf(glyf), glyf = NULL; }
 	}
 	goto ABSENT;
 
@@ -497,7 +497,7 @@ static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options, 
 	if (g->yPel) { json_object_push(glyph, "LTSH_yPel", json_integer_new(g->yPel)); }
 	return glyph;
 }
-void caryll_dump_glyphorder(const table_glyf *table, json_value *root) {
+void otfcc_dump_glyphorder(const table_glyf *table, json_value *root) {
 	if (!table) return;
 	json_value *order = json_array_new(table->numberGlyphs);
 	for (glyphid_t j = 0; j < table->numberGlyphs; j++) {
@@ -506,7 +506,7 @@ void caryll_dump_glyphorder(const table_glyf *table, json_value *root) {
 	}
 	json_object_push(root, "glyph_order", preserialize(order));
 }
-void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Options *options, bool hasVerticalMetrics,
+void otfcc_dumpTableglyf(const table_glyf *table, json_value *root, const otfcc_Options *options, bool hasVerticalMetrics,
                      bool exportFDSelect) {
 	if (!table) return;
 	loggedStep("glyf") {
@@ -516,7 +516,7 @@ void table_dump_glyf(const table_glyf *table, json_value *root, const otfcc_Opti
 			json_object_push(glyf, g->name, glyf_dump_glyph(g, options, hasVerticalMetrics, exportFDSelect));
 		}
 		json_object_push(root, "glyf", glyf);
-		if (!options->ignore_glyph_order) caryll_dump_glyphorder(table, root);
+		if (!options->ignore_glyph_order) otfcc_dump_glyphorder(table, root);
 	}
 }
 
@@ -674,9 +674,9 @@ static void parse_masks(json_value *md, shapeid_t *count, glyf_PostscriptHintMas
 	}
 }
 
-static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOrderEntry *order_entry,
+static glyf_Glyph *otfcc_glyf_parse_glyph(json_value *glyphdump, otfcc_GlyphOrderEntry *order_entry,
                                            const otfcc_Options *options) {
-	glyf_Glyph *g = table_new_glyf_glyph();
+	glyf_Glyph *g = otfcc_newTableglyf_glyph();
 	g->name = sdsdup(order_entry->name);
 	g->advanceWidth = json_obj_getint(glyphdump, "advanceWidth");
 	g->advanceHeight = json_obj_getint(glyphdump, "advanceHeight");
@@ -698,7 +698,7 @@ static glyf_Glyph *caryll_glyf_parse_glyph(json_value *glyphdump, caryll_GlyphOr
 	return g;
 }
 
-table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, const otfcc_Options *options) {
+table_glyf *otfcc_parseTableglyf(json_value *root, otfcc_GlyphOrder *glyph_order, const otfcc_Options *options) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -711,10 +711,10 @@ table_glyf *table_parse_glyf(json_value *root, caryll_GlyphOrder *glyph_order, c
 			for (glyphid_t j = 0; j < numGlyphs; j++) {
 				sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 				json_value *glyphdump = table->u.object.values[j].value;
-				caryll_GlyphOrderEntry *order_entry = NULL;
+				otfcc_GlyphOrderEntry *order_entry = NULL;
 				HASH_FIND(hhName, glyph_order->byName, gname, sdslen(gname), order_entry);
 				if (glyphdump->type == json_object && order_entry && !glyf->glyphs[order_entry->gid]) {
-					glyf->glyphs[order_entry->gid] = caryll_glyf_parse_glyph(glyphdump, order_entry, options);
+					glyf->glyphs[order_entry->gid] = otfcc_glyf_parse_glyph(glyphdump, order_entry, options);
 				}
 				json_value_free(glyphdump);
 				table->u.object.values[j].value = NULL;
@@ -867,15 +867,15 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 			bufwrite8(gbuf, arg2);
 		}
 		if (flags & WE_HAVE_A_SCALE) {
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->a));
 		} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->a));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->d));
 		} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->a));
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->b));
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->c));
-			bufwrite16b(gbuf, caryll_to_f2dot14(r->d));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->a));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->b));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->c));
+			bufwrite16b(gbuf, otfcc_to_f2dot14(r->d));
 		}
 	}
 	if (g->instructionsLength) {
@@ -883,7 +883,7 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 		if (g->instructions) bufwrite_bytes(gbuf, g->instructionsLength, g->instructions);
 	}
 }
-glyf_loca_bufpair table_build_glyf(const table_glyf *table, table_head *head, const otfcc_Options *options) {
+glyf_loca_bufpair otfcc_buildTableglyf(const table_glyf *table, table_head *head, const otfcc_Options *options) {
 	caryll_Buffer *bufglyf = bufnew();
 	caryll_Buffer *bufloca = bufnew();
 	if (table && head) {

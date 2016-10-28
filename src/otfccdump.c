@@ -148,11 +148,11 @@ int main(int argc, char *argv[]) {
 
 	time_now(&begin);
 
-	caryll_SplineFontContainer *sfnt;
+	otfcc_SplineFontContainer *sfnt;
 	loggedStep("Read SFNT") {
 		logProgress("From file %s", inPath);
 		FILE *file = u8fopen(inPath, "rb");
-		sfnt = caryll_read_SFNT(file);
+		sfnt = otfcc_read_SFNT(file);
 		if (!sfnt || sfnt->count == 0) {
 			logError("Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 	}
 
-	caryll_Font *font;
+	otfcc_Font *font;
 	loggedStep("Read Font") {
 		otfcc_IFontBuilder *reader = otfcc_newOTFReader();
 		font = reader->create(sfnt, ttcindex, options);
@@ -174,11 +174,11 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		reader->dispose(reader);
-		if (sfnt) caryll_delete_SFNT(sfnt);
+		if (sfnt) otfcc_delete_SFNT(sfnt);
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
-		caryll_font_consolidate(font, options);
+		otfcc_consolidateFont(font, options);
 		logStepTime;
 	}
 	json_value *root;
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]) {
 
 	loggedStep("Finalize") {
 		free(buf);
-		if (font) caryll_delete_Font(font);
+		if (font) otfcc_delete_Font(font);
 		if (root) json_builder_free(root);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);

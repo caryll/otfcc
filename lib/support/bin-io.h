@@ -12,7 +12,7 @@
 #endif
 #endif
 
-static INLINE bool caryll_check_endian(void) {
+static INLINE bool otfcc_check_endian(void) {
 	union {
 		uint8_t i1[2];
 		uint16_t i2;
@@ -21,8 +21,8 @@ static INLINE bool caryll_check_endian(void) {
 	return (check_union.i1[0] == 1);
 }
 
-static INLINE uint16_t caryll_endian_convert16(uint16_t i) {
-	if (caryll_check_endian()) {
+static INLINE uint16_t otfcc_endian_convert16(uint16_t i) {
+	if (otfcc_check_endian()) {
 		union {
 			uint8_t i1[2];
 			uint16_t i2;
@@ -39,8 +39,8 @@ static INLINE uint16_t caryll_endian_convert16(uint16_t i) {
 	}
 }
 
-static INLINE uint32_t caryll_endian_convert32(uint32_t i) {
-	if (caryll_check_endian()) {
+static INLINE uint32_t otfcc_endian_convert32(uint32_t i) {
+	if (otfcc_check_endian()) {
 		union {
 			uint8_t i1[4];
 			uint32_t i4;
@@ -59,8 +59,8 @@ static INLINE uint32_t caryll_endian_convert32(uint32_t i) {
 	}
 }
 
-static INLINE uint64_t caryll_endian_convert64(uint64_t i) {
-	if (caryll_check_endian()) {
+static INLINE uint64_t otfcc_endian_convert64(uint64_t i) {
+	if (otfcc_check_endian()) {
 		union {
 			uint8_t i1[8];
 			uint64_t i8;
@@ -83,22 +83,22 @@ static INLINE uint64_t caryll_endian_convert64(uint64_t i) {
 	}
 }
 
-static INLINE uint16_t caryll_get16u(FILE *file) {
+static INLINE uint16_t otfcc_get16u(FILE *file) {
 	uint16_t tmp;
 	fread(&tmp, 2, 1, file);
-	return caryll_endian_convert16(tmp);
+	return otfcc_endian_convert16(tmp);
 }
 
-static INLINE uint32_t caryll_get32u(FILE *file) {
+static INLINE uint32_t otfcc_get32u(FILE *file) {
 	uint32_t tmp;
 	fread(&tmp, 4, 1, file);
-	return caryll_endian_convert32(tmp);
+	return otfcc_endian_convert32(tmp);
 }
 
-static INLINE uint64_t caryll_get64u(FILE *file) {
+static INLINE uint64_t otfcc_get64u(FILE *file) {
 	uint64_t tmp;
 	fread(&tmp, 8, 1, file);
-	return caryll_endian_convert64(tmp);
+	return otfcc_endian_convert64(tmp);
 }
 
 // data reader

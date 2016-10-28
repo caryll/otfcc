@@ -12,7 +12,7 @@ static bool shouldDecodeAsBytes(const name_record *record) {
 	return record->platformID == 1 && record->encodingID == 0 && record->languageID == 0; // Mac Roman English - I hope
 }
 
-table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *options) {
+table_name *otfcc_readTablename(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('name', table) {
 		table_name *name = NULL;
 		font_file_pointer data = table.data;
@@ -60,7 +60,7 @@ table_name *table_read_name(const caryll_Packet packet, const otfcc_Options *opt
 	return NULL;
 }
 
-void table_delete_name(table_name *table) {
+void otfcc_deleteTablename(table_name *table) {
 	for (uint16_t j = 0; j < table->count; j++) {
 		if (table->records[j]->nameString) sdsfree(table->records[j]->nameString);
 		FREE(table->records[j]);
@@ -69,7 +69,7 @@ void table_delete_name(table_name *table) {
 	FREE(table);
 }
 
-void table_dump_name(const table_name *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpTablename(const table_name *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("name") {
 		json_value *name = json_array_new(table->count);
@@ -95,7 +95,7 @@ static int name_record_sort(const void *_a, const void *_b) {
 	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
 	return (*a)->nameID - (*b)->nameID;
 }
-table_name *table_parse_name(const json_value *root, const otfcc_Options *options) {
+table_name *otfcc_parseTablename(const json_value *root, const otfcc_Options *options) {
 	table_name *name;
 	NEW(name);
 	json_value *table = NULL;
@@ -152,7 +152,7 @@ table_name *table_parse_name(const json_value *root, const otfcc_Options *option
 	}
 	return name;
 }
-caryll_Buffer *table_build_name(const table_name *name, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildTablename(const table_name *name, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);

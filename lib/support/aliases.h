@@ -6,7 +6,7 @@
 #define FOR_TABLE(name, table)                                                                                         \
 	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
 	     keep = !keep, count++)                                                                                        \
-		for (caryll_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                    \
+		for (otfcc_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                    \
 			if (table.tag == (name))                                                                                   \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 

@@ -28,7 +28,7 @@ static int lig_by_gid(lig_hash *a, lig_hash *b) {
 	return a->gid - b->gid;
 }
 
-static void consolidateMarkArray(caryll_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *marks,
+static void consolidateMarkArray(otfcc_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *marks,
                                  otl_MarkArray *markArray, glyphclass_t classCount) {
 	mark_hash *hm = NULL;
 	for (glyphid_t k = 0; k < marks->numGlyphs; k++) {
@@ -62,7 +62,7 @@ static void consolidateMarkArray(caryll_Font *font, table_OTL *table, const otfc
 	}
 }
 
-static void consolidateBaseArray(caryll_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *bases,
+static void consolidateBaseArray(otfcc_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *bases,
                                  otl_Anchor **baseArray) {
 	// consolidate bases
 	base_hash *hm = NULL;
@@ -98,7 +98,7 @@ static void consolidateBaseArray(caryll_Font *font, table_OTL *table, const otfc
 	}
 }
 
-static void consolidateLigArray(caryll_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *bases,
+static void consolidateLigArray(otfcc_Font *font, table_OTL *table, const otfcc_Options *options, otl_Coverage *bases,
                                 otl_MarkToLigatureBase **ligArray) {
 	lig_hash *hm = NULL;
 	for (glyphid_t k = 0; k < bases->numGlyphs; k++) {
@@ -133,7 +133,7 @@ static void consolidateLigArray(caryll_Font *font, table_OTL *table, const otfcc
 	}
 }
 
-bool consolidate_mark_to_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_mark_to_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                                 const otfcc_Options *options) {
 	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
 	fontop_consolidateCoverage(font, subtable->marks, options);
@@ -143,7 +143,7 @@ bool consolidate_mark_to_single(caryll_Font *font, table_OTL *table, otl_Subtabl
 	return false;
 }
 
-bool consolidate_mark_to_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_mark_to_ligature(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                                   const otfcc_Options *options) {
 	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	fontop_consolidateCoverage(font, subtable->marks, options);

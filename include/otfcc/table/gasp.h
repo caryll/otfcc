@@ -16,10 +16,10 @@ typedef struct {
 	gasp_Record *records;
 } table_gasp;
 
-table_gasp *table_new_gasp();
-void table_delete_gasp(table_gasp *table);
-table_gasp *table_read_gasp(const caryll_Packet packet, const otfcc_Options *options);
-void table_dump_gasp(const table_gasp *table, json_value *root, const otfcc_Options *options);
-table_gasp *table_parse_gasp(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *table_build_gasp(const table_gasp *table, const otfcc_Options *options);
+table_gasp *otfcc_newTablegasp();
+void otfcc_deleteTablegasp(table_gasp *table);
+table_gasp *otfcc_readTablegasp(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpTablegasp(const table_gasp *table, json_value *root, const otfcc_Options *options);
+table_gasp *otfcc_parseTablegasp(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildTablegasp(const table_gasp *table, const otfcc_Options *options);
 #endif

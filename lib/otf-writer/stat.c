@@ -80,7 +80,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	return stat;
 }
 
-void caryll_stat_glyf(caryll_Font *font, const otfcc_Options *options) {
+void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	stat_status *stated;
 	NEW(stated, font->glyf->numberGlyphs);
 	pos_t xmin = 0xFFFFFFFF;
@@ -110,7 +110,7 @@ void caryll_stat_glyf(caryll_Font *font, const otfcc_Options *options) {
 	FREE(stated);
 }
 
-void caryll_stat_maxp(caryll_Font *font) {
+void statMaxp(otfcc_Font *font) {
 	uint16_t nestDepth = 0;
 	uint16_t nPoints = 0;
 	uint16_t nContours = 0;
@@ -140,7 +140,7 @@ void caryll_stat_maxp(caryll_Font *font) {
 	font->maxp->maxSizeOfInstructions = instSize;
 }
 
-static void caryll_font_stat_hmtx(caryll_Font *font, const otfcc_Options *options) {
+static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx;
 	NEW(hmtx);
@@ -186,7 +186,7 @@ static void caryll_font_stat_hmtx(caryll_Font *font, const otfcc_Options *option
 	font->hhea->advanceWithMax = maxWidth;
 	font->hmtx = hmtx;
 }
-static void caryll_font_stat_vmtx(caryll_Font *font, const otfcc_Options *options) {
+static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	table_vmtx *vmtx;
 	NEW(vmtx);
@@ -231,7 +231,7 @@ static void caryll_font_stat_vmtx(caryll_Font *font, const otfcc_Options *option
 	font->vhea->advanceHeightMax = maxHeight;
 	font->vmtx = vmtx;
 }
-static void caryll_font_stat_OS_2_unicodeRanges(caryll_Font *font, const otfcc_Options *options) {
+static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options) {
 	cmap_Entry *item;
 	// Stat for OS/2.ulUnicodeRange.
 	uint32_t u1 = 0;
@@ -417,7 +417,7 @@ static void caryll_font_stat_OS_2_unicodeRanges(caryll_Font *font, const otfcc_O
 		font->OS_2->usLastCharIndex = 0xFFFF;
 	}
 }
-static void caryll_font_stat_OS_2_avgwidth(caryll_Font *font, const otfcc_Options *options) {
+static void statOS_2AverageWidth(otfcc_Font *font, const otfcc_Options *options) {
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
@@ -425,13 +425,13 @@ static void caryll_font_stat_OS_2_avgwidth(caryll_Font *font, const otfcc_Option
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
 }
-static void caryll_font_stat_OS_2(caryll_Font *font, const otfcc_Options *options) {
-	caryll_font_stat_OS_2_unicodeRanges(font, options);
-	caryll_font_stat_OS_2_avgwidth(font, options);
+static void statOS_2(otfcc_Font *font, const otfcc_Options *options) {
+	statOS_2UnicodeRanges(font, options);
+	statOS_2AverageWidth(font, options);
 }
 
 #define MAX_STAT_METRIC 4096
-static void caryll_stat_cff_widths(caryll_Font *font) {
+static void statCFFWidths(otfcc_Font *font) {
 	if (!font->glyf || !font->CFF_) return;
 	// Stat the most frequent character width
 	uint32_t *frequency;
@@ -472,7 +472,7 @@ static void caryll_stat_cff_widths(caryll_Font *font) {
 	FREE(frequency);
 }
 
-static void caryll_stat_cff_vorgs(caryll_Font *font) {
+static void statVORG(otfcc_Font *font) {
 	if (!font->glyf || !font->CFF_ || !font->vhea || !font->vmtx) return;
 	uint32_t *frequency;
 	NEW(frequency, MAX_STAT_METRIC);
@@ -514,7 +514,7 @@ static void caryll_stat_cff_vorgs(caryll_Font *font) {
 	font->VORG = vorg;
 }
 
-static void caryll_stat_LTSH(caryll_Font *font) {
+static void statLTSH(otfcc_Font *font) {
 	if (!font->glyf) return;
 	bool needLTSH = false;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++)
@@ -531,9 +531,9 @@ static void caryll_stat_LTSH(caryll_Font *font) {
 	font->LTSH = ltsh;
 }
 
-void otfcc_statFont(caryll_Font *font, const otfcc_Options *options) {
+void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyf && font->head) {
-		caryll_stat_glyf(font, options);
+		statGlyf(font, options);
 		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
 	}
 	if (font->head && font->CFF_) {
@@ -573,12 +573,12 @@ void otfcc_statFont(caryll_Font *font, const otfcc_Options *options) {
 			}
 		}
 
-		caryll_stat_cff_widths(font);
+		statCFFWidths(font);
 	}
 	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
 	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) {
-		caryll_stat_maxp(font);
+		statMaxp(font);
 		if (font->fpgm && font->fpgm->length > font->maxp->maxSizeOfInstructions) {
 			font->maxp->maxSizeOfInstructions = font->fpgm->length;
 		}
@@ -586,24 +586,21 @@ void otfcc_statFont(caryll_Font *font, const otfcc_Options *options) {
 			font->maxp->maxSizeOfInstructions = font->prep->length;
 		}
 	}
-	if (font->OS_2 && font->cmap && font->glyf) caryll_font_stat_OS_2(font, options);
+	if (font->OS_2 && font->cmap && font->glyf) statOS_2(font, options);
 	if (font->subtype == FONTTYPE_TTF) {
 		if (font->maxp) font->maxp->version = 0x00010000;
 	} else {
 		if (font->maxp) font->maxp->version = 0x00005000;
 	}
-	if (font->glyf && font->hhea) { caryll_font_stat_hmtx(font, options); }
-	if (font->glyf && font->vhea) {
-		caryll_font_stat_vmtx(font, options);
-		caryll_stat_cff_vorgs(font);
-	}
-	caryll_stat_LTSH(font);
+	if (font->glyf && font->hhea) { statHmtx(font, options); }
+	if (font->glyf && font->vhea) { statVmtx(font, options), statVORG(font); }
+	statLTSH(font);
 }
 
-void otfcc_unstatFont(caryll_Font *font, const otfcc_Options *options) {
-	if (font->hdmx) DELETE(table_delete_hdmx, font->hdmx);
-	if (font->hmtx) DELETE(table_delete_hmtx, font->hmtx);
-	if (font->VORG) DELETE(table_delete_VORG, font->VORG);
-	if (font->vmtx) DELETE(table_delete_vmtx, font->vmtx);
-	if (font->LTSH) DELETE(table_delete_LTSH, font->LTSH);
+void otfcc_unstatFont(otfcc_Font *font, const otfcc_Options *options) {
+	if (font->hdmx) DELETE(otfcc_deleteTablehdmx, font->hdmx);
+	if (font->hmtx) DELETE(otfcc_deleteTablehmtx, font->hmtx);
+	if (font->VORG) DELETE(otfcc_deleteTableVORG, font->VORG);
+	if (font->vmtx) DELETE(otfcc_deleteTablevmtx, font->vmtx);
+	if (font->LTSH) DELETE(otfcc_deleteTableLTSH, font->LTSH);
 }
