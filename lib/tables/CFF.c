@@ -425,7 +425,7 @@ static cff_IOutlineBuilder drawPass = {.setWidth = callback_draw_setwidth,
                                        .setMask = callback_draw_setmask,
                                        .getrand = callback_draw_getrand};
 
-static void buildOutline(glyphid_t i, cff_extract_context *context) {
+static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_Options *options) {
 	cff_File *f = context->cffFile;
 	glyf_Glyph *g = table_new_glyf_glyph();
 	context->glyphs->glyphs[i] = g;
@@ -461,14 +461,16 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 
 	// PASS 1 : Count contours
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass,
+	                 options);
 	NEW_N(g->contours, g->numberOfContours);
 
 	// PASS 2 : Count points
 	stack.index = 0;
 	stack.stem = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass,
+	                 options);
 	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
 		NEW_N(g->contours[j].points, g->contours[j].pointsCount);
 	}
@@ -483,7 +485,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context) {
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass, options);
 	g->numberOfContourMasks = bc.definedContourMasks;
 	g->numberOfHintMasks = bc.definedHintMasks;
 
@@ -606,7 +608,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc
 	FOR_TABLE('CFF ', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		cff_File *cffFile = cff_openStream(data, length);
+		cff_File *cffFile = cff_openStream(data, length, options);
 		context.cffFile = cffFile;
 		context.meta = table_new_CFF();
 
@@ -644,7 +646,7 @@ table_CFFAndGlyf table_read_cff_and_glyf(const caryll_Packet packet, const otfcc
 		glyphs->numberGlyphs = cffFile->char_strings.count;
 		NEW_N(glyphs->glyphs, glyphs->numberGlyphs);
 		for (glyphid_t j = 0; j < glyphs->numberGlyphs; j++) {
-			buildOutline(j, &context);
+			buildOutline(j, &context, options);
 		}
 
 		applyCffMatrix(context.meta, context.glyphs, head);

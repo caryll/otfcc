@@ -8,7 +8,8 @@ void otl_delete_gpos_single(otl_Subtable *subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                   const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);

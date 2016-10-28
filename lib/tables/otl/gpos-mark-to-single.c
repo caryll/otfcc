@@ -19,7 +19,8 @@ void otl_delete_gpos_markToSingle(otl_Subtable *_subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset) {
+otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+                                         const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);

@@ -29,7 +29,8 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 	}
 }
 
-otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                           const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);

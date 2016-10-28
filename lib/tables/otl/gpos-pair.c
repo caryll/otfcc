@@ -28,7 +28,8 @@ typedef struct {
 	UT_hash_handle hh;
 } pair_classifier_hash;
 
-otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                 const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);

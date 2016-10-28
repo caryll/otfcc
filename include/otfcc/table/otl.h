@@ -205,7 +205,7 @@ typedef struct {
 } table_OTL;
 
 otl_Subtable *table_read_otl_subtable(uint8_t *data, uint32_t tableLength, uint32_t subtableOffset,
-                                      otl_LookupType lookupType);
+                                      otl_LookupType lookupType, const otfcc_Options *options);
 
 table_OTL *table_new_otl();
 void table_delete_otl(MOVE table_OTL *table);

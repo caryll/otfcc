@@ -155,10 +155,10 @@ void cff_mergeCS2Special(caryll_Buffer *blob, uint8_t val);
 
 extern uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelect select, cff_Index *subr);
 void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack, void *outline,
-                      cff_IOutlineBuilder methods);
+                      cff_IOutlineBuilder methods, const otfcc_Options *options);
 
 // File
-extern cff_File *cff_openStream(uint8_t *data, uint32_t len);
+extern cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *options);
 extern void cff_close(cff_File *file);
 
 #endif

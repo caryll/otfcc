@@ -25,7 +25,8 @@ static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	}
 }
 
-otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                    const otfcc_Options *options) {
 	otl_Subtable *_subtable;
 	NEW(_subtable);
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);

@@ -60,7 +60,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 	}
 }
 
-static void parse_cff_bytecode(cff_File *cff) {
+static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 	uint32_t pos;
 	int32_t offset;
 
@@ -79,8 +79,9 @@ static void parse_cff_bytecode(cff_File *cff) {
 	cff_extract_Index(cff->raw_data, pos, &cff->top_dict);
 
 	/** LINT CFF FONTSET **/
+
 	if (cff->name.count != cff->top_dict.count)
-		fprintf(stderr, "[libcff] Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count, cff->top_dict.count);
+		logWarning("[libcff] Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count, cff->top_dict.count);
 
 	/* String INDEX */
 	pos = 4 + cff_lengthOfIndex(cff->name) + cff_lengthOfIndex(cff->top_dict);
@@ -107,7 +108,7 @@ static void parse_cff_bytecode(cff_File *cff) {
 			cff->cnt_glyph = cff->char_strings.count;
 		} else {
 			cff_empty_Index(&cff->char_strings);
-			fprintf(stderr, "[libcff] Bad CFF font: no any glyph data.\n");
+			logWarning("[libcff] Bad CFF font: no any glyph data.\n");
 		}
 
 		/* Encodings */
@@ -177,14 +178,14 @@ static void parse_cff_bytecode(cff_File *cff) {
 	}
 }
 
-cff_File *cff_openStream(uint8_t *data, uint32_t len) {
+cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *options) {
 	cff_File *file = calloc(1, sizeof(cff_File));
 
 	file->raw_data = calloc(len, sizeof(uint8_t));
 	memcpy(file->raw_data, data, len);
 	file->raw_length = len;
 	file->cnt_glyph = 0;
-	parse_cff_bytecode(file);
+	parse_cff_bytecode(file, options);
 
 	return file;
 }
@@ -303,14 +304,14 @@ static double callback_nopgetrand(void *context) {
 #define CHECK_STACK_TOP(op, n)                                                                                         \
 	{                                                                                                                  \
 		if (stack->index < n) {                                                                                        \
-			fprintf(stderr, "[libcff] Stack cannot provide enough parameters for %s (%04x). This "                     \
-			                "operation is ignored.\n",                                                                 \
-			        #op, op);                                                                                          \
+			logWarning("[libcff] Stack cannot provide enough parameters for %s (%04x). This "                          \
+			           "operation is ignored.\n",                                                                      \
+			           #op, op);                                                                                       \
 			break;                                                                                                     \
 		}                                                                                                              \
 	}
 void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack, void *outline,
-                      cff_IOutlineBuilder methods) {
+                      cff_IOutlineBuilder methods, const otfcc_Options *options) {
 	uint16_t gsubr_bias = compute_subr_bias(gsubr.count);
 	uint16_t lsubr_bias = compute_subr_bias(lsubr.count);
 	uint8_t *start = data;
@@ -770,7 +771,7 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						cff_parseOutline(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
 						                 lsubr.offset[lsubr_bias + subr + 1] - lsubr.offset[lsubr_bias + subr], gsubr,
-						                 lsubr, stack, outline, methods);
+						                 lsubr, stack, outline, methods, options);
 						break;
 					}
 					case op_callgsubr: {
@@ -778,7 +779,7 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						cff_parseOutline(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
 						                 gsubr.offset[gsubr_bias + subr + 1] - gsubr.offset[gsubr_bias + subr], gsubr,
-						                 lsubr, stack, outline, methods);
+						                 lsubr, stack, outline, methods, options);
 						break;
 					}
 				}

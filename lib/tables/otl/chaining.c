@@ -136,7 +136,8 @@ FAIL:
 	return NULL;
 }
 
-otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                  const otfcc_Options *options) {
 	uint16_t format = 0;
 	otl_Subtable *_subtable;
 	NEW(_subtable);
@@ -231,7 +232,7 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 		return _subtable;
 	}
 FAIL:
-	fprintf(stderr, "Unsupported format %d.\n", format);
+	logWarning("Unsupported format %d.\n", format);
 	DELETE(otl_delete_chaining, _subtable);
 	return NULL;
 }
@@ -290,7 +291,8 @@ FAIL:
 	return NULL;
 }
 
-otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
+otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                const otfcc_Options *options) {
 	uint16_t format = 0;
 	otl_Subtable *_subtable;
 	NEW(_subtable);
@@ -390,7 +392,7 @@ otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLeng
 		return _subtable;
 	}
 FAIL:
-	fprintf(stderr, "Unsupported format %d.\n", format);
+	logWarning("Unsupported format %d.\n", format);
 	DELETE(otl_delete_chaining, _subtable);
 	return NULL;
 }

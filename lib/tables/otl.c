@@ -27,7 +27,7 @@ typedef struct {
 
 void caryll_delete_lookup(otl_Lookup *lookup);
 otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                      otl_LookupType lookupType);
+                                      otl_LookupType lookupType, const otfcc_Options *options);
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump);
 static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Options *options, lookup_hash **lh);
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset);
@@ -244,7 +244,8 @@ FAIL:
 	return NULL;
 }
 
-static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_Lookup *lookup) {
+static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, otl_Lookup *lookup,
+                                  const otfcc_Options *options) {
 	lookup->flags = read_16u(data + lookup->_offset + 2);
 	lookup->subtableCount = read_16u(data + lookup->_offset + 4);
 	if (!lookup->subtableCount || tableLength < lookup->_offset + 6 + 2 * lookup->subtableCount) {
@@ -256,7 +257,7 @@ static void table_read_otl_lookup(font_file_pointer data, uint32_t tableLength, 
 	NEW_N(lookup->subtables, lookup->subtableCount);
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
-		lookup->subtables[j] = table_read_otl_subtable(data, tableLength, subtableOffset, lookup->type);
+		lookup->subtables[j] = table_read_otl_subtable(data, tableLength, subtableOffset, lookup->type, options);
 	}
 	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
 		lookup->type = 0;
@@ -306,7 +307,7 @@ table_OTL *table_read_otl(caryll_Packet packet, const otfcc_Options *options, ui
 		    options);
 		if (!otl) goto FAIL;
 		for (tableid_t j = 0; j < otl->lookupCount; j++) {
-			table_read_otl_lookup(data, length, otl->lookups[j]);
+			table_read_otl_lookup(data, length, otl->lookups[j], options);
 		}
 		return otl;
 	FAIL:
@@ -944,7 +945,7 @@ caryll_Buffer *table_build_otl(const table_OTL *table, const otfcc_Options *opti
 		break;
 #define LOOKUP_READER(llt, fn)                                                                                         \
 	case llt:                                                                                                          \
-		return fn(data, tableLength, subtableOffset);
+		return fn(data, tableLength, subtableOffset,options);
 #define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
 #define LOOKUP_PARSER(llt, parser)                                                                                     \
 	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, options, lh); }
@@ -999,7 +1000,7 @@ void caryll_delete_lookup(otl_Lookup *lookup) {
 }
 
 otl_Subtable *table_read_otl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                      otl_LookupType lookupType) {
+                                      otl_LookupType lookupType, const otfcc_Options *options) {
 	switch (lookupType) {
 		LOOKUP_READER(otl_type_gsub_single, otl_read_gsub_single);
 		LOOKUP_READER(otl_type_gsub_multiple, otl_read_gsub_multi);
