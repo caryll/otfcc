@@ -14,14 +14,14 @@ typedef struct {
 	uint32_t maxMemType42;
 	uint32_t minMemType1;
 	uint32_t maxMemType1;
-	caryll_GlyphOrder *post_name_map;
+	otfcc_GlyphOrder *post_name_map;
 } table_post;
 
-table_post *table_new_post();
-void table_delete_post(MOVE table_post *table);
-table_post *table_read_post(const caryll_Packet packet, const otfcc_Options *options);
-void table_dump_post(const table_post *table, json_value *root, const otfcc_Options *options);
-table_post *table_parse_post(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *table_build_post(const table_post *post, caryll_GlyphOrder *glyphorder, const otfcc_Options *options);
+table_post *otfcc_newTablepost();
+void otfcc_deleteTablepost(MOVE table_post *table);
+table_post *otfcc_readTablepost(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpTablepost(const table_post *table, json_value *root, const otfcc_Options *options);
+table_post *otfcc_parseTablepost(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildTablepost(const table_post *post, otfcc_GlyphOrder *glyphorder, const otfcc_Options *options);
 
 #endif

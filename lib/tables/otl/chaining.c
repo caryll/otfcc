@@ -486,7 +486,7 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 	return _st;
 }
 
-caryll_Buffer *caryll_build_chaining_coverage(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_chaining_coverage(const otl_Subtable *_subtable) {
 	const subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = (otl_ChainingRule *)&(subtable->rule);
 	tableid_t nBacktrack = rule->inputBegins;
@@ -520,7 +520,7 @@ caryll_Buffer *caryll_build_chaining_coverage(const otl_Subtable *_subtable) {
 	return bk_build_Block(root);
 }
 
-caryll_Buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_chaining_classes(const otl_Subtable *_subtable) {
 	const subtable_chaining *subtable = &(_subtable->chaining);
 
 	otl_Coverage *coverage;
@@ -592,11 +592,11 @@ caryll_Buffer *caryll_build_chaining_classes(const otl_Subtable *_subtable) {
 	return bk_build_Block(root);
 }
 
-caryll_Buffer *caryll_build_chaining(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_chaining(const otl_Subtable *_subtable) {
 	if (_subtable->chaining.type == otl_chaining_classified) {
-		return caryll_build_chaining_classes(_subtable);
+		return otfcc_build_chaining_classes(_subtable);
 	} else {
-		return caryll_build_chaining_coverage(_subtable);
+		return otfcc_build_chaining_coverage(_subtable);
 	}
 }
 
@@ -827,7 +827,7 @@ FAIL:;
 		return 0;
 	}
 }
-tableid_t caryll_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
+tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
                                          MODIFY size_t *lastOffset) {
 	tableid_t subtablesWritten = 0;
 	NEW(*subtableBuffers, lookup->subtableCount);
@@ -837,7 +837,7 @@ tableid_t caryll_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Bu
 		subtable_chaining *st = st0;
 		// Try to classify subtables after j into j
 		j += tryClassifyAround(lookup, j, &st);
-		caryll_Buffer *buf = caryll_build_chaining((otl_Subtable *)st);
+		caryll_Buffer *buf = otfcc_build_chaining((otl_Subtable *)st);
 		if (st != st0) { otl_delete_chaining((otl_Subtable *)st); }
 		(*subtableBuffers)[subtablesWritten] = buf;
 		*lastOffset += buf->size;

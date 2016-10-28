@@ -16,25 +16,25 @@ typedef struct {
 	uint32_t orderEntry;
 	UT_hash_handle hhID;
 	UT_hash_handle hhName;
-} caryll_GlyphOrderEntry;
+} otfcc_GlyphOrderEntry;
 
 typedef struct {
-	caryll_GlyphOrderEntry *byGID;
-	caryll_GlyphOrderEntry *byName;
-} caryll_GlyphOrder;
+	otfcc_GlyphOrderEntry *byGID;
+	otfcc_GlyphOrderEntry *byName;
+} otfcc_GlyphOrder;
 
-caryll_GlyphOrder *caryll_new_GlyphOrder();
-void caryll_delete_GlyphOrder(caryll_GlyphOrder *go);
-sds caryll_setGlyphOrderByGID(caryll_GlyphOrder *go, glyphid_t gid, sds name);
-glyphid_t caryll_setGlyphOrderByName(caryll_GlyphOrder *go, sds name, glyphid_t gid);
-void caryll_setGlyphOrderByNameWithOrder(caryll_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry);
-void caryll_orderGlyphs(caryll_GlyphOrder *go);
-caryll_GlyphOrder *caryll_parse_GlyphOrder(json_value *root, const otfcc_Options *options);
-bool gord_nameAFieldShared(caryll_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
-bool gord_consolidateHandle(caryll_GlyphOrder *go, otfcc_GlyphHandle *h);
-caryll_GlyphOrderEntry *caryll_lookupName(caryll_GlyphOrder *go, sds name);
+otfcc_GlyphOrder *otfcc_new_GlyphOrder();
+void otfcc_delete_GlyphOrder(otfcc_GlyphOrder *go);
+sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds name);
+glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
+void otfcc_setGlyphOrderByNameWithOrder(otfcc_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry);
+void otfcc_orderGlyphs(otfcc_GlyphOrder *go);
+otfcc_GlyphOrder *otfcc_parse_GlyphOrder(json_value *root, const otfcc_Options *options);
+bool gord_nameAFieldShared(otfcc_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
+bool gord_consolidateHandle(otfcc_GlyphOrder *go, otfcc_GlyphHandle *h);
+otfcc_GlyphOrderEntry *otfcc_lookupName(otfcc_GlyphOrder *go, sds name);
 
-otfcc_GlyphHandle gord_formIndexedHandle(caryll_GlyphOrder *go, glyphid_t gid);
-otfcc_GlyphHandle gord_formNamedHandle(caryll_GlyphOrder *go, const sds name);
+otfcc_GlyphHandle gord_formIndexedHandle(otfcc_GlyphOrder *go, glyphid_t gid);
+otfcc_GlyphHandle gord_formNamedHandle(otfcc_GlyphOrder *go, const sds name);
 
 #endif

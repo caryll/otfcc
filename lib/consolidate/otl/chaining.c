@@ -1,6 +1,6 @@
 #include "chaining.h"
 
-bool consolidate_chaining(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
+bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	if (subtable->type) {
 		logWarning("[Consolidate] Ignoring non-canonical chaining subtable.");

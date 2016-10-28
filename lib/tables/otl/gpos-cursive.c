@@ -80,7 +80,7 @@ otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Op
 	return _st;
 }
 
-caryll_Buffer *caryll_build_gpos_cursive(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
 	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 
 	bk_Block *root = bk_new_Block(b16, 1,                                                             // format

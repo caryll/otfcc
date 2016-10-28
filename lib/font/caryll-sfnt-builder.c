@@ -19,14 +19,14 @@ static uint32_t buf_checksum(caryll_Buffer *buffer) {
 		uint32_t *start = (uint32_t *)buffer->data;
 		uint32_t *end = start + ((actualLength + 3) & ~3) / sizeof(uint32_t);
 		while (start < end) {
-			sum += caryll_endian_convert32(*start++);
+			sum += otfcc_endian_convert32(*start++);
 		}
 	}
 	return sum;
 }
 
-static caryll_SFNTTableEntry *createSegment(uint32_t tag, caryll_Buffer *buffer) {
-	caryll_SFNTTableEntry *table;
+static otfcc_SFNTTableEntry *createSegment(uint32_t tag, caryll_Buffer *buffer) {
+	otfcc_SFNTTableEntry *table;
 	NEW(table);
 	table->tag = tag;
 	table->length = (uint32_t)buflen(buffer);
@@ -38,15 +38,15 @@ static caryll_SFNTTableEntry *createSegment(uint32_t tag, caryll_Buffer *buffer)
 		uint32_t *start = (uint32_t *)buffer->data;
 		uint32_t *end = start + ((table->length + 3) & ~3) / sizeof(uint32_t);
 		while (start < end) {
-			sum += caryll_endian_convert32(*start++);
+			sum += otfcc_endian_convert32(*start++);
 		}
 	}
 	table->checksum = sum;
 	return table;
 }
 
-caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, const otfcc_Options *options) {
-	caryll_SFNTBuilder *builder;
+otfcc_SFNTBuilder *otfcc_newSFNTBuilder(uint32_t header, const otfcc_Options *options) {
+	otfcc_SFNTBuilder *builder;
 	NEW(builder);
 	builder->count = 0;
 	builder->header = header;
@@ -55,9 +55,9 @@ caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, const otfcc_Options 
 	return builder;
 }
 
-void caryll_delete_SFNTBuilder(caryll_SFNTBuilder *builder) {
+void otfcc_delete_SFNTBuilder(otfcc_SFNTBuilder *builder) {
 	if (!builder) return;
-	caryll_SFNTTableEntry *item, *tmp;
+	otfcc_SFNTTableEntry *item, *tmp;
 	HASH_ITER(hh, builder->tables, item, tmp) {
 		HASH_DEL(builder->tables, item);
 		buffree(item->buffer);
@@ -66,9 +66,9 @@ void caryll_delete_SFNTBuilder(caryll_SFNTBuilder *builder) {
 	FREE(builder);
 }
 
-void caryll_pushTableToSfntBuilder(caryll_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer) {
+void otfcc_SFNTBuilder_pushTable(otfcc_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer) {
 	if (!builder) return;
-	caryll_SFNTTableEntry *item;
+	otfcc_SFNTTableEntry *item;
 	const otfcc_Options *options = builder->options;
 	HASH_FIND_INT(builder->tables, &tag, item);
 	if (!item) {
@@ -81,11 +81,11 @@ void caryll_pushTableToSfntBuilder(caryll_SFNTBuilder *builder, uint32_t tag, ca
 	}
 }
 
-static int byTag(caryll_SFNTTableEntry *a, caryll_SFNTTableEntry *b) {
+static int byTag(otfcc_SFNTTableEntry *a, otfcc_SFNTTableEntry *b) {
 	return (a->tag - b->tag);
 }
 
-caryll_Buffer *caryll_serializeSFNT(caryll_SFNTBuilder *builder) {
+caryll_Buffer *otfcc_SFNTBuilder_serialize(otfcc_SFNTBuilder *builder) {
 	caryll_Buffer *buffer = bufnew();
 	if (!builder) return buffer;
 	uint16_t nTables = HASH_COUNT(builder->tables);
@@ -96,7 +96,7 @@ caryll_Buffer *caryll_serializeSFNT(caryll_SFNTBuilder *builder) {
 	bufwrite16b(buffer, (nTables < 16 ? 3 : nTables < 32 ? 4 : nTables < 64 ? 5 : 6));
 	bufwrite16b(buffer, nTables * 16 - searchRange);
 
-	caryll_SFNTTableEntry *table;
+	otfcc_SFNTTableEntry *table;
 	size_t offset = 32 + nTables * 16;
 	size_t headOffset = offset;
 	HASH_SORT(builder->tables, byTag);

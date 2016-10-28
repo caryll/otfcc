@@ -212,7 +212,7 @@ otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable, const otf
 	return st;
 }
 
-caryll_Buffer *caryll_build_gpos_markToSingle(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_markToSingle(const otl_Subtable *_subtable) {
 	const subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
 
 	bk_Block *root = bk_new_Block(b16, 1,                                                          // format

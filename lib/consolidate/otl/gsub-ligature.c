@@ -1,6 +1,6 @@
 #include "gsub-ligature.h"
 
-bool consolidate_gsub_ligature(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_gsub_ligature(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                                const otfcc_Options *options) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	fontop_consolidateCoverage(font, subtable->to, options);

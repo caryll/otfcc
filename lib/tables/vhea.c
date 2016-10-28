@@ -1,16 +1,16 @@
 #include "support/util.h"
 #include "otfcc/table/vhea.h"
 
-table_vhea *table_new_vhea() {
+table_vhea *otfcc_newTablevhea() {
 	table_vhea *vhea;
 	NEW(vhea);
 	vhea->version = 0x11000;
 	return vhea;
 }
-void table_delete_vhea(MOVE table_vhea *table) {
+void otfcc_deleteTablevhea(MOVE table_vhea *table) {
 	FREE(table);
 }
-table_vhea *table_read_vhea(const caryll_Packet packet, const otfcc_Options *options) {
+table_vhea *otfcc_readTablevhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
 	;
 	FOR_TABLE('vhea', table) {
@@ -42,7 +42,7 @@ table_vhea *table_read_vhea(const caryll_Packet packet, const otfcc_Options *opt
 	}
 	return NULL;
 }
-void table_dump_vhea(const table_vhea *table, json_value *root, const otfcc_Options *options) {
+void otfcc_dumpTablevhea(const table_vhea *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
 	loggedStep("vhea") {
@@ -61,11 +61,11 @@ void table_dump_vhea(const table_vhea *table, json_value *root, const otfcc_Opti
 	}
 }
 
-table_vhea *table_parse_vhea(const json_value *root, const otfcc_Options *options) {
+table_vhea *otfcc_parseTablevhea(const json_value *root, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
-		vhea = table_new_vhea();
+		vhea = otfcc_newTablevhea();
 		if (!vhea) return NULL;
 		loggedStep("vhea") {
 			vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);
@@ -84,7 +84,7 @@ table_vhea *table_parse_vhea(const json_value *root, const otfcc_Options *option
 	return vhea;
 }
 
-caryll_Buffer *table_build_vhea(const table_vhea *vhea, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildTablevhea(const table_vhea *vhea, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!vhea) return buf;
 	bufwrite32b(buf, vhea->version);

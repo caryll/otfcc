@@ -234,7 +234,7 @@ otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const o
 	return st;
 }
 
-caryll_Buffer *caryll_build_gpos_markToLigature(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	const subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	bk_Block *root = bk_new_Block(b16, 1,                                                          // format
 	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage

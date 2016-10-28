@@ -4,7 +4,7 @@
 #include "sfnt.h"
 
 struct _caryll_font;
-typedef struct _caryll_font caryll_Font;
+typedef struct _caryll_font otfcc_Font;
 
 #include "otfcc/glyph-order.h"
 
@@ -33,10 +33,10 @@ typedef struct _caryll_font caryll_Font;
 #include "otfcc/table/BASE.h"
 #include "otfcc/table/otl.h"
 
-typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } caryll_font_subtype;
+typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
 struct _caryll_font {
-	caryll_font_subtype subtype;
+	otfcc_font_subtype subtype;
 
 	table_head *head;
 	table_hhea *hhea;
@@ -67,21 +67,21 @@ struct _caryll_font {
 	table_GDEF *GDEF;
 	table_BASE *BASE;
 
-	caryll_GlyphOrder *glyph_order;
+	otfcc_GlyphOrder *glyph_order;
 };
 
-caryll_Font *caryll_new_Font();
-void caryll_delete_Font(caryll_Font *font);
+otfcc_Font *otfcc_new_Font();
+void otfcc_delete_Font(otfcc_Font *font);
 
-void caryll_font_consolidate(caryll_Font *font, const otfcc_Options *options);
+void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
 
 typedef struct otfcc_IFontBuilder {
-	caryll_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
+	otfcc_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
 	void (*dispose)(struct otfcc_IFontBuilder *self);
 } otfcc_IFontBuilder;
 
 typedef struct otfcc_IFontSerializer {
-	void *(*serialize)(caryll_Font *font, const otfcc_Options *options);
+	void *(*serialize)(otfcc_Font *font, const otfcc_Options *options);
 	void (*dispose)(struct otfcc_IFontSerializer *self);
 } otfcc_IFontSerializer;
 

@@ -10,7 +10,7 @@ typedef struct {
 static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
 	return a->fromid - b->fromid;
 }
-bool consolidate_gsub_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                              const otfcc_Options *options) {
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	fontop_consolidateCoverage(font, subtable->from, options);

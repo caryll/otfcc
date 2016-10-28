@@ -17,10 +17,10 @@ typedef struct {
 	pos_t *leftSideBearing;
 } table_hmtx;
 
-void table_delete_hmtx(table_hmtx *table);
-table_hmtx *table_read_hmtx(const caryll_Packet packet, const otfcc_Options *options, table_hhea *hhea,
+void otfcc_deleteTablehmtx(table_hmtx *table);
+table_hmtx *otfcc_readTablehmtx(const otfcc_Packet packet, const otfcc_Options *options, table_hhea *hhea,
                             table_maxp *maxp);
-caryll_Buffer *table_build_hmtx(const table_hmtx *table, glyphid_t count_a, glyphid_t count_k,
+caryll_Buffer *otfcc_buildTablehmtx(const table_hmtx *table, glyphid_t count_a, glyphid_t count_k,
                                 const otfcc_Options *options);
 
 #endif

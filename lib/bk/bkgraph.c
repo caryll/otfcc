@@ -176,7 +176,7 @@ void bk_minimizeGraph(bk_Graph *f) {
 	}
 }
 
-static size_t caryll_bkblock_size(bk_Block *b) {
+static size_t otfcc_bkblock_size(bk_Block *b) {
 	size_t size = 0;
 	for (uint32_t j = 0; j < b->length; j++)
 		switch (b->cells[j].t) {
@@ -291,7 +291,7 @@ static bool try_untangle(bk_Graph *f, uint16_t passes) {
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
-			offsets[j + 1] = offsets[j] + caryll_bkblock_size(f->entries[j].block);
+			offsets[j + 1] = offsets[j] + otfcc_bkblock_size(f->entries[j].block);
 		} else {
 			offsets[j + 1] = offsets[j];
 		}
@@ -308,7 +308,7 @@ static bool try_untangle(bk_Graph *f, uint16_t passes) {
 	return didUntangle;
 }
 
-static void caryll_build_bkblock(caryll_Buffer *buf, bk_Block *b, size_t *offsets) {
+static void otfcc_build_bkblock(caryll_Buffer *buf, bk_Block *b, size_t *offsets) {
 	for (uint32_t j = 0; j < b->length; j++) {
 		switch (b->cells[j].t) {
 			case b8:
@@ -350,14 +350,14 @@ caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
-			offsets[j + 1] = offsets[j] + caryll_bkblock_size(f->entries[j].block);
+			offsets[j + 1] = offsets[j] + otfcc_bkblock_size(f->entries[j].block);
 		} else {
 			offsets[j + 1] = offsets[j];
 		}
 	}
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
-			caryll_build_bkblock(buf, f->entries[j].block, offsets);
+			otfcc_build_bkblock(buf, f->entries[j].block, offsets);
 		}
 	}
 	FREE(offsets);
@@ -371,7 +371,7 @@ size_t bk_estimateSizeOfGraph(bk_Graph *f) {
 	offsets[0] = 0;
 	for (uint32_t j = 0; j < f->length; j++) {
 		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
-			offsets[j + 1] = offsets[j] + caryll_bkblock_size(f->entries[j].block);
+			offsets[j + 1] = offsets[j] + otfcc_bkblock_size(f->entries[j].block);
 		} else {
 			offsets[j + 1] = offsets[j];
 		}

@@ -12,19 +12,19 @@ typedef struct {
 	uint32_t checksum;
 	caryll_Buffer *buffer;
 	UT_hash_handle hh;
-} caryll_SFNTTableEntry;
+} otfcc_SFNTTableEntry;
 
 typedef struct {
 	uint32_t count;
 	uint32_t header;
-	caryll_SFNTTableEntry *tables;
+	otfcc_SFNTTableEntry *tables;
 	const otfcc_Options *options;
-} caryll_SFNTBuilder;
+} otfcc_SFNTBuilder;
 
-caryll_SFNTBuilder *caryll_new_SFNTBuilder(uint32_t header, const otfcc_Options *options);
-void caryll_pushTableToSfntBuilder(caryll_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer);
-void caryll_delete_SFNTBuilder(caryll_SFNTBuilder *builder);
+otfcc_SFNTBuilder *otfcc_newSFNTBuilder(uint32_t header, const otfcc_Options *options);
+void otfcc_SFNTBuilder_pushTable(otfcc_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer);
+void otfcc_delete_SFNTBuilder(otfcc_SFNTBuilder *builder);
 
-caryll_Buffer *caryll_serializeSFNT(caryll_SFNTBuilder *builder);
+caryll_Buffer *otfcc_SFNTBuilder_serialize(otfcc_SFNTBuilder *builder);
 
 #endif

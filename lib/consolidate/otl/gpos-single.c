@@ -10,7 +10,7 @@ static int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gpos_single(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                              const otfcc_Options *options) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	fontop_consolidateCoverage(font, subtable->coverage, options);

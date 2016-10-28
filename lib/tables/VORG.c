@@ -1,12 +1,12 @@
 #include "support/util.h"
 #include "otfcc/table/VORG.h"
 
-void table_delete_VORG(table_VORG *vorg) {
+void otfcc_deleteTableVORG(table_VORG *vorg) {
 	if (vorg) FREE(vorg->entries);
 	FREE(vorg);
 }
 
-table_VORG *table_read_VORG(const caryll_Packet packet, const otfcc_Options *options) {
+table_VORG *otfcc_readTableVORG(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('VORG', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -30,7 +30,7 @@ table_VORG *table_read_VORG(const caryll_Packet packet, const otfcc_Options *opt
 	return NULL;
 }
 
-caryll_Buffer *table_build_VORG(const table_VORG *table, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildTableVORG(const table_VORG *table, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
 	if (!table) return buf;
 	bufwrite16b(buf, 1);

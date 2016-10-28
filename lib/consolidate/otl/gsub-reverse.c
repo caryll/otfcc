@@ -11,7 +11,7 @@ static int by_from_id(gsub_single_map_hash *a, gsub_single_map_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_reverse(caryll_Font *font, table_OTL *table, otl_Subtable *_subtable,
+bool consolidate_gsub_reverse(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                               const otfcc_Options *options) {
 	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	for (tableid_t j = 0; j < subtable->matchCount; j++) {

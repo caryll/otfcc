@@ -261,7 +261,7 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	return cov;
 }
 
-bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
+bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
@@ -314,7 +314,7 @@ bk_Block *caryll_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 	FREE(pairCounts);
 	return root;
 }
-bk_Block *caryll_build_gpos_pair_classes(const otl_Subtable *_subtable) {
+bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
 	uint16_t format2 = 0;
@@ -347,9 +347,9 @@ bk_Block *caryll_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 	DELETE(otl_delete_Coverage, cov);
 	return root;
 }
-caryll_Buffer *caryll_build_gpos_pair(const otl_Subtable *_subtable) {
-	bk_Block *format1 = caryll_build_gpos_pair_individual(_subtable);
-	bk_Block *format2 = caryll_build_gpos_pair_classes(_subtable);
+caryll_Buffer *otfcc_build_gpos_pair(const otl_Subtable *_subtable) {
+	bk_Block *format1 = otfcc_build_gpos_pair_individual(_subtable);
+	bk_Block *format2 = otfcc_build_gpos_pair_classes(_subtable);
 	bk_Graph *g1 = bk_newGraphFromRootBlock(format1);
 	bk_Graph *g2 = bk_newGraphFromRootBlock(format2);
 	bk_minimizeGraph(g1);

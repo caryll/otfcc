@@ -8,10 +8,10 @@
 //   2. Replace all glyph IDs into glyph names. Note all glyph references with
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
-static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) {
+static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
-	caryll_GlyphOrder *glyph_order = caryll_new_GlyphOrder();
-	caryll_GlyphOrder *aglfn = caryll_new_GlyphOrder();
+	otfcc_GlyphOrder *glyph_order = otfcc_new_GlyphOrder();
+	otfcc_GlyphOrder *aglfn = otfcc_new_GlyphOrder();
 	aglfn_setupNames(aglfn);
 	glyphid_t numGlyphs = font->glyf->numberGlyphs;
 	sds prefix;
@@ -24,7 +24,7 @@ static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) 
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
 		if (font->glyf->glyphs[j]->name) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, font->glyf->glyphs[j]->name);
-			sds sharedName = caryll_setGlyphOrderByGID(glyph_order, j, gname);
+			sds sharedName = otfcc_setGlyphOrderByGID(glyph_order, j, gname);
 			sdsfree(font->glyf->glyphs[j]->name);
 			font->glyf->glyphs[j]->name = sharedName;
 		}
@@ -32,10 +32,10 @@ static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) 
 
 	// pass 2: Map to `post` names
 	if (font->post != NULL && font->post->post_name_map != NULL) {
-		caryll_GlyphOrderEntry *s, *tmp;
+		otfcc_GlyphOrderEntry *s, *tmp;
 		HASH_ITER(hhID, font->post->post_name_map->byGID, s, tmp) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, s->name);
-			caryll_setGlyphOrderByGID(glyph_order, s->gid, gname);
+			otfcc_setGlyphOrderByGID(glyph_order, s->gid, gname);
 		}
 	}
 
@@ -50,7 +50,7 @@ static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) 
 			} else {
 				name = sdscatprintf(sdsempty(), "%s%s", prefix, name);
 			}
-			caryll_setGlyphOrderByGID(glyph_order, s->glyph.index, name);
+			otfcc_setGlyphOrderByGID(glyph_order, s->glyph.index, name);
 		}
 	}
 
@@ -62,15 +62,15 @@ static void caryll_name_glyphs(caryll_Font *font, const otfcc_Options *options) 
 		} else {
 			name = sdscatfmt(sdsempty(), "%s.notdef", prefix);
 		}
-		caryll_setGlyphOrderByGID(glyph_order, j, name);
+		otfcc_setGlyphOrderByGID(glyph_order, j, name);
 	}
 
-	caryll_delete_GlyphOrder(aglfn);
+	otfcc_delete_GlyphOrder(aglfn);
 	sdsfree(prefix);
 	font->glyph_order = glyph_order;
 }
 
-static void caryll_name_glyf(caryll_Font *font) {
+static void nameGlyphs(otfcc_Font *font) {
 	if (font->glyph_order != NULL && font->glyf != NULL) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			glyf_Glyph *g = font->glyf->glyphs[j];
@@ -81,7 +81,7 @@ static void caryll_name_glyf(caryll_Font *font) {
 	}
 }
 
-static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_OTL *table) {
+static void unconsolidate_chaining(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) {
 	tableid_t totalRules = 0;
 	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 		if (!lookup->subtables[j]) continue;
@@ -116,7 +116,7 @@ static void unconsolidate_chaining(caryll_Font *font, otl_Lookup *lookup, table_
 	lookup->subtables = newsts;
 }
 
-static void expandChain(caryll_Font *font, otl_Lookup *lookup, table_OTL *table) {
+static void expandChain(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) {
 	switch (lookup->type) {
 		case otl_type_gsub_chaining:
 		case otl_type_gpos_chaining:
@@ -127,7 +127,7 @@ static void expandChain(caryll_Font *font, otl_Lookup *lookup, table_OTL *table)
 	}
 }
 
-static void expandChainingLookups(caryll_Font *font) {
+static void expandChainingLookups(otfcc_Font *font) {
 	if (font->GSUB) {
 		for (uint32_t j = 0; j < font->GSUB->lookupCount; j++) {
 			otl_Lookup *lookup = font->GSUB->lookups[j];
@@ -142,7 +142,7 @@ static void expandChainingLookups(caryll_Font *font) {
 	}
 }
 
-static void merge_hmtx(caryll_Font *font) {
+static void mergeHmtx(otfcc_Font *font) {
 	// Merge hmtx table into glyf.
 	if (font->hhea && font->hmtx && font->glyf) {
 		uint32_t count_a = font->hhea->numberOfMetrics;
@@ -151,7 +151,7 @@ static void merge_hmtx(caryll_Font *font) {
 		}
 	}
 }
-static void merge_vmtx(caryll_Font *font) {
+static void mergeVmtx(otfcc_Font *font) {
 	// Merge vmtx table into glyf.
 	if (font->vhea && font->vmtx && font->glyf) {
 		uint32_t count_a = font->vhea->numOfLongVerMetrics;
@@ -177,21 +177,21 @@ static void merge_vmtx(caryll_Font *font) {
 		}
 	}
 }
-static void merge_LTSH(caryll_Font *font) {
+static void mergeLTSH(otfcc_Font *font) {
 	if (font->glyf && font->LTSH) {
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs && j < font->LTSH->numGlyphs; j++) {
 			font->glyf->glyphs[j]->yPel = font->LTSH->yPels[j];
 		}
 	}
 }
-void otfcc_unconsolidateFont(caryll_Font *font, const otfcc_Options *options) {
+void otfcc_unconsolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// Merge metrics
-	merge_hmtx(font);
-	merge_vmtx(font);
-	merge_LTSH(font);
+	mergeHmtx(font);
+	mergeVmtx(font);
+	mergeLTSH(font);
 	// expand chaining lookups
 	expandChainingLookups(font);
 	// Name glyphs
-	caryll_name_glyphs(font, options);
-	caryll_name_glyf(font);
+	createGlyphOrder(font, options);
+	nameGlyphs(font);
 }

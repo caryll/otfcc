@@ -11,11 +11,11 @@ typedef struct {
 } cmap_Entry;
 typedef cmap_Entry *table_cmap;
 
-void table_delete_cmap(MOVE table_cmap *table);
-table_cmap *table_read_cmap(const caryll_Packet packet, const otfcc_Options *options);
-void table_dump_cmap(const table_cmap *table, json_value *root, const otfcc_Options *options);
-table_cmap *table_parse_cmap(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *table_build_cmap(const table_cmap *cmap, const otfcc_Options *options);
+void otfcc_deleteTablecmap(MOVE table_cmap *table);
+table_cmap *otfcc_readTablecmap(const otfcc_Packet packet, const otfcc_Options *options);
+void otfcc_dumpTablecmap(const table_cmap *table, json_value *root, const otfcc_Options *options);
+table_cmap *otfcc_parseTablecmap(const json_value *root, const otfcc_Options *options);
+caryll_Buffer *otfcc_buildTablecmap(const table_cmap *cmap, const otfcc_Options *options);
 
 void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid);
 void table_encodeCmapByName(table_cmap *map, int c, sds name);
