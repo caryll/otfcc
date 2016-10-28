@@ -45,7 +45,7 @@ static void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name)
 	h->name = sdsdup(name);
 }
 
-const struct otfcc_HandlePackage otfcc_pHandle = {
+const struct otfcc_HandlePackage otfcc_pkgHandle = {
     // export them
     .empty = handle_new,
     .copy = handle_copy,

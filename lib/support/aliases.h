@@ -29,7 +29,7 @@ typedef uint8_t *font_file_pointer;
 
 // alias "package" otfcc_pHandle to Handle
 #include "otfcc/handle.h"
-#define Handle otfcc_pHandle
+#define Handle otfcc_pkgHandle
 typedef otfcc_GlyphHandle glyph_handle;
 typedef otfcc_FDHandle fd_handle;
 typedef otfcc_LookupHandle lookup_handle;
