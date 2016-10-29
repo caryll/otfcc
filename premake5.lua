@@ -1,4 +1,5 @@
 require "dep/premake-modules/xcode-alt"
+require "dep/premake-modules/ninja"
 
 MAIN_VER = '0'
 SECONDARY_VER = '4'
@@ -57,6 +58,12 @@ workspace "otfcc"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
+	filter "action:ninja"
+		location "build/ninja"
+	filter {"system:windows", "action:ninja"}
+		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
+		flags { "StaticRuntime" }
+		includedirs { "dep/polyfill-msvc" }
 	filter "action:gmake"
 		location "build/gmake"
 	filter "action:xcode4"
@@ -80,6 +87,11 @@ project "deps"
 		"dep/extern/**.c"
 	}
 	filter "action:vs*"
+	files {
+		"dep/polyfill-msvc/**.h",
+		"dep/polyfill-msvc/**.c"
+	}
+	filter {"system:windows", "action:ninja"}
 	files {
 		"dep/polyfill-msvc/**.h",
 		"dep/polyfill-msvc/**.c"

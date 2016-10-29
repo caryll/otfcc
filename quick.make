@@ -6,6 +6,8 @@ mf-vs2015 :
 	@$(PREMAKE5) vs2015
 mf-gmake :
 	@$(PREMAKE5) gmake
+mf-ninja :
+	@$(PREMAKE5) ninja
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
@@ -31,6 +33,11 @@ clang-cl-release-x64 : mf-vs2015
 	@cmd /c _vcbuild64.bat /property:Configuration=Release
 clang-cl-release-x86 : mf-vs2015
 	@cmd /c _vcbuild32.bat /property:Configuration=Release /property:Platform=win32
+
+ninja-win-x64 : mf-ninja
+	@cmd /c _vcbuildNinja.bat otfccdump_Release_x64 otfccbuild_Release_x64
+ninja-win-x86 : mf-ninja
+	@cmd /c _vcbuildNinja.bat otfccdump_Release_x32 otfccbuild_Release_x32
 
 TEST_OPCODES = abs add div drop dup eq.(mul) exch ifelse index.(roll,drop) mul neg not or.(mul) put.get roll.(drop) sqrt.(mul) sub
 TEST_OPCODES_TARGETS = $(foreach op,$(TEST_OPCODES),cffopcodetest-$(op))
