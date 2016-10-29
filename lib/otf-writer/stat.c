@@ -599,9 +599,9 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 }
 
 void otfcc_unstatFont(otfcc_Font *font, const otfcc_Options *options) {
-	if (font->hdmx) DELETE(otfcc_deleteHdmx, font->hdmx);
-	if (font->hmtx) DELETE(otfcc_deleteHmtx, font->hmtx);
-	if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
-	if (font->vmtx) DELETE(otfcc_deleteVmtx, font->vmtx);
-	if (font->LTSH) DELETE(otfcc_deleteLTSH, font->LTSH);
+	otfcc_deleteFontTable(font, 'hdmx');
+	otfcc_deleteFontTable(font, 'hmtx');
+	otfcc_deleteFontTable(font, 'VORG');
+	otfcc_deleteFontTable(font, 'vmtx');
+	otfcc_deleteFontTable(font, 'LTSH');
 }
