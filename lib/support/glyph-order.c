@@ -36,7 +36,7 @@ static sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds nam
 		if (t) {
 			// The name is already in-use.
 			sdsfree(name);
-			name = sdscatprintf(sdsempty(), "gid%d", gid);
+			name = sdscatprintf(sdsempty(), "$$gid%d", gid);
 		}
 		NEW(s);
 		s->gid = gid;
@@ -48,23 +48,20 @@ static sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds nam
 }
 
 // Register a name->gid map
-static glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gid) {
+static bool otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyphid_t gid) {
 	otfcc_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhName, go->byName, name, sdslen(name), s);
 	if (s) {
-		sdsfree(name);
-		otfcc_GlyphOrderEntry *t = NULL;
-		HASH_FIND(hhID, go->byGID, &gid, sizeof(glyphid_t), t);
-		if (!t) { HASH_ADD(hhID, go->byGID, gid, sizeof(glyphid_t), s); }
-		return s->gid;
+		// name is already mapped to a glyph
+		// reject this naming suggestion
+		return false;
 	} else {
 		NEW(s);
-		fprintf(stderr, "%d -> %s\n", gid, name);
 		s->gid = gid;
 		s->name = name;
 		HASH_ADD(hhID, go->byGID, gid, sizeof(glyphid_t), s);
 		HASH_ADD(hhName, go->byName, name[0], sdslen(s->name), s);
-		return s->gid;
+		return true;
 	}
 }
 

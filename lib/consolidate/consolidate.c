@@ -246,10 +246,24 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 			if (glyfName) {
 				name = sdsdup(glyfName);
 			} else {
-				name = sdscatprintf(sdsempty(), "__gid%d", j);
+				name = sdscatprintf(sdsempty(), "$$gid%d", j);
 				font->glyf->glyphs[j]->name = sdsdup(name);
 			}
-			GlyphOrder.setByName(go, name, j);
+			if (!GlyphOrder.setByName(go, name, j)) {
+				uint32_t suffix = 2;
+				bool success;
+				do {
+					sds newname = sdscatfmt(sdsempty(), "%s_%u", name, suffix);
+					success = GlyphOrder.setByName(go, newname, j);
+					if (!success) {
+						sdsfree(newname);
+					} else {
+						sdsfree(font->glyf->glyphs[j]->name);
+						font->glyf->glyphs[j]->name = newname;
+					}
+				} while (!success);
+				sdsfree(name);
+			}
 		}
 		font->glyph_order = go;
 	}

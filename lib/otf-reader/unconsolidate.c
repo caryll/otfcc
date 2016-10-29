@@ -8,8 +8,7 @@
 //   2. Replace all glyph IDs into glyph names. Note all glyph references with
 //      same name whare one unique string entity stored in font->glyph_order.
 //      (Separate?)
-static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
-	if (!font->glyf) return;
+static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_GlyphOrder *glyph_order = GlyphOrder.create();
 	otfcc_GlyphOrder *aglfn = GlyphOrder.create();
 	aglfn_setupNames(aglfn);
@@ -67,17 +66,16 @@ static void createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 
 	GlyphOrder.free(aglfn);
 	sdsfree(prefix);
-	font->glyph_order = glyph_order;
+	return glyph_order;
 }
 
-static void nameGlyphs(otfcc_Font *font) {
-	if (font->glyph_order != NULL && font->glyf != NULL) {
-		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			glyf_Glyph *g = font->glyf->glyphs[j];
-			sds glyphName = NULL;
-			GlyphOrder.nameAField_Shared(font->glyph_order, j, &glyphName);
-			g->name = sdsdup(glyphName);
-		}
+static void nameGlyphs(otfcc_Font *font, otfcc_GlyphOrder *gord) {
+	if (!gord) return;
+	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		glyf_Glyph *g = font->glyf->glyphs[j];
+		sds glyphName = NULL;
+		GlyphOrder.nameAField_Shared(gord, j, &glyphName);
+		g->name = sdsdup(glyphName);
 	}
 }
 
@@ -192,6 +190,9 @@ void otfcc_unconsolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// expand chaining lookups
 	expandChainingLookups(font);
 	// Name glyphs
-	createGlyphOrder(font, options);
-	nameGlyphs(font);
+	if (font->glyf) {
+		otfcc_GlyphOrder *gord = createGlyphOrder(font, options);
+		nameGlyphs(font, gord);
+		GlyphOrder.free(gord);
+	}
 }

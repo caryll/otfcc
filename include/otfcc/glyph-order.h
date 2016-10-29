@@ -27,7 +27,7 @@ struct otfcc_GlyphOrderPackage {
 	otfcc_GlyphOrder *(*create)();
 	void (*free)(otfcc_GlyphOrder *go);
 	sds (*setByGID)(otfcc_GlyphOrder *go, glyphid_t gid, sds name);
-	glyphid_t (*setByName)(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
+	bool (*setByName)(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
 	bool (*nameAField_Shared)(otfcc_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
 	bool (*consolidateHandle)(otfcc_GlyphOrder *go, otfcc_GlyphHandle *h);
 };
