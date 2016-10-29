@@ -42,7 +42,7 @@ workspace "otfcc"
 	platforms { "x32", "x64" }
 	
 	location "build"
-	includedirs { "include", "dep", "lib" }
+	includedirs { "include" }
 	
 	defines {
 		'_CARYLL_USE_PRE_SERIALIZED',
@@ -92,7 +92,7 @@ project "libotfcc"
 	cbuildoptions()
 
 	links { "deps" }
-	
+	includedirs{ "lib" }
 	filter "action:gmake"
 		links "m"
 	filter {}
