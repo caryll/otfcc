@@ -174,7 +174,7 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
                                         otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
                                         const otfcc_Options *options) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
-		loggedStep(lookup->name) {
+		loggedStep("%s", lookup->name) {
 			for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 				if (lookup->subtables[j]) {
 					bool subtableRemoved;
