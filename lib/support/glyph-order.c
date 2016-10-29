@@ -59,6 +59,7 @@ static glyphid_t otfcc_setGlyphOrderByName(otfcc_GlyphOrder *go, sds name, glyph
 		return s->gid;
 	} else {
 		NEW(s);
+		fprintf(stderr, "%d -> %s\n", gid, name);
 		s->gid = gid;
 		s->name = name;
 		HASH_ADD(hhID, go->byGID, gid, sizeof(glyphid_t), s);

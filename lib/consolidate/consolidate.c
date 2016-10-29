@@ -29,9 +29,9 @@ static int by_stem_pos(const void *_a, const void *_b) {
 static int by_mask_pointindex(const void *a, const void *b) {
 	return ((glyf_PostscriptHintMask *)a)->pointsBefore - ((glyf_PostscriptHintMask *)b)->pointsBefore;
 }
-void otfcc_consolidateTableglyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
+void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
 	// The name field of glyf_Glyph will not be consolidated with glyphOrder
-	// Consolidate references
+	// Remove empty contours
 	shapeid_t nContoursConsolidated = 0;
 	shapeid_t skip = 0;
 	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
@@ -44,6 +44,8 @@ void otfcc_consolidateTableglyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Op
 		}
 	}
 	g->numberOfContours = nContoursConsolidated;
+
+	// Consolidate references
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
 		if (!GlyphOrder.consolidateHandle(font->glyph_order, &g->references[j].glyph)) {
@@ -147,7 +149,7 @@ void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyph_order || !font->glyf) return;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]) {
-			otfcc_consolidateTableglyph(font->glyf->glyphs[j], font, options);
+			consolidateGlyph(font->glyf->glyphs[j], font, options);
 		} else {
 			font->glyf->glyphs[j] = otfcc_newGlyf_glyph();
 		}
@@ -249,6 +251,7 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 			}
 			GlyphOrder.setByName(go, name, j);
 		}
+		font->glyph_order = go;
 	}
 	loggedStep("glyf") {
 		consolidateGlyf(font, options);
