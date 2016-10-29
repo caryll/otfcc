@@ -1,5 +1,7 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
+
 #include "unconsolidate.h"
 
 static otfcc_font_subtype decideFontSubtypeOTF(otfcc_SplineFontContainer *sfnt, uint32_t index) {

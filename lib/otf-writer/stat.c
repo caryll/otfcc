@@ -1,6 +1,7 @@
+#include "stat.h"
+
 #include <time.h>
 #include "support/util.h"
-#include "otfcc/font.h"
 
 // Stating
 // Calculate necessary values for SFNT

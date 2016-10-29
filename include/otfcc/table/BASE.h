@@ -25,10 +25,4 @@ typedef struct {
 	otl_BaseAxis *vertical;
 } table_BASE;
 
-void otfcc_deleteBASE(MOVE table_BASE *base);
-table_BASE *otfcc_readBASE(const otfcc_Packet packet, const otfcc_Options *options);
-void otfcc_dumpBASE(const table_BASE *base, json_value *root, const otfcc_Options *options);
-table_BASE *otfcc_parseBASE(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *otfcc_buildBASE(const table_BASE *base, const otfcc_Options *options);
-
 #endif

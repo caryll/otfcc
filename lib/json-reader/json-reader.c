@@ -1,5 +1,6 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
 
 static otfcc_font_subtype otfcc_decideFontSubtypeFromJson(json_value *root) {
 	if (json_obj_get_type(root, "CFF_", json_object) != NULL) {

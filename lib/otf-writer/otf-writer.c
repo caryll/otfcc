@@ -1,5 +1,6 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
 #include "otfcc/sfnt-builder.h"
 #include "stat.h"
 

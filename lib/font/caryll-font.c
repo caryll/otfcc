@@ -1,5 +1,6 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
 #include "otfcc/sfnt-builder.h"
 
 otfcc_Font *otfcc_newFont() {

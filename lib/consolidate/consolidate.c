@@ -1,5 +1,6 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
 
 #include "otl/gsub-single.h"
 #include "otl/gsub-multi.h"
