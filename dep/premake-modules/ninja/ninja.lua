@@ -197,7 +197,7 @@ function ninja.generateProjectCfg(cfg)
 
 	local all_cflags = buildopt .. cflags .. warnings .. defines .. includes .. forceincludes
 	local all_cxxflags = buildopt .. cflags .. cppflags .. cxxflags .. warnings .. defines .. includes .. forceincludes
-	local all_ldflags = buildopt .. ldflags
+	local all_ldflags = ldflags
 
 	local obj_dir = project.getrelative(cfg.workspace, cfg.objdir)
 

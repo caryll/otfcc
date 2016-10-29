@@ -10,6 +10,8 @@ function cbuildoptions()
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter { "action:vs2015", "platforms:x64" }
 		buildoptions {'-Wshorten-64-to-32'}
+	filter {"system:windows", "action:ninja"}
+		buildoptions { '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter "action:xcode4"
@@ -20,6 +22,8 @@ end
 function externcbuildoptions()
 	filter "action:vs2015"
 		buildoptions { '/MP', '-Qunused-arguments', '-Wno-unused-const-variable' }
+	filter {"system:windows", "action:ninja"}
+		buildoptions { '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake"
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter "action:xcode4"
@@ -30,6 +34,8 @@ end
 function cxxbuildoptions()
 	filter "action:vs2015"
 		buildoptions { '/MP', '-Qunused-arguments' }
+	filter {"system:windows", "action:ninja"}
+		buildoptions { '-Qunused-arguments' }
 	filter "action:gmake"
 		buildoptions { '-std=gnu++11' }
 	filter "action:xcode4"
@@ -152,8 +158,6 @@ project "otfccbuild"
 	
 	filter "action:gmake"
 		links "m"
-	filter {}
-
 	filter "action:xcode4"
 		links "m"
 	filter {}
