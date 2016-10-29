@@ -69,7 +69,7 @@ static void vbkpushitems(bk_Block *b, bk_CellType type0, va_list ap) {
 	}
 }
 
-bk_Block *bk_new_Block(bk_CellType type0, ...) {
+bk_Block *bk_new_Block(int type0, ...) {
 	va_list ap;
 	va_start(ap, type0);
 	bk_Block *b = _bkblock_init();
@@ -78,7 +78,7 @@ bk_Block *bk_new_Block(bk_CellType type0, ...) {
 	return b;
 }
 
-bk_Block *bk_push(bk_Block *b, bk_CellType type0, ...) {
+bk_Block *bk_push(bk_Block *b, int type0, ...) {
 	va_list ap;
 	va_start(ap, type0);
 	vbkpushitems(b, type0, ap);
