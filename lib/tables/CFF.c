@@ -1211,6 +1211,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	cff_Dict *top = cff_make_fd_dict(cff, &stringHash);
 	caryll_Buffer *t = cff_build_Dict(top);
 	cff_delete_Dict(top);
+
 	// cff top PRIVATE
 	cff_Dict *top_pd = cff_make_private_dict(cff->privateDict);
 	caryll_Buffer *p = cff_build_Dict(top_pd);
