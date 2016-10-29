@@ -252,16 +252,17 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 			if (!GlyphOrder.setByName(go, name, j)) {
 				logWarning("[Consolidate] Glyph name %s is already in use.", name);
 				uint32_t suffix = 2;
-				bool success;
+				bool success = false;
 				do {
 					sds newname = sdscatfmt(sdsempty(), "%s_%u", name, suffix);
 					success = GlyphOrder.setByName(go, newname, j);
 					if (!success) {
 						sdsfree(newname);
+						suffix += 1;
 					} else {
 						logWarning("[Consolidate] Glyph %s is renamed into %s.", name, newname);
 						sdsfree(font->glyf->glyphs[j]->name);
-						font->glyf->glyphs[j]->name = newname;
+						font->glyf->glyphs[j]->name = sdsdup(newname);
 					}
 				} while (!success);
 				sdsfree(name);
