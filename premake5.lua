@@ -11,11 +11,11 @@ function cbuildoptions()
 	filter { "action:vs2015", "platforms:x64" }
 		buildoptions {'-Wshorten-64-to-32'}
 	filter {"system:windows", "action:ninja"}
-		buildoptions { '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
+		buildoptions { '/Wall', '-Wextra', '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake"
-		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		buildoptions { '-std=c11', '-Wall', '-Wno-multichar' }
 	filter "action:xcode4"
-		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		buildoptions { '-std=c11', '-Wall', '-Wno-multichar' }
 	filter {}
 end
 
@@ -25,9 +25,9 @@ function externcbuildoptions()
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake"
-		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
+		buildoptions { '-std=c11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter "action:xcode4"
-		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
+		buildoptions { '-std=c11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
 	filter {}
 end
 
@@ -37,9 +37,9 @@ function cxxbuildoptions()
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '-Qunused-arguments' }
 	filter "action:gmake"
-		buildoptions { '-std=gnu++11' }
+		buildoptions { '-std=c++11' }
 	filter "action:xcode4"
-		buildoptions { '-std=gnu++11' }
+		buildoptions { '-std=c++11' }
 	filter {}
 end
 
