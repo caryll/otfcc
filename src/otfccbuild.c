@@ -2,11 +2,9 @@
 #include "otfcc/font.h"
 #include "otfcc/sfnt-builder.h"
 
+#include "aliases.h"
 #include "platform.h"
 #include "stopwatch.h"
-
-#include <getopt.h>
-#include "aliases.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
