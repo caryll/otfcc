@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
+void otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
@@ -16,7 +16,7 @@ void table_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 		s->glyph = Handle.fromIndex(gid);
 	}
 }
-void table_encodeCmapByName(table_cmap *map, int c, sds name) {
+void otfcc_encodeCmapByName(table_cmap *map, int c, sds name) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
@@ -29,6 +29,26 @@ void table_encodeCmapByName(table_cmap *map, int c, sds name) {
 		Handle.dispose(&s->glyph);
 		s->glyph = Handle.fromName(name);
 	}
+}
+void otfcc_unmapCmap(table_cmap *map, int c) {
+	cmap_Entry *s;
+	HASH_FIND_INT(*map, &c, s);
+	if (s) {
+		Handle.dispose(&s->glyph);
+		HASH_DEL(*(map), s);
+		FREE(s);
+	}
+}
+
+void otfcc_deleteCmap(table_cmap *table) {
+	cmap_Entry *s, *tmp;
+	HASH_ITER(hh, *(table), s, tmp) {
+		// delete and free all cmap entries
+		Handle.dispose(&s->glyph);
+		HASH_DEL(*(table), s);
+		FREE(s);
+	}
+	FREE(table);
 }
 
 static void readFormat12(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
@@ -40,7 +60,7 @@ static void readFormat12(font_file_pointer start, uint32_t lengthLimit, table_cm
 		uint32_t endCode = read_32u(start + 16 + 12 * j + 4);
 		uint32_t startGID = read_32u(start + 16 + 12 * j + 8);
 		for (uint32_t c = startCode; c <= endCode; c++) {
-			table_encodeCmapByIndex(map, c, (c - startCode) + startGID);
+			otfcc_encodeCmapByIndex(map, c, (c - startCode) + startGID);
 		}
 	}
 }
@@ -58,14 +78,14 @@ static void readFormat4(font_file_pointer start, uint32_t lengthLimit, table_cma
 		if (idRangeOffset == 0) {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint16_t gid = (c + idDelta) & 0xFFFF;
-				table_encodeCmapByIndex(map, c, gid);
+				otfcc_encodeCmapByIndex(map, c, gid);
 			}
 		} else {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
 				if (glyphOffset + 2 > lengthLimit) continue; // ignore this encoding slot when o-o-r
 				uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
-				table_encodeCmapByIndex(map, c, gid);
+				otfcc_encodeCmapByIndex(map, c, gid);
 			}
 		}
 	}
@@ -116,17 +136,6 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 	return NULL;
 }
 
-void otfcc_deleteCmap(table_cmap *table) {
-	cmap_Entry *s, *tmp;
-	HASH_ITER(hh, *(table), s, tmp) {
-		// delete and free all cmap entries
-		Handle.dispose(&s->glyph);
-		HASH_DEL(*(table), s);
-		FREE(s);
-	}
-	FREE(table);
-}
-
 void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("cmap") {
@@ -154,7 +163,7 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 				sdsfree(unicodeStr);
 				if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
 					sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-					table_encodeCmapByName(&hash, unicode, gname);
+					otfcc_encodeCmapByName(&hash, unicode, gname);
 				}
 			}
 		}

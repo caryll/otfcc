@@ -11,4 +11,8 @@ typedef struct {
 } cmap_Entry;
 typedef cmap_Entry *table_cmap;
 
+void otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid);
+void otfcc_encodeCmapByName(table_cmap *map, int c, sds name);
+void otfcc_unmapCmap(table_cmap *map, int c);
+
 #endif
