@@ -449,6 +449,7 @@ static json_value *glyf_glyph_dump_maskdefs(glyf_PostscriptHintMask *masks, shap
 	json_value *a = json_array_new(count);
 	for (shapeid_t j = 0; j < count; j++) {
 		json_value *mask = json_object_new(3);
+		json_object_push(mask, "contoursBefore", json_integer_new(masks[j].contoursBefore));
 		json_object_push(mask, "pointsBefore", json_integer_new(masks[j].pointsBefore));
 		json_value *h = json_array_new(nh);
 		for (shapeid_t k = 0; k < nh; k++) {
@@ -666,6 +667,7 @@ static void parse_masks(json_value *md, shapeid_t *count, glyf_PostscriptHintMas
 			json_value *m = md->u.array.values[j];
 			if (m->type == json_object) {
 				(*arr)[jj].pointsBefore = json_obj_getint(m, "pointsBefore");
+				(*arr)[jj].contoursBefore = json_obj_getint(m, "contoursBefore");
 				parse_maskbits(&((*arr)[jj].maskH[0]), json_obj_get_type(m, "maskH", json_array));
 				parse_maskbits(&((*arr)[jj].maskV[0]), json_obj_get_type(m, "maskV", json_array));
 				jj++;

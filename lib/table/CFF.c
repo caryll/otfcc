@@ -255,7 +255,6 @@ typedef struct {
 	shapeid_t jPoint;
 	double defaultWidthX;
 	double nominalWidthX;
-	shapeid_t pointsDefined;
 	uint8_t definedHStems;
 	uint8_t definedVStems;
 	uint8_t definedHintMasks;
@@ -321,7 +320,6 @@ static void callback_draw_lineto(void *_context, double x1, double y1) {
 		context->g->contours[context->jContour - 1].points[context->jPoint].x = x1;
 		context->g->contours[context->jContour - 1].points[context->jPoint].y = y1;
 		context->jPoint += 1;
-		context->pointsDefined += 1;
 	}
 }
 static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2, double x3, double y3) {
@@ -337,7 +335,6 @@ static void callback_draw_curveto(void *_context, double x1, double y1, double x
 		context->g->contours[context->jContour - 1].points[context->jPoint + 2].x = x3;
 		context->g->contours[context->jContour - 1].points[context->jPoint + 2].y = y3;
 		context->jPoint += 3;
-		context->pointsDefined += 3;
 	}
 }
 static void callback_draw_sethint(void *_context, bool isVertical, double position, double width) {
@@ -361,7 +358,7 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 
 	if (maskIndex > 0) {
 		glyf_PostscriptHintMask *lastMask = &(maskList)[maskIndex - 1];
-		if (lastMask->pointsBefore == context->pointsDefined) {
+		if (lastMask->pointsBefore == context->jPoint && lastMask->contoursBefore == context->jContour) {
 			mask = lastMask;
 			duplicateMask = true;
 		} else {
@@ -370,7 +367,12 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	} else {
 		mask = &(maskList)[maskIndex];
 	}
-	mask->pointsBefore = context->pointsDefined;
+	if (context->jContour) {
+		mask->contoursBefore = context->jContour - 1;
+	} else {
+		mask->contoursBefore = 0;
+	}
+	mask->pointsBefore = context->jPoint;
 
 	for (shapeid_t j = 0; j < 0x100; j++) {
 		mask->maskH[j] = j < context->g->numberOfStemH ? maskArray[j] : 0;
@@ -439,7 +441,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	stack.index = 0;
 	stack.stem = 0;
 
-	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0, 0};
+	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0};
 
 	uint8_t fd = 0;
 	if (f->fdselect.t != cff_FDSELECT_UNSPECED)
@@ -906,7 +908,7 @@ static void cff_make_charstrings(cff_charstring_builder_context *context, caryll
 		FREE(il->instr);
 		FREE(il);
 	}
-	cff_ilGraphToBuffers(context->graph, s, gs, ls);
+	cff_ilGraphToBuffers(context->graph, s, gs, ls, context->options);
 	DELETE(cff_delete_Graph, context->graph);
 }
 

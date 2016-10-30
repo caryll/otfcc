@@ -26,8 +26,11 @@ static int by_stem_pos(const void *_a, const void *_b) {
 		return -1;
 	}
 }
-static int by_mask_pointindex(const void *a, const void *b) {
-	return ((glyf_PostscriptHintMask *)a)->pointsBefore - ((glyf_PostscriptHintMask *)b)->pointsBefore;
+static int by_mask_pointindex(const void *_a, const void *_b) {
+	const glyf_PostscriptHintMask *a = (const glyf_PostscriptHintMask *)_a;
+	const glyf_PostscriptHintMask *b = (const glyf_PostscriptHintMask *)_b;
+	return a->contoursBefore == b->contoursBefore ? a->pointsBefore - b->pointsBefore
+	                                              : a->contoursBefore - b->contoursBefore;
 }
 void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
 	// The name field of glyf_Glyph will not be consolidated with glyphOrder

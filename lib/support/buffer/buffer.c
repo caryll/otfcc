@@ -4,6 +4,7 @@
 caryll_Buffer *bufnew() {
 	caryll_Buffer *buf;
 	NEW(buf);
+	buf->size = buf->free = 0;
 	return buf;
 }
 void buffree(caryll_Buffer *buf) {

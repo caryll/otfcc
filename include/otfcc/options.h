@@ -25,6 +25,7 @@ typedef struct {
 	bool cff_rollCharString;
 	bool cff_doSubroutinize;
 	bool stub_cmap4;
+	bool decimal_cmap;
 	char *glyph_name_prefix;
 	otfcc_ILogger *logger;
 } otfcc_Options;

@@ -69,7 +69,12 @@ static void placeOrderEntriesFromCmap(json_value *table, otfcc_GlyphOrder *go) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
 		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
-		int32_t unicode = atoi(unicodeStr);
+		int32_t unicode;
+		if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
+			unicode = strtol(unicodeStr + 2, NULL, 16);
+		} else {
+			unicode = atoi(unicodeStr);
+		}
 		sdsfree(unicodeStr);
 		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);

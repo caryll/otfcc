@@ -142,7 +142,6 @@ uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val) {
 		advance = 1;
 	} else if (*start >= 32 && *start <= 254) {
 		val->t = CS2_OPERAND;
-
 		if (*start >= 32 && *start <= 246) {
 			val->i = (int32_t)(*start - 139);
 			advance = 1;

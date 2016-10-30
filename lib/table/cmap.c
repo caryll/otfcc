@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-void otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
+bool otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
@@ -10,13 +10,12 @@ void otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
 		s->glyph = Handle.fromIndex(gid);
 		s->unicode = c;
 		HASH_ADD_INT(*map, unicode, s);
+		return true;
 	} else {
-		// Override existing encoding
-		Handle.dispose(&s->glyph);
-		s->glyph = Handle.fromIndex(gid);
+		return false;
 	}
 }
-void otfcc_encodeCmapByName(table_cmap *map, int c, sds name) {
+bool otfcc_encodeCmapByName(table_cmap *map, int c, sds name) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s == NULL) {
@@ -24,19 +23,31 @@ void otfcc_encodeCmapByName(table_cmap *map, int c, sds name) {
 		s->glyph = Handle.fromName(name);
 		s->unicode = c;
 		HASH_ADD_INT(*map, unicode, s);
+		return true;
 	} else {
-		// Override existing encoding
-		Handle.dispose(&s->glyph);
-		s->glyph = Handle.fromName(name);
+		return false;
 	}
 }
-void otfcc_unmapCmap(table_cmap *map, int c) {
+bool otfcc_unmapCmap(table_cmap *map, int c) {
 	cmap_Entry *s;
 	HASH_FIND_INT(*map, &c, s);
 	if (s) {
 		Handle.dispose(&s->glyph);
 		HASH_DEL(*(map), s);
 		FREE(s);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *map, int c) {
+	cmap_Entry *s;
+	HASH_FIND_INT(*map, &c, s);
+	if (s) {
+		return &(s->glyph);
+	} else {
+		return NULL;
 	}
 }
 
@@ -142,7 +153,12 @@ void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Optio
 		json_value *cmap = json_object_new(HASH_COUNT(*table));
 		cmap_Entry *item;
 		foreach_hash(item, *table) if (item->glyph.name) {
-			sds key = sdsfromlonglong(item->unicode);
+			sds key;
+			if (options->decimal_cmap) {
+				key = sdsfromlonglong(item->unicode);
+			} else {
+				key = sdscatprintf(sdsempty(), "U+%04X", item->unicode);
+			}
 			json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
 			sdsfree(key);
 		}
@@ -159,11 +175,20 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 			for (uint32_t j = 0; j < table->u.object.length; j++) {
 				sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 				json_value *item = table->u.object.values[j].value;
-				int32_t unicode = atoi(unicodeStr);
+				int32_t unicode;
+				if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
+					unicode = strtol(unicodeStr + 2, NULL, 16);
+				} else {
+					unicode = atoi(unicodeStr);
+				}
 				sdsfree(unicodeStr);
 				if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
 					sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-					otfcc_encodeCmapByName(&hash, unicode, gname);
+					if (!otfcc_encodeCmapByName(&hash, unicode, gname)) {
+						glyph_handle *currentMap = otfcc_cmapLookup(&hash, unicode);
+						logWarning("U+%04X is already mapped to %s. Assignment to %s is ignored.", unicode,
+						           currentMap->name, gname);
+					}
 				}
 			}
 		}

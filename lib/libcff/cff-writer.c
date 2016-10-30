@@ -38,7 +38,7 @@ void cff_mergeCS2Int(caryll_Buffer *blob, int32_t val) {
 		}
 	}
 }
-static void merge_cs2_real(caryll_Buffer *blob, double val) {
+static void mergeCS2Real(caryll_Buffer *blob, double val) {
 	int16_t integerPart = floor(val);
 	uint16_t fractionPart = (val - integerPart) * 65536.0;
 	bufnwrite8(blob, 5, 0xFF, integerPart >> 8, integerPart & 0xFF, fractionPart >> 8, fractionPart & 0xFF);
@@ -48,7 +48,7 @@ void cff_mergeCS2Operand(caryll_Buffer *blob, double val) {
 	if (modf(val, &intpart) == 0.0) {
 		cff_mergeCS2Int(blob, (int32_t)intpart);
 	} else {
-		merge_cs2_real(blob, val);
+		mergeCS2Real(blob, val);
 	}
 }
 void cff_mergeCS2Special(caryll_Buffer *blob, uint8_t val) {

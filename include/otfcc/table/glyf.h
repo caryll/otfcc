@@ -31,6 +31,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t pointsBefore;
+	uint16_t contoursBefore;
 	bool maskH[0x100];
 	bool maskV[0x100];
 } glyf_PostscriptHintMask;

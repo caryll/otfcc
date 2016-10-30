@@ -48,11 +48,13 @@ static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2,
 
 static void _il_push_maskgroup(cff_CharstringIL *il,                       // il seq
                                uint16_t n, glyf_PostscriptHintMask *masks, // masks array
+                               uint16_t contours,                          // contous drawn
                                uint16_t points,                            // points drawn
                                uint16_t nh, uint16_t nv,                   // quantity of stems
                                uint16_t *jm,                               // index of cur mask
                                int32_t op) {                               // mask operator
-	while (*jm < n && masks[*jm].pointsBefore <= points) {
+	while (*jm < n && (masks[*jm].contoursBefore < contours ||
+	                   (masks[*jm].contoursBefore == contours && masks[*jm].pointsBefore <= points))) {
 		il_push_op(il, op);
 		uint8_t maskByte = 0;
 		uint8_t bits = 0;
@@ -80,15 +82,18 @@ static void _il_push_maskgroup(cff_CharstringIL *il,                       // il
 	}
 }
 static void il_push_masks(cff_CharstringIL *il, glyf_Glyph *g, // meta
+                          uint16_t contours,                   // contours sofar
                           uint16_t points,                     // points sofar
                           uint16_t *jh,                        // index of pushed cmasks
                           uint16_t *jm                         // index of pushed hmasks
                           ) {
 	if (!g->numberOfStemH && !g->numberOfStemV) return;
-	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH, g->numberOfStemV, jh,
-	                   op_cntrmask);
-	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, points, g->numberOfStemH, g->numberOfStemV, jm,
-	                   op_hintmask);
+	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, //
+	                   contours, points,                             //
+	                   g->numberOfStemH, g->numberOfStemV, jh, op_cntrmask);
+	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, //
+	                   contours, points,                       //
+	                   g->numberOfStemH, g->numberOfStemV, jm, op_hintmask);
 }
 
 static void _il_push_stemgroup(cff_CharstringIL *il,                      // il seq
@@ -132,12 +137,12 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		shapeid_t n = contour->pointsCount;
-		if (n > 1) {
+		if (n > 2) {
 			pos_t x0 = contour->points[0].x;
 			pos_t y0 = contour->points[0].y;
 			pos_t xlast = contour->points[n - 1].x;
 			pos_t ylast = contour->points[n - 1].y;
-			if (xlast != x0 || ylast != y0) {
+			if ((xlast != x0 || ylast != y0) && (!contour->points[n - 1].onCurve)) {
 				// Duplicate first point.
 				n += 1;
 				RESIZE(contour->points, n);
@@ -164,10 +169,11 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
 	// Write contour
+	shapeid_t contoursSofar = 0;
 	shapeid_t pointsSofar = 0;
 	shapeid_t jh = 0;
 	shapeid_t jm = 0;
-	if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+	if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 	for (shapeid_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		shapeid_t n = contour->pointsCount;
@@ -176,12 +182,12 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 		il_push_operand(il, contour->points[0].y);
 		il_push_op(il, op_rmoveto);
 		pointsSofar++;
-		if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+		if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 
 		for (shapeid_t j = 1; j < n; j++) {
 			if (contour->points[j].onCurve) { // A line-to
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
-				pointsSofar++;
+				pointsSofar += 1;
 			} else if (j < n - 2                                                // have enough points
 			           && !contour->points[j + 1].onCurve                       // next is offcurve
 			           && contour->points[j + 2].onCurve                        // and next is oncurve
@@ -195,8 +201,10 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
 				pointsSofar++;
 			}
-			if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+			if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 		}
+		contoursSofar += 1;
+		pointsSofar = 0;
 	}
 	il_push_op(il, op_endchar);
 	return il;

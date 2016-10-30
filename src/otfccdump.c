@@ -33,6 +33,7 @@ void printHelp() {
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
+	                " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
 	                " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
 	                "                           when redirecting to another program. Use --no-bom to\n"
 	                "                           turn it off.)\n"
@@ -61,6 +62,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"decimal-cmap", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
@@ -99,6 +101,8 @@ int main(int argc, char *argv[]) {
 					options->verbose = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					options->ignore_hints = true;
+				} else if (strcmp(longopts[option_index].name, "decimal-cmap") == 0) {
+					options->decimal_cmap = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
