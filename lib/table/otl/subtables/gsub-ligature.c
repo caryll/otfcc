@@ -4,11 +4,11 @@ void otl_delete_gsub_ligature(otl_Subtable *_subtable) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 	if (subtable->from && subtable->to) {
 		for (glyphid_t j = 0; j < subtable->to->numGlyphs; j++) {
-			otl_delete_Coverage(subtable->from[j]);
+			Coverage.dispose(subtable->from[j]);
 		}
 		FREE(subtable->from);
 	}
-	otl_delete_Coverage(subtable->to);
+	Coverage.dispose(subtable->to);
 	FREE(subtable);
 }
 
@@ -21,7 +21,7 @@ otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tabl
 	subtable->to = NULL;
 	checkLength(offset + 6);
 
-	otl_Coverage *startCoverage = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	otl_Coverage *startCoverage = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!startCoverage) goto FAIL;
 	glyphid_t setCount = read_16u(data + offset + 4);
 	if (setCount != startCoverage->numGlyphs) goto FAIL;
@@ -64,7 +64,7 @@ otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tabl
 			jj++;
 		}
 	}
-	otl_delete_Coverage(startCoverage);
+	Coverage.dispose(startCoverage);
 	return _subtable;
 FAIL:
 	otl_delete_gsub_ligature(_subtable);
@@ -76,7 +76,7 @@ json_value *otl_gsub_dump_ligature(const otl_Subtable *_subtable) {
 	json_value *st = json_array_new(subtable->to->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->to->numGlyphs; j++) {
 		json_value *entry = json_object_new(2);
-		json_object_push(entry, "from", otl_dump_Coverage(subtable->from[j]));
+		json_object_push(entry, "from", Coverage.dump(subtable->from[j]));
 		json_object_push(entry, "to", json_string_new_length((uint32_t)sdslen(subtable->to->glyphs[j].name),
 		                                                     subtable->to->glyphs[j].name));
 		json_array_push(st, preserialize(entry));
@@ -105,7 +105,7 @@ otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_O
 			json_value *_to = json_obj_get_type(entry, "to", json_string);
 			if (!_from || !_to) continue;
 			st->to->glyphs[jj] = Handle.fromName(sdsnewlen(_to->u.string.ptr, _to->u.string.length));
-			st->from[jj] = otl_parse_Coverage(_from);
+			st->from[jj] = Coverage.parse(_from);
 			jj += 1;
 		}
 		st->to->numGlyphs = jj;
@@ -124,7 +124,7 @@ otl_Subtable *otl_gsub_parse_ligature(const json_value *_subtable, const otfcc_O
 			if (!_from || _from->type != json_array) continue;
 			st->to->glyphs[jj] = Handle.fromName(
 			    sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
-			st->from[jj] = otl_parse_Coverage(_from);
+			st->from[jj] = Coverage.parse(_from);
 			jj += 1;
 		}
 		st->to->numGlyphs = jj;
@@ -170,9 +170,9 @@ caryll_Buffer *otfcc_build_gsub_ligature_subtable(const otl_Subtable *_subtable)
 		jj++;
 	}
 
-	bk_Block *root = bk_new_Block(b16, 1,                                                   // format
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(startcov)), // coverage
-	                              b16, startcov->numGlyphs,                                 // LigSetCount
+	bk_Block *root = bk_new_Block(b16, 1,                                               // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(startcov)), // coverage
+	                              b16, startcov->numGlyphs,                             // LigSetCount
 	                              bkover);
 
 	foreach_hash(s, h) {
@@ -195,7 +195,7 @@ caryll_Buffer *otfcc_build_gsub_ligature_subtable(const otl_Subtable *_subtable)
 		bk_push(root, p16, ligset, bkover);
 	}
 
-	otl_delete_Coverage(startcov);
+	Coverage.dispose(startcov);
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		FREE(s);

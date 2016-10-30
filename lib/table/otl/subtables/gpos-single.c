@@ -2,7 +2,7 @@
 #include "gpos-common.h"
 void otl_delete_gpos_single(otl_Subtable *subtable) {
 	if (subtable) {
-		otl_delete_Coverage(subtable->gpos_single.coverage);
+		Coverage.dispose(subtable->gpos_single.coverage);
 		FREE(subtable->gpos_single.values);
 		FREE(subtable);
 	}
@@ -18,7 +18,7 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 	checkLength(offset + 6);
 
 	uint16_t subtableFormat = read_16u(data + offset);
-	subtable->coverage = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->coverage = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
 	NEW(subtable->values, subtable->coverage->numGlyphs);
 
@@ -40,7 +40,7 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 	}
 	goto OK;
 FAIL:
-	if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
+	if (subtable->coverage) Coverage.dispose(subtable->coverage);
 	if (subtable->values) FREE(subtable->values);
 	_subtable = NULL;
 OK:
@@ -91,15 +91,15 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 	if (isConst) {
 		return bk_build_Block(bk_new_Block(b16, 1, // Format
 		                                   p16,
-		                                   bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // coverage
-		                                   b16, format,                                                   // format
-		                                   bkembed, bk_gpos_value(subtable->values[0], format),           // value
+		                                   bk_newBlockFromBuffer(Coverage.build(subtable->coverage)), // coverage
+		                                   b16, format,                                               // format
+		                                   bkembed, bk_gpos_value(subtable->values[0], format),       // value
 		                                   bkover));
 	} else {
-		bk_Block *b = bk_new_Block(b16, 2,                                                             // Format
-		                           p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // coverage
-		                           b16, format,                                                        // format
-		                           b16, subtable->coverage->numGlyphs,                                 // quantity
+		bk_Block *b = bk_new_Block(b16, 2,                                                         // Format
+		                           p16, bk_newBlockFromBuffer(Coverage.build(subtable->coverage)), // coverage
+		                           b16, format,                                                    // format
+		                           b16, subtable->coverage->numGlyphs,                             // quantity
 		                           bkover);
 		for (glyphid_t k = 0; k < subtable->coverage->numGlyphs; k++) {
 			bk_push(b, bkembed, bk_gpos_value(subtable->values[k], format), // value

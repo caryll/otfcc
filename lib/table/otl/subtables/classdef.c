@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/otl/classdef.h"
 
-otl_ClassDef *otl_new_ClassDef() {
+static otl_ClassDef *newClassDef() {
 	otl_ClassDef *cd;
 	NEW(cd);
 	return cd;
@@ -18,7 +18,7 @@ static void growClassdef(otl_ClassDef *cd, uint32_t n) {
 	}
 }
 
-void otl_delete_ClassDef(otl_ClassDef *cd) {
+static void deleteClassDef(otl_ClassDef *cd) {
 	if (cd) {
 		if (cd->glyphs) {
 			for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
@@ -31,7 +31,7 @@ void otl_delete_ClassDef(otl_ClassDef *cd) {
 	}
 }
 
-void otl_ClassDef_push(otl_ClassDef *cd, MOVE otfcc_GlyphHandle h, glyphclass_t cls) {
+static void pushClassDef(otl_ClassDef *cd, MOVE otfcc_GlyphHandle h, glyphclass_t cls) {
 	cd->numGlyphs += 1;
 	growClassdef(cd, cd->numGlyphs);
 	cd->glyphs[cd->numGlyphs - 1] = h;
@@ -49,8 +49,8 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
-	otl_ClassDef *cd = otl_new_ClassDef();
+static otl_ClassDef *readClassDef(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
+	otl_ClassDef *cd = newClassDef();
 	if (tableLength < offset + 4) return cd;
 	uint16_t format = read_16u(data + offset);
 	if (format == 1 && tableLength >= offset + 6) {
@@ -58,7 +58,7 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 		glyphid_t count = read_16u(data + offset + 4);
 		if (count && tableLength >= offset + 6 + count * 2) {
 			for (glyphid_t j = 0; j < count; j++) {
-				otl_ClassDef_push(cd, Handle.fromIndex(startGID + j), read_16u(data + offset + 6 + j * 2));
+				pushClassDef(cd, Handle.fromIndex(startGID + j), read_16u(data + offset + 6 + j * 2));
 			}
 			return cd;
 		}
@@ -86,7 +86,7 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 		HASH_SORT(hash, by_covIndex);
 		coverage_entry *e, *tmp;
 		HASH_ITER(hh, hash, e, tmp) {
-			otl_ClassDef_push(cd, Handle.fromIndex(e->gid), e->covIndex);
+			pushClassDef(cd, Handle.fromIndex(e->gid), e->covIndex);
 			HASH_DEL(hash, e);
 			FREE(e);
 		}
@@ -95,8 +95,8 @@ otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint3
 	return cd;
 }
 
-otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
-	otl_ClassDef *cd = otl_new_ClassDef();
+static otl_ClassDef *expandClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
+	otl_ClassDef *cd = newClassDef();
 	coverage_entry *hash = NULL;
 	for (glyphid_t j = 0; j < ocd->numGlyphs; j++) {
 		int gid = ocd->glyphs[j].index;
@@ -123,15 +123,15 @@ otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 	}
 	coverage_entry *e, *tmp;
 	HASH_ITER(hh, hash, e, tmp) {
-		otl_ClassDef_push(cd, Handle.fromIndex(e->gid), e->covIndex);
+		pushClassDef(cd, Handle.fromIndex(e->gid), e->covIndex);
 		HASH_DEL(hash, e);
 		FREE(e);
 	}
-	otl_delete_ClassDef(ocd);
+	deleteClassDef(ocd);
 	return cd;
 }
 
-json_value *otl_dump_ClassDef(const otl_ClassDef *cd) {
+static json_value *dumpClassDef(const otl_ClassDef *cd) {
 	json_value *a = json_object_new(cd->numGlyphs);
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		json_object_push(a, cd->glyphs[j].name, json_integer_new(cd->classes[j]));
@@ -139,9 +139,9 @@ json_value *otl_dump_ClassDef(const otl_ClassDef *cd) {
 	return preserialize(a);
 }
 
-otl_ClassDef *otl_parse_ClassDef(const json_value *_cd) {
+static otl_ClassDef *parseClassDef(const json_value *_cd) {
 	if (!_cd || _cd->type != json_object) return NULL;
-	otl_ClassDef *cd = otl_new_ClassDef();
+	otl_ClassDef *cd = newClassDef();
 	for (glyphid_t j = 0; j < _cd->u.object.length; j++) {
 		glyph_handle h = Handle.fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
 		json_value *_cid = _cd->u.object.values[j].value;
@@ -151,7 +151,7 @@ otl_ClassDef *otl_parse_ClassDef(const json_value *_cd) {
 		} else if (_cid->type == json_double) {
 			cls = _cid->u.dbl;
 		}
-		otl_ClassDef_push(cd, h, cls);
+		pushClassDef(cd, h, cls);
 	}
 	return cd;
 }
@@ -160,10 +160,11 @@ typedef struct {
 	glyphid_t gid;
 	glyphclass_t cid;
 } classdef_sortrecord;
+
 static int by_gid(const void *a, const void *b) {
 	return ((classdef_sortrecord *)a)->gid - ((classdef_sortrecord *)b)->gid;
 }
-caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
+static caryll_Buffer *buildClassDef(const otl_ClassDef *cd) {
 	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 2);
 	if (!cd->numGlyphs) { // no glyphs, return a blank classdef
@@ -219,7 +220,7 @@ caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd) {
 	return buf;
 }
 
-void fontop_shrinkClassDef(otl_ClassDef *cd) {
+static void shrinkClassDef(otl_ClassDef *cd) {
 	glyphid_t k = 0;
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 		if (cd->glyphs[j].name) {
@@ -232,3 +233,15 @@ void fontop_shrinkClassDef(otl_ClassDef *cd) {
 	}
 	cd->numGlyphs = k;
 }
+
+const struct otfcc_ClassDefPackage otfcc_pkgClassDef = {
+    .create = newClassDef,
+    .dispose = deleteClassDef,
+    .read = readClassDef,
+    .expand = expandClassDef,
+    .dump = dumpClassDef,
+    .parse = parseClassDef,
+    .build = buildClassDef,
+    .shrink = shrinkClassDef,
+    .push = pushClassDef,
+};

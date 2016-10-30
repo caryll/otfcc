@@ -114,11 +114,11 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 	return newRule;
 }
 static otl_ClassDef *toClass(classifier_hash *h) {
-	otl_ClassDef *cd = otl_new_ClassDef();
+	otl_ClassDef *cd = ClassDef.create();
 	classifier_hash *item;
 	HASH_SORT(h, by_gid_clsh);
 	foreach_hash(item, h) {
-		otl_ClassDef_push(cd, Handle.fromConsolidated(item->gid, item->gname), item->cls);
+		ClassDef.push(cd, Handle.fromConsolidated(item->gid, item->gname), item->cls);
 	}
 	return cd;
 }

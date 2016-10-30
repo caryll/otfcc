@@ -1,8 +1,8 @@
 #include "gsub-single.h"
 void otl_delete_gsub_single(otl_Subtable *subtable) {
 	if (subtable) {
-		otl_delete_Coverage(subtable->gsub_single.from);
-		otl_delete_Coverage(subtable->gsub_single.to);
+		Coverage.dispose(subtable->gsub_single.from);
+		Coverage.dispose(subtable->gsub_single.to);
 		FREE(subtable);
 	}
 }
@@ -13,7 +13,7 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 	NEW(subtable);
 	if (tableLength < subtableOffset + 6) goto FAIL;
 	uint16_t subtableFormat = read_16u(data + subtableOffset);
-	otl_Coverage *from = otl_read_Coverage(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
+	otl_Coverage *from = Coverage.read(data, tableLength, subtableOffset + read_16u(data + subtableOffset + 2));
 	subtable->gsub_single.from = from;
 	if (!from || from->numGlyphs == 0) goto FAIL;
 
@@ -43,8 +43,8 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 	}
 	goto OK;
 FAIL:
-	if (subtable->gsub_single.from) otl_delete_Coverage(subtable->gsub_single.from);
-	if (subtable->gsub_single.to) otl_delete_Coverage(subtable->gsub_single.to);
+	if (subtable->gsub_single.from) Coverage.dispose(subtable->gsub_single.from);
+	if (subtable->gsub_single.to) Coverage.dispose(subtable->gsub_single.to);
 	subtable = NULL;
 OK:
 	return subtable;
@@ -93,15 +93,15 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		}
 	}
 	if (isConstantDifference && subtable->from->numGlyphs > 0) {
-		return bk_build_Block(bk_new_Block(b16, 1,                                                         // Format
-		                                   p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
+		return bk_build_Block(bk_new_Block(b16, 1,                                                     // Format
+		                                   p16, bk_newBlockFromBuffer(Coverage.build(subtable->from)), // coverage
 		                                   b16,
 		                                   subtable->to->glyphs[0].index - subtable->from->glyphs[0].index, // delta
 		                                   bkover));
 	} else {
-		bk_Block *b = bk_new_Block(b16, 2,                                                         // Format
-		                           p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
-		                           b16, subtable->to->numGlyphs,                                   // quantity
+		bk_Block *b = bk_new_Block(b16, 2,                                                     // Format
+		                           p16, bk_newBlockFromBuffer(Coverage.build(subtable->from)), // coverage
+		                           b16, subtable->to->numGlyphs,                               // quantity
 		                           bkover);
 		for (glyphid_t k = 0; k < subtable->to->numGlyphs; k++) {
 			bk_push(b, b16, subtable->to->glyphs[k].index, bkover);

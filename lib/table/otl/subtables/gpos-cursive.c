@@ -2,7 +2,7 @@
 #include "gpos-common.h"
 void otl_delete_gpos_cursive(otl_Subtable *subtable) {
 	if (subtable) {
-		otl_delete_Coverage(subtable->gpos_cursive.coverage);
+		Coverage.dispose(subtable->gpos_cursive.coverage);
 		FREE(subtable->gpos_cursive.enter);
 		FREE(subtable->gpos_cursive.exit);
 		FREE(subtable);
@@ -19,7 +19,7 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 	subtable->exit = NULL;
 	checkLength(offset + 6);
 
-	subtable->coverage = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->coverage = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
 	NEW(subtable->enter, subtable->coverage->numGlyphs);
 	NEW(subtable->exit, subtable->coverage->numGlyphs);
@@ -38,7 +38,7 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 	}
 	goto OK;
 FAIL:
-	if (subtable->coverage) otl_delete_Coverage(subtable->coverage);
+	if (subtable->coverage) Coverage.dispose(subtable->coverage);
 	if (subtable->enter) FREE(subtable->enter);
 	if (subtable->exit) FREE(subtable->exit);
 	_subtable = NULL;
@@ -83,9 +83,9 @@ otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Op
 caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
 	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 
-	bk_Block *root = bk_new_Block(b16, 1,                                                             // format
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->coverage)), // Coverage
-	                              b16, subtable->coverage->numGlyphs,                                 // EntryExitCount
+	bk_Block *root = bk_new_Block(b16, 1,                                                         // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(subtable->coverage)), // Coverage
+	                              b16, subtable->coverage->numGlyphs,                             // EntryExitCount
 	                              bkover);
 	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
 		bk_push(root,                                  // EntryExitRecord[.]

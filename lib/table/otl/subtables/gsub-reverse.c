@@ -5,9 +5,9 @@ void otl_delete_gsub_reverse(otl_Subtable *_subtable) {
 		subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 		if (subtable->match)
 			for (tableid_t j = 0; j < subtable->matchCount; j++) {
-				otl_delete_Coverage(subtable->match[j]);
+				Coverage.dispose(subtable->match[j]);
 			}
-		if (subtable->to) otl_delete_Coverage(subtable->to);
+		if (subtable->to) Coverage.dispose(subtable->to);
 		FREE(_subtable);
 	}
 }
@@ -49,16 +49,16 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 
 	for (tableid_t j = 0; j < nBacktrack; j++) {
 		uint32_t covOffset = offset + read_16u(data + offset + 6 + j * 2);
-		subtable->match[j] = otl_read_Coverage(data, tableLength, covOffset);
+		subtable->match[j] = Coverage.read(data, tableLength, covOffset);
 	}
 	{
 		uint32_t covOffset = offset + read_16u(data + offset + 2);
-		subtable->match[subtable->inputIndex] = otl_read_Coverage(data, tableLength, covOffset);
+		subtable->match[subtable->inputIndex] = Coverage.read(data, tableLength, covOffset);
 		if (nReplacement != subtable->match[subtable->inputIndex]->numGlyphs) goto FAIL;
 	}
 	for (tableid_t j = 0; j < nForward; j++) {
 		uint32_t covOffset = offset + read_16u(data + offset + 8 + nBacktrack * 2 + j * 2);
-		subtable->match[nBacktrack + 1 + j] = otl_read_Coverage(data, tableLength, covOffset);
+		subtable->match[nBacktrack + 1 + j] = Coverage.read(data, tableLength, covOffset);
 	}
 
 	NEW(subtable->to);
@@ -80,10 +80,10 @@ json_value *otl_gsub_dump_reverse(const otl_Subtable *_subtable) {
 	json_value *_st = json_object_new(3);
 	json_value *_match = json_array_new(subtable->matchCount);
 	for (tableid_t j = 0; j < subtable->matchCount; j++) {
-		json_array_push(_match, otl_dump_Coverage(subtable->match[j]));
+		json_array_push(_match, Coverage.dump(subtable->match[j]));
 	}
 	json_object_push(_st, "match", _match);
-	json_object_push(_st, "to", otl_dump_Coverage(subtable->to));
+	json_object_push(_st, "to", Coverage.dump(subtable->to));
 	json_object_push(_st, "inputIndex", json_integer_new(subtable->inputIndex));
 	return _st;
 }
@@ -103,9 +103,9 @@ otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable, const otfcc_Op
 	subtable->inputIndex = json_obj_getnum_fallback(_subtable, "inputIndex", 0);
 
 	for (tableid_t j = 0; j < subtable->matchCount; j++) {
-		subtable->match[j] = otl_parse_Coverage(_match->u.array.values[j]);
+		subtable->match[j] = Coverage.parse(_match->u.array.values[j]);
 	}
-	subtable->to = otl_parse_Coverage(_to);
+	subtable->to = Coverage.parse(_to);
 	return _st;
 }
 
@@ -114,16 +114,16 @@ caryll_Buffer *otfcc_build_gsub_reverse(const otl_Subtable *_subtable) {
 	reverseBacktracks(subtable->match, subtable->inputIndex);
 
 	bk_Block *root =
-	    bk_new_Block(b16, 1,                                                                                // format
-	                 p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->match[subtable->inputIndex])), // coverage
+	    bk_new_Block(b16, 1,                                                                            // format
+	                 p16, bk_newBlockFromBuffer(Coverage.build(subtable->match[subtable->inputIndex])), // coverage
 	                 bkover);
 	bk_push(root, b16, subtable->inputIndex, bkover);
 	for (tableid_t j = 0; j < subtable->inputIndex; j++) {
-		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->match[j])), bkover);
+		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(subtable->match[j])), bkover);
 	}
 	bk_push(root, b16, subtable->matchCount - subtable->inputIndex - 1, bkover);
 	for (tableid_t j = subtable->inputIndex + 1; j < subtable->matchCount; j++) {
-		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->match[j])), bkover);
+		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(subtable->match[j])), bkover);
 	}
 	bk_push(root, b16, subtable->to->numGlyphs, bkover);
 	for (tableid_t j = 0; j < subtable->to->numGlyphs; j++) {

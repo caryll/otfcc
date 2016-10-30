@@ -3,7 +3,7 @@
 static INLINE void closeRule(otl_ChainingRule *rule) {
 	if (rule && rule->match && rule->matchCount) {
 		for (tableid_t k = 0; k < rule->matchCount; k++) {
-			otl_delete_Coverage(rule->match[k]);
+			Coverage.dispose(rule->match[k]);
 		}
 		FREE(rule->match);
 	}

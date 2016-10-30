@@ -21,7 +21,7 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 	rule->inputEnds = json_obj_getnum_fallback(_subtable, "inputEnds", rule->matchCount);
 
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
-		rule->match[j] = otl_parse_Coverage(_match->u.array.values[j]);
+		rule->match[j] = Coverage.parse(_match->u.array.values[j]);
 	}
 	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		rule->apply[j].index = 0;

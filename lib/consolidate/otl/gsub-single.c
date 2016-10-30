@@ -40,12 +40,12 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	if (HASH_COUNT(h) != subtable->from->numGlyphs || HASH_COUNT(h) != subtable->to->numGlyphs) {
 		logWarning("[Consolidate] In this lookup, some mappings are ignored.\n");
 	}
-	otl_clear_Coverage(subtable->from, 0), otl_clear_Coverage(subtable->to, 0);
+	Coverage.clear(subtable->from, 0), Coverage.clear(subtable->to, 0);
 	{
 		gsub_single_map_hash *s, *tmp;
 		HASH_ITER(hh, h, s, tmp) {
-			otl_Coverage_push(subtable->from, Handle.fromConsolidated(s->fromid, s->fromname));
-			otl_Coverage_push(subtable->to, Handle.fromConsolidated(s->toid, s->toname));
+			Coverage.push(subtable->from, Handle.fromConsolidated(s->fromid, s->fromname));
+			Coverage.push(subtable->to, Handle.fromConsolidated(s->toid, s->toname));
 			HASH_DEL(h, s);
 			FREE(s);
 		}

@@ -15,15 +15,15 @@ caryll_Buffer *otfcc_build_chaining_coverage(const otl_Subtable *_subtable) {
 
 	bk_push(root, b16, nBacktrack, bkover);
 	for (tableid_t j = 0; j < rule->inputBegins; j++) {
-		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(rule->match[j])), bkover);
+		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(rule->match[j])), bkover);
 	}
 	bk_push(root, b16, nInput, bkover);
 	for (tableid_t j = rule->inputBegins; j < rule->inputEnds; j++) {
-		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(rule->match[j])), bkover);
+		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(rule->match[j])), bkover);
 	}
 	bk_push(root, b16, nLookahead, bkover);
 	for (tableid_t j = rule->inputEnds; j < rule->matchCount; j++) {
-		bk_push(root, p16, bk_newBlockFromBuffer(otl_build_Coverage(rule->match[j])), bkover);
+		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(rule->match[j])), bkover);
 	}
 	bk_push(root, b16, rule->applyCount, bkover);
 	for (tableid_t j = 0; j < nSubst; j++) {
@@ -43,12 +43,12 @@ caryll_Buffer *otfcc_build_chaining_classes(const otl_Subtable *_subtable) {
 	coverage->numGlyphs = subtable->ic->numGlyphs;
 	coverage->glyphs = subtable->ic->glyphs;
 
-	bk_Block *root = bk_new_Block(b16, 2,                                                       // format
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(coverage)),     // coverage
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->bc)), // BacktrackClassDef
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->ic)), // InputClassDef
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->fc)), // LookaheadClassDef
-	                              b16, subtable->ic->maxclass + 1,                              // ChainSubClassSetCnt
+	bk_Block *root = bk_new_Block(b16, 2,                                                   // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(coverage)),     // coverage
+	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->bc)), // BacktrackClassDef
+	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->ic)), // InputClassDef
+	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->fc)), // LookaheadClassDef
+	                              b16, subtable->ic->maxclass + 1,                          // ChainSubClassSetCnt
 	                              bkover);
 
 	glyphclass_t *rcpg;

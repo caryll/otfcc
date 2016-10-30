@@ -15,7 +15,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 	fontop_consolidateCoverage(font, subtable->from, options);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
 		fontop_consolidateCoverage(font, subtable->to[j], options);
-		fontop_shrinkCoverage(subtable->to[j], false);
+		Coverage.shrink(subtable->to[j], false);
 	}
 	gsub_multi_hash *h = NULL;
 	for (glyphid_t k = 0; k < subtable->from->numGlyphs; k++) {
@@ -30,14 +30,14 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 				s->to = subtable->to[k];
 				HASH_ADD_INT(h, fromid, s);
 			} else {
-				otl_delete_Coverage(subtable->to[k]);
+				Coverage.dispose(subtable->to[k]);
 			}
 		} else {
-			otl_delete_Coverage(subtable->to[k]);
+			Coverage.dispose(subtable->to[k]);
 		}
 	}
 	HASH_SORT(h, by_from_id_multi);
-	otl_clear_Coverage(subtable->from, HASH_COUNT(h));
+	Coverage.clear(subtable->from, HASH_COUNT(h));
 	{
 		gsub_multi_hash *s, *tmp;
 		glyphid_t j = 0;

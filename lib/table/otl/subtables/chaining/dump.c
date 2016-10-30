@@ -8,7 +8,7 @@ json_value *otl_dump_chaining(const otl_Subtable *_subtable) {
 
 	json_value *_match = json_array_new(rule->matchCount);
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
-		json_array_push(_match, otl_dump_Coverage(rule->match[j]));
+		json_array_push(_match, Coverage.dump(rule->match[j]));
 	}
 	json_object_push(_st, "match", _match);
 

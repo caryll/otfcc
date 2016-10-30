@@ -4,11 +4,11 @@ void otl_delete_gsub_multi(otl_Subtable *_subtable) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	if (subtable->from && subtable->to) {
 		for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
-			otl_delete_Coverage(subtable->to[j]);
+			Coverage.dispose(subtable->to[j]);
 		}
 		FREE(subtable->to);
 	}
-	otl_delete_Coverage(subtable->from);
+	Coverage.dispose(subtable->from);
 	FREE(subtable);
 }
 
@@ -21,7 +21,7 @@ otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, 
 	subtable->to = NULL;
 	checkLength(offset + 6);
 
-	subtable->from = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->from = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 	if (!subtable->from) goto FAIL;
 	glyphid_t seqCount = read_16u(data + offset + 4);
 	if (seqCount != subtable->from->numGlyphs) goto FAIL;
@@ -50,7 +50,7 @@ json_value *otl_gsub_dump_multi(const otl_Subtable *_subtable) {
 	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	json_value *st = json_object_new(subtable->from->numGlyphs);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
-		json_object_push(st, subtable->from->glyphs[j].name, otl_dump_Coverage(subtable->to[j]));
+		json_object_push(st, subtable->from->glyphs[j].name, Coverage.dump(subtable->to[j]));
 	}
 	return st;
 }
@@ -70,7 +70,7 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 		if (!_to || _to->type != json_array) continue;
 		st->from->glyphs[jj] =
 		    Handle.fromName(sdsnewlen(_subtable->u.object.values[k].name, _subtable->u.object.values[k].name_length));
-		st->to[jj] = otl_parse_Coverage(_to);
+		st->to[jj] = Coverage.parse(_to);
 		jj += 1;
 	}
 	st->from->numGlyphs = jj;
@@ -80,9 +80,9 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
 	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 
-	bk_Block *root = bk_new_Block(b16, 1,                                                         // format
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->from)), // coverage
-	                              b16, subtable->from->numGlyphs,                                 // quantity
+	bk_Block *root = bk_new_Block(b16, 1,                                                     // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(subtable->from)), // coverage
+	                              b16, subtable->from->numGlyphs,                             // quantity
 	                              bkover);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
 		bk_Block *b = bk_new_Block(b16, subtable->to[j]->numGlyphs, bkover);

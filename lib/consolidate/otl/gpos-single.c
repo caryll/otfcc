@@ -34,7 +34,7 @@ bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	}
 	HASH_SORT(h, gpos_by_from_id);
 
-	otl_clear_Coverage(subtable->coverage, HASH_COUNT(h));
+	Coverage.clear(subtable->coverage, HASH_COUNT(h));
 	{
 		gpos_single_hash *s, *tmp;
 		glyphid_t j = 0;

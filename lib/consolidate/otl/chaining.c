@@ -9,7 +9,7 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 	otl_ChainingRule *rule = &(subtable->rule);
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		fontop_consolidateCoverage(font, rule->match[j], options);
-		fontop_shrinkCoverage(rule->match[j], true);
+		Coverage.shrink(rule->match[j], true);
 	}
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;

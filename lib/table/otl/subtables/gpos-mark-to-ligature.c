@@ -14,7 +14,7 @@ void delete_lig_attachment(otl_MarkToLigatureBase *att) {
 void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 	if (_subtable) {
 		subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
-		if (subtable->marks) { otl_delete_Coverage(subtable->marks); }
+		if (subtable->marks) { Coverage.dispose(subtable->marks); }
 		if (subtable->markArray) { otl_delete_mark_array(subtable->markArray); }
 		if (subtable->bases) {
 			if (subtable->ligArray) {
@@ -23,7 +23,7 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 				}
 				FREE(subtable->ligArray);
 			}
-			otl_delete_Coverage(subtable->bases);
+			Coverage.dispose(subtable->bases);
 		}
 		FREE(_subtable);
 	}
@@ -35,8 +35,8 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 	NEW(_subtable);
 	subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	if (tableLength < offset + 12) goto FAIL;
-	subtable->marks = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
-	subtable->bases = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 4));
+	subtable->marks = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
+	subtable->bases = Coverage.read(data, tableLength, offset + read_16u(data + offset + 4));
 	if (!subtable->marks || subtable->marks->numGlyphs == 0 || !subtable->bases || subtable->bases->numGlyphs == 0)
 		goto FAIL;
 	subtable->classCount = read_16u(data + offset + 6);
@@ -236,10 +236,10 @@ otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const o
 
 caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	const subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
-	bk_Block *root = bk_new_Block(b16, 1,                                                          // format
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->marks)), // markCoverage
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(subtable->bases)), // baseCoverage
-	                              b16, subtable->classCount,                                       // classCont
+	bk_Block *root = bk_new_Block(b16, 1,                                                      // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(subtable->marks)), // markCoverage
+	                              p16, bk_newBlockFromBuffer(Coverage.build(subtable->bases)), // baseCoverage
+	                              b16, subtable->classCount,                                   // classCont
 	                              bkover);
 
 	bk_Block *markArray = bk_new_Block(b16, subtable->marks->numGlyphs, // markCount

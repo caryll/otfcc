@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/otl/coverage.h"
 
-otl_Coverage *otl_new_Coverage() {
+static otl_Coverage *newCoverage() {
 	otl_Coverage *coverage;
 	NEW(coverage);
 	return coverage;
@@ -15,7 +15,7 @@ static void growCoverage(otl_Coverage *coverage, uint32_t n) {
 		RESIZE(coverage->glyphs, coverage->capacity);
 	}
 }
-void otl_clear_Coverage(otl_Coverage *coverage, uint32_t n) {
+static void clearCoverage(otl_Coverage *coverage, uint32_t n) {
 	if (!coverage || !coverage->glyphs) return;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 		Handle.dispose(&coverage->glyphs[j]);
@@ -24,7 +24,7 @@ void otl_clear_Coverage(otl_Coverage *coverage, uint32_t n) {
 	coverage->numGlyphs = n;
 }
 
-void otl_delete_Coverage(MOVE otl_Coverage *coverage) {
+static void deleteCoverage(MOVE otl_Coverage *coverage) {
 	if (coverage && coverage->glyphs) {
 		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 			Handle.dispose(&coverage->glyphs[j]);
@@ -44,14 +44,14 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 	return a->covIndex - b->covIndex;
 }
 
-void otl_Coverage_push(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h) {
+static void pushToCoverage(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h) {
 	coverage->numGlyphs += 1;
 	growCoverage(coverage, coverage->numGlyphs);
 	coverage->glyphs[coverage->numGlyphs - 1] = h;
 }
 
-otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
-	otl_Coverage *coverage = otl_new_Coverage();
+static otl_Coverage *readCoverage(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
+	otl_Coverage *coverage = newCoverage();
 	if (tableLength < offset + 4) return coverage;
 	uint16_t format = read_16u(data + offset);
 	switch (format) {
@@ -73,7 +73,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 			HASH_SORT(hash, by_covIndex);
 			coverage_entry *e, *tmp;
 			HASH_ITER(hh, hash, e, tmp) {
-				otl_Coverage_push(coverage, Handle.fromIndex(e->gid));
+				pushToCoverage(coverage, Handle.fromIndex(e->gid));
 				HASH_DEL(hash, e);
 				FREE(e);
 			}
@@ -101,7 +101,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 			HASH_SORT(hash, by_covIndex);
 			coverage_entry *e, *tmp;
 			HASH_ITER(hh, hash, e, tmp) {
-				otl_Coverage_push(coverage, Handle.fromIndex(e->gid));
+				pushToCoverage(coverage, Handle.fromIndex(e->gid));
 				HASH_DEL(hash, e);
 				FREE(e);
 			}
@@ -113,7 +113,7 @@ otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint3
 	return coverage;
 }
 
-json_value *otl_dump_Coverage(const otl_Coverage *coverage) {
+static json_value *dumpCoverage(const otl_Coverage *coverage) {
 	json_value *a = json_array_new(coverage->numGlyphs);
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
 		json_array_push(a, json_string_new(coverage->glyphs[j].name));
@@ -121,14 +121,14 @@ json_value *otl_dump_Coverage(const otl_Coverage *coverage) {
 	return preserialize(a);
 }
 
-otl_Coverage *otl_parse_Coverage(const json_value *cov) {
-	otl_Coverage *c = otl_new_Coverage();
+static otl_Coverage *parseCoverage(const json_value *cov) {
+	otl_Coverage *c = newCoverage();
 	if (!cov || cov->type != json_array) return c;
 
 	for (glyphid_t j = 0; j < cov->u.array.length; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
-			otl_Coverage_push(c, Handle.fromName(sdsnewlen(cov->u.array.values[j]->u.string.ptr,
-			                                               cov->u.array.values[j]->u.string.length)));
+			pushToCoverage(c, Handle.fromName(sdsnewlen(cov->u.array.values[j]->u.string.ptr,
+			                                            cov->u.array.values[j]->u.string.length)));
 		}
 	}
 	return c;
@@ -137,7 +137,7 @@ otl_Coverage *otl_parse_Coverage(const json_value *cov) {
 static int by_gid(const void *a, const void *b) {
 	return *((glyphid_t *)a) - *((glyphid_t *)b);
 }
-caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage) {
+static caryll_Buffer *buildCoverage(const otl_Coverage *coverage) {
 	// sort the gids in coverage
 	if (!coverage->numGlyphs) {
 		caryll_Buffer *buf = bufnew();
@@ -207,7 +207,7 @@ static int byHandleGID(const void *a, const void *b) {
 	return ((glyph_handle *)a)->index - ((glyph_handle *)b)->index;
 }
 
-void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
+static void shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 	if (!coverage) return;
 	glyphid_t k = 0;
 	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
@@ -232,3 +232,15 @@ void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 	}
 	coverage->numGlyphs = k;
 }
+
+const struct otfcc_CoveragePackage otfcc_pkgCoverage = {
+    .create = newCoverage,
+    .clear = clearCoverage,
+    .dispose = deleteCoverage,
+    .read = readCoverage,
+    .dump = dumpCoverage,
+    .parse = parseCoverage,
+    .build = buildCoverage,
+    .shrink = shrinkCoverage,
+    .push = pushToCoverage,
+};

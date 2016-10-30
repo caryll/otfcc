@@ -39,7 +39,7 @@ otl_Coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16
 }
 otl_Coverage *format3Coverage(font_file_pointer data, uint32_t tableLength, uint16_t shift, uint32_t _offset,
                               uint16_t kind, void *userdata) {
-	return otl_read_Coverage(data, tableLength, _offset + shift - 2);
+	return Coverage.read(data, tableLength, _offset + shift - 2);
 }
 
 typedef otl_Coverage *(*CoverageReaderHandler)(font_file_pointer, uint32_t, uint16_t, uint32_t, uint16_t, void *);
@@ -91,7 +91,7 @@ static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, con
 	checkLength(offset + 6);
 
 	uint16_t covOffset = offset + read_16u(data + offset + 2);
-	otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
+	otl_Coverage *firstCoverage = Coverage.read(data, tableLength, covOffset);
 
 	tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
 	if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
@@ -119,7 +119,7 @@ static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, con
 		}
 	}
 
-	otl_delete_Coverage(firstCoverage);
+	Coverage.dispose(firstCoverage);
 	return subtable;
 FAIL:
 	otl_delete_chaining((otl_Subtable *)subtable);
@@ -133,7 +133,7 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 	classdefs *cds;
 	NEW(cds);
 	cds->bc = NULL;
-	cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
+	cds->ic = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 4));
 	cds->fc = NULL;
 
 	tableid_t chainSubClassSetCnt = read_16u(data + offset + 6);
@@ -259,7 +259,7 @@ static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const
 	checkLength(offset + 6);
 
 	uint16_t covOffset = offset + read_16u(data + offset + 2);
-	otl_Coverage *firstCoverage = otl_read_Coverage(data, tableLength, covOffset);
+	otl_Coverage *firstCoverage = Coverage.read(data, tableLength, covOffset);
 
 	tableid_t chainSubRuleSetCount = read_16u(data + offset + 4);
 	if (chainSubRuleSetCount != firstCoverage->numGlyphs) goto FAIL;
@@ -287,7 +287,7 @@ static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const
 		}
 	}
 
-	otl_delete_Coverage(firstCoverage);
+	Coverage.dispose(firstCoverage);
 	return subtable;
 FAIL:
 	otl_delete_chaining((otl_Subtable *)subtable);
@@ -300,9 +300,9 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 
 	classdefs *cds;
 	NEW(cds);
-	cds->bc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 4));
-	cds->ic = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 6));
-	cds->fc = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 8));
+	cds->bc = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 4));
+	cds->ic = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 6));
+	cds->fc = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 8));
 
 	tableid_t chainSubClassSetCnt = read_16u(data + offset + 10);
 	checkLength(offset + 12 + 2 * chainSubClassSetCnt);
@@ -330,9 +330,9 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 	}
 
 	if (cds) {
-		if (cds->bc) otl_delete_ClassDef(cds->bc);
-		if (cds->ic) otl_delete_ClassDef(cds->ic);
-		if (cds->fc) otl_delete_ClassDef(cds->fc);
+		if (cds->bc) ClassDef.dispose(cds->bc);
+		if (cds->ic) ClassDef.dispose(cds->ic);
+		if (cds->fc) ClassDef.dispose(cds->fc);
 	}
 	return subtable;
 FAIL:

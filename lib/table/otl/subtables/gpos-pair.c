@@ -16,8 +16,8 @@ void otl_delete_gpos_pair(otl_Subtable *_subtable) {
 			}
 			FREE(subtable->secondValues);
 		}
-		otl_delete_ClassDef(subtable->first);
-		otl_delete_ClassDef(subtable->second);
+		ClassDef.dispose(subtable->first);
+		ClassDef.dispose(subtable->second);
 		FREE(_subtable);
 	}
 }
@@ -42,7 +42,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 	uint16_t subtableFormat = read_16u(data + offset);
 	if (subtableFormat == 1) {
 		// pair adjustment by individuals
-		otl_Coverage *cov = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
+		otl_Coverage *cov = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 		NEW(subtable->first);
 		subtable->first->numGlyphs = cov->numGlyphs;
 		subtable->first->maxclass = cov->numGlyphs - 1;
@@ -137,11 +137,11 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		uint16_t format2 = read_16u(data + offset + 6);
 		uint8_t len1 = position_format_length(format1);
 		uint8_t len2 = position_format_length(format2);
-		otl_Coverage *cov = otl_read_Coverage(data, tableLength, offset + read_16u(data + offset + 2));
-		subtable->first = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 8));
-		subtable->first = otl_expand_ClassDef(cov, subtable->first);
-		otl_delete_Coverage(cov);
-		subtable->second = otl_read_ClassDef(data, tableLength, offset + read_16u(data + offset + 10));
+		otl_Coverage *cov = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
+		subtable->first = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 8));
+		subtable->first = ClassDef.expand(cov, subtable->first);
+		Coverage.dispose(cov);
+		subtable->second = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 10));
 		if (!subtable->first || !subtable->second) goto FAIL;
 		glyphclass_t class1Count = read_16u(data + offset + 12);
 		glyphclass_t class2Count = read_16u(data + offset + 14);
@@ -174,8 +174,8 @@ FAIL:
 json_value *otl_gpos_dump_pair(const otl_Subtable *_subtable) {
 	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	json_value *st = json_object_new(3);
-	json_object_push(st, "first", otl_dump_ClassDef(subtable->first));
-	json_object_push(st, "second", otl_dump_ClassDef(subtable->second));
+	json_object_push(st, "first", ClassDef.dump(subtable->first));
+	json_object_push(st, "second", ClassDef.dump(subtable->second));
 
 	json_value *mat = json_array_new(subtable->first->maxclass + 1);
 	for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
@@ -212,8 +212,8 @@ otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable, const otfcc_Optio
 	subtable->secondValues = NULL;
 
 	json_value *_mat = json_obj_get_type(_subtable, "matrix", json_array);
-	subtable->first = otl_parse_ClassDef(json_obj_get_type(_subtable, "first", json_object));
-	subtable->second = otl_parse_ClassDef(json_obj_get_type(_subtable, "second", json_object));
+	subtable->first = ClassDef.parse(json_obj_get_type(_subtable, "first", json_object));
+	subtable->second = ClassDef.parse(json_obj_get_type(_subtable, "second", json_object));
 	if (!_mat || !subtable->first || !subtable->second) goto FAIL;
 
 	glyphclass_t class1Count = subtable->first->maxclass + 1;
@@ -288,11 +288,11 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 	}
 	otl_Coverage *cov = covFromCD(subtable->first);
-	bk_Block *root = bk_new_Block(b16, 1,                                              // PosFormat
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(cov)), // Coverage
-	                              b16, format1,                                        // ValueFormat1
-	                              b16, format2,                                        // ValueFormat2
-	                              b16, subtable->first->numGlyphs,                     // PairSetCount
+	bk_Block *root = bk_new_Block(b16, 1,                                          // PosFormat
+	                              p16, bk_newBlockFromBuffer(Coverage.build(cov)), // Coverage
+	                              b16, format1,                                    // ValueFormat1
+	                              b16, format2,                                    // ValueFormat2
+	                              b16, subtable->first->numGlyphs,                 // PairSetCount
 	                              bkover);
 	for (glyphid_t j = 0; j < subtable->first->numGlyphs; j++) {
 		bk_Block *pairSet = bk_new_Block(b16, pairCounts[j], // PairValueCount
@@ -310,7 +310,7 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 		bk_push(root, p16, pairSet, bkover);
 	}
-	DELETE(otl_delete_Coverage, cov);
+	DELETE(Coverage.dispose, cov);
 	FREE(pairCounts);
 	return root;
 }
@@ -328,14 +328,14 @@ bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 		}
 	}
 	otl_Coverage *cov = covFromCD(subtable->first);
-	bk_Block *root = bk_new_Block(b16, 2,                                                           // PosFormat
-	                              p16, bk_newBlockFromBuffer(otl_build_Coverage(cov)),              // Coverage
-	                              b16, format1,                                                     // ValueFormat1
-	                              b16, format2,                                                     // ValueFormat2
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->first)),  // ClassDef1
-	                              p16, bk_newBlockFromBuffer(otl_build_ClassDef(subtable->second)), // ClassDef2
-	                              b16, class1Count,                                                 // Class1Count
-	                              b16, class2Count,                                                 // Class2Count
+	bk_Block *root = bk_new_Block(b16, 2,                                                       // PosFormat
+	                              p16, bk_newBlockFromBuffer(Coverage.build(cov)),              // Coverage
+	                              b16, format1,                                                 // ValueFormat1
+	                              b16, format2,                                                 // ValueFormat2
+	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->first)),  // ClassDef1
+	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->second)), // ClassDef2
+	                              b16, class1Count,                                             // Class1Count
+	                              b16, class2Count,                                             // Class2Count
 	                              bkover);
 	for (glyphclass_t j = 0; j < class1Count; j++) {
 		for (glyphclass_t k = 0; k < class2Count; k++) {
@@ -344,7 +344,7 @@ bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 			        bkover);
 		}
 	}
-	DELETE(otl_delete_Coverage, cov);
+	DELETE(Coverage.dispose, cov);
 	return root;
 }
 caryll_Buffer *otfcc_build_gpos_pair(const otl_Subtable *_subtable) {

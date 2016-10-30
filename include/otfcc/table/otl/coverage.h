@@ -8,16 +8,18 @@ typedef struct {
 	otfcc_GlyphHandle *glyphs;
 } otl_Coverage;
 
-otl_Coverage *otl_new_Coverage();
-void otl_clear_Coverage(otl_Coverage *coverage, uint32_t n);
-void otl_delete_Coverage(MOVE otl_Coverage *coverage);
+struct otfcc_CoveragePackage {
+	otl_Coverage *(*create)();
+	void (*clear)(otl_Coverage *coverage, uint32_t n);
+	void (*dispose)(MOVE otl_Coverage *coverage);
+	otl_Coverage *(*read)(const uint8_t *data, uint32_t tableLength, uint32_t offset);
+	json_value *(*dump)(const otl_Coverage *coverage);
+	otl_Coverage *(*parse)(const json_value *cov);
+	caryll_Buffer *(*build)(const otl_Coverage *coverage);
+	void (*shrink)(otl_Coverage *coverage, bool dosort);
+	void (*push)(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h);
+};
 
-otl_Coverage *otl_read_Coverage(const uint8_t *data, uint32_t tableLength, uint32_t offset);
-json_value *otl_dump_Coverage(const otl_Coverage *coverage);
-otl_Coverage *otl_parse_Coverage(const json_value *cov);
-caryll_Buffer *otl_build_Coverage(const otl_Coverage *coverage);
-void fontop_shrinkCoverage(otl_Coverage *coverage, bool dosort);
-
-void otl_Coverage_push(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h);
+extern const struct otfcc_CoveragePackage otfcc_pkgCoverage;
 
 #endif
