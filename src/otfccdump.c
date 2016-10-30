@@ -1,11 +1,10 @@
-#include "font/caryll-font.h"
-#include "font/caryll-sfnt.h"
-#include "fontops/fontop.h"
+#include "dep/json-builder.h"
+#include "otfcc/sfnt.h"
+#include "otfcc/font.h"
 
+#include "aliases.h"
 #include "platform.h"
 #include "stopwatch.h"
-
-#include <getopt.h>
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -30,11 +29,11 @@ void printHelp() {
 	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.\n"
 	                " --pretty                : Prettify the output JSON.\n"
 	                " --ugly                  : Force uglify the output JSON.\n"
-	                " --time                  : Time each substep.\n"
 	                " --verbose               : Show more information when building.\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
+	                " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
 	                " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
 	                "                           when redirecting to another program. Use --no-bom to\n"
 	                "                           turn it off.)\n"
@@ -53,7 +52,6 @@ int main(int argc, char *argv[]) {
 	bool show_version = false;
 	bool show_pretty = false;
 	bool show_ugly = false;
-	bool show_time = false;
 	bool add_bom = false;
 	bool no_bom = false;
 	uint32_t ttcindex = 0;
@@ -64,6 +62,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"decimal-cmap", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
@@ -73,7 +72,9 @@ int main(int argc, char *argv[]) {
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
 
-	caryll_Options *options = options_new();
+	otfcc_Options *options = otfcc_newOptions();
+	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
+	options->logger->indent(options->logger, "otfccdump");
 
 	int option_index = 0;
 	int c;
@@ -90,7 +91,6 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(longopts[option_index].name, "ugly") == 0) {
 					show_ugly = true;
 				} else if (strcmp(longopts[option_index].name, "time") == 0) {
-					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "add-bom") == 0) {
 					add_bom = true;
 				} else if (strcmp(longopts[option_index].name, "no-bom") == 0) {
@@ -99,9 +99,10 @@ int main(int argc, char *argv[]) {
 					options->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
-					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					options->ignore_hints = true;
+				} else if (strcmp(longopts[option_index].name, "decimal-cmap") == 0) {
+					options->decimal_cmap = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
@@ -125,6 +126,8 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+	options->logger->setVerbosity(options->logger, options->verbose ? 0xFF : 1);
+
 	if (show_help) {
 		printInfo();
 		printHelp();
@@ -136,7 +139,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (optind >= argc) {
-		fprintf(stderr, "Expected argument for input file name.\n");
+		logError("Expected argument for input file name.\n");
 		printHelp();
 		exit(EXIT_FAILURE);
 	} else {
@@ -147,61 +150,71 @@ int main(int argc, char *argv[]) {
 
 	time_now(&begin);
 
-	caryll_SplineFontContainer *sfnt;
-	{
+	otfcc_SplineFontContainer *sfnt;
+	loggedStep("Read SFNT") {
+		logProgress("From file %s", inPath);
 		FILE *file = u8fopen(inPath, "rb");
-		sfnt = caryll_read_SFNT(file);
+		sfnt = otfcc_readSFNT(file);
 		if (!sfnt || sfnt->count == 0) {
-			fprintf(stderr, "Cannot read SFNT file \"%s\". Exit.\n", inPath);
+			logError("Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
 		if (ttcindex >= sfnt->count) {
-			fprintf(stderr, "Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
-			        (sfnt->count - 1));
+			logError("Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
+			         (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
-		if (show_time) push_stopwatch("Read Input SFNT", &begin);
+		logStepTime;
 	}
 
-	caryll_Font *font;
-	{
-		font = caryll_read_Font(sfnt, ttcindex, options);
+	otfcc_Font *font;
+	loggedStep("Read Font") {
+		otfcc_IFontBuilder *reader = otfcc_newOTFReader();
+		font = reader->create(sfnt, ttcindex, options);
 		if (!font) {
-			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
+			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		caryll_font_unconsolidate(font, options);
-		if (show_time) push_stopwatch("Parse SFNT", &begin);
+		reader->dispose(reader);
+		if (sfnt) otfcc_deleteSFNT(sfnt);
+		logStepTime;
 	}
-
+	loggedStep("Consolidate") {
+		otfcc_consolidateFont(font, options);
+		logStepTime;
+	}
 	json_value *root;
-	{
-		root = caryll_dump_Font(font, options);
+	loggedStep("Dump") {
+		otfcc_IFontSerializer *dumper = otfcc_newJsonWriter();
+		root = (json_value *)dumper->serialize(font, options);
 		if (!root) {
-			fprintf(stderr, "Font structure broken or corrupted \"%s\". Exit.\n", inPath);
+			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		if (show_time) push_stopwatch("Convert to JSON", &begin);
+		logStepTime;
+		dumper->dispose(dumper);
 	}
 
 	char *buf;
-	{
-		json_serialize_opts options;
-		options.mode = json_serialize_mode_packed;
-		options.opts = 0;
-		options.indent_size = 4;
-		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) { options.mode = json_serialize_mode_multiline; }
-		if (show_ugly) options.mode = json_serialize_mode_packed;
-		buf = malloc(json_measure_ex(root, options));
-		json_serialize_ex(buf, root, options);
-		if (show_time) push_stopwatch("Serialize to string", &begin);
+	loggedStep("Serialize to JSON") {
+		json_serialize_opts jsonOptions;
+		jsonOptions.mode = json_serialize_mode_packed;
+		jsonOptions.opts = 0;
+		jsonOptions.indent_size = 4;
+		if (show_pretty || (!outputPath && isatty(fileno(stdout)))) {
+			jsonOptions.mode = json_serialize_mode_multiline;
+		}
+		if (show_ugly) jsonOptions.mode = json_serialize_mode_packed;
+		buf = malloc(json_measure_ex(root, jsonOptions));
+		json_serialize_ex(buf, root, jsonOptions);
+		logStepTime;
 	}
 
-	{
+	loggedStep("Output") {
 		if (outputPath) {
 			FILE *outputFile = u8fopen(outputPath, "wb");
 			if (!outputFile) {
-				fprintf(stderr, "Cannot write to file \"%s\". Exit.", outputPath);
+				logError("Cannot write to file \"%s\". Exit.", outputPath);
 				exit(EXIT_FAILURE);
 			}
 			if (add_bom) {
@@ -243,19 +256,17 @@ int main(int argc, char *argv[]) {
 			fputs(buf, stdout);
 #endif
 		}
-		if (show_time) push_stopwatch("Write to file", &begin);
+		logStepTime;
 	}
 
-	{
+	loggedStep("Finalize") {
 		free(buf);
-		if (font) caryll_delete_Font(font);
+		if (font) otfcc_deleteFont(font);
 		if (root) json_builder_free(root);
-		if (sfnt) caryll_delete_SFNT(sfnt);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);
-		options_delete(options);
-		if (show_time) push_stopwatch("Complete", &begin);
+		logStepTime;
 	}
-
+	otfcc_deleteOptions(options);
 	return 0;
 }

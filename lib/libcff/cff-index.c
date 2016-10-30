@@ -1,13 +1,14 @@
 #include "cff-index.h"
 // INDEX util functions
 cff_Index *cff_new_Index(void) {
-	cff_Index *out = calloc(1, sizeof(cff_Index));
+	cff_Index *out;
+	NEW(out);
 	return out;
 }
 
 void cff_close_Index(cff_Index in) {
-	if (in.offset != NULL) free(in.offset);
-	if (in.data != NULL) free(in.data);
+	if (in.offset != NULL) FREE(in.offset);
+	if (in.data != NULL) FREE(in.data);
 }
 
 void cff_empty_Index(cff_Index *in) {
@@ -19,9 +20,9 @@ void cff_empty_Index(cff_Index *in) {
 
 void cff_delete_Index(cff_Index *out) {
 	if (out != NULL) {
-		if (out->offset != NULL) free(out->offset);
-		if (out->data != NULL) free(out->data);
-		free(out);
+		if (out->offset != NULL) FREE(out->offset);
+		if (out->data != NULL) FREE(out->data);
+		FREE(out);
 	}
 }
 
@@ -37,7 +38,7 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 	in->offSize = gu1(data, pos + 2);
 
 	if (in->count > 0) {
-		in->offset = calloc(in->count + 1, sizeof(uint32_t));
+		NEW(in->offset, in->count + 1);
 
 		for (int i = 0; i <= in->count; i++) {
 			switch (in->offSize) {
@@ -56,7 +57,7 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 			}
 		}
 
-		in->data = calloc(in->offset[in->count] - 1, sizeof(uint8_t));
+		NEW(in->data, in->offset[in->count] - 1);
 		memcpy(in->data, data + pos + 3 + (in->count + 1) * in->offSize, in->offset[in->count] - 1);
 	} else {
 		in->offset = NULL;
@@ -64,21 +65,21 @@ void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in) {
 	}
 }
 
-cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer *(*fn)(void *, uint32_t)) {
+cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t)) {
 	cff_Index *idx = cff_new_Index();
 	idx->count = length;
-	NEW_N(idx->offset, idx->count + 1);
+	NEW(idx->offset, idx->count + 1);
 	idx->offset[0] = 1;
 	idx->data = NULL;
 
 	size_t used = 0;
 	size_t blank = 0;
 	for (uint32_t i = 0; i < length; i++) {
-		caryll_buffer *blob = fn(context, i);
+		caryll_Buffer *blob = fn(context, i);
 		if (blank < blob->size) {
 			used += blob->size;
 			blank = (used >> 1) & 0xFFFFFF;
-			idx->data = realloc(idx->data, sizeof(uint8_t) * (used + blank));
+			RESIZE(idx->data, used + blank);
 		} else {
 			used += blob->size;
 			blank -= blob->size;
@@ -91,8 +92,8 @@ cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_buffer 
 	return idx;
 }
 
-caryll_buffer *cff_build_Index(cff_Index index) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_build_Index(cff_Index index) {
+	caryll_Buffer *blob = bufnew();
 	if (!index.count) {
 		bufwrite8(blob, 0);
 		bufwrite8(blob, 0);
@@ -117,7 +118,7 @@ caryll_buffer *cff_build_Index(cff_Index index) {
 	else
 		blob->size = 3;
 
-	blob->data = calloc(blob->size, sizeof(uint8_t));
+	NEW(blob->data, blob->size);
 	blob->data[0] = index.count / 256;
 	blob->data[1] = index.count % 256;
 	blob->data[2] = index.offSize;

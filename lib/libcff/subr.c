@@ -18,7 +18,8 @@ static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 	}
 
 	*len = 3 + l1 + 1;
-	uint8_t *key = malloc(*len);
+	uint8_t *key;
+	NEW(key, *len);
 	key[0] = '1';
 	key[1] = (n->rule ? '1' : '0');
 	key[2] = '0';
@@ -45,7 +46,8 @@ static uint8_t *getDoubletHashKey(cff_SubrNode *n, size_t *len) {
 		l2 = buflen(n->next->terminal) * sizeof(uint8_t);
 	}
 	*len = 3 + l1 + l2 + 1;
-	uint8_t *key = malloc(*len);
+	uint8_t *key;
+	NEW(key, *len);
 	key[0] = '2';
 	key[1] = (n->rule ? '1' : '0');
 	key[2] = (n->next->rule ? '1' : '0');
@@ -77,7 +79,7 @@ static void delete_Node(cff_SubrNode *x) {
 
 static cff_SubrNode *cff_new_Node() {
 	cff_SubrNode *n;
-	NEW_CLEAN(n);
+	NEW(n);
 	n->rule = NULL;
 	n->terminal = NULL;
 	n->guard = false;
@@ -89,7 +91,7 @@ static cff_SubrNode *cff_new_Node() {
 
 static cff_SubrRule *cff_new_Rule() {
 	cff_SubrRule *r;
-	NEW_CLEAN(r);
+	NEW(r);
 	r->refcount = 0;
 	r->guard = cff_new_Node();
 	r->guard->prev = r->guard;
@@ -102,7 +104,7 @@ static cff_SubrRule *cff_new_Rule() {
 
 cff_SubrGraph *cff_new_Graph() {
 	cff_SubrGraph *g;
-	NEW_CLEAN(g);
+	NEW(g);
 	g->root = cff_new_Rule();
 	return g;
 }
@@ -356,7 +358,7 @@ static void appendNodeToGraph(cff_SubrGraph *g, cff_SubrNode *n) {
 }
 
 void cff_insertILToGraph(cff_SubrGraph *g, cff_CharstringIL *il) {
-	caryll_buffer *blob = bufnew();
+	caryll_Buffer *blob = bufnew();
 	bool flush = false;
 	bool last = false;
 	for (uint32_t j = 0; j < il->length; j++) {
@@ -460,13 +462,13 @@ static bool endsWithEndChar(cff_SubrRule *rule) {
 	}
 }
 
-static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll_buffer *gsubrs, uint32_t maxGSubrs,
-                                  caryll_buffer *lsubrs, uint32_t maxLSubrs) {
+static void serializeNodeToBuffer(cff_SubrNode *node, caryll_Buffer *buf, caryll_Buffer *gsubrs, uint32_t maxGSubrs,
+                                  caryll_Buffer *lsubrs, uint32_t maxLSubrs) {
 	if (node->rule) {
 		if (node->rule->numbered && node->rule->number < maxLSubrs + maxGSubrs &&
 		    node->rule->height < type2_subr_nesting) {
 			// A call.
-			caryll_buffer *target;
+			caryll_Buffer *target;
 			if (node->rule->number < maxLSubrs) {
 				int32_t stacknum = node->rule->number - subroutineBias(maxLSubrs);
 				target = lsubrs + node->rule->number;
@@ -499,15 +501,17 @@ static void serializeNodeToBuffer(cff_SubrNode *node, caryll_buffer *buf, caryll
 	}
 }
 
-static caryll_buffer *from_array(void *_context, uint32_t j) {
-	caryll_buffer *context = (caryll_buffer *)_context;
-	caryll_buffer *blob = bufnew();
+static caryll_Buffer *from_array(void *_context, uint32_t j) {
+	caryll_Buffer *context = (caryll_Buffer *)_context;
+	caryll_Buffer *blob = bufnew();
 	bufwrite_buf(blob, context + j);
 	return blob;
 }
-void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **gs, caryll_buffer **ls) {
+void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **gs, caryll_Buffer **ls,
+                          const otfcc_Options *options) {
 	cff_statHeight(g->root, 0);
 	uint32_t maxSubroutines = cff_numberSubroutines(g);
+	logProgress("[libcff] Total %d subroutines extracted.", maxSubroutines);
 	uint32_t maxLSubrs = maxSubroutines;
 	uint32_t maxGSubrs = 0;
 	{
@@ -521,10 +525,10 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **g
 		maxLSubrs = total / 2;
 		maxGSubrs = total - maxLSubrs;
 	}
-	caryll_buffer *charStrings, *gsubrs, *lsubrs;
-	NEW_N(charStrings, g->totalCharStrings + 1);
-	NEW_N(lsubrs, maxLSubrs + 1);
-	NEW_N(gsubrs, maxGSubrs + 1);
+	caryll_Buffer *charStrings, *gsubrs, *lsubrs;
+	NEW(charStrings, g->totalCharStrings + 1);
+	NEW(lsubrs, maxLSubrs + 1);
+	NEW(gsubrs, maxGSubrs + 1);
 	uint32_t j = 0;
 	cff_SubrRule *r = g->root;
 	for (cff_SubrNode *e = r->guard->next; e != r->guard; e = e->next) {
@@ -537,16 +541,16 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_buffer **s, caryll_buffer **g
 	cff_Index *ils = cff_newIndexByCallback(lsubrs, maxLSubrs, from_array);
 
 	for (uint32_t j = 0; j < g->totalCharStrings; j++) {
-		free((charStrings + j)->data);
+		FREE((charStrings + j)->data);
 	}
 	for (uint32_t j = 0; j < maxGSubrs; j++) {
-		free((gsubrs + j)->data);
+		FREE((gsubrs + j)->data);
 	}
 	for (uint32_t j = 0; j < maxLSubrs; j++) {
-		free((lsubrs + j)->data);
+		FREE((lsubrs + j)->data);
 	}
-	free(charStrings);
-	free(gsubrs);
+	FREE(charStrings);
+	FREE(gsubrs);
 
 	*s = cff_build_Index(*is);
 	*gs = cff_build_Index(*igs);
@@ -565,11 +569,11 @@ static void deleteFullRule(cff_SubrRule *r) {
 			if (e->rule->refcount < 1) deleteFullRule(e->rule);
 		}
 		if (e->terminal) buffree(e->terminal);
-		free(e);
+		FREE(e);
 		e = next;
 	}
-	free(r->guard);
-	free(r);
+	FREE(r->guard);
+	FREE(r);
 }
 
 void cff_delete_Graph(cff_SubrGraph *g) {

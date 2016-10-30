@@ -1,12 +1,10 @@
-#include "font/caryll-font.h"
-#include "font/caryll-sfnt-builder.h"
-#include "font/caryll-sfnt.h"
-#include "fontops/fontop.h"
+#include "otfcc/sfnt.h"
+#include "otfcc/font.h"
+#include "otfcc/sfnt-builder.h"
 
+#include "aliases.h"
 #include "platform.h"
 #include "stopwatch.h"
-
-#include <getopt.h>
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -44,7 +42,6 @@ void printHelp() {
 	                "                             used. In this level, these options will be set:\n"
 	                "                               --force-cid\n"
 	                "                               --subroutinize\n"
-	                " --time                    : Time each substep.\n"
 	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
@@ -54,8 +51,8 @@ void printHelp() {
 	                " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
 	                "                             using current time.\n\n"
 	                " --short-post              : Don't export glyph names in the result font.\n"
-	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
-	                " --keep-glyph-order        : Keep the glyph order information in the input.\n"
+	                " --ignore-glyph-order, -i  : Ignore the glyph order information in the input.\n"
+	                " --keep-glyph-order, -k    : Keep the glyph order information in the input.\n"
 	                "                             Use to preserve glyph order under -O2 and -O3.\n"
 	                " --dont-ignore-glyph-order : Same as --keep-glyph-order.\n"
 	                " --merge-features          : Merge duplicate OpenType feature definitions.\n"
@@ -113,11 +110,6 @@ void readEntireStdin(char **_buffer, long *_length) {
 	*_length = length;
 }
 
-void print_table(caryll_SFNTTableEntry *t) {
-	fprintf(stderr, "Writing Table %c%c%c%c, Length: %8d, Checksum: %08X\n", ((uint32_t)(t->tag) >> 24) & 0xff,
-	        ((uint32_t)(t->tag) >> 16) & 0xff, ((uint32_t)(t->tag) >> 8) & 0xff, t->tag & 0xff, t->length, t->checksum);
-}
-
 #ifdef _WIN32
 int main() {
 	int argc;
@@ -131,13 +123,14 @@ int main(int argc, char *argv[]) {
 
 	bool show_help = false;
 	bool show_version = false;
-	bool show_time = false;
 	sds outputPath = NULL;
 	sds inPath = NULL;
 	int option_index = 0;
 	int c;
 
-	caryll_Options *options = options_new();
+	otfcc_Options *options = otfcc_newOptions();
+	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
+	options->logger->indent(options->logger, "otfccbuild");
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},
@@ -164,14 +157,13 @@ int main(int argc, char *argv[]) {
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
 
-	while ((c = getopt_long(argc, argv, "vhsO:o:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhskiO:o:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
 				if (longopts[option_index].flag != 0) {
 					break;
 				} else if (strcmp(longopts[option_index].name, "time") == 0) {
-					show_time = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "keep-average-char-width") == 0) {
@@ -208,7 +200,6 @@ int main(int argc, char *argv[]) {
 					options->dummy_DSIG = true;
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
-					show_time = true;
 				}
 				break;
 			case 'v':
@@ -217,6 +208,12 @@ int main(int argc, char *argv[]) {
 			case 'h':
 				show_help = true;
 				break;
+			case 'k':
+				options->ignore_glyph_order = false;
+				break;
+			case 'i':
+				options->ignore_glyph_order = true;
+				break;
 			case 'o':
 				outputPath = sdsnew(optarg);
 				break;
@@ -224,10 +221,11 @@ int main(int argc, char *argv[]) {
 				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				options_optimizeTo(options, atoi(optarg));
+				otfcc_Options_optimizeTo(options, atoi(optarg));
 				break;
 		}
 	}
+	options->logger->setVerbosity(options->logger, options->verbose ? 0xFF : 1);
 	if (show_help) {
 		printInfo();
 		printHelp();
@@ -244,63 +242,64 @@ int main(int argc, char *argv[]) {
 		inPath = sdsnew(argv[optind]); // read from file
 	}
 	if (!outputPath) {
-		fprintf(stderr, "Unable to build OpenType font tile : output path not "
-		                "specified. Exit.\n");
+		logError("Unable to build OpenType font tile : output path not "
+		         "specified. Exit.\n");
 		printHelp();
 		exit(EXIT_FAILURE);
 	}
 
 	char *buffer;
 	long length;
-	{
+	loggedStep("Load file") {
 		if (inPath) {
-			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", inPath, outputPath); }
-			readEntireFile(inPath, &buffer, &length);
+			loggedStep("Load from file %s", inPath) {
+				readEntireFile(inPath, &buffer, &length);
+				sdsfree(inPath);
+			}
 		} else {
-			if (options->verbose) { fprintf(stderr, "Building OpenType font from %s to %s.\n", "[STDIN]", outputPath); }
-			readEntireStdin(&buffer, &length);
+			loggedStep("Load from stdin") {
+				readEntireStdin(&buffer, &length);
+			}
 		}
-		if (show_time) push_stopwatch("Read input", &begin);
+		logStepTime;
 	}
 
 	json_value *root;
-	{
+	loggedStep("Parse into JSON") {
 		root = json_parse(buffer, length);
 		free(buffer);
-		if (show_time) push_stopwatch("Parse JSON", &begin);
+		logStepTime;
 		if (!root) {
-			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
+			logError("Cannot parse JSON file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
 	}
 
-	caryll_Font *font;
-	{
-		font = caryll_parse_Font(root, options);
+	otfcc_Font *font;
+	loggedStep("Parse") {
+		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
+		font = parser->create(root, 0, options);
 		if (!font) {
-			fprintf(stderr, "Cannot parse JSON file \"%s\". Exit.\n", inPath);
+			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
+		parser->dispose(parser);
 		json_value_free(root);
-		if (show_time) push_stopwatch("Convert JSON to font", &begin);
+		logStepTime;
 	}
-	{
-		caryll_font_consolidate(font, options);
-		if (show_time) push_stopwatch("Consolidation", &begin);
-		caryll_font_stat(font, options);
-		if (show_time) push_stopwatch("Stating", &begin);
+	loggedStep("Consolidate") {
+		otfcc_consolidateFont(font, options);
+		logStepTime;
 	}
-	{
-		caryll_buffer *otf = caryll_build_Font(font, options);
+	loggedStep("Build") {
+		otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
+		caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
 		FILE *outfile = u8fopen(outputPath, "wb");
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
-		if (show_time) push_stopwatch("Write OpenType", &begin);
-
-		buffree(otf);
-		caryll_delete_Font(font);
-		options_delete(options);
-		if (show_time) push_stopwatch("Finalize", &begin);
+		logStepTime;
+		buffree(otf), writer->dispose(writer), otfcc_deleteFont(font), sdsfree(outputPath);
 	}
+	otfcc_deleteOptions(options);
 	return 0;
 }

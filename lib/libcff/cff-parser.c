@@ -27,7 +27,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				{
 					enc->f0.format = 0;
 					enc->f0.ncodes = data[offset + 1];
-					enc->f0.code = calloc(enc->f0.ncodes, sizeof(uint8_t));
+					NEW(enc->f0.code, enc->f0.ncodes);
 
 					for (uint32_t i = 0; i < enc->f0.ncodes; i++)
 						enc->f0.code[i] = data[offset + 2 + i];
@@ -38,7 +38,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				{
 					enc->f1.format = 1;
 					enc->f1.nranges = data[offset + 1];
-					enc->f1.range1 = calloc(enc->f1.nranges, sizeof(cff_EncodingRangeFormat1));
+					NEW(enc->f1.range1, enc->f1.nranges);
 
 					for (uint32_t i = 0; i < enc->f1.nranges; i++)
 						enc->f1.range1[i].first = data[offset + 2 + i * 2],
@@ -49,7 +49,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 				enc->t = cff_ENC_FORMAT_SUPPLEMENT;
 				{
 					enc->ns.nsup = data[offset];
-					enc->ns.supplement = calloc(enc->ns.nsup, sizeof(cff_EncodingSupplement));
+					NEW(enc->ns.supplement, enc->ns.nsup);
 
 					for (uint32_t i = 0; i < enc->ns.nsup; i++)
 						enc->ns.supplement[i].code = data[offset + 1 + i * 3],
@@ -60,7 +60,7 @@ static void parse_encoding(cff_File *cff, int32_t offset, cff_Encoding *enc) {
 	}
 }
 
-static void parse_cff_bytecode(cff_File *cff) {
+static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 	uint32_t pos;
 	int32_t offset;
 
@@ -79,8 +79,9 @@ static void parse_cff_bytecode(cff_File *cff) {
 	cff_extract_Index(cff->raw_data, pos, &cff->top_dict);
 
 	/** LINT CFF FONTSET **/
+
 	if (cff->name.count != cff->top_dict.count)
-		fprintf(stderr, "[libcff] Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count, cff->top_dict.count);
+		logWarning("[libcff] Bad CFF font: (%d, name), (%d, top_dict).\n", cff->name.count, cff->top_dict.count);
 
 	/* String INDEX */
 	pos = 4 + cff_lengthOfIndex(cff->name) + cff_lengthOfIndex(cff->top_dict);
@@ -107,7 +108,7 @@ static void parse_cff_bytecode(cff_File *cff) {
 			cff->cnt_glyph = cff->char_strings.count;
 		} else {
 			cff_empty_Index(&cff->char_strings);
-			fprintf(stderr, "[libcff] Bad CFF font: no any glyph data.\n");
+			logWarning("[libcff] Bad CFF font: no any glyph data.\n");
 		}
 
 		/* Encodings */
@@ -177,21 +178,22 @@ static void parse_cff_bytecode(cff_File *cff) {
 	}
 }
 
-cff_File *cff_openStream(uint8_t *data, uint32_t len) {
-	cff_File *file = calloc(1, sizeof(cff_File));
+cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *options) {
+	cff_File *file;
+	NEW(file);
 
-	file->raw_data = calloc(len, sizeof(uint8_t));
+	NEW(file->raw_data, len);
 	memcpy(file->raw_data, data, len);
 	file->raw_length = len;
 	file->cnt_glyph = 0;
-	parse_cff_bytecode(file);
+	parse_cff_bytecode(file, options);
 
 	return file;
 }
 
 void cff_close(cff_File *file) {
 	if (file != NULL) {
-		if (file->raw_data != NULL) free(file->raw_data);
+		if (file->raw_data != NULL) FREE(file->raw_data);
 
 		cff_close_Index(file->name);
 		cff_close_Index(file->top_dict);
@@ -207,20 +209,20 @@ void cff_close(cff_File *file) {
 			case cff_ENC_UNSPECED:
 				break;
 			case cff_ENC_FORMAT0:
-				if (file->encodings.f0.code != NULL) free(file->encodings.f0.code);
+				if (file->encodings.f0.code != NULL) FREE(file->encodings.f0.code);
 				break;
 			case cff_ENC_FORMAT1:
-				if (file->encodings.f1.range1 != NULL) free(file->encodings.f1.range1);
+				if (file->encodings.f1.range1 != NULL) FREE(file->encodings.f1.range1);
 				break;
 			case cff_ENC_FORMAT_SUPPLEMENT:
-				if (file->encodings.ns.supplement != NULL) free(file->encodings.ns.supplement);
+				if (file->encodings.ns.supplement != NULL) FREE(file->encodings.ns.supplement);
 				break;
 		}
 
 		cff_close_Charset(file->charsets);
 		cff_close_FDSelect(file->fdselect);
 
-		free(file);
+		FREE(file);
 	}
 }
 
@@ -303,14 +305,14 @@ static double callback_nopgetrand(void *context) {
 #define CHECK_STACK_TOP(op, n)                                                                                         \
 	{                                                                                                                  \
 		if (stack->index < n) {                                                                                        \
-			fprintf(stderr, "[libcff] Stack cannot provide enough parameters for %s (%04x). This "                     \
-			                "operation is ignored.\n",                                                                 \
-			        #op, op);                                                                                          \
+			logWarning("[libcff] Stack cannot provide enough parameters for %s (%04x). This "                          \
+			           "operation is ignored.\n",                                                                      \
+			           #op, op);                                                                                       \
 			break;                                                                                                     \
 		}                                                                                                              \
 	}
 void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack, void *outline,
-                      cff_IOutlineBuilder methods) {
+                      cff_IOutlineBuilder methods, const otfcc_Options *options) {
 	uint16_t gsubr_bias = compute_subr_bias(gsubr.count);
 	uint16_t lsubr_bias = compute_subr_bias(lsubr.count);
 	uint8_t *start = data;
@@ -368,7 +370,7 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						}
 						uint32_t maskLength = (stack->stem + 7) >> 3;
 						bool *mask;
-						NEW_N(mask, stack->stem + 7);
+						NEW(mask, stack->stem + 7);
 						for (uint32_t byte = 0; byte < maskLength; byte++) {
 							uint8_t maskByte = start[advance + byte];
 							mask[(byte << 3) + 0] = maskByte >> 7 & 1;
@@ -770,7 +772,7 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						cff_parseOutline(lsubr.data + lsubr.offset[lsubr_bias + subr] - 1,
 						                 lsubr.offset[lsubr_bias + subr + 1] - lsubr.offset[lsubr_bias + subr], gsubr,
-						                 lsubr, stack, outline, methods);
+						                 lsubr, stack, outline, methods, options);
 						break;
 					}
 					case op_callgsubr: {
@@ -778,7 +780,7 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						uint32_t subr = (uint32_t)stack->stack[--(stack->index)].d;
 						cff_parseOutline(gsubr.data + gsubr.offset[gsubr_bias + subr] - 1,
 						                 gsubr.offset[gsubr_bias + subr + 1] - gsubr.offset[gsubr_bias + subr], gsubr,
-						                 lsubr, stack, outline, methods);
+						                 lsubr, stack, outline, methods, options);
 						break;
 					}
 				}

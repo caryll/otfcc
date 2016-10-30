@@ -9,11 +9,7 @@ static void bkblock_acells(bk_Block *b, uint32_t len) {
 		// allocate space
 		b->length = len;
 		b->free = (len >> 1) & 0xFFFFFF;
-		if (b->cells) {
-			b->cells = realloc(b->cells, sizeof(bk_Cell) * (b->length + b->free));
-		} else {
-			b->cells = malloc(sizeof(bk_Cell) * (b->length + b->free));
-		}
+		RESIZE(b->cells, b->length + b->free);
 	}
 }
 bool bk_cellIsPointer(bk_Cell *cell) {
@@ -27,7 +23,8 @@ static bk_Cell *bkblock_grow(bk_Block *b, uint32_t len) {
 }
 
 bk_Block *_bkblock_init() {
-	bk_Block *b = calloc(1, sizeof(bk_Block));
+	bk_Block *b;
+	NEW(b);
 	bkblock_acells(b, 0);
 	return b;
 }
@@ -58,8 +55,8 @@ static void vbkpushitems(bk_Block *b, bk_CellType type0, va_list ap) {
 				}
 			}
 			if (curtype == bkembed && par) {
-				free(par->cells);
-				free(par);
+				FREE(par->cells);
+				FREE(par);
 			}
 		} else if (curtype < p16) {
 			uint32_t par = va_arg(ap, int);
@@ -72,7 +69,7 @@ static void vbkpushitems(bk_Block *b, bk_CellType type0, va_list ap) {
 	}
 }
 
-bk_Block *bk_new_Block(bk_CellType type0, ...) {
+bk_Block *bk_new_Block(int type0, ...) {
 	va_list ap;
 	va_start(ap, type0);
 	bk_Block *b = _bkblock_init();
@@ -81,7 +78,7 @@ bk_Block *bk_new_Block(bk_CellType type0, ...) {
 	return b;
 }
 
-bk_Block *bk_push(bk_Block *b, bk_CellType type0, ...) {
+bk_Block *bk_push(bk_Block *b, int type0, ...) {
 	va_list ap;
 	va_start(ap, type0);
 	vbkpushitems(b, type0, ap);
@@ -89,7 +86,7 @@ bk_Block *bk_push(bk_Block *b, bk_CellType type0, ...) {
 	return b;
 }
 
-bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_buffer *buf) {
+bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_Buffer *buf) {
 	bk_Block *b = bk_new_Block(bkover);
 	for (size_t j = 0; j < buf->size; j++) {
 		bkblock_pushint(b, b8, buf->data[j]);

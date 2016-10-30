@@ -4,11 +4,7 @@
 static void ensureThereIsSpace(cff_CharstringIL *il) {
 	if (il->free) return;
 	il->free = 0x100;
-	if (il->instr) {
-		il->instr = realloc(il->instr, sizeof(cff_CharstringInstruction) * (il->length + il->free));
-	} else {
-		il->instr = malloc(sizeof(cff_CharstringInstruction) * (il->length + il->free));
-	}
+	RESIZE(il->instr, il->length + il->free);
 }
 
 void il_push_operand(cff_CharstringIL *il, double x) {
@@ -52,11 +48,13 @@ static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2,
 
 static void _il_push_maskgroup(cff_CharstringIL *il,                       // il seq
                                uint16_t n, glyf_PostscriptHintMask *masks, // masks array
+                               uint16_t contours,                          // contous drawn
                                uint16_t points,                            // points drawn
                                uint16_t nh, uint16_t nv,                   // quantity of stems
                                uint16_t *jm,                               // index of cur mask
                                int32_t op) {                               // mask operator
-	while (*jm < n && masks[*jm].pointsBefore <= points) {
+	while (*jm < n && (masks[*jm].contoursBefore < contours ||
+	                   (masks[*jm].contoursBefore == contours && masks[*jm].pointsBefore <= points))) {
 		il_push_op(il, op);
 		uint8_t maskByte = 0;
 		uint8_t bits = 0;
@@ -84,15 +82,18 @@ static void _il_push_maskgroup(cff_CharstringIL *il,                       // il
 	}
 }
 static void il_push_masks(cff_CharstringIL *il, glyf_Glyph *g, // meta
+                          uint16_t contours,                   // contours sofar
                           uint16_t points,                     // points sofar
                           uint16_t *jh,                        // index of pushed cmasks
                           uint16_t *jm                         // index of pushed hmasks
                           ) {
 	if (!g->numberOfStemH && !g->numberOfStemV) return;
-	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, points, g->numberOfStemH, g->numberOfStemV, jh,
-	                   op_cntrmask);
-	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, points, g->numberOfStemH, g->numberOfStemV, jm,
-	                   op_hintmask);
+	_il_push_maskgroup(il, g->numberOfContourMasks, g->contourMasks, //
+	                   contours, points,                             //
+	                   g->numberOfStemH, g->numberOfStemV, jh, op_cntrmask);
+	_il_push_maskgroup(il, g->numberOfHintMasks, g->hintMasks, //
+	                   contours, points,                       //
+	                   g->numberOfStemH, g->numberOfStemV, jm, op_hintmask);
 }
 
 static void _il_push_stemgroup(cff_CharstringIL *il,                      // il seq
@@ -129,22 +130,22 @@ static void il_push_stems(cff_CharstringIL *il, glyf_Glyph *g, bool hasmask, boo
 }
 cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
 	cff_CharstringIL *il;
-	NEW_CLEAN(il);
+	NEW(il);
 	// Convert absolute positions to deltas
 	pos_t x = 0;
 	pos_t y = 0;
 	for (uint16_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		shapeid_t n = contour->pointsCount;
-		if (n > 1) {
+		if (n > 2) {
 			pos_t x0 = contour->points[0].x;
 			pos_t y0 = contour->points[0].y;
 			pos_t xlast = contour->points[n - 1].x;
 			pos_t ylast = contour->points[n - 1].y;
-			if (xlast != x0 || ylast != y0) {
+			if ((xlast != x0 || ylast != y0) && (!contour->points[n - 1].onCurve)) {
 				// Duplicate first point.
 				n += 1;
-				contour->points = realloc(contour->points, n * sizeof(glyf_Point));
+				RESIZE(contour->points, n);
 				contour->points[n - 1].x = x0;
 				contour->points[n - 1].y = y0;
 				contour->points[n - 1].onCurve = true;
@@ -168,10 +169,11 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
 	// Write contour
+	shapeid_t contoursSofar = 0;
 	shapeid_t pointsSofar = 0;
 	shapeid_t jh = 0;
 	shapeid_t jm = 0;
-	if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+	if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 	for (shapeid_t c = 0; c < g->numberOfContours; c++) {
 		glyf_Contour *contour = &(g->contours[c]);
 		shapeid_t n = contour->pointsCount;
@@ -180,12 +182,12 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 		il_push_operand(il, contour->points[0].y);
 		il_push_op(il, op_rmoveto);
 		pointsSofar++;
-		if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+		if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 
 		for (shapeid_t j = 1; j < n; j++) {
 			if (contour->points[j].onCurve) { // A line-to
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
-				pointsSofar++;
+				pointsSofar += 1;
 			} else if (j < n - 2                                                // have enough points
 			           && !contour->points[j + 1].onCurve                       // next is offcurve
 			           && contour->points[j + 2].onCurve                        // and next is oncurve
@@ -199,8 +201,10 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 				il_lineto(il, contour->points[j].x, contour->points[j].y);
 				pointsSofar++;
 			}
-			if (hasmask) il_push_masks(il, g, pointsSofar, &jh, &jm);
+			if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 		}
+		contoursSofar += 1;
+		pointsSofar = 0;
 	}
 	il_push_op(il, op_endchar);
 	return il;
@@ -396,7 +400,7 @@ static uint8_t decideAdvance(cff_CharstringIL *il, uint32_t j, uint8_t optimizeL
 	return 1;                                                                 // nothing match
 }
 
-void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
+void cff_optimizeIL(cff_CharstringIL *il, const otfcc_Options *options) {
 	if (!options->cff_rollCharString) return;
 	uint32_t j = 0;
 	while (j < il->length) {
@@ -405,8 +409,8 @@ void cff_optimizeIL(cff_CharstringIL *il, const caryll_Options *options) {
 }
 
 // IL to buffer conversion
-caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_build_IL(cff_CharstringIL *il) {
+	caryll_Buffer *blob = bufnew();
 
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
@@ -431,7 +435,7 @@ caryll_buffer *cff_build_IL(cff_CharstringIL *il) {
 
 cff_CharstringIL *cff_shrinkIL(cff_CharstringIL *il) {
 	cff_CharstringIL *out;
-	NEW_CLEAN(out);
+	NEW(out);
 	for (uint16_t j = 0; j < il->length; j++) {
 		switch (il->instr[j].type) {
 			case IL_ITEM_OPERAND: {

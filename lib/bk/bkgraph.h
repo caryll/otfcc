@@ -5,7 +5,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include "support/buffer.h"
+#include "caryll/buffer.h"
 
 #include "bkblock.h"
 
@@ -27,8 +27,8 @@ bk_Graph *bk_newGraphFromRootBlock(bk_Block *b);
 void bk_delete_Graph(/*MOVE*/ bk_Graph *f);
 void bk_minimizeGraph(/*BORROW*/ bk_Graph *f);
 void bk_untangleGraph(/*BORROW*/ bk_Graph *f);
-caryll_buffer *bk_build_Graph(/*BORROW*/ bk_Graph *f);
-caryll_buffer *bk_build_Block(/*MOVE*/ bk_Block *root);
+caryll_Buffer *bk_build_Graph(/*BORROW*/ bk_Graph *f);
+caryll_Buffer *bk_build_Block(/*MOVE*/ bk_Block *root);
 size_t bk_estimateSizeOfGraph(bk_Graph *f);
 
 #endif

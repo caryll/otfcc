@@ -43,6 +43,6 @@ typedef struct {
 
 void cff_close_FDSelect(cff_FDSelect fds);
 void cff_extract_FDSelect(uint8_t *data, int32_t offset, uint16_t nchars, cff_FDSelect *fdselect);
-caryll_buffer *cff_build_FDSelect(cff_FDSelect fd);
+caryll_Buffer *cff_build_FDSelect(cff_FDSelect fd);
 
 #endif

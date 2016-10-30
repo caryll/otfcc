@@ -137,28 +137,28 @@ extern uint32_t cff_decodeCffToken(uint8_t *start, cff_Value *val);
 extern uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val);
 
 // number, number, float
-extern caryll_buffer *cff_encodeCffOperator(int32_t val);
-extern caryll_buffer *cff_encodeCffInteger(int32_t val);
-extern caryll_buffer *cff_encodeCffFloat(double val);
+extern caryll_Buffer *cff_encodeCffOperator(int32_t val);
+extern caryll_Buffer *cff_encodeCffInteger(int32_t val);
+extern caryll_Buffer *cff_encodeCffFloat(double val);
 
 /*
   Writer
 */
 
-extern caryll_buffer *cff_buildOffset(int32_t val);
-extern caryll_buffer *cff_buildHeader(void);
+extern caryll_Buffer *cff_buildOffset(int32_t val);
+extern caryll_Buffer *cff_buildHeader(void);
 
-void cff_mergeCS2Int(caryll_buffer *blob, int32_t val);
-void cff_mergeCS2Operator(caryll_buffer *blob, int32_t val);
-void cff_mergeCS2Operand(caryll_buffer *blob, double val);
-void cff_mergeCS2Special(caryll_buffer *blob, uint8_t val);
+void cff_mergeCS2Int(caryll_Buffer *blob, int32_t val);
+void cff_mergeCS2Operator(caryll_Buffer *blob, int32_t val);
+void cff_mergeCS2Operand(caryll_Buffer *blob, double val);
+void cff_mergeCS2Special(caryll_Buffer *blob, uint8_t val);
 
 extern uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelect select, cff_Index *subr);
 void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index lsubr, cff_Stack *stack, void *outline,
-                      cff_IOutlineBuilder methods);
+                      cff_IOutlineBuilder methods, const otfcc_Options *options);
 
 // File
-extern cff_File *cff_openStream(uint8_t *data, uint32_t len);
+extern cff_File *cff_openStream(uint8_t *data, uint32_t len, const otfcc_Options *options);
 extern void cff_close(cff_File *file);
 
 #endif

@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <Windows.h>
+#include "getopt.h"
+
 int get_argv_utf8(int *argc_ptr, char ***argv_ptr) {
 	int argc;
 	char **argv;
@@ -53,7 +55,9 @@ FILE *__u8fopen(char *path, char *mode) {
 #endif
 
 #else
-#define u8fopen fopen
-#endif
 
+#include <getopt.h>
+#define u8fopen fopen
+
+#endif
 #endif

@@ -19,7 +19,7 @@
   * 30 (double)
 */
 
-caryll_buffer *cff_encodeCffOperator(int32_t val) {
+caryll_Buffer *cff_encodeCffOperator(int32_t val) {
 	if (val > 256) {
 		return bufninit(2, val / 256, val % 256);
 	} else {
@@ -27,7 +27,7 @@ caryll_buffer *cff_encodeCffOperator(int32_t val) {
 	}
 }
 
-caryll_buffer *cff_encodeCffInteger(int32_t val) {
+caryll_Buffer *cff_encodeCffInteger(int32_t val) {
 	if (val >= -107 && val <= 107) {
 		return bufninit(1, val + 139);
 	} else if (val >= 108 && val <= 1131) {
@@ -46,14 +46,14 @@ caryll_buffer *cff_encodeCffInteger(int32_t val) {
 
 // -2.25       -> 1e e2 a2 5f
 // 0.140541E-3 -> 1e 0a 14 05 41 c3 ff
-caryll_buffer *cff_encodeCffFloat(double val) {
-	caryll_buffer *blob = bufnew();
+caryll_Buffer *cff_encodeCffFloat(double val) {
+	caryll_Buffer *blob = bufnew();
 	uint32_t i, j = 0;
 	uint8_t temp[32] = {0};
 
 	if (val == 0.0) {
 		blob->size = 2;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
+		NEW(blob->data, blob->size);
 		blob->data[0] = 30;
 		blob->data[1] = 0x0f;
 	} else {
@@ -75,14 +75,14 @@ caryll_buffer *cff_encodeCffFloat(double val) {
 		}
 
 		blob->size = 2 + niblen / 2;
-		blob->data = calloc(blob->size, sizeof(uint8_t));
+		NEW(blob->data, blob->size);
 		blob->data[0] = 30;
 
 		if (niblen % 2 != 0) {
-			array = calloc((niblen + 1), sizeof(uint8_t));
+			NEW(array, (niblen + 1));
 			array[niblen] = 0x0f;
 		} else {
-			array = calloc((niblen + 2), sizeof(uint8_t));
+			NEW(array, (niblen + 2));
 			array[niblen + 1] = 0x0f;
 			array[niblen] = 0x0f;
 		}
@@ -104,7 +104,7 @@ caryll_buffer *cff_encodeCffFloat(double val) {
 			blob->data[i] = array[(i - 1) * 2] * 16 + array[(i - 1) * 2 + 1];
 		}
 
-		free(array);
+		FREE(array);
 	}
 
 	return blob;
@@ -142,7 +142,6 @@ uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val) {
 		advance = 1;
 	} else if (*start >= 32 && *start <= 254) {
 		val->t = CS2_OPERAND;
-
 		if (*start >= 32 && *start <= 246) {
 			val->i = (int32_t)(*start - 139);
 			advance = 1;
