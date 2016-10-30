@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLE_OTL_GPOS_COMMON_H
 #define CARYLL_TABLE_OTL_GPOS_COMMON_H
 
-#include "otl-private.h"
+#include "common.h"
 
 // anchors
 otl_Anchor otl_anchor_absent();

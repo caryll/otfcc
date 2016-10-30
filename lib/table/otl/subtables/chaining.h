@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLE_OTL_CHAINING_H
 #define CARYLL_TABLE_OTL_CHAINING_H
 
-#include "otl-private.h"
+#include "common.h"
 
 // This file supports four formats
 // GSUB contextual
@@ -19,6 +19,6 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 caryll_Buffer *otfcc_build_chaining(const otl_Subtable *_subtable);
 
 tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
-                                         MODIFY size_t *lastOffset);
+                                        MODIFY size_t *lastOffset);
 
 #endif

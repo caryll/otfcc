@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLE_OTL_GSUB_MULTI_H
 #define CARYLL_TABLE_OTL_GSUB_MULTI_H
 
-#include "otl-private.h"
+#include "common.h"
 
 void otl_delete_gsub_multi(otl_Subtable *subtable);
 otl_Subtable *otl_read_gsub_multi(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,

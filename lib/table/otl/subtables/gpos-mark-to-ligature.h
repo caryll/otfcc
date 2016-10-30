@@ -1,7 +1,7 @@
 #ifndef CARYLL_TABLE_OTL_GPOS_MARK_TO_LIGATURE_H
 #define CARYLL_TABLE_OTL_GPOS_MARK_TO_LIGATURE_H
 
-#include "otl-private.h"
+#include "common.h"
 
 void delete_lig_attachment(otl_MarkToLigatureBase *att);
 void otl_delete_gpos_markToLigature(otl_Subtable *subtable);

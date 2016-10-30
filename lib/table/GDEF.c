@@ -1,6 +1,6 @@
 #include "GDEF.h"
 
-#include "otl/otl-private.h"
+#include "otl/private.h"
 
 void otfcc_deleteGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
