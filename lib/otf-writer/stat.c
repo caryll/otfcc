@@ -1,6 +1,7 @@
+#include "stat.h"
+
 #include <time.h>
 #include "support/util.h"
-#include "otfcc/font.h"
 
 // Stating
 // Calculate necessary values for SFNT
@@ -49,7 +50,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	for (shapeid_t r = 0; r < g->numberOfReferences; r++) {
 		glyf_ComponentReference ref;
 		glyf_ComponentReference *rr = &(g->references[r]);
-		ref.glyph = handle_fromIndex(g->references[r].glyph.index);
+		ref.glyph = Handle.fromIndex(g->references[r].glyph.index);
 		// composite affine transformations
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
@@ -89,7 +90,7 @@ void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	pos_t ymax = -0xFFFFFFFF;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_ComponentReference gr;
-		gr.glyph = handle_fromIndex(j);
+		gr.glyph = Handle.fromIndex(j);
 		gr.x = 0;
 		gr.y = 0;
 		gr.a = 1;
@@ -598,9 +599,9 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 }
 
 void otfcc_unstatFont(otfcc_Font *font, const otfcc_Options *options) {
-	if (font->hdmx) DELETE(otfcc_deleteHdmx, font->hdmx);
-	if (font->hmtx) DELETE(otfcc_deleteHmtx, font->hmtx);
-	if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
-	if (font->vmtx) DELETE(otfcc_deleteVmtx, font->vmtx);
-	if (font->LTSH) DELETE(otfcc_deleteLTSH, font->LTSH);
+	otfcc_deleteFontTable(font, 'hdmx');
+	otfcc_deleteFontTable(font, 'hmtx');
+	otfcc_deleteFontTable(font, 'VORG');
+	otfcc_deleteFontTable(font, 'vmtx');
+	otfcc_deleteFontTable(font, 'LTSH');
 }

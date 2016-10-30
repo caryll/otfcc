@@ -23,10 +23,4 @@ typedef struct {
 	otl_LigCaretTable *ligCarets;
 } table_GDEF;
 
-void otfcc_deleteGDEF(MOVE table_GDEF *gdef);
-table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *options);
-void otfcc_dumpGDEF(const table_GDEF *gdef, json_value *root, const otfcc_Options *options);
-table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options);
-caryll_Buffer *otfcc_buildGDEF(const table_GDEF *gdef, const otfcc_Options *options);
-
 #endif

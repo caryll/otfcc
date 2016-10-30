@@ -1,12 +1,12 @@
 #ifndef CARYLL_SUPPORT_ALIASES_H
 #define CARYLL_SUPPORT_ALIASES_H
 
-#include "otfcc/handle.h"
+#include <stdint.h>
 
 #define FOR_TABLE(name, table)                                                                                         \
 	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
 	     keep = !keep, count++)                                                                                        \
-		for (otfcc_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                    \
+		for (otfcc_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                     \
 			if (table.tag == (name))                                                                                   \
 				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
 
@@ -25,10 +25,17 @@
 #define logProgress(...)                                                                                               \
 	options->logger->logSDS(options->logger, log_vl_progress, log_type_progress, sdscatprintf(sdsempty(), __VA_ARGS__));
 
+typedef uint8_t *font_file_pointer;
+
+// alias "package" otfcc_pHandle to Handle
+#include "otfcc/handle.h"
+#define Handle otfcc_pkgHandle
 typedef otfcc_GlyphHandle glyph_handle;
 typedef otfcc_FDHandle fd_handle;
 typedef otfcc_LookupHandle lookup_handle;
 
-typedef uint8_t *font_file_pointer;
+// alias "package" otfcc_pkgGlyphOrder to GlyphOrder
+#include "otfcc/glyph-order.h"
+#define GlyphOrder otfcc_pkgGlyphOrder
 
 #endif

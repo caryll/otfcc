@@ -10,8 +10,7 @@ static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
-                            const otfcc_Options *options) {
+bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	fontop_consolidateCoverage(font, subtable->from, options);
 	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
@@ -43,7 +42,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 		gsub_multi_hash *s, *tmp;
 		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j] = handle_fromConsolidated(s->fromid, s->fromname);
+			subtable->from->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
 			subtable->to[j] = s->to;
 			j++;
 			HASH_DEL(h, s);

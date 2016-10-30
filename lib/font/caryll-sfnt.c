@@ -27,7 +27,7 @@ static void otfcc_read_packets(otfcc_SplineFontContainer *font, FILE *file) {
 	}
 }
 
-otfcc_SplineFontContainer *otfcc_read_SFNT(FILE *file) {
+otfcc_SplineFontContainer *otfcc_readSFNT(FILE *file) {
 	if (!file) return NULL;
 	otfcc_SplineFontContainer *font;
 	NEW(font);

@@ -54,7 +54,7 @@ static void consolidateMarkArray(otfcc_Font *font, table_OTL *table, const otfcc
 	mark_hash *s, *tmp;
 	glyphid_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		marks->glyphs[k] = handle_fromConsolidated(s->gid, s->name);
+		marks->glyphs[k] = Handle.fromConsolidated(s->gid, s->name);
 		markArray->records[k] = s->markrec;
 		k++;
 		HASH_DEL(hm, s);
@@ -90,7 +90,7 @@ static void consolidateBaseArray(otfcc_Font *font, table_OTL *table, const otfcc
 	base_hash *s, *tmp;
 	glyphid_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		bases->glyphs[k] = handle_fromConsolidated(s->gid, s->name);
+		bases->glyphs[k] = Handle.fromConsolidated(s->gid, s->name);
 		baseArray[k] = s->anchors;
 		k++;
 		HASH_DEL(hm, s);
@@ -125,7 +125,7 @@ static void consolidateLigArray(otfcc_Font *font, table_OTL *table, const otfcc_
 	lig_hash *s, *tmp;
 	glyphid_t k = 0;
 	HASH_ITER(hh, hm, s, tmp) {
-		bases->glyphs[k] = handle_fromConsolidated(s->gid, s->name);
+		bases->glyphs[k] = Handle.fromConsolidated(s->gid, s->name);
 		ligArray[k] = s->ligAttachment;
 		k++;
 		HASH_DEL(hm, s);

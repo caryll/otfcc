@@ -2,11 +2,9 @@
 #include "otfcc/sfnt.h"
 #include "otfcc/font.h"
 
+#include "aliases.h"
 #include "platform.h"
 #include "stopwatch.h"
-
-#include <getopt.h>
-#include "aliases.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -35,6 +33,7 @@ void printHelp() {
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
+	                " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
 	                " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
 	                "                           when redirecting to another program. Use --no-bom to\n"
 	                "                           turn it off.)\n"
@@ -63,6 +62,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"decimal-cmap", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	                            {"ttc-index", required_argument, NULL, 'n'},
 	                            {0, 0, 0, 0}};
 
-	otfcc_Options *options = options_new();
+	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccdump");
 
@@ -101,6 +101,8 @@ int main(int argc, char *argv[]) {
 					options->verbose = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					options->ignore_hints = true;
+				} else if (strcmp(longopts[option_index].name, "decimal-cmap") == 0) {
+					options->decimal_cmap = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
@@ -152,7 +154,7 @@ int main(int argc, char *argv[]) {
 	loggedStep("Read SFNT") {
 		logProgress("From file %s", inPath);
 		FILE *file = u8fopen(inPath, "rb");
-		sfnt = otfcc_read_SFNT(file);
+		sfnt = otfcc_readSFNT(file);
 		if (!sfnt || sfnt->count == 0) {
 			logError("Cannot read SFNT file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
@@ -265,6 +267,6 @@ int main(int argc, char *argv[]) {
 		if (outputPath) sdsfree(outputPath);
 		logStepTime;
 	}
-	options_delete(options);
+	otfcc_deleteOptions(options);
 	return 0;
 }

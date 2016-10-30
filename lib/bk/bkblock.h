@@ -11,17 +11,16 @@
 
 struct __caryll_bkblock;
 typedef enum {
-	bkover = 0,     // nothing
-	b8 = 1,         // byte
-	b16 = 2,        // short
-	b32 = 3,        // long
-	p16 = 0x10,     // 16-bit offset, p = pointer to block
-	p32 = 0x11,     // 32-bit offset, p = pointer to block
-	sp16 = 0x80,    // 16-bit offset, p = pointer to block, marked as compact
-	sp32 = 0x81,    // 32-bit offset, p = pointer to block, marked as compact
-	bkcopy = 0xFE,  // Embed another block
-	bkembed = 0xFF, // Embed another block
-	__bk_force_width = INT_MAX
+	bkover = 0,    // nothing
+	b8 = 1,        // byte
+	b16 = 2,       // short
+	b32 = 3,       // long
+	p16 = 0x10,    // 16-bit offset, p = pointer to block
+	p32 = 0x11,    // 32-bit offset, p = pointer to block
+	sp16 = 0x80,   // 16-bit offset, p = pointer to block, marked as compact
+	sp32 = 0x81,   // 32-bit offset, p = pointer to block, marked as compact
+	bkcopy = 0xFE, // Embed another block
+	bkembed = 0xFF // Embed another block
 } bk_CellType;
 typedef enum { VISIT_WHITE, VISIT_GRAY, VISIT_BLACK } bk_cell_visit_state;
 
@@ -44,8 +43,8 @@ typedef struct __caryll_bkblock {
 } bk_Block;
 
 bk_Block *_bkblock_init();
-bk_Block *bk_new_Block(bk_CellType type0, ...);
-bk_Block *bk_push(bk_Block *b, bk_CellType type0, ...);
+bk_Block *bk_new_Block(int type0, ...);
+bk_Block *bk_push(bk_Block *b, int type0, ...);
 bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_Buffer *buf);
 bool bk_cellIsPointer(bk_Cell *cell);
 void bk_printBlock(bk_Block *b);

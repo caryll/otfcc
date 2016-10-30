@@ -9,8 +9,4 @@ typedef struct {
 	uint8_t *yPels;
 } table_LTSH;
 
-table_LTSH *otfcc_readLTSH(const otfcc_Packet packet, const otfcc_Options *options);
-void otfcc_deleteLTSH(table_LTSH *ltsh);
-caryll_Buffer *otfcc_buildLTSH(const table_LTSH *ltsh, const otfcc_Options *options);
-
 #endif

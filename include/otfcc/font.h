@@ -72,21 +72,22 @@ struct _caryll_font {
 
 otfcc_Font *otfcc_newFont();
 void otfcc_deleteFont(otfcc_Font *font);
-
+void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
 
+// Font builder interfaces
 typedef struct otfcc_IFontBuilder {
 	otfcc_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
 	void (*dispose)(struct otfcc_IFontBuilder *self);
 } otfcc_IFontBuilder;
+otfcc_IFontBuilder *otfcc_newOTFReader();
+otfcc_IFontBuilder *otfcc_newJsonReader();
 
+// Font serializer interface
 typedef struct otfcc_IFontSerializer {
 	void *(*serialize)(otfcc_Font *font, const otfcc_Options *options);
 	void (*dispose)(struct otfcc_IFontSerializer *self);
 } otfcc_IFontSerializer;
-
-otfcc_IFontBuilder *otfcc_newOTFReader();
-otfcc_IFontBuilder *otfcc_newJsonReader();
 otfcc_IFontSerializer *otfcc_newJsonWriter();
 otfcc_IFontSerializer *otfcc_newOTFWriter();
 

@@ -25,12 +25,13 @@ typedef struct {
 	bool cff_rollCharString;
 	bool cff_doSubroutinize;
 	bool stub_cmap4;
+	bool decimal_cmap;
 	char *glyph_name_prefix;
 	otfcc_ILogger *logger;
 } otfcc_Options;
 
-otfcc_Options *options_new();
-void options_delete(otfcc_Options *options);
-void options_optimizeTo(otfcc_Options *options, uint8_t level);
+otfcc_Options *otfcc_newOptions();
+void otfcc_deleteOptions(otfcc_Options *options);
+void otfcc_Options_optimizeTo(otfcc_Options *options, uint8_t level);
 
 #endif

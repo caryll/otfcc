@@ -1,5 +1,6 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
 
 static otfcc_font_subtype otfcc_decideFontSubtypeFromJson(json_value *root) {
 	if (json_obj_get_type(root, "CFF_", json_object) != NULL) {
@@ -29,7 +30,7 @@ static void setOrderByName(otfcc_GlyphOrder *go, sds name, uint8_t orderType, ui
 	}
 }
 
-static int compare_glyphorder_entry_b(otfcc_GlyphOrderEntry *a, otfcc_GlyphOrderEntry *b) {
+static int _byOrder(otfcc_GlyphOrderEntry *a, otfcc_GlyphOrderEntry *b) {
 	if (a->orderType < b->orderType) return (-1);
 	if (a->orderType > b->orderType) return (1);
 	if (a->orderEntry < b->orderEntry) return (-1);
@@ -39,7 +40,7 @@ static int compare_glyphorder_entry_b(otfcc_GlyphOrderEntry *a, otfcc_GlyphOrder
 
 // Complete ClyphOrder
 static void orderGlyphs(otfcc_GlyphOrder *go) {
-	HASH_SRT(hhName, go->byName, compare_glyphorder_entry_b);
+	HASH_SRT(hhName, go->byName, _byOrder);
 	otfcc_GlyphOrderEntry *current, *temp;
 	glyphid_t gid = 0;
 	HASH_ITER(hhName, go->byName, current, temp) {
@@ -68,7 +69,12 @@ static void placeOrderEntriesFromCmap(json_value *table, otfcc_GlyphOrder *go) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
 		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
-		int32_t unicode = atoi(unicodeStr);
+		int32_t unicode;
+		if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
+			unicode = strtol(unicodeStr + 2, NULL, 16);
+		} else {
+			unicode = atoi(unicodeStr);
+		}
 		sdsfree(unicodeStr);
 		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
@@ -91,7 +97,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, otfcc_GlyphOrder *g
 }
 
 static otfcc_GlyphOrder *parseGlyphOrder(json_value *root, const otfcc_Options *options) {
-	otfcc_GlyphOrder *go = otfcc_newGlyphOrder();
+	otfcc_GlyphOrder *go = GlyphOrder.create();
 	if (root->type != json_object) return go;
 	json_value *table;
 

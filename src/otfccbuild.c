@@ -2,11 +2,9 @@
 #include "otfcc/font.h"
 #include "otfcc/sfnt-builder.h"
 
+#include "aliases.h"
 #include "platform.h"
 #include "stopwatch.h"
-
-#include <getopt.h>
-#include "aliases.h"
 
 #ifndef MAIN_VER
 #define MAIN_VER 0
@@ -53,8 +51,8 @@ void printHelp() {
 	                " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
 	                "                             using current time.\n\n"
 	                " --short-post              : Don't export glyph names in the result font.\n"
-	                " --ignore-glyph-order      : Ignore the glyph order information in the input.\n"
-	                " --keep-glyph-order        : Keep the glyph order information in the input.\n"
+	                " --ignore-glyph-order, -i  : Ignore the glyph order information in the input.\n"
+	                " --keep-glyph-order, -k    : Keep the glyph order information in the input.\n"
 	                "                             Use to preserve glyph order under -O2 and -O3.\n"
 	                " --dont-ignore-glyph-order : Same as --keep-glyph-order.\n"
 	                " --merge-features          : Merge duplicate OpenType feature definitions.\n"
@@ -130,7 +128,7 @@ int main(int argc, char *argv[]) {
 	int option_index = 0;
 	int c;
 
-	otfcc_Options *options = options_new();
+	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccbuild");
 
@@ -159,7 +157,7 @@ int main(int argc, char *argv[]) {
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
 
-	while ((c = getopt_long(argc, argv, "vhsO:o:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhskiO:o:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
@@ -210,6 +208,12 @@ int main(int argc, char *argv[]) {
 			case 'h':
 				show_help = true;
 				break;
+			case 'k':
+				options->ignore_glyph_order = false;
+				break;
+			case 'i':
+				options->ignore_glyph_order = true;
+				break;
 			case 'o':
 				outputPath = sdsnew(optarg);
 				break;
@@ -217,7 +221,7 @@ int main(int argc, char *argv[]) {
 				options->dummy_DSIG = true;
 				break;
 			case 'O':
-				options_optimizeTo(options, atoi(optarg));
+				otfcc_Options_optimizeTo(options, atoi(optarg));
 				break;
 		}
 	}
@@ -296,6 +300,6 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 		buffree(otf), writer->dispose(writer), otfcc_deleteFont(font), sdsfree(outputPath);
 	}
-	options_delete(options);
+	otfcc_deleteOptions(options);
 	return 0;
 }

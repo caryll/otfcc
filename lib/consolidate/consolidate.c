@@ -1,5 +1,6 @@
 #include "support/util.h"
 #include "otfcc/font.h"
+#include "table/all.h"
 
 #include "otl/gsub-single.h"
 #include "otl/gsub-multi.h"
@@ -25,12 +26,15 @@ static int by_stem_pos(const void *_a, const void *_b) {
 		return -1;
 	}
 }
-static int by_mask_pointindex(const void *a, const void *b) {
-	return ((glyf_PostscriptHintMask *)a)->pointsBefore - ((glyf_PostscriptHintMask *)b)->pointsBefore;
+static int by_mask_pointindex(const void *_a, const void *_b) {
+	const glyf_PostscriptHintMask *a = (const glyf_PostscriptHintMask *)_a;
+	const glyf_PostscriptHintMask *b = (const glyf_PostscriptHintMask *)_b;
+	return a->contoursBefore == b->contoursBefore ? a->pointsBefore - b->pointsBefore
+	                                              : a->contoursBefore - b->contoursBefore;
 }
-void otfcc_consolidateTableglyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
+void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
 	// The name field of glyf_Glyph will not be consolidated with glyphOrder
-	// Consolidate references
+	// Remove empty contours
 	shapeid_t nContoursConsolidated = 0;
 	shapeid_t skip = 0;
 	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
@@ -43,12 +47,14 @@ void otfcc_consolidateTableglyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Op
 		}
 	}
 	g->numberOfContours = nContoursConsolidated;
+
+	// Consolidate references
 	shapeid_t nReferencesConsolidated = 0;
 	for (shapeid_t j = 0; j < g->numberOfReferences; j++) {
-		if (!otfcc_gordConsolidateHandle(font->glyph_order, &g->references[j].glyph)) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &g->references[j].glyph)) {
 			logWarning("[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
 			           g->references[j].glyph.name, g->name);
-			handle_dispose(&g->references[j].glyph);
+			Handle.dispose(&g->references[j].glyph);
 		} else {
 			nReferencesConsolidated += 1;
 		}
@@ -123,22 +129,22 @@ void otfcc_consolidateTableglyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Op
 	// Consolidate fdSelect
 	if (g->fdSelect.state == HANDLE_STATE_INDEX && font->CFF_ && font->CFF_->fdArray) {
 		if (g->fdSelect.index >= font->CFF_->fdArrayCount) { g->fdSelect.index = 0; }
-		g->fdSelect = handle_fromConsolidated(g->fdSelect.index, font->CFF_->fdArray[g->fdSelect.index]->fontName);
+		g->fdSelect = Handle.fromConsolidated(g->fdSelect.index, font->CFF_->fdArray[g->fdSelect.index]->fontName);
 	} else if (g->fdSelect.name && font->CFF_ && font->CFF_->fdArray) {
 		bool found = false;
 		for (tableid_t j = 0; j < font->CFF_->fdArrayCount; j++) {
 			if (strcmp(g->fdSelect.name, font->CFF_->fdArray[j]->fontName) == 0) {
 				found = true;
-				handle_consolidateTo(&(g->fdSelect), j, font->CFF_->fdArray[j]->fontName);
+				Handle.consolidateTo(&(g->fdSelect), j, font->CFF_->fdArray[j]->fontName);
 				break;
 			}
 		}
 		if (!found) {
 			logWarning("[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name, g->name);
-			handle_dispose(&(g->fdSelect));
+			Handle.dispose(&(g->fdSelect));
 		}
 	} else if (g->fdSelect.name) {
-		handle_dispose(&(g->fdSelect));
+		Handle.dispose(&(g->fdSelect));
 	}
 }
 
@@ -146,7 +152,7 @@ void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyph_order || !font->glyf) return;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		if (font->glyf->glyphs[j]) {
-			otfcc_consolidateTableglyph(font->glyf->glyphs[j], font, options);
+			consolidateGlyph(font->glyf->glyphs[j], font, options);
 		} else {
 			font->glyf->glyphs[j] = otfcc_newGlyf_glyph();
 		}
@@ -157,10 +163,10 @@ void consolidateCmap(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyph_order && font->cmap) {
 		cmap_Entry *item;
 		foreach_hash(item, *font->cmap) {
-			if (!otfcc_gordConsolidateHandle(font->glyph_order, &item->glyph)) {
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &item->glyph)) {
 				logWarning("[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
 				           item->glyph.name);
-				handle_dispose(&item->glyph);
+				Handle.dispose(&item->glyph);
 			}
 		}
 	}
@@ -174,7 +180,7 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
                                         otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
                                         const otfcc_Options *options) {
 	if (lookup && lookup->subtableCount && lookup->type == type) {
-		loggedStep(lookup->name) {
+		loggedStep("%s", lookup->name) {
 			for (tableid_t j = 0; j < lookup->subtableCount; j++) {
 				if (lookup->subtables[j]) {
 					bool subtableRemoved;
@@ -236,18 +242,36 @@ void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// In case we don’t have a glyph order, make one.
 	if (font->glyf && !font->glyph_order) {
-		otfcc_GlyphOrder *go = otfcc_newGlyphOrder();
+		otfcc_GlyphOrder *go = GlyphOrder.create();
 		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 			sds name;
 			sds glyfName = font->glyf->glyphs[j]->name;
 			if (glyfName) {
 				name = sdsdup(glyfName);
 			} else {
-				name = sdscatprintf(sdsempty(), "__gid%d", j);
+				name = sdscatprintf(sdsempty(), "$$gid%d", j);
 				font->glyf->glyphs[j]->name = sdsdup(name);
 			}
-			otfcc_setGlyphOrderByName(go, name, j);
+			if (!GlyphOrder.setByName(go, name, j)) {
+				logWarning("[Consolidate] Glyph name %s is already in use.", name);
+				uint32_t suffix = 2;
+				bool success = false;
+				do {
+					sds newname = sdscatfmt(sdsempty(), "%s_%u", name, suffix);
+					success = GlyphOrder.setByName(go, newname, j);
+					if (!success) {
+						sdsfree(newname);
+						suffix += 1;
+					} else {
+						logWarning("[Consolidate] Glyph %s is renamed into %s.", name, newname);
+						sdsfree(font->glyf->glyphs[j]->name);
+						font->glyf->glyphs[j]->name = sdsdup(newname);
+					}
+				} while (!success);
+				sdsfree(name);
+			}
 		}
+		font->glyph_order = go;
 	}
 	loggedStep("glyf") {
 		consolidateGlyf(font, options);
