@@ -26,7 +26,7 @@ bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 			} else {
 				NEW(s);
 				s->fromid = subtable->coverage->glyphs[k].index;
-				s->fromname = subtable->coverage->glyphs[k].name;
+				s->fromname = sdsdup(subtable->coverage->glyphs[k].name);
 				s->v = subtable->values[k];
 				HASH_ADD_INT(h, fromid, s);
 			}
@@ -34,7 +34,7 @@ bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	}
 	HASH_SORT(h, gpos_by_from_id);
 
-	subtable->coverage->numGlyphs = HASH_COUNT(h);
+	otl_clear_Coverage(subtable->coverage, HASH_COUNT(h));
 	{
 		gpos_single_hash *s, *tmp;
 		glyphid_t j = 0;

@@ -26,7 +26,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 			if (!s) {
 				NEW(s);
 				s->fromid = subtable->from->glyphs[k].index;
-				s->fromname = subtable->from->glyphs[k].name;
+				s->fromname = sdsdup(subtable->from->glyphs[k].name);
 				s->to = subtable->to[k];
 				HASH_ADD_INT(h, fromid, s);
 			} else {
@@ -37,7 +37,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 		}
 	}
 	HASH_SORT(h, by_from_id_multi);
-	subtable->from->numGlyphs = HASH_COUNT(h);
+	otl_clear_Coverage(subtable->from, HASH_COUNT(h));
 	{
 		gsub_multi_hash *s, *tmp;
 		glyphid_t j = 0;
