@@ -2,8 +2,8 @@ require "dep/premake-modules/xcode-alt"
 require "dep/premake-modules/ninja"
 
 MAIN_VER = '0'
-SECONDARY_VER = '4'
-PATCH_VER = '4'
+SECONDARY_VER = '5'
+PATCH_VER = '0'
 
 function cbuildoptions()
 	filter "action:vs2015"
