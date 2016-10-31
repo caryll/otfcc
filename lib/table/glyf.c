@@ -64,16 +64,18 @@ glyf_Glyph *otfcc_newGlyf_glyph() {
 	g->stat.nCompositeContours = 0;
 	return g;
 }
-
+void otfcc_deleteGlyfContours(shapeid_t n, glyf_Contour *contours) {
+	if (!contours) return;
+	for (shapeid_t k = 0; k < n; k++) {
+		if (contours[k].points) FREE(contours[k].points);
+	}
+	FREE(contours);
+}
 static void otfcc_deleteGlyf_glyph(glyf_Glyph *g) {
 	if (!g) return;
 	sdsfree(g->name);
-	if (g->numberOfContours > 0 && g->contours != NULL) {
-		for (shapeid_t k = 0; k < g->numberOfContours; k++) {
-			if (g->contours[k].points) FREE(g->contours[k].points);
-		}
-		FREE(g->contours);
-	}
+	otfcc_deleteGlyfContours(g->numberOfContours, g->contours);
+	g->contours = NULL;
 	if (g->numberOfReferences > 0 && g->references != NULL) {
 		for (shapeid_t k = 0; k < g->numberOfReferences; k++) {
 			Handle.dispose(&g->references[k].glyph);
