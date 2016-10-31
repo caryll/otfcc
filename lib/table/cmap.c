@@ -2,38 +2,38 @@
 
 #include "support/util.h"
 
-bool otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid) {
+bool otfcc_encodeCmapByIndex(table_cmap *cmap, int c, uint16_t gid) {
 	cmap_Entry *s;
-	HASH_FIND_INT(*map, &c, s);
+	HASH_FIND_INT(cmap->unicodes, &c, s);
 	if (s == NULL) {
 		NEW(s);
 		s->glyph = Handle.fromIndex(gid);
 		s->unicode = c;
-		HASH_ADD_INT(*map, unicode, s);
+		HASH_ADD_INT(cmap->unicodes, unicode, s);
 		return true;
 	} else {
 		return false;
 	}
 }
-bool otfcc_encodeCmapByName(table_cmap *map, int c, sds name) {
+bool otfcc_encodeCmapByName(table_cmap *cmap, int c, sds name) {
 	cmap_Entry *s;
-	HASH_FIND_INT(*map, &c, s);
+	HASH_FIND_INT(cmap->unicodes, &c, s);
 	if (s == NULL) {
 		NEW(s);
 		s->glyph = Handle.fromName(name);
 		s->unicode = c;
-		HASH_ADD_INT(*map, unicode, s);
+		HASH_ADD_INT(cmap->unicodes, unicode, s);
 		return true;
 	} else {
 		return false;
 	}
 }
-bool otfcc_unmapCmap(table_cmap *map, int c) {
+bool otfcc_unmapCmap(table_cmap *cmap, int c) {
 	cmap_Entry *s;
-	HASH_FIND_INT(*map, &c, s);
+	HASH_FIND_INT(cmap->unicodes, &c, s);
 	if (s) {
 		Handle.dispose(&s->glyph);
-		HASH_DEL(*(map), s);
+		HASH_DEL(cmap->unicodes, s);
 		FREE(s);
 		return true;
 	} else {
@@ -41,9 +41,9 @@ bool otfcc_unmapCmap(table_cmap *map, int c) {
 	}
 }
 
-otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *map, int c) {
+otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c) {
 	cmap_Entry *s;
-	HASH_FIND_INT(*map, &c, s);
+	HASH_FIND_INT(cmap->unicodes, &c, s);
 	if (s) {
 		return &(s->glyph);
 	} else {
@@ -51,18 +51,18 @@ otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *map, int c) {
 	}
 }
 
-void otfcc_deleteCmap(table_cmap *table) {
+void otfcc_deleteCmap(table_cmap *cmap) {
 	cmap_Entry *s, *tmp;
-	HASH_ITER(hh, *(table), s, tmp) {
+	HASH_ITER(hh, cmap->unicodes, s, tmp) {
 		// delete and free all cmap entries
 		Handle.dispose(&s->glyph);
-		HASH_DEL(*(table), s);
+		HASH_DEL(cmap->unicodes, s);
 		FREE(s);
 	}
-	FREE(table);
+	FREE(cmap);
 }
 
-static void readFormat12(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
+static void readFormat12(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
 	if (lengthLimit < 16) return;
 	uint32_t nGroups = read_32u(start + 12);
 	if (lengthLimit < 16 + 12 * nGroups) return;
@@ -71,12 +71,12 @@ static void readFormat12(font_file_pointer start, uint32_t lengthLimit, table_cm
 		uint32_t endCode = read_32u(start + 16 + 12 * j + 4);
 		uint32_t startGID = read_32u(start + 16 + 12 * j + 8);
 		for (uint32_t c = startCode; c <= endCode; c++) {
-			otfcc_encodeCmapByIndex(map, c, (c - startCode) + startGID);
+			otfcc_encodeCmapByIndex(cmap, c, (c - startCode) + startGID);
 		}
 	}
 }
 
-static void readFormat4(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
+static void readFormat4(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
 	if (lengthLimit < 14) return;
 	uint16_t segmentsCount = read_16u(start + 6) / 2;
 	if (lengthLimit < 16 + segmentsCount * 8) return;
@@ -89,25 +89,25 @@ static void readFormat4(font_file_pointer start, uint32_t lengthLimit, table_cma
 		if (idRangeOffset == 0) {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint16_t gid = (c + idDelta) & 0xFFFF;
-				otfcc_encodeCmapByIndex(map, c, gid);
+				otfcc_encodeCmapByIndex(cmap, c, gid);
 			}
 		} else {
 			for (uint32_t c = startCode; c < 0xFFFF && c <= endCode; c++) {
 				uint32_t glyphOffset = idRangeOffset + (c - startCode) * 2 + idRangeOffsetOffset;
 				if (glyphOffset + 2 > lengthLimit) continue; // ignore this encoding slot when o-o-r
 				uint16_t gid = (read_16u(start + glyphOffset) + idDelta) & 0xFFFF;
-				otfcc_encodeCmapByIndex(map, c, gid);
+				otfcc_encodeCmapByIndex(cmap, c, gid);
 			}
 		}
 	}
 }
 
-static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *map) {
+static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
 	uint16_t format = read_16u(start);
 	if (format == 4) {
-		readFormat4(start, lengthLimit, map);
+		readFormat4(start, lengthLimit, cmap);
 	} else if (format == 12) {
-		readFormat12(start, lengthLimit, map);
+		readFormat12(start, lengthLimit, cmap);
 	}
 }
 
@@ -118,14 +118,13 @@ static int by_unicode(cmap_Entry *a, cmap_Entry *b) {
 // OTFCC will not support all `cmap` mappings.
 table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *options) {
 	// the map is a reference to a hash table
-	table_cmap *map = NULL;
+	table_cmap *cmap = NULL;
 	FOR_TABLE('cmap', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 4) goto CMAP_CORRUPTED;
 
-		NEW(map);
-		*map = NULL; // intialize to empty hashtable
+		NEW(cmap); // intialize to empty hashtable
 		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 		for (uint16_t j = 0; j < numTables; j++) {
@@ -134,15 +133,15 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 			if ((platform == 0 && encoding == 3) || (platform == 0 && encoding == 4) ||
 			    (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
 				uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
-				readCmapMappingTable(data + tableOffset, length - tableOffset, map);
+				readCmapMappingTable(data + tableOffset, length - tableOffset, cmap);
 			}
 		};
-		HASH_SORT(*map, by_unicode);
-		return map;
+		HASH_SORT(cmap->unicodes, by_unicode);
+		return cmap;
 
 	CMAP_CORRUPTED:
 		logWarning("table 'cmap' corrupted.\n");
-		if (map != NULL) { FREE(map), map = NULL; }
+		if (cmap != NULL) { FREE(cmap), cmap = NULL; }
 	}
 	return NULL;
 }
@@ -150,9 +149,9 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("cmap") {
-		json_value *cmap = json_object_new(HASH_COUNT(*table));
+		json_value *cmap = json_object_new(HASH_COUNT(table->unicodes));
 		cmap_Entry *item;
-		foreach_hash(item, *table) if (item->glyph.name) {
+		foreach_hash(item, table->unicodes) if (item->glyph.name) {
 			sds key;
 			if (options->decimal_cmap) {
 				key = sdsfromlonglong(item->unicode);
@@ -168,7 +167,8 @@ void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Optio
 
 table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options) {
 	if (root->type != json_object) return NULL;
-	table_cmap hash = NULL;
+	table_cmap *cmap;
+	NEW(cmap);
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
 		loggedStep("cmap") {
@@ -184,8 +184,8 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 				sdsfree(unicodeStr);
 				if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
 					sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-					if (!otfcc_encodeCmapByName(&hash, unicode, gname)) {
-						glyph_handle *currentMap = otfcc_cmapLookup(&hash, unicode);
+					if (!otfcc_encodeCmapByName(cmap, unicode, gname)) {
+						glyph_handle *currentMap = otfcc_cmapLookup(cmap, unicode);
 						logWarning("U+%04X is already mapped to %s. Assignment to %s is ignored.", unicode,
 						           currentMap->name, gname);
 					}
@@ -193,14 +193,8 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 			}
 		}
 	}
-	if (hash) {
-		HASH_SORT(hash, by_unicode);
-		table_cmap *map;
-		NEW(map);
-		*map = hash;
-		return map;
-	}
-	return NULL;
+	HASH_SORT(cmap->unicodes, by_unicode);
+	return cmap;
 }
 // writing tables
 #define FLUSH_SEQUENCE_FORMAT_4                                                                                        \
@@ -232,7 +226,7 @@ caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 	uint16_t segmentsCount = 0;
 
 	cmap_Entry *item;
-	foreach_hash(item, *cmap) if (item->unicode <= 0xFFFF) {
+	foreach_hash(item, cmap->unicodes) if (item->unicode <= 0xFFFF) {
 		if (!started) {
 			started = true;
 			lastUnicodeStart = lastUnicodeEnd = item->unicode;
@@ -328,7 +322,7 @@ caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 	int lastGIDStart = 0xFFFFFF;
 	int lastGIDEnd = 0xFFFFFF;
 	cmap_Entry *item;
-	foreach_hash(item, *cmap) {
+	foreach_hash(item, cmap->unicodes) {
 		if (!started) {
 			started = true;
 			lastUnicodeStart = lastUnicodeEnd = item->unicode;
@@ -358,11 +352,11 @@ caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 }
 caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *options) {
 	caryll_Buffer *buf = bufnew();
-	if (!cmap || !*cmap) return buf;
+	if (!cmap || !cmap->unicodes) return buf;
 
 	cmap_Entry *entry;
 	bool hasSMP = false;
-	foreach_hash(entry, *cmap) {
+	foreach_hash(entry, cmap->unicodes) {
 		if (entry->unicode > 0xFFFF) { hasSMP = true; }
 	}
 

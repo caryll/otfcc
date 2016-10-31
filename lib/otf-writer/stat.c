@@ -241,7 +241,7 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 	uint32_t u4 = 0;
 	int32_t minUnicode = 0xFFFF;
 	int32_t maxUnicode = 0;
-	foreach_hash(item, *font->cmap) {
+	foreach_hash(item, font->cmap->unicodes) {
 		int u = item->unicode;
 		// Stat for minimium and maximium unicode
 		if (u < minUnicode) minUnicode = u;
