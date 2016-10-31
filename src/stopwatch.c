@@ -101,6 +101,6 @@ sds push_stopwatch(struct timespec *sofar) {
 	struct timespec diff;
 	timespec_diff(sofar, &ends, &diff);
 	*sofar = ends;
-	sds log = sdscatprintf(sdsempty(), "Done in %gs.\n", diff.tv_sec + diff.tv_nsec / (double)BILLION);
+	sds log = sdscatprintf(sdsempty(), "Step time = %gs.\n", diff.tv_sec + diff.tv_nsec / (double)BILLION);
 	return log;
 }

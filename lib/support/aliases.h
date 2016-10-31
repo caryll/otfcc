@@ -15,7 +15,7 @@
 #define loggedStep(...)                                                                                                \
 	for (bool ___loggedstep_v =                                                                                        \
 	              (options->logger->startSDS(options->logger, sdscatprintf(sdsempty(), __VA_ARGS__)), true);           \
-	     ___loggedstep_v; ___loggedstep_v = false, options->logger->dedent(options->logger))
+	     ___loggedstep_v; ___loggedstep_v = false, options->logger->finish(options->logger))
 #define logError(...)                                                                                                  \
 	options->logger->logSDS(options->logger, log_vl_critical, log_type_error, sdscatprintf(sdsempty(), __VA_ARGS__));
 #define logWarning(...)                                                                                                \
