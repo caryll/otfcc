@@ -3,21 +3,19 @@
 bool consolidate_gsub_ligature(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                                const otfcc_Options *options) {
 	subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
-	fontop_consolidateCoverage(font, subtable->to, options);
-	for (glyphid_t j = 0; j < subtable->to->numGlyphs; j++) {
-		fontop_consolidateCoverage(font, subtable->from[j], options);
-		Coverage.shrink(subtable->from[j], false);
-	}
-	glyphid_t jj = 0;
-	for (glyphid_t k = 0; k < subtable->to->numGlyphs; k++) {
-		if (subtable->to->glyphs[k].name && subtable->from[k]->numGlyphs) {
-			subtable->to->glyphs[jj] = subtable->to->glyphs[k];
-			subtable->from[jj] = subtable->from[k];
-			jj++;
-		} else {
-			Coverage.dispose(subtable->from[k]);
+	subtable_gsub_ligature *nt = otl_new_gsub_ligature();
+	for (glyphid_t k = 0; k < subtable->length; k++) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].to)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].to.name);
+			continue;
 		}
+		fontop_consolidateCoverage(font, subtable->data[k].from, options);
+		Coverage.shrink(subtable->data[k].from, false);
+		caryll_vecPush(nt, ((otl_GsubLigatureEntry){
+		                       .from = subtable->data[k].from, .to = Handle.copy(subtable->data[k].to),
+		                   }));
+		subtable->data[k].from = NULL;
 	}
-	subtable->to->numGlyphs = jj;
-	return (subtable->to->numGlyphs == 0);
+	caryll_vecReplace(subtable, nt);
+	return (subtable->length == 0);
 }

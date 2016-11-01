@@ -1,32 +1,28 @@
 #include "gsub-single.h"
 
-static void gss_entry_ctor(MODIFY subtable_gsub_single_entry *entry) {
+static void gss_entry_ctor(MODIFY otl_GsubSingleEntry *entry) {
 	entry->from = Handle.empty();
 	entry->to = Handle.empty();
 }
-static void gss_entry_movector(MODIFY subtable_gsub_single_entry *dst, MOVE subtable_gsub_single_entry *src) {
-	dst->from = src->from;
-	dst->to = src->to;
-}
-static void gss_entry_copyctor(MODIFY subtable_gsub_single_entry *dst, COPY const subtable_gsub_single_entry *src) {
+static void gss_entry_copyctor(MODIFY otl_GsubSingleEntry *dst, COPY const otl_GsubSingleEntry *src) {
 	dst->from = Handle.copy(src->from);
 	dst->to = Handle.copy(src->to);
 }
-static void gss_entry_dtor(MODIFY subtable_gsub_single_entry *entry) {
+static void gss_entry_dtor(MODIFY otl_GsubSingleEntry *entry) {
 	Handle.dispose(&entry->from);
 	Handle.dispose(&entry->to);
 }
 
 void otl_delete_gsub_single(otl_Subtable *subtable) {
-	caryll_deleteVector(&subtable->gsub_single);
+	caryll_vecDelete(&subtable->gsub_single);
 }
 
-static const caryll_VectorEntryTypeInfo(subtable_gsub_single_entry) gss_typeinfo = {
-    .ctor = gss_entry_ctor, .movector = gss_entry_movector, .copyctor = gss_entry_copyctor, .dtor = gss_entry_dtor};
+static const caryll_VectorEntryTypeInfo(otl_GsubSingleEntry) gss_typeinfo = {
+    .ctor = gss_entry_ctor, .copyctor = gss_entry_copyctor, .dtor = gss_entry_dtor};
 
 static subtable_gsub_single *otl_new_gsub_single() {
 	subtable_gsub_single *subtable;
-	caryll_newVector(subtable, gss_typeinfo);
+	caryll_vecNew(subtable, gss_typeinfo);
 	return subtable;
 }
 
@@ -69,10 +65,10 @@ FAIL:
 	return NULL;
 OK:
 	for (glyphid_t j = 0; j < from->numGlyphs; j++) {
-		caryll_pushVector(subtable, ((subtable_gsub_single_entry){
-		                                .from = Handle.copy(from->glyphs[j]), // from
-		                                .to = Handle.copy(to->glyphs[j]),     // to
-		                            }));
+		caryll_vecPush(subtable, ((otl_GsubSingleEntry){
+		                             .from = Handle.copy(from->glyphs[j]), // from
+		                             .to = Handle.copy(to->glyphs[j]),     // to
+		                         }));
 	}
 	if (from) Coverage.dispose(from);
 	if (to) Coverage.dispose(to);
@@ -96,7 +92,7 @@ otl_Subtable *otl_gsub_parse_single(const json_value *_subtable, const otfcc_Opt
 			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length));
 			glyph_handle to = Handle.fromName(sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
 			                                            _subtable->u.object.values[j].value->u.string.length));
-			caryll_pushVector(subtable, ((subtable_gsub_single_entry){.from = from, .to = to}));
+			caryll_vecPush(subtable, ((otl_GsubSingleEntry){.from = from, .to = to}));
 		}
 	}
 	return (otl_Subtable *)subtable;

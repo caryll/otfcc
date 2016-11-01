@@ -1,98 +1,103 @@
 #include "gpos-cursive.h"
 #include "gpos-common.h"
-void otl_delete_gpos_cursive(otl_Subtable *subtable) {
-	if (subtable) {
-		Coverage.dispose(subtable->gpos_cursive.coverage);
-		FREE(subtable->gpos_cursive.enter);
-		FREE(subtable->gpos_cursive.exit);
-		FREE(subtable);
-	}
+
+static void deleteGposCursiveEntry(otl_GposCursiveEntry *entry) {
+	Handle.dispose(&entry->target);
+}
+
+static const caryll_VectorEntryTypeInfo(otl_GposCursiveEntry) gss_typeinfo = {
+    .ctor = NULL, .copyctor = NULL, .dtor = deleteGposCursiveEntry};
+
+void otl_delete_gpos_cursive(otl_Subtable *_subtable) {
+	if (!_subtable) return;
+	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
+	caryll_vecDelete(subtable);
+}
+
+subtable_gpos_cursive *otl_new_gpos_cursive() {
+	subtable_gpos_cursive *subtable;
+	caryll_vecNew(subtable, gss_typeinfo);
+	return subtable;
 }
 
 otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                     const otfcc_Options *options) {
-	otl_Subtable *_subtable;
-	NEW(_subtable);
-	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
-	subtable->coverage = NULL;
-	subtable->enter = NULL;
-	subtable->exit = NULL;
+	subtable_gpos_cursive *subtable = otl_new_gpos_cursive();
+	otl_Coverage *targets = NULL;
+
 	checkLength(offset + 6);
 
-	subtable->coverage = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
-	if (!subtable->coverage || subtable->coverage->numGlyphs == 0) goto FAIL;
-	NEW(subtable->enter, subtable->coverage->numGlyphs);
-	NEW(subtable->exit, subtable->coverage->numGlyphs);
+	targets = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
+	if (!targets || targets->numGlyphs == 0) goto FAIL;
 
 	glyphid_t valueCount = read_16u(data + offset + 4);
 	checkLength(offset + 6 + 4 * valueCount);
-	if (valueCount != subtable->coverage->numGlyphs) goto FAIL;
+	if (valueCount != targets->numGlyphs) goto FAIL;
 
-	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < valueCount; j++) {
 		uint16_t enterOffset = read_16u(data + offset + 6 + 4 * j);
 		uint16_t exitOffset = read_16u(data + offset + 6 + 4 * j + 2);
-		subtable->enter[j] = otl_anchor_absent();
-		subtable->exit[j] = otl_anchor_absent();
-		if (enterOffset) { subtable->enter[j] = otl_read_anchor(data, tableLength, offset + enterOffset); }
-		if (exitOffset) { subtable->exit[j] = otl_read_anchor(data, tableLength, offset + exitOffset); }
+		otl_Anchor enter = otl_anchor_absent();
+		otl_Anchor exit = otl_anchor_absent();
+		if (enterOffset) { enter = otl_read_anchor(data, tableLength, offset + enterOffset); }
+		if (exitOffset) { exit = otl_read_anchor(data, tableLength, offset + exitOffset); }
+		caryll_vecPush(subtable, ((otl_GposCursiveEntry){
+		                             .target = Handle.copy(targets->glyphs[j]), .enter = enter, .exit = exit}));
 	}
-	goto OK;
+	if (targets) Coverage.dispose(targets);
+	return (otl_Subtable *)subtable;
 FAIL:
-	if (subtable->coverage) Coverage.dispose(subtable->coverage);
-	if (subtable->enter) FREE(subtable->enter);
-	if (subtable->exit) FREE(subtable->exit);
-	_subtable = NULL;
-OK:
-	return _subtable;
+	if (targets) Coverage.dispose(targets);
+	otl_delete_gpos_cursive((otl_Subtable *)subtable);
+	return NULL;
 }
 
 json_value *otl_gpos_dump_cursive(const otl_Subtable *_subtable) {
 	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
-	json_value *st = json_object_new(subtable->coverage->numGlyphs);
-	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
+	json_value *st = json_object_new(subtable->length);
+	for (glyphid_t j = 0; j < subtable->length; j++) {
 		json_value *rec = json_object_new(2);
-		json_object_push(rec, "enter", otl_dump_anchor(subtable->enter[j]));
-		json_object_push(rec, "exit", otl_dump_anchor(subtable->exit[j]));
-		json_object_push(st, subtable->coverage->glyphs[j].name, preserialize(rec));
+		json_object_push(rec, "enter", otl_dump_anchor(subtable->data[j].enter));
+		json_object_push(rec, "exit", otl_dump_anchor(subtable->data[j].exit));
+		json_object_push(st, subtable->data[j].target.name, preserialize(rec));
 	}
 	return st;
 }
 
 otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Options *options) {
-	otl_Subtable *_st;
-	NEW(_st);
-	subtable_gpos_cursive *subtable = &(_st->gpos_cursive);
-	NEW(subtable->coverage);
-	NEW(subtable->coverage->glyphs, _subtable->u.object.length);
-	NEW(subtable->enter, _subtable->u.object.length);
-	NEW(subtable->exit, _subtable->u.object.length);
-	glyphid_t jj = 0;
+	subtable_gpos_cursive *subtable = otl_new_gpos_cursive();
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
 		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
 			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
-			subtable->coverage->glyphs[jj] = Handle.fromName(gname);
-			subtable->enter[jj] = otl_parse_anchor(json_obj_get(_subtable->u.object.values[j].value, "enter"));
-			subtable->exit[jj] = otl_parse_anchor(json_obj_get(_subtable->u.object.values[j].value, "exit"));
-			jj++;
+			caryll_vecPush(subtable,
+			               ((otl_GposCursiveEntry){
+			                   .target = Handle.fromName(gname),
+			                   .enter = otl_parse_anchor(json_obj_get(_subtable->u.object.values[j].value, "enter")),
+			                   .exit = otl_parse_anchor(json_obj_get(_subtable->u.object.values[j].value, "exit")),
+			               }));
 		}
 	}
-	subtable->coverage->numGlyphs = jj;
-	return _st;
+	return (otl_Subtable *)subtable;
 }
 
 caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
 	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
+	otl_Coverage *cov = Coverage.create();
+	for (glyphid_t j = 0; j < subtable->length; j++) {
+		Coverage.push(cov, Handle.copy(subtable->data[j].target));
+	}
 
-	bk_Block *root = bk_new_Block(b16, 1,                                                         // format
-	                              p16, bk_newBlockFromBuffer(Coverage.build(subtable->coverage)), // Coverage
-	                              b16, subtable->coverage->numGlyphs,                             // EntryExitCount
+	bk_Block *root = bk_new_Block(b16, 1,                                          // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(cov)), // Coverage
+	                              b16, subtable->length,                           // EntryExitCount
 	                              bkover);
-	for (glyphid_t j = 0; j < subtable->coverage->numGlyphs; j++) {
-		bk_push(root,                                  // EntryExitRecord[.]
-		        p16, bkFromAnchor(subtable->enter[j]), // enter
-		        p16, bkFromAnchor(subtable->exit[j]),  // exit
+	for (glyphid_t j = 0; j < subtable->length; j++) {
+		bk_push(root,                                       // EntryExitRecord[.]
+		        p16, bkFromAnchor(subtable->data[j].enter), // enter
+		        p16, bkFromAnchor(subtable->data[j].exit),  // exit
 		        bkover);
 	}
+	Coverage.dispose(cov);
 
 	return bk_build_Block(root);
 }

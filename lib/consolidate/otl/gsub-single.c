@@ -15,8 +15,14 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	gsub_single_map_hash *h = NULL;
 	for (size_t k = 0; k < subtable->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].from)) { continue; }
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].to)) { continue; }
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].from)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].from.name);
+			continue;
+		}
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].to)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].to.name);
+			continue;
+		}
 		gsub_single_map_hash *s;
 		int fromid = subtable->data[k].from.index;
 		HASH_FIND_INT(h, &fromid, s);
@@ -34,16 +40,14 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	}
 	HASH_SORT(h, by_from_id);
 	if (HASH_COUNT(h) != subtable->length) { logWarning("[Consolidate] In this lookup, some mappings are ignored.\n"); }
-	caryll_resetVector(subtable);
-	{
-		gsub_single_map_hash *s, *tmp;
-		HASH_ITER(hh, h, s, tmp) {
-			caryll_pushVector(subtable,
-			                  ((subtable_gsub_single_entry){.from = Handle.fromConsolidated(s->fromid, s->fromname),
-			                                                .to = Handle.fromConsolidated(s->toid, s->toname)}));
-			HASH_DEL(h, s);
-			FREE(s);
-		}
+	caryll_vecReset(subtable);
+
+	gsub_single_map_hash *s, *tmp;
+	HASH_ITER(hh, h, s, tmp) {
+		caryll_vecPush(subtable, ((otl_GsubSingleEntry){.from = Handle.fromConsolidated(s->fromid, s->fromname),
+		                                                .to = Handle.fromConsolidated(s->toid, s->toname)}));
+		HASH_DEL(h, s);
+		FREE(s);
 	}
 	return (subtable->length == 0);
 }

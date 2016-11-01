@@ -42,23 +42,22 @@ typedef struct {
 
 // GSUB subtable formats
 typedef struct {
-	otfcc_GlyphHandle from;
-	otfcc_GlyphHandle to;
-} subtable_gsub_single_entry;
-typedef caryll_Vector(subtable_gsub_single_entry) subtable_gsub_single;
-/*typedef struct {
-    OWNING otl_Coverage *from;
-    OWNING otl_Coverage *to;
-} subtable_gsub_single;
-*/
+	OWNING otfcc_GlyphHandle from;
+	OWNING otfcc_GlyphHandle to;
+} otl_GsubSingleEntry;
+typedef caryll_Vector(otl_GsubSingleEntry) subtable_gsub_single;
+
+typedef struct {
+	OWNING otfcc_GlyphHandle from;
+	OWNING otl_Coverage *to;
+} otl_GsubMultiEntry;
+typedef caryll_Vector(otl_GsubMultiEntry) subtable_gsub_multi;
+
 typedef struct {
 	OWNING otl_Coverage *from;
-	OWNING otl_Coverage **to;
-} subtable_gsub_multi;
-typedef struct {
-	OWNING otl_Coverage **from;
-	OWNING otl_Coverage *to;
-} subtable_gsub_ligature;
+	OWNING otfcc_GlyphHandle to;
+} otl_GsubLigatureEntry;
+typedef caryll_Vector(otl_GsubLigatureEntry) subtable_gsub_ligature;
 
 typedef enum {
 	otl_chaining_canonical = 0, // The canonical form of chaining contextual substitution, one rule per subtable.
@@ -102,9 +101,10 @@ typedef struct {
 
 // GPOS subtable formats
 typedef struct {
-	OWNING otl_Coverage *coverage;
-	OWNING otl_PositionValue *values;
-} subtable_gpos_single;
+	OWNING otfcc_GlyphHandle target;
+	OWNING otl_PositionValue value;
+} otl_GposSingleEntry;
+typedef caryll_Vector(otl_GposSingleEntry) subtable_gpos_single;
 
 typedef struct {
 	bool present;
@@ -120,10 +120,11 @@ typedef struct {
 } subtable_gpos_pair;
 
 typedef struct {
-	OWNING otl_Coverage *coverage;
-	OWNING otl_Anchor *enter;
-	OWNING otl_Anchor *exit;
-} subtable_gpos_cursive;
+	OWNING otfcc_GlyphHandle target;
+	OWNING otl_Anchor enter;
+	OWNING otl_Anchor exit;
+} otl_GposCursiveEntry;
+typedef caryll_Vector(otl_GposCursiveEntry) subtable_gpos_cursive;
 
 typedef struct {
 	glyphclass_t markClass;
