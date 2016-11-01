@@ -46,7 +46,6 @@ static void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name)
 }
 
 const struct otfcc_HandlePackage otfcc_pkgHandle = {
-    // export them
     .empty = handle_new,
     .copy = handle_copy,
     .fromIndex = handle_fromIndex,
@@ -54,5 +53,5 @@ const struct otfcc_HandlePackage otfcc_pkgHandle = {
     .fromConsolidated = handle_fromConsolidated,
     .dispose = handle_dispose,
     .free = handle_delete,
-    .consolidateTo = handle_consolidateTo //
+    .consolidateTo = handle_consolidateTo,
 };

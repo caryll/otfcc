@@ -1,4 +1,5 @@
 #include "charstring-il.h"
+#include "table/glyf.h"
 
 // Glyph building
 static void ensureThereIsSpace(cff_CharstringIL *il) {
@@ -132,39 +133,48 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	cff_CharstringIL *il;
 	NEW(il);
 	// Convert absolute positions to deltas
-	pos_t x = 0;
-	pos_t y = 0;
-	for (uint16_t c = 0; c < g->numberOfContours; c++) {
-		glyf_Contour *contour = &(g->contours[c]);
-		shapeid_t n = contour->pointsCount;
-		if (n > 2) {
-			pos_t x0 = contour->points[0].x;
-			pos_t y0 = contour->points[0].y;
-			pos_t xlast = contour->points[n - 1].x;
-			pos_t ylast = contour->points[n - 1].y;
-			if ((xlast != x0 || ylast != y0) && (!contour->points[n - 1].onCurve)) {
-				// Duplicate first point.
-				n += 1;
-				RESIZE(contour->points, n);
-				contour->points[n - 1].x = x0;
-				contour->points[n - 1].y = y0;
-				contour->points[n - 1].onCurve = true;
-				contour->pointsCount = n;
+	glyf_Contour *tempContours = NULL;
+	{
+		pos_t x = 0;
+		pos_t y = 0;
+		NEW(tempContours, g->numberOfContours);
+		for (uint16_t c = 0; c < g->numberOfContours; c++) {
+			glyf_Contour *contour = &(g->contours[c]);
+			glyf_Contour *newcontour = &(tempContours[c]);
+			shapeid_t n = contour->pointsCount;
+			newcontour->pointsCount = n;
+			NEW(newcontour->points, n);
+			for (shapeid_t j = 0; j < n; j++) {
+				newcontour->points[j] = contour->points[j];
 			}
-		}
-		for (shapeid_t j = 0; j < n; j++) {
-			pos_t dx = contour->points[j].x - x;
-			pos_t dy = contour->points[j].y - y;
-			x = contour->points[j].x, y = contour->points[j].y;
-			contour->points[j].x = dx;
-			contour->points[j].y = dy;
+			if (n > 2) {
+				pos_t x0 = contour->points[0].x;
+				pos_t y0 = contour->points[0].y;
+				pos_t xlast = contour->points[n - 1].x;
+				pos_t ylast = contour->points[n - 1].y;
+				if ((xlast != x0 || ylast != y0) && (!contour->points[n - 1].onCurve)) {
+					// Duplicate first point.
+					n += 1;
+					RESIZE(newcontour->points, n);
+					newcontour->points[n - 1].x = x0;
+					newcontour->points[n - 1].y = y0;
+					newcontour->points[n - 1].onCurve = true;
+					newcontour->pointsCount = n;
+				}
+			}
+			for (shapeid_t j = 0; j < n; j++) {
+				pos_t dx = newcontour->points[j].x - x;
+				pos_t dy = newcontour->points[j].y - y;
+				x = newcontour->points[j].x, y = newcontour->points[j].y;
+				newcontour->points[j].x = dx;
+				newcontour->points[j].y = dy;
+			}
 		}
 	}
 
 	bool hasmask = (g->hintMasks && g->numberOfHintMasks)           // we have hint masks
 	               || (g->contourMasks && g->numberOfContourMasks); // or contour masks
 	bool haswidth = g->advanceWidth != defaultWidth;                // we have width operand here
-
 	// Write IL
 	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
@@ -175,7 +185,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 	shapeid_t jm = 0;
 	if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
 	for (shapeid_t c = 0; c < g->numberOfContours; c++) {
-		glyf_Contour *contour = &(g->contours[c]);
+		glyf_Contour *contour = &(tempContours[c]);
 		shapeid_t n = contour->pointsCount;
 		if (n == 0) continue;
 		il_push_operand(il, contour->points[0].x);
@@ -207,6 +217,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 		pointsSofar = 0;
 	}
 	il_push_op(il, op_endchar);
+	otfcc_deleteGlyfContours(g->numberOfContours, tempContours);
 	return il;
 }
 

@@ -18,6 +18,7 @@ void fontop_consolidateClassDef(otfcc_Font *font, otl_ClassDef *cd, const otfcc_
 		if (!GlyphOrder.consolidateHandle(font->glyph_order, h)) {
 			logWarning("[Consolidate] Ignored missing glyph /%s.\n", h->name);
 			Handle.dispose(h);
+			cd->classes[j] = 0;
 		}
 	}
 }

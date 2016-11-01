@@ -162,7 +162,7 @@ void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 void consolidateCmap(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyph_order && font->cmap) {
 		cmap_Entry *item;
-		foreach_hash(item, *font->cmap) {
+		foreach_hash(item, font->cmap->unicodes) {
 			if (!GlyphOrder.consolidateHandle(font->glyph_order, &item->glyph)) {
 				logWarning("[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
 				           item->glyph.name);

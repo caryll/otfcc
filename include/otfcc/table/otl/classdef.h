@@ -5,17 +5,25 @@
 
 typedef struct {
 	glyphid_t numGlyphs;
+	uint32_t capacity;
 	glyphclass_t maxclass;
 	otfcc_GlyphHandle *glyphs;
 	glyphclass_t *classes;
 } otl_ClassDef;
 
-void otl_delete_ClassDef(otl_ClassDef *cd);
-otl_ClassDef *otl_read_ClassDef(const uint8_t *data, uint32_t tableLength, uint32_t offset);
-otl_ClassDef *otl_expand_ClassDef(otl_Coverage *cov, otl_ClassDef *ocd);
-json_value *otl_dump_ClassDef(const otl_ClassDef *cd);
-otl_ClassDef *otl_parse_ClassDef(const json_value *_cd);
-caryll_Buffer *otl_build_ClassDef(const otl_ClassDef *cd);
-void fontop_shrinkClassDef(otl_ClassDef *cd);
+struct otfcc_ClassDefPackage {
+	otl_ClassDef *(*create)();
+	void (*dispose)(otl_ClassDef *);
+	void (*push)(otl_ClassDef *cd, MOVE otfcc_GlyphHandle h, glyphclass_t cls);
+
+	otl_ClassDef *(*read)(const uint8_t *data, uint32_t tableLength, uint32_t offset);
+	otl_ClassDef *(*expand)(otl_Coverage *cov, otl_ClassDef *ocd);
+	json_value *(*dump)(const otl_ClassDef *cd);
+	otl_ClassDef *(*parse)(const json_value *_cd);
+	caryll_Buffer *(*build)(const otl_ClassDef *cd);
+	void (*shrink)(otl_ClassDef *cd);
+};
+
+extern const struct otfcc_ClassDefPackage otfcc_pkgClassDef;
 
 #endif

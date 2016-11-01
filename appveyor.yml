@@ -1,12 +1,17 @@
 environment:
   VS_VERSION: vs2015
+
 platform:
   - x64
+
 configuration:
   - Release
+
 install:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
   - set PATH=C:\msys64\usr\bin;%PATH%
+
+before_build:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
 
 build_script:
   - dep\bin-win\premake5.exe vs2015

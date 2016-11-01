@@ -41,7 +41,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	// pass 3: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
 		cmap_Entry *s;
-		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
+		foreach_hash(s, font->cmap->unicodes) if (s->glyph.index > 0) {
 			sds name = NULL;
 			GlyphOrder.nameAField_Shared(aglfn, s->unicode, &name);
 			if (name == NULL) {

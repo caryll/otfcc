@@ -30,8 +30,8 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 				NEW(s);
 				s->fromid = subtable->from->glyphs[k].index;
 				s->toid = subtable->to->glyphs[k].index;
-				s->fromname = subtable->from->glyphs[k].name;
-				s->toname = subtable->to->glyphs[k].name;
+				s->fromname = sdsdup(subtable->from->glyphs[k].name);
+				s->toname = sdsdup(subtable->to->glyphs[k].name);
 				HASH_ADD_INT(h, fromid, s);
 			}
 		}
@@ -40,19 +40,12 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	if (HASH_COUNT(h) != subtable->from->numGlyphs || HASH_COUNT(h) != subtable->to->numGlyphs) {
 		logWarning("[Consolidate] In this lookup, some mappings are ignored.\n");
 	}
-	subtable->from->numGlyphs = HASH_COUNT(h);
-	subtable->to->numGlyphs = HASH_COUNT(h);
-	FREE(subtable->from->glyphs);
-	FREE(subtable->to->glyphs);
-	NEW(subtable->from->glyphs, subtable->from->numGlyphs);
-	NEW(subtable->to->glyphs, subtable->to->numGlyphs);
+	Coverage.clear(subtable->from, 0), Coverage.clear(subtable->to, 0);
 	{
 		gsub_single_map_hash *s, *tmp;
-		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
-			subtable->to->glyphs[j] = Handle.fromConsolidated(s->toid, s->toname);
-			j++;
+			Coverage.push(subtable->from, Handle.fromConsolidated(s->fromid, s->fromname));
+			Coverage.push(subtable->to, Handle.fromConsolidated(s->toid, s->toname));
 			HASH_DEL(h, s);
 			FREE(s);
 		}

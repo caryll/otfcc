@@ -6,16 +6,20 @@ SECONDARY_VER = '5'
 PATCH_VER = '0'
 
 function cbuildoptions()
+	-- Windows
 	filter "action:vs2015"
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter { "action:vs2015", "platforms:x64" }
 		buildoptions {'-Wshorten-64-to-32'}
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '/Wall', '-Wextra', '-Wno-unused-parameter', '-Qunused-arguments' }
-	filter "action:gmake"
+	-- Linux / OSX
+	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
-	filter "action:xcode4"
+		links "m"
+	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		links "m"
 	filter {}
 end
 
@@ -24,22 +28,10 @@ function externcbuildoptions()
 		buildoptions { '/MP', '-Qunused-arguments', '-Wno-unused-const-variable' }
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '-Wno-unused-parameter', '-Qunused-arguments' }
-	filter "action:gmake"
+	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
-	filter "action:xcode4"
+	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
-	filter {}
-end
-
-function cxxbuildoptions()
-	filter "action:vs2015"
-		buildoptions { '/MP', '-Qunused-arguments' }
-	filter {"system:windows", "action:ninja"}
-		buildoptions { '-Qunused-arguments' }
-	filter "action:gmake"
-		buildoptions { '-std=gnu++11' }
-	filter "action:xcode4"
-		buildoptions { '-std=gnu++11' }
 	filter {}
 end
 
@@ -60,7 +52,7 @@ workspace "otfcc"
 	
 	filter "action:vs2015"
 		location "build/vs"
-		toolset "msc-LLVM-vs2014"
+		toolset "msc-llvm-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
@@ -111,13 +103,6 @@ project "libotfcc"
 
 	links { "deps" }
 	includedirs{ "lib" }
-	filter "action:gmake"
-		links "m"
-	filter {}
-
-	filter "action:xcode4"
-		links "m"
-	filter {}
 
 	files {
 		"lib/**.h",
@@ -131,14 +116,6 @@ project "otfccdump"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
-	
-	filter "action:gmake"
-		links "m"
-	filter {}
-
-	filter "action:xcode4"
-		links "m"
-	filter {}
 	
 	files {
 		"src/**.c",
@@ -155,12 +132,6 @@ project "otfccbuild"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
-	
-	filter "action:gmake"
-		links "m"
-	filter "action:xcode4"
-		links "m"
-	filter {}
 	
 	files {
 		"src/**.c",

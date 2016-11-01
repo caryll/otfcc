@@ -128,17 +128,29 @@ cd build/gmake
 make
 ```
 
+If you have [Ninja](https://ninja-build.org/) installed on your system, you can use ninja either:
+
+```bash
+premake5 ninja
+cd build/ninja
+ninja otfccdump_Release_x64 otfccbuild_Release_x64
+```
+
+Change the targets above when necessary.
+
 ### Windows
 
 On Windows, building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
 
-* GCC 5.1 included in `TDM-GCC`. Run the following from the command line:
+* GCC 5.1 included in `TDM-GCC`, or GCC 6.1.0 in MinGW-W64. Run the following from the command line:
 
   ```bash
   premake5 gmake
   cd build/gmake
   make
   ```
+  To use Ninja like that in Linux, you need to specify the `--os=linux` when using `premake5 ninja`.
+
 * [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
 
   ```bat
@@ -146,6 +158,7 @@ On Windows, building `otfcc` is tested under the toolchains listed below. The de
   msbuild build\vs\otfcc.sln /property:Configuration=Release
   ```
 
+* [Visual Studio 2015 Update 3](https://www.visualstudio.com) with Clang/C2. Use the same command above.
 
 ### Mac OS
 

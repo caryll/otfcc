@@ -34,18 +34,20 @@ static void loggerDedent(otfcc_ILogger *_self) {
 	self->level -= 1;
 	if (self->level < self->lastLoggedLevel) { self->lastLoggedLevel = self->level; }
 }
-static void loggerStart(otfcc_ILogger *_self, const char *segment) {
-	((otfcc_ILogger *)_self)
-	    ->logSDS(_self, log_vl_progress + ((Logger *)_self)->level, log_type_progress, sdsnew(segment));
-	((otfcc_ILogger *)_self)->indentSDS(_self, sdsnew(segment));
+static void loggerFinish(otfcc_ILogger *self) {
+	self->logSDS(self, log_vl_progress + ((Logger *)self)->level, log_type_progress, sdsnew("Finish"));
+	self->dedent(self);
 }
-static void loggerStartSDS(otfcc_ILogger *_self, MOVE sds segment) {
-	((otfcc_ILogger *)_self)
-	    ->logSDS(_self, log_vl_progress + ((Logger *)_self)->level, log_type_progress, sdsdup(segment));
-	((otfcc_ILogger *)_self)->indentSDS(_self, segment);
+static void loggerStart(otfcc_ILogger *self, const char *segment) {
+	self->indentSDS(self, sdsnew(segment));
+	self->logSDS(self, log_vl_progress + ((Logger *)self)->level, log_type_progress, sdsnew("Begin"));
 }
-static void loggerLog(otfcc_ILogger *_self, uint8_t verbosity, otfcc_LoggerType type, const char *data) {
-	((otfcc_ILogger *)_self)->logSDS(_self, verbosity, type, sdsnew(data));
+static void loggerStartSDS(otfcc_ILogger *self, MOVE sds segment) {
+	self->indentSDS(self, segment);
+	self->logSDS(self, log_vl_progress + ((Logger *)self)->level, log_type_progress, sdsnew("Begin"));
+}
+static void loggerLog(otfcc_ILogger *self, uint8_t verbosity, otfcc_LoggerType type, const char *data) {
+	self->logSDS(self, verbosity, type, sdsnew(data));
 }
 
 static void loggerLogSDS(otfcc_ILogger *_self, uint8_t verbosity, otfcc_LoggerType type, MOVE sds data) {
@@ -53,7 +55,14 @@ static void loggerLogSDS(otfcc_ILogger *_self, uint8_t verbosity, otfcc_LoggerTy
 	sds demand = sdsempty();
 	for (uint16_t level = 0; level < self->level; level++) {
 		if (level < self->lastLoggedLevel - 1) {
-			demand = sdscat(demand, " .  ");
+			for (size_t j = 0; j < sdslen(self->indents[level]); j++) {
+				demand = sdscat(demand, " ");
+			}
+			if (level < self->lastLoggedLevel - 2) {
+				demand = sdscat(demand, " | ");
+			} else {
+				demand = sdscat(demand, " |-");
+			}
 		} else {
 			demand = sdscatfmt(demand, "%S : ", self->indents[level]);
 		}
@@ -97,11 +106,12 @@ static void loggerDispose(otfcc_ILogger *_self) {
 const otfcc_ILogger VTABLE_LOGGER = {.dispose = loggerDispose,
                                      .indent = loggerIndent,
                                      .indentSDS = loggerIndentSDS,
-                                     .dedent = loggerDedent,
                                      .start = loggerStart,
                                      .startSDS = loggerStartSDS,
                                      .log = loggerLog,
                                      .logSDS = loggerLogSDS,
+                                     .dedent = loggerDedent,
+                                     .finish = loggerFinish,
                                      .getTarget = loggerGetTarget,
                                      .setVerbosity = loggerSetVerbosity};
 

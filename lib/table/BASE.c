@@ -1,6 +1,6 @@
 #include "BASE.h"
 
-#include "otl/otl-private.h"
+#include "otl/private.h"
 
 static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {
 	if (!axis) return;

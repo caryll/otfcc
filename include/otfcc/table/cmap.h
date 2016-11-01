@@ -9,11 +9,12 @@ typedef struct {
 	int unicode;
 	otfcc_GlyphHandle glyph;
 } cmap_Entry;
-typedef cmap_Entry *table_cmap;
 
-bool otfcc_encodeCmapByIndex(table_cmap *map, int c, uint16_t gid);
-bool otfcc_encodeCmapByName(table_cmap *map, int c, sds name);
-bool otfcc_unmapCmap(table_cmap *map, int c);
-otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *map, int c);
+typedef struct { cmap_Entry *unicodes; } table_cmap;
+
+bool otfcc_encodeCmapByIndex(table_cmap *cmap, int c, uint16_t gid);
+bool otfcc_encodeCmapByName(table_cmap *cmap, int c, sds name);
+bool otfcc_unmapCmap(table_cmap *cmap, int c);
+otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c);
 
 #endif
