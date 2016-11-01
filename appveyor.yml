@@ -8,10 +8,11 @@ configuration:
   - Release
 
 install:
-  - set PATH="C:\Program Files\LLVM\bin";"C:\msys64\usr\bin";%PATH%
+  - set PATH="C:\msys64\usr\bin";%PATH%
 
 before_build:
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  - set PATH="C:\Program Files\LLVM\msbuild-bin";%PATH%
 
 build_script:
   - dep\bin-win\premake5.exe ninja
