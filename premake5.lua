@@ -6,16 +6,20 @@ SECONDARY_VER = '5'
 PATCH_VER = '0'
 
 function cbuildoptions()
+	-- Windows
 	filter "action:vs2015"
 		buildoptions { '/MP', '/Wall', '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter { "action:vs2015", "platforms:x64" }
 		buildoptions {'-Wshorten-64-to-32'}
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '/Wall', '-Wextra', '-Wno-unused-parameter', '-Qunused-arguments' }
+	-- Linux / OSX
 	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		links "m"
 	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		links "m"
 	filter {}
 end
 
@@ -99,13 +103,6 @@ project "libotfcc"
 
 	links { "deps" }
 	includedirs{ "lib" }
-	filter "action:gmake"
-		links "m"
-	filter {}
-
-	filter "action:xcode4"
-		links "m"
-	filter {}
 
 	files {
 		"lib/**.h",
@@ -119,14 +116,6 @@ project "otfccdump"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
-	
-	filter "action:gmake"
-		links "m"
-	filter {}
-
-	filter "action:xcode4"
-		links "m"
-	filter {}
 	
 	files {
 		"src/**.c",
@@ -143,12 +132,6 @@ project "otfccbuild"
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
 	links { "libotfcc", "deps" }
-	
-	filter "action:gmake"
-		links "m"
-	filter "action:xcode4"
-		links "m"
-	filter {}
 	
 	files {
 		"src/**.c",
