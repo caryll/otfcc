@@ -52,7 +52,7 @@ workspace "otfcc"
 	
 	filter "action:vs2015"
 		location "build/vs"
-		toolset "msc-LLVM-vs2014"
+		toolset "msc-llvm-vs2014"
 		defines { '_CRT_SECURE_NO_WARNINGS', '_CRT_NONSTDC_NO_DEPRECATE' }
 		flags { "StaticRuntime" }
 		includedirs { "dep/polyfill-msvc" }
