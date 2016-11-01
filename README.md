@@ -151,14 +151,13 @@ On Windows, building `otfcc` is tested under the toolchains listed below. The de
   ```
   To use Ninja like that in Linux, you need to specify the `--os=linux` when using `premake5 ninja`.
 
-* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
+* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.9](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
 
   ```bat
   premake5 vs2015
   msbuild build\vs\otfcc.sln /property:Configuration=Release
   ```
 
-* [Visual Studio 2015 Update 3](https://www.visualstudio.com) with Clang/C2. Use the same command above.
 
 ### Mac OS
 
