@@ -6,8 +6,10 @@ mf-vs2015 :
 	@$(PREMAKE5) vs2015
 mf-gmake :
 	@$(PREMAKE5) gmake
-mf-ninja :
-	@$(PREMAKE5) ninja
+mf-ninja-windows :
+	@$(PREMAKE5) ninja --os=windows
+mf-ninja-linux :
+	@$(PREMAKE5) ninja --os=linux
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
@@ -18,14 +20,14 @@ mingw-release-x64 : mf-gmake
 mingw-release-x86 : mf-gmake
 	@cd build/gmake && make config=release_x32
 
-linux-debug-x64 : mf-gmake
-	@cd build/gmake && make config=debug_x64
-linux-debug-x86 : mf-gmake
-	@cd build/gmake && make config=debug_x32
-linux-release-x64 : mf-gmake
-	@cd build/gmake && make config=release_x64
-linux-release-x86 : mf-gmake
-	@cd build/gmake && make config=release_x32
+linux-debug-x64 : mf-ninja-linux
+	@cd build/ninja && ninja otfccdump_Debug_x64 otfccbuild_Debug_x64
+linux-debug-x86 : mf-ninja-linux
+	@cd build/ninja && ninja otfccdump_Debug_x32 otfccbuild_Debug_x32
+linux-release-x64 : mf-ninja-linux
+	@cd build/ninja && ninja otfccdump_Release_x64 otfccbuild_Release_x64
+linux-release-x86 : mf-ninja-linux
+	@cd build/ninja && ninja otfccdump_Release_x32 otfccbuild_Release_x32
 
 # Clang-cl does not support debugging well
 # It is used for release versions only
@@ -34,9 +36,9 @@ clang-cl-release-x64 : mf-vs2015
 clang-cl-release-x86 : mf-vs2015
 	@cmd /c _vcbuild32.bat /property:Configuration=Release /property:Platform=win32
 
-ninja-win-x64 : mf-ninja
+ninja-win-x64 : mf-ninja-windows
 	@cmd /c _vcbuildNinja.bat otfccdump_Release_x64 otfccbuild_Release_x64
-ninja-win-x86 : mf-ninja
+ninja-win-x86 : mf-ninja-windows
 	@cmd /c _vcbuildNinja.bat otfccdump_Release_x32 otfccbuild_Release_x32
 
 TEST_OPCODES = abs add div drop dup eq.(mul) exch ifelse index.(roll,drop) mul neg not or.(mul) put.get roll.(drop) sqrt.(mul) sub

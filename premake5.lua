@@ -12,9 +12,9 @@ function cbuildoptions()
 		buildoptions {'-Wshorten-64-to-32'}
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '/Wall', '-Wextra', '-Wno-unused-parameter', '-Qunused-arguments' }
-	filter "action:gmake"
+	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
-	filter "action:xcode4"
+	filter {"system:linux", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter {}
 end
