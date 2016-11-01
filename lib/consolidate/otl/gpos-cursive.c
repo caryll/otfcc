@@ -40,7 +40,6 @@ bool consolidate_gpos_cursive(otfcc_Font *font, table_OTL *table, otl_Subtable *
 	caryll_vecReset(subtable);
 
 	gpos_cursive_hash *s, *tmp;
-	glyphid_t j = 0;
 	HASH_ITER(hh, h, s, tmp) {
 		caryll_vecPush(
 		    subtable, ((otl_GposCursiveEntry){

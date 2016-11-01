@@ -1,5 +1,14 @@
 #include "caryll/vector.h"
+#include "support/util.h"
 #include <stdio.h>
+
+void *__caryll_vector_alloc(size_t headersize) {
+	return __otfcc_malloc(headersize);
+}
+
+void __caryll_vector_dealloc(void *array) {
+	__otfcc_free(array);
+}
 
 void __caryll_vector_init(caryll_VectorVoid *array, size_t elem_size, __caryll_VVTI cp) {
 	array->length = 0;
@@ -9,6 +18,7 @@ void __caryll_vector_init(caryll_VectorVoid *array, size_t elem_size, __caryll_V
 	array->iElement.copyctor = cp.copyctor;
 	array->data = NULL;
 }
+
 void __caryll_vector_grow(caryll_VectorVoid *array, size_t elem_size) {
 	if (array->length < array->capacity) return;
 	if (!array->capacity) array->capacity = 0x10;
