@@ -12,7 +12,7 @@ install:
   - set PATH="C:\Program Files\LLVM\bin";"C:\msys64\usr\bin";%PATH%
 
 build_script:
-  - dep\bin-win\premake5.exe vs2015
+  - dep\bin-win\premake5.exe ninja
   - cd build\ninja
   - ..\..\dep\bin-win\ninja otfccdump_Release_x64 otfccbuild_Release_x64
   - cd ..\..\
