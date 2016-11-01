@@ -1,6 +1,7 @@
 #ifndef CARYLL_INCLUDE_TABLE_OTL_H
 #define CARYLL_INCLUDE_TABLE_OTL_H
 
+#include "caryll/vector.h"
 #include "table-common.h"
 #include "otl/coverage.h"
 #include "otl/classdef.h"
@@ -41,9 +42,15 @@ typedef struct {
 
 // GSUB subtable formats
 typedef struct {
-	OWNING otl_Coverage *from;
-	OWNING otl_Coverage *to;
+	otfcc_GlyphHandle from;
+	otfcc_GlyphHandle to;
+} subtable_gsub_single_entry;
+typedef caryll_Vector(subtable_gsub_single_entry) subtable_gsub_single;
+/*typedef struct {
+    OWNING otl_Coverage *from;
+    OWNING otl_Coverage *to;
 } subtable_gsub_single;
+*/
 typedef struct {
 	OWNING otl_Coverage *from;
 	OWNING otl_Coverage **to;

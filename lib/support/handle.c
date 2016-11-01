@@ -7,7 +7,11 @@ static struct otfcc_Handle handle_new() {
 }
 static struct otfcc_Handle handle_copy(struct otfcc_Handle h) {
 	struct otfcc_Handle h1 = h;
-	h1.name = sdsdup(h.name);
+	if (h.name) {
+		h1.name = sdsdup(h.name);
+	} else {
+		h1.name = NULL;
+	}
 	return h1;
 }
 static struct otfcc_Handle handle_fromIndex(glyphid_t id) {
