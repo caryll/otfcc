@@ -14,7 +14,7 @@ function cbuildoptions()
 		buildoptions { '/Wall', '-Wextra', '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
-	filter {"system:linux", "action:ninja"}
+	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
 	filter {}
 end
@@ -24,22 +24,10 @@ function externcbuildoptions()
 		buildoptions { '/MP', '-Qunused-arguments', '-Wno-unused-const-variable' }
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '-Wno-unused-parameter', '-Qunused-arguments' }
-	filter "action:gmake"
+	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
-	filter "action:xcode4"
+	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
-	filter {}
-end
-
-function cxxbuildoptions()
-	filter "action:vs2015"
-		buildoptions { '/MP', '-Qunused-arguments' }
-	filter {"system:windows", "action:ninja"}
-		buildoptions { '-Qunused-arguments' }
-	filter "action:gmake"
-		buildoptions { '-std=gnu++11' }
-	filter "action:xcode4"
-		buildoptions { '-std=gnu++11' }
 	filter {}
 end
 
