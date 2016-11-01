@@ -17,6 +17,12 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	fontop_consolidateCoverage(font, subtable->to, options);
 	glyphid_t len = subtable->to->numGlyphs;
 	if (subtable->from->numGlyphs < subtable->to->numGlyphs) { len = subtable->from->numGlyphs; }
+	for (glyphid_t j = len; j < subtable->from->numGlyphs; j++) {
+		Handle.dispose(&subtable->from->glyphs[j]);
+	}
+	for (glyphid_t j = len; j < subtable->to->numGlyphs; j++) {
+		Handle.dispose(&subtable->to->glyphs[j]);
+	}
 	gsub_single_map_hash *h = NULL;
 	for (glyphid_t k = 0; k < len; k++) {
 		if (subtable->from->glyphs[k].name && subtable->to->glyphs[k].name) {
