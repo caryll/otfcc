@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t pointsCount;
-	glyf_Point *points;
+	OWNING glyf_Point *points;
 } glyf_Contour;
 
 // CFF stems and hint masks
@@ -74,18 +74,18 @@ typedef struct {
 	// NOTE: SFNT does not support mixed glyphs, but we do.
 	shapeid_t numberOfContours;
 	shapeid_t numberOfReferences;
-	glyf_Contour *contours;
-	glyf_ComponentReference *references;
+	OWNING glyf_Contour *contours;
+	OWNING glyf_ComponentReference *references;
 
 	// Postscript hints
 	shapeid_t numberOfStemH;
 	shapeid_t numberOfStemV;
 	shapeid_t numberOfHintMasks;
 	shapeid_t numberOfContourMasks;
-	glyf_PostscriptStemDef *stemH;
-	glyf_PostscriptStemDef *stemV;
-	glyf_PostscriptHintMask *hintMasks;
-	glyf_PostscriptHintMask *contourMasks;
+	OWNING glyf_PostscriptStemDef *stemH;
+	OWNING glyf_PostscriptStemDef *stemV;
+	OWNING glyf_PostscriptHintMask *hintMasks;
+	OWNING glyf_PostscriptHintMask *contourMasks;
 
 	// TTF instructions
 	uint16_t instructionsLength;

@@ -12,7 +12,7 @@ typedef struct {
 } vertical_metric;
 
 typedef struct {
-	vertical_metric *metrics;
+	OWNING vertical_metric *metrics;
 	pos_t *topSideBearing;
 } table_vmtx;
 

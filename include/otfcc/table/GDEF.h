@@ -10,17 +10,17 @@ typedef struct {
 } otl_CaretValue;
 typedef struct {
 	glyphid_t caretCount;
-	otl_CaretValue *values;
+	OWNING otl_CaretValue *values;
 } otl_CaretValueRecord;
 typedef struct {
-	otl_Coverage *coverage;
-	otl_CaretValueRecord *carets;
+	OWNING otl_Coverage *coverage;
+	OWNING otl_CaretValueRecord *carets;
 } otl_LigCaretTable;
 
 typedef struct {
-	otl_ClassDef *glyphClassDef;
-	otl_ClassDef *markAttachClassDef;
-	otl_LigCaretTable *ligCarets;
+	OWNING otl_ClassDef *glyphClassDef;
+	OWNING otl_ClassDef *markAttachClassDef;
+	OWNING otl_LigCaretTable *ligCarets;
 } table_GDEF;
 
 #endif

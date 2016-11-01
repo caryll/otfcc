@@ -15,7 +15,7 @@ typedef struct {
 	uint16_t format;
 	uint16_t count;
 	uint16_t stringOffset;
-	otfcc_NameRecord **records;
+	OWNING otfcc_NameRecord *records;
 } table_name;
 
 #endif

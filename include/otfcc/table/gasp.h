@@ -13,7 +13,7 @@ typedef struct {
 typedef struct {
 	uint16_t version;
 	uint16_t numRanges;
-	gasp_Record *records;
+	OWNING gasp_Record *records;
 } table_gasp;
 
 #endif

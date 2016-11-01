@@ -13,8 +13,8 @@ typedef struct {
 
 typedef struct {
 	// Horizontal metrics
-	horizontal_metric *metrics;
-	pos_t *leftSideBearing;
+	OWNING horizontal_metric *metrics;
+	OWNING pos_t *leftSideBearing;
 } table_hmtx;
 
 #endif

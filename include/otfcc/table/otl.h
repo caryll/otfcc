@@ -41,16 +41,16 @@ typedef struct {
 
 // GSUB subtable formats
 typedef struct {
-	otl_Coverage *from;
-	otl_Coverage *to;
+	OWNING otl_Coverage *from;
+	OWNING otl_Coverage *to;
 } subtable_gsub_single;
 typedef struct {
-	otl_Coverage *from;
-	otl_Coverage **to;
+	OWNING otl_Coverage *from;
+	OWNING otl_Coverage **to;
 } subtable_gsub_multi;
 typedef struct {
-	otl_Coverage **from;
-	otl_Coverage *to;
+	OWNING otl_Coverage **from;
+	OWNING otl_Coverage *to;
 } subtable_gsub_ligature;
 
 typedef enum {
@@ -68,9 +68,9 @@ typedef struct {
 	tableid_t matchCount;
 	tableid_t inputBegins;
 	tableid_t inputEnds;
-	otl_Coverage **match;
+	OWNING otl_Coverage **match;
 	tableid_t applyCount;
-	otl_ChainLookupApplication *apply;
+	OWNING otl_ChainLookupApplication *apply;
 } otl_ChainingRule;
 typedef struct {
 	otl_chaining_type type;
@@ -78,10 +78,10 @@ typedef struct {
 		otl_ChainingRule rule; // for type = otl_chaining_canonical
 		struct {               // for type = otl_chaining_poly or otl_chaining_classified
 			tableid_t rulesCount;
-			otl_ChainingRule **rules;
-			otl_ClassDef *bc;
-			otl_ClassDef *ic;
-			otl_ClassDef *fc;
+			OWNING otl_ChainingRule **rules;
+			OWNING otl_ClassDef *bc;
+			OWNING otl_ClassDef *ic;
+			OWNING otl_ClassDef *fc;
 		};
 	};
 } subtable_chaining;
@@ -89,14 +89,14 @@ typedef struct {
 typedef struct {
 	tableid_t matchCount;
 	tableid_t inputIndex;
-	otl_Coverage **match;
-	otl_Coverage *to;
+	OWNING otl_Coverage **match;
+	OWNING otl_Coverage *to;
 } subtable_gsub_reverse;
 
 // GPOS subtable formats
 typedef struct {
-	otl_Coverage *coverage;
-	otl_PositionValue *values;
+	OWNING otl_Coverage *coverage;
+	OWNING otl_PositionValue *values;
 } subtable_gpos_single;
 
 typedef struct {
@@ -106,16 +106,16 @@ typedef struct {
 } otl_Anchor;
 
 typedef struct {
-	otl_ClassDef *first;
-	otl_ClassDef *second;
-	otl_PositionValue **firstValues;
-	otl_PositionValue **secondValues;
+	OWNING otl_ClassDef *first;
+	OWNING otl_ClassDef *second;
+	OWNING otl_PositionValue **firstValues;
+	OWNING otl_PositionValue **secondValues;
 } subtable_gpos_pair;
 
 typedef struct {
-	otl_Coverage *coverage;
-	otl_Anchor *enter;
-	otl_Anchor *exit;
+	OWNING otl_Coverage *coverage;
+	OWNING otl_Anchor *enter;
+	OWNING otl_Anchor *exit;
 } subtable_gpos_cursive;
 
 typedef struct {
@@ -125,28 +125,28 @@ typedef struct {
 
 typedef struct {
 	glyphclass_t markCount;
-	otl_MarkRecord *records;
+	OWNING otl_MarkRecord *records;
 } otl_MarkArray;
 
 typedef struct {
-	otl_Coverage *marks;
-	otl_Coverage *bases;
+	OWNING otl_Coverage *marks;
+	OWNING otl_Coverage *bases;
 	glyphclass_t classCount;
-	otl_MarkArray *markArray;
-	otl_Anchor **baseArray;
+	OWNING otl_MarkArray *markArray;
+	OWNING otl_Anchor **baseArray;
 } subtable_gpos_markToSingle;
 
 typedef struct {
 	glyphid_t componentCount;
-	otl_Anchor **anchors;
+	OWNING otl_Anchor **anchors;
 } otl_MarkToLigatureBase;
 
 typedef struct {
-	otl_Coverage *marks;
-	otl_Coverage *bases;
+	OWNING otl_Coverage *marks;
+	OWNING otl_Coverage *bases;
 	glyphclass_t classCount;
-	otl_MarkArray *markArray;
-	otl_MarkToLigatureBase **ligArray;
+	OWNING otl_MarkArray *markArray;
+	OWNING otl_MarkToLigatureBase **ligArray;
 } subtable_gpos_markToLigature;
 
 typedef struct {
@@ -174,20 +174,20 @@ typedef struct _otl_lookup {
 	uint32_t _offset;
 	uint16_t flags;
 	tableid_t subtableCount;
-	otl_Subtable **subtables;
+	OWNING otl_Subtable **subtables;
 } otl_Lookup;
 
 typedef struct {
 	sds name;
 	tableid_t lookupCount;
-	otl_Lookup **lookups;
+	OWNING otl_Lookup **lookups;
 } otl_Feature;
 
 typedef struct {
 	sds name;
-	otl_Feature *requiredFeature;
+	OWNING otl_Feature *requiredFeature;
 	tableid_t featureCount;
-	otl_Feature **features;
+	OWNING otl_Feature **features;
 } otl_LanguageSystem;
 
 typedef struct {
@@ -197,11 +197,11 @@ typedef struct {
 
 typedef struct {
 	uint32_t languageCount;
-	otl_LanguageSystem **languages;
+	OWNING otl_LanguageSystem **languages;
 	tableid_t featureCount;
-	otl_Feature **features;
+	OWNING otl_Feature **features;
 	tableid_t lookupCount;
-	otl_Lookup **lookups;
+	OWNING otl_Lookup **lookups;
 } table_OTL;
 
 #endif

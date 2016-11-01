@@ -3,6 +3,14 @@
 #include "support/util.h"
 #include "support/unicodeconv/unicodeconv.h"
 
+void otfcc_deleteName(table_name *table) {
+	for (uint16_t j = 0; j < table->count; j++) {
+		if (table->records[j].nameString) DELETE(sdsfree, table->records[j].nameString);
+	}
+	FREE(table->records);
+	FREE(table);
+}
+
 static bool shouldDecodeAsUTF16(const otfcc_NameRecord *record) {
 	return (record->platformID == 0)                               // Unicode, all
 	       || (record->platformID == 2 && record->encodingID == 1) // ISO, 1
@@ -28,8 +36,7 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 
 		NEW(name->records, name->count);
 		for (uint16_t j = 0; j < name->count; j++) {
-			otfcc_NameRecord *record;
-			NEW(record);
+			otfcc_NameRecord *record = &(name->records[j]);
 			record->platformID = read_16u(data + 6 + j * 12);
 			record->encodingID = read_16u(data + 6 + j * 12 + 2);
 			record->languageID = read_16u(data + 6 + j * 12 + 4);
@@ -51,7 +58,6 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 				record->nameString = sdsnewlen(buf, len);
 				FREE(buf);
 			}
-			name->records[j] = record;
 		}
 		return name;
 	TABLE_NAME_CORRUPTED:
@@ -61,21 +67,12 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 	return NULL;
 }
 
-void otfcc_deleteName(table_name *table) {
-	for (uint16_t j = 0; j < table->count; j++) {
-		if (table->records[j]->nameString) sdsfree(table->records[j]->nameString);
-		FREE(table->records[j]);
-	}
-	FREE(table->records);
-	FREE(table);
-}
-
 void otfcc_dumpName(const table_name *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("name") {
 		json_value *name = json_array_new(table->count);
 		for (uint16_t j = 0; j < table->count; j++) {
-			otfcc_NameRecord *r = table->records[j];
+			otfcc_NameRecord *r = &(table->records[j]);
 			json_value *record = json_object_new(5);
 			json_object_push(record, "platformID", json_integer_new(r->platformID));
 			json_object_push(record, "encodingID", json_integer_new(r->encodingID));
@@ -89,12 +86,12 @@ void otfcc_dumpName(const table_name *table, json_value *root, const otfcc_Optio
 	}
 }
 static int name_record_sort(const void *_a, const void *_b) {
-	const otfcc_NameRecord **a = (const otfcc_NameRecord **)_a;
-	const otfcc_NameRecord **b = (const otfcc_NameRecord **)_b;
-	if ((*a)->platformID != (*b)->platformID) return (*a)->platformID - (*b)->platformID;
-	if ((*a)->encodingID != (*b)->encodingID) return (*a)->encodingID - (*b)->encodingID;
-	if ((*a)->languageID != (*b)->languageID) return (*a)->languageID - (*b)->languageID;
-	return (*a)->nameID - (*b)->nameID;
+	const otfcc_NameRecord *a = (const otfcc_NameRecord *)_a;
+	const otfcc_NameRecord *b = (const otfcc_NameRecord *)_b;
+	if (a->platformID != b->platformID) return a->platformID - b->platformID;
+	if (a->encodingID != b->encodingID) return a->encodingID - b->encodingID;
+	if (a->languageID != b->languageID) return a->languageID - b->languageID;
+	return a->nameID - b->nameID;
 }
 table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options) {
 	table_name *name;
@@ -136,19 +133,18 @@ table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options
 					    json_obj_get_type(record, "languageID", json_integer) &&
 					    json_obj_get_type(record, "nameID", json_integer) &&
 					    json_obj_get_type(record, "nameString", json_string)) {
-						NEW(name->records[jj]);
-						name->records[jj]->platformID = json_obj_getint(record, "platformID");
-						name->records[jj]->encodingID = json_obj_getint(record, "encodingID");
-						name->records[jj]->languageID = json_obj_getint(record, "languageID");
-						name->records[jj]->nameID = json_obj_getint(record, "nameID");
+						name->records[jj].platformID = json_obj_getint(record, "platformID");
+						name->records[jj].encodingID = json_obj_getint(record, "encodingID");
+						name->records[jj].languageID = json_obj_getint(record, "languageID");
+						name->records[jj].nameID = json_obj_getint(record, "nameID");
 
 						json_value *str = json_obj_get_type(record, "nameString", json_string);
-						name->records[jj]->nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
+						name->records[jj].nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
 						jj += 1;
 					}
 				}
 			}
-			qsort(name->records, validCount, sizeof(otfcc_NameRecord *), name_record_sort);
+			qsort(name->records, validCount, sizeof(otfcc_NameRecord), name_record_sort);
 		}
 	}
 	return name;
@@ -161,7 +157,7 @@ caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *opti
 	bufwrite16b(buf, 0); // fill later
 	caryll_Buffer *strings = bufnew();
 	for (uint16_t j = 0; j < name->count; j++) {
-		otfcc_NameRecord *record = name->records[j];
+		otfcc_NameRecord *record = &(name->records[j]);
 		bufwrite16b(buf, record->platformID);
 		bufwrite16b(buf, record->encodingID);
 		bufwrite16b(buf, record->languageID);

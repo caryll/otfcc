@@ -10,7 +10,7 @@ typedef struct {
 	otfcc_GlyphHandle glyph;
 } cmap_Entry;
 
-typedef struct { cmap_Entry *unicodes; } table_cmap;
+typedef struct { OWNING cmap_Entry *unicodes; } table_cmap;
 
 bool otfcc_encodeCmapByIndex(table_cmap *cmap, int c, uint16_t gid);
 bool otfcc_encodeCmapByName(table_cmap *cmap, int c, sds name);
