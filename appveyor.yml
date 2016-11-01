@@ -1,14 +1,19 @@
 environment:
   VS_VERSION: vs2015
+
 platform:
   - x64
+
 configuration:
   - Release
+
 install:
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-  - set PATH=C:\msys64\usr\bin;%PATH%
+  - set PATH="C:\Program Files\LLVM\bin";"C:\msys64\usr\bin";%PATH%
 
 build_script:
   - dep\bin-win\premake5.exe vs2015
-  - cmd /c _vcbuild64.bat /property:Configuration=Release
+  - cd build\ninja
+  - ..\..\dep\bin-win\ninja otfccdump_Release_x64 otfccbuild_Release_x64
+  - cd ..\..\
   - make -f quick.make test
