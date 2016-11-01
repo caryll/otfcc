@@ -14,7 +14,7 @@ mf-gmake :
 mf-ninja-windows :
 	@$(PREMAKE5) ninja --os=windows
 mf-ninja-linux :
-	@$(PREMAKE5) ninja --os=linux
+	@$(PREMAKE5) ninja --os=linux --cc=$(CC)
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
