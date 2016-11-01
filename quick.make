@@ -1,6 +1,9 @@
 ifndef PREMAKE5
 PREMAKE5=premake5
 endif
+ifndef NINJA
+NINJA=ninja
+endif
 
 mf-vs2015 :
 	@$(PREMAKE5) vs2015
@@ -21,13 +24,13 @@ mingw-release-x86 : mf-gmake
 	@cd build/gmake && make config=release_x32
 
 linux-debug-x64 : mf-ninja-linux
-	@cd build/ninja && ninja otfccdump_Debug_x64 otfccbuild_Debug_x64
+	@cd build/ninja && $(NINJA) otfccdump_Debug_x64 otfccbuild_Debug_x64
 linux-debug-x86 : mf-ninja-linux
-	@cd build/ninja && ninja otfccdump_Debug_x32 otfccbuild_Debug_x32
+	@cd build/ninja && $(NINJA) otfccdump_Debug_x32 otfccbuild_Debug_x32
 linux-release-x64 : mf-ninja-linux
-	@cd build/ninja && ninja otfccdump_Release_x64 otfccbuild_Release_x64
+	@cd build/ninja && $(NINJA) otfccdump_Release_x64 otfccbuild_Release_x64
 linux-release-x86 : mf-ninja-linux
-	@cd build/ninja && ninja otfccdump_Release_x32 otfccbuild_Release_x32
+	@cd build/ninja && $(NINJA) otfccdump_Release_x32 otfccbuild_Release_x32
 
 # Clang-cl does not support debugging well
 # It is used for release versions only

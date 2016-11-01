@@ -17,11 +17,12 @@ addons:
     packages:
     - gcc-5
     - g++-5
-    - ninja-build
 
 install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export PREMAKE5=dep/bin-linux/premake5; else export PREMAKE5=dep/bin-osx/premake5; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then export NINJA=dep/bin-linux/ninja; else export NINJA=dep/bin-osx/ninja; fi
   - chmod +x $PREMAKE5
+  - chmod +x $NINJA
 
 script:
   - make -f quick.make linux-release-x64
