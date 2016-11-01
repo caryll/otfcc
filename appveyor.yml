@@ -8,10 +8,13 @@ configuration:
   - Release
 
 install:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
   - set PATH="C:\Program Files\LLVM\bin";"C:\msys64\usr\bin";%PATH%
 
+before_build:
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  - set PATH="dep\bin-win\";%PATH%
+
 build_script:
-  - dep\bin-win\premake5.exe ninja
-  - cd build\ninja && ..\..\dep\bin-win\ninja.exe otfccdump_Release_x64 otfccbuild_Release_x64 && cd ..\..\
+  - premake5 ninja
+  - cd build\ninja && ninja otfccdump_Release_x64 otfccbuild_Release_x64 && cd ..\..\
   - make -f quick.make test
