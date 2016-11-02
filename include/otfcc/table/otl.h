@@ -127,34 +127,35 @@ typedef struct {
 typedef caryll_Vector(otl_GposCursiveEntry) subtable_gpos_cursive;
 
 typedef struct {
+	OWNING otfcc_GlyphHandle glyph;
 	glyphclass_t markClass;
 	otl_Anchor anchor;
 } otl_MarkRecord;
+typedef caryll_Vector(otl_MarkRecord) otl_MarkArray;
 
 typedef struct {
-	glyphclass_t markCount;
-	OWNING otl_MarkRecord *records;
-} otl_MarkArray;
+	OWNING otfcc_GlyphHandle glyph;
+	OWNING otl_Anchor *anchors;
+} otl_BaseRecord;
+typedef caryll_Vector(otl_BaseRecord) otl_BaseArray;
 
 typedef struct {
-	OWNING otl_Coverage *marks;
-	OWNING otl_Coverage *bases;
 	glyphclass_t classCount;
-	OWNING otl_MarkArray *markArray;
-	OWNING otl_Anchor **baseArray;
+	OWNING otl_MarkArray markArray;
+	otl_BaseArray baseArray;
 } subtable_gpos_markToSingle;
 
 typedef struct {
+	OWNING otfcc_GlyphHandle glyph;
 	glyphid_t componentCount;
 	OWNING otl_Anchor **anchors;
-} otl_MarkToLigatureBase;
+} otl_LigatureBaseRecord;
+typedef caryll_Vector(otl_LigatureBaseRecord) otl_LigatureArray;
 
 typedef struct {
-	OWNING otl_Coverage *marks;
-	OWNING otl_Coverage *bases;
 	glyphclass_t classCount;
-	OWNING otl_MarkArray *markArray;
-	OWNING otl_MarkToLigatureBase **ligArray;
+	OWNING otl_MarkArray markArray;
+	otl_LigatureArray ligArray;
 } subtable_gpos_markToLigature;
 
 typedef struct {
