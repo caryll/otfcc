@@ -3,6 +3,7 @@
 
 #include "otfcc/table/name.h"
 
+table_name *otfcc_newName();
 void otfcc_deleteName(table_name *table);
 
 table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *options);
