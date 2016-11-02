@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+subtable_gpos_markToLigature *otl_new_gpos_markToLigature();
 void otl_delete_gpos_markToLigature(otl_Subtable *subtable);
 otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                            const otfcc_Options *options);

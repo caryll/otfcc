@@ -21,7 +21,7 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 	}
 }
 
-static subtable_gpos_markToLigature *otl_new_gpos_markToLigature() {
+subtable_gpos_markToLigature *otl_new_gpos_markToLigature() {
 	subtable_gpos_markToLigature *subtable;
 	NEW(subtable);
 	otl_initMarkArray(&subtable->markArray);

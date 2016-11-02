@@ -1,9 +1,11 @@
 #include "gpos-common.h"
+
 static void deleteMarkArrayItem(otl_MarkRecord *entry) {
 	Handle.dispose(&entry->glyph);
 }
 static const caryll_VectorEntryTypeInfo(otl_MarkRecord) gss_typeinfo = {
     .ctor = NULL, .copyctor = NULL, .dtor = deleteMarkArrayItem};
+
 void otl_initMarkArray(otl_MarkArray *array) {
 	caryll_vecInit(array, gss_typeinfo);
 }

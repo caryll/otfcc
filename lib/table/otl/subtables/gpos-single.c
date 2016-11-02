@@ -15,9 +15,7 @@ void otl_delete_gpos_single(otl_Subtable *_subtable) {
 }
 
 subtable_gpos_single *otl_new_gpos_single() {
-	subtable_gpos_single *subtable;
-	caryll_vecNew(subtable, gss_typeinfo);
-	return subtable;
+	return caryll_vecNew(otl_GposSingleEntry, gss_typeinfo);
 }
 
 otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t offset,

@@ -8,9 +8,7 @@ static const caryll_VectorEntryTypeInfo(otl_GsubLigatureEntry) gss_typeinfo = {
     .ctor = NULL, .copyctor = NULL, .dtor = deleteGsubLigatureEntry};
 
 subtable_gsub_ligature *otl_new_gsub_ligature() {
-	subtable_gsub_ligature *subtable;
-	caryll_vecNew(subtable, gss_typeinfo);
-	return subtable;
+	return caryll_vecNew(otl_GsubLigatureEntry, gss_typeinfo);
 }
 
 void otl_delete_gsub_ligature(otl_Subtable *_subtable) {

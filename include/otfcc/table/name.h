@@ -11,11 +11,6 @@ typedef struct {
 	sds nameString;
 } otfcc_NameRecord;
 
-typedef struct {
-	uint16_t format;
-	uint16_t count;
-	uint16_t stringOffset;
-	OWNING otfcc_NameRecord *records;
-} table_name;
+typedef caryll_Vector(otfcc_NameRecord) table_name;
 
 #endif

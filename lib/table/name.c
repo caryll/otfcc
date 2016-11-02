@@ -3,12 +3,20 @@
 #include "support/util.h"
 #include "support/unicodeconv/unicodeconv.h"
 
+static void nameRecordDtor(otfcc_NameRecord *entry) {
+	DELETE(sdsfree, entry->nameString);
+}
+static const caryll_VectorEntryTypeInfo(otfcc_NameRecord) otfcc_NameRecordTI = {
+    .ctor = NULL, .dtor = nameRecordDtor, .copyctor = NULL,
+};
+
 void otfcc_deleteName(table_name *table) {
-	for (uint16_t j = 0; j < table->count; j++) {
-		if (table->records[j].nameString) DELETE(sdsfree, table->records[j].nameString);
-	}
-	FREE(table->records);
+	caryll_vecReset(table);
 	FREE(table);
+}
+
+table_name *otfcc_newName() {
+	return caryll_vecNew(otfcc_NameRecord, otfcc_NameRecordTI);
 }
 
 static bool shouldDecodeAsUTF16(const otfcc_NameRecord *record) {
@@ -25,54 +33,54 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 	FOR_TABLE('name', table) {
 		table_name *name = NULL;
 		font_file_pointer data = table.data;
+
 		uint32_t length = table.length;
 		if (length < 6) goto TABLE_NAME_CORRUPTED;
+		uint32_t count = read_16u(data + 2);
+		uint32_t stringOffset = read_16u(data + 4);
+		if (length < 6 + 12 * count) goto TABLE_NAME_CORRUPTED;
 
-		NEW(name);
-		name->format = read_16u(data);
-		name->count = read_16u(data + 2);
-		name->stringOffset = read_16u(data + 4);
-		if (length < 6 + 12 * name->count) goto TABLE_NAME_CORRUPTED;
+		name = otfcc_newName();
 
-		NEW(name->records, name->count);
-		for (uint16_t j = 0; j < name->count; j++) {
-			otfcc_NameRecord *record = &(name->records[j]);
-			record->platformID = read_16u(data + 6 + j * 12);
-			record->encodingID = read_16u(data + 6 + j * 12 + 2);
-			record->languageID = read_16u(data + 6 + j * 12 + 4);
-			record->nameID = read_16u(data + 6 + j * 12 + 6);
-			record->nameString = NULL;
+		for (uint16_t j = 0; j < count; j++) {
+			otfcc_NameRecord record;
+			record.platformID = read_16u(data + 6 + j * 12);
+			record.encodingID = read_16u(data + 6 + j * 12 + 2);
+			record.languageID = read_16u(data + 6 + j * 12 + 4);
+			record.nameID = read_16u(data + 6 + j * 12 + 6);
+			record.nameString = NULL;
 			uint16_t length = read_16u(data + 6 + j * 12 + 8);
 			uint16_t offset = read_16u(data + 6 + j * 12 + 10);
 
-			if (shouldDecodeAsBytes(record)) {
+			if (shouldDecodeAsBytes(&record)) {
 				// Mac Roman. Note that this is not very correct, but works for most fonts
-				sds nameString = sdsnewlen(data + (name->stringOffset) + offset, length);
-				record->nameString = nameString;
-			} else if (shouldDecodeAsUTF16(record)) {
-				sds nameString = utf16be_to_utf8(data + (name->stringOffset) + offset, length);
-				record->nameString = nameString;
+				sds nameString = sdsnewlen(data + stringOffset + offset, length);
+				record.nameString = nameString;
+			} else if (shouldDecodeAsUTF16(&record)) {
+				sds nameString = utf16be_to_utf8(data + stringOffset + offset, length);
+				record.nameString = nameString;
 			} else {
 				size_t len = 0;
-				uint8_t *buf = base64_encode(data + (name->stringOffset) + offset, length, &len);
-				record->nameString = sdsnewlen(buf, len);
+				uint8_t *buf = base64_encode(data + stringOffset + offset, length, &len);
+				record.nameString = sdsnewlen(buf, len);
 				FREE(buf);
 			}
+			caryll_vecPush(name, record);
 		}
 		return name;
 	TABLE_NAME_CORRUPTED:
 		logWarning("table 'name' corrupted.\n");
-		if (name) { FREE(name), name = NULL; }
+		if (name) { DELETE(otfcc_deleteName, name); }
 	}
 	return NULL;
 }
 
-void otfcc_dumpName(const table_name *table, json_value *root, const otfcc_Options *options) {
-	if (!table) return;
+void otfcc_dumpName(const table_name *name, json_value *root, const otfcc_Options *options) {
+	if (!name) return;
 	loggedStep("name") {
-		json_value *name = json_array_new(table->count);
-		for (uint16_t j = 0; j < table->count; j++) {
-			otfcc_NameRecord *r = &(table->records[j]);
+		json_value *_name = json_array_new(name->length);
+		for (uint16_t j = 0; j < name->length; j++) {
+			otfcc_NameRecord *r = &(name->data[j]);
 			json_value *record = json_object_new(5);
 			json_object_push(record, "platformID", json_integer_new(r->platformID));
 			json_object_push(record, "encodingID", json_integer_new(r->encodingID));
@@ -80,9 +88,9 @@ void otfcc_dumpName(const table_name *table, json_value *root, const otfcc_Optio
 			json_object_push(record, "nameID", json_integer_new(r->nameID));
 			json_object_push(record, "nameString",
 			                 json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
-			json_array_push(name, record);
+			json_array_push(_name, record);
 		}
-		json_object_push(root, "name", name);
+		json_object_push(root, "name", _name);
 	}
 }
 static int name_record_sort(const void *_a, const void *_b) {
@@ -94,57 +102,31 @@ static int name_record_sort(const void *_a, const void *_b) {
 	return a->nameID - b->nameID;
 }
 table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options) {
-	table_name *name;
-	NEW(name);
+	table_name *name = caryll_vecNew(otfcc_NameRecord, otfcc_NameRecordTI);
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
 		loggedStep("name") {
-			int validCount = 0;
-			for (uint32_t j = 0; j < table->u.array.length; j++) {
-				if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
-					json_value *record = table->u.array.values[j];
-					if (!json_obj_get_type(record, "platformID", json_integer))
-						logWarning("Missing or invalid platformID for name entry %d\n", j);
-					if (!json_obj_get_type(record, "encodingID", json_integer))
-						logWarning("Missing or invalid encodingID for name entry %d\n", j);
-					if (!json_obj_get_type(record, "languageID", json_integer))
-						logWarning("Missing or invalid languageID for name entry %d\n", j);
-					if (!json_obj_get_type(record, "nameID", json_integer))
-						logWarning("Missing or invalid nameID for name entry %d\n", j);
-					if (!json_obj_get_type(record, "nameString", json_string))
-						logWarning("Missing or invalid nameString for name entry %d\n", j);
-					if (json_obj_get_type(record, "platformID", json_integer) &&
-					    json_obj_get_type(record, "encodingID", json_integer) &&
-					    json_obj_get_type(record, "languageID", json_integer) &&
-					    json_obj_get_type(record, "nameID", json_integer) &&
-					    json_obj_get_type(record, "nameString", json_string)) {
-						validCount += 1;
-					}
-				}
-			}
-			name->count = validCount;
-			NEW(name->records, validCount);
-			int jj = 0;
-			for (uint32_t j = 0; j < table->u.array.length; j++) {
-				if (table->u.array.values[j] && table->u.array.values[j]->type == json_object) {
-					json_value *record = table->u.array.values[j];
-					if (json_obj_get_type(record, "platformID", json_integer) &&
-					    json_obj_get_type(record, "encodingID", json_integer) &&
-					    json_obj_get_type(record, "languageID", json_integer) &&
-					    json_obj_get_type(record, "nameID", json_integer) &&
-					    json_obj_get_type(record, "nameString", json_string)) {
-						name->records[jj].platformID = json_obj_getint(record, "platformID");
-						name->records[jj].encodingID = json_obj_getint(record, "encodingID");
-						name->records[jj].languageID = json_obj_getint(record, "languageID");
-						name->records[jj].nameID = json_obj_getint(record, "nameID");
 
-						json_value *str = json_obj_get_type(record, "nameString", json_string);
-						name->records[jj].nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
-						jj += 1;
-					}
-				}
+			for (uint32_t j = 0; j < table->u.array.length; j++) {
+				if (!(table->u.array.values[j] && table->u.array.values[j]->type == json_object)) continue;
+				json_value *_record = table->u.array.values[j];
+				if (!json_obj_get_type(_record, "platformID", json_integer)) continue;
+				if (!json_obj_get_type(_record, "encodingID", json_integer)) continue;
+				if (!json_obj_get_type(_record, "languageID", json_integer)) continue;
+				if (!json_obj_get_type(_record, "nameID", json_integer)) continue;
+				if (!json_obj_get_type(_record, "nameString", json_string)) continue;
+				otfcc_NameRecord record;
+				record.platformID = json_obj_getint(_record, "platformID");
+				record.encodingID = json_obj_getint(_record, "encodingID");
+				record.languageID = json_obj_getint(_record, "languageID");
+				record.nameID = json_obj_getint(_record, "nameID");
+
+				json_value *str = json_obj_get_type(_record, "nameString", json_string);
+				record.nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
+				caryll_vecPush(name, record);
 			}
-			qsort(name->records, validCount, sizeof(otfcc_NameRecord), name_record_sort);
+
+			qsort(name->data, name->length, sizeof(otfcc_NameRecord), name_record_sort);
 		}
 	}
 	return name;
@@ -153,11 +135,11 @@ caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *opti
 	caryll_Buffer *buf = bufnew();
 	if (!name) return buf;
 	bufwrite16b(buf, 0);
-	bufwrite16b(buf, name->count);
+	bufwrite16b(buf, name->length);
 	bufwrite16b(buf, 0); // fill later
 	caryll_Buffer *strings = bufnew();
-	for (uint16_t j = 0; j < name->count; j++) {
-		otfcc_NameRecord *record = &(name->records[j]);
+	for (uint16_t j = 0; j < name->length; j++) {
+		otfcc_NameRecord *record = &(name->data[j]);
 		bufwrite16b(buf, record->platformID);
 		bufwrite16b(buf, record->encodingID);
 		bufwrite16b(buf, record->languageID);

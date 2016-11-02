@@ -20,10 +20,8 @@ void otl_delete_gsub_single(otl_Subtable *subtable) {
 static const caryll_VectorEntryTypeInfo(otl_GsubSingleEntry) gss_typeinfo = {
     .ctor = gss_entry_ctor, .copyctor = gss_entry_copyctor, .dtor = gss_entry_dtor};
 
-static subtable_gsub_single *otl_new_gsub_single() {
-	subtable_gsub_single *subtable;
-	caryll_vecNew(subtable, gss_typeinfo);
-	return subtable;
+subtable_gsub_single *otl_new_gsub_single() {
+	return caryll_vecNew(otl_GsubSingleEntry, gss_typeinfo);
 }
 
 otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,

@@ -5,7 +5,7 @@ static void deleteGsubMultiEntry(otl_GsubMultiEntry *entry) {
 	DELETE(Coverage.dispose, entry->to);
 }
 
-static const caryll_VectorEntryTypeInfo(otl_GsubMultiEntry) gss_typeinfo = {
+static const caryll_VectorEntryTypeInfo(otl_GsubMultiEntry) gsm_typeinfo = {
     .ctor = NULL, .copyctor = NULL, .dtor = deleteGsubMultiEntry};
 
 void otl_delete_gsub_multi(otl_Subtable *_subtable) {
@@ -14,10 +14,8 @@ void otl_delete_gsub_multi(otl_Subtable *_subtable) {
 	caryll_vecDelete(subtable);
 }
 
-static subtable_gsub_multi *otl_new_gsub_multi() {
-	subtable_gsub_multi *subtable;
-	caryll_vecNew(subtable, gss_typeinfo);
-	return subtable;
+subtable_gsub_multi *otl_new_gsub_multi() {
+	return caryll_vecNew(otl_GsubMultiEntry, gsm_typeinfo);
 }
 
 otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset,

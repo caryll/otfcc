@@ -19,6 +19,12 @@ void __caryll_vector_init(caryll_VectorVoid *array, size_t elem_size, __caryll_V
 	array->data = NULL;
 }
 
+void *__caryll_vector_new(size_t elem_size, __caryll_VVTI cp) {
+	caryll_VectorVoid *ptr = __caryll_vector_alloc(sizeof(*ptr));
+	__caryll_vector_init(ptr, elem_size, cp);
+	return ptr;
+}
+
 void __caryll_vector_grow(caryll_VectorVoid *array, size_t elem_size) {
 	if (array->length < array->capacity) return;
 	if (!array->capacity) array->capacity = 0x10;

@@ -17,7 +17,7 @@ void otl_delete_gpos_markToSingle(otl_Subtable *_subtable) {
 	}
 }
 
-static subtable_gpos_markToSingle *otl_new_gpos_markToSingle() {
+subtable_gpos_markToSingle *otl_new_gpos_markToSingle() {
 	subtable_gpos_markToSingle *subtable;
 	NEW(subtable);
 	otl_initMarkArray(&subtable->markArray);
