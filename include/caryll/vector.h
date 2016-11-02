@@ -43,6 +43,12 @@ void __caryll_vector_grow(caryll_VectorVoid *array, size_t elem_size);
 	(__caryll_vector_grow((caryll_VectorVoid *)(__ptr), sizeof((__ptr)->data[0])),                                     \
 	 (__ptr)->data[(__ptr)->length++] = (__elem), &((__ptr)->data[(__ptr)->length - 1]))
 
+void __caryll_vector_pop(caryll_VectorVoid *array, size_t elem_size);
+#define caryll_vecPop(__ptr) (__caryll_vector_pop((caryll_VectorVoid *)(__ptr), sizeof((__ptr)->data[0])))
+
+#define caryll_vecDisposeItem(__ptr, __j)                                                                              \
+	((__ptr)->iElement.dtor ? (__ptr)->iElement.dtor(&((__ptr)->data[__j])) : (void)0)
+
 void __caryll_vector_dealloc(void *array);
 void __caryll_vector_clear(caryll_VectorVoid *array, size_t elem_size);
 #define caryll_vecDelete(__ptr)                                                                                        \

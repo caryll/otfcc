@@ -36,6 +36,13 @@ void __caryll_vector_grow(caryll_VectorVoid *array, size_t elem_size) {
 	}
 }
 
+void __caryll_vector_pop(caryll_VectorVoid *array, size_t elem_size) {
+	if (array->iElement.dtor) {
+		array->iElement.dtor((void *)((char *)(array->data) + elem_size * (array->length - 1)));
+	}
+	array->length -= 1;
+}
+
 void __caryll_vector_clear(caryll_VectorVoid *array, size_t elem_size) {
 	if (array->iElement.dtor) {
 		for (size_t j = array->length; j--;) {

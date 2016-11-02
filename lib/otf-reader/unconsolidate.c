@@ -149,6 +149,7 @@ static void mergeHmtx(otfcc_Font *font) {
 		}
 	}
 }
+
 static void mergeVmtx(otfcc_Font *font) {
 	// Merge vmtx table into glyf.
 	if (font->vhea && font->vmtx && font->glyf) {

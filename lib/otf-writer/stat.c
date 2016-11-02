@@ -32,10 +32,10 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	uint16_t nCompositePoints = 0;
 	uint16_t nCompositeContours = 0;
 	// Stat xmin, xmax, ymin, ymax
-	for (shapeid_t c = 0; c < g->numberOfContours; c++) {
-		for (shapeid_t pj = 0; pj < g->contours[c].pointsCount; pj++) {
+	for (shapeid_t c = 0; c < g->contours.length; c++) {
+		for (shapeid_t pj = 0; pj < g->contours.data[c].length; pj++) {
 			// Stat point coordinates USING the matrix transformation
-			glyf_Point *p = &(g->contours[c].points[pj]);
+			glyf_Point *p = &(g->contours.data[c].data[pj]);
 			pos_t x = gr->x + gr->a * p->x + gr->b * p->y;
 			pos_t y = gr->y + gr->c * p->x + gr->d * p->y;
 			if (x < xmin) xmin = x;
@@ -46,11 +46,11 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		}
 	}
 	nCompositePoints = nPoints;
-	nCompositeContours = g->numberOfContours;
-	for (shapeid_t r = 0; r < g->numberOfReferences; r++) {
+	nCompositeContours = g->contours.length;
+	for (shapeid_t r = 0; r < g->references.length; r++) {
 		glyf_ComponentReference ref;
-		glyf_ComponentReference *rr = &(g->references[r]);
-		ref.glyph = Handle.fromIndex(g->references[r].glyph.index);
+		glyf_ComponentReference *rr = &(g->references.data[r]);
+		ref.glyph = Handle.fromIndex(g->references.data[r].glyph.index);
 		// composite affine transformations
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
@@ -74,7 +74,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	stat.yMax = ymax;
 	stat.nestDepth = nestDepth;
 	stat.nPoints = nPoints;
-	stat.nContours = g->numberOfContours;
+	stat.nContours = g->contours.length;
 	stat.nCompositePoints = nCompositePoints;
 	stat.nCompositeContours = nCompositeContours;
 	stated[j] = stat_completed;
@@ -121,14 +121,14 @@ void statMaxp(otfcc_Font *font) {
 	uint16_t instSize = 0;
 	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
 		glyf_Glyph *g = font->glyf->glyphs[j];
-		if (g->numberOfContours > 0) {
+		if (g->contours.length > 0) {
 			if (g->stat.nPoints > nPoints) nPoints = g->stat.nPoints;
 			if (g->stat.nContours > nContours) nContours = g->stat.nContours;
-		} else if (g->numberOfReferences > 0) {
+		} else if (g->references.length > 0) {
 			if (g->stat.nCompositePoints > nCompositePoints) nCompositePoints = g->stat.nCompositePoints;
 			if (g->stat.nCompositeContours > nCompositeContours) nCompositeContours = g->stat.nCompositeContours;
 			if (g->stat.nestDepth > nestDepth) nestDepth = g->stat.nestDepth;
-			if (g->numberOfReferences > nComponents) nComponents = g->numberOfReferences;
+			if (g->references.length > nComponents) nComponents = g->references.length;
 		}
 		if (g->instructionsLength > instSize) instSize = g->instructionsLength;
 	}

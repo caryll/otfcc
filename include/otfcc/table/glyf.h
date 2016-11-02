@@ -15,19 +15,16 @@ typedef struct {
 	                // bit 1 - 7 : unused, set to 0
 	                // in JSON, they are separated into several boolean fields.
 } glyf_Point;
-
-typedef struct {
-	uint16_t pointsCount;
-	OWNING glyf_Point *points;
-} glyf_Contour;
+typedef caryll_Vector(glyf_Point) glyf_Contour;
+typedef caryll_Vector(glyf_Contour) glyf_ContourList;
 
 // CFF stems and hint masks
 typedef struct {
 	pos_t position;
 	pos_t width;
-
 	uint16_t map;
 } glyf_PostscriptStemDef;
+typedef caryll_Vector(glyf_PostscriptStemDef) glyf_StemDefList;
 
 typedef struct {
 	uint16_t pointsBefore;
@@ -35,6 +32,7 @@ typedef struct {
 	bool maskH[0x100];
 	bool maskV[0x100];
 } glyf_PostscriptHintMask;
+typedef caryll_Vector(glyf_PostscriptHintMask) glyf_MaskList;
 
 typedef struct {
 	otfcc_GlyphHandle glyph;
@@ -49,6 +47,7 @@ typedef struct {
 	bool roundToGrid;
 	bool useMyMetrics;
 } glyf_ComponentReference;
+typedef caryll_Vector(glyf_ComponentReference) glyf_ReferenceList;
 
 typedef struct {
 	pos_t xMin;
@@ -72,20 +71,14 @@ typedef struct {
 
 	// Outline
 	// NOTE: SFNT does not support mixed glyphs, but we do.
-	shapeid_t numberOfContours;
-	shapeid_t numberOfReferences;
-	OWNING glyf_Contour *contours;
-	OWNING glyf_ComponentReference *references;
+	OWNING glyf_ContourList contours;
+	OWNING glyf_ReferenceList references;
 
 	// Postscript hints
-	shapeid_t numberOfStemH;
-	shapeid_t numberOfStemV;
-	shapeid_t numberOfHintMasks;
-	shapeid_t numberOfContourMasks;
-	OWNING glyf_PostscriptStemDef *stemH;
-	OWNING glyf_PostscriptStemDef *stemV;
-	OWNING glyf_PostscriptHintMask *hintMasks;
-	OWNING glyf_PostscriptHintMask *contourMasks;
+	OWNING glyf_StemDefList stemH;
+	OWNING glyf_StemDefList stemV;
+	OWNING glyf_MaskList hintMasks;
+	OWNING glyf_MaskList contourMasks;
 
 	// TTF instructions
 	uint16_t instructionsLength;
