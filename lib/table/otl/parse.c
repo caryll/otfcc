@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
 	char *name;
-	otl_LanguageSystem *script;
+	otl_LanguageSystem *language;
 	UT_hash_handle hh;
 } language_hash;
 static bool _declareLookupParser(const char *lt, otl_LookupType llt,
@@ -51,6 +51,7 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt,
                                  otl_Subtable *(*parser)(const json_value *, const otfcc_Options *options),
                                  json_value *_lookup, char *lookupName, const otfcc_Options *options,
                                  lookup_hash **lh) {
+
 	// detect a valid type field exists
 	json_value *type = json_obj_get_type(_lookup, "type", json_string);
 	if (!type || strcmp(type->u.string.ptr, lt)) {
@@ -260,11 +261,11 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 				if (!s) {
 					NEW(s);
 					s->name = sdsnew(languageName);
-					NEW(s->script);
-					s->script->name = sdsdup(s->name);
-					s->script->requiredFeature = requiredFeature;
-					s->script->featureCount = naf;
-					s->script->features = af;
+					NEW(s->language);
+					s->language->name = sdsdup(s->name);
+					s->language->requiredFeature = requiredFeature;
+					s->language->featureCount = naf;
+					s->language->features = af;
 					HASH_ADD_STR(sh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate language item [%s/%s]. This language "
@@ -336,12 +337,8 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 
 		{
 			lookup_hash *s, *tmp;
-			otl->lookupCount = HASH_COUNT(lh);
-			NEW(otl->lookups, otl->lookupCount);
-			tableid_t j = 0;
 			HASH_ITER(hh, lh, s, tmp) {
-				otl->lookups[j] = s->lookup;
-				j++;
+				caryll_vecPush(&otl->lookups, s->lookup);
 				HASH_DEL(lh, s);
 				sdsfree(s->name);
 				FREE(s);
@@ -349,31 +346,20 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		}
 		{
 			feature_hash *s, *tmp;
-			otl->featureCount = HASH_COUNT(fh);
-			NEW(otl->features, otl->featureCount);
-			tableid_t j = 0;
 			HASH_ITER(hh, fh, s, tmp) {
-				if (!s->alias) {
-					otl->features[j] = s->feature;
-					j++;
-				}
+				if (!s->alias) { caryll_vecPush(&otl->features, s->feature); }
 				HASH_DEL(fh, s);
 				sdsfree(s->name);
 				FREE(s);
 			}
-			otl->featureCount = j;
 		}
 		{
 			language_hash *s, *tmp;
-			otl->languageCount = HASH_COUNT(sh);
-			NEW(otl->languages, otl->languageCount);
-			tableid_t j = 0;
 			HASH_ITER(hh, sh, s, tmp) {
-				otl->languages[j] = s->script;
+				caryll_vecPush(&otl->languages, s->language);
 				HASH_DEL(sh, s);
 				sdsfree(s->name);
 				FREE(s);
-				j++;
 			}
 		}
 	}

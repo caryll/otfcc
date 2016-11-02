@@ -199,18 +199,14 @@ typedef struct {
 	OWNING otl_Feature **features;
 } otl_LanguageSystem;
 
-typedef struct {
-	sds from;
-	sds to;
-} otl_LookupAliasingRecord;
+typedef caryll_Vector(otl_Lookup *) otl_LookupList;
+typedef caryll_Vector(otl_Feature *) otl_FeatureList;
+typedef caryll_Vector(otl_LanguageSystem *) otl_LangSystemList;
 
 typedef struct {
-	uint32_t languageCount;
-	OWNING otl_LanguageSystem **languages;
-	tableid_t featureCount;
-	OWNING otl_Feature **features;
-	tableid_t lookupCount;
-	OWNING otl_Lookup **lookups;
+	otl_LookupList lookups;
+	otl_FeatureList features;
+	otl_LangSystemList languages;
 } table_OTL;
 
 #endif

@@ -127,14 +127,14 @@ static void expandChain(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) 
 
 static void expandChainingLookups(otfcc_Font *font) {
 	if (font->GSUB) {
-		for (uint32_t j = 0; j < font->GSUB->lookupCount; j++) {
-			otl_Lookup *lookup = font->GSUB->lookups[j];
+		for (uint32_t j = 0; j < font->GSUB->lookups.length; j++) {
+			otl_Lookup *lookup = font->GSUB->lookups.data[j];
 			expandChain(font, lookup, font->GSUB);
 		}
 	}
 	if (font->GPOS) {
-		for (uint32_t j = 0; j < font->GPOS->lookupCount; j++) {
-			otl_Lookup *lookup = font->GPOS->lookups[j];
+		for (uint32_t j = 0; j < font->GPOS->lookups.length; j++) {
+			otl_Lookup *lookup = font->GPOS->lookups.data[j];
 			expandChain(font, lookup, font->GPOS);
 		}
 	}

@@ -41,7 +41,7 @@ void *__caryll_vector_new(size_t elem_size, __caryll_VVTI cp);
 void __caryll_vector_grow(caryll_VectorVoid *array, size_t elem_size);
 #define caryll_vecPush(__ptr, __elem)                                                                                  \
 	(__caryll_vector_grow((caryll_VectorVoid *)(__ptr), sizeof((__ptr)->data[0])),                                     \
-	 (__ptr)->data[(__ptr)->length++] = (__elem))
+	 (__ptr)->data[(__ptr)->length++] = (__elem), &((__ptr)->data[(__ptr)->length - 1]))
 
 void __caryll_vector_dealloc(void *array);
 void __caryll_vector_clear(caryll_VectorVoid *array, size_t elem_size);

@@ -72,8 +72,10 @@ struct _caryll_font {
 
 otfcc_Font *otfcc_newFont();
 void otfcc_deleteFont(otfcc_Font *font);
-void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
+
+void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag);
+void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
 
 // Font builder interfaces
 typedef struct otfcc_IFontBuilder {

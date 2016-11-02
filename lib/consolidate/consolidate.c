@@ -222,15 +222,15 @@ void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lo
 void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 	loggedStep("GSUB") {
 		if (font->glyph_order && font->GSUB) {
-			for (tableid_t j = 0; j < font->GSUB->lookupCount; j++) {
-				otfcc_consolidate_lookup(font, font->GSUB, font->GSUB->lookups[j], options);
+			for (tableid_t j = 0; j < font->GSUB->lookups.length; j++) {
+				otfcc_consolidate_lookup(font, font->GSUB, font->GSUB->lookups.data[j], options);
 			}
 		}
 	}
 	loggedStep("GPOS") {
 		if (font->glyph_order && font->GPOS) {
-			for (tableid_t j = 0; j < font->GPOS->lookupCount; j++) {
-				otfcc_consolidate_lookup(font, font->GPOS, font->GPOS->lookups[j], options);
+			for (tableid_t j = 0; j < font->GPOS->lookups.length; j++) {
+				otfcc_consolidate_lookup(font, font->GPOS, font->GPOS->lookups.data[j], options);
 			}
 		}
 	}

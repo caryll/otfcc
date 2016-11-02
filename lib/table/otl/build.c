@@ -42,35 +42,36 @@ static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtab
 // offsets are too large.
 static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *options, const char *tag) {
 	caryll_Buffer ***subtables;
-	NEW(subtables, table->lookupCount);
+	NEW(subtables, table->lookups.length);
 	tableid_t *subtableQuantity;
-	NEW(subtableQuantity, table->lookupCount);
+	NEW(subtableQuantity, table->lookups.length);
+
 	size_t lastOffset = 0;
-	for (tableid_t j = 0; j < table->lookupCount; j++) {
-		logProgress("Building lookup %s (%u/%u)\n", table->lookups[j]->name, j, table->lookupCount);
-		otl_Lookup *lookup = table->lookups[j];
-		subtables[j] = NULL;
+	for (tableid_t j = 0; j < table->lookups.length; j++) {
+		otl_Lookup *lookup = table->lookups.data[j];
+		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j, table->lookups.length);
 		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
 	}
-	size_t headerSize = 2 + 2 * table->lookupCount;
-	for (tableid_t j = 0; j < table->lookupCount; j++) {
+
+	size_t headerSize = 2 + 2 * table->lookups.length;
+	for (tableid_t j = 0; j < table->lookups.length; j++) {
 		if (subtableQuantity[j]) { headerSize += 6 + 2 * subtableQuantity[j]; }
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
 	if (useExtended) {
 		logNotice("[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag);
-		for (tableid_t j = 0; j < table->lookupCount; j++) {
+		for (tableid_t j = 0; j < table->lookups.length; j++) {
 			if (subtableQuantity[j]) { headerSize += 8 * subtableQuantity[j]; }
 		}
 	}
-	bk_Block *root = bk_new_Block(b16, table->lookupCount, // LookupCount
+	bk_Block *root = bk_new_Block(b16, table->lookups.length, // LookupCount
 	                              bkover);
-	for (tableid_t j = 0; j < table->lookupCount; j++) {
+	for (tableid_t j = 0; j < table->lookups.length; j++) {
 		if (!subtableQuantity[j]) {
-			logNotice("Lookup %s not written.\n", table->lookups[j]->name);
+			logNotice("Lookup %s not written.\n", table->lookups.data[j]->name);
 			continue;
 		}
-		otl_Lookup *lookup = table->lookups[j];
+		otl_Lookup *lookup = table->lookups.data[j];
 		uint16_t lookupType =
 		    useExtended
 		        ? (lookup->type > otl_type_gpos_unknown
@@ -135,27 +136,28 @@ static uint32_t featureNameToTag(const sds name) {
 	return tag;
 }
 static bk_Block *writeOTLFeatures(const table_OTL *table, const otfcc_Options *options) {
-	bk_Block *root = bk_new_Block(b16, table->featureCount, bkover);
-	for (tableid_t j = 0; j < table->featureCount; j++) {
-		bk_Block *fea = bk_new_Block(p16, NULL,                            // FeatureParams
-		                             b16, table->features[j]->lookupCount, // LookupCount
+	bk_Block *root = bk_new_Block(b16, table->features.length, bkover);
+	for (tableid_t j = 0; j < table->features.length; j++) {
+		bk_Block *fea = bk_new_Block(p16, NULL,                                 // FeatureParams
+		                             b16, table->features.data[j]->lookupCount, // LookupCount
 		                             bkover);
-		for (tableid_t k = 0; k < table->features[j]->lookupCount; k++) {
+		for (tableid_t k = 0; k < table->features.data[j]->lookupCount; k++) {
 			// reverse lookup
-			for (tableid_t l = 0; l < table->lookupCount; l++) {
-				if (table->features[j]->lookups[k] == table->lookups[l]) {
+			for (tableid_t l = 0; l < table->lookups.length; l++) {
+				if (table->features.data[j]->lookups[k] == table->lookups.data[l]) {
 					bk_push(fea, b16, l, bkover);
 					break;
 				}
 			}
 		}
-		bk_push(root, b32, featureNameToTag(table->features[j]->name), // FeatureTag
-		        p16, fea,                                              // Feature
+		bk_push(root, b32, featureNameToTag(table->features.data[j]->name), // FeatureTag
+		        p16, fea,                                                   // Feature
 		        bkover);
 	}
 	return root;
 }
 
+// script hash
 typedef struct {
 	sds tag;
 	uint16_t lc;
@@ -165,8 +167,8 @@ typedef struct {
 } script_stat_hash;
 
 static tableid_t featureIndex(otl_Feature *feature, const table_OTL *table) {
-	for (tableid_t j = 0; j < table->featureCount; j++)
-		if (table->features[j] == feature) { return j; }
+	for (tableid_t j = 0; j < table->features.length; j++)
+		if (table->features.data[j] == feature) { return j; }
 	return 0xFFFF;
 }
 static bk_Block *writeLanguage(otl_LanguageSystem *lang, const table_OTL *table) {
@@ -198,31 +200,32 @@ static bk_Block *writeScript(script_stat_hash *script, const table_OTL *table) {
 }
 static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_Options *options) {
 	script_stat_hash *h = NULL;
-	for (tableid_t j = 0; j < table->languageCount; j++) {
-		sds scriptTag = sdsnewlen(table->languages[j]->name, 4);
-		bool isDefault = strncmp(table->languages[j]->name + 5, "DFLT", 4) == 0 ||
-		                 strncmp(table->languages[j]->name + 5, "dflt", 4) == 0;
+	for (tableid_t j = 0; j < table->languages.length; j++) {
+		otl_LanguageSystem *language = table->languages.data[j];
+		sds scriptTag = sdsnewlen(language->name, 4);
+		bool isDefault = strncmp(language->name + 5, "DFLT", 4) == 0 || strncmp(language->name + 5, "dflt", 4) == 0;
+
 		script_stat_hash *s = NULL;
 		HASH_FIND_STR(h, scriptTag, s);
 		if (s) {
 			if (isDefault) {
-				s->dl = table->languages[j];
+				s->dl = language;
 			} else {
 				s->lc += 1;
-				s->ll[s->lc - 1] = table->languages[j];
+				s->ll[s->lc - 1] = language;
 			}
 			sdsfree(scriptTag);
 		} else {
 			NEW(s);
 			s->tag = scriptTag;
 			s->dl = NULL;
-			NEW(s->ll, table->languageCount);
+			NEW(s->ll, table->languages.length);
 			if (isDefault) {
-				s->dl = table->languages[j];
+				s->dl = language;
 				s->lc = 0;
 			} else {
 				s->lc = 1;
-				s->ll[s->lc - 1] = table->languages[j];
+				s->ll[s->lc - 1] = language;
 			}
 			HASH_ADD_STR(h, tag, s);
 		}
@@ -246,10 +249,13 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 caryll_Buffer *otfcc_buildOtl(const table_OTL *table, const otfcc_Options *options, const char *tag) {
 	caryll_Buffer *buf;
 	loggedStep("%s", tag) {
-		bk_Block *root = bk_new_Block(b32, 0x10000,                                    // Version
-		                              p16, writeOTLScriptAndLanguages(table, options), // ScriptList
-		                              p16, writeOTLFeatures(table, options),           // FeatureList
-		                              p16, writeOTLLookups(table, options, tag),       // LookupList
+		bk_Block *lookups = writeOTLLookups(table, options, tag);
+		bk_Block *features = writeOTLFeatures(table, options);
+		bk_Block *languages = writeOTLScriptAndLanguages(table, options);
+		bk_Block *root = bk_new_Block(b32, 0x10000,   // Version
+		                              p16, languages, // ScriptList
+		                              p16, features,  // FeatureList
+		                              p16, lookups,   // LookupList
 		                              bkover);
 		buf = bk_build_Block(root);
 	}
