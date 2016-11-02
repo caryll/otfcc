@@ -110,11 +110,26 @@ table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options
 			for (uint32_t j = 0; j < table->u.array.length; j++) {
 				if (!(table->u.array.values[j] && table->u.array.values[j]->type == json_object)) continue;
 				json_value *_record = table->u.array.values[j];
-				if (!json_obj_get_type(_record, "platformID", json_integer)) continue;
-				if (!json_obj_get_type(_record, "encodingID", json_integer)) continue;
-				if (!json_obj_get_type(_record, "languageID", json_integer)) continue;
-				if (!json_obj_get_type(_record, "nameID", json_integer)) continue;
-				if (!json_obj_get_type(_record, "nameString", json_string)) continue;
+				if (!json_obj_get_type(_record, "platformID", json_integer)) {
+					logWarning("Missing or invalid platformID for name entry %d\n", j);
+					continue;
+				}
+				if (!json_obj_get_type(_record, "encodingID", json_integer)) {
+					logWarning("Missing or invalid encodingID for name entry %d\n", j);
+					continue;
+				}
+				if (!json_obj_get_type(_record, "languageID", json_integer)) {
+					logWarning("Missing or invalid languageID for name entry %d\n", j);
+					continue;
+				}
+				if (!json_obj_get_type(_record, "nameID", json_integer)) {
+					logWarning("Missing or invalid nameID for name entry %d\n", j);
+					continue;
+				}
+				if (!json_obj_get_type(_record, "nameString", json_string)) {
+					logWarning("Missing or invalid name string for name entry %d\n", j);
+					continue;
+				}
 				otfcc_NameRecord record;
 				record.platformID = json_obj_getint(_record, "platformID");
 				record.encodingID = json_obj_getint(_record, "encodingID");

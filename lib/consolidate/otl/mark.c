@@ -34,7 +34,10 @@ static void consolidateMarkArray(otfcc_Font *font, table_OTL *table, const otfcc
                                  otl_MarkArray *markArray, glyphclass_t classCount) {
 	mark_hash *hm = NULL;
 	for (glyphid_t k = 0; k < markArray->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &markArray->data[k].glyph)) { continue; }
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &markArray->data[k].glyph)) {
+			logWarning("[Consolidate] Ignored unknown glyph name %s.", markArray->data[k].glyph.name);
+			continue;
+		}
 		mark_hash *s = NULL;
 		int gid = markArray->data[k].glyph.index;
 		HASH_FIND_INT(hm, &gid, s);
@@ -69,7 +72,10 @@ static void consolidateBaseArray(otfcc_Font *font, table_OTL *table, const otfcc
 	// consolidate bases
 	base_hash *hm = NULL;
 	for (glyphid_t k = 0; k < baseArray->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &baseArray->data[k].glyph)) { continue; }
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &baseArray->data[k].glyph)) {
+			logWarning("[Consolidate] Ignored unknown glyph name %s.", baseArray->data[k].glyph.name);
+			continue;
+		}
 		base_hash *s = NULL;
 		int gid = baseArray->data[k].glyph.index;
 		HASH_FIND_INT(hm, &gid, s);
@@ -100,7 +106,10 @@ static void consolidateLigArray(otfcc_Font *font, table_OTL *table, const otfcc_
                                 otl_LigatureArray *ligArray) {
 	lig_hash *hm = NULL;
 	for (glyphid_t k = 0; k < ligArray->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &ligArray->data[k].glyph)) { continue; }
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &ligArray->data[k].glyph)) {
+			logWarning("[Consolidate] Ignored unknown glyph name %s.", ligArray->data[k].glyph.name);
+			continue;
+		}
 		lig_hash *s = NULL;
 		int gid = ligArray->data[k].glyph.index;
 		HASH_FIND_INT(hm, &gid, s);
