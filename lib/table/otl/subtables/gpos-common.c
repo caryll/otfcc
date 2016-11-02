@@ -4,12 +4,12 @@ static void deleteMarkArrayItem(otl_MarkRecord *entry) {
 }
 static const caryll_VectorEntryTypeInfo(otl_MarkRecord) gss_typeinfo = {
     .ctor = NULL, .copyctor = NULL, .dtor = deleteMarkArrayItem};
-void otl_init_mark_array(otl_MarkArray *array) {
+void otl_initMarkArray(otl_MarkArray *array) {
 	caryll_vecInit(array, gss_typeinfo);
 }
 
-void otl_read_mark_array(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
-                         uint32_t offset) {
+void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
+                       uint32_t offset) {
 	checkLength(offset + 2);
 	glyphid_t markCount = read_16u(data + offset);
 	for (glyphid_t j = 0; j < markCount; j++) {

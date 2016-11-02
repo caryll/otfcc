@@ -17,9 +17,9 @@ typedef struct {
 	UT_hash_handle hh;
 } otl_ClassnameHash;
 
-void otl_init_mark_array(otl_MarkArray *array);
-void otl_read_mark_array(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
-                         uint32_t offset);
+void otl_initMarkArray(otl_MarkArray *array);
+void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
+                       uint32_t offset);
 void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameHash **h, const otfcc_Options *options);
 
 // position values

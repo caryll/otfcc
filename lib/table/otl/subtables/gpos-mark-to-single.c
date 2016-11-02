@@ -20,7 +20,7 @@ void otl_delete_gpos_markToSingle(otl_Subtable *_subtable) {
 static subtable_gpos_markToSingle *otl_new_gpos_markToSingle() {
 	subtable_gpos_markToSingle *subtable;
 	NEW(subtable);
-	otl_init_mark_array(&subtable->markArray);
+	otl_initMarkArray(&subtable->markArray);
 	caryll_vecInit(&subtable->baseArray, ba_typeinfo);
 	return subtable;
 }
@@ -39,7 +39,7 @@ otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t 
 
 	subtable->classCount = read_16u(data + subtableOffset + 6);
 	uint32_t markArrayOffset = subtableOffset + read_16u(data + subtableOffset + 8);
-	otl_read_mark_array(&subtable->markArray, marks, data, tableLength, markArrayOffset);
+	otl_readMarkArray(&subtable->markArray, marks, data, tableLength, markArrayOffset);
 
 	uint32_t baseArrayOffset = subtableOffset + read_16u(data + subtableOffset + 10);
 	checkLength(baseArrayOffset + 2 + 2 * bases->numGlyphs * subtable->classCount);

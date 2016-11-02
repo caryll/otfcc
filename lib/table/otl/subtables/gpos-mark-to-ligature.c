@@ -24,7 +24,7 @@ void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
 static subtable_gpos_markToLigature *otl_new_gpos_markToLigature() {
 	subtable_gpos_markToLigature *subtable;
 	NEW(subtable);
-	otl_init_mark_array(&subtable->markArray);
+	otl_initMarkArray(&subtable->markArray);
 	caryll_vecInit(&subtable->ligArray, la_typeinfo);
 	return subtable;
 }
@@ -42,7 +42,7 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 	subtable->classCount = read_16u(data + offset + 6);
 
 	uint32_t markArrayOffset = offset + read_16u(data + offset + 8);
-	otl_read_mark_array(&subtable->markArray, marks, data, tableLength, markArrayOffset);
+	otl_readMarkArray(&subtable->markArray, marks, data, tableLength, markArrayOffset);
 
 	uint32_t ligArrayOffset = offset + read_16u(data + offset + 10);
 	checkLength(ligArrayOffset + 2 + 2 * bases->numGlyphs);
