@@ -34,6 +34,7 @@ void printHelp() {
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
 	                " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
+	                " --name-by-hash          : Name glyphs using its hash value.\n"
 	                " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
 	                "                           when redirecting to another program. Use --no-bom to\n"
 	                "                           turn it off.)\n"
