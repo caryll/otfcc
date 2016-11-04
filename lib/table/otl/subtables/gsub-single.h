@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+subtable_gsub_single *otl_new_gsub_single();
 void otl_delete_gsub_single(otl_Subtable *subtable);
 otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                    const otfcc_Options *options);

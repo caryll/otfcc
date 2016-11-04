@@ -6,7 +6,7 @@
 typedef struct {
 	sds tag;
 	uint32_t length;
-	uint8_t *bytes;
+	OWNING uint8_t *bytes;
 } table_fpgm_prep;
 
 #endif

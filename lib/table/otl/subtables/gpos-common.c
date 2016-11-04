@@ -1,11 +1,99 @@
 #include "gpos-common.h"
 
-void otl_delete_mark_array(otl_MarkArray *array) {
-	if (array) {
-		if (array->records) FREE(array->records);
-		FREE(array);
-	};
+static void deleteMarkArrayItem(otl_MarkRecord *entry) {
+	Handle.dispose(&entry->glyph);
 }
+static const caryll_VectorEntryTypeInfo(otl_MarkRecord) gss_typeinfo = {
+    .ctor = NULL, .copyctor = NULL, .dtor = deleteMarkArrayItem};
+
+void otl_initMarkArray(otl_MarkArray *array) {
+	caryll_vecInit(array, gss_typeinfo);
+}
+
+void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
+                       uint32_t offset) {
+	checkLength(offset + 2);
+	glyphid_t markCount = read_16u(data + offset);
+	for (glyphid_t j = 0; j < markCount; j++) {
+		glyphclass_t markClass = read_16u(data + offset + 2 + j * 4);
+		uint16_t delta = read_16u(data + offset + 2 + j * 4 + 2);
+		if (delta) {
+			caryll_vecPush(array, ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
+			                                        .markClass = markClass,
+			                                        .anchor = otl_read_anchor(data, tableLength, offset + delta)}));
+		} else {
+			caryll_vecPush(array, ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
+			                                        .markClass = markClass,
+			                                        .anchor = otl_anchor_absent()}));
+		}
+	}
+FAIL:
+	return;
+}
+
+static int compare_classHash(otl_ClassnameHash *a, otl_ClassnameHash *b) {
+	return strcmp(a->className, b->className);
+}
+void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameHash **h, const otfcc_Options *options) {
+	for (glyphid_t j = 0; j < _marks->u.object.length; j++) {
+		otl_MarkRecord mark;
+		char *gname = _marks->u.object.values[j].name;
+		json_value *anchorRecord = _marks->u.object.values[j].value;
+		mark.glyph = Handle.fromName(sdsnewlen(gname, _marks->u.object.values[j].name_length));
+		mark.markClass = 0;
+		mark.anchor = otl_anchor_absent();
+
+		if (!anchorRecord || anchorRecord->type != json_object) {
+			caryll_vecPush(array, mark);
+			continue;
+		}
+		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
+		if (!_className) {
+			caryll_vecPush(array, mark);
+			continue;
+		}
+
+		sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
+		otl_ClassnameHash *s;
+		HASH_FIND_STR(*h, className, s);
+		if (!s) {
+			NEW(s);
+			s->className = className;
+			s->classID = HASH_COUNT(*h);
+			HASH_ADD_STR(*h, className, s);
+		} else {
+			sdsfree(className);
+		}
+		mark.markClass = s->classID;
+		mark.anchor.present = true;
+		mark.anchor.x = json_obj_getnum(anchorRecord, "x");
+		mark.anchor.y = json_obj_getnum(anchorRecord, "y");
+		caryll_vecPush(array, mark);
+	}
+
+	HASH_SORT(*h, compare_classHash);
+	glyphid_t jAnchorIndex = 0;
+	otl_ClassnameHash *s;
+	foreach_hash(s, *h) {
+		s->classID = jAnchorIndex;
+		jAnchorIndex++;
+	}
+	for (glyphid_t j = 0; j < array->length; j++) {
+		if (!array->data[j].anchor.present) continue;
+		json_value *anchorRecord = _marks->u.object.values[j].value;
+		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
+		sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
+		otl_ClassnameHash *s;
+		HASH_FIND_STR(*h, className, s);
+		if (s) {
+			array->data[j].markClass = s->classID;
+		} else {
+			array->data[j].markClass = 0;
+		}
+		sdsfree(className);
+	}
+}
+
 otl_Anchor otl_anchor_absent() {
 	otl_Anchor anchor = {.present = false, .x = 0, .y = 0};
 	return anchor;
@@ -40,30 +128,6 @@ otl_Anchor otl_parse_anchor(json_value *v) {
 	anchor.x = json_obj_getnum_fallback(v, "x", 0);
 	anchor.y = json_obj_getnum_fallback(v, "y", 0);
 	return anchor;
-}
-
-otl_MarkArray *otl_read_mark_array(font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	otl_MarkArray *array = NULL;
-	NEW(array);
-	checkLength(offset + 2);
-	array->markCount = read_16u(data + offset);
-	checkLength(offset + 2 + 4 * array->markCount);
-	NEW(array->records, array->markCount);
-	for (glyphid_t j = 0; j < array->markCount; j++) {
-		array->records[j].markClass = read_16u(data + offset + 2 + j * 4);
-		uint16_t delta = read_16u(data + offset + 2 + j * 4 + 2);
-		if (delta) {
-			array->records[j].anchor = otl_read_anchor(data, tableLength, offset + delta);
-		} else {
-			array->records[j].anchor.present = false;
-			array->records[j].anchor.x = 0;
-			array->records[j].anchor.y = 0;
-		}
-	}
-	return array;
-FAIL:
-	DELETE(otl_delete_mark_array, array);
-	return NULL;
 }
 
 bk_Block *bkFromAnchor(otl_Anchor a) {

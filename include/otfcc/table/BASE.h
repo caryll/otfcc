@@ -12,7 +12,7 @@ typedef struct {
 	uint32_t tag;
 	uint32_t defaultBaselineTag;
 	tableid_t baseValuesCount;
-	otl_BaseValue *baseValues;
+	OWNING otl_BaseValue *baseValues;
 } otl_BaseScriptEntry;
 
 typedef struct {

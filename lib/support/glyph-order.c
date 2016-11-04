@@ -108,6 +108,13 @@ static bool otfcc_gordConsolidateHandle(otfcc_GlyphOrder *go, glyph_handle *h) {
 	return false;
 }
 
+static bool gordLookupName(otfcc_GlyphOrder *go, sds name) {
+	otfcc_GlyphOrderEntry *t;
+	HASH_FIND(hhName, go->byName, name, sdslen(name), t);
+	if (t) return true;
+	return false;
+}
+
 const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder = {
     .create = otfcc_newGlyphOrder,
     .free = otfcc_deleteGlyphOrder,
@@ -115,4 +122,5 @@ const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder = {
     .setByName = otfcc_setGlyphOrderByName,
     .nameAField_Shared = otfcc_gordNameAFieldShared,
     .consolidateHandle = otfcc_gordConsolidateHandle,
+    .lookupName = gordLookupName,
 };

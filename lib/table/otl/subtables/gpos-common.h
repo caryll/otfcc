@@ -11,8 +11,16 @@ otl_Anchor otl_parse_anchor(json_value *v);
 bk_Block *bkFromAnchor(otl_Anchor a);
 
 // mark arrays
-void otl_delete_mark_array(otl_MarkArray *array);
-otl_MarkArray *otl_read_mark_array(font_file_pointer data, uint32_t tableLength, uint32_t offset);
+typedef struct {
+	sds className;
+	glyphclass_t classID;
+	UT_hash_handle hh;
+} otl_ClassnameHash;
+
+void otl_initMarkArray(otl_MarkArray *array);
+void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
+                       uint32_t offset);
+void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameHash **h, const otfcc_Options *options);
 
 // position values
 extern const uint8_t FORMAT_DX;

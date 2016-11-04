@@ -5,7 +5,7 @@
 
 typedef struct {
 	uint32_t length;
-	uint16_t *words;
+	OWNING uint16_t *words;
 } table_cvt;
 
 #endif

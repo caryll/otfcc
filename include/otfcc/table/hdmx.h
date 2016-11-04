@@ -15,7 +15,7 @@ typedef struct {
 	uint16_t version;
 	uint16_t numRecords;
 	uint32_t sizeDeviceRecord;
-	device_record *records;
+	OWNING device_record *records;
 } table_hdmx;
 
 #endif

@@ -4,6 +4,7 @@
 	case type:                                                                                                         \
 		fn(lookup->subtables[j]);                                                                                      \
 		break;
+
 void otfcc_delete_lookup(otl_Lookup *lookup) {
 	if (!lookup) return;
 	if (lookup->subtables) {
@@ -30,43 +31,46 @@ void otfcc_delete_lookup(otl_Lookup *lookup) {
 	}
 	FREE(lookup);
 }
+static void deleteLookupListItem(otl_Lookup **entry) {
+	otfcc_delete_lookup(*entry);
+}
+static void deleteFeature(otl_Feature **feature) {
+	if (!*feature) return;
+	if ((*feature)->name) sdsfree((*feature)->name);
+	if ((*feature)->lookups) FREE((*feature)->lookups);
+	FREE(*feature);
+}
+static void deleteLanguage(otl_LanguageSystem **language) {
+	if (!*language) return;
+	if ((*language)->name) sdsfree((*language)->name);
+	if ((*language)->features) FREE((*language)->features);
+	FREE(*language);
+}
+
+otl_LookupTI_t otl_LookupTI = {
+    .ctor = NULL, .copyctor = NULL, .dtor = deleteLookupListItem,
+};
+otl_FeatureTI_t otl_FeatureTI = {
+    .ctor = NULL, .copyctor = NULL, .dtor = deleteFeature,
+};
+otl_LanguageSystemTI_t otl_LanguageSystemTI = {
+    .ctor = NULL, .copyctor = NULL, .dtor = deleteLanguage,
+};
 
 // COMMON PART
 table_OTL *otfcc_newOtl() {
 	table_OTL *table;
 	NEW(table);
-	table->languageCount = 0;
-	table->languages = NULL;
-	table->featureCount = 0;
-	table->features = NULL;
-	table->lookupCount = 0;
-	table->lookups = NULL;
+	caryll_vecInit(&table->lookups, otl_LookupTI);
+	caryll_vecInit(&table->features, otl_FeatureTI);
+	caryll_vecInit(&table->languages, otl_LanguageSystemTI);
 	return table;
 }
 
 void otfcc_deleteOtl(table_OTL *table) {
 	if (!table) return;
-	if (table->languages) {
-		for (tableid_t j = 0; j < table->languageCount; j++) {
-			if (table->languages[j]->name) sdsfree(table->languages[j]->name);
-			if (table->languages[j]->features) FREE(table->languages[j]->features);
-			FREE(table->languages[j]);
-		}
-		FREE(table->languages);
-	}
-	if (table->features) {
-		for (tableid_t j = 0; j < table->featureCount; j++) {
-			if (table->features[j]->name) sdsfree(table->features[j]->name);
-			if (table->features[j]->lookups) FREE(table->features[j]->lookups);
-			FREE(table->features[j]);
-		}
-		FREE(table->features);
-	}
-	if (table->lookups) {
-		for (tableid_t j = 0; j < table->lookupCount; j++) {
-			otfcc_delete_lookup(table->lookups[j]);
-		}
-		FREE(table->lookups);
-	}
+	caryll_vecReset(&table->lookups);
+	caryll_vecReset(&table->features);
+	caryll_vecReset(&table->languages);
 	FREE(table);
 }

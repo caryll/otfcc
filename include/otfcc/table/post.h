@@ -14,7 +14,7 @@ typedef struct {
 	uint32_t maxMemType42;
 	uint32_t minMemType1;
 	uint32_t maxMemType1;
-	otfcc_GlyphOrder *post_name_map;
+	OWNING otfcc_GlyphOrder *post_name_map;
 } table_post;
 
 #endif

@@ -13,7 +13,6 @@ static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_valu
 	}
 }
 
-
 #define LOOKUP_DUMPER(llt, fn) _declare_lookup_dumper(llt, tableNames[llt], fn, lookup, dump);
 
 static void _dump_lookup(otl_Lookup *lookup, json_value *dump) {
@@ -32,52 +31,49 @@ static void _dump_lookup(otl_Lookup *lookup, json_value *dump) {
 	LOOKUP_DUMPER(otl_type_gpos_markToLigature, otl_gpos_dump_markToLigature);
 }
 
-
 void otfcc_dumpOtl(const table_OTL *table, json_value *root, const otfcc_Options *options, const char *tag) {
-	if (!table || !table->languages || !table->lookups || !table->features) return;
+	if (!table || !table->languages.length || !table->lookups.length || !table->features.length) return;
 	loggedStep("%s", tag) {
 		json_value *otl = json_object_new(3);
 		loggedStep("Languages") {
 			// dump script list
-			json_value *languages = json_object_new(table->languageCount);
-			for (tableid_t j = 0; j < table->languageCount; j++) {
-				json_value *language = json_object_new(5);
-				if (table->languages[j]->requiredFeature) {
-					json_object_push(language, "requiredFeature",
-					                 json_string_new(table->languages[j]->requiredFeature->name));
+			json_value *languages = json_object_new(table->languages.length);
+			for (tableid_t j = 0; j < table->languages.length; j++) {
+				json_value *_lang = json_object_new(5);
+				otl_LanguageSystem *lang = table->languages.data[j];
+				if (lang->requiredFeature) {
+					json_object_push(_lang, "requiredFeature", json_string_new(lang->requiredFeature->name));
 				}
-				json_value *features = json_array_new(table->languages[j]->featureCount);
-				for (tableid_t k = 0; k < table->languages[j]->featureCount; k++)
-					if (table->languages[j]->features[k]) {
-						json_array_push(features, json_string_new(table->languages[j]->features[k]->name));
-					}
-				json_object_push(language, "features", preserialize(features));
-				json_object_push(languages, table->languages[j]->name, language);
+				json_value *features = json_array_new(lang->featureCount);
+				for (tableid_t k = 0; k < lang->featureCount; k++)
+					if (lang->features[k]) { json_array_push(features, json_string_new(lang->features[k]->name)); }
+				json_object_push(_lang, "features", preserialize(features));
+				json_object_push(languages, lang->name, _lang);
 			}
 			json_object_push(otl, "languages", languages);
 		}
 		loggedStep("Features") {
 			// dump feature list
-			json_value *features = json_object_new(table->featureCount);
-			for (tableid_t j = 0; j < table->featureCount; j++) {
-				json_value *feature = json_array_new(table->features[j]->lookupCount);
-				for (tableid_t k = 0; k < table->features[j]->lookupCount; k++)
-					if (table->features[j]->lookups[k]) {
-						json_array_push(feature, json_string_new(table->features[j]->lookups[k]->name));
-					}
-				json_object_push(features, table->features[j]->name, preserialize(feature));
+			json_value *features = json_object_new(table->features.length);
+			for (tableid_t j = 0; j < table->features.length; j++) {
+				otl_Feature *feature = table->features.data[j];
+				json_value *_feature = json_array_new(feature->lookupCount);
+				for (tableid_t k = 0; k < feature->lookupCount; k++)
+					if (feature->lookups[k]) { json_array_push(_feature, json_string_new(feature->lookups[k]->name)); }
+				json_object_push(features, feature->name, preserialize(_feature));
 			}
 			json_object_push(otl, "features", features);
 		}
 		loggedStep("Lookups") {
 			// dump lookups
-			json_value *lookups = json_object_new(table->lookupCount);
-			json_value *lookupOrder = json_array_new(table->lookupCount);
-			for (tableid_t j = 0; j < table->lookupCount; j++) {
-				json_value *lookup = json_object_new(5);
-				_dump_lookup(table->lookups[j], lookup);
-				json_object_push(lookups, table->lookups[j]->name, lookup);
-				json_array_push(lookupOrder, json_string_new(table->lookups[j]->name));
+			json_value *lookups = json_object_new(table->lookups.length);
+			json_value *lookupOrder = json_array_new(table->lookups.length);
+			for (tableid_t j = 0; j < table->lookups.length; j++) {
+				json_value *_lookup = json_object_new(5);
+				otl_Lookup *lookup = table->lookups.data[j];
+				_dump_lookup(lookup, _lookup);
+				json_object_push(lookups, lookup->name, _lookup);
+				json_array_push(lookupOrder, json_string_new(lookup->name));
 			}
 			json_object_push(otl, "lookups", lookups);
 			json_object_push(otl, "lookupOrder", lookupOrder);

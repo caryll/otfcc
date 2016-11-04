@@ -1,6 +1,7 @@
 #ifndef CARYLL_INCLUDE_TABLE_OTL_H
 #define CARYLL_INCLUDE_TABLE_OTL_H
 
+#include "caryll/vector.h"
 #include "table-common.h"
 #include "otl/coverage.h"
 #include "otl/classdef.h"
@@ -41,17 +42,22 @@ typedef struct {
 
 // GSUB subtable formats
 typedef struct {
-	otl_Coverage *from;
-	otl_Coverage *to;
-} subtable_gsub_single;
+	OWNING otfcc_GlyphHandle from;
+	OWNING otfcc_GlyphHandle to;
+} otl_GsubSingleEntry;
+typedef caryll_Vector(otl_GsubSingleEntry) subtable_gsub_single;
+
 typedef struct {
-	otl_Coverage *from;
-	otl_Coverage **to;
-} subtable_gsub_multi;
+	OWNING otfcc_GlyphHandle from;
+	OWNING otl_Coverage *to;
+} otl_GsubMultiEntry;
+typedef caryll_Vector(otl_GsubMultiEntry) subtable_gsub_multi;
+
 typedef struct {
-	otl_Coverage **from;
-	otl_Coverage *to;
-} subtable_gsub_ligature;
+	OWNING otl_Coverage *from;
+	OWNING otfcc_GlyphHandle to;
+} otl_GsubLigatureEntry;
+typedef caryll_Vector(otl_GsubLigatureEntry) subtable_gsub_ligature;
 
 typedef enum {
 	otl_chaining_canonical = 0, // The canonical form of chaining contextual substitution, one rule per subtable.
@@ -68,9 +74,9 @@ typedef struct {
 	tableid_t matchCount;
 	tableid_t inputBegins;
 	tableid_t inputEnds;
-	otl_Coverage **match;
+	OWNING otl_Coverage **match;
 	tableid_t applyCount;
-	otl_ChainLookupApplication *apply;
+	OWNING otl_ChainLookupApplication *apply;
 } otl_ChainingRule;
 typedef struct {
 	otl_chaining_type type;
@@ -78,10 +84,10 @@ typedef struct {
 		otl_ChainingRule rule; // for type = otl_chaining_canonical
 		struct {               // for type = otl_chaining_poly or otl_chaining_classified
 			tableid_t rulesCount;
-			otl_ChainingRule **rules;
-			otl_ClassDef *bc;
-			otl_ClassDef *ic;
-			otl_ClassDef *fc;
+			OWNING otl_ChainingRule **rules;
+			OWNING otl_ClassDef *bc;
+			OWNING otl_ClassDef *ic;
+			OWNING otl_ClassDef *fc;
 		};
 	};
 } subtable_chaining;
@@ -89,15 +95,16 @@ typedef struct {
 typedef struct {
 	tableid_t matchCount;
 	tableid_t inputIndex;
-	otl_Coverage **match;
-	otl_Coverage *to;
+	OWNING otl_Coverage **match;
+	OWNING otl_Coverage *to;
 } subtable_gsub_reverse;
 
 // GPOS subtable formats
 typedef struct {
-	otl_Coverage *coverage;
-	otl_PositionValue *values;
-} subtable_gpos_single;
+	OWNING otfcc_GlyphHandle target;
+	OWNING otl_PositionValue value;
+} otl_GposSingleEntry;
+typedef caryll_Vector(otl_GposSingleEntry) subtable_gpos_single;
 
 typedef struct {
 	bool present;
@@ -106,47 +113,49 @@ typedef struct {
 } otl_Anchor;
 
 typedef struct {
-	otl_ClassDef *first;
-	otl_ClassDef *second;
-	otl_PositionValue **firstValues;
-	otl_PositionValue **secondValues;
+	OWNING otl_ClassDef *first;
+	OWNING otl_ClassDef *second;
+	OWNING otl_PositionValue **firstValues;
+	OWNING otl_PositionValue **secondValues;
 } subtable_gpos_pair;
 
 typedef struct {
-	otl_Coverage *coverage;
-	otl_Anchor *enter;
-	otl_Anchor *exit;
-} subtable_gpos_cursive;
+	OWNING otfcc_GlyphHandle target;
+	OWNING otl_Anchor enter;
+	OWNING otl_Anchor exit;
+} otl_GposCursiveEntry;
+typedef caryll_Vector(otl_GposCursiveEntry) subtable_gpos_cursive;
 
 typedef struct {
+	OWNING otfcc_GlyphHandle glyph;
 	glyphclass_t markClass;
 	otl_Anchor anchor;
 } otl_MarkRecord;
+typedef caryll_Vector(otl_MarkRecord) otl_MarkArray;
 
 typedef struct {
-	glyphclass_t markCount;
-	otl_MarkRecord *records;
-} otl_MarkArray;
+	OWNING otfcc_GlyphHandle glyph;
+	OWNING otl_Anchor *anchors;
+} otl_BaseRecord;
+typedef caryll_Vector(otl_BaseRecord) otl_BaseArray;
 
 typedef struct {
-	otl_Coverage *marks;
-	otl_Coverage *bases;
 	glyphclass_t classCount;
-	otl_MarkArray *markArray;
-	otl_Anchor **baseArray;
+	OWNING otl_MarkArray markArray;
+	otl_BaseArray baseArray;
 } subtable_gpos_markToSingle;
 
 typedef struct {
+	OWNING otfcc_GlyphHandle glyph;
 	glyphid_t componentCount;
-	otl_Anchor **anchors;
-} otl_MarkToLigatureBase;
+	OWNING otl_Anchor **anchors;
+} otl_LigatureBaseRecord;
+typedef caryll_Vector(otl_LigatureBaseRecord) otl_LigatureArray;
 
 typedef struct {
-	otl_Coverage *marks;
-	otl_Coverage *bases;
 	glyphclass_t classCount;
-	otl_MarkArray *markArray;
-	otl_MarkToLigatureBase **ligArray;
+	OWNING otl_MarkArray markArray;
+	otl_LigatureArray ligArray;
 } subtable_gpos_markToLigature;
 
 typedef struct {
@@ -174,34 +183,30 @@ typedef struct _otl_lookup {
 	uint32_t _offset;
 	uint16_t flags;
 	tableid_t subtableCount;
-	otl_Subtable **subtables;
+	OWNING otl_Subtable **subtables;
 } otl_Lookup;
 
 typedef struct {
 	sds name;
 	tableid_t lookupCount;
-	otl_Lookup **lookups;
+	OWNING otl_Lookup **lookups;
 } otl_Feature;
 
 typedef struct {
 	sds name;
-	otl_Feature *requiredFeature;
+	OWNING otl_Feature *requiredFeature;
 	tableid_t featureCount;
-	otl_Feature **features;
+	OWNING otl_Feature **features;
 } otl_LanguageSystem;
 
-typedef struct {
-	sds from;
-	sds to;
-} otl_LookupAliasingRecord;
+typedef caryll_Vector(otl_Lookup *) otl_LookupList;
+typedef caryll_Vector(otl_Feature *) otl_FeatureList;
+typedef caryll_Vector(otl_LanguageSystem *) otl_LangSystemList;
 
 typedef struct {
-	uint32_t languageCount;
-	otl_LanguageSystem **languages;
-	tableid_t featureCount;
-	otl_Feature **features;
-	tableid_t lookupCount;
-	otl_Lookup **lookups;
+	otl_LookupList lookups;
+	otl_FeatureList features;
+	otl_LangSystemList languages;
 } table_OTL;
 
 #endif
