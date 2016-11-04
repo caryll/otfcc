@@ -288,17 +288,25 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 	}
 	otl_Coverage *cov = covFromCD(subtable->first);
+	Coverage.shrink(cov, true);
 	bk_Block *root = bk_new_Block(b16, 1,                                          // PosFormat
 	                              p16, bk_newBlockFromBuffer(Coverage.build(cov)), // Coverage
 	                              b16, format1,                                    // ValueFormat1
 	                              b16, format2,                                    // ValueFormat2
 	                              b16, subtable->first->numGlyphs,                 // PairSetCount
 	                              bkover);
-	for (glyphid_t j = 0; j < subtable->first->numGlyphs; j++) {
+
+	for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 		bk_Block *pairSet = bk_new_Block(b16, pairCounts[j], // PairValueCount
 		                                 bkover);
+		glyphclass_t c1 = 0;
+		for (glyphid_t k = 0; k < subtable->first->numGlyphs; k++) {
+			if (subtable->first->glyphs[k].index == cov->glyphs[j].index) {
+				// The coverage is sorted, not direct correspondence with subtable->first.
+				c1 = subtable->first->classes[k];
+			}
+		}
 		for (glyphid_t k = 0; k < subtable->second->numGlyphs; k++) {
-			glyphclass_t c1 = subtable->first->classes[j];
 			glyphclass_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
