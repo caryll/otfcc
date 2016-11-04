@@ -64,6 +64,7 @@ int main(int argc, char *argv[]) {
 	                            {"ignore-hints", no_argument, NULL, 0},
 	                            {"decimal-cmap", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
+	                            {"name-by-hash", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
 	                            {"add-bom", no_argument, NULL, 0},
@@ -103,6 +104,8 @@ int main(int argc, char *argv[]) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "decimal-cmap") == 0) {
 					options->decimal_cmap = true;
+				} else if (strcmp(longopts[option_index].name, "name-by-hash") == 0) {
+					options->name_glyphs_by_hash = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {

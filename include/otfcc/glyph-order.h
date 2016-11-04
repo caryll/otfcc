@@ -30,6 +30,7 @@ struct otfcc_GlyphOrderPackage {
 	bool (*setByName)(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
 	bool (*nameAField_Shared)(otfcc_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer
 	bool (*consolidateHandle)(otfcc_GlyphOrder *go, otfcc_GlyphHandle *h);
+	bool (*lookupName)(otfcc_GlyphOrder *go, sds name);
 };
 
 extern const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder;
