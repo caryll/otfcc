@@ -31,7 +31,6 @@ struct otfcc_VFPackage {
 	vf_Functional (*add)(MOVE vf_Functional a, MOVE vf_Functional b);
 	vf_Functional (*minus)(MOVE vf_Functional a, MOVE vf_Functional b);
 	vf_Functional (*multi)(MOVE vf_Functional a, MOVE vf_Functional b);
-	vf_Functional (*shrink)(MOVE vf_Functional *form);
 	pos_t (*zero)(OBSERVE vf_Functional a);
 	pos_t (*base)(OBSERVE vf_Functional a, shapeid_t n);
 	vf_Functional (*gxCanonical)(OBSERVE vf_Functional a, shapeid_t n);
