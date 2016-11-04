@@ -297,15 +297,17 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 	                              bkover);
 
 	for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
-		bk_Block *pairSet = bk_new_Block(b16, pairCounts[j], // PairValueCount
-		                                 bkover);
+		tableid_t currentPairCount = 0;
 		glyphclass_t c1 = 0;
 		for (glyphid_t k = 0; k < subtable->first->numGlyphs; k++) {
 			if (subtable->first->glyphs[k].index == cov->glyphs[j].index) {
 				// The coverage is sorted, not direct correspondence with subtable->first.
 				c1 = subtable->first->classes[k];
+				currentPairCount = pairCounts[k];
 			}
 		}
+		bk_Block *pairSet = bk_new_Block(b16, currentPairCount, // PairValueCount
+		                                 bkover);
 		for (glyphid_t k = 0; k < subtable->second->numGlyphs; k++) {
 			glyphclass_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
