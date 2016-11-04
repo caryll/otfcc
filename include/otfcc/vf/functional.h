@@ -25,11 +25,18 @@ typedef struct vf_Functional {
 	};
 } vf_Functional;
 
-void vf_delete_Functional(MOVE vf_Functional *form);
-vf_Functional *vf_new_Functional_scalar(pos_t scalar);
-vf_Functional *vf_Functional_add(MOVE vf_Functional *a, MOVE vf_Functional *b);
-vf_Functional *vf_Functional_minus(MOVE vf_Functional *a, MOVE vf_Functional *b);
-vf_Functional *vf_Functional_multi(MOVE vf_Functional *a, pos_t scalar);
-vf_Functional *vf_Functional_shrink(MOVE vf_Functional *form);
+struct otfcc_VFPackage {
+	void (*dispose)(MOVE vf_Functional *form);
+	vf_Functional (*scalar)(pos_t scalar);
+	vf_Functional (*add)(MOVE vf_Functional a, MOVE vf_Functional b);
+	vf_Functional (*minus)(MOVE vf_Functional a, MOVE vf_Functional b);
+	vf_Functional (*multi)(MOVE vf_Functional a, MOVE vf_Functional b);
+	vf_Functional (*shrink)(MOVE vf_Functional *form);
+	pos_t (*zero)(OBSERVE vf_Functional a);
+	pos_t (*base)(OBSERVE vf_Functional a, shapeid_t n);
+	vf_Functional (*gxCanonical)(OBSERVE vf_Functional a, shapeid_t n);
+};
+
+extern const struct otfcc_VFPackage otfcc_vfPackage;
 
 #endif
