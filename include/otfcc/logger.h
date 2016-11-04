@@ -22,6 +22,7 @@ typedef struct otfcc_ILogger {
 	void (*log)(struct otfcc_ILogger *self, uint8_t verbosity, otfcc_LoggerType type, const char *data); // log a data
 	void (*logSDS)(struct otfcc_ILogger *self, uint8_t verbosity, otfcc_LoggerType type, MOVE sds data); // log a data
 	void (*dedent)(struct otfcc_ILogger *self);                          // remove a level
+	void (*finish)(struct otfcc_ILogger *self);                          // remove a level, finishing a ask
 	void (*end)(struct otfcc_ILogger *self);                             // remove a level
 	void (*setVerbosity)(struct otfcc_ILogger *self, uint8_t verbosity); // remove a level
 	otfcc_ILoggerTarget *(*getTarget)(struct otfcc_ILogger *self);       // query target

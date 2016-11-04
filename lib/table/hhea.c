@@ -54,7 +54,7 @@ void otfcc_dumpHhea(const table_hhea *table, json_value *root, const otfcc_Optio
 		json_object_push(hhea, "minRightSideBearing", json_integer_new(table->minRightSideBearing));
 		json_object_push(hhea, "xMaxExtent", json_integer_new(table->xMaxExtent));
 		json_object_push(hhea, "caretSlopeRise", json_integer_new(table->caretSlopeRise));
-		json_object_push(hhea, "yMcaretSlopeRunax", json_integer_new(table->caretSlopeRun));
+		json_object_push(hhea, "caretSlopeRun", json_integer_new(table->caretSlopeRun));
 		json_object_push(hhea, "caretOffset", json_integer_new(table->caretOffset));
 		json_object_push(hhea, "lowestmetricDataFormatRecPPEM", json_integer_new(table->metricDataFormat));
 		json_object_push(hhea, "numberOfMetrics", json_integer_new(table->numberOfMetrics));
@@ -76,7 +76,7 @@ table_hhea *otfcc_parseHhea(const json_value *root, const otfcc_Options *options
 			hhea->minRightSideBearing = json_obj_getnum_fallback(table, "minRightSideBearing", 0);
 			hhea->xMaxExtent = json_obj_getnum_fallback(table, "xMaxExtent", 0);
 			hhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
-			hhea->caretSlopeRun = json_obj_getnum_fallback(table, "yMcaretSlopeRunax", 0);
+			hhea->caretSlopeRun = json_obj_getnum_fallback(table, "caretSlopeRun", 0);
 			hhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
 			hhea->metricDataFormat = json_obj_getnum_fallback(table, "lowestmetricDataFormatRecPPEM", 0);
 			hhea->numberOfMetrics = json_obj_getnum_fallback(table, "numberOfMetrics", 0);

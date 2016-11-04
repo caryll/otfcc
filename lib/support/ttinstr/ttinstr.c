@@ -438,7 +438,7 @@ static uint8_t *parse_instrs(char *text, int *len, void *context, void (*IVError
 	int push_left = 0, push_size = 0;
 	char *pt;
 	char *end, *bend, *brack;
-	int icnt = 0, imax = (int)(strlen(text) / 2), val;
+	int icnt = 0, imax = (int)(strlen(text)), val;
 	uint8_t *instrs;
 	NEW(instrs, imax);
 

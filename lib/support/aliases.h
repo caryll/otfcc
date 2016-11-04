@@ -15,7 +15,7 @@
 #define loggedStep(...)                                                                                                \
 	for (bool ___loggedstep_v =                                                                                        \
 	              (options->logger->startSDS(options->logger, sdscatprintf(sdsempty(), __VA_ARGS__)), true);           \
-	     ___loggedstep_v; ___loggedstep_v = false, options->logger->dedent(options->logger))
+	     ___loggedstep_v; ___loggedstep_v = false, options->logger->finish(options->logger))
 #define logError(...)                                                                                                  \
 	options->logger->logSDS(options->logger, log_vl_critical, log_type_error, sdscatprintf(sdsempty(), __VA_ARGS__));
 #define logWarning(...)                                                                                                \
@@ -37,5 +37,11 @@ typedef otfcc_LookupHandle lookup_handle;
 // alias "package" otfcc_pkgGlyphOrder to GlyphOrder
 #include "otfcc/glyph-order.h"
 #define GlyphOrder otfcc_pkgGlyphOrder
+
+#include "otfcc/table/otl/classdef.h"
+#define ClassDef otfcc_pkgClassDef
+
+#include "otfcc/table/otl/coverage.h"
+#define Coverage otfcc_pkgCoverage
 
 #endif

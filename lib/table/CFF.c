@@ -262,125 +262,70 @@ typedef struct {
 	uint64_t randx;
 } outline_builder_context;
 
-static void callback_count_contour(void *context) {
-	((outline_builder_context *)context)->g->numberOfContours += 1;
-}
-static void callback_countpoint_next_contour(void *_context) {
-	outline_builder_context *context = (outline_builder_context *)_context;
-	context->jContour += 1;
-	context->g->contours[context->jContour - 1].pointsCount = 0;
-	context->jPoint = 0;
-}
-static void callback_countpoint_lineto(void *_context, double x1, double y1) {
-	outline_builder_context *context = (outline_builder_context *)_context;
-	if (context->jContour) {
-		context->g->contours[context->jContour - 1].pointsCount += 1;
-		context->jPoint += 1;
-	}
-}
-static void callback_countpoint_curveto(void *_context, double x1, double y1, double x2, double y2, double x3,
-                                        double y3) {
-	outline_builder_context *context = (outline_builder_context *)_context;
-	if (context->jContour) {
-		context->g->contours[context->jContour - 1].pointsCount += 3;
-		context->jPoint += 3;
-	}
-}
-static void callback_countpoint_sethint(void *_context, bool isVertical, double position, double width) {
-	outline_builder_context *context = (outline_builder_context *)_context;
-	if (isVertical) {
-		context->g->numberOfStemV += 1;
-	} else {
-		context->g->numberOfStemH += 1;
-	}
-}
-static void callback_countpoint_setmask(void *_context, bool isContourMask, bool *mask) {
-	outline_builder_context *context = (outline_builder_context *)_context;
-	if (isContourMask) {
-		context->g->numberOfContourMasks += 1;
-	} else {
-		context->g->numberOfHintMasks += 1;
-	}
-	FREE(mask);
-}
-
 static void callback_draw_setwidth(void *_context, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	context->g->advanceWidth = width + context->nominalWidthX;
 }
 static void callback_draw_next_contour(void *_context) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	context->jContour += 1;
+	glyf_Contour c;
+	otfcc_initGlyfContour(&c);
+	caryll_vecPush(&context->g->contours, c);
+	context->jContour = context->g->contours.length;
 	context->jPoint = 0;
 }
 static void callback_draw_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
-		context->g->contours[context->jContour - 1].points[context->jPoint].onCurve = true;
-		context->g->contours[context->jContour - 1].points[context->jPoint].x = x1;
-		context->g->contours[context->jContour - 1].points[context->jPoint].y = y1;
+		glyf_Contour *contour = &context->g->contours.data[context->jContour - 1];
+		caryll_vecPush(contour, ((glyf_Point){
+		                            .onCurve = true, .x = x1, .y = y1,
+		                        }));
 		context->jPoint += 1;
 	}
 }
 static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2, double x3, double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
-		context->g->contours[context->jContour - 1].points[context->jPoint].onCurve = false;
-		context->g->contours[context->jContour - 1].points[context->jPoint].x = x1;
-		context->g->contours[context->jContour - 1].points[context->jPoint].y = y1;
-		context->g->contours[context->jContour - 1].points[context->jPoint + 1].onCurve = false;
-		context->g->contours[context->jContour - 1].points[context->jPoint + 1].x = x2;
-		context->g->contours[context->jContour - 1].points[context->jPoint + 1].y = y2;
-		context->g->contours[context->jContour - 1].points[context->jPoint + 2].onCurve = true;
-		context->g->contours[context->jContour - 1].points[context->jPoint + 2].x = x3;
-		context->g->contours[context->jContour - 1].points[context->jPoint + 2].y = y3;
+		glyf_Contour *contour = &context->g->contours.data[context->jContour - 1];
+		caryll_vecPush(contour, ((glyf_Point){
+		                            .onCurve = false, .x = x1, .y = y1,
+		                        }));
+		caryll_vecPush(contour, ((glyf_Point){
+		                            .onCurve = false, .x = x2, .y = y2,
+		                        }));
+		caryll_vecPush(contour, ((glyf_Point){
+		                            .onCurve = true, .x = x3, .y = y3,
+		                        }));
 		context->jPoint += 3;
 	}
 }
 static void callback_draw_sethint(void *_context, bool isVertical, double position, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	if (isVertical) {
-		context->g->stemV[context->definedVStems].position = position;
-		context->g->stemV[context->definedVStems].width = width;
-		context->definedVStems += 1;
-	} else {
-		context->g->stemH[context->definedHStems].position = position;
-		context->g->stemH[context->definedHStems].width = width;
-		context->definedHStems += 1;
-	}
+	caryll_vecPush((isVertical ? &context->g->stemV : &context->g->stemH), //
+	               ((glyf_PostscriptStemDef){
+	                   .position = position, .width = width,
+	               }));
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	shapeid_t maskIndex = isContourMask ? context->definedContourMasks : context->definedHintMasks;
-	glyf_PostscriptHintMask *maskList = isContourMask ? context->g->contourMasks : context->g->hintMasks;
-	glyf_PostscriptHintMask *mask;
-	bool duplicateMask = false;
+	glyf_MaskList *maskList = isContourMask ? &context->g->contourMasks : &context->g->hintMasks;
+	glyf_PostscriptHintMask mask;
 
-	if (maskIndex > 0) {
-		glyf_PostscriptHintMask *lastMask = &(maskList)[maskIndex - 1];
-		if (lastMask->pointsBefore == context->jPoint && lastMask->contoursBefore == context->jContour) {
-			mask = lastMask;
-			duplicateMask = true;
-		} else {
-			mask = &(maskList)[maskIndex];
-		}
-	} else {
-		mask = &(maskList)[maskIndex];
-	}
 	if (context->jContour) {
-		mask->contoursBefore = context->jContour - 1;
+		mask.contoursBefore = context->jContour - 1;
 	} else {
-		mask->contoursBefore = 0;
+		mask.contoursBefore = 0;
 	}
-	mask->pointsBefore = context->jPoint;
+	mask.pointsBefore = context->jPoint;
 
 	for (shapeid_t j = 0; j < 0x100; j++) {
-		mask->maskH[j] = j < context->g->numberOfStemH ? maskArray[j] : 0;
-		mask->maskV[j] = j < context->g->numberOfStemV ? maskArray[j + context->g->numberOfStemH] : 0;
+		mask.maskH[j] = j < context->g->stemH.length ? maskArray[j] : 0;
+		mask.maskV[j] = j < context->g->stemV.length ? maskArray[j + context->g->stemH.length] : 0;
 	}
 
 	FREE(maskArray);
-	if (duplicateMask) return;
+	caryll_vecPush(maskList, mask);
 	if (isContourMask) {
 		context->definedContourMasks += 1;
 	} else {
@@ -406,20 +351,6 @@ static double callback_draw_getrand(void *_context) {
 	return a.d - q;
 }
 
-static cff_IOutlineBuilder conutContourPass = {.setWidth = NULL,
-                                               .newContour = callback_count_contour,
-                                               .lineTo = NULL,
-                                               .curveTo = NULL,
-                                               .setHint = NULL,
-                                               .setMask = NULL,
-                                               .getrand = NULL};
-static cff_IOutlineBuilder contourPointPass = {.setWidth = NULL,
-                                               .newContour = callback_countpoint_next_contour,
-                                               .lineTo = callback_countpoint_lineto,
-                                               .curveTo = callback_countpoint_curveto,
-                                               .setHint = callback_countpoint_sethint,
-                                               .setMask = callback_countpoint_setmask,
-                                               .getrand = NULL};
 static cff_IOutlineBuilder drawPass = {.setWidth = callback_draw_setwidth,
                                        .newContour = callback_draw_next_contour,
                                        .lineTo = callback_draw_lineto,
@@ -462,50 +393,28 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	uint8_t *charStringPtr = f->char_strings.data + f->char_strings.offset[i] - 1;
 	uint32_t charStringLength = f->char_strings.offset[i + 1] - f->char_strings.offset[i];
 
-	// PASS 1 : Count contours
-	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, conutContourPass,
-	                 options);
-	NEW(g->contours, g->numberOfContours);
-
-	// PASS 2 : Count points
-	stack.index = 0;
-	stack.stem = 0;
-	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, contourPointPass,
-	                 options);
-	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
-		NEW(g->contours[j].points, g->contours[j].pointsCount);
-	}
-	NEW(g->stemH, g->numberOfStemH);
-	NEW(g->stemV, g->numberOfStemV);
-	NEW(g->hintMasks, g->numberOfHintMasks);
-	NEW(g->contourMasks, g->numberOfContourMasks);
-
-	// PASS 3 : Draw points
+	// Draw points
 	stack.index = 0;
 	stack.stem = 0;
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass, options);
-	g->numberOfContourMasks = bc.definedContourMasks;
-	g->numberOfHintMasks = bc.definedHintMasks;
-
 	// PASS 4 : Turn deltas into absolute coordinates
 	double cx = 0;
 	double cy = 0;
-	for (shapeid_t j = 0; j < g->numberOfContours; j++) {
-		for (shapeid_t k = 0; k < g->contours[j].pointsCount; k++) {
-			cx += g->contours[j].points[k].x;
-			cy += g->contours[j].points[k].y;
+	for (shapeid_t j = 0; j < g->contours.length; j++) {
+		glyf_Contour *contour = &g->contours.data[j];
+		for (shapeid_t k = 0; k < contour->length; k++) {
+			cx += contour->data[k].x;
+			cy += contour->data[k].y;
 
-			g->contours[j].points[k].x = cx;
-			g->contours[j].points[k].y = cy;
+			contour->data[k].x = cx;
+			contour->data[k].y = cy;
 		}
-		if (g->contours[j].points[0].x == g->contours[j].points[g->contours[j].pointsCount - 1].x &&
-		    g->contours[j].points[0].y == g->contours[j].points[g->contours[j].pointsCount - 1].y) {
-			g->contours[j].pointsCount -= 1;
+		if (contour->data[0].x == contour->data[contour->length - 1].x &&
+		    contour->data[0].y == contour->data[contour->length - 1].y) {
+			caryll_vecPop(contour);
 		}
 	}
 
@@ -585,12 +494,13 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 			pos_t d = qround(head->unitsPerEm * fd->fontMatrix->d);
 			pos_t x = qround(head->unitsPerEm * fd->fontMatrix->x);
 			pos_t y = qround(head->unitsPerEm * fd->fontMatrix->y);
-			for (shapeid_t j = 0; j < g->numberOfContours; j++) {
-				for (shapeid_t k = 0; k < g->contours[j].pointsCount; k++) {
-					pos_t zx = g->contours[j].points[k].x;
-					pos_t zy = g->contours[j].points[k].y;
-					g->contours[j].points[k].x = a * zx + b * zy + x;
-					g->contours[j].points[k].y = c * zx + d * zy + y;
+			for (shapeid_t j = 0; j < g->contours.length; j++) {
+				glyf_Contour *contour = &g->contours.data[j];
+				for (shapeid_t k = 0; k < contour->length; k++) {
+					pos_t zx = contour->data[k].x;
+					pos_t zy = contour->data[k].y;
+					contour->data[k].x = a * zx + b * zy + x;
+					contour->data[k].y = c * zx + d * zy + y;
 				}
 			}
 		}

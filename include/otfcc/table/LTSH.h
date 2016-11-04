@@ -6,7 +6,7 @@
 typedef struct {
 	uint16_t version;
 	glyphid_t numGlyphs;
-	uint8_t *yPels;
+	OWNING uint8_t *yPels;
 } table_LTSH;
 
 #endif

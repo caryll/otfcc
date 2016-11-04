@@ -13,38 +13,37 @@ static int gpos_by_from_id(gpos_single_hash *a, gpos_single_hash *b) {
 bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                              const otfcc_Options *options) {
 	subtable_gpos_single *subtable = &(_subtable->gpos_single);
-	fontop_consolidateCoverage(font, subtable->coverage, options);
 	gpos_single_hash *h = NULL;
-	for (glyphid_t k = 0; k < subtable->coverage->numGlyphs; k++) {
-		if (subtable->coverage->glyphs[k].name) {
-			gpos_single_hash *s;
-			int fromid = subtable->coverage->glyphs[k].index;
-			HASH_FIND_INT(h, &fromid, s);
-			if (s) {
-				logWarning("[Consolidate] Detected glyph double-mapping about /%s.\n",
-				           subtable->coverage->glyphs[k].name);
-			} else {
-				NEW(s);
-				s->fromid = subtable->coverage->glyphs[k].index;
-				s->fromname = subtable->coverage->glyphs[k].name;
-				s->v = subtable->values[k];
-				HASH_ADD_INT(h, fromid, s);
-			}
+	for (glyphid_t k = 0; k < subtable->length; k++) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].target)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].target.name);
+			continue;
+		}
+		gpos_single_hash *s;
+		int fromid = subtable->data[k].target.index;
+		HASH_FIND_INT(h, &fromid, s);
+		if (s) {
+			logWarning("[Consolidate] Detected glyph double-mapping about /%s.\n", subtable->data[k].target.name);
+		} else {
+			NEW(s);
+			s->fromid = subtable->data[k].target.index;
+			s->fromname = sdsdup(subtable->data[k].target.name);
+			s->v = subtable->data[k].value;
+			HASH_ADD_INT(h, fromid, s);
 		}
 	}
-	HASH_SORT(h, gpos_by_from_id);
 
-	subtable->coverage->numGlyphs = HASH_COUNT(h);
-	{
-		gpos_single_hash *s, *tmp;
-		glyphid_t j = 0;
-		HASH_ITER(hh, h, s, tmp) {
-			subtable->coverage->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
-			subtable->values[j] = s->v;
-			j++;
-			HASH_DEL(h, s);
-			FREE(s);
-		}
+	HASH_SORT(h, gpos_by_from_id);
+	caryll_vecReset(subtable);
+
+	gpos_single_hash *s, *tmp;
+	HASH_ITER(hh, h, s, tmp) {
+		caryll_vecPush(subtable, ((otl_GposSingleEntry){
+		                             .target = Handle.fromConsolidated(s->fromid, s->fromname), .value = s->v,
+		                         }));
+		HASH_DEL(h, s);
+		FREE(s);
 	}
-	return (subtable->coverage->numGlyphs == 0);
+
+	return (subtable->length == 0);
 }

@@ -9,7 +9,7 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 	otl_ChainingRule *rule = &(subtable->rule);
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		fontop_consolidateCoverage(font, rule->match[j], options);
-		fontop_shrinkCoverage(rule->match[j], true);
+		Coverage.shrink(rule->match[j], true);
 	}
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
@@ -17,10 +17,10 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 		bool foundLookup = false;
 		lookup_handle *h = &(rule->apply[j].lookup);
 		if (h->name) {
-			for (tableid_t k = 0; k < table->lookupCount; k++) {
-				if (strcmp(table->lookups[k]->name, h->name) != 0) continue;
+			for (tableid_t k = 0; k < table->lookups.length; k++) {
+				if (strcmp(table->lookups.data[k]->name, h->name) != 0) continue;
 				foundLookup = true;
-				Handle.consolidateTo(h, k, table->lookups[k]->name);
+				Handle.consolidateTo(h, k, table->lookups.data[k]->name);
 			}
 			if (!foundLookup && rule->apply[j].lookup.name) {
 				logWarning("[Consolidate] Quoting an invalid lookup %s. This lookup application is ignored.",
@@ -28,8 +28,8 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 				Handle.dispose(&rule->apply[j].lookup);
 			}
 		} else if (h->state == HANDLE_STATE_INDEX) {
-			if (h->index >= table->lookupCount) h->index = 0;
-			Handle.consolidateTo(h, h->index, table->lookups[h->index]->name);
+			if (h->index >= table->lookups.length) h->index = 0;
+			Handle.consolidateTo(h, h->index, table->lookups.data[h->index]->name);
 		}
 	}
 	// If a rule is designed to have no lookup application, it may be a ignoration

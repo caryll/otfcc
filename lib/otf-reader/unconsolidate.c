@@ -1,6 +1,106 @@
 #include "unconsolidate.h"
 #include "support/util.h"
 #include "support/aglfn/aglfn.h"
+#include "support/sha1/sha1.h"
+
+typedef struct { uint8_t hash[SHA1_BLOCK_SIZE]; } GlyphHash;
+
+GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
+	caryll_Buffer *buf = bufnew();
+	bufwrite8(buf, 'H');
+	bufwrite32b(buf, g->advanceWidth);
+	bufwrite8(buf, 'V');
+	bufwrite32b(buf, g->advanceHeight);
+	bufwrite8(buf, 'v');
+	bufwrite32b(buf, g->verticalOrigin);
+	// contours
+	bufwrite8(buf, 'C');
+	bufwrite8(buf, '(');
+	for (shapeid_t j = 0; j < g->contours.length; j++) {
+		bufwrite8(buf, '(');
+		glyf_Contour *c = &g->contours.data[j];
+		for (shapeid_t k = 0; k < c->length; k++) {
+			bufwrite32b(buf, otfcc_to_fixed(c->data[k].x));
+			bufwrite32b(buf, otfcc_to_fixed(c->data[k].y));
+			bufwrite8(buf, c->data[k].onCurve ? 1 : 0);
+		}
+		bufwrite8(buf, ')');
+	}
+	bufwrite8(buf, ')');
+	// references
+	bufwrite8(buf, 'R');
+	bufwrite8(buf, '(');
+	for (shapeid_t j = 0; j < g->references.length; j++) {
+		glyf_ComponentReference *r = &g->references.data[j];
+		GlyphHash h = nameGlyphByHash(glyf->glyphs[r->glyph.index], glyf);
+		bufwrite_bytes(buf, SHA1_BLOCK_SIZE, h.hash);
+		bufwrite32b(buf, otfcc_to_fixed(r->x));
+		bufwrite32b(buf, otfcc_to_fixed(r->y));
+		bufwrite32b(buf, otfcc_to_f2dot14(r->a));
+		bufwrite32b(buf, otfcc_to_f2dot14(r->b));
+		bufwrite32b(buf, otfcc_to_f2dot14(r->c));
+		bufwrite32b(buf, otfcc_to_f2dot14(r->d));
+	}
+	bufwrite8(buf, ')');
+	// stemH, stemV
+	bufwrite8(buf, 's'), bufwrite8(buf, 'H');
+	bufwrite8(buf, '(');
+	for (shapeid_t j = 0; j < g->stemH.length; j++) {
+		bufwrite32b(buf, otfcc_to_fixed(g->stemH.data[j].position));
+		bufwrite32b(buf, otfcc_to_fixed(g->stemH.data[j].width));
+	}
+	bufwrite8(buf, ')');
+	bufwrite8(buf, 's'), bufwrite8(buf, 'V');
+	bufwrite8(buf, '(');
+	for (shapeid_t j = 0; j < g->stemV.length; j++) {
+		bufwrite32b(buf, otfcc_to_fixed(g->stemV.data[j].position));
+		bufwrite32b(buf, otfcc_to_fixed(g->stemV.data[j].width));
+	}
+	bufwrite8(buf, ')');
+	// hintmask, contourmask
+	bufwrite8(buf, 'm'), bufwrite8(buf, 'H');
+	bufwrite8(buf, '(');
+	for (shapeid_t j = 0; j < g->hintMasks.length; j++) {
+		bufwrite16b(buf, g->hintMasks.data[j].contoursBefore);
+		bufwrite16b(buf, g->hintMasks.data[j].pointsBefore);
+		for (shapeid_t k = 0; k < g->stemH.length; k++) {
+			bufwrite8(buf, g->hintMasks.data[j].maskH[k]);
+		}
+		for (shapeid_t k = 0; k < g->stemV.length; k++) {
+			bufwrite8(buf, g->hintMasks.data[j].maskV[k]);
+		}
+	}
+	bufwrite8(buf, ')');
+	bufwrite8(buf, 'm'), bufwrite8(buf, 'C');
+	bufwrite8(buf, '(');
+	for (shapeid_t j = 0; j < g->contourMasks.length; j++) {
+		bufwrite16b(buf, g->contourMasks.data[j].contoursBefore);
+		bufwrite16b(buf, g->contourMasks.data[j].pointsBefore);
+		for (shapeid_t k = 0; k < g->stemH.length; k++) {
+			bufwrite8(buf, g->contourMasks.data[j].maskH[k]);
+		}
+		for (shapeid_t k = 0; k < g->stemV.length; k++) {
+			bufwrite8(buf, g->contourMasks.data[j].maskV[k]);
+		}
+	}
+	bufwrite8(buf, ')');
+	// instructions
+	bufwrite8(buf, 'I');
+	bufwrite32b(buf, g->instructionsLength);
+	bufwrite_bytes(buf, g->instructionsLength, g->instructions);
+	// Generate SHA1
+	SHA1_CTX ctx;
+	uint8_t hash[SHA1_BLOCK_SIZE];
+	sha1_init(&ctx);
+	sha1_update(&ctx, buf->data, buflen(buf));
+	sha1_final(&ctx, hash);
+	GlyphHash h;
+	for (uint16_t j = 0; j < SHA1_BLOCK_SIZE; j++) {
+		h.hash[j] = hash[j];
+	}
+	buffree(buf);
+	return h;
+}
 
 // Unconsolidation: Remove redundent data and de-couple internal data
 // It does these things:
@@ -19,13 +119,45 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	} else {
 		prefix = sdsempty();
 	}
+
 	// pass 1: Map to existing glyph names
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
-		if (font->glyf->glyphs[j]->name) {
-			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, font->glyf->glyphs[j]->name);
+		glyf_Glyph *g = font->glyf->glyphs[j];
+		if (options->name_glyphs_by_hash) {
+			GlyphHash h = nameGlyphByHash(g, font->glyf);
+			sds gname = sdsempty();
+			for (uint16_t j = 0; j < SHA1_BLOCK_SIZE; j++) {
+				if (!(j % 4) && (j / 4)) {
+					gname = sdscatprintf(gname, "-%02X", h.hash[j]);
+				} else {
+					gname = sdscatprintf(gname, "%02X", h.hash[j]);
+				}
+			}
+			if (GlyphOrder.lookupName(glyph_order, gname)) {
+				// found duplicate glyph
+				glyphid_t n = 2;
+				bool stillIn = false;
+				do {
+					if (stillIn) n += 1;
+					sds newname = sdscatprintf(sdsempty(), "%s-%s%d", gname, prefix, n);
+					stillIn = GlyphOrder.lookupName(glyph_order, newname);
+					sdsfree(newname);
+				} while (stillIn);
+				sds newname = sdscatprintf(sdsempty(), "%s-%s%d", gname, prefix, n);
+				sds sharedName = GlyphOrder.setByGID(glyph_order, j, newname);
+				if (g->name) sdsfree(g->name);
+				g->name = sdsdup(sharedName);
+				sdsfree(gname);
+			} else {
+				sds sharedName = GlyphOrder.setByGID(glyph_order, j, gname);
+				if (g->name) sdsfree(g->name);
+				g->name = sdsdup(sharedName);
+			}
+		} else if (g->name) {
+			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, g->name);
 			sds sharedName = GlyphOrder.setByGID(glyph_order, j, gname);
-			sdsfree(font->glyf->glyphs[j]->name);
-			font->glyf->glyphs[j]->name = sharedName;
+			if (g->name) sdsfree(g->name);
+			g->name = sdsdup(sharedName);
 		}
 	}
 
@@ -41,7 +173,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	// pass 3: Map to AGLFN & Unicode
 	if (font->cmap != NULL) {
 		cmap_Entry *s;
-		foreach_hash(s, *font->cmap) if (s->glyph.index > 0) {
+		foreach_hash(s, font->cmap->unicodes) if (s->glyph.index > 0) {
 			sds name = NULL;
 			GlyphOrder.nameAField_Shared(aglfn, s->unicode, &name);
 			if (name == NULL) {
@@ -75,6 +207,7 @@ static void nameGlyphs(otfcc_Font *font, otfcc_GlyphOrder *gord) {
 		glyf_Glyph *g = font->glyf->glyphs[j];
 		sds glyphName = NULL;
 		GlyphOrder.nameAField_Shared(gord, j, &glyphName);
+		if (g->name) sdsfree(g->name);
 		g->name = sdsdup(glyphName);
 	}
 }
@@ -127,14 +260,14 @@ static void expandChain(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) 
 
 static void expandChainingLookups(otfcc_Font *font) {
 	if (font->GSUB) {
-		for (uint32_t j = 0; j < font->GSUB->lookupCount; j++) {
-			otl_Lookup *lookup = font->GSUB->lookups[j];
+		for (uint32_t j = 0; j < font->GSUB->lookups.length; j++) {
+			otl_Lookup *lookup = font->GSUB->lookups.data[j];
 			expandChain(font, lookup, font->GSUB);
 		}
 	}
 	if (font->GPOS) {
-		for (uint32_t j = 0; j < font->GPOS->lookupCount; j++) {
-			otl_Lookup *lookup = font->GPOS->lookups[j];
+		for (uint32_t j = 0; j < font->GPOS->lookups.length; j++) {
+			otl_Lookup *lookup = font->GPOS->lookups.data[j];
 			expandChain(font, lookup, font->GPOS);
 		}
 	}
@@ -149,6 +282,7 @@ static void mergeHmtx(otfcc_Font *font) {
 		}
 	}
 }
+
 static void mergeVmtx(otfcc_Font *font) {
 	// Merge vmtx table into glyf.
 	if (font->vhea && font->vmtx && font->glyf) {

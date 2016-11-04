@@ -11,7 +11,7 @@ typedef struct {
 typedef struct {
 	glyphid_t numVertOriginYMetrics;
 	pos_t defaultVerticalOrigin;
-	VORG_entry *entries;
+	OWNING VORG_entry *entries;
 } table_VORG;
 
 #endif

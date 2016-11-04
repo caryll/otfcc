@@ -12,42 +12,39 @@ static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 
 bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
-	fontop_consolidateCoverage(font, subtable->from, options);
-	for (glyphid_t j = 0; j < subtable->from->numGlyphs; j++) {
-		fontop_consolidateCoverage(font, subtable->to[j], options);
-		fontop_shrinkCoverage(subtable->to[j], false);
-	}
 	gsub_multi_hash *h = NULL;
-	for (glyphid_t k = 0; k < subtable->from->numGlyphs; k++) {
-		if (subtable->from->glyphs[k].name) {
-			gsub_multi_hash *s;
-			int fromid = subtable->from->glyphs[k].index;
-			HASH_FIND_INT(h, &fromid, s);
-			if (!s) {
-				NEW(s);
-				s->fromid = subtable->from->glyphs[k].index;
-				s->fromname = subtable->from->glyphs[k].name;
-				s->to = subtable->to[k];
-				HASH_ADD_INT(h, fromid, s);
-			} else {
-				otl_delete_Coverage(subtable->to[k]);
-			}
-		} else {
-			otl_delete_Coverage(subtable->to[k]);
+
+	for (glyphid_t k = 0; k < subtable->length; k++) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].from)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].from.name);
+			continue;
+		}
+		fontop_consolidateCoverage(font, subtable->data[k].to, options);
+		Coverage.shrink(subtable->data[k].to, false);
+
+		gsub_multi_hash *s;
+		int fromid = subtable->data[k].from.index;
+		HASH_FIND_INT(h, &fromid, s);
+		if (!s) {
+			NEW(s);
+			s->fromid = subtable->data[k].from.index;
+			s->fromname = sdsdup(subtable->data[k].from.name);
+			s->to = subtable->data[k].to;
+			subtable->data[k].to = NULL; // Transfer ownership
+			HASH_ADD_INT(h, fromid, s);
 		}
 	}
 	HASH_SORT(h, by_from_id_multi);
-	subtable->from->numGlyphs = HASH_COUNT(h);
+	caryll_vecReset(subtable);
 	{
 		gsub_multi_hash *s, *tmp;
-		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			subtable->from->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
-			subtable->to[j] = s->to;
-			j++;
+			caryll_vecPush(subtable, ((otl_GsubMultiEntry){
+			                             .from = Handle.fromConsolidated(s->fromid, s->fromname), .to = s->to,
+			                         }));
 			HASH_DEL(h, s);
 			FREE(s);
 		}
 	}
-	return (subtable->from->numGlyphs == 0);
+	return (subtable->length == 0);
 }

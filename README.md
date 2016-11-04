@@ -119,7 +119,7 @@ It was developed and optimized for Clang/LLVM, therefore it is *strongly* recomm
 On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
 
 1. Install the latest Clang/LLVM or GCC if you do not have it already.
-2. Download and install [premake5](http://premake.github.io/) for Linux and make it available in your path.
+2. Install [premake5](http://premake.github.io/) and make it available in your path.
 3. Run the following from the command line:
 
 ```bash
@@ -128,18 +128,30 @@ cd build/gmake
 make
 ```
 
+If you have [Ninja](https://ninja-build.org/) installed on your system, you can use ninja either:
+
+```bash
+premake5 ninja
+cd build/ninja
+ninja otfccdump_Release_x64 otfccbuild_Release_x64
+```
+
+Change the targets above when necessary.
+
 ### Windows
 
 On Windows, building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
 
-* GCC 5.1 included in `TDM-GCC`. Run the following from the command line:
+* GCC 5.1 included in `TDM-GCC`, or GCC 6.1.0 in MinGW-W64. Run the following from the command line:
 
   ```bash
   premake5 gmake
   cd build/gmake
   make
   ```
-* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.8](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
+  To use Ninja like that in Linux, you need to specify the `--os=linux` when using `premake5 ninja`.
+
+* [Visual C++ Building Tools (Mar 2016)](https://blogs.msdn.microsoft.com/vcblog/2016/03/31/announcing-the-official-release-of-the-visual-c-build-tools-2015/) with [Clang/LLVM 3.9](http://clang.llvm.org/). Only Release build is tested. Run the following from the Visual C++ Command Prompt:
 
   ```bat
   premake5 vs2015
@@ -149,7 +161,7 @@ On Windows, building `otfcc` is tested under the toolchains listed below. The de
 
 ### Mac OS
 
-premake5 provides ability to produce XCode projects. Run
+[premake5](http://premake.github.io/) (can be installed via `brew install premake --devel`, or be found in the `dep/bin-osx` directory) provides ability to produce XCode projects. Run
 
 ```bash
 premake5 xcode4

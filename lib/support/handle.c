@@ -7,7 +7,11 @@ static struct otfcc_Handle handle_new() {
 }
 static struct otfcc_Handle handle_copy(struct otfcc_Handle h) {
 	struct otfcc_Handle h1 = h;
-	h1.name = sdsdup(h.name);
+	if (h.name) {
+		h1.name = sdsdup(h.name);
+	} else {
+		h1.name = NULL;
+	}
 	return h1;
 }
 static struct otfcc_Handle handle_fromIndex(glyphid_t id) {
@@ -46,7 +50,6 @@ static void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name)
 }
 
 const struct otfcc_HandlePackage otfcc_pkgHandle = {
-    // export them
     .empty = handle_new,
     .copy = handle_copy,
     .fromIndex = handle_fromIndex,
@@ -54,5 +57,5 @@ const struct otfcc_HandlePackage otfcc_pkgHandle = {
     .fromConsolidated = handle_fromConsolidated,
     .dispose = handle_dispose,
     .free = handle_delete,
-    .consolidateTo = handle_consolidateTo //
+    .consolidateTo = handle_consolidateTo,
 };

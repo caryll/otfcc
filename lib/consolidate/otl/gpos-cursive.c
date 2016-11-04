@@ -13,41 +13,41 @@ static int gpos_cursive_by_from_id(gpos_cursive_hash *a, gpos_cursive_hash *b) {
 bool consolidate_gpos_cursive(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                               const otfcc_Options *options) {
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
-	fontop_consolidateCoverage(font, subtable->coverage, options);
 	gpos_cursive_hash *h = NULL;
-	for (glyphid_t k = 0; k < subtable->coverage->numGlyphs; k++) {
-		if (subtable->coverage->glyphs[k].name) {
-			gpos_cursive_hash *s;
-			int fromid = subtable->coverage->glyphs[k].index;
-			HASH_FIND_INT(h, &fromid, s);
-			if (s) {
-				logWarning("[Consolidate] Double-mapping a glyph in a "
-				           "single substitution /%s.\n",
-				           subtable->coverage->glyphs[k].name);
-			} else {
-				NEW(s);
-				s->fromid = subtable->coverage->glyphs[k].index;
-				s->fromname = subtable->coverage->glyphs[k].name;
-				s->enter = subtable->enter[k];
-				s->exit = subtable->exit[k];
-				HASH_ADD_INT(h, fromid, s);
-			}
+	for (glyphid_t k = 0; k < subtable->length; k++) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].target)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].target.name);
+			continue;
 		}
-	}
-	HASH_SORT(h, gpos_cursive_by_from_id);
 
-	subtable->coverage->numGlyphs = HASH_COUNT(h);
-	{
-		gpos_cursive_hash *s, *tmp;
-		glyphid_t j = 0;
-		HASH_ITER(hh, h, s, tmp) {
-			subtable->coverage->glyphs[j] = Handle.fromConsolidated(s->fromid, s->fromname);
-			subtable->enter[j] = s->enter;
-			subtable->exit[j] = s->exit;
-			j++;
-			HASH_DEL(h, s);
-			FREE(s);
+		gpos_cursive_hash *s;
+		int fromid = subtable->data[k].target.index;
+		HASH_FIND_INT(h, &fromid, s);
+		if (s) {
+			logWarning("[Consolidate] Double-mapping a glyph in a cursive positioning /%s.\n",
+			           subtable->data[k].target.name);
+		} else {
+			NEW(s);
+			s->fromid = subtable->data[k].target.index;
+			s->fromname = sdsdup(subtable->data[k].target.name);
+			s->enter = subtable->data[k].enter;
+			s->exit = subtable->data[k].exit;
+			HASH_ADD_INT(h, fromid, s);
 		}
 	}
-	return (subtable->coverage->numGlyphs == 0);
+
+	HASH_SORT(h, gpos_cursive_by_from_id);
+	caryll_vecReset(subtable);
+
+	gpos_cursive_hash *s, *tmp;
+	HASH_ITER(hh, h, s, tmp) {
+		caryll_vecPush(
+		    subtable, ((otl_GposCursiveEntry){
+		                  .target = Handle.fromConsolidated(s->fromid, s->fromname), .enter = s->enter, .exit = s->exit,
+		              }));
+		HASH_DEL(h, s);
+		FREE(s);
+	}
+
+	return (subtable->length == 0);
 }

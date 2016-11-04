@@ -9,6 +9,18 @@ otfcc_Font *otfcc_newFont() {
 	return font;
 }
 
+void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag) {
+	switch (tag) {
+		case 'name':
+			return otfcc_newName();
+		case 'GSUB':
+		case 'GPOS':
+			return otfcc_newOtl();
+		default:
+			return NULL;
+	}
+}
+
 void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'head':
