@@ -33,13 +33,11 @@
 	}
 #define caryll_VectorInterfaceTypeName(__TV) const struct __caryll_vectorinterface_##__TV
 #define caryll_VectorInterfaceTrait(__TV, __T)                                                                         \
-	caryll_T(__TV);                                                                                                    \
-	__TV *(*create)();                                                                                                 \
-	void (*destroy)(MOVE __TV * arr);                                                                                  \
-	void (*initN)(MOVE __TV * arr, size_t n);                                                                          \
+	caryll_RT(__TV);                                                                                                   \
+	void (*initN)(MODIFY __TV * arr, size_t n);                                                                        \
 	__TV *(*createN)(size_t n);                                                                                        \
-	void (*clear)(MOVE __TV * arr);                                                                                    \
-	void (*replace)(MODIFY __TV * dst, const __TV *src);                                                               \
+	void (*clear)(MODIFY __TV * arr);                                                                                  \
+	void (*replace)(MODIFY __TV * dst, MOVE const __TV *src);                                                          \
 	void (*push)(MODIFY __TV * arr, MOVE __T obj);                                                                     \
 	__T (*pop)(MODIFY __TV * arr);                                                                                     \
 	void (*fill)(MODIFY __TV * arr, size_t n);                                                                         \
@@ -80,7 +78,7 @@
 	}
 
 #define caryll_VectorImplFunctionsCommon(__TV, __T, __ti, __name)                                                      \
-	static __CARYLL_INLINE__ void __name##_init(__TV *arr) {                                                           \
+	static __CARYLL_INLINE__ void __name##_init(MODIFY __TV *arr) {                                                    \
 		arr->length = 0;                                                                                               \
 		arr->capacity = 0;                                                                                             \
 		arr->items = NULL;                                                                                             \
@@ -130,7 +128,7 @@
 			__name##_push(arr, x);                                                                                     \
 		}                                                                                                              \
 	}                                                                                                                  \
-	static __CARYLL_INLINE__ void __name##_initN(__TV *arr, size_t n) {                                                \
+	static __CARYLL_INLINE__ void __name##_initN(MODIFY __TV *arr, size_t n) {                                         \
 		__name##_init(arr);                                                                                            \
 		__name##_fill(arr, n);                                                                                         \
 	}                                                                                                                  \
@@ -152,7 +150,7 @@
 			}                                                                                                          \
 		}                                                                                                              \
 	}                                                                                                                  \
-	static __CARYLL_INLINE__ void __name##_replace(MODIFY __TV *dst, const __TV *src) {                                \
+	static __CARYLL_INLINE__ void __name##_replace(MODIFY __TV *dst, MOVE const __TV *src) {                           \
 		__name##_dispose(dst);                                                                                         \
 		memcpy(dst, src, sizeof(__TV));                                                                                \
 	}                                                                                                                  \
