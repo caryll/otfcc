@@ -11,10 +11,13 @@ typedef struct {
 } cmap_Entry;
 
 typedef struct { OWNING cmap_Entry *unicodes; } table_cmap;
-
-bool otfcc_encodeCmapByIndex(table_cmap *cmap, int c, uint16_t gid);
-bool otfcc_encodeCmapByName(table_cmap *cmap, int c, sds name);
-bool otfcc_unmapCmap(table_cmap *cmap, int c);
-otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c);
+extern caryll_ElementInterfaceOf(table_cmap) {
+	caryll_RT(table_cmap);
+	bool (*encodeByIndex)(table_cmap * cmap, int c, uint16_t gid);
+	bool (*encodeByName)(table_cmap * cmap, int c, MOVE sds name);
+	bool (*unmap)(table_cmap * cmap, int c);
+	otfcc_GlyphHandle *(*lookup)(table_cmap * cmap, int c);
+}
+iTable_cmap;
 
 #endif

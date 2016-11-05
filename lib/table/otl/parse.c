@@ -338,7 +338,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		{
 			lookup_hash *s, *tmp;
 			HASH_ITER(hh, lh, s, tmp) {
-				caryll_vecPush(&otl->lookups, s->lookup);
+				otl_iLookupList.push(&otl->lookups, s->lookup);
 				HASH_DEL(lh, s);
 				sdsfree(s->name);
 				FREE(s);
@@ -347,7 +347,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		{
 			feature_hash *s, *tmp;
 			HASH_ITER(hh, fh, s, tmp) {
-				if (!s->alias) { caryll_vecPush(&otl->features, s->feature); }
+				if (!s->alias) { otl_iFeatureList.push(&otl->features, s->feature); }
 				HASH_DEL(fh, s);
 				sdsfree(s->name);
 				FREE(s);
@@ -356,7 +356,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		{
 			language_hash *s, *tmp;
 			HASH_ITER(hh, sh, s, tmp) {
-				caryll_vecPush(&otl->languages, s->language);
+				otl_iLangSystemList.push(&otl->languages, s->language);
 				HASH_DEL(sh, s);
 				sdsfree(s->name);
 				FREE(s);

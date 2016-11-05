@@ -34,30 +34,30 @@ static void consolidateMarkArray(otfcc_Font *font, table_OTL *table, const otfcc
                                  otl_MarkArray *markArray, glyphclass_t classCount) {
 	mark_hash *hm = NULL;
 	for (glyphid_t k = 0; k < markArray->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &markArray->data[k].glyph)) {
-			logWarning("[Consolidate] Ignored unknown glyph name %s.", markArray->data[k].glyph.name);
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &markArray->items[k].glyph)) {
+			logWarning("[Consolidate] Ignored unknown glyph name %s.", markArray->items[k].glyph.name);
 			continue;
 		}
 		mark_hash *s = NULL;
-		int gid = markArray->data[k].glyph.index;
+		int gid = markArray->items[k].glyph.index;
 		HASH_FIND_INT(hm, &gid, s);
-		if (!s && markArray->data[k].anchor.present && markArray->data[k].markClass < classCount) {
+		if (!s && markArray->items[k].anchor.present && markArray->items[k].markClass < classCount) {
 			NEW(s);
-			s->gid = markArray->data[k].glyph.index;
-			s->name = sdsdup(markArray->data[k].glyph.name);
-			s->markClass = markArray->data[k].markClass;
-			s->anchor = markArray->data[k].anchor;
+			s->gid = markArray->items[k].glyph.index;
+			s->name = sdsdup(markArray->items[k].glyph.name);
+			s->markClass = markArray->items[k].markClass;
+			s->anchor = markArray->items[k].anchor;
 			HASH_ADD_INT(hm, gid, s);
 		} else {
 			logWarning("[Consolidate] Ignored invalid or double-mapping mark definition for /%s.",
-			           markArray->data[k].glyph.name);
+			           markArray->items[k].glyph.name);
 		}
 	}
 	HASH_SORT(hm, mark_by_gid);
-	caryll_vecReset(markArray);
+	otl_iMarkArray.clear(markArray);
 	mark_hash *s, *tmp;
 	HASH_ITER(hh, hm, s, tmp) {
-		caryll_vecPush(
+		otl_iMarkArray.push(
 		    markArray,
 		    ((otl_MarkRecord){
 		        .glyph = Handle.fromConsolidated(s->gid, s->name), .markClass = s->markClass, .anchor = s->anchor,
@@ -72,31 +72,31 @@ static void consolidateBaseArray(otfcc_Font *font, table_OTL *table, const otfcc
 	// consolidate bases
 	base_hash *hm = NULL;
 	for (glyphid_t k = 0; k < baseArray->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &baseArray->data[k].glyph)) {
-			logWarning("[Consolidate] Ignored unknown glyph name %s.", baseArray->data[k].glyph.name);
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &baseArray->items[k].glyph)) {
+			logWarning("[Consolidate] Ignored unknown glyph name %s.", baseArray->items[k].glyph.name);
 			continue;
 		}
 		base_hash *s = NULL;
-		int gid = baseArray->data[k].glyph.index;
+		int gid = baseArray->items[k].glyph.index;
 		HASH_FIND_INT(hm, &gid, s);
 		if (!s) {
 			NEW(s);
-			s->gid = baseArray->data[k].glyph.index;
-			s->name = sdsdup(baseArray->data[k].glyph.name);
-			s->anchors = baseArray->data[k].anchors;
-			baseArray->data[k].anchors = NULL; // Transfer ownership
+			s->gid = baseArray->items[k].glyph.index;
+			s->name = sdsdup(baseArray->items[k].glyph.name);
+			s->anchors = baseArray->items[k].anchors;
+			baseArray->items[k].anchors = NULL; // Transfer ownership
 			HASH_ADD_INT(hm, gid, s);
 		} else {
-			logWarning("[Consolidate] Ignored anchor double-definition for /%s.", baseArray->data[k].glyph.name);
+			logWarning("[Consolidate] Ignored anchor double-definition for /%s.", baseArray->items[k].glyph.name);
 		}
 	}
 	HASH_SORT(hm, base_by_gid);
-	caryll_vecReset(baseArray);
+	otl_iBaseArray.clear(baseArray);
 	base_hash *s, *tmp;
 	HASH_ITER(hh, hm, s, tmp) {
-		caryll_vecPush(baseArray, ((otl_BaseRecord){
-		                              .glyph = Handle.fromConsolidated(s->gid, s->name), .anchors = s->anchors,
-		                          }));
+		otl_iBaseArray.push(baseArray, ((otl_BaseRecord){
+		                                   .glyph = Handle.fromConsolidated(s->gid, s->name), .anchors = s->anchors,
+		                               }));
 		HASH_DEL(hm, s);
 		FREE(s);
 	}
@@ -106,34 +106,34 @@ static void consolidateLigArray(otfcc_Font *font, table_OTL *table, const otfcc_
                                 otl_LigatureArray *ligArray) {
 	lig_hash *hm = NULL;
 	for (glyphid_t k = 0; k < ligArray->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &ligArray->data[k].glyph)) {
-			logWarning("[Consolidate] Ignored unknown glyph name %s.", ligArray->data[k].glyph.name);
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &ligArray->items[k].glyph)) {
+			logWarning("[Consolidate] Ignored unknown glyph name %s.", ligArray->items[k].glyph.name);
 			continue;
 		}
 		lig_hash *s = NULL;
-		int gid = ligArray->data[k].glyph.index;
+		int gid = ligArray->items[k].glyph.index;
 		HASH_FIND_INT(hm, &gid, s);
 		if (!s) {
 			NEW(s);
-			s->gid = ligArray->data[k].glyph.index;
-			s->name = sdsdup(ligArray->data[k].glyph.name);
-			s->componentCount = ligArray->data[k].componentCount;
-			s->anchors = ligArray->data[k].anchors;
-			ligArray->data[k].anchors = NULL;
+			s->gid = ligArray->items[k].glyph.index;
+			s->name = sdsdup(ligArray->items[k].glyph.name);
+			s->componentCount = ligArray->items[k].componentCount;
+			s->anchors = ligArray->items[k].anchors;
+			ligArray->items[k].anchors = NULL;
 			HASH_ADD_INT(hm, gid, s);
 		} else {
-			logWarning("[Consolidate] Ignored anchor double-definition for /%s.", ligArray->data[k].glyph.name);
+			logWarning("[Consolidate] Ignored anchor double-definition for /%s.", ligArray->items[k].glyph.name);
 		}
 	}
 	HASH_SORT(hm, lig_by_gid);
-	caryll_vecReset(ligArray);
+	otl_iLigatureArray.clear(ligArray);
 	lig_hash *s, *tmp;
 	HASH_ITER(hh, hm, s, tmp) {
-		caryll_vecPush(ligArray, ((otl_LigatureBaseRecord){
-		                             .glyph = Handle.fromConsolidated(s->gid, s->name),
-		                             .componentCount = s->componentCount,
-		                             .anchors = s->anchors,
-		                         }));
+		otl_iLigatureArray.push(ligArray, ((otl_LigatureBaseRecord){
+		                                      .glyph = Handle.fromConsolidated(s->gid, s->name),
+		                                      .componentCount = s->componentCount,
+		                                      .anchors = s->anchors,
+		                                  }));
 		HASH_DEL(hm, s);
 		FREE(s);
 	}

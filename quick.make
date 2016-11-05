@@ -74,7 +74,7 @@ $(TTF_ROUNDTRIP_TARGETS) : ttfroundtriptest-% : tests/payload/%.ttf
 
 
 CFF_ROUNDTRIP_PAYLOADS = Cormorant-Medium WorkSans-Regular
-CFF_ROUNDTRIP_PAYLOADS_FJ = WorkSans-Regular
+CFF_ROUNDTRIP_PAYLOADS_FJ = WorkSans-Regular kltf-bugfont1
 CFF_ROUNDTRIP_TARGETS = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS),cffroundtriptest-$(f))
 CFF_ROUNDTRIP_TARGETS_FJ = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS_FJ),cffroundtriptest-fj-$(f))
 cffroundtriptest: $(CFF_ROUNDTRIP_TARGETS) $(CFF_ROUNDTRIP_TARGETS_FJ)

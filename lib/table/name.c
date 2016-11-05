@@ -6,17 +6,16 @@
 static void nameRecordDtor(otfcc_NameRecord *entry) {
 	DELETE(sdsfree, entry->nameString);
 }
-static const caryll_VectorEntryTypeInfo(otfcc_NameRecord) otfcc_NameRecordTI = {
-    .ctor = NULL, .dtor = nameRecordDtor, .copyctor = NULL,
-};
+caryll_DtorElementImpl(otfcc_NameRecord, nameRecordDtor, otfcc_iNameRecord);
+caryll_DefineVectorImpl(table_name, otfcc_NameRecord, otfcc_iNameRecord, iTable_name);
 
 void otfcc_deleteName(table_name *table) {
-	caryll_vecReset(table);
+	iTable_name.dispose(table);
 	FREE(table);
 }
 
 table_name *otfcc_newName() {
-	return caryll_vecNew(otfcc_NameRecord, otfcc_NameRecordTI);
+	return iTable_name.create();
 }
 
 static bool shouldDecodeAsUTF16(const otfcc_NameRecord *record) {
@@ -65,7 +64,7 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 				record.nameString = sdsnewlen(buf, len);
 				FREE(buf);
 			}
-			caryll_vecPush(name, record);
+			iTable_name.push(name, record);
 		}
 		return name;
 	TABLE_NAME_CORRUPTED:
@@ -80,7 +79,7 @@ void otfcc_dumpName(const table_name *name, json_value *root, const otfcc_Option
 	loggedStep("name") {
 		json_value *_name = json_array_new(name->length);
 		for (uint16_t j = 0; j < name->length; j++) {
-			otfcc_NameRecord *r = &(name->data[j]);
+			otfcc_NameRecord *r = &(name->items[j]);
 			json_value *record = json_object_new(5);
 			json_object_push(record, "platformID", json_integer_new(r->platformID));
 			json_object_push(record, "encodingID", json_integer_new(r->encodingID));
@@ -93,16 +92,14 @@ void otfcc_dumpName(const table_name *name, json_value *root, const otfcc_Option
 		json_object_push(root, "name", _name);
 	}
 }
-static int name_record_sort(const void *_a, const void *_b) {
-	const otfcc_NameRecord *a = (const otfcc_NameRecord *)_a;
-	const otfcc_NameRecord *b = (const otfcc_NameRecord *)_b;
+static int name_record_sort(const otfcc_NameRecord *a, const otfcc_NameRecord *b) {
 	if (a->platformID != b->platformID) return a->platformID - b->platformID;
 	if (a->encodingID != b->encodingID) return a->encodingID - b->encodingID;
 	if (a->languageID != b->languageID) return a->languageID - b->languageID;
 	return a->nameID - b->nameID;
 }
 table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options) {
-	table_name *name = caryll_vecNew(otfcc_NameRecord, otfcc_NameRecordTI);
+	table_name *name = iTable_name.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
 		loggedStep("name") {
@@ -138,10 +135,10 @@ table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options
 
 				json_value *str = json_obj_get_type(_record, "nameString", json_string);
 				record.nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
-				caryll_vecPush(name, record);
+				iTable_name.push(name, record);
 			}
 
-			qsort(name->data, name->length, sizeof(otfcc_NameRecord), name_record_sort);
+			iTable_name.sort(name, name_record_sort);
 		}
 	}
 	return name;
@@ -154,7 +151,7 @@ caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *opti
 	bufwrite16b(buf, 0); // fill later
 	caryll_Buffer *strings = bufnew();
 	for (uint16_t j = 0; j < name->length; j++) {
-		otfcc_NameRecord *record = &(name->data[j]);
+		otfcc_NameRecord *record = &(name->items[j]);
 		bufwrite16b(buf, record->platformID);
 		bufwrite16b(buf, record->encodingID);
 		bufwrite16b(buf, record->languageID);

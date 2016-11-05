@@ -5,30 +5,26 @@ static void deleteBaseArrayItem(otl_BaseRecord *entry) {
 	Handle.dispose(&entry->glyph);
 	FREE(entry->anchors);
 }
-static const caryll_VectorEntryTypeInfo(otl_BaseRecord) ba_typeinfo = {
-    .ctor = NULL, .copyctor = NULL, .dtor = deleteBaseArrayItem};
+static caryll_ElementInterface(otl_BaseRecord) ba_typeinfo = {
+    .init = NULL, .copy = NULL, .dispose = deleteBaseArrayItem};
 
-void otl_delete_gpos_markToSingle(otl_Subtable *_subtable) {
-	if (_subtable) {
-		subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
-		caryll_vecReset(&subtable->markArray);
-		caryll_vecReset(&subtable->baseArray);
-		FREE(_subtable);
-	}
+caryll_DefineVectorImpl(otl_BaseArray, otl_BaseRecord, ba_typeinfo, otl_iBaseArray);
+
+static void initMarkToSingle(subtable_gpos_markToSingle *subtable) {
+	otl_iMarkArray.init(&subtable->markArray);
+	otl_iBaseArray.init(&subtable->baseArray);
+}
+static void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
+	otl_iMarkArray.dispose(&subtable->markArray);
+	otl_iBaseArray.dispose(&subtable->baseArray);
 }
 
-subtable_gpos_markToSingle *otl_new_gpos_markToSingle() {
-	subtable_gpos_markToSingle *subtable;
-	NEW(subtable);
-	otl_initMarkArray(&subtable->markArray);
-	caryll_vecInit(&subtable->baseArray, ba_typeinfo);
-	return subtable;
-}
+caryll_CDRefElementImpl(subtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle, iSubtable_gpos_markToSingle);
 
 otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                          const otfcc_Options *options) {
 
-	subtable_gpos_markToSingle *subtable = otl_new_gpos_markToSingle();
+	subtable_gpos_markToSingle *subtable = iSubtable_gpos_markToSingle.create();
 	otl_Coverage *marks = NULL;
 	otl_Coverage *bases = NULL;
 
@@ -57,12 +53,12 @@ otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t 
 			}
 			_offset += 2;
 		}
-		caryll_vecPush(&subtable->baseArray,
-		               ((otl_BaseRecord){.glyph = Handle.copy(bases->glyphs[j]), .anchors = baseAnchors}));
+		otl_iBaseArray.push(&subtable->baseArray,
+		                    ((otl_BaseRecord){.glyph = Handle.copy(bases->glyphs[j]), .anchors = baseAnchors}));
 	}
 	return (otl_Subtable *)subtable;
 FAIL:
-	otl_delete_gpos_markToSingle((otl_Subtable *)subtable);
+	iSubtable_gpos_markToSingle.destroy(subtable);
 	return NULL;
 }
 
@@ -73,26 +69,26 @@ json_value *otl_gpos_dump_markToSingle(const otl_Subtable *st) {
 	json_value *_bases = json_object_new(subtable->baseArray.length);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
 		json_value *_mark = json_object_new(3);
-		sds markClassName = sdscatfmt(sdsempty(), "anchor%i", subtable->markArray.data[j].markClass);
+		sds markClassName = sdscatfmt(sdsempty(), "anchor%i", subtable->markArray.items[j].markClass);
 		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
-		json_object_push(_mark, "x", json_integer_new(subtable->markArray.data[j].anchor.x));
-		json_object_push(_mark, "y", json_integer_new(subtable->markArray.data[j].anchor.y));
-		json_object_push(_marks, subtable->markArray.data[j].glyph.name, preserialize(_mark));
+		json_object_push(_mark, "x", json_integer_new(subtable->markArray.items[j].anchor.x));
+		json_object_push(_mark, "y", json_integer_new(subtable->markArray.items[j].anchor.y));
+		json_object_push(_marks, subtable->markArray.items[j].glyph.name, preserialize(_mark));
 	}
 	for (glyphid_t j = 0; j < subtable->baseArray.length; j++) {
 		json_value *_base = json_object_new(subtable->classCount);
 		for (glyphclass_t k = 0; k < subtable->classCount; k++) {
-			if (subtable->baseArray.data[j].anchors[k].present) {
+			if (subtable->baseArray.items[j].anchors[k].present) {
 				json_value *_anchor = json_object_new(2);
-				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray.data[j].anchors[k].x));
-				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray.data[j].anchors[k].y));
+				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray.items[j].anchors[k].x));
+				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray.items[j].anchors[k].y));
 				sds markClassName = sdscatfmt(sdsempty(), "anchor%i", k);
 				json_object_push_length(_base, (uint32_t)sdslen(markClassName), markClassName, _anchor);
 				sdsfree(markClassName);
 			}
 		}
-		json_object_push(_bases, subtable->baseArray.data[j].glyph.name, preserialize(_base));
+		json_object_push(_bases, subtable->baseArray.items[j].glyph.name, preserialize(_base));
 	}
 	json_object_push(_subtable, "marks", _marks);
 	json_object_push(_subtable, "bases", _bases);
@@ -112,7 +108,7 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 		}
 		json_value *baseRecord = _bases->u.object.values[j].value;
 		if (!baseRecord || baseRecord->type != json_object) {
-			caryll_vecPush(&subtable->baseArray, base);
+			otl_iBaseArray.push(&subtable->baseArray, base);
 			continue;
 		}
 
@@ -129,14 +125,14 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 		NEXT:
 			sdsfree(className);
 		}
-		caryll_vecPush(&subtable->baseArray, base);
+		otl_iBaseArray.push(&subtable->baseArray, base);
 	}
 }
 otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
-	subtable_gpos_markToSingle *st = otl_new_gpos_markToSingle();
+	subtable_gpos_markToSingle *st = iSubtable_gpos_markToSingle.create();
 	otl_ClassnameHash *h = NULL;
 	otl_parseMarkArray(_marks, &st->markArray, &h, options);
 	st->classCount = HASH_COUNT(h);
@@ -156,11 +152,11 @@ caryll_Buffer *otfcc_build_gpos_markToSingle(const otl_Subtable *_subtable) {
 	const subtable_gpos_markToSingle *subtable = &(_subtable->gpos_markToSingle);
 	otl_Coverage *marks = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		Coverage.push(marks, Handle.copy(subtable->markArray.data[j].glyph));
+		Coverage.push(marks, Handle.copy(subtable->markArray.items[j].glyph));
 	}
 	otl_Coverage *bases = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->baseArray.length; j++) {
-		Coverage.push(bases, Handle.copy(subtable->baseArray.data[j].glyph));
+		Coverage.push(bases, Handle.copy(subtable->baseArray.items[j].glyph));
 	}
 
 	bk_Block *root = bk_new_Block(b16, 1,                                            // format
@@ -172,9 +168,9 @@ caryll_Buffer *otfcc_build_gpos_markToSingle(const otl_Subtable *_subtable) {
 	bk_Block *markArray = bk_new_Block(b16, subtable->markArray.length, // markCount
 	                                   bkover);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		bk_push(markArray,                                             // markArray item
-		        b16, subtable->markArray.data[j].markClass,            // markClass
-		        p16, bkFromAnchor(subtable->markArray.data[j].anchor), // Anchor
+		bk_push(markArray,                                          // markArray item
+		        b16, subtable->markArray.items[j].markClass,            // markClass
+		        p16, bkFromAnchor(subtable->markArray.items[j].anchor), // Anchor
 		        bkover);
 	}
 
@@ -182,7 +178,7 @@ caryll_Buffer *otfcc_build_gpos_markToSingle(const otl_Subtable *_subtable) {
 	                                   bkover);
 	for (glyphid_t j = 0; j < subtable->baseArray.length; j++) {
 		for (glyphclass_t k = 0; k < subtable->classCount; k++) {
-			bk_push(baseArray, p16, bkFromAnchor(subtable->baseArray.data[j].anchors[k]), bkover);
+			bk_push(baseArray, p16, bkFromAnchor(subtable->baseArray.items[j].anchors[k]), bkover);
 		}
 	}
 

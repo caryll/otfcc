@@ -9,29 +9,26 @@ static void deleteLigArrayItem(otl_LigatureBaseRecord *entry) {
 		FREE(entry->anchors);
 	}
 }
-static const caryll_VectorEntryTypeInfo(otl_LigatureBaseRecord) la_typeinfo = {
-    .ctor = NULL, .copyctor = NULL, .dtor = deleteLigArrayItem};
+static caryll_ElementInterface(otl_LigatureBaseRecord) la_typeinfo = {
+    .init = NULL, .copy = NULL, .dispose = deleteLigArrayItem};
 
-void otl_delete_gpos_markToLigature(otl_Subtable *_subtable) {
-	if (_subtable) {
-		subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
-		caryll_vecReset(&subtable->markArray);
-		caryll_vecReset(&subtable->ligArray);
-		FREE(_subtable);
-	}
+caryll_DefineVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
+
+static void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
+	otl_iMarkArray.init(&subtable->markArray);
+	otl_iLigatureArray.init(&subtable->ligArray);
+}
+static void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
+	otl_iMarkArray.dispose(&subtable->markArray);
+	otl_iLigatureArray.dispose(&subtable->ligArray);
 }
 
-subtable_gpos_markToLigature *otl_new_gpos_markToLigature() {
-	subtable_gpos_markToLigature *subtable;
-	NEW(subtable);
-	otl_initMarkArray(&subtable->markArray);
-	caryll_vecInit(&subtable->ligArray, la_typeinfo);
-	return subtable;
-}
+caryll_CDRefElementImpl(subtable_gpos_markToLigature, initMarkToLigature, disposeMarkToLigature,
+                        iSubtable_gpos_markToLigature);
 
 otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                            const otfcc_Options *options) {
-	subtable_gpos_markToLigature *subtable = otl_new_gpos_markToLigature();
+	subtable_gpos_markToLigature *subtable = iSubtable_gpos_markToLigature.create();
 	otl_Coverage *marks = NULL;
 	otl_Coverage *bases = NULL;
 	if (tableLength < offset + 12) goto FAIL;
@@ -71,7 +68,7 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 				_offset += 2;
 			}
 		}
-		caryll_vecPush(&subtable->ligArray, lig);
+		otl_iLigatureArray.push(&subtable->ligArray, lig);
 	}
 	if (marks) Coverage.dispose(marks);
 	if (bases) Coverage.dispose(bases);
@@ -79,7 +76,7 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 FAIL:
 	if (marks) Coverage.dispose(marks);
 	if (bases) Coverage.dispose(bases);
-	otl_delete_gpos_markToLigature((otl_Subtable *)subtable);
+	iSubtable_gpos_markToLigature.destroy(subtable);
 	return NULL;
 }
 
@@ -90,15 +87,15 @@ json_value *otl_gpos_dump_markToLigature(const otl_Subtable *st) {
 	json_value *_bases = json_object_new(subtable->ligArray.length);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
 		json_value *_mark = json_object_new(3);
-		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray.data[j].markClass);
+		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray.items[j].markClass);
 		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
-		json_object_push(_mark, "x", json_integer_new(subtable->markArray.data[j].anchor.x));
-		json_object_push(_mark, "y", json_integer_new(subtable->markArray.data[j].anchor.y));
-		json_object_push(_marks, subtable->markArray.data[j].glyph.name, preserialize(_mark));
+		json_object_push(_mark, "x", json_integer_new(subtable->markArray.items[j].anchor.x));
+		json_object_push(_mark, "y", json_integer_new(subtable->markArray.items[j].anchor.y));
+		json_object_push(_marks, subtable->markArray.items[j].glyph.name, preserialize(_mark));
 	}
 	for (glyphid_t j = 0; j < subtable->ligArray.length; j++) {
-		otl_LigatureBaseRecord *base = &subtable->ligArray.data[j];
+		otl_LigatureBaseRecord *base = &subtable->ligArray.items[j];
 		json_value *_base = json_array_new(base->componentCount);
 		for (glyphid_t k = 0; k < base->componentCount; k++) {
 			json_value *_bk = json_object_new(subtable->classCount);
@@ -135,7 +132,7 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 
 		json_value *baseRecord = _bases->u.object.values[j].value;
 		if (!baseRecord || baseRecord->type != json_array) {
-			caryll_vecPush(&subtable->ligArray, lig);
+			otl_iLigatureArray.push(&subtable->ligArray, lig);
 			continue;
 		}
 		lig.componentCount = baseRecord->u.array.length;
@@ -165,14 +162,14 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 				sdsfree(className);
 			}
 		}
-		caryll_vecPush(&subtable->ligArray, lig);
+		otl_iLigatureArray.push(&subtable->ligArray, lig);
 	}
 }
 otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const otfcc_Options *options) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
-	subtable_gpos_markToLigature *st = otl_new_gpos_markToLigature();
+	subtable_gpos_markToLigature *st = iSubtable_gpos_markToLigature.create();
 	otl_ClassnameHash *h = NULL;
 	otl_parseMarkArray(_marks, &st->markArray, &h, options);
 	st->classCount = HASH_COUNT(h);
@@ -192,11 +189,11 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	const subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	otl_Coverage *marks = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		Coverage.push(marks, Handle.copy(subtable->markArray.data[j].glyph));
+		Coverage.push(marks, Handle.copy(subtable->markArray.items[j].glyph));
 	}
 	otl_Coverage *bases = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->ligArray.length; j++) {
-		Coverage.push(bases, Handle.copy(subtable->ligArray.data[j].glyph));
+		Coverage.push(bases, Handle.copy(subtable->ligArray.items[j].glyph));
 	}
 
 	bk_Block *root = bk_new_Block(b16, 1,                                            // format
@@ -208,19 +205,19 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	bk_Block *markArray = bk_new_Block(b16, subtable->markArray.length, // markCount
 	                                   bkover);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		bk_push(markArray,                                             // markArray item
-		        b16, subtable->markArray.data[j].markClass,            // markClass
-		        p16, bkFromAnchor(subtable->markArray.data[j].anchor), // Anchor
+		bk_push(markArray,                                          // markArray item
+		        b16, subtable->markArray.items[j].markClass,            // markClass
+		        p16, bkFromAnchor(subtable->markArray.items[j].anchor), // Anchor
 		        bkover);
 	}
 
 	bk_Block *ligatureArray = bk_new_Block(b16, subtable->ligArray.length, bkover);
 	for (glyphid_t j = 0; j < subtable->ligArray.length; j++) {
-		bk_Block *attach = bk_new_Block(b16, subtable->ligArray.data[j].componentCount, // componentCount
+		bk_Block *attach = bk_new_Block(b16, subtable->ligArray.items[j].componentCount, // componentCount
 		                                bkover);
-		for (glyphid_t k = 0; k < subtable->ligArray.data[j].componentCount; k++) {
+		for (glyphid_t k = 0; k < subtable->ligArray.items[j].componentCount; k++) {
 			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
-				bk_push(attach, p16, bkFromAnchor(subtable->ligArray.data[j].anchors[k][m]), bkover);
+				bk_push(attach, p16, bkFromAnchor(subtable->ligArray.items[j].anchors[k][m]), bkover);
 			}
 		}
 		bk_push(ligatureArray, p16, attach, bkover);

@@ -40,7 +40,7 @@ void otfcc_dumpOtl(const table_OTL *table, json_value *root, const otfcc_Options
 			json_value *languages = json_object_new(table->languages.length);
 			for (tableid_t j = 0; j < table->languages.length; j++) {
 				json_value *_lang = json_object_new(5);
-				otl_LanguageSystem *lang = table->languages.data[j];
+				otl_LanguageSystem *lang = table->languages.items[j];
 				if (lang->requiredFeature) {
 					json_object_push(_lang, "requiredFeature", json_string_new(lang->requiredFeature->name));
 				}
@@ -56,7 +56,7 @@ void otfcc_dumpOtl(const table_OTL *table, json_value *root, const otfcc_Options
 			// dump feature list
 			json_value *features = json_object_new(table->features.length);
 			for (tableid_t j = 0; j < table->features.length; j++) {
-				otl_Feature *feature = table->features.data[j];
+				otl_Feature *feature = table->features.items[j];
 				json_value *_feature = json_array_new(feature->lookupCount);
 				for (tableid_t k = 0; k < feature->lookupCount; k++)
 					if (feature->lookups[k]) { json_array_push(_feature, json_string_new(feature->lookups[k]->name)); }
@@ -70,7 +70,7 @@ void otfcc_dumpOtl(const table_OTL *table, json_value *root, const otfcc_Options
 			json_value *lookupOrder = json_array_new(table->lookups.length);
 			for (tableid_t j = 0; j < table->lookups.length; j++) {
 				json_value *_lookup = json_object_new(5);
-				otl_Lookup *lookup = table->lookups.data[j];
+				otl_Lookup *lookup = table->lookups.items[j];
 				_dump_lookup(lookup, _lookup);
 				json_object_push(lookups, lookup->name, _lookup);
 				json_array_push(lookupOrder, json_string_new(lookup->name));

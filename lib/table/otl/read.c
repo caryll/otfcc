@@ -34,7 +34,7 @@ static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t
 	checkLength(base + 6);
 	tableid_t rid = read_16u(data + base + 2);
 	if (rid < features->length) {
-		lang->requiredFeature = features->data[rid];
+		lang->requiredFeature = features->items[rid];
 	} else {
 		lang->requiredFeature = NULL;
 	}
@@ -45,7 +45,7 @@ static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t
 	for (tableid_t j = 0; j < lang->featureCount; j++) {
 		tableid_t featureIndex = read_16u(data + base + 6 + 2 * j);
 		if (featureIndex < features->length) {
-			lang->features[j] = features->data[featureIndex];
+			lang->features[j] = features->items[featureIndex];
 		} else {
 			lang->features[j] = NULL;
 		}
@@ -81,7 +81,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 			lookup->_offset = lookupListOffset + read_16u(data + lookupListOffset + 2 + 2 * j);
 			checkLength(lookup->_offset + 6);
 			lookup->type = read_16u(data + lookup->_offset) + lookup_type_base;
-			caryll_vecPush(&table->lookups, lookup);
+			otl_iLookupList.push(&table->lookups, lookup);
 		}
 	}
 
@@ -111,7 +111,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 			for (tableid_t k = 0; k < lookupCount; k++) {
 				tableid_t lookupid = read_16u(data + featureOffset + 4 + k * 2);
 				if (lookupid < table->lookups.length) {
-					feature->lookups[k] = table->lookups.data[lookupid];
+					feature->lookups[k] = table->lookups.items[lookupid];
 					if (!feature->lookups[k]->name) {
 						if (options->glyph_name_prefix) {
 							feature->lookups[k]->name = sdscatprintf(
@@ -125,7 +125,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 					}
 				}
 			}
-			caryll_vecPush(&table->features, feature);
+			otl_iFeatureList.push(&table->features, feature);
 		}
 	}
 
@@ -153,7 +153,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 				lang->name = sdscatprintf(sdsempty(), "%c%c%c%c%cDFLT", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
 				                          (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR);
 				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, lang, &table->features);
-				caryll_vecPush(&table->languages, lang);
+				otl_iLangSystemList.push(&table->languages, lang);
 			}
 			tableid_t langSysCount = read_16u(data + scriptOffset + 2);
 			for (tableid_t k = 0; k < langSysCount; k++) {
@@ -166,20 +166,19 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 				                 (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR, (langTag >> 24) & 0xFF,
 				                 (langTag >> 16) & 0xFF, (langTag >> 8) & 0xff, langTag & 0xff);
 				parseLanguage(data, tableLength, scriptOffset + langSys, lang, &table->features);
-				caryll_vecPush(&table->languages, lang);
+				otl_iLangSystemList.push(&table->languages, lang);
 			}
 		}
 	}
 
 	// name all lookups
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
-		if (!table->lookups.data[j]->name) {
+		if (!table->lookups.items[j]->name) {
 			if (options->glyph_name_prefix) {
-				table->lookups.data[j]->name = sdscatprintf(sdsempty(), "lookup_%s_%02x_%d", options->glyph_name_prefix,
-				                                            table->lookups.data[j]->type, j);
+				table->lookups.items[j]->name = sdscatprintf(sdsempty(), "lookup_%s_%02x_%d", options->glyph_name_prefix,
+				                                         table->lookups.items[j]->type, j);
 			} else {
-				table->lookups.data[j]->name =
-				    sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups.data[j]->type, j);
+				table->lookups.items[j]->name = sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups.items[j]->type, j);
 			}
 		}
 	}
@@ -252,7 +251,7 @@ table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint
 		    options);
 		if (!otl) goto FAIL;
 		for (tableid_t j = 0; j < otl->lookups.length; j++) {
-			otfcc_readOtl_lookup(data, length, otl->lookups.data[j], options);
+			otfcc_readOtl_lookup(data, length, otl->lookups.items[j], options);
 		}
 		return otl;
 	FAIL:
