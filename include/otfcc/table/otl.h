@@ -46,18 +46,21 @@ typedef struct {
 	OWNING otfcc_GlyphHandle to;
 } otl_GsubSingleEntry;
 typedef caryll_Vector(otl_GsubSingleEntry) subtable_gsub_single;
+extern caryll_VectorInterface(subtable_gsub_single, otl_GsubSingleEntry) iSubtable_gsub_single;
 
 typedef struct {
 	OWNING otfcc_GlyphHandle from;
 	OWNING otl_Coverage *to;
 } otl_GsubMultiEntry;
 typedef caryll_Vector(otl_GsubMultiEntry) subtable_gsub_multi;
+extern caryll_VectorInterface(subtable_gsub_multi, otl_GsubMultiEntry) iSubtable_gsub_multi;
 
 typedef struct {
 	OWNING otl_Coverage *from;
 	OWNING otfcc_GlyphHandle to;
 } otl_GsubLigatureEntry;
 typedef caryll_Vector(otl_GsubLigatureEntry) subtable_gsub_ligature;
+extern caryll_VectorInterface(subtable_gsub_ligature, otl_GsubLigatureEntry) iSubtable_gsub_ligature;
 
 typedef enum {
 	otl_chaining_canonical = 0, // The canonical form of chaining contextual substitution, one rule per subtable.
@@ -91,6 +94,7 @@ typedef struct {
 		};
 	};
 } subtable_chaining;
+extern caryll_RefElementInterface(subtable_chaining) iSubtable_chaining;
 
 typedef struct {
 	tableid_t matchCount;
@@ -98,6 +102,7 @@ typedef struct {
 	OWNING otl_Coverage **match;
 	OWNING otl_Coverage *to;
 } subtable_gsub_reverse;
+extern caryll_RefElementInterface(subtable_gsub_reverse) iSubtable_gsub_reverse;
 
 // GPOS subtable formats
 typedef struct {
@@ -105,6 +110,7 @@ typedef struct {
 	OWNING otl_PositionValue value;
 } otl_GposSingleEntry;
 typedef caryll_Vector(otl_GposSingleEntry) subtable_gpos_single;
+extern caryll_VectorInterface(subtable_gpos_single, otl_GposSingleEntry) iSubtable_gpos_single;
 
 typedef struct {
 	bool present;
@@ -118,6 +124,7 @@ typedef struct {
 	OWNING otl_PositionValue **firstValues;
 	OWNING otl_PositionValue **secondValues;
 } subtable_gpos_pair;
+extern caryll_RefElementInterface(subtable_gpos_pair) iSubtable_gpos_pair;
 
 typedef struct {
 	OWNING otfcc_GlyphHandle target;
@@ -125,6 +132,7 @@ typedef struct {
 	OWNING otl_Anchor exit;
 } otl_GposCursiveEntry;
 typedef caryll_Vector(otl_GposCursiveEntry) subtable_gpos_cursive;
+extern caryll_VectorInterface(subtable_gpos_cursive, otl_GposCursiveEntry) iSubtable_gpos_cursive;
 
 typedef struct {
 	OWNING otfcc_GlyphHandle glyph;
@@ -132,18 +140,21 @@ typedef struct {
 	otl_Anchor anchor;
 } otl_MarkRecord;
 typedef caryll_Vector(otl_MarkRecord) otl_MarkArray;
+extern caryll_VectorInterface(otl_MarkArray, otl_MarkRecord) otl_iMarkArray;
 
 typedef struct {
 	OWNING otfcc_GlyphHandle glyph;
 	OWNING otl_Anchor *anchors;
 } otl_BaseRecord;
 typedef caryll_Vector(otl_BaseRecord) otl_BaseArray;
+extern caryll_VectorInterface(otl_BaseArray, otl_BaseRecord) otl_iBaseArray;
 
 typedef struct {
 	glyphclass_t classCount;
 	OWNING otl_MarkArray markArray;
 	otl_BaseArray baseArray;
 } subtable_gpos_markToSingle;
+extern caryll_RefElementInterface(subtable_gpos_markToSingle) iSubtable_gpos_markToSingle;
 
 typedef struct {
 	OWNING otfcc_GlyphHandle glyph;
@@ -151,12 +162,14 @@ typedef struct {
 	OWNING otl_Anchor **anchors;
 } otl_LigatureBaseRecord;
 typedef caryll_Vector(otl_LigatureBaseRecord) otl_LigatureArray;
+extern caryll_VectorInterface(otl_LigatureArray, otl_LigatureBaseRecord) otl_iLigatureArray;
 
 typedef struct {
 	glyphclass_t classCount;
 	OWNING otl_MarkArray markArray;
 	otl_LigatureArray ligArray;
 } subtable_gpos_markToLigature;
+extern caryll_RefElementInterface(subtable_gpos_markToLigature) iSubtable_gpos_markToLigature;
 
 typedef struct {
 	otl_LookupType type;
@@ -199,9 +212,20 @@ typedef struct {
 	OWNING otl_Feature **features;
 } otl_LanguageSystem;
 
-typedef caryll_Vector(otl_Lookup *) otl_LookupList;
-typedef caryll_Vector(otl_Feature *) otl_FeatureList;
-typedef caryll_Vector(otl_LanguageSystem *) otl_LangSystemList;
+typedef otl_Lookup *otl_LookupPtr;
+extern caryll_ElementInterface(otl_LookupPtr) otl_iLookup;
+typedef caryll_Vector(otl_LookupPtr) otl_LookupList;
+extern caryll_VectorInterface(otl_LookupList, otl_LookupPtr) otl_iLookupList;
+
+typedef otl_Feature *otl_FeaturePtr;
+extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeature;
+typedef caryll_Vector(otl_FeaturePtr) otl_FeatureList;
+extern caryll_VectorInterface(otl_FeatureList, otl_FeaturePtr) otl_iFeatureList;
+
+typedef otl_LanguageSystem *otl_LanguageSystemPtr;
+extern caryll_ElementInterface(otl_LanguageSystemPtr) otl_iLanguageSystem;
+typedef caryll_Vector(otl_LanguageSystemPtr) otl_LangSystemList;
+extern caryll_VectorInterface(otl_LangSystemList, otl_LanguageSystemPtr) otl_iLangSystemList;
 
 typedef struct {
 	otl_LookupList lookups;

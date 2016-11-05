@@ -21,7 +21,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		return stat;
 	}
 
-	glyf_Glyph *g = table->glyphs[gr->glyph.index];
+	glyf_Glyph *g = table->items[gr->glyph.index];
 	stated[j] = stat_doing;
 	pos_t xmin = 0xFFFFFFFF;
 	pos_t xmax = -0xFFFFFFFF;
@@ -33,9 +33,9 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	uint16_t nCompositeContours = 0;
 	// Stat xmin, xmax, ymin, ymax
 	for (shapeid_t c = 0; c < g->contours.length; c++) {
-		for (shapeid_t pj = 0; pj < g->contours.data[c].length; pj++) {
+		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
 			// Stat point coordinates USING the matrix transformation
-			glyf_Point *p = &(g->contours.data[c].data[pj]);
+			glyf_Point *p = &(g->contours.items[c].items[pj]);
 			pos_t x = gr->x + gr->a * p->x + gr->b * p->y;
 			pos_t y = gr->y + gr->c * p->x + gr->d * p->y;
 			if (x < xmin) xmin = x;
@@ -49,8 +49,8 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	nCompositeContours = g->contours.length;
 	for (shapeid_t r = 0; r < g->references.length; r++) {
 		glyf_ComponentReference ref;
-		glyf_ComponentReference *rr = &(g->references.data[r]);
-		ref.glyph = Handle.fromIndex(g->references.data[r].glyph.index);
+		glyf_ComponentReference *rr = &(g->references.items[r]);
+		ref.glyph = Handle.fromIndex(g->references.items[r].glyph.index);
 		// composite affine transformations
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
@@ -83,12 +83,12 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 
 void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	stat_status *stated;
-	NEW(stated, font->glyf->numberGlyphs);
+	NEW(stated, font->glyf->length);
 	pos_t xmin = 0xFFFFFFFF;
 	pos_t xmax = -0xFFFFFFFF;
 	pos_t ymin = 0xFFFFFFFF;
 	pos_t ymax = -0xFFFFFFFF;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_ComponentReference gr;
 		gr.glyph = Handle.fromIndex(j);
 		gr.x = 0;
@@ -97,7 +97,7 @@ void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 		gr.b = 0;
 		gr.c = 0;
 		gr.d = 1;
-		glyf_GlyphStat thatstat = font->glyf->glyphs[j]->stat =
+		glyf_GlyphStat thatstat = font->glyf->items[j]->stat =
 		    stat_single_glyph(font->glyf, &gr, stated, 0, j, options);
 		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
 		if (thatstat.xMax > xmax) xmax = thatstat.xMax;
@@ -119,8 +119,8 @@ void statMaxp(otfcc_Font *font) {
 	uint16_t nCompositePoints = 0;
 	uint16_t nCompositeContours = 0;
 	uint16_t instSize = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		glyf_Glyph *g = font->glyf->glyphs[j];
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		glyf_Glyph *g = font->glyf->items[j];
 		if (g->contours.length > 0) {
 			if (g->stat.nPoints > nPoints) nPoints = g->stat.nPoints;
 			if (g->stat.nContours > nContours) nContours = g->stat.nContours;
@@ -145,16 +145,16 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	table_hmtx *hmtx;
 	NEW(hmtx);
-	glyphid_t count_a = font->glyf->numberGlyphs;
+	glyphid_t count_a = font->glyf->length;
 	glyphid_t count_k = 0;
 	if (font->subtype == FONTTYPE_CFF) {
 		// pass
 	} else {
 		while (count_a > 2 &&
-		       font->glyf->glyphs[count_a - 1]->advanceWidth == font->glyf->glyphs[count_a - 2]->advanceWidth) {
+		       font->glyf->items[count_a - 1]->advanceWidth == font->glyf->items[count_a - 2]->advanceWidth) {
 			count_a--;
 		}
-		count_k = font->glyf->numberGlyphs - count_a;
+		count_k = font->glyf->length - count_a;
 	}
 	NEW(hmtx->metrics, count_a);
 	NEW(hmtx->leftSideBearing, count_k);
@@ -163,14 +163,14 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	pos_t minRSB = 0x7FFF;
 	pos_t maxExtent = -0x8000;
 	length_t maxWidth = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		length_t advanceWidth = font->glyf->glyphs[j]->advanceWidth;
-		pos_t lsb = font->glyf->glyphs[j]->stat.xMin;
-		pos_t rsb = advanceWidth - font->glyf->glyphs[j]->stat.xMax;
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		length_t advanceWidth = font->glyf->items[j]->advanceWidth;
+		pos_t lsb = font->glyf->items[j]->stat.xMin;
+		pos_t rsb = advanceWidth - font->glyf->items[j]->stat.xMax;
 
 		if (j < count_a) {
-			hmtx->metrics[j].advanceWidth = font->glyf->glyphs[j]->advanceWidth;
-			hmtx->metrics[j].lsb = font->glyf->glyphs[j]->stat.xMin;
+			hmtx->metrics[j].advanceWidth = font->glyf->items[j]->advanceWidth;
+			hmtx->metrics[j].lsb = font->glyf->items[j]->stat.xMin;
 		} else {
 			hmtx->leftSideBearing[j - count_a] = lsb;
 		}
@@ -178,7 +178,7 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 		if (advanceWidth > maxWidth) maxWidth = advanceWidth;
 		if (lsb < minLSB) minLSB = lsb;
 		if (rsb < minRSB) minRSB = rsb;
-		if (font->glyf->glyphs[j]->stat.xMax > maxExtent) maxExtent = font->glyf->glyphs[j]->stat.xMax;
+		if (font->glyf->items[j]->stat.xMax > maxExtent) maxExtent = font->glyf->items[j]->stat.xMax;
 	}
 	font->hhea->numberOfMetrics = count_a;
 	font->hhea->minLeftSideBearing = minLSB;
@@ -191,16 +191,16 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
 	table_vmtx *vmtx;
 	NEW(vmtx);
-	glyphid_t count_a = font->glyf->numberGlyphs;
+	glyphid_t count_a = font->glyf->length;
 	glyphid_t count_k = 0;
 	if (font->subtype == FONTTYPE_CFF && !options->cff_short_vmtx) {
 		// pass
 	} else {
 		while (count_a > 2 &&
-		       font->glyf->glyphs[count_a - 1]->advanceHeight == font->glyf->glyphs[count_a - 2]->advanceHeight) {
+		       font->glyf->items[count_a - 1]->advanceHeight == font->glyf->items[count_a - 2]->advanceHeight) {
 			count_a--;
 		}
-		count_k = font->glyf->numberGlyphs - count_a;
+		count_k = font->glyf->length - count_a;
 	}
 	NEW(vmtx->metrics, count_a);
 	NEW(vmtx->topSideBearing, count_k);
@@ -209,8 +209,8 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	pos_t minBSB = 0x7FFF;
 	pos_t maxExtent = -0x8000;
 	length_t maxHeight = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		glyf_Glyph *g = font->glyf->glyphs[j];
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		glyf_Glyph *g = font->glyf->items[j];
 		length_t advanceHeight = g->advanceHeight;
 		pos_t tsb = g->verticalOrigin - g->stat.yMax;
 		pos_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
@@ -421,10 +421,10 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 static void statOS_2AverageWidth(otfcc_Font *font, const otfcc_Options *options) {
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		totalWidth += font->glyf->glyphs[j]->advanceWidth;
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		totalWidth += font->glyf->items[j]->advanceWidth;
 	}
-	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->numberGlyphs;
+	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->length;
 }
 static void statOS_2(otfcc_Font *font, const otfcc_Options *options) {
 	statOS_2UnicodeRanges(font, options);
@@ -437,8 +437,8 @@ static void statCFFWidths(otfcc_Font *font) {
 	// Stat the most frequent character width
 	uint32_t *frequency;
 	NEW(frequency, MAX_STAT_METRIC);
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		uint16_t intWidth = (uint16_t)font->glyf->glyphs[j]->advanceWidth;
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		uint16_t intWidth = (uint16_t)font->glyf->items[j]->advanceWidth;
 		if (intWidth < MAX_STAT_METRIC) { frequency[intWidth] += 1; }
 	}
 	uint16_t maxfreq = 0;
@@ -452,10 +452,10 @@ static void statCFFWidths(otfcc_Font *font) {
 	// stat nominalWidthX
 	uint16_t nn = 0;
 	uint32_t nnsum = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]->advanceWidth != maxj) {
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		if (font->glyf->items[j]->advanceWidth != maxj) {
 			nn += 1;
-			nnsum += font->glyf->glyphs[j]->advanceWidth;
+			nnsum += font->glyf->items[j]->advanceWidth;
 		}
 	}
 	int16_t nominalWidthX = 0;
@@ -477,9 +477,9 @@ static void statVORG(otfcc_Font *font) {
 	if (!font->glyf || !font->CFF_ || !font->vhea || !font->vmtx) return;
 	uint32_t *frequency;
 	NEW(frequency, MAX_STAT_METRIC);
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]->verticalOrigin >= 0 && font->glyf->glyphs[j]->verticalOrigin < MAX_STAT_METRIC) {
-			frequency[(uint16_t)(font->glyf->glyphs[j]->verticalOrigin)] += 1;
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		if (font->glyf->items[j]->verticalOrigin >= 0 && font->glyf->items[j]->verticalOrigin < MAX_STAT_METRIC) {
+			frequency[(uint16_t)(font->glyf->items[j]->verticalOrigin)] += 1;
 		}
 	}
 	// stat VORG.defaultVerticalOrigin
@@ -497,17 +497,17 @@ static void statVORG(otfcc_Font *font) {
 	vorg->defaultVerticalOrigin = maxj;
 
 	glyphid_t nVertOrigs = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]->verticalOrigin != maxj) { nVertOrigs += 1; }
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		if (font->glyf->items[j]->verticalOrigin != maxj) { nVertOrigs += 1; }
 	}
 	vorg->numVertOriginYMetrics = nVertOrigs;
 	NEW(vorg->entries, nVertOrigs);
 
 	glyphid_t jj = 0;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]->verticalOrigin != maxj) {
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		if (font->glyf->items[j]->verticalOrigin != maxj) {
 			vorg->entries[jj].gid = j;
-			vorg->entries[jj].verticalOrigin = font->glyf->glyphs[j]->verticalOrigin;
+			vorg->entries[jj].verticalOrigin = font->glyf->items[j]->verticalOrigin;
 			jj += 1;
 		}
 	}
@@ -518,16 +518,16 @@ static void statVORG(otfcc_Font *font) {
 static void statLTSH(otfcc_Font *font) {
 	if (!font->glyf) return;
 	bool needLTSH = false;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++)
-		if (font->glyf->glyphs[j]->yPel > 1) { needLTSH = true; }
+	for (glyphid_t j = 0; j < font->glyf->length; j++)
+		if (font->glyf->items[j]->yPel > 1) { needLTSH = true; }
 	if (!needLTSH) return;
 
 	table_LTSH *ltsh;
 	NEW(ltsh);
-	ltsh->numGlyphs = font->glyf->numberGlyphs;
+	ltsh->numGlyphs = font->glyf->length;
 	NEW(ltsh->yPels, ltsh->numGlyphs);
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		ltsh->yPels[j] = font->glyf->glyphs[j]->yPel;
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		ltsh->yPels[j] = font->glyf->items[j]->yPel;
 	}
 	font->LTSH = ltsh;
 }
@@ -543,7 +543,7 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 		if (cff->fontBBoxTop < font->head->yMax) cff->fontBBoxTop = font->head->yMax;
 		if (cff->fontBBoxLeft < font->head->xMin) cff->fontBBoxLeft = font->head->xMin;
 		if (cff->fontBBoxRight < font->head->xMax) cff->fontBBoxRight = font->head->xMax;
-		if (font->glyf && cff->isCID) { cff->cidCount = font->glyf->numberGlyphs; }
+		if (font->glyf && cff->isCID) { cff->cidCount = font->glyf->length; }
 		if (cff->isCID) {
 			if (cff->fontMatrix) { FREE(cff->fontMatrix); }
 			for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
@@ -576,8 +576,8 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 
 		statCFFWidths(font);
 	}
-	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->numberGlyphs; }
-	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->numberGlyphs; }
+	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->length; }
+	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->length; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) {
 		statMaxp(font);
 		if (font->fpgm && font->fpgm->length > font->maxp->maxSizeOfInstructions) {

@@ -3,12 +3,10 @@
 static void deleteMarkArrayItem(otl_MarkRecord *entry) {
 	Handle.dispose(&entry->glyph);
 }
-static const caryll_VectorEntryTypeInfo(otl_MarkRecord) gss_typeinfo = {
-    .ctor = NULL, .copyctor = NULL, .dtor = deleteMarkArrayItem};
+static caryll_ElementInterface(otl_MarkRecord) gss_typeinfo = {
+    .init = NULL, .copy = NULL, .dispose = deleteMarkArrayItem};
 
-void otl_initMarkArray(otl_MarkArray *array) {
-	caryll_vecInit(array, gss_typeinfo);
-}
+caryll_DefineVectorImpl(otl_MarkArray, otl_MarkRecord, gss_typeinfo, otl_iMarkArray);
 
 void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
                        uint32_t offset) {
@@ -18,13 +16,14 @@ void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointe
 		glyphclass_t markClass = read_16u(data + offset + 2 + j * 4);
 		uint16_t delta = read_16u(data + offset + 2 + j * 4 + 2);
 		if (delta) {
-			caryll_vecPush(array, ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
-			                                        .markClass = markClass,
-			                                        .anchor = otl_read_anchor(data, tableLength, offset + delta)}));
+			otl_iMarkArray.push(array,
+			                    ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
+			                                      .markClass = markClass,
+			                                      .anchor = otl_read_anchor(data, tableLength, offset + delta)}));
 		} else {
-			caryll_vecPush(array, ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
-			                                        .markClass = markClass,
-			                                        .anchor = otl_anchor_absent()}));
+			otl_iMarkArray.push(array, ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
+			                                             .markClass = markClass,
+			                                             .anchor = otl_anchor_absent()}));
 		}
 	}
 FAIL:
@@ -44,12 +43,12 @@ void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameH
 		mark.anchor = otl_anchor_absent();
 
 		if (!anchorRecord || anchorRecord->type != json_object) {
-			caryll_vecPush(array, mark);
+			otl_iMarkArray.push(array, mark);
 			continue;
 		}
 		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
 		if (!_className) {
-			caryll_vecPush(array, mark);
+			otl_iMarkArray.push(array, mark);
 			continue;
 		}
 
@@ -68,7 +67,7 @@ void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameH
 		mark.anchor.present = true;
 		mark.anchor.x = json_obj_getnum(anchorRecord, "x");
 		mark.anchor.y = json_obj_getnum(anchorRecord, "y");
-		caryll_vecPush(array, mark);
+		otl_iMarkArray.push(array, mark);
 	}
 
 	HASH_SORT(*h, compare_classHash);
@@ -79,16 +78,16 @@ void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameH
 		jAnchorIndex++;
 	}
 	for (glyphid_t j = 0; j < array->length; j++) {
-		if (!array->data[j].anchor.present) continue;
+		if (!array->items[j].anchor.present) continue;
 		json_value *anchorRecord = _marks->u.object.values[j].value;
 		json_value *_className = json_obj_get_type(anchorRecord, "class", json_string);
 		sds className = sdsnewlen(_className->u.string.ptr, _className->u.string.length);
 		otl_ClassnameHash *s;
 		HASH_FIND_STR(*h, className, s);
 		if (s) {
-			array->data[j].markClass = s->classID;
+			array->items[j].markClass = s->classID;
 		} else {
-			array->data[j].markClass = 0;
+			array->items[j].markClass = 0;
 		}
 		sdsfree(className);
 	}

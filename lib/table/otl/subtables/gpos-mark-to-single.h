@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-subtable_gpos_markToSingle *otl_new_gpos_markToSingle();
-void otl_delete_gpos_markToSingle(otl_Subtable *_subtable);
 otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                          const otfcc_Options *options);
 json_value *otl_gpos_dump_markToSingle(const otl_Subtable *st);

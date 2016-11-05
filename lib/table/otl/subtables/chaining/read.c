@@ -122,7 +122,7 @@ static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, con
 	Coverage.dispose(firstCoverage);
 	return subtable;
 FAIL:
-	otl_delete_chaining((otl_Subtable *)subtable);
+	iSubtable_chaining.destroy(subtable);
 	return NULL;
 }
 static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, const font_file_pointer data,
@@ -166,21 +166,15 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 	if (cds && cds->ic) FREE(cds->ic);
 	return subtable;
 FAIL:
-	otl_delete_chaining((otl_Subtable *)subtable);
+	iSubtable_chaining.destroy(subtable);
 	return NULL;
 }
 otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                   const otfcc_Options *options) {
 	uint16_t format = 0;
-	otl_Subtable *_subtable;
-	NEW(_subtable);
-	subtable_chaining *subtable = &(_subtable->chaining);
-	subtable->rulesCount = 0;
+	subtable_chaining *subtable = iSubtable_chaining.create();
 	subtable->type = otl_chaining_poly;
-	subtable->bc = NULL;
-	subtable->ic = NULL;
-	subtable->fc = NULL;
-	subtable->rules = NULL;
+
 	checkLength(offset + 2);
 	format = read_16u(data + offset);
 	if (format == 1) {
@@ -192,11 +186,11 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 		subtable->rulesCount = 1;
 		NEW(subtable->rules, 1);
 		subtable->rules[0] = GeneralReadContextualRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
-		return _subtable;
+		return (otl_Subtable *)subtable;
 	}
 FAIL:
 	logWarning("Unsupported format %d.\n", format);
-	DELETE(otl_delete_chaining, _subtable);
+	iSubtable_chaining.destroy(subtable);
 	return NULL;
 }
 
@@ -290,7 +284,7 @@ static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const
 	Coverage.dispose(firstCoverage);
 	return subtable;
 FAIL:
-	otl_delete_chaining((otl_Subtable *)subtable);
+	iSubtable_chaining.destroy(subtable);
 	return NULL;
 }
 static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const font_file_pointer data,
@@ -336,21 +330,14 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 	}
 	return subtable;
 FAIL:
-	otl_delete_chaining((otl_Subtable *)subtable);
+	iSubtable_chaining.destroy(subtable);
 	return NULL;
 }
 otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                 const otfcc_Options *options) {
 	uint16_t format = 0;
-	otl_Subtable *_subtable;
-	NEW(_subtable);
-	subtable_chaining *subtable = &(_subtable->chaining);
-	subtable->rulesCount = 0;
+	subtable_chaining *subtable = iSubtable_chaining.create();
 	subtable->type = otl_chaining_poly;
-	subtable->bc = NULL;
-	subtable->ic = NULL;
-	subtable->fc = NULL;
-	subtable->rules = NULL;
 
 	checkLength(offset + 2);
 	format = read_16u(data + offset);
@@ -364,10 +351,10 @@ otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLeng
 		subtable->rulesCount = 1;
 		NEW(subtable->rules, 1);
 		subtable->rules[0] = GeneralReadChainingRule(data, tableLength, offset + 2, 0, false, format3Coverage, NULL);
-		return _subtable;
+		return (otl_Subtable *)subtable;
 	}
 FAIL:
 	logWarning("Unsupported format %d.\n", format);
-	DELETE(otl_delete_chaining, _subtable);
+	iSubtable_chaining.destroy(subtable);
 	return NULL;
 }

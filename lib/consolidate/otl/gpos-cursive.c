@@ -15,33 +15,33 @@ bool consolidate_gpos_cursive(otfcc_Font *font, table_OTL *table, otl_Subtable *
 	subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 	gpos_cursive_hash *h = NULL;
 	for (glyphid_t k = 0; k < subtable->length; k++) {
-		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->data[k].target)) {
-			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->data[k].target.name);
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->items[k].target)) {
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->items[k].target.name);
 			continue;
 		}
 
 		gpos_cursive_hash *s;
-		int fromid = subtable->data[k].target.index;
+		int fromid = subtable->items[k].target.index;
 		HASH_FIND_INT(h, &fromid, s);
 		if (s) {
 			logWarning("[Consolidate] Double-mapping a glyph in a cursive positioning /%s.\n",
-			           subtable->data[k].target.name);
+			           subtable->items[k].target.name);
 		} else {
 			NEW(s);
-			s->fromid = subtable->data[k].target.index;
-			s->fromname = sdsdup(subtable->data[k].target.name);
-			s->enter = subtable->data[k].enter;
-			s->exit = subtable->data[k].exit;
+			s->fromid = subtable->items[k].target.index;
+			s->fromname = sdsdup(subtable->items[k].target.name);
+			s->enter = subtable->items[k].enter;
+			s->exit = subtable->items[k].exit;
 			HASH_ADD_INT(h, fromid, s);
 		}
 	}
 
 	HASH_SORT(h, gpos_cursive_by_from_id);
-	caryll_vecReset(subtable);
+	iSubtable_gpos_cursive.clear(subtable);
 
 	gpos_cursive_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {
-		caryll_vecPush(
+		iSubtable_gpos_cursive.push(
 		    subtable, ((otl_GposCursiveEntry){
 		                  .target = Handle.fromConsolidated(s->fromid, s->fromname), .enter = s->enter, .exit = s->exit,
 		              }));

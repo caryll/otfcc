@@ -15,9 +15,7 @@
 
 // Consolidation
 // Replace name entries in json to ids and do some check
-static int by_stem_pos(const void *_a, const void *_b) {
-	const glyf_PostscriptStemDef *a = _a;
-	const glyf_PostscriptStemDef *b = _b;
+static int by_stem_pos(const glyf_PostscriptStemDef *a, const glyf_PostscriptStemDef *b) {
 	if (a->position == b->position) {
 		return (int)a->map - (int)b->map;
 	} else if (a->position > b->position) {
@@ -26,9 +24,7 @@ static int by_stem_pos(const void *_a, const void *_b) {
 		return -1;
 	}
 }
-static int by_mask_pointindex(const void *_a, const void *_b) {
-	const glyf_PostscriptHintMask *a = (const glyf_PostscriptHintMask *)_a;
-	const glyf_PostscriptHintMask *b = (const glyf_PostscriptHintMask *)_b;
+static int by_mask_pointindex(const glyf_PostscriptHintMask *a, const glyf_PostscriptHintMask *b) {
 	return a->contoursBefore == b->contoursBefore ? a->pointsBefore - b->pointsBefore
 	                                              : a->contoursBefore - b->contoursBefore;
 }
@@ -38,11 +34,11 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 		shapeid_t nContoursConsolidated = 0;
 		shapeid_t skip = 0;
 		for (shapeid_t j = 0; j < g->contours.length; j++) {
-			if (g->contours.data[j].length) {
-				g->contours.data[j - skip] = g->contours.data[j];
+			if (g->contours.items[j].length) {
+				g->contours.items[j - skip] = g->contours.items[j];
 				nContoursConsolidated += 1;
 			} else {
-				caryll_vecDisposeItem(&g->contours, j);
+				glyf_iContourList.disposeItem(&g->contours, j);
 				logWarning("[Consolidate] Removed empty contour #%d in glyph %s.\n", j, g->name);
 				skip += 1;
 			}
@@ -55,13 +51,13 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 		shapeid_t nReferencesConsolidated = 0;
 		shapeid_t skip = 0;
 		for (shapeid_t j = 0; j < g->references.length; j++) {
-			if (!GlyphOrder.consolidateHandle(font->glyph_order, &g->references.data[j].glyph)) {
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &g->references.items[j].glyph)) {
 				logWarning("[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
-				           g->references.data[j].glyph.name, g->name);
-				caryll_vecDisposeItem(&(g->references), j);
+				           g->references.items[j].glyph.name, g->name);
+				glyf_iReferenceList.disposeItem(&(g->references), j);
 				skip += 1;
 			} else {
-				g->references.data[j - skip] = g->references.data[j];
+				g->references.items[j - skip] = g->references.items[j];
 				nReferencesConsolidated += 1;
 			}
 		}
@@ -71,48 +67,48 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 	// Sort stems
 	if (g->stemH.length) {
 		for (shapeid_t j = 0; j < g->stemH.length; j++) {
-			g->stemH.data[j].map = j;
+			g->stemH.items[j].map = j;
 		}
-		qsort(g->stemH.data, g->stemH.length, sizeof(glyf_PostscriptStemDef), by_stem_pos);
+		glyf_iStemDefList.sort(&g->stemH, by_stem_pos);
 	}
 	if (g->stemV.length) {
 		for (shapeid_t j = 0; j < g->stemV.length; j++) {
-			g->stemV.data[j].map = j;
+			g->stemV.items[j].map = j;
 		}
-		qsort(g->stemV.data, g->stemV.length, sizeof(glyf_PostscriptStemDef), by_stem_pos);
+		glyf_iStemDefList.sort(&g->stemV, by_stem_pos);
 	}
 	shapeid_t *hmap;
 	NEW(hmap, g->stemH.length);
 	shapeid_t *vmap;
 	NEW(vmap, g->stemV.length);
 	for (shapeid_t j = 0; j < g->stemH.length; j++) {
-		hmap[g->stemH.data[j].map] = j;
+		hmap[g->stemH.items[j].map] = j;
 	}
 	for (shapeid_t j = 0; j < g->stemV.length; j++) {
-		vmap[g->stemV.data[j].map] = j;
+		vmap[g->stemV.items[j].map] = j;
 	}
 	// sort masks
 	if (g->hintMasks.length) {
-		qsort(g->hintMasks.data, g->hintMasks.length, sizeof(glyf_PostscriptHintMask), by_mask_pointindex);
+		glyf_iMaskList.sort(&g->hintMasks, by_mask_pointindex);
 		for (shapeid_t j = 0; j < g->hintMasks.length; j++) {
-			glyf_PostscriptHintMask oldmask = g->hintMasks.data[j]; // copy
+			glyf_PostscriptHintMask oldmask = g->hintMasks.items[j]; // copy
 			for (shapeid_t k = 0; k < g->stemH.length; k++) {
-				g->hintMasks.data[j].maskH[k] = oldmask.maskH[hmap[k]];
+				g->hintMasks.items[j].maskH[k] = oldmask.maskH[hmap[k]];
 			}
 			for (shapeid_t k = 0; k < g->stemV.length; k++) {
-				g->hintMasks.data[j].maskV[k] = oldmask.maskV[vmap[k]];
+				g->hintMasks.items[j].maskV[k] = oldmask.maskV[vmap[k]];
 			}
 		}
 	}
 	if (g->contourMasks.length) {
-		qsort(g->contourMasks.data, g->contourMasks.length, sizeof(glyf_PostscriptHintMask), by_mask_pointindex);
+		glyf_iMaskList.sort(&g->contourMasks, by_mask_pointindex);
 		for (shapeid_t j = 0; j < g->contourMasks.length; j++) {
-			glyf_PostscriptHintMask oldmask = g->contourMasks.data[j]; // copy
+			glyf_PostscriptHintMask oldmask = g->contourMasks.items[j]; // copy
 			for (shapeid_t k = 0; k < g->stemH.length; k++) {
-				g->contourMasks.data[j].maskH[k] = oldmask.maskH[hmap[k]];
+				g->contourMasks.items[j].maskH[k] = oldmask.maskH[hmap[k]];
 			}
 			for (shapeid_t k = 0; k < g->stemV.length; k++) {
-				g->contourMasks.data[j].maskV[k] = oldmask.maskV[vmap[k]];
+				g->contourMasks.items[j].maskV[k] = oldmask.maskV[vmap[k]];
 			}
 		}
 	}
@@ -142,11 +138,11 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 
 void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyph_order || !font->glyf) return;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		if (font->glyf->glyphs[j]) {
-			consolidateGlyph(font->glyf->glyphs[j], font, options);
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		if (font->glyf->items[j]) {
+			consolidateGlyph(font->glyf->items[j], font, options);
 		} else {
-			font->glyf->glyphs[j] = otfcc_newGlyf_glyph();
+			font->glyf->items[j] = otfcc_newGlyf_glyph();
 		}
 	}
 }
@@ -166,7 +162,8 @@ void consolidateCmap(otfcc_Font *font, const otfcc_Options *options) {
 
 typedef bool (*otl_consolidation_function)(otfcc_Font *, table_OTL *, otl_Subtable *, const otfcc_Options *);
 typedef void (*subtable_remover)(otl_Subtable *);
-#define LOOKUP_CONSOLIDATOR(llt, fn, fndel) __declare_otl_consolidation(llt, fn, fndel, font, table, lookup, options);
+#define LOOKUP_CONSOLIDATOR(llt, fn, fndel)                                                                            \
+	__declare_otl_consolidation(llt, fn, (subtable_remover)fndel, font, table, lookup, options);
 
 static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn, subtable_remover fndel,
                                         otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
@@ -196,33 +193,34 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 }
 
 void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lookup, const otfcc_Options *options) {
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, otl_delete_gsub_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, otl_delete_gsub_multi);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, otl_delete_gsub_multi);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, otl_delete_gsub_ligature);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, otl_delete_chaining);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, otl_delete_gsub_reverse);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, otl_delete_gpos_single);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, otl_delete_gpos_pair);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, otl_delete_gpos_cursive);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, otl_delete_chaining);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, otl_delete_gpos_markToSingle);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, otl_delete_gpos_markToSingle);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature, otl_delete_gpos_markToLigature);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, iSubtable_gsub_ligature.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, iSubtable_gsub_reverse.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, iSubtable_gpos_single.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, iSubtable_gpos_pair.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, iSubtable_gpos_cursive.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
+	                    iSubtable_gpos_markToLigature.destroy);
 }
 
 void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 	loggedStep("GSUB") {
 		if (font->glyph_order && font->GSUB) {
 			for (tableid_t j = 0; j < font->GSUB->lookups.length; j++) {
-				otfcc_consolidate_lookup(font, font->GSUB, font->GSUB->lookups.data[j], options);
+				otfcc_consolidate_lookup(font, font->GSUB, font->GSUB->lookups.items[j], options);
 			}
 		}
 	}
 	loggedStep("GPOS") {
 		if (font->glyph_order && font->GPOS) {
 			for (tableid_t j = 0; j < font->GPOS->lookups.length; j++) {
-				otfcc_consolidate_lookup(font, font->GPOS, font->GPOS->lookups.data[j], options);
+				otfcc_consolidate_lookup(font, font->GPOS, font->GPOS->lookups.items[j], options);
 			}
 		}
 	}
@@ -235,14 +233,14 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// In case we don’t have a glyph order, make one.
 	if (font->glyf && !font->glyph_order) {
 		otfcc_GlyphOrder *go = GlyphOrder.create();
-		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
+		for (glyphid_t j = 0; j < font->glyf->length; j++) {
 			sds name;
-			sds glyfName = font->glyf->glyphs[j]->name;
+			sds glyfName = font->glyf->items[j]->name;
 			if (glyfName) {
 				name = sdsdup(glyfName);
 			} else {
 				name = sdscatprintf(sdsempty(), "$$gid%d", j);
-				font->glyf->glyphs[j]->name = sdsdup(name);
+				font->glyf->items[j]->name = sdsdup(name);
 			}
 			if (!GlyphOrder.setByName(go, name, j)) {
 				logWarning("[Consolidate] Glyph name %s is already in use.", name);
@@ -256,8 +254,8 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 						suffix += 1;
 					} else {
 						logWarning("[Consolidate] Glyph %s is renamed into %s.", name, newname);
-						sdsfree(font->glyf->glyphs[j]->name);
-						font->glyf->glyphs[j]->name = sdsdup(newname);
+						sdsfree(font->glyf->items[j]->name);
+						font->glyf->items[j]->name = sdsdup(newname);
 					}
 				} while (!success);
 				sdsfree(name);
