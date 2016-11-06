@@ -138,13 +138,13 @@ static uint32_t featureNameToTag(const sds name) {
 static bk_Block *writeOTLFeatures(const table_OTL *table, const otfcc_Options *options) {
 	bk_Block *root = bk_new_Block(b16, table->features.length, bkover);
 	for (tableid_t j = 0; j < table->features.length; j++) {
-		bk_Block *fea = bk_new_Block(p16, NULL,                                  // FeatureParams
-		                             b16, table->features.items[j]->lookupCount, // LookupCount
+		bk_Block *fea = bk_new_Block(p16, NULL,                                     // FeatureParams
+		                             b16, table->features.items[j]->lookups.length, // LookupCount
 		                             bkover);
-		for (tableid_t k = 0; k < table->features.items[j]->lookupCount; k++) {
+		for (tableid_t k = 0; k < table->features.items[j]->lookups.length; k++) {
 			// reverse lookup
 			for (tableid_t l = 0; l < table->lookups.length; l++) {
-				if (table->features.items[j]->lookups[k] == table->lookups.items[l]) {
+				if (table->features.items[j]->lookups.items[k] == table->lookups.items[l]) {
 					bk_push(fea, b16, l, bkover);
 					break;
 				}
@@ -166,7 +166,7 @@ typedef struct {
 	UT_hash_handle hh;
 } script_stat_hash;
 
-static tableid_t featureIndex(otl_Feature *feature, const table_OTL *table) {
+static tableid_t featureIndex(const otl_Feature *feature, const table_OTL *table) {
 	for (tableid_t j = 0; j < table->features.length; j++)
 		if (table->features.items[j] == feature) { return j; }
 	return 0xFFFF;
@@ -175,10 +175,10 @@ static bk_Block *writeLanguage(otl_LanguageSystem *lang, const table_OTL *table)
 	if (!lang) return NULL;
 	bk_Block *root = bk_new_Block(p16, NULL,                                       // LookupOrder
 	                              b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
-	                              b16, lang->featureCount,                         // FeatureCount
+	                              b16, lang->features.length,                      // FeatureCount
 	                              bkover);
-	for (tableid_t k = 0; k < lang->featureCount; k++) {
-		bk_push(root, b16, featureIndex(lang->features[k], table), bkover);
+	for (tableid_t k = 0; k < lang->features.length; k++) {
+		bk_push(root, b16, featureIndex(lang->features.items[k], table), bkover);
 	}
 	return root;
 }

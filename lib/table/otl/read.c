@@ -38,22 +38,16 @@ static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t
 	} else {
 		lang->requiredFeature = NULL;
 	}
-	lang->featureCount = read_16u(data + base + 4);
-	checkLength(base + 6 + lang->featureCount * 2);
-
-	NEW(lang->features, lang->featureCount);
-	for (tableid_t j = 0; j < lang->featureCount; j++) {
+	tableid_t featureCount = read_16u(data + base + 4);
+	for (tableid_t j = 0; j < featureCount; j++) {
 		tableid_t featureIndex = read_16u(data + base + 6 + 2 * j);
 		if (featureIndex < features->length) {
-			lang->features[j] = features->items[featureIndex];
-		} else {
-			lang->features[j] = NULL;
+			otl_iFeatureRefList.push(&lang->features, features->items[featureIndex]);
 		}
 	}
 	return;
 FAIL:
-	if (lang->features) FREE(lang->features);
-	lang->featureCount = 0;
+	otl_iFeatureRefList.dispose(&lang->features);
 	lang->requiredFeature = NULL;
 	return;
 }
@@ -91,7 +85,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 		tableid_t lnk = 0;
 		for (tableid_t j = 0; j < featureCount; j++) {
 			otl_Feature *feature;
-			NEW(feature);
+			otl_iFeature.init(&feature);
 			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
 			if (options->glyph_name_prefix) {
 				feature->name = sdscatprintf(sdsempty(), "%c%c%c%c_%s_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
@@ -105,23 +99,21 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 			checkLength(featureOffset + 4);
 			tableid_t lookupCount = read_16u(data + featureOffset + 2);
 			checkLength(featureOffset + 4 + lookupCount * 2);
-			feature->lookupCount = lookupCount;
-			NEW(feature->lookups, lookupCount);
 			for (tableid_t k = 0; k < lookupCount; k++) {
 				tableid_t lookupid = read_16u(data + featureOffset + 4 + k * 2);
 				if (lookupid < table->lookups.length) {
-					feature->lookups[k] = table->lookups.items[lookupid];
-					if (!feature->lookups[k]->name) {
+					otl_Lookup *lookup = table->lookups.items[lookupid];
+					if (!lookup->name) {
 						if (options->glyph_name_prefix) {
-							feature->lookups[k]->name = sdscatprintf(
-							    sdsempty(), "lookup_%s_%c%c%c%c_%d", options->glyph_name_prefix, (tag >> 24) & 0xFF,
-							    (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, lnk++);
+							lookup->name = sdscatprintf(sdsempty(), "lookup_%s_%c%c%c%c_%d", options->glyph_name_prefix,
+							                            (tag >> 24) & 0xFF, (tag >> 16) & 0xFF, (tag >> 8) & 0xff,
+							                            tag & 0xff, lnk++);
 						} else {
-							feature->lookups[k]->name =
-							    sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-							                 (tag >> 8) & 0xff, tag & 0xff, lnk++);
+							lookup->name = sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF,
+							                            (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, lnk++);
 						}
 					}
+					otl_iLookupRefList.push(&feature->lookups, lookup);
 				}
 			}
 			otl_iFeatureList.push(&table->features, feature);
@@ -148,7 +140,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 			tableid_t defaultLangSystem = read_16u(data + scriptOffset);
 			if (defaultLangSystem) {
 				otl_LanguageSystem *lang;
-				NEW(lang);
+				otl_iLanguageSystem.init(&lang);
 				lang->name = sdscatprintf(sdsempty(), "%c%c%c%c%cDFLT", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
 				                          (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR);
 				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, lang, &table->features);
@@ -159,7 +151,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 				uint32_t langTag = read_32u(data + scriptOffset + 4 + 6 * k);
 				tableid_t langSys = read_16u(data + scriptOffset + 4 + 6 * k + 4);
 				otl_LanguageSystem *lang;
-				NEW(lang);
+				otl_iLanguageSystem.init(&lang);
 				lang->name =
 				    sdscatprintf(sdsempty(), "%c%c%c%c%c%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
 				                 (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR, (langTag >> 24) & 0xFF,

@@ -206,30 +206,37 @@ struct _otl_lookup {
 	uint16_t flags;
 	OWNING otl_SubtableList subtables;
 };
+// owning lookup list
+typedef OWNING otl_Lookup *otl_LookupPtr;
+extern caryll_ElementInterface(otl_LookupPtr) otl_iLookup;
+typedef caryll_Vector(otl_LookupPtr) otl_LookupList;
+extern caryll_VectorInterface(otl_LookupList, otl_LookupPtr) otl_iLookupList;
+// observe lookup list
+typedef OBSERVE otl_Lookup *otl_LookupRef;
+extern caryll_ElementInterface(otl_LookupRef) otl_iLookupRef;
+typedef caryll_Vector(otl_LookupRef) otl_LookupRefList;
+extern caryll_VectorInterface(otl_LookupRefList, otl_LookupRef) otl_iLookupRefList;
 
 typedef struct {
 	sds name;
-	tableid_t lookupCount;
-	OWNING otl_Lookup **lookups;
+	OWNING otl_LookupRefList lookups;
 } otl_Feature;
+// owning feature list
+typedef OWNING otl_Feature *otl_FeaturePtr;
+extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeature;
+typedef caryll_Vector(otl_FeaturePtr) otl_FeatureList;
+extern caryll_VectorInterface(otl_FeatureList, otl_FeaturePtr) otl_iFeatureList;
+// observe feature list
+typedef OBSERVE otl_Feature *otl_FeatureRef;
+extern caryll_ElementInterface(otl_FeatureRef) otl_iFeatureRef;
+typedef caryll_Vector(otl_FeatureRef) otl_FeatureRefList;
+extern caryll_VectorInterface(otl_FeatureRefList, otl_FeatureRef) otl_iFeatureRefList;
 
 typedef struct {
 	sds name;
 	OWNING otl_Feature *requiredFeature;
-	tableid_t featureCount;
-	OWNING otl_Feature **features;
+	OWNING otl_FeatureRefList features;
 } otl_LanguageSystem;
-
-typedef otl_Lookup *otl_LookupPtr;
-extern caryll_ElementInterface(otl_LookupPtr) otl_iLookup;
-typedef caryll_Vector(otl_LookupPtr) otl_LookupList;
-extern caryll_VectorInterface(otl_LookupList, otl_LookupPtr) otl_iLookupList;
-
-typedef otl_Feature *otl_FeaturePtr;
-extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeature;
-typedef caryll_Vector(otl_FeaturePtr) otl_FeatureList;
-extern caryll_VectorInterface(otl_FeatureList, otl_FeaturePtr) otl_iFeatureList;
-
 typedef otl_LanguageSystem *otl_LanguageSystemPtr;
 extern caryll_ElementInterface(otl_LanguageSystemPtr) otl_iLanguageSystem;
 typedef caryll_Vector(otl_LanguageSystemPtr) otl_LangSystemList;

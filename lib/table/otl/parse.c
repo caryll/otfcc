@@ -160,45 +160,43 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 		char *featureName = features->u.object.values[j].name;
 		json_value *_feature = features->u.object.values[j].value;
 		if (_feature->type == json_array) {
-			tableid_t nal = 0;
-			otl_Lookup **al;
-			NEW(al, _feature->u.array.length);
+			otl_LookupRefList al;
+			otl_iLookupRefList.init(&al);
 			for (tableid_t k = 0; k < _feature->u.array.length; k++) {
 				json_value *term = _feature->u.array.values[k];
 				if (term->type != json_string) continue;
 				lookup_hash *item = NULL;
 				HASH_FIND_STR(lh, term->u.string.ptr, item);
 				if (item) {
-					al[nal++] = item->lookup;
+					otl_iLookupRefList.push(&al, item->lookup);
 				} else {
 					logWarning("Lookup assignment %s for feature [%s/%s] is missing or invalid.", term->u.string.ptr,
 					           tag, featureName)
 				}
 			}
-			if (nal > 0) {
+			if (al.length > 0) {
 				feature_hash *s = NULL;
 				HASH_FIND_STR(fh, featureName, s);
 				if (!s) {
 					NEW(s);
 					s->name = sdsnew(featureName);
 					s->alias = false;
-					NEW(s->feature);
+					otl_iFeature.init(&s->feature);
 					s->feature->name = sdsdup(s->name);
-					s->feature->lookupCount = nal;
-					s->feature->lookups = al;
+					otl_iLookupRefList.replace(&s->feature->lookups, &al);
 					HASH_ADD_STR(fh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate feature for [%s/%s]. This feature will "
 					           "be ignored.\n",
 					           tag, featureName);
-					FREE(al);
+					otl_iLookupRefList.dispose(&al);
 				}
 			} else {
 				logWarning("[OTFCC-fea] There is no valid lookup "
 				           "assignments for [%s/%s]. This feature will be "
 				           "ignored.\n",
 				           tag, featureName);
-				FREE(al);
+				otl_iLookupRefList.dispose(&al);
 			}
 		} else if (_feature->type == json_string) {
 			feature_hash *s = NULL;
@@ -236,46 +234,42 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 				HASH_FIND_STR(fh, _rf->u.string.ptr, rf);
 				if (rf) { requiredFeature = rf->feature; }
 			}
-
-			tableid_t naf = 0;
-			otl_Feature **af = NULL;
+			otl_FeatureRefList af;
+			otl_iFeatureRefList.init(&af);
 			json_value *_features = json_obj_get_type(_language, "features", json_array);
 			if (_features) {
-				NEW(af, _features->u.array.length);
 				for (tableid_t k = 0; k < _features->u.array.length; k++) {
 					json_value *term = _features->u.array.values[k];
 					if (term->type == json_string) {
 						feature_hash *item = NULL;
 						HASH_FIND_STR(fh, term->u.string.ptr, item);
-						if (item) { af[naf++] = item->feature; }
+						if (item) { otl_iFeatureRefList.push(&af, item->feature); }
 					}
 				}
 			}
-			if (requiredFeature || (af && naf > 0)) {
+			if (requiredFeature || (af.length > 0)) {
 				language_hash *s = NULL;
 				HASH_FIND_STR(sh, languageName, s);
 				if (!s) {
 					NEW(s);
 					s->name = sdsnew(languageName);
-					NEW(s->language);
+					otl_iLanguageSystem.init(&s->language);
 					s->language->name = sdsdup(s->name);
 					s->language->requiredFeature = requiredFeature;
-					s->language->featureCount = naf;
-					s->language->features = af;
+					otl_iFeatureRefList.replace(&s->language->features, &af);
 					HASH_ADD_STR(sh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate language item [%s/%s]. This language "
 					           "term will be ignored.\n",
 					           tag, languageName);
-					if (af) { FREE(af); }
+					otl_iFeatureRefList.dispose(&af);
 				}
 			} else {
 				logWarning("[OTFCC-fea] There is no valid feature "
 				           "assignments for [%s/%s]. This language term "
 				           "will be ignored.\n",
 				           tag, languageName);
-
-				if (af) { FREE(af); }
+				otl_iFeatureRefList.dispose(&af);
 			}
 		}
 	}
