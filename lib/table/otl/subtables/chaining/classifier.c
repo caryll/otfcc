@@ -128,7 +128,7 @@ tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j, OUT subtable_
 	classifier_hash *hi = NULL;
 	classifier_hash *hf = NULL;
 	// initialize the class hash
-	subtable_chaining *subtable0 = &(lookup->subtables[j]->chaining);
+	subtable_chaining *subtable0 = &(lookup->subtables.items[j]->chaining);
 	int classno_b = 0;
 	int classno_i = 0;
 	int classno_f = 0;
@@ -145,8 +145,8 @@ tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j, OUT subtable_
 		}
 		if (!check) { goto FAIL; }
 	}
-	for (tableid_t k = j + 1; k < lookup->subtableCount; k++) {
-		otl_ChainingRule *rule = &lookup->subtables[k]->chaining.rule;
+	for (tableid_t k = j + 1; k < lookup->subtables.length; k++) {
+		otl_ChainingRule *rule = &lookup->subtables.items[k]->chaining.rule;
 		bool allcheck = true;
 		for (tableid_t m = 0; m < rule->matchCount; m++) {
 			int check = 0;
@@ -174,8 +174,8 @@ endcheck:
 		subtable0->rules[0] = buildRule(rule0, hb, hi, hf);
 		// write other rules
 		tableid_t kk = 1;
-		for (tableid_t k = j + 1; k < lookup->subtableCount && kk < compatibleCount + 1; k++) {
-			otl_ChainingRule *rule = &lookup->subtables[k]->chaining.rule;
+		for (tableid_t k = j + 1; k < lookup->subtables.length && kk < compatibleCount + 1; k++) {
+			otl_ChainingRule *rule = &lookup->subtables.items[k]->chaining.rule;
 			subtable0->rules[kk] = buildRule(rule, hb, hi, hf);
 			kk++;
 		}
@@ -218,9 +218,9 @@ FAIL:;
 tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
                                         MODIFY size_t *lastOffset) {
 	tableid_t subtablesWritten = 0;
-	NEW(*subtableBuffers, lookup->subtableCount);
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		subtable_chaining *st0 = &(lookup->subtables[j]->chaining);
+	NEW(*subtableBuffers, lookup->subtables.length);
+	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+		subtable_chaining *st0 = &(lookup->subtables.items[j]->chaining);
 		if (st0->type) continue;
 		subtable_chaining *st = st0;
 		// Try to classify subtables after j into j

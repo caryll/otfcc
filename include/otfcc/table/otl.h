@@ -32,6 +32,7 @@ typedef enum {
 } otl_LookupType;
 
 typedef union _otl_subtable otl_Subtable;
+typedef struct _otl_lookup otl_Lookup;
 
 typedef struct {
 	pos_t dx;
@@ -190,14 +191,21 @@ typedef union _otl_subtable {
 	subtable_extend extend;
 } otl_Subtable;
 
-typedef struct _otl_lookup {
+typedef otl_Subtable *otl_SubtablePtr;
+typedef caryll_Vector(otl_SubtablePtr) otl_SubtableList;
+extern caryll_VectorInterfaceTypeName(otl_SubtableList) {
+	caryll_VectorInterfaceTrait(otl_SubtableList, otl_SubtablePtr);
+	void (*disposeDependent)(MODIFY otl_SubtableList *, const otl_Lookup *);
+}
+otl_iSubtableList;
+
+struct _otl_lookup {
 	sds name;
 	otl_LookupType type;
 	uint32_t _offset;
 	uint16_t flags;
-	tableid_t subtableCount;
-	OWNING otl_Subtable **subtables;
-} otl_Lookup;
+	OWNING otl_SubtableList subtables;
+};
 
 typedef struct {
 	sds name;

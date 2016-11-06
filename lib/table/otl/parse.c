@@ -73,27 +73,23 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt,
 	}
 	// init this lookup
 	otl_Lookup *lookup;
-	NEW(lookup);
-	lookup->name = NULL;
+	otl_iLookup.init(&lookup);
 	lookup->type = llt;
 	lookup->flags = otfcc_parse_flags(json_obj_get(_lookup, "flags"), lookupFlagsLabels);
 	uint16_t markAttachmentType = json_obj_getint(_lookup, "markAttachmentType");
 	if (markAttachmentType) { lookup->flags |= markAttachmentType << 8; }
 	// start parse subtables
-	lookup->subtableCount = _subtables->u.array.length;
-	NEW(lookup->subtables, lookup->subtableCount);
-	tableid_t jj = 0;
+	tableid_t subtableCount = _subtables->u.array.length;
 	loggedStep("%s", lookupName) {
-		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
+		for (tableid_t j = 0; j < subtableCount; j++) {
 			json_value *_subtable = _subtables->u.array.values[j];
 			if (_subtable && _subtable->type == json_object) {
 				otl_Subtable *_st = parser(_subtable, options);
-				if (_st) { lookup->subtables[jj++] = _st; }
+				otl_iSubtableList.push(&lookup->subtables, _st);
 			}
 		}
 	}
-	lookup->subtableCount = jj;
-	if (!lookup->subtableCount) {
+	if (!lookup->subtables.length) {
 		logWarning("Lookup %s does not have any subtables.", lookupName);
 		otfcc_delete_lookup(lookup);
 		return false;

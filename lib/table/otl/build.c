@@ -3,13 +3,13 @@
 static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
                                         const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
-		NEW(*subtables, lookup->subtableCount);
-		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-			caryll_Buffer *buf = fn(lookup->subtables[j]);
+		NEW(*subtables, lookup->subtables.length);
+		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+			caryll_Buffer *buf = fn(lookup->subtables.items[j]);
 			(*subtables)[j] = buf;
 			*lastOffset += buf->size;
 		}
-		return lookup->subtableCount;
+		return lookup->subtables.length;
 	}
 	return 0;
 }
@@ -138,7 +138,7 @@ static uint32_t featureNameToTag(const sds name) {
 static bk_Block *writeOTLFeatures(const table_OTL *table, const otfcc_Options *options) {
 	bk_Block *root = bk_new_Block(b16, table->features.length, bkover);
 	for (tableid_t j = 0; j < table->features.length; j++) {
-		bk_Block *fea = bk_new_Block(p16, NULL,                                 // FeatureParams
+		bk_Block *fea = bk_new_Block(p16, NULL,                                  // FeatureParams
 		                             b16, table->features.items[j]->lookupCount, // LookupCount
 		                             bkover);
 		for (tableid_t k = 0; k < table->features.items[j]->lookupCount; k++) {
@@ -151,7 +151,7 @@ static bk_Block *writeOTLFeatures(const table_OTL *table, const otfcc_Options *o
 			}
 		}
 		bk_push(root, b32, featureNameToTag(table->features.items[j]->name), // FeatureTag
-		        p16, fea,                                                   // Feature
+		        p16, fea,                                                    // Feature
 		        bkover);
 	}
 	return root;

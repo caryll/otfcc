@@ -6,9 +6,9 @@ static void _declare_lookup_dumper(otl_LookupType llt, const char *lt, json_valu
 		json_object_push(dump, "type", json_string_new(lt));
 		json_object_push(dump, "flags", otfcc_dump_flags(lookup->flags, lookupFlagsLabels));
 		if (lookup->flags >> 8) { json_object_push(dump, "markAttachmentType", json_integer_new(lookup->flags >> 8)); }
-		json_value *subtables = json_array_new(lookup->subtableCount);
-		for (tableid_t j = 0; j < lookup->subtableCount; j++)
-			if (lookup->subtables[j]) { json_array_push(subtables, dumper(lookup->subtables[j])); }
+		json_value *subtables = json_array_new(lookup->subtables.length);
+		for (tableid_t j = 0; j < lookup->subtables.length; j++)
+			if (lookup->subtables.items[j]) { json_array_push(subtables, dumper(lookup->subtables.items[j])); }
 		json_object_push(dump, "subtables", subtables);
 	}
 }

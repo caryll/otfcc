@@ -63,13 +63,11 @@
 		arr->capacity = 0;                                                                                             \
 	}
 
-#define caryll_VectorImplDestroyDependent(__TV, __T, __ti, __name)                                                     \
-	static __CARYLL_INLINE__ void __name##_dispose(__TV *arr) {                                                        \
+#define caryll_VectorImplDestroyDependent(__TV, __T, __TX, fn, __name)                                                 \
+	static __CARYLL_INLINE__ void __name##_disposeDependent(__TV *arr, const __TX *enclosure) {                        \
 		if (!arr) return;                                                                                              \
-		if (__ti.disposeDependent) {                                                                                   \
-			for (size_t j = arr->length; j--;) {                                                                       \
-				__ti.disposeDependent(&arr->items[j], arr);                                                            \
-			}                                                                                                          \
+		for (size_t j = arr->length; j--;) {                                                                           \
+			fn(&arr->items[j], enclosure);                                                                             \
 		}                                                                                                              \
 		__caryll_free(arr->items);                                                                                     \
 		arr->items = NULL;                                                                                             \
