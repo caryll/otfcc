@@ -214,36 +214,38 @@ static void nameGlyphs(otfcc_Font *font, otfcc_GlyphOrder *gord) {
 
 static void unconsolidate_chaining(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) {
 	tableid_t totalRules = 0;
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		if (!lookup->subtables[j]) continue;
-		if (lookup->subtables[j]->chaining.type == otl_chaining_poly) {
-			totalRules += lookup->subtables[j]->chaining.rulesCount;
-		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
+	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+		if (!lookup->subtables.items[j]) continue;
+		if (lookup->subtables.items[j]->chaining.type == otl_chaining_poly) {
+			totalRules += lookup->subtables.items[j]->chaining.rulesCount;
+		} else if (lookup->subtables.items[j]->chaining.type == otl_chaining_canonical) {
 			totalRules += 1;
 		}
 	}
-	otl_Subtable **newsts;
-	NEW(newsts, totalRules);
-	tableid_t jj = 0;
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		if (!lookup->subtables[j]) continue;
-		if (lookup->subtables[j]->chaining.type == otl_chaining_poly) {
-			for (tableid_t k = 0; k < lookup->subtables[j]->chaining.rulesCount; k++) {
-				NEW(newsts[jj]);
-				newsts[jj]->chaining.type = otl_chaining_canonical;
-				newsts[jj]->chaining.rule = *(lookup->subtables[j]->chaining.rules[k]);
-				jj += 1;
+	otl_SubtableList newsts;
+	otl_iSubtableList.init(&newsts);
+	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+		if (!lookup->subtables.items[j]) continue;
+		if (lookup->subtables.items[j]->chaining.type == otl_chaining_poly) {
+			for (tableid_t k = 0; k < lookup->subtables.items[j]->chaining.rulesCount; k++) {
+				otl_Subtable *st;
+				NEW(st);
+				st->chaining.type = otl_chaining_canonical;
+				st->chaining.rule = *(lookup->subtables.items[j]->chaining.rules[k]);
+				otl_iSubtableList.push(&newsts, st);
 			}
-			FREE(lookup->subtables[j]->chaining.rules);
-			FREE(lookup->subtables[j]);
-		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
-			NEW(newsts[jj]);
-			newsts[jj]->chaining.type = otl_chaining_canonical;
-			newsts[jj]->chaining.rule = lookup->subtables[j]->chaining.rule;
-			jj += 1;
+			FREE(lookup->subtables.items[j]->chaining.rules);
+			FREE(lookup->subtables.items[j]);
+		} else if (lookup->subtables.items[j]->chaining.type == otl_chaining_canonical) {
+			otl_Subtable *st;
+			NEW(st);
+			st->chaining.type = otl_chaining_canonical;
+			st->chaining.rule = lookup->subtables.items[j]->chaining.rule;
+			otl_iSubtableList.push(&newsts, st);
+			lookup->subtables.items[j] = NULL;
 		}
 	}
-	lookup->subtableCount = totalRules;
+	otl_iSubtableList.disposeDependent(&lookup->subtables, lookup);
 	lookup->subtables = newsts;
 }
 

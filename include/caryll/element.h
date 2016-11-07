@@ -71,7 +71,7 @@
 	static __CARYLL_INLINE__ void name##_copy(MODIFY T *dst, const T *src) {                                           \
 		memcpy(dst, src, sizeof(T));                                                                                   \
 	}                                                                                                                  \
-	static __CARYLL_INLINE__ void name##_destroy(MODIFY T *x) {                                                        \
+	static __CARYLL_INLINE__ void name##_destroy(MOVE T *x) {                                                          \
 		if (!x) return;                                                                                                \
 		dtor(x);                                                                                                       \
 		__caryll_free(x);                                                                                              \

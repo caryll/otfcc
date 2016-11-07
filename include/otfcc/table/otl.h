@@ -32,6 +32,7 @@ typedef enum {
 } otl_LookupType;
 
 typedef union _otl_subtable otl_Subtable;
+typedef struct _otl_lookup otl_Lookup;
 
 typedef struct {
 	pos_t dx;
@@ -190,38 +191,52 @@ typedef union _otl_subtable {
 	subtable_extend extend;
 } otl_Subtable;
 
-typedef struct _otl_lookup {
+typedef otl_Subtable *otl_SubtablePtr;
+typedef caryll_Vector(otl_SubtablePtr) otl_SubtableList;
+extern caryll_VectorInterfaceTypeName(otl_SubtableList) {
+	caryll_VectorInterfaceTrait(otl_SubtableList, otl_SubtablePtr);
+	void (*disposeDependent)(MODIFY otl_SubtableList *, const otl_Lookup *);
+}
+otl_iSubtableList;
+
+struct _otl_lookup {
 	sds name;
 	otl_LookupType type;
 	uint32_t _offset;
 	uint16_t flags;
-	tableid_t subtableCount;
-	OWNING otl_Subtable **subtables;
-} otl_Lookup;
+	OWNING otl_SubtableList subtables;
+};
+// owning lookup list
+typedef OWNING otl_Lookup *otl_LookupPtr;
+extern caryll_ElementInterface(otl_LookupPtr) otl_iLookup;
+typedef caryll_Vector(otl_LookupPtr) otl_LookupList;
+extern caryll_VectorInterface(otl_LookupList, otl_LookupPtr) otl_iLookupList;
+// observe lookup list
+typedef OBSERVE otl_Lookup *otl_LookupRef;
+extern caryll_ElementInterface(otl_LookupRef) otl_iLookupRef;
+typedef caryll_Vector(otl_LookupRef) otl_LookupRefList;
+extern caryll_VectorInterface(otl_LookupRefList, otl_LookupRef) otl_iLookupRefList;
 
 typedef struct {
 	sds name;
-	tableid_t lookupCount;
-	OWNING otl_Lookup **lookups;
+	OWNING otl_LookupRefList lookups;
 } otl_Feature;
+// owning feature list
+typedef OWNING otl_Feature *otl_FeaturePtr;
+extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeature;
+typedef caryll_Vector(otl_FeaturePtr) otl_FeatureList;
+extern caryll_VectorInterface(otl_FeatureList, otl_FeaturePtr) otl_iFeatureList;
+// observe feature list
+typedef OBSERVE otl_Feature *otl_FeatureRef;
+extern caryll_ElementInterface(otl_FeatureRef) otl_iFeatureRef;
+typedef caryll_Vector(otl_FeatureRef) otl_FeatureRefList;
+extern caryll_VectorInterface(otl_FeatureRefList, otl_FeatureRef) otl_iFeatureRefList;
 
 typedef struct {
 	sds name;
 	OWNING otl_Feature *requiredFeature;
-	tableid_t featureCount;
-	OWNING otl_Feature **features;
+	OWNING otl_FeatureRefList features;
 } otl_LanguageSystem;
-
-typedef otl_Lookup *otl_LookupPtr;
-extern caryll_ElementInterface(otl_LookupPtr) otl_iLookup;
-typedef caryll_Vector(otl_LookupPtr) otl_LookupList;
-extern caryll_VectorInterface(otl_LookupList, otl_LookupPtr) otl_iLookupList;
-
-typedef otl_Feature *otl_FeaturePtr;
-extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeature;
-typedef caryll_Vector(otl_FeaturePtr) otl_FeatureList;
-extern caryll_VectorInterface(otl_FeatureList, otl_FeaturePtr) otl_iFeatureList;
-
 typedef otl_LanguageSystem *otl_LanguageSystemPtr;
 extern caryll_ElementInterface(otl_LanguageSystemPtr) otl_iLanguageSystem;
 typedef caryll_Vector(otl_LanguageSystemPtr) otl_LangSystemList;
