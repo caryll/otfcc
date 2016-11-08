@@ -171,7 +171,7 @@ static INLINE json_value *preserialize(MOVE json_value *x) {
 	json_serialize_ex(buf, x, opts);
 	json_builder_free(x);
 
-	json_value *xx = json_string_new_length((uint32_t)(preserialize_len - 1), buf);
+	json_value *xx = json_string_new_nocopy((uint32_t)(preserialize_len - 1), buf);
 	xx->type = json_pre_serialized;
 	return xx;
 #else

@@ -47,6 +47,8 @@ bool consolidate_gsub_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 		iSubtable_gsub_single.push(subtable,
 		                           ((otl_GsubSingleEntry){.from = Handle.fromConsolidated(s->fromid, s->fromname),
 		                                                  .to = Handle.fromConsolidated(s->toid, s->toname)}));
+		sdsfree(s->fromname);
+		sdsfree(s->toname);
 		HASH_DEL(h, s);
 		FREE(s);
 	}

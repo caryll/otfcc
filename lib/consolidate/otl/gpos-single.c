@@ -42,6 +42,7 @@ bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 		                           ((otl_GposSingleEntry){
 		                               .target = Handle.fromConsolidated(s->fromid, s->fromname), .value = s->v,
 		                           }));
+		sdsfree(s->fromname);
 		HASH_DEL(h, s);
 		FREE(s);
 	}

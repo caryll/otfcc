@@ -12,6 +12,7 @@ void otfcc_deleteGDEF(table_GDEF *gdef) {
 		}
 		FREE(gdef->ligCarets->carets);
 		Coverage.dispose(gdef->ligCarets->coverage);
+		FREE(gdef->ligCarets);
 	}
 	FREE(gdef);
 }
