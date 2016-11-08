@@ -45,6 +45,10 @@ ninja-win-x64 : mf-ninja-windows
 	@cmd /c _vcbuildNinja.bat otfccdump_Release_x64 otfccbuild_Release_x64
 ninja-win-x86 : mf-ninja-windows
 	@cmd /c _vcbuildNinja.bat otfccdump_Release_x32 otfccbuild_Release_x32
+ninja-win-debug-x64 : mf-ninja-windows
+	@cmd /c _vcbuildNinja.bat otfccdump_Debug_x64 otfccbuild_Debug_x64
+ninja-win-debug-x86 : mf-ninja-windows
+	@cmd /c _vcbuildNinja.bat otfccdump_Debug_x32 otfccbuild_Debug_x32
 
 TEST_OPCODES = abs add div drop dup eq.(mul) exch ifelse index.(roll,drop) mul neg not or.(mul) put.get roll.(drop) sqrt.(mul) sub
 TEST_OPCODES_TARGETS = $(foreach op,$(TEST_OPCODES),cffopcodetest-$(op))
