@@ -803,8 +803,6 @@ typedef struct {
 
 static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_Buffer **s, caryll_Buffer **gs,
                                  caryll_Buffer **ls) {
-	*s = bufnew();
-	*gs = bufnew();
 	if (context->glyf->length == 0) { return; }
 	context->graph->doSubroutinize = context->options->cff_doSubroutinize;
 	for (glyphid_t j = 0; j < context->glyf->length; j++) {
