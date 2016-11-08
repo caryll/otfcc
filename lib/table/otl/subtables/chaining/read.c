@@ -160,10 +160,12 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 			}
 		}
 	}
-
-	if (cds && cds->ic && cds->ic->glyphs) FREE(cds->ic->glyphs);
-	if (cds && cds->ic && cds->ic->classes) FREE(cds->ic->classes);
-	if (cds && cds->ic) FREE(cds->ic);
+	if (cds) {
+		if (cds->ic && cds->ic->glyphs) FREE(cds->ic->glyphs);
+		if (cds->ic && cds->ic->classes) FREE(cds->ic->classes);
+		if (cds->ic) FREE(cds->ic);
+		FREE(cds);
+	}
 	return subtable;
 FAIL:
 	iSubtable_chaining.destroy(subtable);

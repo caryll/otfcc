@@ -15,7 +15,7 @@ static int by_gid_clsh(classifier_hash *a, classifier_hash *b) {
 
 static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
-	classifier_hash *s;
+	classifier_hash *s = NULL;
 	if (cov->numGlyphs == 0) return 1;
 	int gid = cov->glyphs[0].index;
 	// check pass
@@ -32,7 +32,7 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 		classifier_hash *revh = NULL;
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
-			classifier_hash *rss;
+			classifier_hash *rss = NULL;
 			HASH_FIND_INT(revh, &gid, rss);
 			if (!rss) {
 				NEW(rss);
@@ -68,7 +68,7 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 		}
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
-			classifier_hash *s;
+			classifier_hash *s = NULL;
 			HASH_FIND_INT(*h, &gid, s);
 			if (!s) {
 				NEW(s);
@@ -78,7 +78,6 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 				HASH_ADD_INT(*h, gid, s);
 			}
 		}
-
 		*past += 1;
 		return 1;
 	}
@@ -113,11 +112,11 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 	}
 	return newRule;
 }
-static otl_ClassDef *toClass(classifier_hash *h) {
+static otl_ClassDef *toClass(classifier_hash **h) {
 	otl_ClassDef *cd = ClassDef.create();
 	classifier_hash *item;
-	HASH_SORT(h, by_gid_clsh);
-	foreach_hash(item, h) {
+	HASH_SORT(*h, by_gid_clsh);
+	foreach_hash(item, *h) {
 		ClassDef.push(cd, Handle.fromConsolidated(item->gid, item->gname), item->cls);
 	}
 	return cd;
@@ -181,9 +180,9 @@ endcheck:
 		}
 
 		subtable0->type = otl_chaining_classified;
-		subtable0->bc = toClass(hb);
-		subtable0->ic = toClass(hi);
-		subtable0->fc = toClass(hf);
+		subtable0->bc = toClass(&hb);
+		subtable0->ic = toClass(&hi);
+		subtable0->fc = toClass(&hf);
 		*classifiedST = subtable0;
 	}
 FAIL:;

@@ -43,6 +43,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 			                          ((otl_GsubMultiEntry){
 			                              .from = Handle.fromConsolidated(s->fromid, s->fromname), .to = s->to,
 			                          }));
+			sdsfree(s->fromname);
 			HASH_DEL(h, s);
 			FREE(s);
 		}

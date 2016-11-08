@@ -45,6 +45,7 @@ bool consolidate_gpos_cursive(otfcc_Font *font, table_OTL *table, otl_Subtable *
 		    subtable, ((otl_GposCursiveEntry){
 		                  .target = Handle.fromConsolidated(s->fromid, s->fromname), .enter = s->enter, .exit = s->exit,
 		              }));
+		sdsfree(s->fromname);
 		HASH_DEL(h, s);
 		FREE(s);
 	}

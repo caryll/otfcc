@@ -62,6 +62,7 @@ static void consolidateMarkArray(otfcc_Font *font, table_OTL *table, const otfcc
 		    ((otl_MarkRecord){
 		        .glyph = Handle.fromConsolidated(s->gid, s->name), .markClass = s->markClass, .anchor = s->anchor,
 		    }));
+		sdsfree(s->name);
 		HASH_DEL(hm, s);
 		FREE(s);
 	}
@@ -97,6 +98,7 @@ static void consolidateBaseArray(otfcc_Font *font, table_OTL *table, const otfcc
 		otl_iBaseArray.push(baseArray, ((otl_BaseRecord){
 		                                   .glyph = Handle.fromConsolidated(s->gid, s->name), .anchors = s->anchors,
 		                               }));
+		sdsfree(s->name);
 		HASH_DEL(hm, s);
 		FREE(s);
 	}
@@ -134,6 +136,7 @@ static void consolidateLigArray(otfcc_Font *font, table_OTL *table, const otfcc_
 		                                      .componentCount = s->componentCount,
 		                                      .anchors = s->anchors,
 		                                  }));
+		sdsfree(s->name);
 		HASH_DEL(hm, s);
 		FREE(s);
 	}
