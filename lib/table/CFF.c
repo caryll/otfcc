@@ -696,7 +696,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 
 	return pd;
 }
-static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, bool topLevel) {
+static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *options, bool topLevel) {
 	table_CFF *table = otfcc_newCFF();
 	if (!dump || dump->type != json_object) return table;
 	// Names
@@ -776,7 +776,7 @@ static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, boo
 	if (table->isCID && !table->cidOrdering) { table->cidOrdering = sdsnew("OTFCCAUTOCID"); }
 	return table;
 }
-table_CFF *otfcc_parseCFF(json_value *root, const otfcc_Options *options) {
+table_CFF *otfcc_parseCFF(const json_value *root, const otfcc_Options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
 	if (!dump) {
 		return NULL;

@@ -149,6 +149,7 @@ static void unlinkNode(cff_SubrGraph *g, cff_SubrNode *a) {
 		FREE(di->key);
 		FREE(di);
 	}
+	FREE(key);
 	return;
 }
 
@@ -549,15 +550,10 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 	for (uint32_t j = 0; j < maxLSubrs; j++) {
 		FREE((lsubrs + j)->data);
 	}
-	FREE(charStrings);
-	FREE(gsubrs);
+	FREE(charStrings), FREE(gsubrs), FREE(lsubrs);
 
-	*s = cff_build_Index(*is);
-	*gs = cff_build_Index(*igs);
-	*ls = cff_build_Index(*ils);
-	cff_delete_Index(is);
-	cff_delete_Index(igs);
-	cff_delete_Index(ils);
+	*s = cff_build_Index(*is), *gs = cff_build_Index(*igs), *ls = cff_build_Index(*ils);
+	cff_delete_Index(is), cff_delete_Index(igs), cff_delete_Index(ils);
 }
 
 static void deleteFullRule(cff_SubrRule *r) {

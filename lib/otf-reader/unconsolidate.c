@@ -231,7 +231,9 @@ static void unconsolidate_chaining(otfcc_Font *font, otl_Lookup *lookup, table_O
 				otl_Subtable *st;
 				NEW(st);
 				st->chaining.type = otl_chaining_canonical;
+				// transfer ownership of rule
 				st->chaining.rule = *(lookup->subtables.items[j]->chaining.rules[k]);
+				FREE(lookup->subtables.items[j]->chaining.rules[k]);
 				otl_iSubtableList.push(&newsts, st);
 			}
 			FREE(lookup->subtables.items[j]->chaining.rules);

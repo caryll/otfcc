@@ -9,7 +9,7 @@ void otfcc_deleteGlyf(table_glyf *table);
 table_glyf *otfcc_readGlyf(const otfcc_Packet packet, const otfcc_Options *options, table_head *head, table_maxp *maxp);
 void otfcc_dumpGlyf(const table_glyf *table, json_value *root, const otfcc_Options *options, bool hasVerticalMetrics,
                     bool exportFDSelect);
-table_glyf *otfcc_parseGlyf(json_value *root, otfcc_GlyphOrder *glyph_order, const otfcc_Options *options);
+table_glyf *otfcc_parseGlyf(const json_value *root, otfcc_GlyphOrder *glyph_order, const otfcc_Options *options);
 
 typedef struct {
 	caryll_Buffer *glyf;

@@ -42,6 +42,7 @@ void consolidate_GDEF(otfcc_Font *font, table_GDEF *gdef, const otfcc_Options *o
 			gdef->ligCarets->coverage->glyphs[j] = Handle.fromConsolidated(s->gid, s->name);
 			gdef->ligCarets->carets[j] = s->cr;
 			j++;
+			sdsfree(s->name);
 			HASH_DEL(h, s);
 			FREE(s);
 		}

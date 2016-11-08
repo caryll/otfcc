@@ -149,7 +149,11 @@ void bufwrite_buf(caryll_Buffer *buf, caryll_Buffer *that) {
 	buf->cursor += len;
 }
 void bufwrite_bufdel(caryll_Buffer *buf, caryll_Buffer *that) {
-	if (!that || !that->data) return;
+	if (!that) return;
+	if (!that->data) {
+		buffree(that);
+		return;
+	}
 	size_t len = buflen(that);
 	bufbeforewrite(buf, len);
 	memcpy(buf->data + buf->cursor, that->data, len);

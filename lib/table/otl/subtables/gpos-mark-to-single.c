@@ -56,6 +56,8 @@ otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t 
 		otl_iBaseArray.push(&subtable->baseArray,
 		                    ((otl_BaseRecord){.glyph = Handle.copy(bases->glyphs[j]), .anchors = baseAnchors}));
 	}
+	if (marks) Coverage.dispose(marks);
+	if (bases) Coverage.dispose(bases);
 	return (otl_Subtable *)subtable;
 FAIL:
 	iSubtable_gpos_markToSingle.destroy(subtable);
@@ -168,7 +170,7 @@ caryll_Buffer *otfcc_build_gpos_markToSingle(const otl_Subtable *_subtable) {
 	bk_Block *markArray = bk_new_Block(b16, subtable->markArray.length, // markCount
 	                                   bkover);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		bk_push(markArray,                                          // markArray item
+		bk_push(markArray,                                              // markArray item
 		        b16, subtable->markArray.items[j].markClass,            // markClass
 		        p16, bkFromAnchor(subtable->markArray.items[j].anchor), // Anchor
 		        bkover);
