@@ -9,6 +9,13 @@ subroutines.
 
 static void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);
 
+#ifdef DEBUG
+static int nodesCreated = 0;
+static int nodesRemoved = 0;
+static int rulesCreated = 0;
+static int rulesRemoved = 0;
+#endif
+
 static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 	size_t l1;
 	if (n->rule) {
@@ -74,6 +81,9 @@ static void clean_Node(cff_SubrNode *x) {
 static void delete_Node(cff_SubrNode *x) {
 	if (!x) return;
 	clean_Node(x);
+#ifdef DEBUG
+	nodesRemoved += 1;
+#endif
 	FREE(x);
 }
 
@@ -86,6 +96,9 @@ static cff_SubrNode *cff_new_Node() {
 	n->hard = false;
 	n->prev = NULL;
 	n->next = NULL;
+#ifdef DEBUG
+	nodesCreated += 1;
+#endif
 	return n;
 }
 
@@ -99,6 +112,10 @@ static cff_SubrRule *cff_new_Rule() {
 	r->guard->terminal = 0;
 	r->guard->guard = true;
 	r->guard->rule = r;
+	r->next = NULL;
+#ifdef DEBUG
+	rulesCreated += 1;
+#endif
 	return r;
 }
 
@@ -106,6 +123,7 @@ cff_SubrGraph *cff_new_Graph() {
 	cff_SubrGraph *g;
 	NEW(g);
 	g->root = cff_new_Rule();
+	g->last = g->root;
 	return g;
 }
 
@@ -221,8 +239,9 @@ static void removeNodeFromGraph(cff_SubrGraph *g, cff_SubrNode *a) {
 static void expandCall(cff_SubrGraph *g, cff_SubrNode *a) {
 	cff_SubrNode *aprev = a->prev;
 	cff_SubrNode *anext = a->next;
-	cff_SubrNode *r1 = a->rule->guard->next;
-	cff_SubrNode *r2 = a->rule->guard->prev;
+	cff_SubrRule *r = a->rule;
+	cff_SubrNode *r1 = r->guard->next;
+	cff_SubrNode *r2 = r->guard->prev;
 
 	// We should move out [a, a'] from g's diagramIndex
 	unlinkNode(g, a);
@@ -230,6 +249,11 @@ static void expandCall(cff_SubrGraph *g, cff_SubrNode *a) {
 	joinNodes(g, aprev, r1);
 	joinNodes(g, r2, anext);
 	addDoublet(g, r2);
+	// make this rule a stub.
+	r->guard->prev = r->guard->next = r->guard;
+	r->refcount -= 1;
+	// remove call node
+	delete_Node(a);
 }
 
 static void substituteDoubletWithRule(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrRule *r) {
@@ -265,10 +289,11 @@ static void processMatchDoublet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode 
 		rule = m->prev->rule;
 		substituteDoubletWithRule(g, n, rule);
 	} else {
-		// Create a new rule
 		rule = cff_new_Rule();
 		rule->uniqueIndex = g->totalRules;
 		g->totalRules += 1;
+		g->last->next = rule;
+		g->last = rule;
 		xInsertNodeAfter(g, lastNodeOf(rule), copyNode(m));
 		xInsertNodeAfter(g, lastNodeOf(rule), copyNode(m->next));
 		substituteDoubletWithRule(g, m, rule);
@@ -294,6 +319,8 @@ static void processMatchSinglet(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode 
 		rule = cff_new_Rule();
 		rule->uniqueIndex = g->totalRules;
 		g->totalRules += 1;
+		g->last->next = rule;
+		g->last = rule;
 		xInsertNodeAfter(g, lastNodeOf(rule), copyNode(m));
 		substituteSingletWithRule(g, m, rule);
 		substituteSingletWithRule(g, n, rule);
@@ -557,23 +584,39 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 }
 
 static void deleteFullRule(cff_SubrRule *r) {
-	cff_SubrNode *next;
-	for (cff_SubrNode *e = r->guard->next; e != r->guard;) {
-		next = e->next;
-		if (e->rule) {
-			e->rule->refcount -= 1;
-			if (e->rule->refcount < 1) deleteFullRule(e->rule);
+	if (r->guard) {
+		for (cff_SubrNode *e = r->guard->next; e != r->guard;) {
+			cff_SubrNode *next = e->next;
+			if (e->terminal) buffree(e->terminal);
+			FREE(e);
+#ifdef DEBUG
+			nodesRemoved += 1;
+#endif
+			e = next;
 		}
-		if (e->terminal) buffree(e->terminal);
-		FREE(e);
-		e = next;
+		{
+			FREE(r->guard);
+#ifdef DEBUG
+			nodesRemoved += 1;
+#endif
+		}
 	}
-	FREE(r->guard);
+
 	FREE(r);
+#ifdef DEBUG
+	rulesRemoved += 1;
+#endif
 }
 
 void cff_delete_Graph(cff_SubrGraph *g) {
-	deleteFullRule(g->root);
+	{
+		cff_SubrRule *r = g->root;
+		while (r) {
+			cff_SubrRule *next = r->next;
+			deleteFullRule(r);
+			r = next;
+		}
+	}
 	cff_SubrDiagramIndex *s, *tmp;
 	HASH_ITER(hh, g->diagramIndex, s, tmp) {
 		HASH_DEL(g->diagramIndex, s);
@@ -581,4 +624,8 @@ void cff_delete_Graph(cff_SubrGraph *g) {
 		FREE(s);
 	}
 	FREE(g);
+#ifdef DEBUG
+	fprintf(stderr, "ALLOC: %d >< %d nodes\n", nodesCreated, nodesRemoved);
+	fprintf(stderr, "ALLOC: %d >< %d rules\n", rulesCreated, rulesRemoved);
+#endif
 }

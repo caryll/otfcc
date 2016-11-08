@@ -8,10 +8,10 @@ typedef struct __cff_SubrRule cff_SubrRule;
 typedef struct __cff_SubrNode cff_SubrNode;
 
 struct __cff_SubrNode {
-	caryll_Buffer *terminal;
-	cff_SubrRule *rule;
 	cff_SubrNode *prev;
-	cff_SubrNode *next;
+	cff_SubrRule *rule;
+	OWNING cff_SubrNode *next;
+	OWNING caryll_Buffer *terminal;
 	bool hard;
 	bool guard;
 	bool last;
@@ -26,7 +26,8 @@ struct __cff_SubrRule {
 	uint16_t cffIndex;
 	uint32_t refcount;
 	uint32_t effectiveLength;
-	cff_SubrNode *guard;
+	OWNING cff_SubrNode *guard;
+	OWNING cff_SubrRule *next;
 };
 
 typedef struct {
@@ -37,7 +38,8 @@ typedef struct {
 } cff_SubrDiagramIndex;
 
 typedef struct {
-	cff_SubrRule *root;
+	OWNING cff_SubrRule *root;
+	cff_SubrRule *last;
 	cff_SubrDiagramIndex *diagramIndex;
 	uint32_t totalRules;
 	uint32_t totalCharStrings;
