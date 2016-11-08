@@ -143,7 +143,9 @@ static void feature_merger_activate(json_value *d, const bool sametag, const cha
 			char *kthat = d->u.object.values[k].name;
 			if (json_ident(jthis, jthat) && (sametag ? strncmp(kthis, kthat, 4) == 0 : true)) {
 				json_value_free(jthat);
-				d->u.object.values[k].value = json_string_new_length(nkthis, kthis);
+				json_value *v = json_string_new_length(nkthis, kthis);
+				v->parent = d;
+				d->u.object.values[k].value = v;
 				logNotice("[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat, kthis);
 			}
 		}

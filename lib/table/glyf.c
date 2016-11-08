@@ -669,7 +669,7 @@ static glyf_Glyph *otfcc_glyf_parse_glyph(json_value *glyphdump, otfcc_GlyphOrde
 	return g;
 }
 
-table_glyf *otfcc_parseGlyf(json_value *root, otfcc_GlyphOrder *glyph_order, const otfcc_Options *options) {
+table_glyf *otfcc_parseGlyf(const json_value *root, otfcc_GlyphOrder *glyph_order, const otfcc_Options *options) {
 	if (root->type != json_object || !glyph_order) return NULL;
 	table_glyf *glyf = NULL;
 	json_value *table;
@@ -686,7 +686,9 @@ table_glyf *otfcc_parseGlyf(json_value *root, otfcc_GlyphOrder *glyph_order, con
 					glyf->items[order_entry->gid] = otfcc_glyf_parse_glyph(glyphdump, order_entry, options);
 				}
 				json_value_free(glyphdump);
-				table->u.object.values[j].value = NULL;
+				json_value *v = json_null_new();
+				v->parent = table;
+				table->u.object.values[j].value = v;
 				sdsfree(gname);
 			}
 		}

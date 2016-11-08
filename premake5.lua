@@ -69,7 +69,7 @@ workspace "otfcc"
 	filter {}
 	
 	filter "configurations:Debug"
-		defines { "DEBUG" }
+		defines { "DEBUG", "_DEBUG" }
 		symbols "on"
 	filter "configurations:Release"
 		defines { "NDEBUG" }

@@ -161,9 +161,9 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 		}
 	}
 	if (cds) {
-		if (cds->ic && cds->ic->glyphs) FREE(cds->ic->glyphs);
-		if (cds->ic && cds->ic->classes) FREE(cds->ic->classes);
-		if (cds->ic) FREE(cds->ic);
+		if (cds->bc) ClassDef.dispose(cds->bc);
+		if (cds->ic) ClassDef.dispose(cds->ic);
+		if (cds->fc) ClassDef.dispose(cds->fc);
 		FREE(cds);
 	}
 	return subtable;
@@ -329,6 +329,7 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 		if (cds->bc) ClassDef.dispose(cds->bc);
 		if (cds->ic) ClassDef.dispose(cds->ic);
 		if (cds->fc) ClassDef.dispose(cds->fc);
+		FREE(cds);
 	}
 	return subtable;
 FAIL:

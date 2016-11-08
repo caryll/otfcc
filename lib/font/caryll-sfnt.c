@@ -80,6 +80,7 @@ void otfcc_deleteSFNT(otfcc_SplineFontContainer *font) {
 			}
 			FREE(font->packets[count].pieces);
 		}
+		FREE(font->packets);
 	}
 	FREE(font->offsets);
 	FREE(font);

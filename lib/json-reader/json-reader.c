@@ -2,7 +2,7 @@
 #include "otfcc/font.h"
 #include "table/all.h"
 
-static otfcc_font_subtype otfcc_decideFontSubtypeFromJson(json_value *root) {
+static otfcc_font_subtype otfcc_decideFontSubtypeFromJson(const json_value *root) {
 	if (json_obj_get_type(root, "CFF_", json_object) != NULL) {
 		return FONTTYPE_CFF;
 	} else {
@@ -96,7 +96,7 @@ static void placeOrderEntriesFromSubtable(json_value *table, otfcc_GlyphOrder *g
 	}
 }
 
-static otfcc_GlyphOrder *parseGlyphOrder(json_value *root, const otfcc_Options *options) {
+static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Options *options) {
 	otfcc_GlyphOrder *go = GlyphOrder.create();
 	if (root->type != json_object) return go;
 	json_value *table;
@@ -113,7 +113,7 @@ static otfcc_GlyphOrder *parseGlyphOrder(json_value *root, const otfcc_Options *
 }
 
 static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *options) {
-	json_value *root = (json_value *)_root;
+	const json_value *root = (json_value *)_root;
 	otfcc_Font *font = otfcc_newFont();
 	if (!font) return NULL;
 	font->subtype = otfcc_decideFontSubtypeFromJson(root);
