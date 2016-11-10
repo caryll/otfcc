@@ -6,7 +6,6 @@ caryll_standardRefType(table_vhea, iTable_vhea);
 
 table_vhea *otfcc_readVhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
-	;
 	FOR_TABLE('vhea', table) {
 		font_file_pointer data = table.data;
 		size_t length = table.length;
