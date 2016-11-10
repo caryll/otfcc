@@ -3,7 +3,7 @@ require "dep/premake-modules/ninja"
 
 MAIN_VER = '0'
 SECONDARY_VER = '5'
-PATCH_VER = '1'
+PATCH_VER = '2'
 
 function cbuildoptions()
 	-- Windows
@@ -69,7 +69,7 @@ workspace "otfcc"
 	filter {}
 	
 	filter "configurations:Debug"
-		defines { "DEBUG" }
+		defines { "DEBUG", "_DEBUG" }
 		symbols "on"
 	filter "configurations:Release"
 		defines { "NDEBUG" }

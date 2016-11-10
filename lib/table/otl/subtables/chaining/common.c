@@ -1,22 +1,22 @@
 #include "../chaining.h"
 #include "common.h"
-
-void otl_delete_chaining(otl_Subtable *_subtable) {
-	if (_subtable) {
-		subtable_chaining *subtable = &(_subtable->chaining);
-		if (subtable->type) {
-			if (subtable->rules) {
-				for (tableid_t j = 0; j < subtable->rulesCount; j++) {
-					deleteRule(subtable->rules[j]);
-				}
-				FREE(subtable->rules);
+void otl_init_chaining(subtable_chaining *subtable) {
+	memset(subtable, 0, sizeof(*subtable));
+}
+void otl_dispose_chaining(subtable_chaining *subtable) {
+	if (subtable->type) {
+		if (subtable->rules) {
+			for (tableid_t j = 0; j < subtable->rulesCount; j++) {
+				deleteRule(subtable->rules[j]);
 			}
-			if (subtable->bc) { ClassDef.dispose(subtable->bc); }
-			if (subtable->ic) { ClassDef.dispose(subtable->ic); }
-			if (subtable->fc) { ClassDef.dispose(subtable->fc); }
-			FREE(_subtable);
-		} else {
-			closeRule(&subtable->rule);
+			FREE(subtable->rules);
 		}
+		if (subtable->bc) { ClassDef.destroy(subtable->bc); }
+		if (subtable->ic) { ClassDef.destroy(subtable->ic); }
+		if (subtable->fc) { ClassDef.destroy(subtable->fc); }
+	} else {
+		closeRule(&subtable->rule);
 	}
 }
+
+caryll_CDRefElementImpl(subtable_chaining, otl_init_chaining, otl_dispose_chaining, iSubtable_chaining);

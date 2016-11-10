@@ -39,9 +39,9 @@ typedef otfcc_LookupHandle lookup_handle;
 #define GlyphOrder otfcc_pkgGlyphOrder
 
 #include "otfcc/table/otl/classdef.h"
-#define ClassDef otfcc_pkgClassDef
+#define ClassDef otfcc_iClassDef
 
 #include "otfcc/table/otl/coverage.h"
-#define Coverage otfcc_pkgCoverage
+#define Coverage otfcc_iCoverage
 
 #endif

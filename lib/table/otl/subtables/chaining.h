@@ -9,7 +9,6 @@
 // GPOS contextual
 // GPOS chaining
 
-void otl_delete_chaining(otl_Subtable *_subtable);
 otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                 const otfcc_Options *options);
 otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset,

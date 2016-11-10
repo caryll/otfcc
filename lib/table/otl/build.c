@@ -3,13 +3,13 @@
 static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
                                         const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
 	if (lookup->type == type) {
-		NEW(*subtables, lookup->subtableCount);
-		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-			caryll_Buffer *buf = fn(lookup->subtables[j]);
+		NEW(*subtables, lookup->subtables.length);
+		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+			caryll_Buffer *buf = fn(lookup->subtables.items[j]);
 			(*subtables)[j] = buf;
 			*lastOffset += buf->size;
 		}
-		return lookup->subtableCount;
+		return lookup->subtables.length;
 	}
 	return 0;
 }
@@ -48,8 +48,8 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
-		otl_Lookup *lookup = table->lookups.data[j];
-		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j, table->lookups.length);
+		otl_Lookup *lookup = table->lookups.items[j];
+		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j, (uint32_t)table->lookups.length);
 		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
 	}
 
@@ -68,10 +68,10 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	                              bkover);
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
 		if (!subtableQuantity[j]) {
-			logNotice("Lookup %s not written.\n", table->lookups.data[j]->name);
+			logNotice("Lookup %s not written.\n", table->lookups.items[j]->name);
 			continue;
 		}
-		otl_Lookup *lookup = table->lookups.data[j];
+		otl_Lookup *lookup = table->lookups.items[j];
 		uint16_t lookupType =
 		    useExtended
 		        ? (lookup->type > otl_type_gpos_unknown
@@ -138,20 +138,20 @@ static uint32_t featureNameToTag(const sds name) {
 static bk_Block *writeOTLFeatures(const table_OTL *table, const otfcc_Options *options) {
 	bk_Block *root = bk_new_Block(b16, table->features.length, bkover);
 	for (tableid_t j = 0; j < table->features.length; j++) {
-		bk_Block *fea = bk_new_Block(p16, NULL,                                 // FeatureParams
-		                             b16, table->features.data[j]->lookupCount, // LookupCount
+		bk_Block *fea = bk_new_Block(p16, NULL,                                     // FeatureParams
+		                             b16, table->features.items[j]->lookups.length, // LookupCount
 		                             bkover);
-		for (tableid_t k = 0; k < table->features.data[j]->lookupCount; k++) {
+		for (tableid_t k = 0; k < table->features.items[j]->lookups.length; k++) {
 			// reverse lookup
 			for (tableid_t l = 0; l < table->lookups.length; l++) {
-				if (table->features.data[j]->lookups[k] == table->lookups.data[l]) {
+				if (table->features.items[j]->lookups.items[k] == table->lookups.items[l]) {
 					bk_push(fea, b16, l, bkover);
 					break;
 				}
 			}
 		}
-		bk_push(root, b32, featureNameToTag(table->features.data[j]->name), // FeatureTag
-		        p16, fea,                                                   // Feature
+		bk_push(root, b32, featureNameToTag(table->features.items[j]->name), // FeatureTag
+		        p16, fea,                                                    // Feature
 		        bkover);
 	}
 	return root;
@@ -166,19 +166,19 @@ typedef struct {
 	UT_hash_handle hh;
 } script_stat_hash;
 
-static tableid_t featureIndex(otl_Feature *feature, const table_OTL *table) {
+static tableid_t featureIndex(const otl_Feature *feature, const table_OTL *table) {
 	for (tableid_t j = 0; j < table->features.length; j++)
-		if (table->features.data[j] == feature) { return j; }
+		if (table->features.items[j] == feature) { return j; }
 	return 0xFFFF;
 }
 static bk_Block *writeLanguage(otl_LanguageSystem *lang, const table_OTL *table) {
 	if (!lang) return NULL;
 	bk_Block *root = bk_new_Block(p16, NULL,                                       // LookupOrder
 	                              b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
-	                              b16, lang->featureCount,                         // FeatureCount
+	                              b16, lang->features.length,                      // FeatureCount
 	                              bkover);
-	for (tableid_t k = 0; k < lang->featureCount; k++) {
-		bk_push(root, b16, featureIndex(lang->features[k], table), bkover);
+	for (tableid_t k = 0; k < lang->features.length; k++) {
+		bk_push(root, b16, featureIndex(lang->features.items[k], table), bkover);
 	}
 	return root;
 }
@@ -201,7 +201,7 @@ static bk_Block *writeScript(script_stat_hash *script, const table_OTL *table) {
 static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_Options *options) {
 	script_stat_hash *h = NULL;
 	for (tableid_t j = 0; j < table->languages.length; j++) {
-		otl_LanguageSystem *language = table->languages.data[j];
+		otl_LanguageSystem *language = table->languages.items[j];
 		sds scriptTag = sdsnewlen(language->name, 4);
 		bool isDefault = strncmp(language->name + 5, "DFLT", 4) == 0 || strncmp(language->name + 5, "dflt", 4) == 0;
 

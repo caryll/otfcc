@@ -272,5 +272,6 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 	}
 	otfcc_deleteOptions(options);
+
 	return 0;
 }

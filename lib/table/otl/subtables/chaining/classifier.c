@@ -15,7 +15,7 @@ static int by_gid_clsh(classifier_hash *a, classifier_hash *b) {
 
 static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 	// checks whether a coverage is compatible to a class hash.
-	classifier_hash *s;
+	classifier_hash *s = NULL;
 	if (cov->numGlyphs == 0) return 1;
 	int gid = cov->glyphs[0].index;
 	// check pass
@@ -32,7 +32,7 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 		classifier_hash *revh = NULL;
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
-			classifier_hash *rss;
+			classifier_hash *rss = NULL;
 			HASH_FIND_INT(revh, &gid, rss);
 			if (!rss) {
 				NEW(rss);
@@ -68,7 +68,7 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 		}
 		for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 			int gid = cov->glyphs[j].index;
-			classifier_hash *s;
+			classifier_hash *s = NULL;
 			HASH_FIND_INT(*h, &gid, s);
 			if (!s) {
 				NEW(s);
@@ -78,7 +78,6 @@ static int classCompatible(classifier_hash **h, otl_Coverage *cov, int *past) {
 				HASH_ADD_INT(*h, gid, s);
 			}
 		}
-
 		*past += 1;
 		return 1;
 	}
@@ -109,15 +108,15 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 	NEW(newRule->apply, newRule->applyCount);
 	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		newRule->apply[j].index = rule->apply[j].index;
-		newRule->apply[j].lookup = Handle.copy(rule->apply[j].lookup);
+		newRule->apply[j].lookup = Handle.dup(rule->apply[j].lookup);
 	}
 	return newRule;
 }
-static otl_ClassDef *toClass(classifier_hash *h) {
+static otl_ClassDef *toClass(classifier_hash **h) {
 	otl_ClassDef *cd = ClassDef.create();
 	classifier_hash *item;
-	HASH_SORT(h, by_gid_clsh);
-	foreach_hash(item, h) {
+	HASH_SORT(*h, by_gid_clsh);
+	foreach_hash(item, *h) {
 		ClassDef.push(cd, Handle.fromConsolidated(item->gid, item->gname), item->cls);
 	}
 	return cd;
@@ -128,7 +127,7 @@ tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j, OUT subtable_
 	classifier_hash *hi = NULL;
 	classifier_hash *hf = NULL;
 	// initialize the class hash
-	subtable_chaining *subtable0 = &(lookup->subtables[j]->chaining);
+	subtable_chaining *subtable0 = &(lookup->subtables.items[j]->chaining);
 	int classno_b = 0;
 	int classno_i = 0;
 	int classno_f = 0;
@@ -145,8 +144,8 @@ tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j, OUT subtable_
 		}
 		if (!check) { goto FAIL; }
 	}
-	for (tableid_t k = j + 1; k < lookup->subtableCount; k++) {
-		otl_ChainingRule *rule = &lookup->subtables[k]->chaining.rule;
+	for (tableid_t k = j + 1; k < lookup->subtables.length; k++) {
+		otl_ChainingRule *rule = &lookup->subtables.items[k]->chaining.rule;
 		bool allcheck = true;
 		for (tableid_t m = 0; m < rule->matchCount; m++) {
 			int check = 0;
@@ -174,16 +173,16 @@ endcheck:
 		subtable0->rules[0] = buildRule(rule0, hb, hi, hf);
 		// write other rules
 		tableid_t kk = 1;
-		for (tableid_t k = j + 1; k < lookup->subtableCount && kk < compatibleCount + 1; k++) {
-			otl_ChainingRule *rule = &lookup->subtables[k]->chaining.rule;
+		for (tableid_t k = j + 1; k < lookup->subtables.length && kk < compatibleCount + 1; k++) {
+			otl_ChainingRule *rule = &lookup->subtables.items[k]->chaining.rule;
 			subtable0->rules[kk] = buildRule(rule, hb, hi, hf);
 			kk++;
 		}
 
 		subtable0->type = otl_chaining_classified;
-		subtable0->bc = toClass(hb);
-		subtable0->ic = toClass(hi);
-		subtable0->fc = toClass(hf);
+		subtable0->bc = toClass(&hb);
+		subtable0->ic = toClass(&hi);
+		subtable0->fc = toClass(&hf);
 		*classifiedST = subtable0;
 	}
 FAIL:;
@@ -218,15 +217,15 @@ FAIL:;
 tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
                                         MODIFY size_t *lastOffset) {
 	tableid_t subtablesWritten = 0;
-	NEW(*subtableBuffers, lookup->subtableCount);
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		subtable_chaining *st0 = &(lookup->subtables[j]->chaining);
+	NEW(*subtableBuffers, lookup->subtables.length);
+	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+		subtable_chaining *st0 = &(lookup->subtables.items[j]->chaining);
 		if (st0->type) continue;
 		subtable_chaining *st = st0;
 		// Try to classify subtables after j into j
 		j += tryClassifyAround(lookup, j, &st);
 		caryll_Buffer *buf = otfcc_build_chaining((otl_Subtable *)st);
-		if (st != st0) { otl_delete_chaining((otl_Subtable *)st); }
+		if (st != st0) { iSubtable_chaining.destroy(st); }
 		(*subtableBuffers)[subtablesWritten] = buf;
 		*lastOffset += buf->size;
 		subtablesWritten += 1;

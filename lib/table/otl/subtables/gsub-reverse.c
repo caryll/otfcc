@@ -1,16 +1,18 @@
 #include "gsub-reverse.h"
 
-void otl_delete_gsub_reverse(otl_Subtable *_subtable) {
-	if (_subtable) {
-		subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
-		if (subtable->match)
-			for (tableid_t j = 0; j < subtable->matchCount; j++) {
-				Coverage.dispose(subtable->match[j]);
-			}
-		if (subtable->to) Coverage.dispose(subtable->to);
-		FREE(_subtable);
-	}
+static void initGsubReverse(subtable_gsub_reverse *subtable) {
+	subtable->match = NULL;
+	subtable->to = NULL;
 }
+static void disposeGsubReverse(subtable_gsub_reverse *subtable) {
+	if (subtable->match)
+		for (tableid_t j = 0; j < subtable->matchCount; j++) {
+			Coverage.destroy(subtable->match[j]);
+		}
+	if (subtable->to) Coverage.destroy(subtable->to);
+}
+
+caryll_CDRefElementImpl(subtable_gsub_reverse, initGsubReverse, disposeGsubReverse, iSubtable_gsub_reverse);
 
 static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	if (inputIndex > 0) {
@@ -27,11 +29,7 @@ static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 
 otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                     const otfcc_Options *options) {
-	otl_Subtable *_subtable;
-	NEW(_subtable);
-	subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
-	subtable->match = NULL;
-	subtable->to = NULL;
+	subtable_gsub_reverse *subtable = iSubtable_gsub_reverse.create();
 	checkLength(offset + 6);
 
 	tableid_t nBacktrack = read_16u(data + offset + 4);
@@ -68,10 +66,10 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 		subtable->to->glyphs[j] = Handle.fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
 	}
 	reverseBacktracks(subtable->match, subtable->inputIndex);
-	return _subtable;
+	return (otl_Subtable *)subtable;
 
 FAIL:
-	otl_delete_gsub_reverse(_subtable);
+	iSubtable_gsub_reverse.destroy(subtable);
 	return NULL;
 }
 
@@ -93,9 +91,7 @@ otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable, const otfcc_Op
 	json_value *_to = json_obj_get_type(_subtable, "to", json_array);
 	if (!_match || !_to) return NULL;
 
-	otl_Subtable *_st;
-	NEW(_st);
-	subtable_gsub_reverse *subtable = &(_st->gsub_reverse);
+	subtable_gsub_reverse *subtable = iSubtable_gsub_reverse.create();
 
 	subtable->matchCount = _match->u.array.length;
 	NEW(subtable->match, subtable->matchCount);
@@ -106,7 +102,7 @@ otl_Subtable *otl_gsub_parse_reverse(const json_value *_subtable, const otfcc_Op
 		subtable->match[j] = Coverage.parse(_match->u.array.values[j]);
 	}
 	subtable->to = Coverage.parse(_to);
-	return _st;
+	return (otl_Subtable *)subtable;
 }
 
 caryll_Buffer *otfcc_build_gsub_reverse(const otl_Subtable *_subtable) {

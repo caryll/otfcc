@@ -43,18 +43,20 @@ otfccdump [OPTIONS] input.[otf|ttf|ttc]
 
  -h, --help              : Display this help message and exit.
  -v, --version           : Display version information and exit.
- -o <file>               : Set output file path to <file>. When absent,
-                           the dump will be written to STDOUT.
+ -o <file>               : Set output file path to <file>. When absent the dump
+                           will be written to STDOUT.
  -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.
  --pretty                : Prettify the output JSON.
  --ugly                  : Force uglify the output JSON.
- --time                  : Time each sub-step.
- --glyph-name-prefix pfx : Add a prefix to the glyph names.
+ --verbose               : Show more information when building.
  --ignore-glyph-order    : Do not export glyph order information.
+ --glyph-name-prefix pfx : Add a prefix to the glyph names.
  --ignore-hints          : Do not export hinting information.
- --add-bom               : Add BOM mark in the output. (This is default
-                           on Windows when redirecting to another program.
-                           Use --no-bom to turn it off.)
+ --decimal-cmap          : Export 'cmap' keys as decimal number.
+ --name-by-hash          : Name glyphs using its hash value.
+ --add-bom               : Add BOM mark in the output. (It is default on Windows
+                           when redirecting to another program. Use --no-bom to
+                           turn it off.)
 ```
 
 ### `otfccbuild` : Build an OpenType font file from JSON
@@ -82,7 +84,6 @@ Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
                              used. In this level, these options will be set:
                                --force-cid
                                --subroutinize
- --time                    : Time each substep.
  --verbose                 : Show more information when building.
 
  --ignore-hints            : Ignore the hinting information in the input.
@@ -94,8 +95,8 @@ Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
                              using current time.
 
  --short-post              : Don't export glyph names in the result font.
- --ignore-glyph-order      : Ignore the glyph order information in the input.
- --keep-glyph-order        : Keep the glyph order information in the input.
+ --ignore-glyph-order, -i  : Ignore the glyph order information in the input.
+ --keep-glyph-order, -k    : Keep the glyph order information in the input.
                              Use to preserve glyph order under -O2 and -O3.
  --dont-ignore-glyph-order : Same as --keep-glyph-order.
  --merge-features          : Merge duplicate OpenType feature definitions.

@@ -73,27 +73,23 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt,
 	}
 	// init this lookup
 	otl_Lookup *lookup;
-	NEW(lookup);
-	lookup->name = NULL;
+	otl_iLookup.init(&lookup);
 	lookup->type = llt;
 	lookup->flags = otfcc_parse_flags(json_obj_get(_lookup, "flags"), lookupFlagsLabels);
 	uint16_t markAttachmentType = json_obj_getint(_lookup, "markAttachmentType");
 	if (markAttachmentType) { lookup->flags |= markAttachmentType << 8; }
 	// start parse subtables
-	lookup->subtableCount = _subtables->u.array.length;
-	NEW(lookup->subtables, lookup->subtableCount);
-	tableid_t jj = 0;
+	tableid_t subtableCount = _subtables->u.array.length;
 	loggedStep("%s", lookupName) {
-		for (tableid_t j = 0; j < lookup->subtableCount; j++) {
+		for (tableid_t j = 0; j < subtableCount; j++) {
 			json_value *_subtable = _subtables->u.array.values[j];
 			if (_subtable && _subtable->type == json_object) {
 				otl_Subtable *_st = parser(_subtable, options);
-				if (_st) { lookup->subtables[jj++] = _st; }
+				otl_iSubtableList.push(&lookup->subtables, _st);
 			}
 		}
 	}
-	lookup->subtableCount = jj;
-	if (!lookup->subtableCount) {
+	if (!lookup->subtables.length) {
 		logWarning("Lookup %s does not have any subtables.", lookupName);
 		otfcc_delete_lookup(lookup);
 		return false;
@@ -147,7 +143,9 @@ static void feature_merger_activate(json_value *d, const bool sametag, const cha
 			char *kthat = d->u.object.values[k].name;
 			if (json_ident(jthis, jthat) && (sametag ? strncmp(kthis, kthat, 4) == 0 : true)) {
 				json_value_free(jthat);
-				d->u.object.values[k].value = json_string_new_length(nkthis, kthis);
+				json_value *v = json_string_new_length(nkthis, kthis);
+				v->parent = d;
+				d->u.object.values[k].value = v;
 				logNotice("[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat, kthis);
 			}
 		}
@@ -164,45 +162,43 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 		char *featureName = features->u.object.values[j].name;
 		json_value *_feature = features->u.object.values[j].value;
 		if (_feature->type == json_array) {
-			tableid_t nal = 0;
-			otl_Lookup **al;
-			NEW(al, _feature->u.array.length);
+			otl_LookupRefList al;
+			otl_iLookupRefList.init(&al);
 			for (tableid_t k = 0; k < _feature->u.array.length; k++) {
 				json_value *term = _feature->u.array.values[k];
 				if (term->type != json_string) continue;
 				lookup_hash *item = NULL;
 				HASH_FIND_STR(lh, term->u.string.ptr, item);
 				if (item) {
-					al[nal++] = item->lookup;
+					otl_iLookupRefList.push(&al, item->lookup);
 				} else {
 					logWarning("Lookup assignment %s for feature [%s/%s] is missing or invalid.", term->u.string.ptr,
 					           tag, featureName)
 				}
 			}
-			if (nal > 0) {
+			if (al.length > 0) {
 				feature_hash *s = NULL;
 				HASH_FIND_STR(fh, featureName, s);
 				if (!s) {
 					NEW(s);
 					s->name = sdsnew(featureName);
 					s->alias = false;
-					NEW(s->feature);
+					otl_iFeature.init(&s->feature);
 					s->feature->name = sdsdup(s->name);
-					s->feature->lookupCount = nal;
-					s->feature->lookups = al;
+					otl_iLookupRefList.replace(&s->feature->lookups, &al);
 					HASH_ADD_STR(fh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate feature for [%s/%s]. This feature will "
 					           "be ignored.\n",
 					           tag, featureName);
-					FREE(al);
+					otl_iLookupRefList.dispose(&al);
 				}
 			} else {
 				logWarning("[OTFCC-fea] There is no valid lookup "
 				           "assignments for [%s/%s]. This feature will be "
 				           "ignored.\n",
 				           tag, featureName);
-				FREE(al);
+				otl_iLookupRefList.dispose(&al);
 			}
 		} else if (_feature->type == json_string) {
 			feature_hash *s = NULL;
@@ -240,46 +236,42 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 				HASH_FIND_STR(fh, _rf->u.string.ptr, rf);
 				if (rf) { requiredFeature = rf->feature; }
 			}
-
-			tableid_t naf = 0;
-			otl_Feature **af = NULL;
+			otl_FeatureRefList af;
+			otl_iFeatureRefList.init(&af);
 			json_value *_features = json_obj_get_type(_language, "features", json_array);
 			if (_features) {
-				NEW(af, _features->u.array.length);
 				for (tableid_t k = 0; k < _features->u.array.length; k++) {
 					json_value *term = _features->u.array.values[k];
 					if (term->type == json_string) {
 						feature_hash *item = NULL;
 						HASH_FIND_STR(fh, term->u.string.ptr, item);
-						if (item) { af[naf++] = item->feature; }
+						if (item) { otl_iFeatureRefList.push(&af, item->feature); }
 					}
 				}
 			}
-			if (requiredFeature || (af && naf > 0)) {
+			if (requiredFeature || (af.length > 0)) {
 				language_hash *s = NULL;
 				HASH_FIND_STR(sh, languageName, s);
 				if (!s) {
 					NEW(s);
 					s->name = sdsnew(languageName);
-					NEW(s->language);
+					otl_iLanguageSystem.init(&s->language);
 					s->language->name = sdsdup(s->name);
 					s->language->requiredFeature = requiredFeature;
-					s->language->featureCount = naf;
-					s->language->features = af;
+					otl_iFeatureRefList.replace(&s->language->features, &af);
 					HASH_ADD_STR(sh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate language item [%s/%s]. This language "
 					           "term will be ignored.\n",
 					           tag, languageName);
-					if (af) { FREE(af); }
+					otl_iFeatureRefList.dispose(&af);
 				}
 			} else {
 				logWarning("[OTFCC-fea] There is no valid feature "
 				           "assignments for [%s/%s]. This language term "
 				           "will be ignored.\n",
 				           tag, languageName);
-
-				if (af) { FREE(af); }
+				otl_iFeatureRefList.dispose(&af);
 			}
 		}
 	}
@@ -338,7 +330,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		{
 			lookup_hash *s, *tmp;
 			HASH_ITER(hh, lh, s, tmp) {
-				caryll_vecPush(&otl->lookups, s->lookup);
+				otl_iLookupList.push(&otl->lookups, s->lookup);
 				HASH_DEL(lh, s);
 				sdsfree(s->name);
 				FREE(s);
@@ -347,7 +339,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		{
 			feature_hash *s, *tmp;
 			HASH_ITER(hh, fh, s, tmp) {
-				if (!s->alias) { caryll_vecPush(&otl->features, s->feature); }
+				if (!s->alias) { otl_iFeatureList.push(&otl->features, s->feature); }
 				HASH_DEL(fh, s);
 				sdsfree(s->name);
 				FREE(s);
@@ -356,7 +348,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 		{
 			language_hash *s, *tmp;
 			HASH_ITER(hh, sh, s, tmp) {
-				caryll_vecPush(&otl->languages, s->language);
+				otl_iLangSystemList.push(&otl->languages, s->language);
 				HASH_DEL(sh, s);
 				sdsfree(s->name);
 				FREE(s);

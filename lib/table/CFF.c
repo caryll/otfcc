@@ -269,43 +269,43 @@ static void callback_draw_setwidth(void *_context, double width) {
 static void callback_draw_next_contour(void *_context) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	glyf_Contour c;
-	otfcc_initGlyfContour(&c);
-	caryll_vecPush(&context->g->contours, c);
+	glyf_iContour.init(&c);
+	glyf_iContourList.push(&context->g->contours, c);
 	context->jContour = context->g->contours.length;
 	context->jPoint = 0;
 }
 static void callback_draw_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
-		glyf_Contour *contour = &context->g->contours.data[context->jContour - 1];
-		caryll_vecPush(contour, ((glyf_Point){
-		                            .onCurve = true, .x = x1, .y = y1,
-		                        }));
+		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
+		glyf_iContour.push(contour, ((glyf_Point){
+		                                .onCurve = true, .x = x1, .y = y1,
+		                            }));
 		context->jPoint += 1;
 	}
 }
 static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2, double x3, double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
-		glyf_Contour *contour = &context->g->contours.data[context->jContour - 1];
-		caryll_vecPush(contour, ((glyf_Point){
-		                            .onCurve = false, .x = x1, .y = y1,
-		                        }));
-		caryll_vecPush(contour, ((glyf_Point){
-		                            .onCurve = false, .x = x2, .y = y2,
-		                        }));
-		caryll_vecPush(contour, ((glyf_Point){
-		                            .onCurve = true, .x = x3, .y = y3,
-		                        }));
+		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
+		glyf_iContour.push(contour, ((glyf_Point){
+		                                .onCurve = false, .x = x1, .y = y1,
+		                            }));
+		glyf_iContour.push(contour, ((glyf_Point){
+		                                .onCurve = false, .x = x2, .y = y2,
+		                            }));
+		glyf_iContour.push(contour, ((glyf_Point){
+		                                .onCurve = true, .x = x3, .y = y3,
+		                            }));
 		context->jPoint += 3;
 	}
 }
 static void callback_draw_sethint(void *_context, bool isVertical, double position, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	caryll_vecPush((isVertical ? &context->g->stemV : &context->g->stemH), //
-	               ((glyf_PostscriptStemDef){
-	                   .position = position, .width = width,
-	               }));
+	glyf_iStemDefList.push((isVertical ? &context->g->stemV : &context->g->stemH), //
+	                       ((glyf_PostscriptStemDef){
+	                           .position = position, .width = width,
+	                       }));
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
 	outline_builder_context *context = (outline_builder_context *)_context;
@@ -325,7 +325,7 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	}
 
 	FREE(maskArray);
-	caryll_vecPush(maskList, mask);
+	glyf_iMaskList.push(maskList, mask);
 	if (isContourMask) {
 		context->definedContourMasks += 1;
 	} else {
@@ -362,7 +362,7 @@ static cff_IOutlineBuilder drawPass = {.setWidth = callback_draw_setwidth,
 static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_Options *options) {
 	cff_File *f = context->cffFile;
 	glyf_Glyph *g = otfcc_newGlyf_glyph();
-	context->glyphs->glyphs[i] = g;
+	context->glyphs->items[i] = g;
 	uint64_t seed = context->seed;
 
 	cff_Index localSubrs;
@@ -404,17 +404,17 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	double cx = 0;
 	double cy = 0;
 	for (shapeid_t j = 0; j < g->contours.length; j++) {
-		glyf_Contour *contour = &g->contours.data[j];
+		glyf_Contour *contour = &g->contours.items[j];
 		for (shapeid_t k = 0; k < contour->length; k++) {
-			cx += contour->data[k].x;
-			cy += contour->data[k].y;
+			cx += contour->items[k].x;
+			cy += contour->items[k].y;
 
-			contour->data[k].x = cx;
-			contour->data[k].y = cy;
+			contour->items[k].x = cx;
+			contour->items[k].y = cy;
 		}
-		if (contour->data[0].x == contour->data[contour->length - 1].x &&
-		    contour->data[0].y == contour->data[contour->length - 1].y) {
-			caryll_vecPop(contour);
+		if (contour->items[0].x == contour->items[contour->length - 1].x &&
+		    contour->items[0].y == contour->items[contour->length - 1].y) {
+			glyf_iContour.pop(contour);
 		}
 	}
 
@@ -432,7 +432,7 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
 				cffsid_t sid = cffFile->charsets.f0.glyph[j];
 				sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-				if (glyphname) { glyphs->glyphs[j + 1]->name = glyphname; }
+				if (glyphname) { glyphs->items[j + 1]->name = glyphname; }
 			}
 			break;
 		}
@@ -441,15 +441,15 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
 				glyphid_t first = cffFile->charsets.f1.range1[j].first;
 				sds glyphname = sdsget_cff_sid(first, cffFile->string);
-				if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
-					glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+				if (glyphsNamedSofar < glyphs->length && glyphname) {
+					glyphs->items[glyphsNamedSofar]->name = glyphname;
 				}
 				glyphsNamedSofar++;
 				for (glyphid_t k = 0; k < cffFile->charsets.f1.range1[j].nleft; k++) {
 					cffsid_t sid = first + k + 1;
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-					if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
-						glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+					if (glyphsNamedSofar < glyphs->length && glyphname) {
+						glyphs->items[glyphsNamedSofar]->name = glyphname;
 					}
 					glyphsNamedSofar++;
 				}
@@ -461,15 +461,15 @@ static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
 			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
 				glyphid_t first = cffFile->charsets.f2.range2[j].first;
 				sds glyphname = sdsget_cff_sid(first, cffFile->string);
-				if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
-					glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+				if (glyphsNamedSofar < glyphs->length && glyphname) {
+					glyphs->items[glyphsNamedSofar]->name = glyphname;
 				}
 				glyphsNamedSofar++;
 				for (glyphid_t k = 0; k < cffFile->charsets.f2.range2[j].nleft; k++) {
 					cffsid_t sid = first + k + 1;
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-					if (glyphsNamedSofar < glyphs->numberGlyphs && glyphname) {
-						glyphs->glyphs[glyphsNamedSofar]->name = glyphname;
+					if (glyphsNamedSofar < glyphs->length && glyphname) {
+						glyphs->items[glyphsNamedSofar]->name = glyphname;
 					}
 					glyphsNamedSofar++;
 				}
@@ -483,8 +483,8 @@ static double qround(const double x) {
 	return otfcc_from_fixed(otfcc_to_fixed(x));
 }
 static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *head) {
-	for (glyphid_t jj = 0; jj < glyf->numberGlyphs; jj++) {
-		glyf_Glyph *g = glyf->glyphs[jj];
+	for (glyphid_t jj = 0; jj < glyf->length; jj++) {
+		glyf_Glyph *g = glyf->items[jj];
 		table_CFF *fd = CFF_;
 		if (fd->fdArray && g->fdSelect.index < fd->fdArrayCount) { fd = fd->fdArray[g->fdSelect.index]; }
 		if (fd->fontMatrix) {
@@ -495,12 +495,12 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 			pos_t x = qround(head->unitsPerEm * fd->fontMatrix->x);
 			pos_t y = qround(head->unitsPerEm * fd->fontMatrix->y);
 			for (shapeid_t j = 0; j < g->contours.length; j++) {
-				glyf_Contour *contour = &g->contours.data[j];
+				glyf_Contour *contour = &g->contours.items[j];
 				for (shapeid_t k = 0; k < contour->length; k++) {
-					pos_t zx = contour->data[k].x;
-					pos_t zy = contour->data[k].y;
-					contour->data[k].x = a * zx + b * zy + x;
-					contour->data[k].y = c * zx + d * zy + y;
+					pos_t zx = contour->items[k].x;
+					pos_t zy = contour->items[k].y;
+					contour->items[k].x = a * zx + b * zy + x;
+					contour->items[k].y = c * zx + d * zy + y;
 				}
 			}
 		}
@@ -553,12 +553,9 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 		if (context.meta->privateDict) {
 			context.seed = (uint64_t)context.meta->privateDict->initialRandomSeed ^ 0x1234567887654321;
 		}
-		table_glyf *glyphs;
-		NEW(glyphs);
+		table_glyf *glyphs = iTable_glyf.createN(cffFile->char_strings.count);
 		context.glyphs = glyphs;
-		glyphs->numberGlyphs = cffFile->char_strings.count;
-		NEW(glyphs->glyphs, glyphs->numberGlyphs);
-		for (glyphid_t j = 0; j < glyphs->numberGlyphs; j++) {
+		for (glyphid_t j = 0; j < glyphs->length; j++) {
 			buildOutline(j, &context, options);
 		}
 
@@ -699,7 +696,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 
 	return pd;
 }
-static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, bool topLevel) {
+static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *options, bool topLevel) {
 	table_CFF *table = otfcc_newCFF();
 	if (!dump || dump->type != json_object) return table;
 	// Names
@@ -779,7 +776,7 @@ static table_CFF *fdFromJson(json_value *dump, const otfcc_Options *options, boo
 	if (table->isCID && !table->cidOrdering) { table->cidOrdering = sdsnew("OTFCCAUTOCID"); }
 	return table;
 }
-table_CFF *otfcc_parseCFF(json_value *root, const otfcc_Options *options) {
+table_CFF *otfcc_parseCFF(const json_value *root, const otfcc_Options *options) {
 	json_value *dump = json_obj_get_type(root, "CFF_", json_object);
 	if (!dump) {
 		return NULL;
@@ -806,13 +803,11 @@ typedef struct {
 
 static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_Buffer **s, caryll_Buffer **gs,
                                  caryll_Buffer **ls) {
-	*s = bufnew();
-	*gs = bufnew();
-	if (context->glyf->numberGlyphs == 0) { return; }
+	if (context->glyf->length == 0) { return; }
 	context->graph->doSubroutinize = context->options->cff_doSubroutinize;
-	for (glyphid_t j = 0; j < context->glyf->numberGlyphs; j++) {
+	for (glyphid_t j = 0; j < context->glyf->length; j++) {
 		cff_CharstringIL *il =
-		    cff_compileGlyphToIL(context->glyf->glyphs[j], context->defaultWidth, context->nominalWidthX);
+		    cff_compileGlyphToIL(context->glyf->items[j], context->defaultWidth, context->nominalWidthX);
 		cff_optimizeIL(il, context->options);
 		cff_insertILToGraph(context->graph, il);
 		FREE(il->instr);
@@ -1020,20 +1015,20 @@ static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
 static caryll_Buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid_entry **stringHash) {
 	cff_Charset *charset;
 	NEW(charset);
-	if (glyf->numberGlyphs > 1) { // At least two glyphs
+	if (glyf->length > 1) { // At least two glyphs
 		charset->t = cff_CHARSET_FORMAT2;
 		charset->s = 1; // One segment only
 		charset->f2.format = 2;
 		NEW(charset->f2.range2);
 		if (cff->isCID) {
 			charset->f2.range2[0].first = 1;
-			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+			charset->f2.range2[0].nleft = glyf->length - 2;
 		} else {
-			for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
-				sidof(stringHash, glyf->glyphs[j]->name);
+			for (glyphid_t j = 1; j < glyf->length; j++) {
+				sidof(stringHash, glyf->items[j]->name);
 			}
-			charset->f2.range2[0].first = sidof(stringHash, glyf->glyphs[1]->name);
-			charset->f2.range2[0].nleft = glyf->numberGlyphs - 2;
+			charset->f2.range2[0].first = sidof(stringHash, glyf->items[1]->name);
+			charset->f2.range2[0].nleft = glyf->length - 2;
 		}
 	} else {
 		charset->t = cff_CHARSET_ISOADOBE;
@@ -1052,12 +1047,12 @@ static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	cff_FDSelect *fds;
 	NEW(fds);
 	fds->t = cff_FDSELECT_UNSPECED;
-	if (!glyf->numberGlyphs) goto done;
-	uint8_t fdi0 = glyf->glyphs[0]->fdSelect.index;
+	if (!glyf->length) goto done;
+	uint8_t fdi0 = glyf->items[0]->fdSelect.index;
 	if (fdi0 > cff->fdArrayCount) fdi0 = 0;
 	current = fdi0;
-	for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
-		uint8_t fdi = glyf->glyphs[j]->fdSelect.index;
+	for (glyphid_t j = 1; j < glyf->length; j++) {
+		uint8_t fdi = glyf->items[j]->fdSelect.index;
 		if (fdi > cff->fdArrayCount) fdi = 0;
 		if (fdi != current) {
 			current = fdi;
@@ -1067,10 +1062,10 @@ static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	NEW(fds->f3.range3, ranges);
 	fds->f3.range3[0].first = 0;
 	fds->f3.range3[0].fd = current = fdi0;
-	for (glyphid_t j = 1; j < glyf->numberGlyphs; j++) {
-		uint8_t fdi = glyf->glyphs[j]->fdSelect.index;
+	for (glyphid_t j = 1; j < glyf->length; j++) {
+		uint8_t fdi = glyf->items[j]->fdSelect.index;
 		if (fdi > cff->fdArrayCount) fdi = 0;
-		if (glyf->glyphs[j]->fdSelect.index != current) {
+		if (glyf->items[j]->fdSelect.index != current) {
 			current = fdi;
 			fds->s++;
 			fds->f3.range3[fds->s].first = j;
@@ -1081,7 +1076,7 @@ static caryll_Buffer *cff_make_fdselect(table_CFF *cff, table_glyf *glyf) {
 	fds->s = ranges;
 	fds->f3.format = 3;
 	fds->f3.nranges = ranges;
-	fds->f3.sentinel = glyf->numberGlyphs;
+	fds->f3.sentinel = glyf->length;
 done:;
 	caryll_Buffer *e = cff_build_FDSelect(*fds);
 	cff_close_FDSelect(*fds);

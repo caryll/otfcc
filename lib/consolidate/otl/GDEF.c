@@ -3,7 +3,7 @@
 typedef struct {
 	int gid;
 	sds name;
-	otl_CaretValueRecord cr;
+	otl_CaretValueList carets;
 	UT_hash_handle hh;
 } GDEF_ligcaret_hash;
 static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) {
@@ -13,35 +13,36 @@ void consolidate_GDEF(otfcc_Font *font, table_GDEF *gdef, const otfcc_Options *o
 	if (!font || !font->glyph_order || !gdef) return;
 	if (gdef->glyphClassDef) fontop_consolidateClassDef(font, gdef->glyphClassDef, options);
 	if (gdef->markAttachClassDef) fontop_consolidateClassDef(font, gdef->markAttachClassDef, options);
-	if (gdef->ligCarets) {
-		fontop_consolidateCoverage(font, gdef->ligCarets->coverage, options);
+	if (gdef->ligCarets.length) {
 		GDEF_ligcaret_hash *h = NULL;
-		for (glyphid_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
+		for (glyphid_t j = 0; j < gdef->ligCarets.length; j++) {
 			GDEF_ligcaret_hash *s;
-			int gid = gdef->ligCarets->coverage->glyphs[j].index;
-			sds gname = gdef->ligCarets->coverage->glyphs[j].name;
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &gdef->ligCarets.items[j].glyph)) { continue; }
+			int gid = gdef->ligCarets.items[j].glyph.index;
+			sds gname = sdsdup(gdef->ligCarets.items[j].glyph.name);
 			if (gname) {
 				HASH_FIND_INT(h, &gid, s);
 				if (!s) {
 					NEW(s);
 					s->gid = gid;
 					s->name = gname;
-					s->cr = gdef->ligCarets->carets[j];
+					otl_iCaretValueList.move(&s->carets, &gdef->ligCarets.items[j].carets);
 					HASH_ADD_INT(h, gid, s);
 				} else {
 					logWarning("[Consolidate] Detected caret value double-mapping about glyph %s", gname);
-					FREE(gdef->ligCarets->carets[j].values);
 				}
 			}
 		}
 		HASH_SORT(h, by_gid);
-		gdef->ligCarets->coverage->numGlyphs = HASH_COUNT(h);
+		otl_iLigCaretTable.clear(&gdef->ligCarets);
 		GDEF_ligcaret_hash *s, *tmp;
-		glyphid_t j = 0;
 		HASH_ITER(hh, h, s, tmp) {
-			gdef->ligCarets->coverage->glyphs[j] = Handle.fromConsolidated(s->gid, s->name);
-			gdef->ligCarets->carets[j] = s->cr;
-			j++;
+			otl_CaretValueRecord v = {
+			    .glyph = Handle.fromConsolidated(s->gid, s->name),
+			};
+			otl_iCaretValueList.move(&v.carets, &s->carets);
+			otl_iLigCaretTable.push(&gdef->ligCarets, v);
+			sdsfree(s->name);
 			HASH_DEL(h, s);
 			FREE(s);
 		}

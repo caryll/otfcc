@@ -118,6 +118,7 @@ int main() {
 #else
 int main(int argc, char *argv[]) {
 #endif
+
 	struct timespec begin;
 	time_now(&begin);
 
@@ -264,12 +265,12 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 	}
 
-	json_value *root;
+	json_value *jsonRoot = NULL;
 	loggedStep("Parse into JSON") {
-		root = json_parse(buffer, length);
+		jsonRoot = json_parse(buffer, length);
 		free(buffer);
 		logStepTime;
-		if (!root) {
+		if (!jsonRoot) {
 			logError("Cannot parse JSON file \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
@@ -278,13 +279,13 @@ int main(int argc, char *argv[]) {
 	otfcc_Font *font;
 	loggedStep("Parse") {
 		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
-		font = parser->create(root, 0, options);
+		font = parser->create(jsonRoot, 0, options);
 		if (!font) {
 			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
 		parser->dispose(parser);
-		json_value_free(root);
+		json_value_free(jsonRoot);
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
@@ -301,5 +302,6 @@ int main(int argc, char *argv[]) {
 		buffree(otf), writer->dispose(writer), otfcc_deleteFont(font), sdsfree(outputPath);
 	}
 	otfcc_deleteOptions(options);
+
 	return 0;
 }

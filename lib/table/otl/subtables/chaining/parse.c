@@ -5,9 +5,7 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 	json_value *_apply = json_obj_get_type(_subtable, "apply", json_array);
 	if (!_match || !_apply) return NULL;
 
-	otl_Subtable *_st;
-	NEW(_st);
-	subtable_chaining *subtable = &(_st->chaining);
+	subtable_chaining *subtable = iSubtable_chaining.create();
 	subtable->type = otl_chaining_canonical;
 
 	otl_ChainingRule *rule = &subtable->rule;
@@ -35,5 +33,5 @@ otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Option
 			}
 		}
 	}
-	return _st;
+	return (otl_Subtable *)subtable;
 }

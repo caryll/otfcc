@@ -16,13 +16,6 @@
 extern const char SCRIPT_LANGUAGE_SEPARATOR;
 extern const char *lookupFlagsLabels[];
 extern const char *tableNames[];
-typedef const caryll_VectorEntryTypeInfo(otl_Lookup *) otl_LookupTI_t;
-typedef const caryll_VectorEntryTypeInfo(otl_Feature *) otl_FeatureTI_t;
-typedef const caryll_VectorEntryTypeInfo(otl_LanguageSystem *) otl_LanguageSystemTI_t;
-
-extern otl_LookupTI_t otl_LookupTI;
-extern otl_FeatureTI_t otl_FeatureTI;
-extern otl_LanguageSystemTI_t otl_LanguageSystemTI;
 
 void otfcc_delete_lookup(otl_Lookup *lookup);
 

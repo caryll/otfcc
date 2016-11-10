@@ -8,19 +8,22 @@ typedef struct {
 	pos_t coordiante;
 	int16_t pointIndex;
 } otl_CaretValue;
+extern caryll_ElementInterface(otl_CaretValue) otl_iCaretValue;
+typedef caryll_Vector(otl_CaretValue) otl_CaretValueList;
+extern caryll_VectorInterface(otl_CaretValueList, otl_CaretValue) otl_iCaretValueList;
+
 typedef struct {
-	glyphid_t caretCount;
-	OWNING otl_CaretValue *values;
+	otfcc_GlyphHandle glyph;
+	OWNING otl_CaretValueList carets;
 } otl_CaretValueRecord;
-typedef struct {
-	OWNING otl_Coverage *coverage;
-	OWNING otl_CaretValueRecord *carets;
-} otl_LigCaretTable;
+extern caryll_ElementInterface(otl_CaretValueRecord) otl_iCaretValueRecord;
+typedef caryll_Vector(otl_CaretValueRecord) otl_LigCaretTable;
+extern caryll_VectorInterface(otl_LigCaretTable, otl_CaretValueRecord) otl_iLigCaretTable;
 
 typedef struct {
 	OWNING otl_ClassDef *glyphClassDef;
 	OWNING otl_ClassDef *markAttachClassDef;
-	OWNING otl_LigCaretTable *ligCarets;
+	OWNING otl_LigCaretTable ligCarets;
 } table_GDEF;
 
 #endif

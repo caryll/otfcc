@@ -15,8 +15,12 @@ typedef struct {
 	                // bit 1 - 7 : unused, set to 0
 	                // in JSON, they are separated into several boolean fields.
 } glyf_Point;
+extern caryll_ElementInterface(glyf_Point) glyf_iPoint;
 typedef caryll_Vector(glyf_Point) glyf_Contour;
+extern caryll_VectorInterface(glyf_Contour, glyf_Point) glyf_iContour;
+
 typedef caryll_Vector(glyf_Contour) glyf_ContourList;
+extern caryll_VectorInterface(glyf_ContourList, glyf_Contour) glyf_iContourList;
 
 // CFF stems and hint masks
 typedef struct {
@@ -24,7 +28,9 @@ typedef struct {
 	pos_t width;
 	uint16_t map;
 } glyf_PostscriptStemDef;
+extern caryll_ElementInterface(glyf_PostscriptStemDef) glyf_iPostscriptStemDef;
 typedef caryll_Vector(glyf_PostscriptStemDef) glyf_StemDefList;
+extern caryll_VectorInterface(glyf_StemDefList, glyf_PostscriptStemDef) glyf_iStemDefList;
 
 typedef struct {
 	uint16_t pointsBefore;
@@ -32,7 +38,9 @@ typedef struct {
 	bool maskH[0x100];
 	bool maskV[0x100];
 } glyf_PostscriptHintMask;
+extern caryll_ElementInterface(glyf_PostscriptHintMask) glyf_iPostscriptHintMask;
 typedef caryll_Vector(glyf_PostscriptHintMask) glyf_MaskList;
+extern caryll_VectorInterface(glyf_MaskList, glyf_PostscriptHintMask) glyf_iMaskList;
 
 typedef struct {
 	otfcc_GlyphHandle glyph;
@@ -47,7 +55,9 @@ typedef struct {
 	bool roundToGrid;
 	bool useMyMetrics;
 } glyf_ComponentReference;
+extern caryll_ElementInterface(glyf_ComponentReference) glyf_iComponentReference;
 typedef caryll_Vector(glyf_ComponentReference) glyf_ReferenceList;
+extern caryll_VectorInterface(glyf_ReferenceList, glyf_ComponentReference) glyf_iReferenceList;
 
 typedef struct {
 	pos_t xMin;
@@ -93,9 +103,9 @@ typedef struct {
 	glyf_GlyphStat stat;
 } glyf_Glyph;
 
-typedef struct {
-	glyphid_t numberGlyphs;
-	glyf_Glyph **glyphs;
-} table_glyf;
+typedef glyf_Glyph *glyf_GlyphPtr;
+extern caryll_ElementInterface(glyf_GlyphPtr) glyf_iGlyphPtr;
+typedef caryll_Vector(glyf_GlyphPtr) table_glyf;
+extern caryll_VectorInterface(table_glyf, glyf_GlyphPtr) iTable_glyf;
 
 #endif

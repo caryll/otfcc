@@ -1,26 +1,30 @@
 #include "gpos-pair.h"
 #include "gpos-common.h"
 
-void otl_delete_gpos_pair(otl_Subtable *_subtable) {
-	if (_subtable) {
-		subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-		if (subtable->firstValues) {
-			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-				FREE(subtable->firstValues[j]);
-			}
-			FREE(subtable->firstValues);
-		}
-		if (subtable->secondValues) {
-			for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
-				FREE(subtable->secondValues[j]);
-			}
-			FREE(subtable->secondValues);
-		}
-		ClassDef.dispose(subtable->first);
-		ClassDef.dispose(subtable->second);
-		FREE(_subtable);
-	}
+static void initGposPair(subtable_gpos_pair *subtable) {
+	subtable->first = NULL;
+	subtable->second = NULL;
+	subtable->firstValues = NULL;
+	subtable->secondValues = NULL;
 }
+static void disposeGposPair(subtable_gpos_pair *subtable) {
+	if (subtable->firstValues) {
+		for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
+			FREE(subtable->firstValues[j]);
+		}
+		FREE(subtable->firstValues);
+	}
+	if (subtable->secondValues) {
+		for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
+			FREE(subtable->secondValues[j]);
+		}
+		FREE(subtable->secondValues);
+	}
+	DELETE(ClassDef.destroy, subtable->first);
+	DELETE(ClassDef.destroy, subtable->second);
+}
+
+caryll_CDRefElementImpl(subtable_gpos_pair, initGposPair, disposeGposPair, iSubtable_gpos_pair);
 
 typedef struct {
 	int gid;
@@ -30,13 +34,7 @@ typedef struct {
 
 otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                  const otfcc_Options *options) {
-	otl_Subtable *_subtable;
-	NEW(_subtable);
-	subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
-	subtable->first = NULL;
-	subtable->second = NULL;
-	subtable->firstValues = NULL;
-	subtable->secondValues = NULL;
+	subtable_gpos_pair *subtable = iSubtable_gpos_pair.create();
 
 	checkLength(offset + 2);
 	uint16_t subtableFormat = read_16u(data + offset);
@@ -129,7 +127,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 			HASH_DEL(h, s);
 			FREE(s);
 		}
-		return _subtable;
+		return (otl_Subtable *)subtable;
 	} else if (subtableFormat == 2) {
 		// pair adjustment by classes
 		checkLength(offset + 16);
@@ -140,7 +138,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		otl_Coverage *cov = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 		subtable->first = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 8));
 		subtable->first = ClassDef.expand(cov, subtable->first);
-		Coverage.dispose(cov);
+		DELETE(Coverage.destroy, cov);
 		subtable->second = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 10));
 		if (!subtable->first || !subtable->second) goto FAIL;
 		glyphclass_t class1Count = read_16u(data + offset + 12);
@@ -164,10 +162,10 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 			}
 		}
 
-		return _subtable;
+		return (otl_Subtable *)subtable;
 	}
 FAIL:
-	otl_delete_gpos_pair(_subtable);
+	iSubtable_gpos_pair.destroy(subtable);
 	return NULL;
 }
 
@@ -203,13 +201,7 @@ json_value *otl_gpos_dump_pair(const otl_Subtable *_subtable) {
 	return st;
 }
 otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable, const otfcc_Options *options) {
-	otl_Subtable *_st;
-	NEW(_st);
-	subtable_gpos_pair *subtable = &(_st->gpos_pair);
-	subtable->first = NULL;
-	subtable->second = NULL;
-	subtable->firstValues = NULL;
-	subtable->secondValues = NULL;
+	subtable_gpos_pair *subtable = iSubtable_gpos_pair.create();
 
 	json_value *_mat = json_obj_get_type(_subtable, "matrix", json_array);
 	subtable->first = ClassDef.parse(json_obj_get_type(_subtable, "first", json_object));
@@ -245,9 +237,9 @@ otl_Subtable *otl_gpos_parse_pair(const json_value *_subtable, const otfcc_Optio
 			}
 		}
 	}
-	return _st;
+	return (otl_Subtable *)subtable;
 FAIL:
-	otl_delete_gpos_pair(_st);
+	iSubtable_gpos_pair.destroy(subtable);
 	return NULL;
 }
 static otl_Coverage *covFromCD(otl_ClassDef *cd) {
@@ -256,7 +248,7 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	cov->numGlyphs = cd->numGlyphs;
 	NEW(cov->glyphs, cd->numGlyphs);
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-		cov->glyphs[j] = Handle.copy(cd->glyphs[j]);
+		cov->glyphs[j] = Handle.dup(cd->glyphs[j]);
 	}
 	return cov;
 }
@@ -320,7 +312,7 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 		bk_push(root, p16, pairSet, bkover);
 	}
-	DELETE(Coverage.dispose, cov);
+	DELETE(Coverage.destroy, cov);
 	FREE(pairCounts);
 	return root;
 }
@@ -354,7 +346,7 @@ bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 			        bkover);
 		}
 	}
-	DELETE(Coverage.dispose, cov);
+	DELETE(Coverage.destroy, cov);
 	return root;
 }
 caryll_Buffer *otfcc_build_gpos_pair(const otl_Subtable *_subtable) {

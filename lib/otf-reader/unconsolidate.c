@@ -18,11 +18,11 @@ GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 	bufwrite8(buf, '(');
 	for (shapeid_t j = 0; j < g->contours.length; j++) {
 		bufwrite8(buf, '(');
-		glyf_Contour *c = &g->contours.data[j];
+		glyf_Contour *c = &g->contours.items[j];
 		for (shapeid_t k = 0; k < c->length; k++) {
-			bufwrite32b(buf, otfcc_to_fixed(c->data[k].x));
-			bufwrite32b(buf, otfcc_to_fixed(c->data[k].y));
-			bufwrite8(buf, c->data[k].onCurve ? 1 : 0);
+			bufwrite32b(buf, otfcc_to_fixed(c->items[k].x));
+			bufwrite32b(buf, otfcc_to_fixed(c->items[k].y));
+			bufwrite8(buf, c->items[k].onCurve ? 1 : 0);
 		}
 		bufwrite8(buf, ')');
 	}
@@ -31,8 +31,8 @@ GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 	bufwrite8(buf, 'R');
 	bufwrite8(buf, '(');
 	for (shapeid_t j = 0; j < g->references.length; j++) {
-		glyf_ComponentReference *r = &g->references.data[j];
-		GlyphHash h = nameGlyphByHash(glyf->glyphs[r->glyph.index], glyf);
+		glyf_ComponentReference *r = &g->references.items[j];
+		GlyphHash h = nameGlyphByHash(glyf->items[r->glyph.index], glyf);
 		bufwrite_bytes(buf, SHA1_BLOCK_SIZE, h.hash);
 		bufwrite32b(buf, otfcc_to_fixed(r->x));
 		bufwrite32b(buf, otfcc_to_fixed(r->y));
@@ -46,41 +46,41 @@ GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 	bufwrite8(buf, 's'), bufwrite8(buf, 'H');
 	bufwrite8(buf, '(');
 	for (shapeid_t j = 0; j < g->stemH.length; j++) {
-		bufwrite32b(buf, otfcc_to_fixed(g->stemH.data[j].position));
-		bufwrite32b(buf, otfcc_to_fixed(g->stemH.data[j].width));
+		bufwrite32b(buf, otfcc_to_fixed(g->stemH.items[j].position));
+		bufwrite32b(buf, otfcc_to_fixed(g->stemH.items[j].width));
 	}
 	bufwrite8(buf, ')');
 	bufwrite8(buf, 's'), bufwrite8(buf, 'V');
 	bufwrite8(buf, '(');
 	for (shapeid_t j = 0; j < g->stemV.length; j++) {
-		bufwrite32b(buf, otfcc_to_fixed(g->stemV.data[j].position));
-		bufwrite32b(buf, otfcc_to_fixed(g->stemV.data[j].width));
+		bufwrite32b(buf, otfcc_to_fixed(g->stemV.items[j].position));
+		bufwrite32b(buf, otfcc_to_fixed(g->stemV.items[j].width));
 	}
 	bufwrite8(buf, ')');
 	// hintmask, contourmask
 	bufwrite8(buf, 'm'), bufwrite8(buf, 'H');
 	bufwrite8(buf, '(');
 	for (shapeid_t j = 0; j < g->hintMasks.length; j++) {
-		bufwrite16b(buf, g->hintMasks.data[j].contoursBefore);
-		bufwrite16b(buf, g->hintMasks.data[j].pointsBefore);
+		bufwrite16b(buf, g->hintMasks.items[j].contoursBefore);
+		bufwrite16b(buf, g->hintMasks.items[j].pointsBefore);
 		for (shapeid_t k = 0; k < g->stemH.length; k++) {
-			bufwrite8(buf, g->hintMasks.data[j].maskH[k]);
+			bufwrite8(buf, g->hintMasks.items[j].maskH[k]);
 		}
 		for (shapeid_t k = 0; k < g->stemV.length; k++) {
-			bufwrite8(buf, g->hintMasks.data[j].maskV[k]);
+			bufwrite8(buf, g->hintMasks.items[j].maskV[k]);
 		}
 	}
 	bufwrite8(buf, ')');
 	bufwrite8(buf, 'm'), bufwrite8(buf, 'C');
 	bufwrite8(buf, '(');
 	for (shapeid_t j = 0; j < g->contourMasks.length; j++) {
-		bufwrite16b(buf, g->contourMasks.data[j].contoursBefore);
-		bufwrite16b(buf, g->contourMasks.data[j].pointsBefore);
+		bufwrite16b(buf, g->contourMasks.items[j].contoursBefore);
+		bufwrite16b(buf, g->contourMasks.items[j].pointsBefore);
 		for (shapeid_t k = 0; k < g->stemH.length; k++) {
-			bufwrite8(buf, g->contourMasks.data[j].maskH[k]);
+			bufwrite8(buf, g->contourMasks.items[j].maskH[k]);
 		}
 		for (shapeid_t k = 0; k < g->stemV.length; k++) {
-			bufwrite8(buf, g->contourMasks.data[j].maskV[k]);
+			bufwrite8(buf, g->contourMasks.items[j].maskV[k]);
 		}
 	}
 	bufwrite8(buf, ')');
@@ -112,7 +112,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	otfcc_GlyphOrder *glyph_order = GlyphOrder.create();
 	otfcc_GlyphOrder *aglfn = GlyphOrder.create();
 	aglfn_setupNames(aglfn);
-	glyphid_t numGlyphs = font->glyf->numberGlyphs;
+	glyphid_t numGlyphs = font->glyf->length;
 	sds prefix;
 	if (options->glyph_name_prefix) {
 		prefix = sdsnew(options->glyph_name_prefix);
@@ -122,7 +122,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 
 	// pass 1: Map to existing glyph names
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
-		glyf_Glyph *g = font->glyf->glyphs[j];
+		glyf_Glyph *g = font->glyf->items[j];
 		if (options->name_glyphs_by_hash) {
 			GlyphHash h = nameGlyphByHash(g, font->glyf);
 			sds gname = sdsempty();
@@ -203,8 +203,8 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 
 static void nameGlyphs(otfcc_Font *font, otfcc_GlyphOrder *gord) {
 	if (!gord) return;
-	for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-		glyf_Glyph *g = font->glyf->glyphs[j];
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		glyf_Glyph *g = font->glyf->items[j];
 		sds glyphName = NULL;
 		GlyphOrder.nameAField_Shared(gord, j, &glyphName);
 		if (g->name) sdsfree(g->name);
@@ -214,36 +214,40 @@ static void nameGlyphs(otfcc_Font *font, otfcc_GlyphOrder *gord) {
 
 static void unconsolidate_chaining(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) {
 	tableid_t totalRules = 0;
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		if (!lookup->subtables[j]) continue;
-		if (lookup->subtables[j]->chaining.type == otl_chaining_poly) {
-			totalRules += lookup->subtables[j]->chaining.rulesCount;
-		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
+	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+		if (!lookup->subtables.items[j]) continue;
+		if (lookup->subtables.items[j]->chaining.type == otl_chaining_poly) {
+			totalRules += lookup->subtables.items[j]->chaining.rulesCount;
+		} else if (lookup->subtables.items[j]->chaining.type == otl_chaining_canonical) {
 			totalRules += 1;
 		}
 	}
-	otl_Subtable **newsts;
-	NEW(newsts, totalRules);
-	tableid_t jj = 0;
-	for (tableid_t j = 0; j < lookup->subtableCount; j++) {
-		if (!lookup->subtables[j]) continue;
-		if (lookup->subtables[j]->chaining.type == otl_chaining_poly) {
-			for (tableid_t k = 0; k < lookup->subtables[j]->chaining.rulesCount; k++) {
-				NEW(newsts[jj]);
-				newsts[jj]->chaining.type = otl_chaining_canonical;
-				newsts[jj]->chaining.rule = *(lookup->subtables[j]->chaining.rules[k]);
-				jj += 1;
+	otl_SubtableList newsts;
+	otl_iSubtableList.init(&newsts);
+	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+		if (!lookup->subtables.items[j]) continue;
+		if (lookup->subtables.items[j]->chaining.type == otl_chaining_poly) {
+			for (tableid_t k = 0; k < lookup->subtables.items[j]->chaining.rulesCount; k++) {
+				otl_Subtable *st;
+				NEW(st);
+				st->chaining.type = otl_chaining_canonical;
+				// transfer ownership of rule
+				st->chaining.rule = *(lookup->subtables.items[j]->chaining.rules[k]);
+				FREE(lookup->subtables.items[j]->chaining.rules[k]);
+				otl_iSubtableList.push(&newsts, st);
 			}
-			FREE(lookup->subtables[j]->chaining.rules);
-			FREE(lookup->subtables[j]);
-		} else if (lookup->subtables[j]->chaining.type == otl_chaining_canonical) {
-			NEW(newsts[jj]);
-			newsts[jj]->chaining.type = otl_chaining_canonical;
-			newsts[jj]->chaining.rule = lookup->subtables[j]->chaining.rule;
-			jj += 1;
+			FREE(lookup->subtables.items[j]->chaining.rules);
+			FREE(lookup->subtables.items[j]);
+		} else if (lookup->subtables.items[j]->chaining.type == otl_chaining_canonical) {
+			otl_Subtable *st;
+			NEW(st);
+			st->chaining.type = otl_chaining_canonical;
+			st->chaining.rule = lookup->subtables.items[j]->chaining.rule;
+			otl_iSubtableList.push(&newsts, st);
+			lookup->subtables.items[j] = NULL;
 		}
 	}
-	lookup->subtableCount = totalRules;
+	otl_iSubtableList.disposeDependent(&lookup->subtables, lookup);
 	lookup->subtables = newsts;
 }
 
@@ -261,13 +265,13 @@ static void expandChain(otfcc_Font *font, otl_Lookup *lookup, table_OTL *table) 
 static void expandChainingLookups(otfcc_Font *font) {
 	if (font->GSUB) {
 		for (uint32_t j = 0; j < font->GSUB->lookups.length; j++) {
-			otl_Lookup *lookup = font->GSUB->lookups.data[j];
+			otl_Lookup *lookup = font->GSUB->lookups.items[j];
 			expandChain(font, lookup, font->GSUB);
 		}
 	}
 	if (font->GPOS) {
 		for (uint32_t j = 0; j < font->GPOS->lookups.length; j++) {
-			otl_Lookup *lookup = font->GPOS->lookups.data[j];
+			otl_Lookup *lookup = font->GPOS->lookups.items[j];
 			expandChain(font, lookup, font->GPOS);
 		}
 	}
@@ -277,8 +281,8 @@ static void mergeHmtx(otfcc_Font *font) {
 	// Merge hmtx table into glyf.
 	if (font->hhea && font->hmtx && font->glyf) {
 		uint32_t count_a = font->hhea->numberOfMetrics;
-		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			font->glyf->glyphs[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+		for (glyphid_t j = 0; j < font->glyf->length; j++) {
+			font->glyf->items[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 		}
 	}
 }
@@ -287,22 +291,22 @@ static void mergeVmtx(otfcc_Font *font) {
 	// Merge vmtx table into glyf.
 	if (font->vhea && font->vmtx && font->glyf) {
 		uint32_t count_a = font->vhea->numOfLongVerMetrics;
-		for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-			font->glyf->glyphs[j]->advanceHeight = font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
+		for (glyphid_t j = 0; j < font->glyf->length; j++) {
+			font->glyf->items[j]->advanceHeight = font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
 			if (j < count_a) {
-				font->glyf->glyphs[j]->verticalOrigin = font->vmtx->metrics[j].tsb + font->glyf->glyphs[j]->stat.yMax;
+				font->glyf->items[j]->verticalOrigin = font->vmtx->metrics[j].tsb + font->glyf->items[j]->stat.yMax;
 			} else {
-				font->glyf->glyphs[j]->verticalOrigin =
-				    font->vmtx->topSideBearing[j - count_a] + font->glyf->glyphs[j]->stat.yMax;
+				font->glyf->items[j]->verticalOrigin =
+				    font->vmtx->topSideBearing[j - count_a] + font->glyf->items[j]->stat.yMax;
 			}
 		}
 		if (font->VORG) {
-			for (glyphid_t j = 0; j < font->glyf->numberGlyphs; j++) {
-				font->glyf->glyphs[j]->verticalOrigin = font->VORG->defaultVerticalOrigin;
+			for (glyphid_t j = 0; j < font->glyf->length; j++) {
+				font->glyf->items[j]->verticalOrigin = font->VORG->defaultVerticalOrigin;
 			}
 			for (glyphid_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
-				if (font->VORG->entries[j].gid < font->glyf->numberGlyphs) {
-					font->glyf->glyphs[font->VORG->entries[j].gid]->verticalOrigin =
+				if (font->VORG->entries[j].gid < font->glyf->length) {
+					font->glyf->items[font->VORG->entries[j].gid]->verticalOrigin =
 					    font->VORG->entries[j].verticalOrigin;
 				}
 			}
@@ -311,8 +315,8 @@ static void mergeVmtx(otfcc_Font *font) {
 }
 static void mergeLTSH(otfcc_Font *font) {
 	if (font->glyf && font->LTSH) {
-		for (glyphid_t j = 0; j < font->glyf->numberGlyphs && j < font->LTSH->numGlyphs; j++) {
-			font->glyf->glyphs[j]->yPel = font->LTSH->yPels[j];
+		for (glyphid_t j = 0; j < font->glyf->length && j < font->LTSH->numGlyphs; j++) {
+			font->glyf->items[j]->yPel = font->LTSH->yPels[j];
 		}
 	}
 }
