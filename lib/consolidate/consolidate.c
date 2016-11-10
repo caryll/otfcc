@@ -28,43 +28,40 @@ static int by_mask_pointindex(const glyf_PostscriptHintMask *a, const glyf_Posts
 	return a->contoursBefore == b->contoursBefore ? a->pointsBefore - b->pointsBefore
 	                                              : a->contoursBefore - b->contoursBefore;
 }
-void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
-	// Remove empty contours
-	{
-		shapeid_t nContoursConsolidated = 0;
-		shapeid_t skip = 0;
-		for (shapeid_t j = 0; j < g->contours.length; j++) {
-			if (g->contours.items[j].length) {
-				g->contours.items[j - skip] = g->contours.items[j];
-				nContoursConsolidated += 1;
-			} else {
-				glyf_iContourList.disposeItem(&g->contours, j);
-				logWarning("[Consolidate] Removed empty contour #%d in glyph %s.\n", j, g->name);
-				skip += 1;
-			}
-		}
-		g->contours.length = nContoursConsolidated;
-	}
 
-	// Consolidate references
-	{
-		shapeid_t nReferencesConsolidated = 0;
-		shapeid_t skip = 0;
-		for (shapeid_t j = 0; j < g->references.length; j++) {
-			if (!GlyphOrder.consolidateHandle(font->glyph_order, &g->references.items[j].glyph)) {
-				logWarning("[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
-				           g->references.items[j].glyph.name, g->name);
-				glyf_iReferenceList.disposeItem(&(g->references), j);
-				skip += 1;
-			} else {
-				g->references.items[j - skip] = g->references.items[j];
-				nReferencesConsolidated += 1;
-			}
+static void consolidateGlyphContours(glyf_Glyph *g, const otfcc_Options *options) {
+	shapeid_t nContoursConsolidated = 0;
+	shapeid_t skip = 0;
+	for (shapeid_t j = 0; j < g->contours.length; j++) {
+		if (g->contours.items[j].length) {
+			g->contours.items[j - skip] = g->contours.items[j];
+			nContoursConsolidated += 1;
+		} else {
+			glyf_iContourList.disposeItem(&g->contours, j);
+			logWarning("[Consolidate] Removed empty contour #%d in glyph %s.\n", j, g->name);
+			skip += 1;
 		}
-		g->references.length = nReferencesConsolidated;
 	}
-
-	// Sort stems
+	g->contours.length = nContoursConsolidated;
+}
+static void consolidateGlyphReferences(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
+	shapeid_t nReferencesConsolidated = 0;
+	shapeid_t skip = 0;
+	for (shapeid_t j = 0; j < g->references.length; j++) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &g->references.items[j].glyph)) {
+			logWarning("[Consolidate] Ignored absent glyph component reference /%s within /%s.\n",
+			           g->references.items[j].glyph.name, g->name);
+			glyf_iReferenceList.disposeItem(&(g->references), j);
+			skip += 1;
+		} else {
+			g->references.items[j - skip] = g->references.items[j];
+			nReferencesConsolidated += 1;
+		}
+	}
+	g->references.length = nReferencesConsolidated;
+}
+static void consolidateGlyphHints(glyf_Glyph *g, const otfcc_Options *options) {
+	// sort stems
 	if (g->stemH.length) {
 		for (shapeid_t j = 0; j < g->stemH.length; j++) {
 			g->stemH.items[j].map = j;
@@ -114,26 +111,35 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 	}
 	FREE(hmap);
 	FREE(vmap);
+}
+static void consolidateFDSelect(fd_handle *h, table_CFF *cff, const otfcc_Options *options, const sds gname) {
+	if (!cff || !cff->fdArray || !cff->fdArrayCount) return;
 	// Consolidate fdSelect
-	if (g->fdSelect.state == HANDLE_STATE_INDEX && font->CFF_ && font->CFF_->fdArray) {
-		if (g->fdSelect.index >= font->CFF_->fdArrayCount) { g->fdSelect.index = 0; }
-		g->fdSelect = Handle.fromConsolidated(g->fdSelect.index, font->CFF_->fdArray[g->fdSelect.index]->fontName);
-	} else if (g->fdSelect.name && font->CFF_ && font->CFF_->fdArray) {
+	if (h->state == HANDLE_STATE_INDEX) {
+		if (h->index >= cff->fdArrayCount) { h->index = 0; }
+		Handle.consolidateTo(h, h->index, cff->fdArray[h->index]->fontName);
+	} else if (h->name) {
 		bool found = false;
-		for (tableid_t j = 0; j < font->CFF_->fdArrayCount; j++) {
-			if (strcmp(g->fdSelect.name, font->CFF_->fdArray[j]->fontName) == 0) {
+		for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
+			if (strcmp(h->name, cff->fdArray[j]->fontName) == 0) {
 				found = true;
-				Handle.consolidateTo(&(g->fdSelect), j, font->CFF_->fdArray[j]->fontName);
+				Handle.consolidateTo(h, j, cff->fdArray[j]->fontName);
 				break;
 			}
 		}
 		if (!found) {
-			logWarning("[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", g->fdSelect.name, g->name);
-			Handle.dispose(&(g->fdSelect));
+			logWarning("[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", h->name, gname);
+			Handle.dispose(h);
 		}
-	} else if (g->fdSelect.name) {
-		Handle.dispose(&(g->fdSelect));
+	} else if (h->name) {
+		Handle.dispose(h);
 	}
+}
+void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
+	consolidateGlyphContours(g, options);
+	consolidateGlyphReferences(g, font, options);
+	consolidateGlyphHints(g, options);
+	consolidateFDSelect(&g->fdSelect, font->CFF_, options, g->name);
 }
 
 void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
