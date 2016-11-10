@@ -25,8 +25,9 @@ typedef struct vf_Functional {
 	};
 } vf_Functional;
 
-struct otfcc_VFPackage {
+struct vf_IFunctional {
 	void (*dispose)(MOVE vf_Functional *form);
+	void (*destroy)(MOVE vf_Functional *form);
 	vf_Functional (*scalar)(pos_t scalar);
 	vf_Functional (*add)(MOVE vf_Functional a, MOVE vf_Functional b);
 	vf_Functional (*minus)(MOVE vf_Functional a, MOVE vf_Functional b);
@@ -36,6 +37,6 @@ struct otfcc_VFPackage {
 	vf_Functional (*gxCanonical)(OBSERVE vf_Functional a, shapeid_t n);
 };
 
-extern const struct otfcc_VFPackage otfcc_vfPackage;
+extern const struct vf_IFunctional vf_iFunctional;
 
 #endif

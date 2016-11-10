@@ -1,21 +1,26 @@
 #include "otfcc/vf/functional.h"
 #include "support/util.h"
 
-void vf_Functional_dispose(MOVE vf_Functional *form) {
-	if (form && form->car > vf_scalar) {
+static void vf_Functional_dispose(MOVE vf_Functional *form) {
+	if (form->car > vf_scalar) {
 		for (shapeid_t j = form->arity; j--;) {
 			vf_Functional_dispose(&form->cdr[j]);
 		}
 		FREE(form->cdr);
 	}
 }
-vf_Functional vf_new_Functional_scalar(pos_t scalar) {
+static void vf_Functional_destroy(MOVE vf_Functional *form) {
+	if (!form) return;
+	vf_Functional_dispose(form);
+	FREE(form);
+}
+static vf_Functional vf_new_Functional_scalar(pos_t scalar) {
 	vf_Functional f;
 	f.car = vf_scalar;
 	f.scalar = scalar;
 	return f;
 }
-vf_Functional vf_Functional_add(MOVE vf_Functional a, MOVE vf_Functional b) {
+static vf_Functional vf_Functional_add(MOVE vf_Functional a, MOVE vf_Functional b) {
 	vf_Functional f;
 	f.car = vf_plus;
 	f.arity = 2;
@@ -24,7 +29,7 @@ vf_Functional vf_Functional_add(MOVE vf_Functional a, MOVE vf_Functional b) {
 	f.cdr[1] = b;
 	return f;
 }
-vf_Functional vf_Functional_minus(MOVE vf_Functional a, MOVE vf_Functional b) {
+static vf_Functional vf_Functional_minus(MOVE vf_Functional a, MOVE vf_Functional b) {
 	vf_Functional f;
 	f.car = vf_minus;
 	f.arity = 2;
@@ -33,7 +38,7 @@ vf_Functional vf_Functional_minus(MOVE vf_Functional a, MOVE vf_Functional b) {
 	f.cdr[1] = b;
 	return f;
 }
-vf_Functional vf_Functional_multi(MOVE vf_Functional a, MOVE vf_Functional b) {
+static vf_Functional vf_Functional_multi(MOVE vf_Functional a, MOVE vf_Functional b) {
 	vf_Functional f;
 	f.car = vf_multiply;
 	f.arity = 2;
@@ -42,7 +47,7 @@ vf_Functional vf_Functional_multi(MOVE vf_Functional a, MOVE vf_Functional b) {
 	f.cdr[1] = b;
 	return f;
 }
-pos_t vf_Functional_zero(OBSERVE vf_Functional a) {
+static pos_t vf_Functional_zero(OBSERVE vf_Functional a) {
 	switch (a.car) {
 		case vf_null:
 			return 0;
@@ -61,7 +66,7 @@ pos_t vf_Functional_zero(OBSERVE vf_Functional a) {
 	}
 }
 
-pos_t vf_Functional_base(OBSERVE vf_Functional a, shapeid_t n) {
+static pos_t vf_Functional_base(OBSERVE vf_Functional a, shapeid_t n) {
 	switch (a.car) {
 		case vf_scalar:
 			return a.scalar;
@@ -82,7 +87,7 @@ pos_t vf_Functional_base(OBSERVE vf_Functional a, shapeid_t n) {
 	}
 }
 
-vf_Functional vf_Functional_gxCanonical(OBSERVE vf_Functional a, shapeid_t n) {
+static vf_Functional vf_Functional_gxCanonical(OBSERVE vf_Functional a, shapeid_t n) {
 	vf_Functional fz = vf_new_Functional_scalar(vf_Functional_zero(a));
 	vf_Functional fb = {.car = vf_gxblend, .arity = n, .cdr = NULL};
 	NEW(fb.cdr, n);
@@ -92,8 +97,9 @@ vf_Functional vf_Functional_gxCanonical(OBSERVE vf_Functional a, shapeid_t n) {
 	return vf_Functional_add(fz, fb);
 }
 
-const struct otfcc_VFPackage otfcc_vfPackage = {
+const struct vf_IFunctional vf_iFunctional = {
     .dispose = vf_Functional_dispose,
+    .destroy = vf_Functional_destroy,
     .scalar = vf_new_Functional_scalar,
     .add = vf_Functional_add,
     .minus = vf_Functional_minus,
