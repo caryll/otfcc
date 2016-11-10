@@ -24,6 +24,10 @@
 	void (*init)(MODIFY T *);                                                                                          \
 	void (*copy)(MODIFY T *, const T *);                                                                               \
 	void (*dispose)(MOVE T *);
+#define caryll_VT(T)                                                                                                   \
+	caryll_T(T);                                                                                                       \
+	T (*empty)();                                                                                                      \
+	T (*dup)(const T);
 #define caryll_RT(T)                                                                                                   \
 	caryll_T(T);                                                                                                       \
 	T *(*create)();                                                                                                    \
@@ -62,7 +66,7 @@
 	    .init = name##_init, .copy = name##_copy, .dispose = dtor,                                                     \
 	}
 
-#define caryll_CDRefElementImpl(T, ctor, dtor, name)                                                                   \
+#define caryll_CDRefElementImplFn(T, ctor, dtor, name)                                                                 \
 	static __CARYLL_INLINE__ T *name##_create() {                                                                      \
 		T *x = (T *)malloc(sizeof(T));                                                                                 \
 		ctor(x);                                                                                                       \
@@ -75,9 +79,15 @@
 		if (!x) return;                                                                                                \
 		dtor(x);                                                                                                       \
 		__caryll_free(x);                                                                                              \
-	}                                                                                                                  \
+	}
+
+#define caryll_CdRefElementImplAsg(T, ctor, dtor, name)                                                                \
+	.init = ctor, .copy = name##_copy, .dispose = dtor, .create = name##_create, .destroy = name##_destroy
+
+#define caryll_CDRefElementImpl(T, ctor, dtor, name)                                                                   \
+	caryll_CDRefElementImplFn(T, ctor, dtor, name);                                                                    \
 	caryll_ElementInterfaceOf(T) name = {                                                                              \
-	    .init = ctor, .copy = name##_copy, .dispose = dtor, .create = name##_create, .destroy = name##_destroy,        \
+	    caryll_CdRefElementImplAsg(T, ctor, dtor, name),                                                               \
 	}
 
 #endif

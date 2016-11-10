@@ -8,10 +8,9 @@ typedef struct {
 	otfcc_GlyphHandle *glyphs;
 } otl_Coverage;
 
-struct otfcc_CoveragePackage {
-	otl_Coverage *(*create)();
+struct __otfcc_ICoverage {
+	caryll_RT(otl_Coverage);
 	void (*clear)(otl_Coverage *coverage, uint32_t n);
-	void (*dispose)(MOVE otl_Coverage *coverage);
 	otl_Coverage *(*read)(const uint8_t *data, uint32_t tableLength, uint32_t offset);
 	json_value *(*dump)(const otl_Coverage *coverage);
 	otl_Coverage *(*parse)(const json_value *cov);
@@ -20,6 +19,6 @@ struct otfcc_CoveragePackage {
 	void (*push)(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h);
 };
 
-extern const struct otfcc_CoveragePackage otfcc_pkgCoverage;
+extern const struct __otfcc_ICoverage otfcc_iCoverage;
 
 #endif

@@ -1,9 +1,14 @@
 #include "support/util.h"
 #include "otfcc/table/otl/coverage.h"
 
+static void initCoverage(otl_Coverage *coverage) {
+	coverage->capacity = coverage->numGlyphs = 0;
+	coverage->glyphs = NULL;
+}
 static otl_Coverage *newCoverage() {
 	otl_Coverage *coverage;
 	NEW(coverage);
+	initCoverage(coverage);
 	return coverage;
 }
 static void growCoverage(otl_Coverage *coverage, uint32_t n) {
@@ -24,14 +29,16 @@ static void clearCoverage(otl_Coverage *coverage, uint32_t n) {
 	coverage->numGlyphs = n;
 }
 
-static void deleteCoverage(MOVE otl_Coverage *coverage) {
-	if (coverage && coverage->glyphs) {
-		for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-			Handle.dispose(&coverage->glyphs[j]);
-		}
-		FREE(coverage->glyphs);
+static void disposeCoverage(MOVE otl_Coverage *coverage) {
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
+		Handle.dispose(&coverage->glyphs[j]);
 	}
-	if (coverage) FREE(coverage);
+	FREE(coverage->glyphs);
+}
+static void destroyCoverage(MOVE otl_Coverage *coverage) {
+	if (!coverage) return;
+	disposeCoverage(coverage);
+	FREE(coverage);
 }
 
 typedef struct {
@@ -233,10 +240,13 @@ static void shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 	coverage->numGlyphs = k;
 }
 
-const struct otfcc_CoveragePackage otfcc_pkgCoverage = {
+const struct __otfcc_ICoverage otfcc_iCoverage = {
+    .init = initCoverage,
     .create = newCoverage,
+    .copy = NULL,
     .clear = clearCoverage,
-    .dispose = deleteCoverage,
+    .dispose = disposeCoverage,
+    .destroy = destroyCoverage,
     .read = readCoverage,
     .dump = dumpCoverage,
     .parse = parseCoverage,

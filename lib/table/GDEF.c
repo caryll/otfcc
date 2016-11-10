@@ -22,8 +22,8 @@ caryll_DefineVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValue
 
 void otfcc_deleteGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
-	if (gdef->glyphClassDef) ClassDef.dispose(gdef->glyphClassDef);
-	if (gdef->markAttachClassDef) ClassDef.dispose(gdef->markAttachClassDef);
+	if (gdef->glyphClassDef) ClassDef.destroy(gdef->glyphClassDef);
+	if (gdef->markAttachClassDef) ClassDef.destroy(gdef->markAttachClassDef);
 	otl_iLigCaretTable.dispose(&gdef->ligCarets);
 	FREE(gdef);
 }
@@ -86,10 +86,10 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 			for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
 				otl_CaretValueRecord v =
 				    readLigCaretRecord(data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
-				v.glyph = Handle.copy(cov->glyphs[j]);
+				v.glyph = Handle.dup(cov->glyphs[j]);
 				otl_iLigCaretTable.push(&gdef->ligCarets, v);
 			}
-			Coverage.dispose(cov);
+			Coverage.destroy(cov);
 		}
 		uint16_t markAttachDefOffset = read_16u(data + 10);
 		if (markAttachDefOffset) { gdef->markAttachClassDef = ClassDef.read(data, tableLength, markAttachDefOffset); }
@@ -195,7 +195,7 @@ static bk_Block *writeLigCaretRec(otl_CaretValueRecord *cr) {
 static bk_Block *writeLigCarets(const otl_LigCaretTable *lc) {
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < lc->length; j++) {
-		Coverage.push(cov, Handle.copy(lc->items[j].glyph));
+		Coverage.push(cov, Handle.dup(lc->items[j].glyph));
 	}
 	bk_Block *lct = bk_new_Block(p16, bk_newBlockFromBuffer(Coverage.build(cov)), // Coverage
 	                             b16, lc->length,                                 // LigGlyphCount
@@ -203,7 +203,7 @@ static bk_Block *writeLigCarets(const otl_LigCaretTable *lc) {
 	for (glyphid_t j = 0; j < lc->length; j++) {
 		bk_push(lct, p16, writeLigCaretRec(&(lc->items[j])), bkover);
 	}
-	Coverage.dispose(cov);
+	Coverage.destroy(cov);
 	return lct;
 }
 

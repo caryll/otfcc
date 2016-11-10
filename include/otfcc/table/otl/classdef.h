@@ -11,9 +11,8 @@ typedef struct {
 	glyphclass_t *classes;
 } otl_ClassDef;
 
-struct otfcc_ClassDefPackage {
-	otl_ClassDef *(*create)();
-	void (*dispose)(otl_ClassDef *);
+struct __otfcc_IClassDef {
+	caryll_RT(otl_ClassDef);
 	void (*push)(otl_ClassDef *cd, MOVE otfcc_GlyphHandle h, glyphclass_t cls);
 
 	otl_ClassDef *(*read)(const uint8_t *data, uint32_t tableLength, uint32_t offset);
@@ -24,6 +23,6 @@ struct otfcc_ClassDefPackage {
 	void (*shrink)(otl_ClassDef *cd);
 };
 
-extern const struct otfcc_ClassDefPackage otfcc_pkgClassDef;
+extern const struct __otfcc_IClassDef otfcc_iClassDef;
 
 #endif

@@ -7,9 +7,9 @@ static void initGsubReverse(subtable_gsub_reverse *subtable) {
 static void disposeGsubReverse(subtable_gsub_reverse *subtable) {
 	if (subtable->match)
 		for (tableid_t j = 0; j < subtable->matchCount; j++) {
-			Coverage.dispose(subtable->match[j]);
+			Coverage.destroy(subtable->match[j]);
 		}
-	if (subtable->to) Coverage.dispose(subtable->to);
+	if (subtable->to) Coverage.destroy(subtable->to);
 }
 
 caryll_CDRefElementImpl(subtable_gsub_reverse, initGsubReverse, disposeGsubReverse, iSubtable_gsub_reverse);
