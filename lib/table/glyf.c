@@ -117,10 +117,6 @@ caryll_ElementInterfaceOf(glyf_GlyphPtr) glyf_iGlyphPtr = {
 };
 caryll_DefineVectorImpl(table_glyf, glyf_GlyphPtr, glyf_iGlyphPtr, iTable_glyf);
 
-void otfcc_deleteGlyf(table_glyf *table) {
-	iTable_glyf.destroy(table);
-}
-
 static glyf_Point *next_point(glyf_ContourList *contours, shapeid_t *cc, shapeid_t *cp) {
 	if (*cp >= contours->items[*cc].length) {
 		*cp = 0;
@@ -384,7 +380,7 @@ table_glyf *otfcc_readGlyf(const otfcc_Packet packet, const otfcc_Options *optio
 		goto PRESENT;
 	GLYF_CORRUPTED:
 		logWarning("table 'glyf' corrupted.\n");
-		if (glyf) { otfcc_deleteGlyf(glyf), glyf = NULL; }
+		if (glyf) { DELETE(iTable_glyf.destroy, glyf), glyf = NULL; }
 	}
 	goto ABSENT;
 

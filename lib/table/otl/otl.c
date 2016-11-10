@@ -26,12 +26,11 @@ static void disposeSubtableDependent(MODIFY otl_SubtablePtr *subtableRef, const 
 static caryll_ElementInterface(otl_SubtablePtr) otl_iSubtablePtr = {
     .init = NULL, .copy = NULL, .dispose = NULL,
 };
-caryll_VectorImplDestroyDependent(otl_SubtableList, otl_SubtablePtr, otl_Lookup, disposeSubtableDependent,
-                                  otl_iSubtableList);
-caryll_VectorImplFunctions(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr, otl_iSubtableList);
+caryll_VectorImplDestroyDependent(otl_SubtableList, otl_SubtablePtr, otl_Lookup, disposeSubtableDependent);
+caryll_VectorImplFunctions(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr);
 caryll_VectorInterfaceTypeName(otl_SubtableList) otl_iSubtableList = {
-    caryll_VectorImplAssignments(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr, otl_iSubtableList),
-    .disposeDependent = otl_iSubtableList_disposeDependent,
+    caryll_VectorImplAssignments(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr),
+    .disposeDependent = otl_SubtableList_disposeDependent,
 };
 
 void otfcc_delete_lookup(otl_Lookup *lookup) {

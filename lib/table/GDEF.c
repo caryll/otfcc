@@ -20,22 +20,19 @@ caryll_ElementInterfaceOf(otl_CaretValueRecord) otl_iCaretValueRecord = {
 };
 caryll_DefineVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
 
-void otfcc_deleteGDEF(table_GDEF *gdef) {
+static void initGDEF(table_GDEF *gdef) {
+	gdef->glyphClassDef = NULL;
+	gdef->markAttachClassDef = NULL;
+	otl_iLigCaretTable.init(&gdef->ligCarets);
+}
+static void disposeGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
 	if (gdef->glyphClassDef) ClassDef.destroy(gdef->glyphClassDef);
 	if (gdef->markAttachClassDef) ClassDef.destroy(gdef->markAttachClassDef);
 	otl_iLigCaretTable.dispose(&gdef->ligCarets);
-	FREE(gdef);
 }
 
-table_GDEF *otfcc_newGDEF() {
-	table_GDEF *gdef;
-	NEW(gdef);
-	gdef->glyphClassDef = NULL;
-	gdef->markAttachClassDef = NULL;
-	otl_iLigCaretTable.init(&gdef->ligCarets);
-	return gdef;
-}
+caryll_standardRefType(table_GDEF, initGDEF, disposeGDEF, iTable_GDEF);
 
 static otl_CaretValue readCaretValue(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_CaretValue v;
@@ -74,7 +71,7 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 		font_file_pointer data = table.data;
 		uint32_t tableLength = table.length;
 		checkLength(12);
-		gdef = otfcc_newGDEF();
+		gdef = iTable_GDEF.create();
 		uint16_t classdefOffset = read_16u(data + 4);
 		if (classdefOffset) { gdef->glyphClassDef = ClassDef.read(data, tableLength, classdefOffset); }
 		uint16_t ligCaretOffset = read_16u(data + 8);
@@ -96,7 +93,7 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 		return gdef;
 
 	FAIL:
-		DELETE(otfcc_deleteGDEF, gdef);
+		DELETE(iTable_GDEF.destroy, gdef);
 	}
 	return gdef;
 }
@@ -169,7 +166,7 @@ table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
 		loggedStep("GDEF") {
-			gdef = otfcc_newGDEF();
+			gdef = iTable_GDEF.create();
 			gdef->glyphClassDef = ClassDef.parse(json_obj_get(table, "glyphClassDef"));
 			gdef->markAttachClassDef = ClassDef.parse(json_obj_get(table, "markAttachClassDef"));
 			ligCaretFromJson(json_obj_get(table, "ligCarets"), &gdef->ligCarets);

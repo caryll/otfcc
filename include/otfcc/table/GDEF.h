@@ -26,4 +26,6 @@ typedef struct {
 	OWNING otl_LigCaretTable ligCarets;
 } table_GDEF;
 
+extern caryll_RefElementInterface(table_GDEF) iTable_GDEF;
+
 #endif

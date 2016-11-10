@@ -23,8 +23,8 @@ static void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iLigatureArray.dispose(&subtable->ligArray);
 }
 
-caryll_CDRefElementImpl(subtable_gpos_markToLigature, initMarkToLigature, disposeMarkToLigature,
-                        iSubtable_gpos_markToLigature);
+caryll_standardRefType(subtable_gpos_markToLigature, initMarkToLigature, disposeMarkToLigature,
+                       iSubtable_gpos_markToLigature);
 
 otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                            const otfcc_Options *options) {

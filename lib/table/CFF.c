@@ -19,12 +19,11 @@ static cff_PrivateDict *otfcc_newCff_private() {
 	pd->expansionFactor = DEFAULT_EXPANSION_FACTOR;
 	return pd;
 }
-table_CFF *otfcc_newCFF() {
-	table_CFF *table = NULL;
-	NEW(table);
-	table->underlinePosition = -100;
-	table->underlineThickness = 50;
-	return table;
+
+static void initFD(table_CFF *fd) {
+	memset(fd, 0, sizeof(*fd));
+	fd->underlinePosition = -100;
+	fd->underlineThickness = 50;
 }
 
 static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
@@ -38,29 +37,29 @@ static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	FREE(priv->stemSnapV);
 	FREE(priv);
 }
-void otfcc_deleteCFF(table_CFF *table) {
-	if (!table) return;
-	sdsfree(table->version);
-	sdsfree(table->notice);
-	sdsfree(table->copyright);
-	sdsfree(table->fullName);
-	sdsfree(table->familyName);
-	sdsfree(table->weight);
+static void disposeFD(table_CFF *fd) {
+	sdsfree(fd->version);
+	sdsfree(fd->notice);
+	sdsfree(fd->copyright);
+	sdsfree(fd->fullName);
+	sdsfree(fd->familyName);
+	sdsfree(fd->weight);
 
-	sdsfree(table->fontName);
-	sdsfree(table->cidRegistry);
-	sdsfree(table->cidOrdering);
+	sdsfree(fd->fontName);
+	sdsfree(fd->cidRegistry);
+	sdsfree(fd->cidOrdering);
 
-	FREE(table->fontMatrix);
-	otfcc_delete_privatedict(table->privateDict);
-	if (table->fdArray) {
-		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
-			otfcc_deleteCFF(table->fdArray[j]);
+	FREE(fd->fontMatrix);
+	otfcc_delete_privatedict(fd->privateDict);
+	if (fd->fdArray) {
+		for (tableid_t j = 0; j < fd->fdArrayCount; j++) {
+			iTable_CFF.destroy(fd->fdArray[j]);
 		}
-		FREE(table->fdArray);
+		FREE(fd->fdArray);
 	}
-	FREE(table);
 }
+
+caryll_standardRefType(table_CFF, initFD, disposeFD, iTable_CFF);
 
 typedef struct {
 	int32_t fdArrayIndex;
@@ -523,7 +522,7 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 		uint32_t length = table.length;
 		cff_File *cffFile = cff_openStream(data, length, options);
 		context.cffFile = cffFile;
-		context.meta = otfcc_newCFF();
+		context.meta = iTable_CFF.create();
 
 		// Extract data in TOP DICT
 		cff_extract_DictByCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
@@ -536,7 +535,7 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 			context.meta->fdArrayCount = cffFile->font_dict.count;
 			NEW(context.meta->fdArray, context.meta->fdArrayCount);
 			for (tableid_t j = 0; j < context.meta->fdArrayCount; j++) {
-				context.meta->fdArray[j] = otfcc_newCFF();
+				context.meta->fdArray[j] = iTable_CFF.create();
 				context.fdArrayIndex = j;
 				cff_extract_DictByCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
 				                           cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
@@ -697,7 +696,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 	return pd;
 }
 static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *options, bool topLevel) {
-	table_CFF *table = otfcc_newCFF();
+	table_CFF *table = iTable_CFF.create();
 	if (!dump || dump->type != json_object) return table;
 	// Names
 	table->version = json_obj_getsds(dump, "version");
@@ -765,7 +764,7 @@ static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *option
 	if (topLevel && options->force_cid && !table->fdArray) {
 		table->fdArrayCount = 1;
 		NEW(table->fdArray, table->fdArrayCount);
-		table->fdArray[0] = otfcc_newCFF();
+		table->fdArray[0] = iTable_CFF.create();
 		table_CFF *fd0 = table->fdArray[0];
 		fd0->privateDict = table->privateDict;
 		table->privateDict = otfcc_newCff_private();

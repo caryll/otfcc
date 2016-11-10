@@ -12,7 +12,7 @@ static void disposeGsubReverse(subtable_gsub_reverse *subtable) {
 	if (subtable->to) Coverage.destroy(subtable->to);
 }
 
-caryll_CDRefElementImpl(subtable_gsub_reverse, initGsubReverse, disposeGsubReverse, iSubtable_gsub_reverse);
+caryll_standardRefType(subtable_gsub_reverse, initGsubReverse, disposeGsubReverse, iSubtable_gsub_reverse);
 
 static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	if (inputIndex > 0) {

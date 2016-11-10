@@ -2,6 +2,7 @@
 #define CARYLL_VF_FUNCTIONAL_H
 
 #include "caryll/ownership.h"
+#include "caryll/element.h"
 #include "otfcc/primitives.h"
 
 // vf_Functional type
@@ -27,8 +28,7 @@ typedef struct vf_Functional {
 } vf_Functional;
 
 struct vf_IFunctional {
-	void (*dispose)(MOVE vf_Functional *form);
-	void (*destroy)(MOVE vf_Functional *form);
+	caryll_VT(vf_Functional);
 	vf_Functional (*scalar)(pos_t scalar);
 	vf_Functional (*add)(MOVE vf_Functional a, MOVE vf_Functional b);
 	vf_Functional (*minus)(MOVE vf_Functional a, MOVE vf_Functional b);

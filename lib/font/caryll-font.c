@@ -24,10 +24,10 @@ void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag) {
 void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'head':
-			if (font->head) DELETE(free, font->head);
+			if (font->head) DELETE(iTable_head.destroy, font->head);
 			return;
 		case 'hhea':
-			if (font->hhea) DELETE(free, font->hhea);
+			if (font->hhea) DELETE(iTable_hhea.destroy, font->hhea);
 			return;
 		case 'maxp':
 			if (font->maxp) DELETE(otfcc_deleteMaxp, font->maxp);
@@ -52,7 +52,7 @@ void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			if (font->hdmx) DELETE(otfcc_deleteHdmx, font->hdmx);
 			return;
 		case 'vhea':
-			if (font->vhea) DELETE(free, font->vhea);
+			if (font->vhea) DELETE(iTable_vhea.destroy, font->vhea);
 			return;
 		case 'fpgm':
 			if (font->fpgm) DELETE(otfcc_deleteFpgm_prep, font->fpgm);
@@ -69,10 +69,10 @@ void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			return;
 		case 'CFF_':
 		case 'CFF ':
-			if (font->CFF_) DELETE(otfcc_deleteCFF, font->CFF_);
+			if (font->CFF_) DELETE(iTable_CFF.destroy, font->CFF_);
 			return;
 		case 'glyf':
-			if (font->glyf) DELETE(otfcc_deleteGlyf, font->glyf);
+			if (font->glyf) DELETE(iTable_glyf.destroy, font->glyf);
 			return;
 		case 'cmap':
 			if (font->cmap) DELETE(otfcc_deleteCmap, font->cmap);
@@ -87,7 +87,7 @@ void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			if (font->GPOS) DELETE(otfcc_deleteOtl, font->GPOS);
 			return;
 		case 'GDEF':
-			if (font->GDEF) DELETE(otfcc_deleteGDEF, font->GDEF);
+			if (font->GDEF) DELETE(iTable_GDEF.destroy, font->GDEF);
 			return;
 		case 'BASE':
 			if (font->BASE) DELETE(otfcc_deleteBASE, font->BASE);

@@ -19,7 +19,7 @@ static void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iBaseArray.dispose(&subtable->baseArray);
 }
 
-caryll_CDRefElementImpl(subtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle, iSubtable_gpos_markToSingle);
+caryll_standardRefType(subtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle, iSubtable_gpos_markToSingle);
 
 otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                          const otfcc_Options *options) {

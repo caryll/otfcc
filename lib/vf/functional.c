@@ -1,19 +1,20 @@
 #include "otfcc/vf/functional.h"
 #include "support/util.h"
 
-static void vf_Functional_dispose(MOVE vf_Functional *form) {
+static void vfDispose(MOVE vf_Functional *form) {
 	if (form->car > vf_scalar) {
 		for (shapeid_t j = form->arity; j--;) {
-			vf_Functional_dispose(&form->cdr[j]);
+			vfDispose(&form->cdr[j]);
 		}
 		FREE(form->cdr);
 	}
 }
-static void vf_Functional_destroy(MOVE vf_Functional *form) {
-	if (!form) return;
-	vf_Functional_dispose(form);
-	FREE(form);
-}
+caryll_trivialInit(vf_Functional);
+caryll_trivialEmpty(vf_Functional);
+caryll_trivialCopy(vf_Functional);
+caryll_nonTrivialDispose(vf_Functional, vfDispose);
+caryll_trivialDup(vf_Functional);
+
 static vf_Functional vf_new_Functional_scalar(pos_t scalar) {
 	vf_Functional f;
 	f.car = vf_scalar;
@@ -98,8 +99,7 @@ static vf_Functional vf_Functional_gxCanonical(OBSERVE vf_Functional a, shapeid_
 }
 
 const struct vf_IFunctional vf_iFunctional = {
-    .dispose = vf_Functional_dispose,
-    .destroy = vf_Functional_destroy,
+    caryll_DefaultVTAsg(vf_Functional), // VT implementation
     .scalar = vf_new_Functional_scalar,
     .add = vf_Functional_add,
     .minus = vf_Functional_minus,
