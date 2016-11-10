@@ -2,18 +2,29 @@
 
 #include "otl/private.h"
 
+caryll_ElementInterfaceOf(otl_CaretValue) otl_iCaretValue = {
+    .init = NULL, .copy = NULL, .dispose = NULL,
+};
+caryll_DefineVectorImpl(otl_CaretValueList, otl_CaretValue, otl_iCaretValue, otl_iCaretValueList);
+
+static void initGdefLigCaretRec(otl_CaretValueRecord *v) {
+	v->glyph = Handle.empty();
+	otl_iCaretValueList.init(&v->carets);
+}
+static void deleteGdefLigCaretRec(otl_CaretValueRecord *v) {
+	Handle.dispose(&v->glyph);
+	otl_iCaretValueList.dispose(&v->carets);
+}
+caryll_ElementInterfaceOf(otl_CaretValueRecord) otl_iCaretValueRecord = {
+    .init = initGdefLigCaretRec, .copy = NULL, .dispose = deleteGdefLigCaretRec,
+};
+caryll_DefineVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
+
 void otfcc_deleteGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
 	if (gdef->glyphClassDef) ClassDef.dispose(gdef->glyphClassDef);
 	if (gdef->markAttachClassDef) ClassDef.dispose(gdef->markAttachClassDef);
-	if (gdef->ligCarets) {
-		for (glyphid_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
-			FREE(gdef->ligCarets->carets[j].values);
-		}
-		FREE(gdef->ligCarets->carets);
-		Coverage.dispose(gdef->ligCarets->coverage);
-		FREE(gdef->ligCarets);
-	}
+	otl_iLigCaretTable.dispose(&gdef->ligCarets);
 	FREE(gdef);
 }
 
@@ -21,8 +32,8 @@ table_GDEF *otfcc_newGDEF() {
 	table_GDEF *gdef;
 	NEW(gdef);
 	gdef->glyphClassDef = NULL;
-	gdef->ligCarets = NULL;
 	gdef->markAttachClassDef = NULL;
+	otl_iLigCaretTable.init(&gdef->ligCarets);
 	return gdef;
 }
 
@@ -43,19 +54,17 @@ FAIL:
 	return v;
 }
 static otl_CaretValueRecord readLigCaretRecord(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
-	checkLength(offset + 2);
 	otl_CaretValueRecord g;
-	g.values = NULL;
-	g.caretCount = read_16u(data + offset);
-	checkLength(offset + 2 + g.caretCount * 2);
-	NEW(g.values, g.caretCount);
+	otl_iCaretValueRecord.init(&g);
+	checkLength(offset + 2);
+	shapeid_t caretCount = read_16u(data + offset);
+	checkLength(offset + 2 + caretCount * 2);
 
-	for (glyphid_t j = 0; j < g.caretCount; j++) {
-		g.values[j] = readCaretValue(data, tableLength, offset + read_16u(data + offset + 2 + j * 2));
+	for (glyphid_t j = 0; j < caretCount; j++) {
+		otl_iCaretValueList.push(&g.carets,
+		                         readCaretValue(data, tableLength, offset + read_16u(data + offset + 2 + j * 2)));
 	}
-	return g;
-FAIL:
-	g.caretCount = 0;
+FAIL:;
 	return g;
 }
 
@@ -71,23 +80,16 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 		uint16_t ligCaretOffset = read_16u(data + 8);
 		if (ligCaretOffset) {
 			checkLength(ligCaretOffset + 4);
-			NEW(gdef->ligCarets);
-			gdef->ligCarets->carets = NULL;
-
 			otl_Coverage *cov = Coverage.read(data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset));
 			if (!cov || cov->numGlyphs != read_16u(data + ligCaretOffset + 2)) goto FAIL;
 			checkLength(ligCaretOffset + 4 + cov->numGlyphs * 2);
-			if (cov->numGlyphs) {
-				gdef->ligCarets->coverage = cov;
-				NEW(gdef->ligCarets->carets, cov->numGlyphs);
-				for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
-					gdef->ligCarets->carets[j] = readLigCaretRecord(
-					    data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
-				}
-			} else {
-				Coverage.dispose(cov);
-				FREE(gdef->ligCarets);
+			for (glyphid_t j = 0; j < cov->numGlyphs; j++) {
+				otl_CaretValueRecord v =
+				    readLigCaretRecord(data, tableLength, ligCaretOffset + read_16u(data + ligCaretOffset + 4 + j * 2));
+				v.glyph = Handle.copy(cov->glyphs[j]);
+				otl_iLigCaretTable.push(&gdef->ligCarets, v);
 			}
+			Coverage.dispose(cov);
 		}
 		uint16_t markAttachDefOffset = read_16u(data + 10);
 		if (markAttachDefOffset) { gdef->markAttachClassDef = ClassDef.read(data, tableLength, markAttachDefOffset); }
@@ -100,17 +102,17 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 }
 
 static json_value *dumpGDEFLigCarets(const table_GDEF *gdef) {
-	json_value *_carets = json_object_new(gdef->ligCarets->coverage->numGlyphs);
-	for (glyphid_t j = 0; j < gdef->ligCarets->coverage->numGlyphs; j++) {
-		sds name = gdef->ligCarets->coverage->glyphs[j].name;
-		json_value *_record = json_array_new(gdef->ligCarets->carets[j].caretCount);
+	json_value *_carets = json_object_new(gdef->ligCarets.length);
+	for (glyphid_t j = 0; j < gdef->ligCarets.length; j++) {
+		sds name = gdef->ligCarets.items[j].glyph.name;
+		json_value *_record = json_array_new(gdef->ligCarets.items[j].carets.length);
 
-		for (glyphid_t k = 0; k < gdef->ligCarets->carets[j].caretCount; k++) {
+		for (glyphid_t k = 0; k < gdef->ligCarets.items[j].carets.length; k++) {
 			json_value *_cv = json_object_new(1);
-			if (gdef->ligCarets->carets[j].values[k].format == 2) {
-				json_object_push(_cv, "atPoint", json_integer_new(gdef->ligCarets->carets[j].values[k].pointIndex));
+			if (gdef->ligCarets.items[j].carets.items[k].format == 2) {
+				json_object_push(_cv, "atPoint", json_integer_new(gdef->ligCarets.items[j].carets.items[k].pointIndex));
 			} else {
-				json_object_push(_cv, "at", json_integer_new(gdef->ligCarets->carets[j].values[k].coordiante));
+				json_object_push(_cv, "at", json_integer_new(gdef->ligCarets.items[j].carets.items[k].coordiante));
 			}
 			json_array_push(_record, _cv);
 		}
@@ -127,48 +129,39 @@ void otfcc_dumpGDEF(const table_GDEF *gdef, json_value *root, const otfcc_Option
 		if (gdef->markAttachClassDef) {
 			json_object_push(_gdef, "markAttachClassDef", ClassDef.dump(gdef->markAttachClassDef));
 		}
-		if (gdef->ligCarets && gdef->ligCarets->coverage && gdef->ligCarets->coverage->numGlyphs) {
-			json_object_push(_gdef, "ligCarets", dumpGDEFLigCarets(gdef));
-		}
+		if (gdef->ligCarets.length) { json_object_push(_gdef, "ligCarets", dumpGDEFLigCarets(gdef)); }
 		json_object_push(root, "GDEF", _gdef);
 	}
 }
 
-static otl_LigCaretTable *ligCaretFromJson(const json_value *_carets) {
-	if (!_carets || _carets->type != json_object) return NULL;
-	otl_LigCaretTable *lc;
-	NEW(lc);
-	NEW(lc->coverage);
-	lc->coverage->numGlyphs = _carets->u.object.length;
-	NEW(lc->coverage->glyphs, lc->coverage->numGlyphs);
-	NEW(lc->carets, lc->coverage->numGlyphs);
+static void ligCaretFromJson(const json_value *_carets, otl_LigCaretTable *lc) {
+	if (!_carets || _carets->type != json_object) return;
 
-	glyphid_t jj = 0;
-	for (glyphid_t j = 0; j < lc->coverage->numGlyphs; j++) {
+	for (glyphid_t j = 0; j < _carets->u.object.length; j++) {
 		json_value *a = _carets->u.object.values[j].value;
 		if (!a || a->type != json_array) continue;
-		lc->coverage->glyphs[jj] =
-		    Handle.fromName(sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length));
-		lc->carets[jj].caretCount = a->u.array.length;
-		NEW(lc->carets[jj].values, lc->carets[jj].caretCount);
-		for (glyphid_t k = 0; k < lc->carets[jj].caretCount; k++) {
-			lc->carets[jj].values[k].format = 1;
-			lc->carets[jj].values[k].coordiante = 0;
-			lc->carets[jj].values[k].pointIndex = 0xFFFF;
+		otl_CaretValueRecord v;
+		otl_iCaretValueRecord.init(&v);
+		v.glyph = Handle.fromName(sdsnewlen(_carets->u.object.values[j].name, _carets->u.object.values[j].name_length));
+		shapeid_t caretCount = a->u.array.length;
+		for (glyphid_t k = 0; k < caretCount; k++) {
+			otl_CaretValue caret;
+			caret.format = 1;
+			caret.coordiante = 0;
+			caret.pointIndex = 0xFFFF;
 			json_value *_caret = a->u.array.values[k];
 			if (_caret && _caret->type == json_object) {
 				if (json_obj_get_type(_caret, "atPoint", json_integer)) {
-					lc->carets[jj].values[k].format = 2;
-					lc->carets[jj].values[k].pointIndex = json_obj_getint(_caret, "atPoint");
+					caret.format = 2;
+					caret.pointIndex = json_obj_getint(_caret, "atPoint");
 				} else {
-					lc->carets[jj].values[k].coordiante = json_obj_getnum(_caret, "at");
+					caret.coordiante = json_obj_getnum(_caret, "at");
 				}
 			}
+			otl_iCaretValueList.push(&v.carets, caret);
 		}
-		jj++;
+		otl_iLigCaretTable.push(lc, v);
 	}
-	lc->coverage->numGlyphs = jj;
-	return lc;
 }
 
 table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options) {
@@ -179,33 +172,38 @@ table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options
 			gdef = otfcc_newGDEF();
 			gdef->glyphClassDef = ClassDef.parse(json_obj_get(table, "glyphClassDef"));
 			gdef->markAttachClassDef = ClassDef.parse(json_obj_get(table, "markAttachClassDef"));
-			gdef->ligCarets = ligCaretFromJson(json_obj_get(table, "ligCarets"));
+			ligCaretFromJson(json_obj_get(table, "ligCarets"), &gdef->ligCarets);
 		}
 	}
 	return gdef;
 }
 
 static bk_Block *writeLigCaretRec(otl_CaretValueRecord *cr) {
-	bk_Block *bcr = bk_new_Block(b16, cr->caretCount, // CaretCount
+	bk_Block *bcr = bk_new_Block(b16, cr->carets.length, // CaretCount
 	                             bkover);
-	for (glyphid_t j = 0; j < cr->caretCount; j++) {
-		bk_push(bcr, p16,
-		        bk_new_Block(b16, cr->values[j].format,                                          // format
-		                     b16, cr->values[j].format == 2 ? cr->values[j].pointIndex           // Point index
-		                                                    : (int16_t)cr->values[j].coordiante, // X coordinate
-		                     bkover),                                                            // CaretValue
+	for (glyphid_t j = 0; j < cr->carets.length; j++) {
+		bk_push(bcr, p16, bk_new_Block(b16, cr->carets.items[j].format, // format
+		                               b16, cr->carets.items[j].format == 2
+		                                        ? cr->carets.items[j].pointIndex           // Point index
+		                                        : (int16_t)cr->carets.items[j].coordiante, // X coordinate
+		                               bkover),                                            // CaretValue
 		        bkover);
 	}
 	return bcr;
 }
 
-static bk_Block *writeLigCarets(otl_LigCaretTable *lc) {
-	bk_Block *lct = bk_new_Block(p16, bk_newBlockFromBuffer(Coverage.build(lc->coverage)), // Coverage
-	                             b16, lc->coverage->numGlyphs,                             // LigGlyphCount
-	                             bkover);
-	for (glyphid_t j = 0; j < lc->coverage->numGlyphs; j++) {
-		bk_push(lct, p16, writeLigCaretRec(&(lc->carets[j])), bkover);
+static bk_Block *writeLigCarets(const otl_LigCaretTable *lc) {
+	otl_Coverage *cov = Coverage.create();
+	for (glyphid_t j = 0; j < lc->length; j++) {
+		Coverage.push(cov, Handle.copy(lc->items[j].glyph));
 	}
+	bk_Block *lct = bk_new_Block(p16, bk_newBlockFromBuffer(Coverage.build(cov)), // Coverage
+	                             b16, lc->length,                                 // LigGlyphCount
+	                             bkover);
+	for (glyphid_t j = 0; j < lc->length; j++) {
+		bk_push(lct, p16, writeLigCaretRec(&(lc->items[j])), bkover);
+	}
+	Coverage.dispose(cov);
 	return lct;
 }
 
@@ -216,9 +214,7 @@ caryll_Buffer *otfcc_buildGDEF(const table_GDEF *gdef, const otfcc_Options *opti
 	bk_Block *bMarkAttachClassDef = NULL;
 
 	if (gdef->glyphClassDef) { bGlyphClassDef = bk_newBlockFromBuffer(ClassDef.build(gdef->glyphClassDef)); }
-	if (gdef->ligCarets && gdef->ligCarets->coverage && gdef->ligCarets->coverage->numGlyphs) {
-		bLigCaretList = writeLigCarets(gdef->ligCarets);
-	}
+	if (gdef->ligCarets.length) { bLigCaretList = writeLigCarets(&gdef->ligCarets); }
 	if (gdef->markAttachClassDef) {
 		bMarkAttachClassDef = bk_newBlockFromBuffer(ClassDef.build(gdef->markAttachClassDef));
 	}

@@ -37,6 +37,7 @@
 	void (*initN)(MODIFY __TV * arr, size_t n);                                                                        \
 	__TV *(*createN)(size_t n);                                                                                        \
 	void (*clear)(MODIFY __TV * arr);                                                                                  \
+	void (*move)(MODIFY __TV * dst, MOVE __TV * src);                                                                  \
 	void (*replace)(MODIFY __TV * dst, MOVE const __TV *src);                                                          \
 	void (*push)(MODIFY __TV * arr, MOVE __T obj);                                                                     \
 	__T (*pop)(MODIFY __TV * arr);                                                                                     \
@@ -135,9 +136,14 @@
 		__name##_initN(t, n);                                                                                          \
 		return t;                                                                                                      \
 	}                                                                                                                  \
+	static __CARYLL_INLINE__ void __name##_move(MODIFY __TV *dst, MOVE __TV *src) {                                    \
+		*dst = *src;                                                                                                   \
+		__name##_init(src);                                                                                            \
+	}                                                                                                                  \
 	static __CARYLL_INLINE__ void __name##_copy(MODIFY __TV *dst, const __TV *src) {                                   \
 		__name##_init(dst);                                                                                            \
 		__name##_growTo(dst, src->length);                                                                             \
+		dst->length = src->length;                                                                                     \
 		if (__ti.copy) {                                                                                               \
 			for (size_t j = 0; j < src->length; j++) {                                                                 \
 				__ti.copy(&dst->items[j], (const __T *)&src->items[j]);                                                \
@@ -167,7 +173,7 @@
 	.init = __name##_init, .copy = __name##_copy, .dispose = __name##_dispose, .create = __name##_create,              \
 	.createN = __name##_createN, .destroy = __name##_destroy, .initN = __name##_initN, .clear = __name##_dispose,      \
 	.replace = __name##_replace, .push = __name##_push, .pop = __name##_pop, .fill = __name##_fill,                    \
-	.sort = __name##_sort, .disposeItem = __name##_disposeItem
+	.sort = __name##_sort, .disposeItem = __name##_disposeItem, .move = __name##_move
 
 #define caryll_DefineVectorImpl(__TV, __T, __ti, __name)                                                               \
 	caryll_VectorImplFunctions(__TV, __T, __ti, __name);                                                               \

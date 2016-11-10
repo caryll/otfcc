@@ -173,9 +173,9 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 			for (tableid_t j = 0; j < lookup->subtables.length; j++) {
 				if (lookup->subtables.items[j]) {
 					bool subtableRemoved;
-					loggedStep("Subtable %d", j) {
-						subtableRemoved = fn(font, table, lookup->subtables.items[j], options);
-					}
+					// loggedStep("Subtable %d", j) {
+					subtableRemoved = fn(font, table, lookup->subtables.items[j], options);
+					//}
 					if (subtableRemoved) {
 						fndel(lookup->subtables.items[j]);
 						lookup->subtables.items[j] = NULL;
