@@ -5,8 +5,8 @@ static void gss_entry_ctor(MODIFY otl_GsubSingleEntry *entry) {
 	entry->to = Handle.empty();
 }
 static void gss_entry_copyctor(MODIFY otl_GsubSingleEntry *dst, COPY const otl_GsubSingleEntry *src) {
-	dst->from = Handle.copy(src->from);
-	dst->to = Handle.copy(src->to);
+	dst->from = Handle.dup(src->from);
+	dst->to = Handle.dup(src->to);
 }
 static void gss_entry_dtor(MODIFY otl_GsubSingleEntry *entry) {
 	Handle.dispose(&entry->from);
@@ -52,18 +52,18 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 	goto OK;
 FAIL:
 	iSubtable_gsub_single.destroy(subtable);
-	if (from) Coverage.dispose(from);
-	if (to) Coverage.dispose(to);
+	if (from) Coverage.destroy(from);
+	if (to) Coverage.destroy(to);
 	return NULL;
 OK:
 	for (glyphid_t j = 0; j < from->numGlyphs; j++) {
 		iSubtable_gsub_single.push(subtable, ((otl_GsubSingleEntry){
-		                                         .from = Handle.copy(from->glyphs[j]), // from
-		                                         .to = Handle.copy(to->glyphs[j]),     // to
+		                                         .from = Handle.dup(from->glyphs[j]), // from
+		                                         .to = Handle.dup(to->glyphs[j]),     // to
 		                                     }));
 	}
-	if (from) Coverage.dispose(from);
-	if (to) Coverage.dispose(to);
+	if (from) Coverage.destroy(from);
+	if (to) Coverage.destroy(to);
 	return (otl_Subtable *)subtable;
 }
 
@@ -102,7 +102,7 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 	}
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {
-		Coverage.push(cov, Handle.copy(subtable->items[j].from));
+		Coverage.push(cov, Handle.dup(subtable->items[j].from));
 	}
 	if (isConstantDifference && subtable->length > 0) {
 		bk_Block *b = bk_new_Block(b16, 1,                                          // Format
@@ -110,7 +110,7 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		                           b16,
 		                           subtable->items[0].to.index - subtable->items[0].from.index, // delta
 		                           bkover);
-		Coverage.dispose(cov);
+		Coverage.destroy(cov);
 		return bk_build_Block(b);
 	} else {
 		bk_Block *b = bk_new_Block(b16, 2,                                          // Format
@@ -120,7 +120,7 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		for (glyphid_t k = 0; k < subtable->length; k++) {
 			bk_push(b, b16, subtable->items[k].to.index, bkover);
 		}
-		Coverage.dispose(cov);
+		Coverage.destroy(cov);
 		return bk_build_Block(b);
 	}
 }

@@ -20,8 +20,8 @@ static void disposeGposPair(subtable_gpos_pair *subtable) {
 		}
 		FREE(subtable->secondValues);
 	}
-	ClassDef.dispose(subtable->first);
-	ClassDef.dispose(subtable->second);
+	DELETE(ClassDef.destroy, subtable->first);
+	DELETE(ClassDef.destroy, subtable->second);
 }
 
 caryll_CDRefElementImpl(subtable_gpos_pair, initGposPair, disposeGposPair, iSubtable_gpos_pair);
@@ -138,7 +138,7 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 		otl_Coverage *cov = Coverage.read(data, tableLength, offset + read_16u(data + offset + 2));
 		subtable->first = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 8));
 		subtable->first = ClassDef.expand(cov, subtable->first);
-		Coverage.dispose(cov);
+		DELETE(Coverage.destroy, cov);
 		subtable->second = ClassDef.read(data, tableLength, offset + read_16u(data + offset + 10));
 		if (!subtable->first || !subtable->second) goto FAIL;
 		glyphclass_t class1Count = read_16u(data + offset + 12);
@@ -248,7 +248,7 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	cov->numGlyphs = cd->numGlyphs;
 	NEW(cov->glyphs, cd->numGlyphs);
 	for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-		cov->glyphs[j] = Handle.copy(cd->glyphs[j]);
+		cov->glyphs[j] = Handle.dup(cd->glyphs[j]);
 	}
 	return cov;
 }
@@ -312,7 +312,7 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 		bk_push(root, p16, pairSet, bkover);
 	}
-	DELETE(Coverage.dispose, cov);
+	DELETE(Coverage.destroy, cov);
 	FREE(pairCounts);
 	return root;
 }
@@ -346,7 +346,7 @@ bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 			        bkover);
 		}
 	}
-	DELETE(Coverage.dispose, cov);
+	DELETE(Coverage.destroy, cov);
 	return root;
 }
 caryll_Buffer *otfcc_build_gpos_pair(const otl_Subtable *_subtable) {

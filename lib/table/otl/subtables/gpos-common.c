@@ -17,11 +17,11 @@ void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointe
 		uint16_t delta = read_16u(data + offset + 2 + j * 4 + 2);
 		if (delta) {
 			otl_iMarkArray.push(array,
-			                    ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
+			                    ((otl_MarkRecord){.glyph = Handle.dup(cov->glyphs[j]),
 			                                      .markClass = markClass,
 			                                      .anchor = otl_read_anchor(data, tableLength, offset + delta)}));
 		} else {
-			otl_iMarkArray.push(array, ((otl_MarkRecord){.glyph = Handle.copy(cov->glyphs[j]),
+			otl_iMarkArray.push(array, ((otl_MarkRecord){.glyph = Handle.dup(cov->glyphs[j]),
 			                                             .markClass = markClass,
 			                                             .anchor = otl_anchor_absent()}));
 		}

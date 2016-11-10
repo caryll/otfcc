@@ -13,7 +13,7 @@ bool consolidate_gsub_ligature(otfcc_Font *font, table_OTL *table, otl_Subtable 
 		fontop_consolidateCoverage(font, subtable->items[k].from, options);
 		Coverage.shrink(subtable->items[k].from, false);
 		iSubtable_gsub_ligature.push(&nt, ((otl_GsubLigatureEntry){
-		                                      .from = subtable->items[k].from, .to = Handle.copy(subtable->items[k].to),
+		                                      .from = subtable->items[k].from, .to = Handle.dup(subtable->items[k].to),
 		                                  }));
 		subtable->items[k].from = NULL;
 	}

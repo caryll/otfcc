@@ -2,7 +2,7 @@
 
 static void deleteGsubMultiEntry(otl_GsubMultiEntry *entry) {
 	Handle.dispose(&entry->from);
-	DELETE(Coverage.dispose, entry->to);
+	DELETE(Coverage.destroy, entry->to);
 }
 
 static caryll_ElementInterface(otl_GsubMultiEntry) gsm_typeinfo = {
@@ -29,14 +29,14 @@ otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, 
 			Coverage.push(cov, Handle.fromIndex(read_16u(data + seqOffset + 2 + k * 2)));
 		}
 		iSubtable_gsub_multi.push(subtable, ((otl_GsubMultiEntry){
-		                                        .from = Handle.copy(from->glyphs[j]), .to = cov,
+		                                        .from = Handle.dup(from->glyphs[j]), .to = cov,
 		                                    }));
 	}
-	Coverage.dispose(from);
+	Coverage.destroy(from);
 	return (otl_Subtable *)subtable;
 
 FAIL:
-	if (from) Coverage.dispose(from);
+	if (from) Coverage.destroy(from);
 	iSubtable_gsub_multi.destroy(subtable);
 	return NULL;
 }
@@ -70,7 +70,7 @@ caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
 	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {
-		Coverage.push(cov, Handle.copy(subtable->items[j].from));
+		Coverage.push(cov, Handle.dup(subtable->items[j].from));
 	}
 
 	bk_Block *root = bk_new_Block(b16, 1,                                          // format
@@ -84,6 +84,6 @@ caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
 		}
 		bk_push(root, p16, b, bkover);
 	}
-	Coverage.dispose(cov);
+	Coverage.destroy(cov);
 	return bk_build_Block(root);
 }

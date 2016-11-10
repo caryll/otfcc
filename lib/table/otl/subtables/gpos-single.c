@@ -25,7 +25,7 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 		otl_PositionValue v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
 		for (glyphid_t j = 0; j < targets->numGlyphs; j++) {
 			iSubtable_gpos_single.push(subtable, ((otl_GposSingleEntry){
-			                                         .target = Handle.copy(targets->glyphs[j]), .value = v,
+			                                         .target = Handle.dup(targets->glyphs[j]), .value = v,
 			                                     }));
 		}
 	} else {
@@ -37,17 +37,17 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 		for (glyphid_t j = 0; j < targets->numGlyphs; j++) {
 			iSubtable_gpos_single.push(
 			    subtable, ((otl_GposSingleEntry){
-			                  .target = Handle.copy(targets->glyphs[j]),
+			                  .target = Handle.dup(targets->glyphs[j]),
 			                  .value = read_gpos_value(
 			                      data, tableLength, offset + 8 + j * position_format_length(valueFormat), valueFormat),
 			              }));
 		}
 	}
-	if (targets) Coverage.dispose(targets);
+	if (targets) Coverage.destroy(targets);
 	return (otl_Subtable *)subtable;
 
 FAIL:
-	if (targets) Coverage.dispose(targets);
+	if (targets) Coverage.destroy(targets);
 	iSubtable_gpos_single.destroy(subtable);
 	return NULL;
 }
@@ -89,17 +89,17 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 	}
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {
-		Coverage.push(cov, Handle.copy(subtable->items[j].target));
+		Coverage.push(cov, Handle.dup(subtable->items[j].target));
 	}
 
 	if (isConst) {
 		bk_Block *b = (bk_new_Block(b16, 1, // Format
 		                            p16,
-		                            bk_newBlockFromBuffer(Coverage.build(cov)),           // coverage
-		                            b16, format,                                          // format
+		                            bk_newBlockFromBuffer(Coverage.build(cov)),               // coverage
+		                            b16, format,                                              // format
 		                            bkembed, bk_gpos_value(subtable->items[0].value, format), // value
 		                            bkover));
-		Coverage.dispose(cov);
+		Coverage.destroy(cov);
 		return bk_build_Block(b);
 	} else {
 		bk_Block *b = bk_new_Block(b16, 2,                                          // Format
@@ -111,7 +111,7 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 			bk_push(b, bkembed, bk_gpos_value(subtable->items[k].value, format), // value
 			        bkover);
 		}
-		Coverage.dispose(cov);
+		Coverage.destroy(cov);
 		return bk_build_Block(b);
 	}
 }

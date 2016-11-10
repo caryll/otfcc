@@ -108,7 +108,7 @@ static otl_ChainingRule *buildRule(otl_ChainingRule *rule, classifier_hash *hb, 
 	NEW(newRule->apply, newRule->applyCount);
 	for (tableid_t j = 0; j < rule->applyCount; j++) {
 		newRule->apply[j].index = rule->apply[j].index;
-		newRule->apply[j].lookup = Handle.copy(rule->apply[j].lookup);
+		newRule->apply[j].lookup = Handle.dup(rule->apply[j].lookup);
 	}
 	return newRule;
 }

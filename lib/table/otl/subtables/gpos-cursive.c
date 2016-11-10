@@ -32,13 +32,12 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 		if (enterOffset) { enter = otl_read_anchor(data, tableLength, offset + enterOffset); }
 		if (exitOffset) { exit = otl_read_anchor(data, tableLength, offset + exitOffset); }
 		iSubtable_gpos_cursive.push(
-		    subtable,
-		    ((otl_GposCursiveEntry){.target = Handle.copy(targets->glyphs[j]), .enter = enter, .exit = exit}));
+		    subtable, ((otl_GposCursiveEntry){.target = Handle.dup(targets->glyphs[j]), .enter = enter, .exit = exit}));
 	}
-	if (targets) Coverage.dispose(targets);
+	if (targets) Coverage.destroy(targets);
 	return (otl_Subtable *)subtable;
 FAIL:
-	if (targets) Coverage.dispose(targets);
+	if (targets) Coverage.destroy(targets);
 	iSubtable_gpos_cursive.destroy(subtable);
 	return NULL;
 }
@@ -75,7 +74,7 @@ caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
 	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {
-		Coverage.push(cov, Handle.copy(subtable->items[j].target));
+		Coverage.push(cov, Handle.dup(subtable->items[j].target));
 	}
 
 	bk_Block *root = bk_new_Block(b16, 1,                                          // format
@@ -83,12 +82,12 @@ caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
 	                              b16, subtable->length,                           // EntryExitCount
 	                              bkover);
 	for (glyphid_t j = 0; j < subtable->length; j++) {
-		bk_push(root,                                    // EntryExitRecord[.]
+		bk_push(root,                                        // EntryExitRecord[.]
 		        p16, bkFromAnchor(subtable->items[j].enter), // enter
 		        p16, bkFromAnchor(subtable->items[j].exit),  // exit
 		        bkover);
 	}
-	Coverage.dispose(cov);
+	Coverage.destroy(cov);
 
 	return bk_build_Block(root);
 }

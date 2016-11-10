@@ -119,7 +119,7 @@ static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, con
 		}
 	}
 
-	Coverage.dispose(firstCoverage);
+	Coverage.destroy(firstCoverage);
 	return subtable;
 FAIL:
 	iSubtable_chaining.destroy(subtable);
@@ -161,9 +161,9 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 		}
 	}
 	if (cds) {
-		if (cds->bc) ClassDef.dispose(cds->bc);
-		if (cds->ic) ClassDef.dispose(cds->ic);
-		if (cds->fc) ClassDef.dispose(cds->fc);
+		if (cds->bc) ClassDef.destroy(cds->bc);
+		if (cds->ic) ClassDef.destroy(cds->ic);
+		if (cds->fc) ClassDef.destroy(cds->fc);
 		FREE(cds);
 	}
 	return subtable;
@@ -283,7 +283,7 @@ static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const
 		}
 	}
 
-	Coverage.dispose(firstCoverage);
+	Coverage.destroy(firstCoverage);
 	return subtable;
 FAIL:
 	iSubtable_chaining.destroy(subtable);
@@ -326,9 +326,9 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 	}
 
 	if (cds) {
-		if (cds->bc) ClassDef.dispose(cds->bc);
-		if (cds->ic) ClassDef.dispose(cds->ic);
-		if (cds->fc) ClassDef.dispose(cds->fc);
+		if (cds->bc) ClassDef.destroy(cds->bc);
+		if (cds->ic) ClassDef.destroy(cds->ic);
+		if (cds->fc) ClassDef.destroy(cds->fc);
 		FREE(cds);
 	}
 	return subtable;

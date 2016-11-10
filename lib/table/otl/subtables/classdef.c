@@ -1,9 +1,15 @@
 #include "support/util.h"
 #include "otfcc/table/otl/classdef.h"
 
+static void initClassDef(otl_ClassDef *cd) {
+	cd->numGlyphs = cd->capacity = 0;
+	cd->glyphs = NULL;
+	cd->classes = NULL;
+}
 static otl_ClassDef *newClassDef() {
 	otl_ClassDef *cd;
 	NEW(cd);
+	initClassDef(cd);
 	return cd;
 }
 
@@ -18,17 +24,19 @@ static void growClassdef(otl_ClassDef *cd, uint32_t n) {
 	}
 }
 
-static void deleteClassDef(otl_ClassDef *cd) {
-	if (cd) {
-		if (cd->glyphs) {
-			for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-				Handle.dispose(&cd->glyphs[j]);
-			}
-			FREE(cd->glyphs);
+static void disposeClassDef(otl_ClassDef *cd) {
+	if (cd->glyphs) {
+		for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
+			Handle.dispose(&cd->glyphs[j]);
 		}
-		FREE(cd->classes);
-		FREE(cd);
+		FREE(cd->glyphs);
 	}
+	FREE(cd->classes);
+}
+static void deleteClassDef(otl_ClassDef *cd) {
+	if (!cd) return;
+	disposeClassDef(cd);
+	FREE(cd);
 }
 
 static void pushClassDef(otl_ClassDef *cd, MOVE otfcc_GlyphHandle h, glyphclass_t cls) {
@@ -234,9 +242,12 @@ static void shrinkClassDef(otl_ClassDef *cd) {
 	cd->numGlyphs = k;
 }
 
-const struct otfcc_ClassDefPackage otfcc_pkgClassDef = {
+const struct __otfcc_IClassDef otfcc_iClassDef = {
+    .init = initClassDef,
     .create = newClassDef,
-    .dispose = deleteClassDef,
+    .copy = NULL,
+    .dispose = disposeClassDef,
+    .destroy = deleteClassDef,
     .read = readClassDef,
     .expand = expandClassDef,
     .dump = dumpClassDef,

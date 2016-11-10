@@ -47,7 +47,7 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 
 	for (glyphid_t j = 0; j < bases->numGlyphs; j++) {
 		otl_LigatureBaseRecord lig;
-		lig.glyph = Handle.copy(bases->glyphs[j]);
+		lig.glyph = Handle.dup(bases->glyphs[j]);
 		uint32_t ligAttachOffset = ligArrayOffset + read_16u(data + ligArrayOffset + 2 + j * 2);
 		checkLength(ligAttachOffset + 2);
 		lig.componentCount = read_16u(data + ligAttachOffset);
@@ -70,12 +70,12 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 		}
 		otl_iLigatureArray.push(&subtable->ligArray, lig);
 	}
-	if (marks) Coverage.dispose(marks);
-	if (bases) Coverage.dispose(bases);
+	if (marks) Coverage.destroy(marks);
+	if (bases) Coverage.destroy(bases);
 	return (otl_Subtable *)subtable;
 FAIL:
-	if (marks) Coverage.dispose(marks);
-	if (bases) Coverage.dispose(bases);
+	if (marks) Coverage.destroy(marks);
+	if (bases) Coverage.destroy(bases);
 	iSubtable_gpos_markToLigature.destroy(subtable);
 	return NULL;
 }
@@ -189,11 +189,11 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	const subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	otl_Coverage *marks = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		Coverage.push(marks, Handle.copy(subtable->markArray.items[j].glyph));
+		Coverage.push(marks, Handle.dup(subtable->markArray.items[j].glyph));
 	}
 	otl_Coverage *bases = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->ligArray.length; j++) {
-		Coverage.push(bases, Handle.copy(subtable->ligArray.items[j].glyph));
+		Coverage.push(bases, Handle.dup(subtable->ligArray.items[j].glyph));
 	}
 
 	bk_Block *root = bk_new_Block(b16, 1,                                            // format
@@ -205,7 +205,7 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	bk_Block *markArray = bk_new_Block(b16, subtable->markArray.length, // markCount
 	                                   bkover);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
-		bk_push(markArray,                                          // markArray item
+		bk_push(markArray,                                              // markArray item
 		        b16, subtable->markArray.items[j].markClass,            // markClass
 		        p16, bkFromAnchor(subtable->markArray.items[j].anchor), // Anchor
 		        bkover);
@@ -224,7 +224,7 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	}
 
 	bk_push(root, p16, markArray, p16, ligatureArray, bkover);
-	Coverage.dispose(marks);
-	Coverage.dispose(bases);
+	Coverage.destroy(marks);
+	Coverage.destroy(bases);
 	return bk_build_Block(root);
 }
