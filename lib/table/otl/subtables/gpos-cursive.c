@@ -8,7 +8,7 @@ static void deleteGposCursiveEntry(otl_GposCursiveEntry *entry) {
 static caryll_ElementInterface(otl_GposCursiveEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGposCursiveEntry};
 
-caryll_DefineVectorImpl(subtable_gpos_cursive, otl_GposCursiveEntry, gss_typeinfo, iSubtable_gpos_cursive);
+caryll_standardVectorImpl(subtable_gpos_cursive, otl_GposCursiveEntry, gss_typeinfo, iSubtable_gpos_cursive);
 
 otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                     const otfcc_Options *options) {

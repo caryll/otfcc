@@ -49,11 +49,10 @@ static void initLookupPtr(otl_LookupPtr *entry) {
 static void disposeLookupPtr(otl_LookupPtr *entry) {
 	otfcc_delete_lookup(*entry);
 }
-caryll_ElementInterfaceOf(otl_LookupPtr) otl_iLookup = {
-    .init = initLookupPtr, .dispose = disposeLookupPtr,
-};
-caryll_TrivialElementImpl(otl_LookupRef, otl_iLookupRef);
-caryll_DefineVectorImpl(otl_LookupRefList, otl_LookupRef, otl_iLookupRef, otl_iLookupRefList);
+caryll_standardType(otl_LookupPtr, otl_iLookupPtr, initLookupPtr, disposeLookupPtr);
+caryll_standardVectorImpl(otl_LookupList, otl_LookupPtr, otl_iLookupPtr, otl_iLookupList);
+caryll_standardType(otl_LookupRef, otl_iLookupRef);
+caryll_standardVectorImpl(otl_LookupRefList, otl_LookupRef, otl_iLookupRef, otl_iLookupRefList);
 
 // FEATURE
 static void initFeaturePtr(otl_FeaturePtr *feature) {
@@ -66,11 +65,10 @@ static void disposeFeaturePtr(otl_Feature **feature) {
 	otl_iLookupRefList.dispose(&(*feature)->lookups);
 	FREE(*feature);
 }
-caryll_ElementInterfaceOf(otl_FeaturePtr) otl_iFeature = {
-    .init = initFeaturePtr, .dispose = disposeFeaturePtr,
-};
-caryll_TrivialElementImpl(otl_FeatureRef, otl_iFeatureRef);
-caryll_DefineVectorImpl(otl_FeatureRefList, otl_FeatureRef, otl_iFeatureRef, otl_iFeatureRefList);
+caryll_standardType(otl_FeaturePtr, otl_iFeaturePtr, initFeaturePtr, disposeFeaturePtr);
+caryll_standardVectorImpl(otl_FeatureList, otl_FeaturePtr, otl_iFeaturePtr, otl_iFeatureList);
+caryll_standardType(otl_FeatureRef, otl_iFeatureRef);
+caryll_standardVectorImpl(otl_FeatureRefList, otl_FeatureRef, otl_iFeatureRef, otl_iFeatureRefList);
 
 // LANGUAGE
 static void initLanguagePtr(otl_LanguageSystemPtr *language) {
@@ -86,25 +84,18 @@ static void disposeLanguagePtr(otl_LanguageSystemPtr *language) {
 caryll_ElementInterfaceOf(otl_LanguageSystemPtr) otl_iLanguageSystem = {
     .init = initLanguagePtr, .dispose = disposeLanguagePtr,
 };
-
-caryll_DefineVectorImpl(otl_LookupList, otl_LookupPtr, otl_iLookup, otl_iLookupList);
-caryll_DefineVectorImpl(otl_FeatureList, otl_FeaturePtr, otl_iFeature, otl_iFeatureList);
-caryll_DefineVectorImpl(otl_LangSystemList, otl_LanguageSystemPtr, otl_iLanguageSystem, otl_iLangSystemList);
+caryll_standardVectorImpl(otl_LangSystemList, otl_LanguageSystemPtr, otl_iLanguageSystem, otl_iLangSystemList);
 
 // COMMON PART
-table_OTL *otfcc_newOtl() {
-	table_OTL *table;
-	NEW(table);
+static void initOTL(table_OTL *table) {
 	otl_iLookupList.init(&table->lookups);
 	otl_iFeatureList.init(&table->features);
 	otl_iLangSystemList.init(&table->languages);
-	return table;
 }
-
-void otfcc_deleteOtl(table_OTL *table) {
-	if (!table) return;
+static void disposeOTL(table_OTL *table) {
 	otl_iLookupList.dispose(&table->lookups);
 	otl_iFeatureList.dispose(&table->features);
 	otl_iLangSystemList.dispose(&table->languages);
-	FREE(table);
 }
+
+caryll_standardRefType(table_OTL, iTable_OTL, initOTL, disposeOTL);

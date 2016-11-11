@@ -45,5 +45,6 @@ typedef struct {
 	uint16_t usLowerOpticalPointSize;
 	uint16_t usUpperOpticalPointSize;
 } table_OS_2;
+extern caryll_RefElementInterface(table_OS_2) iTable_OS_2;
 
 #endif

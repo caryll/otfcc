@@ -3,12 +3,19 @@
 #include "support/util.h"
 #include "support/ttinstr/ttinstr.h"
 
+static void disposeFpgmPrep(MOVE table_fpgm_prep *table) {
+	if (table->tag) sdsfree(table->tag);
+	if (table->bytes) FREE(table->bytes);
+}
+
+caryll_standardRefType(table_fpgm_prep, iTable_fpgm_prep, disposeFpgmPrep);
+
 table_fpgm_prep *otfcc_readFpgmPrep(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_fpgm_prep *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		NEW(t);
+		t = iTable_fpgm_prep.create();
 		t->tag = NULL;
 		t->length = length;
 		NEW(t->bytes, length);
@@ -16,17 +23,10 @@ table_fpgm_prep *otfcc_readFpgmPrep(const otfcc_Packet packet, const otfcc_Optio
 		memcpy(t->bytes, data, length);
 		return t;
 	FAIL:
-		otfcc_deleteFpgm_prep(t);
+		iTable_fpgm_prep.destroy(t);
 		t = NULL;
 	}
 	return NULL;
-}
-
-void otfcc_deleteFpgm_prep(table_fpgm_prep *table) {
-	if (!table) return;
-	if (table->tag) sdsfree(table->tag);
-	if (table->bytes) FREE(table->bytes);
-	FREE(table);
 }
 
 void table_dumpTableFpgmPrep(const table_fpgm_prep *table, json_value *root, const otfcc_Options *options,
@@ -54,7 +54,7 @@ table_fpgm_prep *otfcc_parseFpgmPrep(const json_value *root, const otfcc_Options
 	json_value *table = NULL;
 	if ((table = json_obj_get(root, tag))) {
 		loggedStep("%s", tag) {
-			NEW(t);
+			t = iTable_fpgm_prep.create();
 			t->tag = sdsnew(tag);
 			parse_ttinstr(table, t, makeFpgmPrepInstr, wrongFpgmPrepInstr);
 		}

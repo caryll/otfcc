@@ -24,7 +24,7 @@ static void disposeGposPair(subtable_gpos_pair *subtable) {
 	DELETE(ClassDef.destroy, subtable->second);
 }
 
-caryll_standardRefType(subtable_gpos_pair, initGposPair, disposeGposPair, iSubtable_gpos_pair);
+caryll_standardRefType(subtable_gpos_pair, iSubtable_gpos_pair, initGposPair, disposeGposPair);
 
 typedef struct {
 	int gid;

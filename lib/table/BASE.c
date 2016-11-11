@@ -12,10 +12,12 @@ static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {
 	}
 }
 
-void otfcc_deleteBASE(MOVE table_BASE *base) {
+static void disposeBASE(MOVE table_BASE *base) {
 	deleteBaseAxis(base->horizontal);
 	deleteBaseAxis(base->vertical);
 }
+
+caryll_standardRefType(table_BASE, iTable_BASE, disposeBASE);
 
 static int16_t readBaseValue(font_file_pointer data, uint32_t tableLength, uint16_t offset) {
 	checkLength(offset + 4);
@@ -118,7 +120,7 @@ table_BASE *otfcc_readBASE(const otfcc_Packet packet, const otfcc_Options *optio
 		return base;
 	FAIL:
 		logWarning("Table 'BASE' Corrupted");
-		DELETE(otfcc_deleteBASE, base);
+		DELETE(iTable_BASE.destroy, base);
 	}
 	return base;
 }

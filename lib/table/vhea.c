@@ -2,7 +2,14 @@
 
 #include "support/util.h"
 
-caryll_standardRefType(table_vhea, iTable_vhea);
+static void initVhea(table_vhea *vhea) {
+	memset(vhea, 0, sizeof(*vhea));
+	vhea->version = 0x10000;
+}
+static void disposeVhea(MOVE table_vhea *vhea) {
+	// trivial
+}
+caryll_standardRefType(table_vhea, iTable_vhea, initVhea, disposeVhea);
 
 table_vhea *otfcc_readVhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;

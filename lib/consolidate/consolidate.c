@@ -174,20 +174,21 @@ typedef void (*subtable_remover)(otl_Subtable *);
 static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn, subtable_remover fndel,
                                         otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
                                         const otfcc_Options *options) {
-	if (lookup && lookup->subtables.length && lookup->type == type) {
-		loggedStep("%s", lookup->name) {
-			for (tableid_t j = 0; j < lookup->subtables.length; j++) {
-				if (lookup->subtables.items[j]) {
-					bool subtableRemoved;
-					// loggedStep("Subtable %d", j) {
-					subtableRemoved = fn(font, table, lookup->subtables.items[j], options);
-					//}
-					if (subtableRemoved) {
-						fndel(lookup->subtables.items[j]);
-						lookup->subtables.items[j] = NULL;
-						logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
-					}
-				}
+	if (!lookup || !lookup->subtables.length || lookup->type != type) return;
+	loggedStep("%s", lookup->name) {
+		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+			if (!lookup->subtables.items[j]) {
+				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+				continue;
+			}
+			bool subtableRemoved;
+			// loggedStep("Subtable %d", j) {
+			subtableRemoved = fn(font, table, lookup->subtables.items[j], options);
+			//}
+			if (subtableRemoved) {
+				fndel(lookup->subtables.items[j]);
+				lookup->subtables.items[j] = NULL;
+				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
 			}
 		}
 		tableid_t k = 0;

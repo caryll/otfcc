@@ -16,7 +16,7 @@ static void gss_entry_dtor(MODIFY otl_GsubSingleEntry *entry) {
 static caryll_ElementInterface(otl_GsubSingleEntry) gss_typeinfo = {
     .init = gss_entry_ctor, .copy = gss_entry_copyctor, .dispose = gss_entry_dtor};
 
-caryll_DefineVectorImpl(subtable_gsub_single, otl_GsubSingleEntry, gss_typeinfo, iSubtable_gsub_single);
+caryll_standardVectorImpl(subtable_gsub_single, otl_GsubSingleEntry, gss_typeinfo, iSubtable_gsub_single);
 
 otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                    const otfcc_Options *options) {

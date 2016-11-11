@@ -5,7 +5,7 @@
 caryll_ElementInterfaceOf(otl_CaretValue) otl_iCaretValue = {
     .init = NULL, .copy = NULL, .dispose = NULL,
 };
-caryll_DefineVectorImpl(otl_CaretValueList, otl_CaretValue, otl_iCaretValue, otl_iCaretValueList);
+caryll_standardVectorImpl(otl_CaretValueList, otl_CaretValue, otl_iCaretValue, otl_iCaretValueList);
 
 static void initGdefLigCaretRec(otl_CaretValueRecord *v) {
 	v->glyph = Handle.empty();
@@ -18,7 +18,7 @@ static void deleteGdefLigCaretRec(otl_CaretValueRecord *v) {
 caryll_ElementInterfaceOf(otl_CaretValueRecord) otl_iCaretValueRecord = {
     .init = initGdefLigCaretRec, .copy = NULL, .dispose = deleteGdefLigCaretRec,
 };
-caryll_DefineVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
+caryll_standardVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
 
 static void initGDEF(table_GDEF *gdef) {
 	gdef->glyphClassDef = NULL;
@@ -32,7 +32,7 @@ static void disposeGDEF(table_GDEF *gdef) {
 	otl_iLigCaretTable.dispose(&gdef->ligCarets);
 }
 
-caryll_standardRefType(table_GDEF, initGDEF, disposeGDEF, iTable_GDEF);
+caryll_standardRefType(table_GDEF, iTable_GDEF, initGDEF, disposeGDEF);
 
 static otl_CaretValue readCaretValue(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_CaretValue v;

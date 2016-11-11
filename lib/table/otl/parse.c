@@ -73,7 +73,7 @@ static bool _declareLookupParser(const char *lt, otl_LookupType llt,
 	}
 	// init this lookup
 	otl_Lookup *lookup;
-	otl_iLookup.init(&lookup);
+	otl_iLookupPtr.init(&lookup);
 	lookup->type = llt;
 	lookup->flags = otfcc_parse_flags(json_obj_get(_lookup, "flags"), lookupFlagsLabels);
 	uint16_t markAttachmentType = json_obj_getint(_lookup, "markAttachmentType");
@@ -183,7 +183,7 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 					NEW(s);
 					s->name = sdsnew(featureName);
 					s->alias = false;
-					otl_iFeature.init(&s->feature);
+					otl_iFeaturePtr.init(&s->feature);
 					s->feature->name = sdsdup(s->name);
 					otl_iLookupRefList.replace(&s->feature->lookups, &al);
 					HASH_ADD_STR(fh, name, s);
@@ -295,7 +295,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 	table_OTL *otl = NULL;
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
-	otl = otfcc_newOtl();
+	otl = iTable_OTL.create();
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
@@ -359,7 +359,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 FAIL:
 	if (otl) {
 		logWarning("[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
-		otfcc_deleteOtl(otl);
+		iTable_OTL.destroy(otl);
 	}
 	return NULL;
 }

@@ -2,7 +2,14 @@
 
 #include "support/util.h"
 
-caryll_standardRefType(table_hhea, iTable_hhea);
+static void initHhea(table_hhea *hhea) {
+	memset(hhea, 0, sizeof(*hhea));
+	hhea->version = 0x10000;
+}
+static void disposeHhea(MOVE table_hhea *hhea) {
+	// trivial
+}
+caryll_standardRefType(table_hhea, iTable_hhea, initHhea, disposeHhea);
 
 table_hhea *otfcc_readHhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('hhea', table) {

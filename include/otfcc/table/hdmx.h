@@ -18,4 +18,6 @@ typedef struct {
 	OWNING device_record *records;
 } table_hdmx;
 
+extern caryll_RefElementInterface(table_hdmx) iTable_hdmx;
+
 #endif

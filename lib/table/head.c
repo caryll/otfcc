@@ -10,7 +10,7 @@ static void initHead(table_head *head) {
 static void disposeHead(table_head *head) {
 	// trivial
 }
-caryll_standardRefType(table_head, initHead, disposeHead, iTable_head);
+caryll_standardRefType(table_head, iTable_head, initHead, disposeHead);
 
 table_head *otfcc_readHead(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('head', table) {

@@ -196,7 +196,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 		GlyphOrder.setByGID(glyph_order, j, name);
 	}
 
-	GlyphOrder.free(aglfn);
+	GlyphOrder.destroy(aglfn);
 	sdsfree(prefix);
 	return glyph_order;
 }
@@ -331,6 +331,6 @@ void otfcc_unconsolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyf) {
 		otfcc_GlyphOrder *gord = createGlyphOrder(font, options);
 		nameGlyphs(font, gord);
-		GlyphOrder.free(gord);
+		GlyphOrder.destroy(gord);
 	}
 }

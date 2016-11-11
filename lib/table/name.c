@@ -6,17 +6,8 @@
 static void nameRecordDtor(otfcc_NameRecord *entry) {
 	DELETE(sdsfree, entry->nameString);
 }
-caryll_DtorElementImpl(otfcc_NameRecord, nameRecordDtor, otfcc_iNameRecord);
-caryll_DefineVectorImpl(table_name, otfcc_NameRecord, otfcc_iNameRecord, iTable_name);
-
-void otfcc_deleteName(table_name *table) {
-	iTable_name.dispose(table);
-	FREE(table);
-}
-
-table_name *otfcc_newName() {
-	return iTable_name.create();
-}
+caryll_standardType(otfcc_NameRecord, otfcc_iNameRecord, nameRecordDtor);
+caryll_standardVectorImpl(table_name, otfcc_NameRecord, otfcc_iNameRecord, iTable_name);
 
 static bool shouldDecodeAsUTF16(const otfcc_NameRecord *record) {
 	return (record->platformID == 0)                               // Unicode, all
@@ -39,7 +30,7 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 		uint32_t stringOffset = read_16u(data + 4);
 		if (length < 6 + 12 * count) goto TABLE_NAME_CORRUPTED;
 
-		name = otfcc_newName();
+		name = iTable_name.create();
 
 		for (uint16_t j = 0; j < count; j++) {
 			otfcc_NameRecord record;
@@ -69,7 +60,7 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 		return name;
 	TABLE_NAME_CORRUPTED:
 		logWarning("table 'name' corrupted.\n");
-		if (name) { DELETE(otfcc_deleteName, name); }
+		if (name) { DELETE(iTable_name.destroy, name); }
 	}
 	return NULL;
 }

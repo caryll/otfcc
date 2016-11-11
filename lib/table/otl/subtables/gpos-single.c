@@ -8,7 +8,7 @@ static void deleteGposSingleEntry(otl_GposSingleEntry *entry) {
 static caryll_ElementInterface(otl_GposSingleEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGposSingleEntry};
 
-caryll_DefineVectorImpl(subtable_gpos_single, otl_GposSingleEntry, gss_typeinfo, iSubtable_gpos_single);
+caryll_standardVectorImpl(subtable_gpos_single, otl_GposSingleEntry, gss_typeinfo, iSubtable_gpos_single);
 
 otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                    const otfcc_Options *options) {

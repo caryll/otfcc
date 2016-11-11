@@ -7,28 +7,26 @@
 #define GASP_SYMMETRIC_GRIDFIT 0x0004
 #define GASP_SYMMETRIC_SMOOTHING 0x0008
 
-caryll_TrivialElementImpl(gasp_Record, gasp_iRecord);
-caryll_DefineVectorImpl(gasp_RecordList, gasp_Record, gasp_iRecord, gasp_iRecordList);
+caryll_standardType(gasp_Record, gasp_iRecord);
+caryll_standardVectorImpl(gasp_RecordList, gasp_Record, gasp_iRecord, gasp_iRecordList);
 
-table_gasp *otfcc_newGasp() {
-	table_gasp *gasp;
-	NEW(gasp);
+static void initGasp(table_gasp *gasp) {
 	gasp->version = 1;
 	gasp_iRecordList.init(&gasp->records);
-	return gasp;
 }
-void otfcc_deleteGasp(table_gasp *table) {
-	if (!table) return;
-	gasp_iRecordList.dispose(&table->records);
-	FREE(table);
+static void disposeGasp(MOVE table_gasp *gasp) {
+	gasp_iRecordList.dispose(&gasp->records);
 }
+
+caryll_standardRefType(table_gasp, iTable_gasp, initGasp, disposeGasp);
+
 table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
 	FOR_TABLE('gasp', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 4) { goto FAIL; }
-		gasp = otfcc_newGasp();
+		gasp = iTable_gasp.create();
 		gasp->version = read_16u(data);
 		tableid_t numRanges = read_16u(data + 2);
 		if (length < 4 + numRanges * 4) { goto FAIL; }
@@ -47,7 +45,7 @@ table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *optio
 
 	FAIL:
 		logWarning("table 'gasp' corrupted.\n");
-		otfcc_deleteGasp(gasp);
+		iTable_gasp.destroy(gasp);
 		gasp = NULL;
 	}
 	return NULL;
@@ -74,7 +72,7 @@ table_gasp *otfcc_parseGasp(const json_value *root, const otfcc_Options *options
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
 		loggedStep("gasp") {
-			gasp = otfcc_newGasp();
+			gasp = iTable_gasp.create();
 			for (uint16_t j = 0; j < table->u.array.length; j++) {
 				json_value *r = table->u.array.values[j];
 				if (!r || r->type != json_object) continue;

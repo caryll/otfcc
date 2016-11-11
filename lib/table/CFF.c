@@ -59,7 +59,7 @@ static void disposeFD(table_CFF *fd) {
 	}
 }
 
-caryll_standardRefType(table_CFF, initFD, disposeFD, iTable_CFF);
+caryll_standardRefType(table_CFF, iTable_CFF, initFD, disposeFD);
 
 typedef struct {
 	int32_t fdArrayIndex;

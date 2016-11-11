@@ -24,8 +24,7 @@ typedef struct {
 } otfcc_GlyphOrder;
 
 struct otfcc_GlyphOrderPackage {
-	otfcc_GlyphOrder *(*create)();
-	void (*free)(otfcc_GlyphOrder *go);
+	caryll_RT(otfcc_GlyphOrder);
 	sds (*setByGID)(otfcc_GlyphOrder *go, glyphid_t gid, sds name);
 	bool (*setByName)(otfcc_GlyphOrder *go, sds name, glyphid_t gid);
 	bool (*nameAField_Shared)(otfcc_GlyphOrder *go, glyphid_t gid, sds *field); // return a shared name pointer

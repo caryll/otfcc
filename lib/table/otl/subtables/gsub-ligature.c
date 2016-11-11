@@ -7,7 +7,7 @@ static void deleteGsubLigatureEntry(otl_GsubLigatureEntry *entry) {
 static caryll_ElementInterface(otl_GsubLigatureEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGsubLigatureEntry};
 
-caryll_DefineVectorImpl(subtable_gsub_ligature, otl_GsubLigatureEntry, gss_typeinfo, iSubtable_gsub_ligature);
+caryll_standardVectorImpl(subtable_gsub_ligature, otl_GsubLigatureEntry, gss_typeinfo, iSubtable_gsub_ligature);
 
 otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                      const otfcc_Options *options) {

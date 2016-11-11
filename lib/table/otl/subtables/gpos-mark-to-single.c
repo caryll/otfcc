@@ -8,7 +8,7 @@ static void deleteBaseArrayItem(otl_BaseRecord *entry) {
 static caryll_ElementInterface(otl_BaseRecord) ba_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteBaseArrayItem};
 
-caryll_DefineVectorImpl(otl_BaseArray, otl_BaseRecord, ba_typeinfo, otl_iBaseArray);
+caryll_standardVectorImpl(otl_BaseArray, otl_BaseRecord, ba_typeinfo, otl_iBaseArray);
 
 static void initMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
@@ -19,7 +19,7 @@ static void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iBaseArray.dispose(&subtable->baseArray);
 }
 
-caryll_standardRefType(subtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle, iSubtable_gpos_markToSingle);
+caryll_standardRefType(subtable_gpos_markToSingle, iSubtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle);
 
 otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                          const otfcc_Options *options) {

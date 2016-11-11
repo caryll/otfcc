@@ -19,4 +19,4 @@ void otl_dispose_chaining(subtable_chaining *subtable) {
 	}
 }
 
-caryll_standardRefType(subtable_chaining, otl_init_chaining, otl_dispose_chaining, iSubtable_chaining);
+caryll_standardRefType(subtable_chaining, iSubtable_chaining, otl_init_chaining, otl_dispose_chaining);

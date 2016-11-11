@@ -12,7 +12,7 @@ static void deleteLigArrayItem(otl_LigatureBaseRecord *entry) {
 static caryll_ElementInterface(otl_LigatureBaseRecord) la_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteLigArrayItem};
 
-caryll_DefineVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
+caryll_standardVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
 
 static void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
@@ -23,8 +23,8 @@ static void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iLigatureArray.dispose(&subtable->ligArray);
 }
 
-caryll_standardRefType(subtable_gpos_markToLigature, initMarkToLigature, disposeMarkToLigature,
-                       iSubtable_gpos_markToLigature);
+caryll_standardRefType(subtable_gpos_markToLigature, iSubtable_gpos_markToLigature, initMarkToLigature,
+                       disposeMarkToLigature);
 
 otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                            const otfcc_Options *options) {

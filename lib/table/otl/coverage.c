@@ -1,16 +1,14 @@
 #include "support/util.h"
 #include "otfcc/table/otl/coverage.h"
 
-static void initCoverage(otl_Coverage *coverage) {
-	coverage->capacity = coverage->numGlyphs = 0;
-	coverage->glyphs = NULL;
+static void disposeCoverage(MOVE otl_Coverage *coverage) {
+	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
+		Handle.dispose(&coverage->glyphs[j]);
+	}
+	FREE(coverage->glyphs);
 }
-static otl_Coverage *newCoverage() {
-	otl_Coverage *coverage;
-	NEW(coverage);
-	initCoverage(coverage);
-	return coverage;
-}
+caryll_standardRefTypeFn(otl_Coverage, disposeCoverage);
+
 static void growCoverage(otl_Coverage *coverage, uint32_t n) {
 	if (!n) return;
 	if (n > coverage->capacity) {
@@ -27,18 +25,6 @@ static void clearCoverage(otl_Coverage *coverage, uint32_t n) {
 	}
 	growCoverage(coverage, n);
 	coverage->numGlyphs = n;
-}
-
-static void disposeCoverage(MOVE otl_Coverage *coverage) {
-	for (glyphid_t j = 0; j < coverage->numGlyphs; j++) {
-		Handle.dispose(&coverage->glyphs[j]);
-	}
-	FREE(coverage->glyphs);
-}
-static void destroyCoverage(MOVE otl_Coverage *coverage) {
-	if (!coverage) return;
-	disposeCoverage(coverage);
-	FREE(coverage);
 }
 
 typedef struct {
@@ -58,7 +44,7 @@ static void pushToCoverage(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h) {
 }
 
 static otl_Coverage *readCoverage(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
-	otl_Coverage *coverage = newCoverage();
+	otl_Coverage *coverage = otl_iCoverage.create();
 	if (tableLength < offset + 4) return coverage;
 	uint16_t format = read_16u(data + offset);
 	switch (format) {
@@ -129,7 +115,7 @@ static json_value *dumpCoverage(const otl_Coverage *coverage) {
 }
 
 static otl_Coverage *parseCoverage(const json_value *cov) {
-	otl_Coverage *c = newCoverage();
+	otl_Coverage *c = otl_iCoverage.create();
 	if (!cov || cov->type != json_array) return c;
 
 	for (glyphid_t j = 0; j < cov->u.array.length; j++) {
@@ -240,13 +226,9 @@ static void shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 	coverage->numGlyphs = k;
 }
 
-const struct __otfcc_ICoverage otfcc_iCoverage = {
-    .init = initCoverage,
-    .create = newCoverage,
-    .copy = NULL,
+const struct __otfcc_ICoverage otl_iCoverage = {
+    caryll_DefaultRTAsg(otl_Coverage),
     .clear = clearCoverage,
-    .dispose = disposeCoverage,
-    .destroy = destroyCoverage,
     .read = readCoverage,
     .dump = dumpCoverage,
     .parse = parseCoverage,

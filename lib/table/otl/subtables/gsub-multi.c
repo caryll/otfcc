@@ -8,7 +8,7 @@ static void deleteGsubMultiEntry(otl_GsubMultiEntry *entry) {
 static caryll_ElementInterface(otl_GsubMultiEntry) gsm_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGsubMultiEntry};
 
-caryll_DefineVectorImpl(subtable_gsub_multi, otl_GsubMultiEntry, gsm_typeinfo, iSubtable_gsub_multi);
+caryll_standardVectorImpl(subtable_gsub_multi, otl_GsubMultiEntry, gsm_typeinfo, iSubtable_gsub_multi);
 
 otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                   const otfcc_Options *options) {

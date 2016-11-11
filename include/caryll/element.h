@@ -107,76 +107,51 @@
 		return dst;                                                                                                    \
 	}
 
-#define caryll_TrivialElementImpl(T, name)                                                                             \
+#define caryll_standardTypeFn1(T)                                                                                      \
 	caryll_trivialInit(T);                                                                                             \
 	caryll_trivialCopy(T);                                                                                             \
-	caryll_trivialDispose(T);                                                                                          \
-	caryll_ElementInterfaceOf(T) name = {                                                                              \
-	    .init = T##_init, .copy = T##_copy, .dispose = T##_dispose,                                                    \
-	}
-
-#define caryll_DtorElementImpl(T, dtor, name)                                                                          \
+	caryll_trivialDispose(T);
+#define caryll_standardTypeFn2(T, __fn_dispose)                                                                        \
 	caryll_trivialInit(T);                                                                                             \
 	caryll_trivialCopy(T);                                                                                             \
-	caryll_ElementInterfaceOf(T) name = {                                                                              \
-	    .init = T##_init, .copy = T##_copy, .dispose = dtor,                                                           \
-	}
-
-#define caryll_CDRefElementImplFn(T, ctor, dtor)                                                                       \
-	static __CARYLL_INLINE__ T *T##_create() {                                                                         \
-		T *x = (T *)malloc(sizeof(T));                                                                                 \
-		ctor(x);                                                                                                       \
-		return x;                                                                                                      \
-	}                                                                                                                  \
-	caryll_trivialCopy(T);                                                                                             \
-	static __CARYLL_INLINE__ void T##_destroy(MOVE T *x) {                                                             \
-		if (!x) return;                                                                                                \
-		dtor(x);                                                                                                       \
-		__caryll_free(x);                                                                                              \
-	}
-
-#define caryll_DefaultRTAsg(T)                                                                                         \
-	.init = T##_init, .copy = T##_copy, .dispose = T##_dispose, .create = T##_create, .destroy = T##_destroy
-#define caryll_DefaultVTAsg(T)                                                                                         \
-	.init = T##_init, .copy = T##_copy, .dispose = T##_dispose, .empty = T##_empty, .dup = T##_dup
-
-#define caryll_standardRefType2(T, __name)                                                                             \
-	caryll_trivialInit(T);                                                                                             \
-	caryll_trivialCreate(T);                                                                                           \
-	caryll_trivialCopy(T);                                                                                             \
-	caryll_trivialDispose(T);                                                                                          \
-	caryll_trivialDestroy(T);                                                                                          \
-	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultRTAsg(T),                                                                                        \
-	};
-#define caryll_standardRefType3(T, __fn_dispose, __name)                                                               \
-	caryll_trivialInit(T);                                                                                             \
-	caryll_trivialCreate(T);                                                                                           \
-	caryll_trivialCopy(T);                                                                                             \
-	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
-	caryll_trivialDestroy(T);                                                                                          \
-	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultRTAsg(T),                                                                                        \
-	};
-#define caryll_standardRefType4(T, __fn_init, __fn_dispose, __name)                                                    \
+	caryll_nonTrivialDispose(T, __fn_dispose);
+#define caryll_standardTypeFn3(T, __fn_init, __fn_dispose)                                                             \
 	caryll_nonTrivialInit(T, __fn_init);                                                                               \
-	caryll_trivialCreate(T);                                                                                           \
 	caryll_trivialCopy(T);                                                                                             \
-	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
-	caryll_trivialDestroy(T);                                                                                          \
-	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultRTAsg(T),                                                                                        \
-	};
-#define caryll_standardRefType5(T, __fn_init, __fn_copy, __fn_dispose, __name)                                         \
+	caryll_nonTrivialDispose(T, __fn_dispose);
+#define caryll_standardTypeFn4(T, __fn_init, __fn_copy, __fn_dispose)                                                  \
 	caryll_nonTrivialInit(T, __fn_init);                                                                               \
-	caryll_trivialCreate(T);                                                                                           \
 	caryll_nonTrivialCopy(T, __fn_copy);                                                                               \
-	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
-	caryll_trivialDestroy(T);                                                                                          \
+	caryll_nonTrivialDispose(T, __fn_dispose);
+
+#define caryll_standardTypeFn(...) __CARYLLVFUNC(caryll_standardTypeFn, __VA_ARGS__)
+#define caryll_standardRefTypeFn(T, ...)                                                                               \
+	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
+	caryll_trivialCreate(T);                                                                                           \
+	caryll_trivialDestroy(T);
+#define caryll_standardValTypeFn(T, ...)                                                                               \
+	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
+	caryll_trivialEmpty(T);                                                                                            \
+	caryll_trivialDup(T);
+
+#define caryll_DefaultTAsg(T) .init = T##_init, .copy = T##_copy, .dispose = T##_dispose
+#define caryll_DefaultRTAsg(T) caryll_DefaultTAsg(T), .create = T##_create, .destroy = T##_destroy
+#define caryll_DefaultVTAsg(T) caryll_DefaultTAsg(T), .empty = T##_empty, .dup = T##_dup
+
+#define caryll_standardType(T, __name, ...)                                                                            \
+	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
+	caryll_ElementInterfaceOf(T) __name = {                                                                            \
+	    caryll_DefaultTAsg(T),                                                                                         \
+	};
+#define caryll_standardRefType(T, __name, ...)                                                                         \
+	caryll_standardRefTypeFn(T, __VA_ARGS__);                                                                          \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
 	    caryll_DefaultRTAsg(T),                                                                                        \
 	};
-
-#define caryll_standardRefType(...) __CARYLLVFUNC(caryll_standardRefType, __VA_ARGS__)
+#define caryll_standardValType(T, __name, ...)                                                                         \
+	caryll_standardValTypeFn(T, __VA_ARGS__);                                                                          \
+	caryll_ElementInterfaceOf(T) __name = {                                                                            \
+	    caryll_DefaultVTAsg(T),                                                                                        \
+	};
 
 #endif

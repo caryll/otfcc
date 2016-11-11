@@ -82,16 +82,8 @@
 		arr->capacity = 0;                                                                                             \
 		arr->items = NULL;                                                                                             \
 	}                                                                                                                  \
-	static __CARYLL_INLINE__ __TV *__TV##_create() {                                                                   \
-		__TV *t = __caryll_malloc(sizeof(__TV));                                                                       \
-		__TV##_init(t);                                                                                                \
-		return t;                                                                                                      \
-	}                                                                                                                  \
-	static __CARYLL_INLINE__ void __TV##_destroy(MOVE __TV *arr) {                                                     \
-		if (!arr) return;                                                                                              \
-		__TV##_dispose(arr);                                                                                           \
-		__caryll_free(arr);                                                                                            \
-	}                                                                                                                  \
+	caryll_trivialCreate(__TV);                                                                                        \
+	caryll_trivialDestroy(__TV);                                                                                       \
 	static __CARYLL_INLINE__ void __TV##_growTo(MODIFY __TV *arr, size_t target) {                                     \
 		if (target <= arr->capacity) return;                                                                           \
 		if (!arr->capacity) arr->capacity = 0x10;                                                                      \
@@ -175,7 +167,7 @@
 	.replace = __TV##_replace, .push = __TV##_push, .pop = __TV##_pop, .fill = __TV##_fill, .sort = __TV##_sort,       \
 	.disposeItem = __TV##_disposeItem, .move = __TV##_move
 
-#define caryll_DefineVectorImpl(__TV, __T, __ti, __name)                                                               \
+#define caryll_standardVectorImpl(__TV, __T, __ti, __name)                                                               \
 	caryll_VectorImplFunctions(__TV, __T, __ti);                                                                       \
 	caryll_VectorInterfaceTypeName(__TV) __name = {                                                                    \
 	    caryll_VectorImplAssignments(__TV, __T, __ti),                                                                 \
