@@ -130,9 +130,13 @@
 #define caryll_DefaultRTAsg(T) caryll_DefaultTAsg(T), .create = T##_create, .destroy = T##_destroy
 #define caryll_DefaultVTAsg(T) caryll_DefaultTAsg(T), .empty = T##_empty, .dup = T##_dup
 
+#define caryll_standardTypeFn(...) __CARYLLVFUNC(caryll_standardTypeFn, __VA_ARGS__)
+
 #ifdef __GNUC__
 
-#define caryll_standardTypeFn(...) __CARYLLVFUNC(caryll_standardTypeFn, __VA_ARGS__)
+// GCC requires adding ## before __VA_ARGS__.
+// Make it happy.
+
 #define caryll_standardRefTypeFn(T, ...)                                                                               \
 	caryll_standardTypeFn(T, ##__VA_ARGS__);                                                                           \
 	caryll_trivialCreate(T);                                                                                           \
@@ -160,7 +164,6 @@
 
 #else
 
-#define caryll_standardTypeFn(...) __CARYLLVFUNC(caryll_standardTypeFn, __VA_ARGS__)
 #define caryll_standardRefTypeFn(T, ...)                                                                               \
 	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
 	caryll_trivialCreate(T);                                                                                           \
