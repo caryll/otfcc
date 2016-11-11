@@ -40,6 +40,7 @@
 #define caryll_T(T)                                                                                                    \
 	void (*init)(MODIFY T *);                                                                                          \
 	void (*copy)(MODIFY T *, const T *);                                                                               \
+	void (*move)(MODIFY T *, T *);                                                                                     \
 	void (*dispose)(MOVE T *);
 #define caryll_VT(T)                                                                                                   \
 	caryll_T(T);                                                                                                       \
@@ -88,6 +89,16 @@
 	static __CARYLL_INLINE__ void T##_copy(MODIFY T *dst, const T *src) {                                              \
 		(__fn_copy)(dst, src);                                                                                         \
 	}
+#define caryll_trivialMove(T)                                                                                          \
+	static __CARYLL_INLINE__ void T##_move(MODIFY T *dst, T *src) {                                                    \
+		memcpy(dst, src, sizeof(T));                                                                                   \
+		T##_init(src);                                                                                                 \
+	}
+#define caryll_nonTrivialMove(T, __fn_move)                                                                            \
+	static __CARYLL_INLINE__ void T##_move(MODIFY T *dst, T *src) {                                                    \
+		(__fn_move)(dst, src);                                                                                         \
+		T##_init(src);                                                                                                 \
+	}
 #define caryll_trivialDispose(T)                                                                                       \
 	static __CARYLL_INLINE__ void T##_dispose(MODIFY T *x) {                                                           \
 		/* trivial */                                                                                                  \
@@ -112,23 +123,33 @@
 #define caryll_standardTypeFn1(T)                                                                                      \
 	caryll_trivialInit(T);                                                                                             \
 	caryll_trivialCopy(T);                                                                                             \
-	caryll_trivialDispose(T);
+	caryll_trivialDispose(T);                                                                                          \
+	caryll_trivialMove(T);
 #define caryll_standardTypeFn2(T, __fn_dispose)                                                                        \
 	caryll_trivialInit(T);                                                                                             \
 	caryll_trivialCopy(T);                                                                                             \
-	caryll_nonTrivialDispose(T, __fn_dispose);
+	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
+	caryll_trivialMove(T);
 #define caryll_standardTypeFn3(T, __fn_init, __fn_dispose)                                                             \
 	caryll_nonTrivialInit(T, __fn_init);                                                                               \
 	caryll_trivialCopy(T);                                                                                             \
-	caryll_nonTrivialDispose(T, __fn_dispose);
+	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
+	caryll_trivialMove(T);
 #define caryll_standardTypeFn4(T, __fn_init, __fn_copy, __fn_dispose)                                                  \
 	caryll_nonTrivialInit(T, __fn_init);                                                                               \
 	caryll_nonTrivialCopy(T, __fn_copy);                                                                               \
-	caryll_nonTrivialDispose(T, __fn_dispose);
+	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
+	caryll_trivialMove(T);
 
-#define caryll_DefaultTAsg(T) .init = T##_init, .copy = T##_copy, .dispose = T##_dispose
-#define caryll_DefaultRTAsg(T) caryll_DefaultTAsg(T), .create = T##_create, .destroy = T##_destroy
-#define caryll_DefaultVTAsg(T) caryll_DefaultTAsg(T), .empty = T##_empty, .dup = T##_dup
+#define caryll_standardTypeFn5(T, __fn_init, __fn_copy, __fn_dispose, __fn_move)                                       \
+	caryll_nonTrivialInit(T, __fn_init);                                                                               \
+	caryll_nonTrivialCopy(T, __fn_copy);                                                                               \
+	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
+	caryll_nonTrivialMove(T, __fn_move);
+
+#define caryll_standardTypeMethods(T) .init = T##_init, .copy = T##_copy, .dispose = T##_dispose, .move = T##_move
+#define caryll_standardRefTypeMethods(T) caryll_standardTypeMethods(T), .create = T##_create, .destroy = T##_destroy
+#define caryll_standardValTypeMethods(T) caryll_standardTypeMethods(T), .empty = T##_empty, .dup = T##_dup
 
 #define caryll_standardTypeFn(...) __CARYLLVFUNC(caryll_standardTypeFn, __VA_ARGS__)
 
@@ -149,17 +170,17 @@
 #define caryll_standardType(T, __name, ...)                                                                            \
 	caryll_standardTypeFn(T, ##__VA_ARGS__);                                                                           \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultTAsg(T),                                                                                         \
+	    caryll_standardTypeMethods(T),                                                                                 \
 	};
 #define caryll_standardRefType(T, __name, ...)                                                                         \
 	caryll_standardRefTypeFn(T, ##__VA_ARGS__);                                                                        \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultRTAsg(T),                                                                                        \
+	    caryll_standardRefTypeMethods(T),                                                                              \
 	};
 #define caryll_standardValType(T, __name, ...)                                                                         \
 	caryll_standardValTypeFn(T, ##__VA_ARGS__);                                                                        \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultVTAsg(T),                                                                                        \
+	    caryll_standardValTypeMethods(T),                                                                              \
 	};
 
 #else
@@ -176,17 +197,17 @@
 #define caryll_standardType(T, __name, ...)                                                                            \
 	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultTAsg(T),                                                                                         \
+	    caryll_standardTypeMethods(T),                                                                                 \
 	};
 #define caryll_standardRefType(T, __name, ...)                                                                         \
 	caryll_standardRefTypeFn(T, __VA_ARGS__);                                                                          \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultRTAsg(T),                                                                                        \
+	    caryll_standardRefTypeMethods(T),                                                                              \
 	};
 #define caryll_standardValType(T, __name, ...)                                                                         \
 	caryll_standardValTypeFn(T, __VA_ARGS__);                                                                          \
 	caryll_ElementInterfaceOf(T) __name = {                                                                            \
-	    caryll_DefaultVTAsg(T),                                                                                        \
+	    caryll_standardValTypeMethods(T),                                                                              \
 	};
 
 #endif

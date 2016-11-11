@@ -54,7 +54,7 @@ static void handle_consolidateTo(struct otfcc_Handle *h, glyphid_t id, sds name)
 }
 
 const struct otfcc_HandlePackage otfcc_iHandle = {
-    caryll_DefaultVTAsg(otfcc_Handle),           // VT
+    caryll_standardValTypeMethods(otfcc_Handle), // VT
     .fromIndex = handle_fromIndex,               // custom constructor, from index
     .fromName = handle_fromName,                 // custom constructor, from name
     .fromConsolidated = handle_fromConsolidated, // custom constructor, from consolidated

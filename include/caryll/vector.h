@@ -37,7 +37,6 @@
 	void (*initN)(MODIFY __TV * arr, size_t n);                                                                        \
 	__TV *(*createN)(size_t n);                                                                                        \
 	void (*clear)(MODIFY __TV * arr);                                                                                  \
-	void (*move)(MODIFY __TV * dst, MOVE __TV * src);                                                                  \
 	void (*replace)(MODIFY __TV * dst, MOVE const __TV *src);                                                          \
 	void (*push)(MODIFY __TV * arr, MOVE __T obj);                                                                     \
 	__T (*pop)(MODIFY __TV * arr);                                                                                     \
@@ -167,7 +166,7 @@
 	.replace = __TV##_replace, .push = __TV##_push, .pop = __TV##_pop, .fill = __TV##_fill, .sort = __TV##_sort,       \
 	.disposeItem = __TV##_disposeItem, .move = __TV##_move
 
-#define caryll_standardVectorImpl(__TV, __T, __ti, __name)                                                               \
+#define caryll_standardVectorImpl(__TV, __T, __ti, __name)                                                             \
 	caryll_VectorImplFunctions(__TV, __T, __ti);                                                                       \
 	caryll_VectorInterfaceTypeName(__TV) __name = {                                                                    \
 	    caryll_VectorImplAssignments(__TV, __T, __ti),                                                                 \

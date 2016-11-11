@@ -68,7 +68,7 @@ otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c) {
 }
 
 caryll_ElementInterfaceOf(table_cmap) iTable_cmap = {
-    caryll_DefaultRTAsg(table_cmap),
+    caryll_standardRefTypeMethods(table_cmap),
     .encodeByIndex = otfcc_encodeCmapByIndex,
     .encodeByName = otfcc_encodeCmapByName,
     .unmap = otfcc_unmapCmap,

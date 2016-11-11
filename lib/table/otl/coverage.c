@@ -227,7 +227,7 @@ static void shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 }
 
 const struct __otfcc_ICoverage otl_iCoverage = {
-    caryll_DefaultRTAsg(otl_Coverage),
+    caryll_standardRefTypeMethods(otl_Coverage),
     .clear = clearCoverage,
     .read = readCoverage,
     .dump = dumpCoverage,

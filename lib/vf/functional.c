@@ -9,11 +9,7 @@ static void vfDispose(MOVE vf_Functional *form) {
 		FREE(form->cdr);
 	}
 }
-caryll_trivialInit(vf_Functional);
-caryll_trivialEmpty(vf_Functional);
-caryll_trivialCopy(vf_Functional);
-caryll_nonTrivialDispose(vf_Functional, vfDispose);
-caryll_trivialDup(vf_Functional);
+caryll_standardValTypeFn(vf_Functional, vfDispose);
 
 static vf_Functional vf_new_Functional_scalar(pos_t scalar) {
 	vf_Functional f;
@@ -99,7 +95,7 @@ static vf_Functional vf_Functional_gxCanonical(OBSERVE vf_Functional a, shapeid_
 }
 
 const struct vf_IFunctional vf_iFunctional = {
-    caryll_DefaultVTAsg(vf_Functional), // VT implementation
+    caryll_standardValTypeMethods(vf_Functional), // VT implementation
     .scalar = vf_new_Functional_scalar,
     .add = vf_Functional_add,
     .minus = vf_Functional_minus,

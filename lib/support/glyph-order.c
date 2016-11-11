@@ -111,10 +111,7 @@ static bool gordLookupName(otfcc_GlyphOrder *go, sds name) {
 }
 
 const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder = {
-    caryll_DefaultRTAsg(otfcc_GlyphOrder),
-    .setByGID = otfcc_setGlyphOrderByGID,
-    .setByName = otfcc_setGlyphOrderByName,
-    .nameAField_Shared = otfcc_gordNameAFieldShared,
-    .consolidateHandle = otfcc_gordConsolidateHandle,
-    .lookupName = gordLookupName,
+    caryll_standardRefTypeMethods(otfcc_GlyphOrder),  .setByGID = otfcc_setGlyphOrderByGID,
+    .setByName = otfcc_setGlyphOrderByName,           .nameAField_Shared = otfcc_gordNameAFieldShared,
+    .consolidateHandle = otfcc_gordConsolidateHandle, .lookupName = gordLookupName,
 };

@@ -226,7 +226,7 @@ static void shrinkClassDef(otl_ClassDef *cd) {
 }
 
 const struct __otfcc_IClassDef otl_iClassDef = {
-    caryll_DefaultRTAsg(otl_ClassDef),
+    caryll_standardRefTypeMethods(otl_ClassDef),
     .read = readClassDef,
     .expand = expandClassDef,
     .dump = dumpClassDef,
