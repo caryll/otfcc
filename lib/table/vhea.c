@@ -2,11 +2,11 @@
 
 #include "support/util.h"
 
-static void initVhea(table_vhea *vhea) {
+static INLINE void initVhea(table_vhea *vhea) {
 	memset(vhea, 0, sizeof(*vhea));
 	vhea->version = 0x10000;
 }
-static void disposeVhea(MOVE table_vhea *vhea) {
+static INLINE void disposeVhea(MOVE table_vhea *vhea) {
 	// trivial
 }
 caryll_standardRefType(table_vhea, iTable_vhea, initVhea, disposeVhea);

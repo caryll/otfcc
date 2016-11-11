@@ -20,7 +20,7 @@ static cff_PrivateDict *otfcc_newCff_private() {
 	return pd;
 }
 
-static void initFD(table_CFF *fd) {
+static INLINE void initFD(table_CFF *fd) {
 	memset(fd, 0, sizeof(*fd));
 	fd->underlinePosition = -100;
 	fd->underlineThickness = 50;
@@ -37,7 +37,7 @@ static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	FREE(priv->stemSnapV);
 	FREE(priv);
 }
-static void disposeFD(table_CFF *fd) {
+static INLINE void disposeFD(table_CFF *fd) {
 	sdsfree(fd->version);
 	sdsfree(fd->notice);
 	sdsfree(fd->copyright);

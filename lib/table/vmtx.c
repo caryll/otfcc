@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-static void disposeVmtx(MOVE table_vmtx *table) {
+static INLINE void disposeVmtx(MOVE table_vmtx *table) {
 	if (table->metrics != NULL) FREE(table->metrics);
 	if (table->topSideBearing != NULL) FREE(table->topSideBearing);
 }

@@ -14,11 +14,11 @@ static caryll_ElementInterface(otl_LigatureBaseRecord) la_typeinfo = {
 
 caryll_standardVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
 
-static void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
+static INLINE void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
 	otl_iLigatureArray.init(&subtable->ligArray);
 }
-static void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
+static INLINE void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iMarkArray.dispose(&subtable->markArray);
 	otl_iLigatureArray.dispose(&subtable->ligArray);
 }

@@ -1,7 +1,7 @@
 #include "support/util.h"
 #include "otfcc/table/otl/classdef.h"
 
-static void disposeClassDef(otl_ClassDef *cd) {
+static INLINE void disposeClassDef(otl_ClassDef *cd) {
 	if (cd->glyphs) {
 		for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
 			Handle.dispose(&cd->glyphs[j]);

@@ -1,11 +1,11 @@
 #include "util.h"
 #include "otfcc/glyph-order.h"
 
-static void initGlyphOrder(otfcc_GlyphOrder *go) {
+static INLINE void initGlyphOrder(otfcc_GlyphOrder *go) {
 	go->byGID = NULL;
 	go->byName = NULL;
 }
-static void disposeGlyphOrder(otfcc_GlyphOrder *go) {
+static INLINE void disposeGlyphOrder(otfcc_GlyphOrder *go) {
 	otfcc_GlyphOrderEntry *current, *temp;
 	HASH_ITER(hhID, go->byGID, current, temp) {
 		if (current->name) sdsfree(current->name);

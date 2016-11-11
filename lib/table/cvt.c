@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-static void disposeCvt(MOVE table_cvt *table) {
+static INLINE void disposeCvt(MOVE table_cvt *table) {
 	if (table->words) FREE(table->words);
 }
 

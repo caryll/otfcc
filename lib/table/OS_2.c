@@ -1,11 +1,11 @@
 #include "OS_2.h"
 #include "support/util.h"
 
-static void initOS2(table_OS_2 *table) {
+static INLINE void initOS2(table_OS_2 *table) {
 	memset(table, 0, sizeof(*table));
 	table->version = 4;
 }
-static void disposeOS2(MOVE table_OS_2 *table) {
+static INLINE void disposeOS2(MOVE table_OS_2 *table) {
 	// trivial
 }
 caryll_standardRefType(table_OS_2, iTable_OS_2, initOS2, disposeOS2);

@@ -2,12 +2,12 @@
 
 #include "support/util.h"
 
-static void initHead(table_head *head) {
+static INLINE void initHead(table_head *head) {
 	memset(head, 0, sizeof(*head));
 	head->magicNumber = 0x5f0f3cf5;
 	head->unitsPerEm = 1000;
 }
-static void disposeHead(table_head *head) {
+static INLINE void disposeHead(table_head *head) {
 	// trivial
 }
 caryll_standardRefType(table_head, iTable_head, initHead, disposeHead);

@@ -10,11 +10,11 @@ static caryll_ElementInterface(otl_BaseRecord) ba_typeinfo = {
 
 caryll_standardVectorImpl(otl_BaseArray, otl_BaseRecord, ba_typeinfo, otl_iBaseArray);
 
-static void initMarkToSingle(subtable_gpos_markToSingle *subtable) {
+static INLINE void initMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
 	otl_iBaseArray.init(&subtable->baseArray);
 }
-static void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
+static INLINE void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iMarkArray.dispose(&subtable->markArray);
 	otl_iBaseArray.dispose(&subtable->baseArray);
 }

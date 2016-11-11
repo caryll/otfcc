@@ -12,7 +12,7 @@ static void deleteBaseAxis(MOVE otl_BaseAxis *axis) {
 	}
 }
 
-static void disposeBASE(MOVE table_BASE *base) {
+static INLINE void disposeBASE(MOVE table_BASE *base) {
 	deleteBaseAxis(base->horizontal);
 	deleteBaseAxis(base->vertical);
 }

@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-static void disposeHmtx(MOVE table_hmtx *table) {
+static INLINE void disposeHmtx(MOVE table_hmtx *table) {
 	if (table->metrics != NULL) FREE(table->metrics);
 	if (table->leftSideBearing != NULL) FREE(table->leftSideBearing);
 }

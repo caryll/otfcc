@@ -17,7 +17,7 @@ caryll_standardVectorImpl(glyf_Contour, glyf_Point, glyf_iPoint, glyf_iContour);
 caryll_standardVectorImpl(glyf_ContourList, glyf_Contour, glyf_iContour, glyf_iContourList);
 
 // ref
-static void disposeGlyfReference(glyf_ComponentReference *ref) {
+static INLINE void disposeGlyfReference(glyf_ComponentReference *ref) {
 	Handle.dispose(&ref->glyph);
 }
 caryll_standardType(glyf_ComponentReference, glyf_iComponentReference, disposeGlyfReference);
@@ -103,13 +103,13 @@ static void otfcc_deleteGlyf_glyph(glyf_Glyph *g) {
 	FREE(g);
 }
 
-static void initGlyfPtr(glyf_GlyphPtr *g) {
+static INLINE void initGlyfPtr(glyf_GlyphPtr *g) {
 	*g = NULL;
 }
 static void copyGlyfPtr(glyf_GlyphPtr *dst, const glyf_GlyphPtr *src) {
 	*dst = *src;
 }
-static void disposeGlyfPtr(glyf_GlyphPtr *g) {
+static INLINE void disposeGlyfPtr(glyf_GlyphPtr *g) {
 	otfcc_deleteGlyf_glyph(*g);
 }
 caryll_ElementInterfaceOf(glyf_GlyphPtr) glyf_iGlyphPtr = {

@@ -2,11 +2,11 @@
 
 #include "support/util.h"
 
-static void initMaxp(table_maxp *maxp) {
+static INLINE void initMaxp(table_maxp *maxp) {
 	memset(maxp, 0, sizeof(*maxp));
 	maxp->version = 0x10000;
 }
-static void disposeMaxp(MOVE table_maxp *maxp) {
+static INLINE void disposeMaxp(MOVE table_maxp *maxp) {
 	// trivial
 }
 caryll_standardRefType(table_maxp, iTable_maxp, initMaxp, disposeMaxp);

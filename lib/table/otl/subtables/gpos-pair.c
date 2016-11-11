@@ -1,13 +1,13 @@
 #include "gpos-pair.h"
 #include "gpos-common.h"
 
-static void initGposPair(subtable_gpos_pair *subtable) {
+static INLINE void initGposPair(subtable_gpos_pair *subtable) {
 	subtable->first = NULL;
 	subtable->second = NULL;
 	subtable->firstValues = NULL;
 	subtable->secondValues = NULL;
 }
-static void disposeGposPair(subtable_gpos_pair *subtable) {
+static INLINE void disposeGposPair(subtable_gpos_pair *subtable) {
 	if (subtable->firstValues) {
 		for (glyphclass_t j = 0; j <= subtable->first->maxclass; j++) {
 			FREE(subtable->firstValues[j]);

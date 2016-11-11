@@ -7,7 +7,7 @@ caryll_ElementInterfaceOf(otl_CaretValue) otl_iCaretValue = {
 };
 caryll_standardVectorImpl(otl_CaretValueList, otl_CaretValue, otl_iCaretValue, otl_iCaretValueList);
 
-static void initGdefLigCaretRec(otl_CaretValueRecord *v) {
+static INLINE void initGdefLigCaretRec(otl_CaretValueRecord *v) {
 	v->glyph = Handle.empty();
 	otl_iCaretValueList.init(&v->carets);
 }
@@ -20,12 +20,12 @@ caryll_ElementInterfaceOf(otl_CaretValueRecord) otl_iCaretValueRecord = {
 };
 caryll_standardVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
 
-static void initGDEF(table_GDEF *gdef) {
+static INLINE void initGDEF(table_GDEF *gdef) {
 	gdef->glyphClassDef = NULL;
 	gdef->markAttachClassDef = NULL;
 	otl_iLigCaretTable.init(&gdef->ligCarets);
 }
-static void disposeGDEF(table_GDEF *gdef) {
+static INLINE void disposeGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
 	if (gdef->glyphClassDef) ClassDef.destroy(gdef->glyphClassDef);
 	if (gdef->markAttachClassDef) ClassDef.destroy(gdef->markAttachClassDef);

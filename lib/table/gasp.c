@@ -10,11 +10,11 @@
 caryll_standardType(gasp_Record, gasp_iRecord);
 caryll_standardVectorImpl(gasp_RecordList, gasp_Record, gasp_iRecord, gasp_iRecordList);
 
-static void initGasp(table_gasp *gasp) {
+static INLINE void initGasp(table_gasp *gasp) {
 	gasp->version = 1;
 	gasp_iRecordList.init(&gasp->records);
 }
-static void disposeGasp(MOVE table_gasp *gasp) {
+static INLINE void disposeGasp(MOVE table_gasp *gasp) {
 	gasp_iRecordList.dispose(&gasp->records);
 }
 

@@ -2,12 +2,12 @@
 #include "support/otfcc-alloc.h"
 
 // default constructors
-static void initHandle(otfcc_Handle *h) {
+static INLINE void initHandle(otfcc_Handle *h) {
 	h->state = HANDLE_STATE_EMPTY;
 	h->index = 0;
 	h->name = NULL;
 }
-static void disposeHandle(struct otfcc_Handle *h) {
+static INLINE void disposeHandle(struct otfcc_Handle *h) {
 	if (h->name) {
 		sdsfree(h->name);
 		h->name = NULL;

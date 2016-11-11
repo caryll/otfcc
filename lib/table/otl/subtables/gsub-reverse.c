@@ -1,10 +1,10 @@
 #include "gsub-reverse.h"
 
-static void initGsubReverse(subtable_gsub_reverse *subtable) {
+static INLINE void initGsubReverse(subtable_gsub_reverse *subtable) {
 	subtable->match = NULL;
 	subtable->to = NULL;
 }
-static void disposeGsubReverse(subtable_gsub_reverse *subtable) {
+static INLINE void disposeGsubReverse(subtable_gsub_reverse *subtable) {
 	if (subtable->match)
 		for (tableid_t j = 0; j < subtable->matchCount; j++) {
 			Coverage.destroy(subtable->match[j]);

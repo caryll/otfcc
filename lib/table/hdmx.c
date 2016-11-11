@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-static void disposeHdmx(MOVE table_hdmx *table) {
+static INLINE void disposeHdmx(MOVE table_hdmx *table) {
 	if (!table->records) return;
 	for (uint32_t i = 0; i < table->numRecords; i++) {
 		if (table->records[i].widths != NULL) FREE(table->records[i].widths);

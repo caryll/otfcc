@@ -7,11 +7,11 @@ static const char *standardMacNames[258] = {".notdef", ".null", "nonmarkingretur
 
 // clang-format on
 
-static void initPost(table_post *post) {
+static INLINE void initPost(table_post *post) {
 	memset(post, 0, sizeof(*post));
 	post->version = 0x30000;
 }
-static void disposePost(MOVE table_post *post) {
+static INLINE void disposePost(MOVE table_post *post) {
 	if (post->post_name_map != NULL) { GlyphOrder.destroy(post->post_name_map); }
 }
 

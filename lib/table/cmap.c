@@ -4,10 +4,10 @@
 
 // PART I, type definition
 
-static void initCmap(table_cmap *cmap) {
+static INLINE void initCmap(table_cmap *cmap) {
 	cmap->unicodes = NULL;
 }
-static void disposeCmap(table_cmap *cmap) {
+static INLINE void disposeCmap(table_cmap *cmap) {
 	cmap_Entry *s, *tmp;
 	HASH_ITER(hh, cmap->unicodes, s, tmp) {
 		// delete and free all cmap entries

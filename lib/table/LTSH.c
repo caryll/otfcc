@@ -2,7 +2,7 @@
 
 #include "support/util.h"
 
-static void disposeLTSH(MOVE table_LTSH *ltsh) {
+static INLINE void disposeLTSH(MOVE table_LTSH *ltsh) {
 	if (ltsh) { FREE(ltsh->yPels); }
 }
 caryll_standardRefType(table_LTSH, iTable_LTSH, disposeLTSH);

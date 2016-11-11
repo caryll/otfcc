@@ -1,7 +1,7 @@
 #include "otfcc/vf/functional.h"
 #include "support/util.h"
 
-static void vfDispose(MOVE vf_Functional *form) {
+static INLINE void vfDispose(MOVE vf_Functional *form) {
 	if (form->car > vf_scalar) {
 		for (shapeid_t j = form->arity; j--;) {
 			vfDispose(&form->cdr[j]);
