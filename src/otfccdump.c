@@ -200,6 +200,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	char *buf;
+	size_t buflen;
 	loggedStep("Serialize to JSON") {
 		json_serialize_opts jsonOptions;
 		jsonOptions.mode = json_serialize_mode_packed;
@@ -209,7 +210,8 @@ int main(int argc, char *argv[]) {
 			jsonOptions.mode = json_serialize_mode_multiline;
 		}
 		if (show_ugly) jsonOptions.mode = json_serialize_mode_packed;
-		buf = malloc(json_measure_ex(root, jsonOptions));
+		buflen = json_measure_ex(root, jsonOptions);
+		buf = malloc(buflen);
 		json_serialize_ex(buf, root, jsonOptions);
 		logStepTime;
 	}
@@ -226,7 +228,7 @@ int main(int argc, char *argv[]) {
 				fputc(0xBB, outputFile);
 				fputc(0xBF, outputFile);
 			}
-			fputs(buf, outputFile);
+			fwrite(buf, sizeof(char), buflen, outputFile);
 			fclose(outputFile);
 		} else {
 #ifdef WIN32
