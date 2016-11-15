@@ -3,15 +3,6 @@
 
 #include <stdint.h>
 
-#define FOR_TABLE(name, table)                                                                                         \
-	for (int keep = 1, count = 0, __notfound = 1; __notfound && keep && count < packet.numTables;                      \
-	     keep = !keep, count++)                                                                                        \
-		for (otfcc_PacketPiece table = (packet.pieces)[count]; keep; keep = !keep)                                     \
-			if (table.tag == (name))                                                                                   \
-				for (int k2 = 1; k2; k2 = 0, __notfound = 0)
-
-#define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
-
 #define loggedStep(...)                                                                                                \
 	for (bool ___loggedstep_v =                                                                                        \
 	              (options->logger->startSDS(options->logger, sdscatprintf(sdsempty(), __VA_ARGS__)), true);           \
@@ -24,6 +15,21 @@
 	options->logger->logSDS(options->logger, log_vl_notice, log_type_info, sdscatprintf(sdsempty(), __VA_ARGS__));
 #define logProgress(...)                                                                                               \
 	options->logger->logSDS(options->logger, log_vl_progress, log_type_progress, sdscatprintf(sdsempty(), __VA_ARGS__));
+
+#define FOR_TABLE_SILENT(name, table)                                                                                  \
+	for (int __fortable_keep = 1, __fortable_count = 0, __notfound = 1;                                                \
+	     __notfound && __fortable_keep && __fortable_count < packet.numTables;                                         \
+	     __fortable_keep = !__fortable_keep, __fortable_count++)                                                       \
+		for (otfcc_PacketPiece table = (packet.pieces)[__fortable_count]; __fortable_keep;                             \
+		     __fortable_keep = !__fortable_keep)                                                                       \
+			if (table.tag == (name))                                                                                   \
+				for (int __fortable_k2 = 1; __fortable_k2; __fortable_k2 = 0, __notfound = 0)
+
+#define FOR_TABLE(name, table)                                                                                         \
+	FOR_TABLE_SILENT(name, table)                                                                                      \
+	loggedStep("Parsing %c%c%c%c", ((name >> 24) & 0xFF), ((name >> 16) & 0xFF), ((name >> 8) & 0xFF), (name & 0xFF))
+
+#define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
 
 typedef uint8_t *font_file_pointer;
 

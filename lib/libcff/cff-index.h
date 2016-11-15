@@ -10,23 +10,24 @@
 #include "cff-util.h"
 #include "cff-value.h"
 
+typedef enum { CFF_INDEX_16, CFF_INDEX_32 } cff_IndexCountType;
+
 typedef struct {
-	uint16_t count;
+	cff_IndexCountType countType;
+	arity_t count;
 	uint8_t offSize;
 	uint32_t *offset;
 	uint8_t *data;
 } cff_Index;
 
-extern cff_Index *cff_new_Index(void);
-extern void cff_delete_Index(cff_Index *out);
-extern void cff_close_Index(cff_Index in);
-extern void cff_empty_Index(cff_Index *in);
-uint32_t cff_lengthOfIndex(cff_Index i);
-
-void cff_extract_Index(uint8_t *data, uint32_t pos, cff_Index *in);
-
-cff_Index *cff_newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t));
-
-caryll_Buffer *cff_build_Index(cff_Index index);
+extern caryll_ElementInterfaceOf(cff_Index) {
+	caryll_RT(cff_Index);
+	void (*empty)(cff_Index * i);
+	uint32_t (*getLength)(const cff_Index *i);
+	void (*extract)(uint8_t * data, uint32_t pos, cff_Index * in);
+	cff_Index *(*fromCallback)(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t));
+	caryll_Buffer *(*build)(const cff_Index *index);
+}
+cff_iIndex;
 
 #endif

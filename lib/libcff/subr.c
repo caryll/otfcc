@@ -564,9 +564,9 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 		if (!e->rule && e->terminal && e->hard) { j++; }
 	}
 
-	cff_Index *is = cff_newIndexByCallback(charStrings, g->totalCharStrings, from_array);
-	cff_Index *igs = cff_newIndexByCallback(gsubrs, maxGSubrs, from_array);
-	cff_Index *ils = cff_newIndexByCallback(lsubrs, maxLSubrs, from_array);
+	cff_Index *is = cff_iIndex.fromCallback(charStrings, g->totalCharStrings, from_array);
+	cff_Index *igs = cff_iIndex.fromCallback(gsubrs, maxGSubrs, from_array);
+	cff_Index *ils = cff_iIndex.fromCallback(lsubrs, maxLSubrs, from_array);
 
 	for (uint32_t j = 0; j < g->totalCharStrings; j++) {
 		FREE((charStrings + j)->data);
@@ -579,8 +579,8 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 	}
 	FREE(charStrings), FREE(gsubrs), FREE(lsubrs);
 
-	*s = cff_build_Index(*is), *gs = cff_build_Index(*igs), *ls = cff_build_Index(*ils);
-	cff_delete_Index(is), cff_delete_Index(igs), cff_delete_Index(ils);
+	*s = cff_iIndex.build(is), *gs = cff_iIndex.build(igs), *ls = cff_iIndex.build(ils);
+	cff_iIndex.destroy(is), cff_iIndex.destroy(igs), cff_iIndex.destroy(ils);
 }
 
 static void deleteFullRule(cff_SubrRule *r) {

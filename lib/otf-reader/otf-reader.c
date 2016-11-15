@@ -6,7 +6,7 @@
 
 static otfcc_font_subtype decideFontSubtypeOTF(otfcc_SplineFontContainer *sfnt, uint32_t index) {
 	otfcc_Packet packet = sfnt->packets[index];
-	FOR_TABLE('CFF ', table) {
+	FOR_TABLE_SILENT('CFF ', table) {
 		return FONTTYPE_CFF;
 	}
 	return FONTTYPE_TTF;

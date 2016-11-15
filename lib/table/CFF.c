@@ -365,6 +365,8 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	uint64_t seed = context->seed;
 
 	cff_Index localSubrs;
+	cff_iIndex.init(&localSubrs);
+
 	cff_Stack stack;
 	stack.max = 0x10000;
 	NEW(stack.stack, stack.max);
@@ -373,6 +375,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 
 	outline_builder_context bc = {g, 0, 0, 0.0, 0.0, 0, 0, 0, 0, 0};
 
+	// Determine used FD index and subroutine list
 	uint8_t fd = 0;
 	if (f->fdselect.t != cff_FDSELECT_UNSPECED)
 		fd = cff_parseSubr(i, f->raw_data, f->font_dict, f->fdselect, &localSubrs);
@@ -380,6 +383,8 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 		fd = cff_parseSubr(i, f->raw_data, f->top_dict, f->fdselect, &localSubrs);
 
 	g->fdSelect = Handle.fromIndex(fd);
+
+	// Decide default and nominal width
 	if (context->meta->fdArray && fd < context->meta->fdArrayCount && context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
 		bc.nominalWidthX = context->meta->fdArray[fd]->privateDict->nominalWidthX;
@@ -389,6 +394,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	}
 	g->advanceWidth = bc.defaultWidthX;
 
+	// Get charstring
 	uint8_t *charStringPtr = f->char_strings.data + f->char_strings.offset[i] - 1;
 	uint32_t charStringLength = f->char_strings.offset[i + 1] - f->char_strings.offset[i];
 
@@ -399,7 +405,8 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	bc.jPoint = 0;
 	bc.randx = seed;
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass, options);
-	// PASS 4 : Turn deltas into absolute coordinates
+
+	// Turn deltas into absolute coordinates
 	double cx = 0;
 	double cy = 0;
 	for (shapeid_t j = 0; j < g->contours.length; j++) {
@@ -417,7 +424,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 		}
 	}
 
-	cff_close_Index(localSubrs);
+	cff_iIndex.dispose(&localSubrs);
 	FREE(stack.stack);
 	context->seed = bc.randx;
 }
@@ -983,16 +990,16 @@ static caryll_Buffer *cffstrings_to_indexblob(cff_sid_entry **h) {
 		j++;
 	}
 
-	cff_Index *strings = cff_newIndexByCallback(blobs, n, callback_makestringindex);
+	cff_Index *strings = cff_iIndex.fromCallback(blobs, n, callback_makestringindex);
 	FREE(blobs);
-	caryll_Buffer *final_blob = cff_build_Index(*strings);
-	cff_delete_Index(strings);
+	caryll_Buffer *final_blob = cff_iIndex.build(strings);
+	cff_iIndex.destroy(strings);
 	final_blob->cursor = final_blob->size;
 	return final_blob;
 }
 
 static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
-	cff_Index *nameIndex = cff_new_Index();
+	cff_Index *nameIndex = cff_iIndex.create();
 	nameIndex->count = 1;
 	nameIndex->offSize = 4;
 	NEW(nameIndex->offset, 2);
@@ -1002,8 +1009,8 @@ static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
 	NEW(nameIndex->data, 1 + sdslen(cff->fontName));
 	memcpy(nameIndex->data, cff->fontName, sdslen(cff->fontName));
 	// CFF Name INDEX
-	caryll_Buffer *buf = cff_build_Index(*nameIndex);
-	cff_delete_Index(nameIndex);
+	caryll_Buffer *buf = cff_iIndex.build(nameIndex);
+	cff_iIndex.destroy(nameIndex);
 	if (cff->fontName) {
 		sdsfree(cff->fontName);
 		cff->fontName = NULL;
@@ -1102,7 +1109,7 @@ static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray, 
 	context.fdArray = fdArray;
 	context.stringHash = stringHash;
 
-	return cff_newIndexByCallback(&context, fdArrayCount, callback_makefd);
+	return cff_iIndex.fromCallback(&context, fdArrayCount, callback_makefd);
 }
 
 static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const otfcc_Options *options) {
@@ -1134,7 +1141,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	caryll_Buffer *r;
 	if (cff->isCID) {
 		fdArrayIndex = cff_make_fdarray(cff->fdArrayCount, cff->fdArray, &stringHash);
-		r = cff_build_Index(*fdArrayIndex);
+		r = cff_iIndex.build(fdArrayIndex);
 	} else {
 		NEW(r);
 	}
@@ -1246,8 +1253,8 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 			fdArrayPrivatesStartOffset += p->size;
 		}
 		buffree(r); // fdarray
-		r = cff_build_Index(*fdArrayIndex);
-		cff_delete_Index(fdArrayIndex);
+		r = cff_iIndex.build(fdArrayIndex);
+		cff_iIndex.destroy(fdArrayIndex);
 		bufwrite_bufdel(blob, r);
 		for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 			startingPositionOfPrivates[j + 1] = blob->cursor;
