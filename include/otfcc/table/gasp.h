@@ -4,7 +4,7 @@
 #include "table-common.h"
 
 typedef struct {
-	uint16_t rangeMaxPPEM;
+	glyphsize_t rangeMaxPPEM;
 	bool dogray;
 	bool gridfit;
 	bool symmetric_smoothing;
