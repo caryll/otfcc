@@ -87,8 +87,8 @@ enum {
 typedef struct {
 	cff_Value *stack;
 	cff_Value transient[32];
-	uint32_t index;
-	uint32_t max;
+	arity_t index;
+	arity_t max;
 	uint8_t stem;
 } cff_Stack;
 
