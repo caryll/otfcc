@@ -225,7 +225,7 @@ tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buf
 		// Try to classify subtables after j into j
 		j += tryClassifyAround(lookup, j, &st);
 		caryll_Buffer *buf = otfcc_build_chaining((otl_Subtable *)st);
-		if (st != st0) { iSubtable_chaining.destroy(st); }
+		if (st != st0) { iSubtable_chaining.free(st); }
 		(*subtableBuffers)[subtablesWritten] = buf;
 		*lastOffset += buf->size;
 		subtablesWritten += 1;

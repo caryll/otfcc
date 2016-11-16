@@ -200,20 +200,20 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 }
 
 void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lookup, const otfcc_Options *options) {
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, iSubtable_gsub_ligature.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, iSubtable_gsub_reverse.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, iSubtable_gpos_single.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, iSubtable_gpos_pair.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, iSubtable_gpos_cursive.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, iSubtable_gsub_ligature.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, iSubtable_gsub_reverse.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, iSubtable_gpos_single.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, iSubtable_gpos_pair.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, iSubtable_gpos_cursive.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
-	                    iSubtable_gpos_markToLigature.destroy);
+	                    iSubtable_gpos_markToLigature.free);
 }
 
 void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {

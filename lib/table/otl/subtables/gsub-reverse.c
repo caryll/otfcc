@@ -7,9 +7,9 @@ static INLINE void initGsubReverse(subtable_gsub_reverse *subtable) {
 static INLINE void disposeGsubReverse(subtable_gsub_reverse *subtable) {
 	if (subtable->match)
 		for (tableid_t j = 0; j < subtable->matchCount; j++) {
-			Coverage.destroy(subtable->match[j]);
+			Coverage.free(subtable->match[j]);
 		}
-	if (subtable->to) Coverage.destroy(subtable->to);
+	if (subtable->to) Coverage.free(subtable->to);
 }
 
 caryll_standardRefType(subtable_gsub_reverse, iSubtable_gsub_reverse, initGsubReverse, disposeGsubReverse);
@@ -69,7 +69,7 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 	return (otl_Subtable *)subtable;
 
 FAIL:
-	iSubtable_gsub_reverse.destroy(subtable);
+	iSubtable_gsub_reverse.free(subtable);
 	return NULL;
 }
 

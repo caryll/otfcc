@@ -70,13 +70,13 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 		}
 		otl_iLigatureArray.push(&subtable->ligArray, lig);
 	}
-	if (marks) Coverage.destroy(marks);
-	if (bases) Coverage.destroy(bases);
+	if (marks) Coverage.free(marks);
+	if (bases) Coverage.free(bases);
 	return (otl_Subtable *)subtable;
 FAIL:
-	if (marks) Coverage.destroy(marks);
-	if (bases) Coverage.destroy(bases);
-	iSubtable_gpos_markToLigature.destroy(subtable);
+	if (marks) Coverage.free(marks);
+	if (bases) Coverage.free(bases);
+	iSubtable_gpos_markToLigature.free(subtable);
 	return NULL;
 }
 
@@ -224,7 +224,7 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	}
 
 	bk_push(root, p16, markArray, p16, ligatureArray, bkover);
-	Coverage.destroy(marks);
-	Coverage.destroy(bases);
+	Coverage.free(marks);
+	Coverage.free(bases);
 	return bk_build_Block(root);
 }

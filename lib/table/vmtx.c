@@ -38,7 +38,7 @@ table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *optio
 		return vmtx;
 	vmtx_CORRUPTED:
 		logWarning("Table 'vmtx' corrupted.\n");
-		if (vmtx) { iTable_vmtx.destroy(vmtx), vmtx = NULL; }
+		if (vmtx) { iTable_vmtx.free(vmtx), vmtx = NULL; }
 	}
 	return NULL;
 }

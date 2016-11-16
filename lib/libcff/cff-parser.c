@@ -72,11 +72,11 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 	/* Name INDEX */
 	pos = cff->head.hdrSize;
-	cff_iIndex.extract(cff->raw_data, pos, &cff->name);
+	cff_iIndex.parse(cff->raw_data, pos, &cff->name);
 
 	/* Top Dict INDEX */
 	pos = 4 + cff_iIndex.getLength(&cff->name);
-	cff_iIndex.extract(cff->raw_data, pos, &cff->top_dict);
+	cff_iIndex.parse(cff->raw_data, pos, &cff->top_dict);
 
 	/** LINT CFF FONTSET **/
 
@@ -85,12 +85,12 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 	/* String INDEX */
 	pos = 4 + cff_iIndex.getLength(&cff->name) + cff_iIndex.getLength(&cff->top_dict);
-	cff_iIndex.extract(cff->raw_data, pos, &cff->string);
+	cff_iIndex.parse(cff->raw_data, pos, &cff->string);
 
 	/* Global Subr INDEX */
 	pos = 4 + cff_iIndex.getLength(&cff->name) + cff_iIndex.getLength(&cff->top_dict) +
 	      cff_iIndex.getLength(&cff->string);
-	cff_iIndex.extract(cff->raw_data, pos, &cff->global_subr);
+	cff_iIndex.parse(cff->raw_data, pos, &cff->global_subr);
 
 	if (cff->top_dict.data != NULL) {
 		int32_t offset;
@@ -101,11 +101,12 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 		/* CharStrings INDEX */
 		offset =
-		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_CharStrings, 0)
+		    cff_iDict
+		        .parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_CharStrings, 0)
 		        .i;
 
 		if (offset != -1) {
-			cff_iIndex.extract(cff->raw_data, offset, &cff->char_strings);
+			cff_iIndex.parse(cff->raw_data, offset, &cff->char_strings);
 			cff->cnt_glyph = cff->char_strings.count;
 		} else {
 			cff_iIndex.empty(&cff->char_strings);
@@ -114,7 +115,9 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 		/* Encodings */
 		offset =
-		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Encoding, 0).i;
+		    cff_iDict
+		        .parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Encoding, 0)
+		        .i;
 
 		if (offset != -1) {
 			parse_encoding(cff, offset, &cff->encodings);
@@ -124,7 +127,8 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 		/* Charsets */
 		offset =
-		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_charset, 0).i;
+		    cff_iDict.parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_charset, 0)
+		        .i;
 
 		if (offset != -1) {
 			cff_extract_Charset(cff->raw_data, offset, cff->char_strings.count, &cff->charsets);
@@ -134,7 +138,9 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 		/* FDSelect */
 		offset =
-		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDSelect, 0).i;
+		    cff_iDict
+		        .parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDSelect, 0)
+		        .i;
 
 		if (cff->char_strings.count && offset != -1) {
 			cff_extract_FDSelect(cff->raw_data, offset, cff->char_strings.count, &cff->fdselect);
@@ -144,10 +150,11 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 		/* Font Dict INDEX */
 		offset =
-		    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDArray, 0).i;
+		    cff_iDict.parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_FDArray, 0)
+		        .i;
 
 		if (offset != -1) {
-			cff_iIndex.extract(cff->raw_data, offset, &cff->font_dict);
+			cff_iIndex.parse(cff->raw_data, offset, &cff->font_dict);
 		} else {
 			cff_iIndex.empty(&cff->font_dict);
 		}
@@ -160,18 +167,20 @@ static void parse_cff_bytecode(cff_File *cff, const otfcc_Options *options) {
 
 		if (cff->top_dict.data != NULL) {
 			private_len =
-			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0)
+			    cff_iDict
+			        .parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 0)
 			        .i;
 			private_off =
-			    cff_parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1)
+			    cff_iDict
+			        .parseDictKey(cff->top_dict.data, cff->top_dict.offset[1] - cff->top_dict.offset[0], op_Private, 1)
 			        .i;
 		}
 
 		if (private_off != -1 && private_len != -1) {
-			offset = cff_parseDictKey(cff->raw_data + private_off, private_len, op_Subrs, 0).i;
+			offset = cff_iDict.parseDictKey(cff->raw_data + private_off, private_len, op_Subrs, 0).i;
 
 			if (offset != -1)
-				cff_iIndex.extract(cff->raw_data, private_off + offset, &cff->local_subr);
+				cff_iIndex.parse(cff->raw_data, private_off + offset, &cff->local_subr);
 			else
 				cff_iIndex.empty(&cff->local_subr);
 		} else {
@@ -249,18 +258,20 @@ uint8_t cff_parseSubr(uint16_t idx, uint8_t *raw, cff_Index fdarray, cff_FDSelec
 			break;
 	}
 
-	off_private = cff_parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
-	                               op_Private, 1)
+	off_private = cff_iDict
+	                  .parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
+	                                op_Private, 1)
 	                  .i;
-	len_private = cff_parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
-	                               op_Private, 0)
+	len_private = cff_iDict
+	                  .parseDictKey(fdarray.data + fdarray.offset[fd] - 1, fdarray.offset[fd + 1] - fdarray.offset[fd],
+	                                op_Private, 0)
 	                  .i;
 
 	if (off_private != -1 && len_private != -1) {
-		off_subr = cff_parseDictKey(raw + off_private, len_private, op_Subrs, 0).i;
+		off_subr = cff_iDict.parseDictKey(raw + off_private, len_private, op_Subrs, 0).i;
 
 		if (off_subr != -1) {
-			cff_iIndex.extract(raw, off_private + off_subr, subr);
+			cff_iIndex.parse(raw, off_private + off_subr, subr);
 		} else {
 			cff_iIndex.empty(subr);
 		}

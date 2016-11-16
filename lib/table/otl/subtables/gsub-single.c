@@ -51,9 +51,9 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 	}
 	goto OK;
 FAIL:
-	iSubtable_gsub_single.destroy(subtable);
-	if (from) Coverage.destroy(from);
-	if (to) Coverage.destroy(to);
+	iSubtable_gsub_single.free(subtable);
+	if (from) Coverage.free(from);
+	if (to) Coverage.free(to);
 	return NULL;
 OK:
 	for (glyphid_t j = 0; j < from->numGlyphs; j++) {
@@ -62,8 +62,8 @@ OK:
 		                                         .to = Handle.dup(to->glyphs[j]),     // to
 		                                     }));
 	}
-	if (from) Coverage.destroy(from);
-	if (to) Coverage.destroy(to);
+	if (from) Coverage.free(from);
+	if (to) Coverage.free(to);
 	return (otl_Subtable *)subtable;
 }
 
@@ -110,7 +110,7 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		                           b16,
 		                           subtable->items[0].to.index - subtable->items[0].from.index, // delta
 		                           bkover);
-		Coverage.destroy(cov);
+		Coverage.free(cov);
 		return bk_build_Block(b);
 	} else {
 		bk_Block *b = bk_new_Block(b16, 2,                                          // Format
@@ -120,7 +120,7 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		for (glyphid_t k = 0; k < subtable->length; k++) {
 			bk_push(b, b16, subtable->items[k].to.index, bkover);
 		}
-		Coverage.destroy(cov);
+		Coverage.free(cov);
 		return bk_build_Block(b);
 	}
 }

@@ -142,13 +142,13 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 	font->BASE = otfcc_parseBASE(root, options);
 	return font;
 }
-static INLINE void disposeReader(otfcc_IFontBuilder *self) {
+static INLINE void freeReader(otfcc_IFontBuilder *self) {
 	free(self);
 }
 otfcc_IFontBuilder *otfcc_newJsonReader() {
 	otfcc_IFontBuilder *reader;
 	NEW(reader);
-	reader->create = readJson;
-	reader->dispose = disposeReader;
+	reader->read = readJson;
+	reader->free = freeReader;
 	return reader;
 }

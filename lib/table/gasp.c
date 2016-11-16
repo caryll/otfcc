@@ -45,7 +45,7 @@ table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *optio
 
 	FAIL:
 		logWarning("table 'gasp' corrupted.\n");
-		iTable_gasp.destroy(gasp);
+		iTable_gasp.free(gasp);
 		gasp = NULL;
 	}
 	return NULL;

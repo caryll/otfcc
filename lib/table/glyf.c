@@ -380,7 +380,7 @@ table_glyf *otfcc_readGlyf(const otfcc_Packet packet, const otfcc_Options *optio
 		goto PRESENT;
 	GLYF_CORRUPTED:
 		logWarning("table 'glyf' corrupted.\n");
-		if (glyf) { DELETE(iTable_glyf.destroy, glyf), glyf = NULL; }
+		if (glyf) { DELETE(iTable_glyf.free, glyf), glyf = NULL; }
 	}
 	goto ABSENT;
 

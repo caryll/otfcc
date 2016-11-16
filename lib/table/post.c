@@ -12,7 +12,7 @@ static INLINE void initPost(table_post *post) {
 	post->version = 0x30000;
 }
 static INLINE void disposePost(MOVE table_post *post) {
-	if (post->post_name_map != NULL) { GlyphOrder.destroy(post->post_name_map); }
+	if (post->post_name_map != NULL) { GlyphOrder.free(post->post_name_map); }
 }
 
 caryll_standardRefType(table_post, iTable_post, initPost, disposePost);

@@ -174,12 +174,12 @@ int main(int argc, char *argv[]) {
 	otfcc_Font *font;
 	loggedStep("Read Font") {
 		otfcc_IFontBuilder *reader = otfcc_newOTFReader();
-		font = reader->create(sfnt, ttcindex, options);
+		font = reader->read(sfnt, ttcindex, options);
 		if (!font) {
 			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		reader->dispose(reader);
+		reader->free(reader);
 		if (sfnt) otfcc_deleteSFNT(sfnt);
 		logStepTime;
 	}
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		logStepTime;
-		dumper->dispose(dumper);
+		dumper->free(dumper);
 	}
 
 	char *buf;

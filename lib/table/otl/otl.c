@@ -7,26 +7,26 @@
 
 static INLINE void disposeSubtableDependent(MODIFY otl_SubtablePtr *subtableRef, const otl_Lookup *lookup) {
 	switch (lookup->type) {
-		DELETE_TYPE(otl_type_gsub_single, iSubtable_gsub_single.destroy);
-		DELETE_TYPE(otl_type_gsub_multiple, iSubtable_gsub_multi.destroy);
-		DELETE_TYPE(otl_type_gsub_alternate, iSubtable_gsub_multi.destroy);
-		DELETE_TYPE(otl_type_gsub_ligature, iSubtable_gsub_ligature.destroy);
-		DELETE_TYPE(otl_type_gsub_chaining, iSubtable_chaining.destroy);
-		DELETE_TYPE(otl_type_gsub_reverse, iSubtable_gsub_reverse.destroy);
-		DELETE_TYPE(otl_type_gpos_single, iSubtable_gpos_single.destroy);
-		DELETE_TYPE(otl_type_gpos_pair, iSubtable_gpos_pair.destroy);
-		DELETE_TYPE(otl_type_gpos_cursive, iSubtable_gpos_cursive.destroy);
-		DELETE_TYPE(otl_type_gpos_chaining, iSubtable_chaining.destroy);
-		DELETE_TYPE(otl_type_gpos_markToBase, iSubtable_gpos_markToSingle.destroy);
-		DELETE_TYPE(otl_type_gpos_markToMark, iSubtable_gpos_markToSingle.destroy);
-		DELETE_TYPE(otl_type_gpos_markToLigature, iSubtable_gpos_markToLigature.destroy);
+		DELETE_TYPE(otl_type_gsub_single, iSubtable_gsub_single.free);
+		DELETE_TYPE(otl_type_gsub_multiple, iSubtable_gsub_multi.free);
+		DELETE_TYPE(otl_type_gsub_alternate, iSubtable_gsub_multi.free);
+		DELETE_TYPE(otl_type_gsub_ligature, iSubtable_gsub_ligature.free);
+		DELETE_TYPE(otl_type_gsub_chaining, iSubtable_chaining.free);
+		DELETE_TYPE(otl_type_gsub_reverse, iSubtable_gsub_reverse.free);
+		DELETE_TYPE(otl_type_gpos_single, iSubtable_gpos_single.free);
+		DELETE_TYPE(otl_type_gpos_pair, iSubtable_gpos_pair.free);
+		DELETE_TYPE(otl_type_gpos_cursive, iSubtable_gpos_cursive.free);
+		DELETE_TYPE(otl_type_gpos_chaining, iSubtable_chaining.free);
+		DELETE_TYPE(otl_type_gpos_markToBase, iSubtable_gpos_markToSingle.free);
+		DELETE_TYPE(otl_type_gpos_markToMark, iSubtable_gpos_markToSingle.free);
+		DELETE_TYPE(otl_type_gpos_markToLigature, iSubtable_gpos_markToLigature.free);
 		default:;
 	}
 }
 static caryll_ElementInterface(otl_SubtablePtr) otl_iSubtablePtr = {
     .init = NULL, .copy = NULL, .dispose = NULL,
 };
-caryll_VectorImplDestroyDependent(otl_SubtableList, otl_SubtablePtr, otl_Lookup, disposeSubtableDependent);
+caryll_VectorImplFreeDependent(otl_SubtableList, otl_SubtablePtr, otl_Lookup, disposeSubtableDependent);
 caryll_VectorImplFunctions(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr);
 caryll_VectorInterfaceTypeName(otl_SubtableList) otl_iSubtableList = {
     caryll_VectorImplAssignments(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr),

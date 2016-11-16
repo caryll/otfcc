@@ -24,7 +24,7 @@ extern caryll_ElementInterfaceOf(cff_Index) {
 	caryll_RT(cff_Index);
 	void (*empty)(cff_Index * i);
 	uint32_t (*getLength)(const cff_Index *i);
-	void (*extract)(uint8_t * data, uint32_t pos, cff_Index * in);
+	void (*parse)(uint8_t * data, uint32_t pos, cff_Index * in);
 	cff_Index *(*fromCallback)(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t));
 	caryll_Buffer *(*build)(const cff_Index *index);
 }

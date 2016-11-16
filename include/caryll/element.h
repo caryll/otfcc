@@ -49,7 +49,7 @@
 #define caryll_RT(T)                                                                                                   \
 	caryll_T(T);                                                                                                       \
 	T *(*create)();                                                                                                    \
-	void (*destroy)(MOVE T *);
+	void (*free)(MOVE T *);
 
 #define caryll_ElementInterfaceOf(T) const struct __caryll_elementinterface_##T
 #define caryll_ElementInterface(T)                                                                                     \
@@ -107,8 +107,8 @@
 	static __CARYLL_INLINE__ void T##_dispose(MODIFY T *x) {                                                           \
 		(__fn_dispose)(x);                                                                                             \
 	}
-#define caryll_trivialDestroy(T)                                                                                       \
-	static __CARYLL_INLINE__ void T##_destroy(MOVE T *x) {                                                             \
+#define caryll_trivialFree(T)                                                                                          \
+	static __CARYLL_INLINE__ void T##_free(MOVE T *x) {                                                                \
 		if (!x) return;                                                                                                \
 		T##_dispose(x);                                                                                                \
 		__caryll_free(x);                                                                                              \
@@ -148,7 +148,7 @@
 	caryll_nonTrivialMove(T, __fn_move);
 
 #define caryll_standardTypeMethods(T) .init = T##_init, .copy = T##_copy, .dispose = T##_dispose, .move = T##_move
-#define caryll_standardRefTypeMethods(T) caryll_standardTypeMethods(T), .create = T##_create, .destroy = T##_destroy
+#define caryll_standardRefTypeMethods(T) caryll_standardTypeMethods(T), .create = T##_create, .free = T##_free
 #define caryll_standardValTypeMethods(T) caryll_standardTypeMethods(T), .empty = T##_empty, .dup = T##_dup
 
 #define caryll_standardTypeFn(...) __CARYLLVFUNC(caryll_standardTypeFn, __VA_ARGS__)
@@ -161,7 +161,7 @@
 #define caryll_standardRefTypeFn(T, ...)                                                                               \
 	caryll_standardTypeFn(T, ##__VA_ARGS__);                                                                           \
 	caryll_trivialCreate(T);                                                                                           \
-	caryll_trivialDestroy(T);
+	caryll_trivialFree(T);
 #define caryll_standardValTypeFn(T, ...)                                                                               \
 	caryll_standardTypeFn(T, ##__VA_ARGS__);                                                                           \
 	caryll_trivialEmpty(T);                                                                                            \
@@ -188,7 +188,7 @@
 #define caryll_standardRefTypeFn(T, ...)                                                                               \
 	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
 	caryll_trivialCreate(T);                                                                                           \
-	caryll_trivialDestroy(T);
+	caryll_trivialFree(T);
 #define caryll_standardValTypeFn(T, ...)                                                                               \
 	caryll_standardTypeFn(T, __VA_ARGS__);                                                                             \
 	caryll_trivialEmpty(T);                                                                                            \

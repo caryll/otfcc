@@ -118,7 +118,7 @@ static otl_ClassDef *expandClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 		HASH_DEL(hash, e);
 		FREE(e);
 	}
-	otl_iClassDef.destroy(ocd);
+	otl_iClassDef.free(ocd);
 	return cd;
 }
 

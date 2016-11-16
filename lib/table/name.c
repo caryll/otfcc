@@ -60,7 +60,7 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 		return name;
 	TABLE_NAME_CORRUPTED:
 		logWarning("table 'name' corrupted.\n");
-		if (name) { DELETE(iTable_name.destroy, name); }
+		if (name) { DELETE(iTable_name.free, name); }
 	}
 	return NULL;
 }

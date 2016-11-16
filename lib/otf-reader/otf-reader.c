@@ -57,13 +57,13 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		return font;
 	}
 }
-static INLINE void disposeReader(otfcc_IFontBuilder *self) {
+static INLINE void freeReader(otfcc_IFontBuilder *self) {
 	free(self);
 }
 otfcc_IFontBuilder *otfcc_newOTFReader() {
 	otfcc_IFontBuilder *reader;
 	NEW(reader);
-	reader->create = readOtf;
-	reader->dispose = disposeReader;
+	reader->read = readOtf;
+	reader->free = freeReader;
 	return reader;
 }

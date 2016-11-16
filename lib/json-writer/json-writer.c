@@ -30,13 +30,13 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpBASE(font->BASE, root, options);
 	return root;
 }
-static void dispose(otfcc_IFontSerializer *self) {
+static void freeJsonWriter(otfcc_IFontSerializer *self) {
 	free(self);
 }
 otfcc_IFontSerializer *otfcc_newJsonWriter() {
 	otfcc_IFontSerializer *writer;
 	NEW(writer);
 	writer->serialize = serializeToJson;
-	writer->dispose = dispose;
+	writer->free = freeJsonWriter;
 	return writer;
 }

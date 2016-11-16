@@ -49,7 +49,7 @@
 		caryll_VectorInterfaceTrait(__TV, __T);                                                                        \
 	}
 
-#define caryll_VectorImplDestroyIndependent(__TV, __T, __ti)                                                           \
+#define caryll_VectorImplFreeIndependent(__TV, __T, __ti)                                                              \
 	static __CARYLL_INLINE__ void __TV##_dispose(__TV *arr) {                                                          \
 		if (!arr) return;                                                                                              \
 		if ((__ti).dispose) {                                                                                          \
@@ -63,7 +63,7 @@
 		arr->capacity = 0;                                                                                             \
 	}
 
-#define caryll_VectorImplDestroyDependent(__TV, __T, __TX, fn)                                                         \
+#define caryll_VectorImplFreeDependent(__TV, __T, __TX, fn)                                                            \
 	static __CARYLL_INLINE__ void __TV##_disposeDependent(__TV *arr, const __TX *enclosure) {                          \
 		if (!arr) return;                                                                                              \
 		for (size_t j = arr->length; j--;) {                                                                           \
@@ -82,7 +82,7 @@
 		arr->items = NULL;                                                                                             \
 	}                                                                                                                  \
 	caryll_trivialCreate(__TV);                                                                                        \
-	caryll_trivialDestroy(__TV);                                                                                       \
+	caryll_trivialFree(__TV);                                                                                          \
 	static __CARYLL_INLINE__ void __TV##_growTo(MODIFY __TV *arr, size_t target) {                                     \
 		if (target <= arr->capacity) return;                                                                           \
 		if (!arr->capacity) arr->capacity = 0x10;                                                                      \
@@ -157,12 +157,12 @@
 	}
 
 #define caryll_VectorImplFunctions(__TV, __T, __ti)                                                                    \
-	caryll_VectorImplDestroyIndependent(__TV, __T, __ti);                                                              \
+	caryll_VectorImplFreeIndependent(__TV, __T, __ti);                                                                 \
 	caryll_VectorImplFunctionsCommon(__TV, __T, __ti);
 
 #define caryll_VectorImplAssignments(__TV, __T, __ti)                                                                  \
 	.init = __TV##_init, .copy = __TV##_copy, .dispose = __TV##_dispose, .create = __TV##_create,                      \
-	.createN = __TV##_createN, .destroy = __TV##_destroy, .initN = __TV##_initN, .clear = __TV##_dispose,              \
+	.createN = __TV##_createN, .free = __TV##_free, .initN = __TV##_initN, .clear = __TV##_dispose,                    \
 	.replace = __TV##_replace, .push = __TV##_push, .pop = __TV##_pop, .fill = __TV##_fill, .sort = __TV##_sort,       \
 	.disposeItem = __TV##_disposeItem, .move = __TV##_move
 

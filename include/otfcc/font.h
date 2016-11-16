@@ -79,8 +79,8 @@ void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
 
 // Font builder interfaces
 typedef struct otfcc_IFontBuilder {
-	otfcc_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
-	void (*dispose)(struct otfcc_IFontBuilder *self);
+	otfcc_Font *(*read)(void *source, uint32_t index, const otfcc_Options *options);
+	void (*free)(struct otfcc_IFontBuilder *self);
 } otfcc_IFontBuilder;
 otfcc_IFontBuilder *otfcc_newOTFReader();
 otfcc_IFontBuilder *otfcc_newJsonReader();
@@ -88,7 +88,7 @@ otfcc_IFontBuilder *otfcc_newJsonReader();
 // Font serializer interface
 typedef struct otfcc_IFontSerializer {
 	void *(*serialize)(otfcc_Font *font, const otfcc_Options *options);
-	void (*dispose)(struct otfcc_IFontSerializer *self);
+	void (*free)(struct otfcc_IFontSerializer *self);
 } otfcc_IFontSerializer;
 otfcc_IFontSerializer *otfcc_newJsonWriter();
 otfcc_IFontSerializer *otfcc_newOTFWriter();

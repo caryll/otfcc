@@ -11,9 +11,9 @@ void otl_dispose_chaining(subtable_chaining *subtable) {
 			}
 			FREE(subtable->rules);
 		}
-		if (subtable->bc) { ClassDef.destroy(subtable->bc); }
-		if (subtable->ic) { ClassDef.destroy(subtable->ic); }
-		if (subtable->fc) { ClassDef.destroy(subtable->fc); }
+		if (subtable->bc) { ClassDef.free(subtable->bc); }
+		if (subtable->ic) { ClassDef.free(subtable->ic); }
+		if (subtable->fc) { ClassDef.free(subtable->fc); }
 	} else {
 		closeRule(&subtable->rule);
 	}

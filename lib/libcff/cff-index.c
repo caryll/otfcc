@@ -8,18 +8,18 @@ static INLINE void disposeCffIndex(cff_Index *in) {
 
 caryll_standardRefTypeFn(cff_Index, disposeCffIndex);
 
-static INLINE uint32_t getIndexLength(const cff_Index *i) {
+static uint32_t getIndexLength(const cff_Index *i) {
 	if (i->count != 0)
 		return 3 + (i->offset[i->count] - 1) + ((i->count + 1) * i->offSize);
 	else
 		return 3;
 }
-static INLINE void emptyIndex(cff_Index *i) {
+static void emptyIndex(cff_Index *i) {
 	cff_iIndex.dispose(i);
 	memset(i, 0, sizeof(*i));
 }
 
-static INLINE void extractIndex(uint8_t *data, uint32_t pos, cff_Index *in) {
+static void extractIndex(uint8_t *data, uint32_t pos, cff_Index *in) {
 	in->count = gu2(data, pos);
 	in->offSize = gu1(data, pos + 2);
 
@@ -51,7 +51,7 @@ static INLINE void extractIndex(uint8_t *data, uint32_t pos, cff_Index *in) {
 	}
 }
 
-static INLINE cff_Index *newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t)) {
+static cff_Index *newIndexByCallback(void *context, uint32_t length, caryll_Buffer *(*fn)(void *, uint32_t)) {
 	cff_Index *idx = cff_iIndex.create();
 	idx->count = length;
 	NEW(idx->offset, idx->count + 1);
@@ -78,7 +78,7 @@ static INLINE cff_Index *newIndexByCallback(void *context, uint32_t length, cary
 	return idx;
 }
 
-static INLINE caryll_Buffer *buildIndex(const cff_Index *index) {
+static caryll_Buffer *buildIndex(const cff_Index *index) {
 	caryll_Buffer *blob = bufnew();
 	if (!index->count) {
 		bufwrite8(blob, 0);
@@ -141,6 +141,6 @@ static INLINE caryll_Buffer *buildIndex(const cff_Index *index) {
 }
 
 caryll_ElementInterfaceOf(cff_Index) cff_iIndex = {
-    caryll_standardRefTypeMethods(cff_Index), .getLength = getIndexLength, .empty = emptyIndex, .extract = extractIndex,
+    caryll_standardRefTypeMethods(cff_Index), .getLength = getIndexLength, .empty = emptyIndex, .parse = extractIndex,
     .fromCallback = newIndexByCallback,       .build = buildIndex,
 };

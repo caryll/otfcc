@@ -27,8 +27,8 @@ static INLINE void initGDEF(table_GDEF *gdef) {
 }
 static INLINE void disposeGDEF(table_GDEF *gdef) {
 	if (!gdef) return;
-	if (gdef->glyphClassDef) ClassDef.destroy(gdef->glyphClassDef);
-	if (gdef->markAttachClassDef) ClassDef.destroy(gdef->markAttachClassDef);
+	if (gdef->glyphClassDef) ClassDef.free(gdef->glyphClassDef);
+	if (gdef->markAttachClassDef) ClassDef.free(gdef->markAttachClassDef);
 	otl_iLigCaretTable.dispose(&gdef->ligCarets);
 }
 
@@ -86,14 +86,14 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 				v.glyph = Handle.dup(cov->glyphs[j]);
 				otl_iLigCaretTable.push(&gdef->ligCarets, v);
 			}
-			Coverage.destroy(cov);
+			Coverage.free(cov);
 		}
 		uint16_t markAttachDefOffset = read_16u(data + 10);
 		if (markAttachDefOffset) { gdef->markAttachClassDef = ClassDef.read(data, tableLength, markAttachDefOffset); }
 		return gdef;
 
 	FAIL:
-		DELETE(iTable_GDEF.destroy, gdef);
+		DELETE(iTable_GDEF.free, gdef);
 	}
 	return gdef;
 }
@@ -200,7 +200,7 @@ static bk_Block *writeLigCarets(const otl_LigCaretTable *lc) {
 	for (glyphid_t j = 0; j < lc->length; j++) {
 		bk_push(lct, p16, writeLigCaretRec(&(lc->items[j])), bkover);
 	}
-	Coverage.destroy(cov);
+	Coverage.free(cov);
 	return lct;
 }
 

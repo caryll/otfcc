@@ -43,12 +43,12 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 			              }));
 		}
 	}
-	if (targets) Coverage.destroy(targets);
+	if (targets) Coverage.free(targets);
 	return (otl_Subtable *)subtable;
 
 FAIL:
-	if (targets) Coverage.destroy(targets);
-	iSubtable_gpos_single.destroy(subtable);
+	if (targets) Coverage.free(targets);
+	iSubtable_gpos_single.free(subtable);
 	return NULL;
 }
 
@@ -99,7 +99,7 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 		                            b16, format,                                              // format
 		                            bkembed, bk_gpos_value(subtable->items[0].value, format), // value
 		                            bkover));
-		Coverage.destroy(cov);
+		Coverage.free(cov);
 		return bk_build_Block(b);
 	} else {
 		bk_Block *b = bk_new_Block(b16, 2,                                          // Format
@@ -111,7 +111,7 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 			bk_push(b, bkembed, bk_gpos_value(subtable->items[k].value, format), // value
 			        bkover);
 		}
-		Coverage.destroy(cov);
+		Coverage.free(cov);
 		return bk_build_Block(b);
 	}
 }

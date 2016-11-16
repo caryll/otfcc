@@ -359,7 +359,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 FAIL:
 	if (otl) {
 		logWarning("[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
-		iTable_OTL.destroy(otl);
+		iTable_OTL.free(otl);
 	}
 	return NULL;
 }

@@ -176,7 +176,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 	}
 	return table;
 FAIL:
-	if (table) iTable_OTL.destroy(table);
+	if (table) iTable_OTL.free(table);
 	return NULL;
 }
 
@@ -242,7 +242,7 @@ table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint
 		}
 		return otl;
 	FAIL:
-		if (otl) iTable_OTL.destroy(otl);
+		if (otl) iTable_OTL.free(otl);
 		otl = NULL;
 	}
 	return NULL;

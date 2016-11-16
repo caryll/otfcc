@@ -24,29 +24,29 @@ void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag) {
 void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'head':
-			if (font->head) DELETE(iTable_head.destroy, font->head);
+			if (font->head) DELETE(iTable_head.free, font->head);
 			return;
 		case 'hhea':
-			if (font->hhea) DELETE(iTable_hhea.destroy, font->hhea);
+			if (font->hhea) DELETE(iTable_hhea.free, font->hhea);
 			return;
 		case 'maxp':
-			if (font->maxp) DELETE(iTable_maxp.destroy, font->maxp);
+			if (font->maxp) DELETE(iTable_maxp.free, font->maxp);
 			return;
 		case 'OS_2':
 		case 'OS/2':
-			if (font->OS_2) DELETE(iTable_OS_2.destroy, font->OS_2);
+			if (font->OS_2) DELETE(iTable_OS_2.free, font->OS_2);
 			return;
 		case 'name':
-			if (font->name) DELETE(iTable_name.destroy, font->name);
+			if (font->name) DELETE(iTable_name.free, font->name);
 			return;
 		case 'hmtx':
-			if (font->hmtx) DELETE(iTable_hmtx.destroy, font->hmtx);
+			if (font->hmtx) DELETE(iTable_hmtx.free, font->hmtx);
 			return;
 		case 'vmtx':
-			if (font->vmtx) DELETE(iTable_vmtx.destroy, font->vmtx);
+			if (font->vmtx) DELETE(iTable_vmtx.free, font->vmtx);
 			return;
 		case 'post':
-			if (font->post) DELETE(iTable_post.destroy, font->post);
+			if (font->post) DELETE(iTable_post.free, font->post);
 			return;
 #if 0
 		case 'hdmx':
@@ -54,51 +54,51 @@ void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			return;
 #endif
 		case 'vhea':
-			if (font->vhea) DELETE(iTable_vhea.destroy, font->vhea);
+			if (font->vhea) DELETE(iTable_vhea.free, font->vhea);
 			return;
 		case 'fpgm':
-			if (font->fpgm) DELETE(iTable_fpgm_prep.destroy, font->fpgm);
+			if (font->fpgm) DELETE(iTable_fpgm_prep.free, font->fpgm);
 			return;
 		case 'prep':
-			if (font->prep) DELETE(iTable_fpgm_prep.destroy, font->prep);
+			if (font->prep) DELETE(iTable_fpgm_prep.free, font->prep);
 			return;
 		case 'cvt_':
 		case 'cvt ':
-			if (font->cvt_) DELETE(iTable_cvt.destroy, font->cvt_);
+			if (font->cvt_) DELETE(iTable_cvt.free, font->cvt_);
 			return;
 		case 'gasp':
-			if (font->gasp) DELETE(iTable_gasp.destroy, font->gasp);
+			if (font->gasp) DELETE(iTable_gasp.free, font->gasp);
 			return;
 		case 'CFF_':
 		case 'CFF ':
-			if (font->CFF_) DELETE(iTable_CFF.destroy, font->CFF_);
+			if (font->CFF_) DELETE(iTable_CFF.free, font->CFF_);
 			return;
 		case 'glyf':
-			if (font->glyf) DELETE(iTable_glyf.destroy, font->glyf);
+			if (font->glyf) DELETE(iTable_glyf.free, font->glyf);
 			return;
 		case 'cmap':
-			if (font->cmap) DELETE(iTable_cmap.destroy, font->cmap);
+			if (font->cmap) DELETE(iTable_cmap.free, font->cmap);
 			return;
 		case 'LTSH':
-			if (font->LTSH) DELETE(iTable_LTSH.destroy, font->LTSH);
+			if (font->LTSH) DELETE(iTable_LTSH.free, font->LTSH);
 			return;
 		case 'GSUB':
-			if (font->GSUB) DELETE(iTable_OTL.destroy, font->GSUB);
+			if (font->GSUB) DELETE(iTable_OTL.free, font->GSUB);
 			return;
 		case 'GPOS':
-			if (font->GPOS) DELETE(iTable_OTL.destroy, font->GPOS);
+			if (font->GPOS) DELETE(iTable_OTL.free, font->GPOS);
 			return;
 		case 'GDEF':
-			if (font->GDEF) DELETE(iTable_GDEF.destroy, font->GDEF);
+			if (font->GDEF) DELETE(iTable_GDEF.free, font->GDEF);
 			return;
 		case 'BASE':
-			if (font->BASE) DELETE(iTable_BASE.destroy, font->BASE);
+			if (font->BASE) DELETE(iTable_BASE.free, font->BASE);
 			return;
 		case 'VORG':
 			if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
 			return;
 		case '$GRD':
-			if (font->glyph_order) DELETE(GlyphOrder.destroy, font->glyph_order);
+			if (font->glyph_order) DELETE(GlyphOrder.free, font->glyph_order);
 			return;
 	}
 }

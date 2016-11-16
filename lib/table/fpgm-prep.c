@@ -23,7 +23,7 @@ table_fpgm_prep *otfcc_readFpgmPrep(const otfcc_Packet packet, const otfcc_Optio
 		memcpy(t->bytes, data, length);
 		return t;
 	FAIL:
-		iTable_fpgm_prep.destroy(t);
+		iTable_fpgm_prep.free(t);
 		t = NULL;
 	}
 	return NULL;

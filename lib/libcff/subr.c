@@ -7,6 +7,112 @@ Kieffer-Yang optimization is unnecessary, given that in almost all payloads, the
 subroutines.
 */
 
+static cff_SubrNode *cff_new_Node() {
+	cff_SubrNode *n;
+	NEW(n);
+	n->rule = NULL;
+	n->terminal = NULL;
+	n->guard = false;
+	n->hard = false;
+	n->prev = NULL;
+	n->next = NULL;
+#ifdef DEBUG
+	nodesCreated += 1;
+#endif
+	return n;
+}
+
+static cff_SubrRule *cff_new_Rule() {
+	cff_SubrRule *r;
+	NEW(r);
+	r->refcount = 0;
+	r->guard = cff_new_Node();
+	r->guard->prev = r->guard;
+	r->guard->next = r->guard;
+	r->guard->terminal = 0;
+	r->guard->guard = true;
+	r->guard->rule = r;
+	r->next = NULL;
+#ifdef DEBUG
+	rulesCreated += 1;
+#endif
+	return r;
+}
+
+static void initSubrGraph(cff_SubrGraph *g) {
+	g->root = cff_new_Rule();
+	g->last = g->root;
+	g->diagramIndex = NULL;
+	g->totalRules = 0;
+	g->totalCharStrings = 0;
+	g->doSubroutinize = false;
+}
+
+static void clean_Node(cff_SubrNode *x) {
+	if (x->rule) { x->rule->refcount -= 1; }
+	x->rule = NULL;
+	buffree(x->terminal);
+	x->terminal = NULL;
+}
+static void delete_Node(cff_SubrNode *x) {
+	if (!x) return;
+	clean_Node(x);
+#ifdef DEBUG
+	nodesRemoved += 1;
+#endif
+	FREE(x);
+}
+
+static void deleteFullRule(cff_SubrRule *r) {
+	if (r->guard) {
+		for (cff_SubrNode *e = r->guard->next; e != r->guard;) {
+			cff_SubrNode *next = e->next;
+			if (e->terminal) buffree(e->terminal);
+			FREE(e);
+#ifdef DEBUG
+			nodesRemoved += 1;
+#endif
+			e = next;
+		}
+		{
+			FREE(r->guard);
+#ifdef DEBUG
+			nodesRemoved += 1;
+#endif
+		}
+	}
+
+	FREE(r);
+#ifdef DEBUG
+	rulesRemoved += 1;
+#endif
+}
+
+static void disposeSubrGraph(cff_SubrGraph *g) {
+	{
+		cff_SubrRule *r = g->root;
+		while (r) {
+			cff_SubrRule *next = r->next;
+			deleteFullRule(r);
+			r = next;
+		}
+	}
+	cff_SubrDiagramIndex *s, *tmp;
+	HASH_ITER(hh, g->diagramIndex, s, tmp) {
+		HASH_DEL(g->diagramIndex, s);
+		FREE(s->key);
+		FREE(s);
+	}
+#ifdef DEBUG
+	fprintf(stderr, "ALLOC: %d >< %d nodes\n", nodesCreated, nodesRemoved);
+	fprintf(stderr, "ALLOC: %d >< %d rules\n", rulesCreated, rulesRemoved);
+#endif
+}
+
+caryll_standardRefType(cff_SubrGraph, cff_iSubrGraph, initSubrGraph, disposeSubrGraph);
+
+// Subroutinizer
+
 static void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);
 
 #ifdef DEBUG
@@ -70,61 +176,6 @@ static uint8_t *getDoubletHashKey(cff_SubrNode *n, size_t *len) {
 		memcpy(key + 3 + l1, n->next->terminal->data, l2);
 	}
 	return key;
-}
-
-static void clean_Node(cff_SubrNode *x) {
-	if (x->rule) { x->rule->refcount -= 1; }
-	x->rule = NULL;
-	buffree(x->terminal);
-	x->terminal = NULL;
-}
-static void delete_Node(cff_SubrNode *x) {
-	if (!x) return;
-	clean_Node(x);
-#ifdef DEBUG
-	nodesRemoved += 1;
-#endif
-	FREE(x);
-}
-
-static cff_SubrNode *cff_new_Node() {
-	cff_SubrNode *n;
-	NEW(n);
-	n->rule = NULL;
-	n->terminal = NULL;
-	n->guard = false;
-	n->hard = false;
-	n->prev = NULL;
-	n->next = NULL;
-#ifdef DEBUG
-	nodesCreated += 1;
-#endif
-	return n;
-}
-
-static cff_SubrRule *cff_new_Rule() {
-	cff_SubrRule *r;
-	NEW(r);
-	r->refcount = 0;
-	r->guard = cff_new_Node();
-	r->guard->prev = r->guard;
-	r->guard->next = r->guard;
-	r->guard->terminal = 0;
-	r->guard->guard = true;
-	r->guard->rule = r;
-	r->next = NULL;
-#ifdef DEBUG
-	rulesCreated += 1;
-#endif
-	return r;
-}
-
-cff_SubrGraph *cff_new_Graph() {
-	cff_SubrGraph *g;
-	NEW(g);
-	g->root = cff_new_Rule();
-	g->last = g->root;
-	return g;
 }
 
 static cff_SubrNode *lastNodeOf(cff_SubrRule *r) {
@@ -580,52 +631,5 @@ void cff_ilGraphToBuffers(cff_SubrGraph *g, caryll_Buffer **s, caryll_Buffer **g
 	FREE(charStrings), FREE(gsubrs), FREE(lsubrs);
 
 	*s = cff_iIndex.build(is), *gs = cff_iIndex.build(igs), *ls = cff_iIndex.build(ils);
-	cff_iIndex.destroy(is), cff_iIndex.destroy(igs), cff_iIndex.destroy(ils);
-}
-
-static void deleteFullRule(cff_SubrRule *r) {
-	if (r->guard) {
-		for (cff_SubrNode *e = r->guard->next; e != r->guard;) {
-			cff_SubrNode *next = e->next;
-			if (e->terminal) buffree(e->terminal);
-			FREE(e);
-#ifdef DEBUG
-			nodesRemoved += 1;
-#endif
-			e = next;
-		}
-		{
-			FREE(r->guard);
-#ifdef DEBUG
-			nodesRemoved += 1;
-#endif
-		}
-	}
-
-	FREE(r);
-#ifdef DEBUG
-	rulesRemoved += 1;
-#endif
-}
-
-void cff_delete_Graph(cff_SubrGraph *g) {
-	{
-		cff_SubrRule *r = g->root;
-		while (r) {
-			cff_SubrRule *next = r->next;
-			deleteFullRule(r);
-			r = next;
-		}
-	}
-	cff_SubrDiagramIndex *s, *tmp;
-	HASH_ITER(hh, g->diagramIndex, s, tmp) {
-		HASH_DEL(g->diagramIndex, s);
-		FREE(s->key);
-		FREE(s);
-	}
-	FREE(g);
-#ifdef DEBUG
-	fprintf(stderr, "ALLOC: %d >< %d nodes\n", nodesCreated, nodesRemoved);
-	fprintf(stderr, "ALLOC: %d >< %d rules\n", rulesCreated, rulesRemoved);
-#endif
+	cff_iIndex.free(is), cff_iIndex.free(igs), cff_iIndex.free(ils);
 }

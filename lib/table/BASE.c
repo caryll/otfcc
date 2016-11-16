@@ -120,7 +120,7 @@ table_BASE *otfcc_readBASE(const otfcc_Packet packet, const otfcc_Options *optio
 		return base;
 	FAIL:
 		logWarning("Table 'BASE' Corrupted");
-		DELETE(iTable_BASE.destroy, base);
+		DELETE(iTable_BASE.free, base);
 	}
 	return base;
 }

@@ -38,7 +38,7 @@ table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *optio
 		return hmtx;
 	HMTX_CORRUPTED:
 		logWarning("Table 'hmtx' corrupted.\n");
-		if (hmtx) { iTable_hmtx.destroy(hmtx), hmtx = NULL; }
+		if (hmtx) { iTable_hmtx.free(hmtx), hmtx = NULL; }
 	}
 	return NULL;
 }
