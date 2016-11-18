@@ -2,12 +2,12 @@
 
 #include "support/util.h"
 
-void otfcc_deleteVmtx(MOVE table_vmtx *table) {
-	if (!table) return;
+static INLINE void disposeVmtx(MOVE table_vmtx *table) {
 	if (table->metrics != NULL) FREE(table->metrics);
 	if (table->topSideBearing != NULL) FREE(table->topSideBearing);
-	FREE(table);
 }
+
+caryll_standardRefType(table_vmtx, iTable_vmtx, disposeVmtx);
 
 table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *options, table_vhea *vhea,
                            table_maxp *maxp) {
@@ -38,7 +38,7 @@ table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *optio
 		return vmtx;
 	vmtx_CORRUPTED:
 		logWarning("Table 'vmtx' corrupted.\n");
-		if (vmtx) { otfcc_deleteVmtx(vmtx), vmtx = NULL; }
+		if (vmtx) { iTable_vmtx.free(vmtx), vmtx = NULL; }
 	}
 	return NULL;
 }

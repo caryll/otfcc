@@ -2,13 +2,15 @@
 
 #include "support/util.h"
 
-table_head *otfcc_newHead() {
-	table_head *head;
-	NEW(head);
+static INLINE void initHead(table_head *head) {
+	memset(head, 0, sizeof(*head));
 	head->magicNumber = 0x5f0f3cf5;
 	head->unitsPerEm = 1000;
-	return head;
 }
+static INLINE void disposeHead(table_head *head) {
+	// trivial
+}
+caryll_standardRefType(table_head, iTable_head, initHead, disposeHead);
 
 table_head *otfcc_readHead(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('head', table) {
@@ -84,7 +86,7 @@ void otfcc_dumpHead(const table_head *table, json_value *root, const otfcc_Optio
 }
 
 table_head *otfcc_parseHead(const json_value *root, const otfcc_Options *options) {
-	table_head *head = otfcc_newHead();
+	table_head *head = iTable_head.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
 		loggedStep("head") {

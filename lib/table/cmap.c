@@ -4,16 +4,10 @@
 
 // PART I, type definition
 
-static void otfcc_initCmap(table_cmap *cmap) {
+static INLINE void initCmap(table_cmap *cmap) {
 	cmap->unicodes = NULL;
 }
-static table_cmap *otfcc_createCmap() {
-	table_cmap *cmap;
-	NEW(cmap);
-	otfcc_initCmap(cmap);
-	return cmap;
-}
-static void otfcc_disposeCmap(table_cmap *cmap) {
+static INLINE void disposeCmap(table_cmap *cmap) {
 	cmap_Entry *s, *tmp;
 	HASH_ITER(hh, cmap->unicodes, s, tmp) {
 		// delete and free all cmap entries
@@ -22,10 +16,7 @@ static void otfcc_disposeCmap(table_cmap *cmap) {
 		FREE(s);
 	}
 }
-void otfcc_deleteCmap(table_cmap *cmap) {
-	otfcc_disposeCmap(cmap);
-	FREE(cmap);
-}
+caryll_standardRefTypeFn(table_cmap, initCmap, disposeCmap);
 
 bool otfcc_encodeCmapByIndex(table_cmap *cmap, int c, uint16_t gid) {
 	cmap_Entry *s;
@@ -77,10 +68,7 @@ otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c) {
 }
 
 caryll_ElementInterfaceOf(table_cmap) iTable_cmap = {
-    .init = otfcc_initCmap,
-    .create = otfcc_createCmap,
-    .dispose = otfcc_disposeCmap,
-    .destroy = otfcc_deleteCmap,
+    caryll_standardRefTypeMethods(table_cmap),
     .encodeByIndex = otfcc_encodeCmapByIndex,
     .encodeByName = otfcc_encodeCmapByName,
     .unmap = otfcc_unmapCmap,

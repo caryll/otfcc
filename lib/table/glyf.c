@@ -13,23 +13,23 @@ caryll_ElementInterfaceOf(glyf_Point) glyf_iPoint = {
 };
 
 // contour
-caryll_DefineVectorImpl(glyf_Contour, glyf_Point, glyf_iPoint, glyf_iContour);
-caryll_DefineVectorImpl(glyf_ContourList, glyf_Contour, glyf_iContour, glyf_iContourList);
+caryll_standardVectorImpl(glyf_Contour, glyf_Point, glyf_iPoint, glyf_iContour);
+caryll_standardVectorImpl(glyf_ContourList, glyf_Contour, glyf_iContour, glyf_iContourList);
 
 // ref
-static void disposeGlyfReference(glyf_ComponentReference *ref) {
+static INLINE void disposeGlyfReference(glyf_ComponentReference *ref) {
 	Handle.dispose(&ref->glyph);
 }
-caryll_DtorElementImpl(glyf_ComponentReference, disposeGlyfReference, glyf_iComponentReference);
-caryll_DefineVectorImpl(glyf_ReferenceList, glyf_ComponentReference, glyf_iComponentReference, glyf_iReferenceList);
+caryll_standardType(glyf_ComponentReference, glyf_iComponentReference, disposeGlyfReference);
+caryll_standardVectorImpl(glyf_ReferenceList, glyf_ComponentReference, glyf_iComponentReference, glyf_iReferenceList);
 
 // stem
-caryll_TrivialElementImpl(glyf_PostscriptStemDef, glyf_iPostscriptStemDef);
-caryll_DefineVectorImpl(glyf_StemDefList, glyf_PostscriptStemDef, glyf_iPostscriptStemDef, glyf_iStemDefList);
+caryll_standardType(glyf_PostscriptStemDef, glyf_iPostscriptStemDef);
+caryll_standardVectorImpl(glyf_StemDefList, glyf_PostscriptStemDef, glyf_iPostscriptStemDef, glyf_iStemDefList);
 
 // mask
-caryll_TrivialElementImpl(glyf_PostscriptHintMask, glyf_iPostscriptHintMask);
-caryll_DefineVectorImpl(glyf_MaskList, glyf_PostscriptHintMask, glyf_iPostscriptHintMask, glyf_iMaskList);
+caryll_standardType(glyf_PostscriptHintMask, glyf_iPostscriptHintMask);
+caryll_standardVectorImpl(glyf_MaskList, glyf_PostscriptHintMask, glyf_iPostscriptHintMask, glyf_iMaskList);
 
 typedef enum {
 	GLYF_FLAG_ON_CURVE = 1,
@@ -103,23 +103,19 @@ static void otfcc_deleteGlyf_glyph(glyf_Glyph *g) {
 	FREE(g);
 }
 
-static void initGlyfPtr(glyf_GlyphPtr *g) {
+static INLINE void initGlyfPtr(glyf_GlyphPtr *g) {
 	*g = NULL;
 }
 static void copyGlyfPtr(glyf_GlyphPtr *dst, const glyf_GlyphPtr *src) {
 	*dst = *src;
 }
-static void disposeGlyfPtr(glyf_GlyphPtr *g) {
+static INLINE void disposeGlyfPtr(glyf_GlyphPtr *g) {
 	otfcc_deleteGlyf_glyph(*g);
 }
 caryll_ElementInterfaceOf(glyf_GlyphPtr) glyf_iGlyphPtr = {
     .init = initGlyfPtr, .copy = copyGlyfPtr, .dispose = disposeGlyfPtr,
 };
-caryll_DefineVectorImpl(table_glyf, glyf_GlyphPtr, glyf_iGlyphPtr, iTable_glyf);
-
-void otfcc_deleteGlyf(table_glyf *table) {
-	iTable_glyf.destroy(table);
-}
+caryll_standardVectorImpl(table_glyf, glyf_GlyphPtr, glyf_iGlyphPtr, iTable_glyf);
 
 static glyf_Point *next_point(glyf_ContourList *contours, shapeid_t *cc, shapeid_t *cp) {
 	if (*cp >= contours->items[*cc].length) {
@@ -384,7 +380,7 @@ table_glyf *otfcc_readGlyf(const otfcc_Packet packet, const otfcc_Options *optio
 		goto PRESENT;
 	GLYF_CORRUPTED:
 		logWarning("table 'glyf' corrupted.\n");
-		if (glyf) { otfcc_deleteGlyf(glyf), glyf = NULL; }
+		if (glyf) { DELETE(iTable_glyf.free, glyf), glyf = NULL; }
 	}
 	goto ABSENT;
 

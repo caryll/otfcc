@@ -12,10 +12,10 @@ otfcc_Font *otfcc_newFont() {
 void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'name':
-			return otfcc_newName();
+			return iTable_name.create();
 		case 'GSUB':
 		case 'GPOS':
-			return otfcc_newOtl();
+			return iTable_OTL.create();
 		default:
 			return NULL;
 	}
@@ -24,76 +24,81 @@ void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag) {
 void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'head':
-			if (font->head) DELETE(free, font->head);
+			if (font->head) DELETE(iTable_head.free, font->head);
 			return;
 		case 'hhea':
-			if (font->hhea) DELETE(free, font->hhea);
+			if (font->hhea) DELETE(iTable_hhea.free, font->hhea);
 			return;
 		case 'maxp':
-			if (font->maxp) DELETE(otfcc_deleteMaxp, font->maxp);
+			if (font->maxp) DELETE(iTable_maxp.free, font->maxp);
 			return;
 		case 'OS_2':
 		case 'OS/2':
-			if (font->OS_2) DELETE(free, font->OS_2);
+			if (font->OS_2) DELETE(iTable_OS_2.free, font->OS_2);
 			return;
 		case 'name':
-			if (font->name) DELETE(otfcc_deleteName, font->name);
+			if (font->name) DELETE(iTable_name.free, font->name);
 			return;
 		case 'hmtx':
-			if (font->hmtx) DELETE(otfcc_deleteHmtx, font->hmtx);
+			if (font->hmtx) DELETE(iTable_hmtx.free, font->hmtx);
 			return;
 		case 'vmtx':
-			if (font->vmtx) DELETE(otfcc_deleteVmtx, font->vmtx);
+			if (font->vmtx) DELETE(iTable_vmtx.free, font->vmtx);
 			return;
 		case 'post':
-			if (font->post) DELETE(otfcc_deletePost, font->post);
+			if (font->post) DELETE(iTable_post.free, font->post);
 			return;
+#if 0
 		case 'hdmx':
 			if (font->hdmx) DELETE(otfcc_deleteHdmx, font->hdmx);
 			return;
+#endif
 		case 'vhea':
-			if (font->vhea) DELETE(free, font->vhea);
+			if (font->vhea) DELETE(iTable_vhea.free, font->vhea);
 			return;
 		case 'fpgm':
-			if (font->fpgm) DELETE(otfcc_deleteFpgm_prep, font->fpgm);
+			if (font->fpgm) DELETE(iTable_fpgm_prep.free, font->fpgm);
 			return;
 		case 'prep':
-			if (font->prep) DELETE(otfcc_deleteFpgm_prep, font->prep);
+			if (font->prep) DELETE(iTable_fpgm_prep.free, font->prep);
 			return;
 		case 'cvt_':
 		case 'cvt ':
-			if (font->cvt_) DELETE(otfcc_deleteCvt, font->cvt_);
+			if (font->cvt_) DELETE(iTable_cvt.free, font->cvt_);
 			return;
 		case 'gasp':
-			if (font->gasp) DELETE(otfcc_deleteGasp, font->gasp);
+			if (font->gasp) DELETE(iTable_gasp.free, font->gasp);
 			return;
 		case 'CFF_':
 		case 'CFF ':
-			if (font->CFF_) DELETE(otfcc_deleteCFF, font->CFF_);
+			if (font->CFF_) DELETE(iTable_CFF.free, font->CFF_);
 			return;
 		case 'glyf':
-			if (font->glyf) DELETE(otfcc_deleteGlyf, font->glyf);
+			if (font->glyf) DELETE(iTable_glyf.free, font->glyf);
 			return;
 		case 'cmap':
-			if (font->cmap) DELETE(otfcc_deleteCmap, font->cmap);
+			if (font->cmap) DELETE(iTable_cmap.free, font->cmap);
 			return;
 		case 'LTSH':
-			if (font->LTSH) DELETE(otfcc_deleteLTSH, font->LTSH);
+			if (font->LTSH) DELETE(iTable_LTSH.free, font->LTSH);
 			return;
 		case 'GSUB':
-			if (font->GSUB) DELETE(otfcc_deleteOtl, font->GSUB);
+			if (font->GSUB) DELETE(iTable_OTL.free, font->GSUB);
 			return;
 		case 'GPOS':
-			if (font->GPOS) DELETE(otfcc_deleteOtl, font->GPOS);
+			if (font->GPOS) DELETE(iTable_OTL.free, font->GPOS);
 			return;
 		case 'GDEF':
-			if (font->GDEF) DELETE(otfcc_deleteGDEF, font->GDEF);
+			if (font->GDEF) DELETE(iTable_GDEF.free, font->GDEF);
 			return;
 		case 'BASE':
-			if (font->BASE) DELETE(otfcc_deleteBASE, font->BASE);
+			if (font->BASE) DELETE(iTable_BASE.free, font->BASE);
 			return;
 		case 'VORG':
 			if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
+			return;
+		case 'CPAL':
+			if (font->CPAL) DELETE(iTable_CPAL.free, font->CPAL);
 			return;
 		case '$GRD':
 			if (font->glyph_order) DELETE(GlyphOrder.free, font->glyph_order);
@@ -124,6 +129,7 @@ void otfcc_deleteFont(otfcc_Font *font) {
 	otfcc_deleteFontTable(font, 'GDEF');
 	otfcc_deleteFontTable(font, 'BASE');
 	otfcc_deleteFontTable(font, 'VORG');
+	otfcc_deleteFontTable(font, 'CPAL');
 	otfcc_deleteFontTable(font, '$GRD');
 	if (font) FREE(font);
 }

@@ -2,18 +2,17 @@
 
 #include "support/util.h"
 
-table_vhea *otfcc_newVhea() {
-	table_vhea *vhea;
-	NEW(vhea);
-	vhea->version = 0x11000;
-	return vhea;
+static INLINE void initVhea(table_vhea *vhea) {
+	memset(vhea, 0, sizeof(*vhea));
+	vhea->version = 0x10000;
 }
-void otfcc_deleteVhea(MOVE table_vhea *table) {
-	FREE(table);
+static INLINE void disposeVhea(MOVE table_vhea *vhea) {
+	// trivial
 }
+caryll_standardRefType(table_vhea, iTable_vhea, initVhea, disposeVhea);
+
 table_vhea *otfcc_readVhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
-	;
 	FOR_TABLE('vhea', table) {
 		font_file_pointer data = table.data;
 		size_t length = table.length;
@@ -66,7 +65,7 @@ table_vhea *otfcc_parseVhea(const json_value *root, const otfcc_Options *options
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
-		vhea = otfcc_newVhea();
+		vhea = iTable_vhea.create();
 		if (!vhea) return NULL;
 		loggedStep("vhea") {
 			vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);

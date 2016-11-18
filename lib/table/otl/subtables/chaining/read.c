@@ -119,10 +119,10 @@ static subtable_chaining *readContextualFormat1(subtable_chaining *subtable, con
 		}
 	}
 
-	Coverage.destroy(firstCoverage);
+	Coverage.free(firstCoverage);
 	return subtable;
 FAIL:
-	iSubtable_chaining.destroy(subtable);
+	iSubtable_chaining.free(subtable);
 	return NULL;
 }
 static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, const font_file_pointer data,
@@ -161,14 +161,14 @@ static subtable_chaining *readContextualFormat2(subtable_chaining *subtable, con
 		}
 	}
 	if (cds) {
-		if (cds->bc) ClassDef.destroy(cds->bc);
-		if (cds->ic) ClassDef.destroy(cds->ic);
-		if (cds->fc) ClassDef.destroy(cds->fc);
+		if (cds->bc) ClassDef.free(cds->bc);
+		if (cds->ic) ClassDef.free(cds->ic);
+		if (cds->fc) ClassDef.free(cds->fc);
 		FREE(cds);
 	}
 	return subtable;
 FAIL:
-	iSubtable_chaining.destroy(subtable);
+	iSubtable_chaining.free(subtable);
 	return NULL;
 }
 otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
@@ -192,7 +192,7 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 	}
 FAIL:
 	logWarning("Unsupported format %d.\n", format);
-	iSubtable_chaining.destroy(subtable);
+	iSubtable_chaining.free(subtable);
 	return NULL;
 }
 
@@ -283,10 +283,10 @@ static subtable_chaining *readChainingFormat1(subtable_chaining *subtable, const
 		}
 	}
 
-	Coverage.destroy(firstCoverage);
+	Coverage.free(firstCoverage);
 	return subtable;
 FAIL:
-	iSubtable_chaining.destroy(subtable);
+	iSubtable_chaining.free(subtable);
 	return NULL;
 }
 static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const font_file_pointer data,
@@ -326,14 +326,14 @@ static subtable_chaining *readChainingFormat2(subtable_chaining *subtable, const
 	}
 
 	if (cds) {
-		if (cds->bc) ClassDef.destroy(cds->bc);
-		if (cds->ic) ClassDef.destroy(cds->ic);
-		if (cds->fc) ClassDef.destroy(cds->fc);
+		if (cds->bc) ClassDef.free(cds->bc);
+		if (cds->ic) ClassDef.free(cds->ic);
+		if (cds->fc) ClassDef.free(cds->fc);
 		FREE(cds);
 	}
 	return subtable;
 FAIL:
-	iSubtable_chaining.destroy(subtable);
+	iSubtable_chaining.free(subtable);
 	return NULL;
 }
 otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
@@ -358,6 +358,6 @@ otl_Subtable *otl_read_chaining(const font_file_pointer data, uint32_t tableLeng
 	}
 FAIL:
 	logWarning("Unsupported format %d.\n", format);
-	iSubtable_chaining.destroy(subtable);
+	iSubtable_chaining.free(subtable);
 	return NULL;
 }

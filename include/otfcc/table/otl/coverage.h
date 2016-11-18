@@ -19,6 +19,6 @@ struct __otfcc_ICoverage {
 	void (*push)(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h);
 };
 
-extern const struct __otfcc_ICoverage otfcc_iCoverage;
+extern const struct __otfcc_ICoverage otl_iCoverage;
 
 #endif

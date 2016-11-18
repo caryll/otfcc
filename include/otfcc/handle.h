@@ -29,6 +29,6 @@ struct otfcc_HandlePackage {
 	void (*consolidateTo)(struct otfcc_Handle *h, glyphid_t id, sds name);
 };
 
-extern const struct otfcc_HandlePackage otfcc_pkgHandle;
+extern const struct otfcc_HandlePackage otfcc_iHandle;
 
 #endif

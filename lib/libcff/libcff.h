@@ -87,8 +87,8 @@ enum {
 typedef struct {
 	cff_Value *stack;
 	cff_Value transient[32];
-	uint32_t index;
-	uint32_t max;
+	arity_t index;
+	arity_t max;
 	uint8_t stem;
 } cff_Stack;
 
@@ -133,8 +133,8 @@ uint8_t cff_getStandardArity(uint32_t op);
 
 sds sdsget_cff_sid(uint16_t idx, cff_Index str);
 
-extern uint32_t cff_decodeCffToken(uint8_t *start, cff_Value *val);
-extern uint32_t cff_decodeCS2Token(uint8_t *start, cff_Value *val);
+extern uint32_t cff_decodeCffToken(const uint8_t *start, cff_Value *val);
+extern uint32_t cff_decodeCS2Token(const uint8_t *start, cff_Value *val);
 
 // number, number, float
 extern caryll_Buffer *cff_encodeCffOperator(int32_t val);

@@ -1,21 +1,20 @@
 #include "libcff.h"
 
-// DICT util functions
-void cff_delete_Dict(cff_Dict *dict) {
-	if (!dict) return;
+static INLINE void disposeDict(cff_Dict *dict) {
 	for (uint32_t j = 0; j < dict->count; j++) {
 		FREE(dict->ents[j].vals);
 	}
 	FREE(dict->ents);
-	FREE(dict);
 }
 
-cff_Dict *cff_extract_Dict(uint8_t *data, uint32_t len) {
+caryll_standardRefTypeFn(cff_Dict, disposeDict);
+
+static cff_Dict *parseDict(const uint8_t *data, const uint32_t len) {
 	cff_Dict *dict;
 	NEW(dict);
 	uint32_t index = 0, advance;
 	cff_Value val, stack[48];
-	uint8_t *temp = data;
+	const uint8_t *temp = data;
 
 	while (temp < data + len) {
 		advance = cff_decodeCffToken(temp, &val);
@@ -42,12 +41,12 @@ cff_Dict *cff_extract_Dict(uint8_t *data, uint32_t len) {
 	return dict;
 }
 
-void cff_extract_DictByCallback(uint8_t *data, uint32_t len, void *context,
-                                void (*callback)(uint32_t op, uint8_t top, cff_Value *stack, void *context)) {
+static void parseToCallback(const uint8_t *data, const uint32_t len, void *context,
+                            void (*callback)(uint32_t op, uint8_t top, cff_Value *stack, void *context)) {
 	uint8_t index = 0;
 	uint32_t advance;
 	cff_Value val, stack[256];
-	uint8_t *temp = data;
+	const uint8_t *temp = data;
 
 	while (temp < data + len) {
 		advance = cff_decodeCffToken(temp, &val);
@@ -83,7 +82,7 @@ static void callback_get_key(uint32_t op, uint8_t top, cff_Value *stack, void *_
 	}
 }
 
-cff_Value cff_parseDictKey(uint8_t *data, uint32_t len, uint32_t op, uint32_t idx) {
+static cff_Value parseDictKey(const uint8_t *data, const uint32_t len, const uint32_t op, const uint32_t idx) {
 	cff_get_key_context context;
 	context.found = false;
 	context.idx = idx;
@@ -91,11 +90,11 @@ cff_Value cff_parseDictKey(uint8_t *data, uint32_t len, uint32_t op, uint32_t id
 	context.res.t = 0;
 	context.res.i = -1;
 
-	cff_extract_DictByCallback(data, len, &context, callback_get_key);
+	parseToCallback(data, len, &context, callback_get_key);
 	return context.res;
 }
 
-caryll_Buffer *cff_build_Dict(cff_Dict *dict) {
+static caryll_Buffer *buildDict(const cff_Dict *dict) {
 	caryll_Buffer *blob = bufnew();
 	for (uint32_t i = 0; i < dict->count; i++) {
 		for (uint32_t j = 0; j < dict->ents[i].cnt; j++) {
@@ -113,3 +112,11 @@ caryll_Buffer *cff_build_Dict(cff_Dict *dict) {
 	}
 	return blob;
 }
+
+caryll_ElementInterfaceOf(cff_Dict) cff_iDict = {
+    caryll_standardRefTypeMethods(cff_Dict),
+    .parse = parseDict,
+    .parseToCallback = parseToCallback,
+    .parseDictKey = parseDictKey,
+    .build = buildDict,
+};

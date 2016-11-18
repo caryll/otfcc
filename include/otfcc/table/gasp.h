@@ -4,7 +4,7 @@
 #include "table-common.h"
 
 typedef struct {
-	uint16_t rangeMaxPPEM;
+	glyphsize_t rangeMaxPPEM;
 	bool dogray;
 	bool gridfit;
 	bool symmetric_smoothing;
@@ -18,5 +18,7 @@ typedef struct {
 	uint16_t version;
 	OWNING gasp_RecordList records;
 } table_gasp;
+
+extern caryll_RefElementInterface(table_gasp) iTable_gasp;
 
 #endif

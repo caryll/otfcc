@@ -279,12 +279,12 @@ int main(int argc, char *argv[]) {
 	otfcc_Font *font;
 	loggedStep("Parse") {
 		otfcc_IFontBuilder *parser = otfcc_newJsonReader();
-		font = parser->create(jsonRoot, 0, options);
+		font = parser->read(jsonRoot, 0, options);
 		if (!font) {
 			logError("Cannot parse JSON file \"%s\" as a font. Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		parser->dispose(parser);
+		parser->free(parser);
 		json_value_free(jsonRoot);
 		logStepTime;
 	}
@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		logStepTime;
-		buffree(otf), writer->dispose(writer), otfcc_deleteFont(font), sdsfree(outputPath);
+		buffree(otf), writer->free(writer), otfcc_deleteFont(font), sdsfree(outputPath);
 	}
 	otfcc_deleteOptions(options);
 

@@ -23,4 +23,6 @@ typedef struct {
 	uint16_t numOfLongVerMetrics;
 } table_vhea;
 
+extern caryll_RefElementInterface(table_vhea) iTable_vhea;
+
 #endif

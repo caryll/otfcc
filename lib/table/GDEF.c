@@ -5,9 +5,9 @@
 caryll_ElementInterfaceOf(otl_CaretValue) otl_iCaretValue = {
     .init = NULL, .copy = NULL, .dispose = NULL,
 };
-caryll_DefineVectorImpl(otl_CaretValueList, otl_CaretValue, otl_iCaretValue, otl_iCaretValueList);
+caryll_standardVectorImpl(otl_CaretValueList, otl_CaretValue, otl_iCaretValue, otl_iCaretValueList);
 
-static void initGdefLigCaretRec(otl_CaretValueRecord *v) {
+static INLINE void initGdefLigCaretRec(otl_CaretValueRecord *v) {
 	v->glyph = Handle.empty();
 	otl_iCaretValueList.init(&v->carets);
 }
@@ -18,24 +18,21 @@ static void deleteGdefLigCaretRec(otl_CaretValueRecord *v) {
 caryll_ElementInterfaceOf(otl_CaretValueRecord) otl_iCaretValueRecord = {
     .init = initGdefLigCaretRec, .copy = NULL, .dispose = deleteGdefLigCaretRec,
 };
-caryll_DefineVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
+caryll_standardVectorImpl(otl_LigCaretTable, otl_CaretValueRecord, otl_iCaretValueRecord, otl_iLigCaretTable);
 
-void otfcc_deleteGDEF(table_GDEF *gdef) {
-	if (!gdef) return;
-	if (gdef->glyphClassDef) ClassDef.destroy(gdef->glyphClassDef);
-	if (gdef->markAttachClassDef) ClassDef.destroy(gdef->markAttachClassDef);
-	otl_iLigCaretTable.dispose(&gdef->ligCarets);
-	FREE(gdef);
-}
-
-table_GDEF *otfcc_newGDEF() {
-	table_GDEF *gdef;
-	NEW(gdef);
+static INLINE void initGDEF(table_GDEF *gdef) {
 	gdef->glyphClassDef = NULL;
 	gdef->markAttachClassDef = NULL;
 	otl_iLigCaretTable.init(&gdef->ligCarets);
-	return gdef;
 }
+static INLINE void disposeGDEF(table_GDEF *gdef) {
+	if (!gdef) return;
+	if (gdef->glyphClassDef) ClassDef.free(gdef->glyphClassDef);
+	if (gdef->markAttachClassDef) ClassDef.free(gdef->markAttachClassDef);
+	otl_iLigCaretTable.dispose(&gdef->ligCarets);
+}
+
+caryll_standardRefType(table_GDEF, iTable_GDEF, initGDEF, disposeGDEF);
 
 static otl_CaretValue readCaretValue(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_CaretValue v;
@@ -74,7 +71,7 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 		font_file_pointer data = table.data;
 		uint32_t tableLength = table.length;
 		checkLength(12);
-		gdef = otfcc_newGDEF();
+		gdef = iTable_GDEF.create();
 		uint16_t classdefOffset = read_16u(data + 4);
 		if (classdefOffset) { gdef->glyphClassDef = ClassDef.read(data, tableLength, classdefOffset); }
 		uint16_t ligCaretOffset = read_16u(data + 8);
@@ -89,14 +86,14 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 				v.glyph = Handle.dup(cov->glyphs[j]);
 				otl_iLigCaretTable.push(&gdef->ligCarets, v);
 			}
-			Coverage.destroy(cov);
+			Coverage.free(cov);
 		}
 		uint16_t markAttachDefOffset = read_16u(data + 10);
 		if (markAttachDefOffset) { gdef->markAttachClassDef = ClassDef.read(data, tableLength, markAttachDefOffset); }
 		return gdef;
 
 	FAIL:
-		DELETE(otfcc_deleteGDEF, gdef);
+		DELETE(iTable_GDEF.free, gdef);
 	}
 	return gdef;
 }
@@ -169,7 +166,7 @@ table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
 		loggedStep("GDEF") {
-			gdef = otfcc_newGDEF();
+			gdef = iTable_GDEF.create();
 			gdef->glyphClassDef = ClassDef.parse(json_obj_get(table, "glyphClassDef"));
 			gdef->markAttachClassDef = ClassDef.parse(json_obj_get(table, "markAttachClassDef"));
 			ligCaretFromJson(json_obj_get(table, "ligCarets"), &gdef->ligCarets);
@@ -203,7 +200,7 @@ static bk_Block *writeLigCarets(const otl_LigCaretTable *lc) {
 	for (glyphid_t j = 0; j < lc->length; j++) {
 		bk_push(lct, p16, writeLigCaretRec(&(lc->items[j])), bkover);
 	}
-	Coverage.destroy(cov);
+	Coverage.free(cov);
 	return lct;
 }
 

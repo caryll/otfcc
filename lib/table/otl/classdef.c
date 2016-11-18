@@ -1,17 +1,16 @@
 #include "support/util.h"
 #include "otfcc/table/otl/classdef.h"
 
-static void initClassDef(otl_ClassDef *cd) {
-	cd->numGlyphs = cd->capacity = 0;
-	cd->glyphs = NULL;
-	cd->classes = NULL;
+static INLINE void disposeClassDef(otl_ClassDef *cd) {
+	if (cd->glyphs) {
+		for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
+			Handle.dispose(&cd->glyphs[j]);
+		}
+		FREE(cd->glyphs);
+	}
+	FREE(cd->classes);
 }
-static otl_ClassDef *newClassDef() {
-	otl_ClassDef *cd;
-	NEW(cd);
-	initClassDef(cd);
-	return cd;
-}
+caryll_standardRefTypeFn(otl_ClassDef, disposeClassDef);
 
 static void growClassdef(otl_ClassDef *cd, uint32_t n) {
 	if (!n) return;
@@ -23,22 +22,6 @@ static void growClassdef(otl_ClassDef *cd, uint32_t n) {
 		RESIZE(cd->classes, cd->capacity);
 	}
 }
-
-static void disposeClassDef(otl_ClassDef *cd) {
-	if (cd->glyphs) {
-		for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-			Handle.dispose(&cd->glyphs[j]);
-		}
-		FREE(cd->glyphs);
-	}
-	FREE(cd->classes);
-}
-static void deleteClassDef(otl_ClassDef *cd) {
-	if (!cd) return;
-	disposeClassDef(cd);
-	FREE(cd);
-}
-
 static void pushClassDef(otl_ClassDef *cd, MOVE otfcc_GlyphHandle h, glyphclass_t cls) {
 	cd->numGlyphs += 1;
 	growClassdef(cd, cd->numGlyphs);
@@ -58,7 +41,7 @@ static int by_covIndex(coverage_entry *a, coverage_entry *b) {
 }
 
 static otl_ClassDef *readClassDef(const uint8_t *data, uint32_t tableLength, uint32_t offset) {
-	otl_ClassDef *cd = newClassDef();
+	otl_ClassDef *cd = otl_iClassDef.create();
 	if (tableLength < offset + 4) return cd;
 	uint16_t format = read_16u(data + offset);
 	if (format == 1 && tableLength >= offset + 6) {
@@ -104,7 +87,7 @@ static otl_ClassDef *readClassDef(const uint8_t *data, uint32_t tableLength, uin
 }
 
 static otl_ClassDef *expandClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
-	otl_ClassDef *cd = newClassDef();
+	otl_ClassDef *cd = otl_iClassDef.create();
 	coverage_entry *hash = NULL;
 	for (glyphid_t j = 0; j < ocd->numGlyphs; j++) {
 		int gid = ocd->glyphs[j].index;
@@ -135,7 +118,7 @@ static otl_ClassDef *expandClassDef(otl_Coverage *cov, otl_ClassDef *ocd) {
 		HASH_DEL(hash, e);
 		FREE(e);
 	}
-	deleteClassDef(ocd);
+	otl_iClassDef.free(ocd);
 	return cd;
 }
 
@@ -149,7 +132,7 @@ static json_value *dumpClassDef(const otl_ClassDef *cd) {
 
 static otl_ClassDef *parseClassDef(const json_value *_cd) {
 	if (!_cd || _cd->type != json_object) return NULL;
-	otl_ClassDef *cd = newClassDef();
+	otl_ClassDef *cd = otl_iClassDef.create();
 	for (glyphid_t j = 0; j < _cd->u.object.length; j++) {
 		glyph_handle h = Handle.fromName(sdsnewlen(_cd->u.object.values[j].name, _cd->u.object.values[j].name_length));
 		json_value *_cid = _cd->u.object.values[j].value;
@@ -242,12 +225,8 @@ static void shrinkClassDef(otl_ClassDef *cd) {
 	cd->numGlyphs = k;
 }
 
-const struct __otfcc_IClassDef otfcc_iClassDef = {
-    .init = initClassDef,
-    .create = newClassDef,
-    .copy = NULL,
-    .dispose = disposeClassDef,
-    .destroy = deleteClassDef,
+const struct __otfcc_IClassDef otl_iClassDef = {
+    caryll_standardRefTypeMethods(otl_ClassDef),
     .read = readClassDef,
     .expand = expandClassDef,
     .dump = dumpClassDef,

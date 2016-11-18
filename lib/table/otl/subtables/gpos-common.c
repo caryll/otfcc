@@ -6,7 +6,7 @@ static void deleteMarkArrayItem(otl_MarkRecord *entry) {
 static caryll_ElementInterface(otl_MarkRecord) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteMarkArrayItem};
 
-caryll_DefineVectorImpl(otl_MarkArray, otl_MarkRecord, gss_typeinfo, otl_iMarkArray);
+caryll_standardVectorImpl(otl_MarkArray, otl_MarkRecord, gss_typeinfo, otl_iMarkArray);
 
 void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
                        uint32_t offset) {

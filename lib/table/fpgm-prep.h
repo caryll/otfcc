@@ -3,7 +3,6 @@
 
 #include "otfcc/table/fpgm-prep.h"
 
-void otfcc_deleteFpgm_prep(table_fpgm_prep *table);
 table_fpgm_prep *otfcc_readFpgmPrep(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag);
 void table_dumpTableFpgmPrep(const table_fpgm_prep *table, json_value *root, const otfcc_Options *options,
                              const char *tag);

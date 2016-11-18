@@ -2,13 +2,13 @@
 
 static void deleteGsubMultiEntry(otl_GsubMultiEntry *entry) {
 	Handle.dispose(&entry->from);
-	DELETE(Coverage.destroy, entry->to);
+	DELETE(Coverage.free, entry->to);
 }
 
 static caryll_ElementInterface(otl_GsubMultiEntry) gsm_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGsubMultiEntry};
 
-caryll_DefineVectorImpl(subtable_gsub_multi, otl_GsubMultiEntry, gsm_typeinfo, iSubtable_gsub_multi);
+caryll_standardVectorImpl(subtable_gsub_multi, otl_GsubMultiEntry, gsm_typeinfo, iSubtable_gsub_multi);
 
 otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                   const otfcc_Options *options) {
@@ -32,12 +32,12 @@ otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, 
 		                                        .from = Handle.dup(from->glyphs[j]), .to = cov,
 		                                    }));
 	}
-	Coverage.destroy(from);
+	Coverage.free(from);
 	return (otl_Subtable *)subtable;
 
 FAIL:
-	if (from) Coverage.destroy(from);
-	iSubtable_gsub_multi.destroy(subtable);
+	if (from) Coverage.free(from);
+	iSubtable_gsub_multi.free(subtable);
 	return NULL;
 }
 
@@ -84,6 +84,6 @@ caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
 		}
 		bk_push(root, p16, b, bkover);
 	}
-	Coverage.destroy(cov);
+	Coverage.free(cov);
 	return bk_build_Block(root);
 }

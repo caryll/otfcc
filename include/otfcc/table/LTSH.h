@@ -8,5 +8,6 @@ typedef struct {
 	glyphid_t numGlyphs;
 	OWNING uint8_t *yPels;
 } table_LTSH;
+extern caryll_RefElementInterface(table_LTSH) iTable_LTSH;
 
 #endif

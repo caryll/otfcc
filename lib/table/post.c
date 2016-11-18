@@ -6,23 +6,22 @@
 static const char *standardMacNames[258] = {".notdef", ".null", "nonmarkingreturn", "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis", "Aring", "Ccedilla", "Eacute", "Ntilde", "Odieresis", "Udieresis", "aacute", "agrave", "acircumflex", "adieresis", "atilde", "aring", "ccedilla", "eacute", "egrave", "ecircumflex", "edieresis", "iacute", "igrave", "icircumflex", "idieresis", "ntilde", "oacute", "ograve", "ocircumflex", "odieresis", "otilde", "uacute", "ugrave", "ucircumflex", "udieresis", "dagger", "degree", "cent", "sterling", "section", "bullet", "paragraph", "germandbls", "registered", "copyright", "trademark", "acute", "dieresis", "notequal", "AE", "Oslash", "infinity", "plusminus", "lessequal", "greaterequal", "yen", "mu", "partialdiff", "summation", "product", "pi", "integral", "ordfeminine", "ordmasculine", "Omega", "ae", "oslash", "questiondown", "exclamdown", "logicalnot", "radical", "florin", "approxequal", "Delta", "guillemotleft", "guillemotright", "ellipsis", "nonbreakingspace", "Agrave", "Atilde", "Otilde", "OE", "oe", "endash", "emdash", "quotedblleft", "quotedblright", "quoteleft", "quoteright", "divide", "lozenge", "ydieresis", "Ydieresis", "fraction", "currency", "guilsinglleft", "guilsinglright", "fi", "fl", "daggerdbl", "periodcentered", "quotesinglbase", "quotedblbase", "perthousand", "Acircumflex", "Ecircumflex", "Aacute", "Edieresis", "Egrave", "Iacute", "Icircumflex", "Idieresis", "Igrave", "Oacute", "Ocircumflex", "apple", "Ograve", "Uacute", "Ucircumflex", "Ugrave", "dotlessi", "circumflex", "tilde", "macron", "breve", "dotaccent", "ring", "cedilla", "hungarumlaut", "ogonek", "caron", "Lslash", "lslash", "Scaron", "scaron", "Zcaron", "zcaron", "brokenbar", "Eth", "eth", "Yacute", "yacute", "Thorn", "thorn", "minus", "multiply", "onesuperior", "twosuperior", "threesuperior", "onehalf", "onequarter", "threequarters", "franc", "Gbreve", "gbreve", "Idotaccent", "Scedilla", "scedilla", "Cacute", "cacute", "Ccaron", "ccaron", "dcroat"};
 
 // clang-format on
-table_post *otfcc_newPost() {
-	table_post *post;
-	NEW(post);
+
+static INLINE void initPost(table_post *post) {
+	memset(post, 0, sizeof(*post));
 	post->version = 0x30000;
-	return post;
 }
-void otfcc_deletePost(MOVE table_post *table) {
-	if (table->post_name_map != NULL) { GlyphOrder.free(table->post_name_map); }
-	FREE(table);
+static INLINE void disposePost(MOVE table_post *post) {
+	if (post->post_name_map != NULL) { GlyphOrder.free(post->post_name_map); }
 }
+
+caryll_standardRefType(table_post, iTable_post, initPost, disposePost);
 
 table_post *otfcc_readPost(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('post', table) {
 		font_file_pointer data = table.data;
 
-		table_post *post;
-		NEW(post);
+		table_post *post = iTable_post.create();
 		post->version = read_32s(data);
 		post->italicAngle = read_32u(data + 4);
 		post->underlinePosition = read_16u(data + 8);
@@ -89,7 +88,7 @@ void otfcc_dumpPost(const table_post *table, json_value *root, const otfcc_Optio
 	}
 }
 table_post *otfcc_parsePost(const json_value *root, const otfcc_Options *options) {
-	table_post *post = otfcc_newPost();
+	table_post *post = iTable_post.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "post", json_object))) {
 		loggedStep("post") {

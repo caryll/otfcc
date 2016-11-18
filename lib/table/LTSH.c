@@ -2,10 +2,11 @@
 
 #include "support/util.h"
 
-void otfcc_deleteLTSH(table_LTSH *ltsh) {
+static INLINE void disposeLTSH(MOVE table_LTSH *ltsh) {
 	if (ltsh) { FREE(ltsh->yPels); }
-	FREE(ltsh);
 }
+caryll_standardRefType(table_LTSH, iTable_LTSH, disposeLTSH);
+
 table_LTSH *otfcc_readLTSH(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('LTSH', table) {
 		font_file_pointer data = table.data;

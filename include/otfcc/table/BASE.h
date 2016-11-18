@@ -25,4 +25,6 @@ typedef struct {
 	otl_BaseAxis *vertical;
 } table_BASE;
 
+extern caryll_RefElementInterface(table_BASE) iTable_BASE;
+
 #endif

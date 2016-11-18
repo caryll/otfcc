@@ -3,8 +3,6 @@
 
 #include "otfcc/table/OS_2.h"
 
-table_OS_2 *otfcc_newOS_2();
-void otfcc_deleteOS_2(MOVE table_OS_2 *table);
 table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *options);
 void otfcc_dumpOS_2(const table_OS_2 *table, json_value *root, const otfcc_Options *options);
 table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options);

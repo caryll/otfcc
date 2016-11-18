@@ -2,8 +2,7 @@
 #define CARYLL_TABLE_VHEA_H
 
 #include "otfcc/table/vhea.h"
-table_vhea *otfcc_newVhea();
-void otfcc_deleteVhea(MOVE table_vhea *table);
+
 table_vhea *otfcc_readVhea(const otfcc_Packet packet, const otfcc_Options *options);
 void otfcc_dumpVhea(const table_vhea *table, json_value *root, const otfcc_Options *options);
 table_vhea *otfcc_parseVhea(const json_value *root, const otfcc_Options *options);

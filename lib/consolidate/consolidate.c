@@ -174,20 +174,21 @@ typedef void (*subtable_remover)(otl_Subtable *);
 static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn, subtable_remover fndel,
                                         otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
                                         const otfcc_Options *options) {
-	if (lookup && lookup->subtables.length && lookup->type == type) {
-		loggedStep("%s", lookup->name) {
-			for (tableid_t j = 0; j < lookup->subtables.length; j++) {
-				if (lookup->subtables.items[j]) {
-					bool subtableRemoved;
-					// loggedStep("Subtable %d", j) {
-					subtableRemoved = fn(font, table, lookup->subtables.items[j], options);
-					//}
-					if (subtableRemoved) {
-						fndel(lookup->subtables.items[j]);
-						lookup->subtables.items[j] = NULL;
-						logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
-					}
-				}
+	if (!lookup || !lookup->subtables.length || lookup->type != type) return;
+	loggedStep("%s", lookup->name) {
+		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
+			if (!lookup->subtables.items[j]) {
+				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+				continue;
+			}
+			bool subtableRemoved;
+			// loggedStep("Subtable %d", j) {
+			subtableRemoved = fn(font, table, lookup->subtables.items[j], options);
+			//}
+			if (subtableRemoved) {
+				fndel(lookup->subtables.items[j]);
+				lookup->subtables.items[j] = NULL;
+				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
 			}
 		}
 		tableid_t k = 0;
@@ -199,20 +200,19 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 }
 
 void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lookup, const otfcc_Options *options) {
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, iSubtable_gsub_ligature.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, iSubtable_gsub_reverse.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, iSubtable_gpos_single.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, iSubtable_gpos_pair.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, iSubtable_gpos_cursive.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.destroy);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
-	                    iSubtable_gpos_markToLigature.destroy);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, iSubtable_gsub_ligature.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, iSubtable_gsub_reverse.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, iSubtable_gpos_single.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, iSubtable_gpos_pair.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, iSubtable_gpos_cursive.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature, iSubtable_gpos_markToLigature.free);
 }
 
 void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
@@ -233,6 +233,32 @@ void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 	loggedStep("GDEF") {
 		consolidate_GDEF(font, font->GDEF, options);
 	}
+}
+
+static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
+	if (!font || !font->COLR || !font->glyph_order) return;
+	table_COLR *consolidated = iTable_COLR.create();
+	foreach (colr_Mapping *mapping, *(font->COLR)) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &mapping->glyph)) {
+			logWarning("[Consolidate] Ignored missing glyph of /%s", mapping->glyph.name);
+			continue;
+		}
+		colr_Mapping m;
+		Handle.copy(&m.glyph, &mapping->glyph);
+		colr_iLayerList.init(&m.layers);
+		foreach (colr_Layer *layer, mapping->layers) {
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &layer->glyph)) {
+				logWarning("[Consolidate] Ignored missing glyph of /%s", layer->glyph.name);
+				continue;
+			}
+			colr_Layer layer1;
+			colr_iLayer.copy(&layer1, layer);
+			colr_iLayerList.push(&m.layers, layer1);
+		}
+		iTable_COLR.push(consolidated, m);
+	}
+	iTable_COLR.free(font->COLR);
+	font->COLR = consolidated;
 }
 
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
@@ -276,4 +302,7 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 		consolidateCmap(font, options);
 	}
 	if (font->glyf) consolidateOTL(font, options);
+	loggedStep("COLR") {
+		consolidateCOLR(font, options);
+	}
 }

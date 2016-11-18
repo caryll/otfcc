@@ -54,7 +54,7 @@ FAIL:
 
 static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base,
                                        const otfcc_Options *options) {
-	table_OTL *table = otfcc_newOtl();
+	table_OTL *table = iTable_OTL.create();
 	if (!table) goto FAIL;
 	checkLength(10);
 	uint32_t scriptListOffset = read_16u(data + 4);
@@ -70,7 +70,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 		checkLength(lookupListOffset + 2 + lookupCount * 2);
 		for (tableid_t j = 0; j < lookupCount; j++) {
 			otl_Lookup *lookup;
-			otl_iLookup.init(&lookup);
+			otl_iLookupPtr.init(&lookup);
 			lookup->_offset = lookupListOffset + read_16u(data + lookupListOffset + 2 + 2 * j);
 			checkLength(lookup->_offset + 6);
 			lookup->type = read_16u(data + lookup->_offset) + lookup_type_base;
@@ -85,7 +85,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 		tableid_t lnk = 0;
 		for (tableid_t j = 0; j < featureCount; j++) {
 			otl_Feature *feature;
-			otl_iFeature.init(&feature);
+			otl_iFeaturePtr.init(&feature);
 			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
 			if (options->glyph_name_prefix) {
 				feature->name = sdscatprintf(sdsempty(), "%c%c%c%c_%s_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
@@ -176,7 +176,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 	}
 	return table;
 FAIL:
-	if (table) otfcc_deleteOtl(table);
+	if (table) iTable_OTL.free(table);
 	return NULL;
 }
 
@@ -211,7 +211,7 @@ static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, o
 				} else if (lookup->subtables.items[j]) {
 					// type mismatch, delete this subtable
 					otl_Lookup *temp;
-					otl_iLookup.init(&temp);
+					otl_iLookupPtr.init(&temp);
 					temp->type = lookup->subtables.items[j]->extend.type;
 					otl_iSubtableList.push(&temp->subtables, lookup->subtables.items[j]->extend.subtable);
 					DELETE(otfcc_delete_lookup, temp);
@@ -242,7 +242,7 @@ table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint
 		}
 		return otl;
 	FAIL:
-		if (otl) otfcc_deleteOtl(otl);
+		if (otl) iTable_OTL.free(otl);
 		otl = NULL;
 	}
 	return NULL;
