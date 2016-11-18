@@ -61,6 +61,8 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_SFNTBuilder_pushTable(builder, 'DSIG', dsig);
 	}
 
+	if (font->CPAL) otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
+
 	caryll_Buffer *otf = otfcc_SFNTBuilder_serialize(builder);
 	otfcc_deleteSFNTBuilder(builder);
 	otfcc_unstatFont(font, options);

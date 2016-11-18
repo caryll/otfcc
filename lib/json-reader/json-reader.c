@@ -140,6 +140,7 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 		font->GDEF = otfcc_parseGDEF(root, options);
 	}
 	font->BASE = otfcc_parseBASE(root, options);
+	font->CPAL = otfcc_parseCPAL(root, options);
 	return font;
 }
 static INLINE void freeReader(otfcc_IFontBuilder *self) {

@@ -1,6 +1,7 @@
 #include "CPAL.h"
 
 #include "support/util.h"
+#include "bk/bkgraph.h"
 
 // Colors are trivial.
 caryll_standardType(cpal_Color, cpal_iColor);
@@ -40,6 +41,8 @@ table_CPAL *otfcc_readCPAL(const otfcc_Packet packet, const otfcc_Options *optio
 		uint16_t version = read_16u(data);
 		uint32_t tableHeaderLength = (version == 0 ? 14 : 26);
 		if (length < tableHeaderLength) goto FAIL;
+
+		t->version = version;
 		uint16_t numPalettesEntries = read_16u(data + 2);
 		uint16_t numPalettes = read_16u(data + 4);
 		uint16_t numColorRecords = read_16u(data + 6);
@@ -146,4 +149,128 @@ void otfcc_dumpCPAL(const table_CPAL *table, json_value *root, const otfcc_Optio
 		json_object_push(_t, "palettes", _a);
 		json_object_push(root, "CPAL", _t);
 	}
+}
+
+static INLINE cpal_Color parseColor(const json_value *_color) {
+	cpal_Color color = white;
+	if (!_color || _color->type != json_object) return color;
+	color.red = json_obj_getint_fallback(_color, "red", 0);
+	color.green = json_obj_getint_fallback(_color, "green", 0);
+	color.blue = json_obj_getint_fallback(_color, "blue", 0);
+	color.alpha = json_obj_getint_fallback(_color, "alpha", 0xFF);
+	color.label = json_obj_getint_fallback(_color, "label", 0xFFFF);
+	return color;
+}
+
+table_CPAL *otfcc_parseCPAL(const json_value *root, const otfcc_Options *options) {
+	json_value *table = NULL;
+	if (!(table = json_obj_get_type(root, "CPAL", json_object))) return NULL;
+	table_CPAL *cpal = NULL;
+	loggedStep("CPAL") {
+		json_value *_palettes = json_obj_get_type(table, "palettes", json_array);
+		if (!_palettes || !_palettes->u.array.length) return NULL;
+		cpal = iTable_CPAL.create();
+		cpal->version = json_obj_getint(table, "version");
+		for (uint16_t j = 0; j < _palettes->u.array.length; j++) {
+			json_value *_palette = _palettes->u.array.values[j];
+			if (!_palette || _palette->type != json_object) continue;
+			json_value *_colors = json_obj_get_type(_palette, "colors", json_array);
+			if (!_colors) continue;
+
+			// palette parser
+			cpal_Palette palette;
+			cpal_iPalette.init(&palette);
+			palette.type = json_obj_getint(_palette, "type");
+			palette.label = json_obj_getint_fallback(_palette, "type", 0xFFFF);
+
+			// color list parser
+			for (uint16_t k = 0; k < _colors->u.array.length; k++) {
+				cpal_iColorSet.push(&palette.colorset, parseColor(_colors->u.array.values[k]));
+			}
+
+			// push into cpal
+			cpal_iPaletteSet.push(&cpal->palettes, palette);
+		}
+	}
+	return cpal;
+}
+
+static INLINE bk_Block *buildPaletteType(const table_CPAL *cpal) {
+	bool needsPaletteType = false;
+	for (tableid_t j = 0; j < cpal->palettes.length; j++) {
+		if (cpal->palettes.items[j].type) needsPaletteType = true;
+	}
+	if (!needsPaletteType) return NULL;
+	bk_Block *block = bk_new_Block(bkover);
+	for (tableid_t j = 0; j < cpal->palettes.length; j++) {
+		bk_push(block, b32, cpal->palettes.items[j].type, bkover);
+	}
+	return block;
+}
+static INLINE bk_Block *buildPaletteLabel(const table_CPAL *cpal) {
+	bool needsPaletteLabel = false;
+	for (tableid_t j = 0; j < cpal->palettes.length; j++) {
+		if (cpal->palettes.items[j].label != 0xFFFF) needsPaletteLabel = true;
+	}
+	if (!needsPaletteLabel) return NULL;
+	bk_Block *block = bk_new_Block(bkover);
+	for (tableid_t j = 0; j < cpal->palettes.length; j++) {
+		bk_push(block, b16, cpal->palettes.items[j].label, bkover);
+	}
+	return block;
+}
+static INLINE bk_Block *buildPaletteEntryLabel(const table_CPAL *cpal) {
+	bool needsPaletteEntryLabel = false;
+	cpal_Palette *palette = &cpal->palettes.items[0];
+	for (tableid_t j = 0; j < palette->colorset.length; j++) {
+		if (palette->colorset.items[j].label != 0xFFFF) needsPaletteEntryLabel = true;
+	}
+	if (!needsPaletteEntryLabel) return NULL;
+	bk_Block *block = bk_new_Block(bkover);
+	for (tableid_t j = 0; j < palette->colorset.length; j++) {
+		bk_push(block, b16, palette->colorset.items[j].label, bkover);
+	}
+	return block;
+}
+caryll_Buffer *otfcc_buildCPAL(const table_CPAL *cpal, const otfcc_Options *options) {
+	if (!cpal || !cpal->palettes.length) return bufnew();
+	uint16_t numPalettes = cpal->palettes.length;
+	uint16_t numPalettesEntries = cpal->palettes.items[0].colorset.length;
+	uint16_t numColorRecords = numPalettes * numPalettesEntries;
+
+	bk_Block *colorRecords = bk_new_Block(bkover);
+	for (tableid_t j = 0; j < numPalettes; j++) {
+		cpal_Palette *palette = &cpal->palettes.items[j];
+		tableid_t totalColors = palette->colorset.length;
+		for (tableid_t k = 0; k < numPalettesEntries; k++) {
+			const cpal_Color *color = NULL;
+			if (k < totalColors) {
+				color = &palette->colorset.items[k];
+			} else {
+				color = &white;
+			}
+			bk_push(colorRecords, b8, color->blue, // blue
+			        b8, color->green,              // green
+			        b8, color->red,                // red
+			        b8, color->alpha,              // alpha
+			        bkover);
+		}
+	}
+
+	bk_Block *root = bk_new_Block(b16, cpal->version,      // Version
+	                              b16, numPalettesEntries, // numPalettesEntries
+	                              b16, numPalettes,        // numPalettes
+	                              b16, numColorRecords,    // numColorRecords
+	                              p32, colorRecords,       // offsetFirstColorRecord
+	                              bkover);
+	for (tableid_t j = 0; j < numPalettes; j++) {
+		bk_push(root, b16, numPalettesEntries * j, bkover); // colorRecordIndices
+	}
+	if (cpal->version > 0) {
+		bk_push(root, p32, buildPaletteType(cpal), // offsetPaletteTypeArray
+		        p32, buildPaletteLabel(cpal),      // offsetPaletteLabelArray
+		        p32, buildPaletteEntryLabel(cpal), // offsetPaletteEntryLabelArray
+		        bkover);
+	}
+	return bk_build_Block(root);
 }
