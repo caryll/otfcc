@@ -53,6 +53,10 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 			font->GDEF = otfcc_readGDEF(packet, options);
 		}
 		font->BASE = otfcc_readBASE(packet, options);
+
+		// Color font
+		font->CPAL = otfcc_readCPAL(packet, options);
+
 		otfcc_unconsolidateFont(font, options);
 		return font;
 	}
