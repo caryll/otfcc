@@ -212,8 +212,7 @@ void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lo
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
-	                    iSubtable_gpos_markToLigature.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature, iSubtable_gpos_markToLigature.free);
 }
 
 void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
@@ -234,6 +233,32 @@ void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 	loggedStep("GDEF") {
 		consolidate_GDEF(font, font->GDEF, options);
 	}
+}
+
+static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
+	if (!font || !font->COLR || !font->glyph_order) return;
+	table_COLR *consolidated = iTable_COLR.create();
+	foreach (colr_Mapping *mapping, *(font->COLR)) {
+		if (!GlyphOrder.consolidateHandle(font->glyph_order, &mapping->glyph)) {
+			logWarning("[Consolidate] Ignored missing glyph of /%s", mapping->glyph.name);
+			continue;
+		}
+		colr_Mapping m;
+		Handle.copy(&m.glyph, &mapping->glyph);
+		colr_iLayerList.init(&m.layers);
+		foreach (colr_Layer *layer, mapping->layers) {
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &layer->glyph)) {
+				logWarning("[Consolidate] Ignored missing glyph of /%s", layer->glyph.name);
+				continue;
+			}
+			colr_Layer layer1;
+			colr_iLayer.copy(&layer1, layer);
+			colr_iLayerList.push(&m.layers, layer1);
+		}
+		iTable_COLR.push(consolidated, m);
+	}
+	iTable_COLR.free(font->COLR);
+	font->COLR = consolidated;
 }
 
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
@@ -277,4 +302,7 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 		consolidateCmap(font, options);
 	}
 	if (font->glyf) consolidateOTL(font, options);
+	loggedStep("COLR") {
+		consolidateCOLR(font, options);
+	}
 }

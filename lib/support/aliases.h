@@ -25,10 +25,12 @@
 			if (table.tag == (name))                                                                                   \
 				for (int __fortable_k2 = 1; __fortable_k2; __fortable_k2 = 0, __notfound = 0)
 
-#define FOR_TABLE(name, table)                                                                                         \
-	FOR_TABLE_SILENT(name, table)                                                                                      \
-	loggedStep("Parsing %c%c%c%c", ((name >> 24) & 0xFF), ((name >> 16) & 0xFF), ((name >> 8) & 0xFF), (name & 0xFF))
+#define FOR_TABLE(name, table) FOR_TABLE_SILENT(name, table)
 
+#define foreach_index(item, index, vector)                                                                             \
+	for (size_t index = 0, keep = 1; keep && index < (vector).length; keep = !keep, index++)                           \
+		for (item = (vector).items + index; keep; keep = !keep)
+#define foreach(item, vector) foreach_index(item, __caryll_index, vector)
 #define foreach_hash(id, range) for (id = (range); id != NULL; id = id->hh.next)
 
 typedef uint8_t *font_file_pointer;

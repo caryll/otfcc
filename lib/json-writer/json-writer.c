@@ -29,6 +29,7 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpGDEF(font->GDEF, root, options);
 	otfcc_dumpBASE(font->BASE, root, options);
 	otfcc_dumpCPAL(font->CPAL, root, options);
+	otfcc_dumpCOLR(font->COLR, root, options);
 	return root;
 }
 static void freeJsonWriter(otfcc_IFontSerializer *self) {

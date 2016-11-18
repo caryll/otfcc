@@ -66,7 +66,7 @@ table_CPAL *otfcc_readCPAL(const otfcc_Packet packet, const otfcc_Options *optio
 			cpal_Palette palette;
 			cpal_iPalette.init(&palette);
 			tableid_t paletteStartIndex = read_16u(data + 12 + j * 2);
-			for (tableid_t j = 0; j < numPalettesEntries; j++) {
+			for (colorid_t j = 0; j < numPalettesEntries; j++) {
 				if (paletteStartIndex + j < numColorRecords) {
 					cpal_iColorSet.push(&palette.colorset, colorList[j + paletteStartIndex]);
 				} else {
@@ -95,7 +95,7 @@ table_CPAL *otfcc_readCPAL(const otfcc_Packet packet, const otfcc_Options *optio
 			if (version > 0) {
 				uint32_t offsetPaletteEntryLabelArray = read_32u(data + 24 + 2 * numPalettes);
 				if (offsetPaletteEntryLabelArray && length >= offsetPaletteEntryLabelArray + 4 * numPalettesEntries) {
-					for (tableid_t j = 0; j < numPalettesEntries; j++) {
+					for (colorid_t j = 0; j < numPalettesEntries; j++) {
 						uint16_t label = read_16u(data + j * 2 + offsetPaletteEntryLabelArray);
 						for (tableid_t k = 0; k < numPalettes; k++) {
 							t->palettes.items[k].colorset.items[j].label = label;
@@ -130,7 +130,7 @@ static INLINE json_value *dumpPalette(cpal_Palette *palette) {
 	if (palette->type) { json_object_push(_palette, "type", json_integer_new(palette->type)); }
 	if (palette->label != 0xFFFF) { json_object_push(_palette, "label", json_integer_new(palette->label)); }
 	json_value *a = json_array_new(palette->colorset.length);
-	for (tableid_t j = 0; j < palette->colorset.length; j++) {
+	for (colorid_t j = 0; j < palette->colorset.length; j++) {
 		json_array_push(a, dumpColor(&palette->colorset.items[j]));
 	}
 	json_object_push(_palette, "colors", a);
@@ -171,7 +171,7 @@ table_CPAL *otfcc_parseCPAL(const json_value *root, const otfcc_Options *options
 		if (!_palettes || !_palettes->u.array.length) return NULL;
 		cpal = iTable_CPAL.create();
 		cpal->version = json_obj_getint(table, "version");
-		for (uint16_t j = 0; j < _palettes->u.array.length; j++) {
+		for (tableid_t j = 0; j < _palettes->u.array.length; j++) {
 			json_value *_palette = _palettes->u.array.values[j];
 			if (!_palette || _palette->type != json_object) continue;
 			json_value *_colors = json_obj_get_type(_palette, "colors", json_array);
@@ -184,7 +184,7 @@ table_CPAL *otfcc_parseCPAL(const json_value *root, const otfcc_Options *options
 			palette.label = json_obj_getint_fallback(_palette, "type", 0xFFFF);
 
 			// color list parser
-			for (uint16_t k = 0; k < _colors->u.array.length; k++) {
+			for (colorid_t k = 0; k < _colors->u.array.length; k++) {
 				cpal_iColorSet.push(&palette.colorset, parseColor(_colors->u.array.values[k]));
 			}
 
@@ -222,12 +222,12 @@ static INLINE bk_Block *buildPaletteLabel(const table_CPAL *cpal) {
 static INLINE bk_Block *buildPaletteEntryLabel(const table_CPAL *cpal) {
 	bool needsPaletteEntryLabel = false;
 	cpal_Palette *palette = &cpal->palettes.items[0];
-	for (tableid_t j = 0; j < palette->colorset.length; j++) {
+	for (colorid_t j = 0; j < palette->colorset.length; j++) {
 		if (palette->colorset.items[j].label != 0xFFFF) needsPaletteEntryLabel = true;
 	}
 	if (!needsPaletteEntryLabel) return NULL;
 	bk_Block *block = bk_new_Block(bkover);
-	for (tableid_t j = 0; j < palette->colorset.length; j++) {
+	for (colorid_t j = 0; j < palette->colorset.length; j++) {
 		bk_push(block, b16, palette->colorset.items[j].label, bkover);
 	}
 	return block;
@@ -241,8 +241,8 @@ caryll_Buffer *otfcc_buildCPAL(const table_CPAL *cpal, const otfcc_Options *opti
 	bk_Block *colorRecords = bk_new_Block(bkover);
 	for (tableid_t j = 0; j < numPalettes; j++) {
 		cpal_Palette *palette = &cpal->palettes.items[j];
-		tableid_t totalColors = palette->colorset.length;
-		for (tableid_t k = 0; k < numPalettesEntries; k++) {
+		colorid_t totalColors = palette->colorset.length;
+		for (colorid_t k = 0; k < numPalettesEntries; k++) {
 			const cpal_Color *color = NULL;
 			if (k < totalColors) {
 				color = &palette->colorset.items[k];

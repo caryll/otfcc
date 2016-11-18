@@ -11,6 +11,7 @@ typedef uint16_t glyphid_t;    // Glyph index
 typedef uint16_t glyphclass_t; // Glyph class
 typedef uint16_t glyphsize_t;  // GASP glyph size
 typedef uint16_t tableid_t;    // Table/Font structure index
+typedef uint16_t colorid_t;    // Color index
 typedef uint16_t shapeid_t;    // Shape index
 typedef uint16_t cffsid_t;     // CFF/CFF2 String index
 typedef uint32_t arity_t;      // CFF Arity/Stack depth

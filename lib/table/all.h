@@ -27,5 +27,6 @@
 #include "table/otl.h"
 
 #include "table/CPAL.h"
+#include "table/COLR.h"
 
 #endif
