@@ -10,7 +10,7 @@ static INLINE void disposeHdmx(MOVE table_hdmx *table) {
 	FREE(table->records);
 }
 
-caryll_standardRefType(table_hdmx, iTable_hdmx, disposeHdmx);
+caryll_standardRefType(table_hdmx, table_iHdmx, disposeHdmx);
 
 table_hdmx *otfcc_readHdmx(otfcc_Packet packet, const otfcc_Options *options, table_maxp *maxp) {
 	FOR_TABLE('hdmx', table) {

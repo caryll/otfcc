@@ -559,7 +559,7 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 		if (context.meta->privateDict) {
 			context.seed = (uint64_t)context.meta->privateDict->initialRandomSeed ^ 0x1234567887654321;
 		}
-		table_glyf *glyphs = iTable_glyf.createN(cffFile->char_strings.count);
+		table_glyf *glyphs = table_iGlyf.createN(cffFile->char_strings.count);
 		context.glyphs = glyphs;
 		for (glyphid_t j = 0; j < glyphs->length; j++) {
 			buildOutline(j, &context, options);

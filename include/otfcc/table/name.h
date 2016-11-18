@@ -12,6 +12,6 @@ typedef struct {
 } otfcc_NameRecord;
 extern caryll_ElementInterface(otfcc_NameRecord) otfcc_iNameRecord;
 typedef caryll_Vector(otfcc_NameRecord) table_name;
-extern caryll_VectorInterface(table_name, otfcc_NameRecord) iTable_name;
+extern caryll_VectorInterface(table_name, otfcc_NameRecord) table_iName;
 
 #endif

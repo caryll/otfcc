@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
-		otfcc_consolidateFont(font, options);
+		otfcc_iFont.consolidate(font, options);
 		logStepTime;
 	}
 	json_value *root;
@@ -270,7 +270,7 @@ int main(int argc, char *argv[]) {
 
 	loggedStep("Finalize") {
 		free(buf);
-		if (font) otfcc_deleteFont(font);
+		if (font) otfcc_iFont.free(font);
 		if (root) json_builder_free(root);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);

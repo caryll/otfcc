@@ -10,7 +10,7 @@ static INLINE void initHead(table_head *head) {
 static INLINE void disposeHead(table_head *head) {
 	// trivial
 }
-caryll_standardRefType(table_head, iTable_head, initHead, disposeHead);
+caryll_standardRefType(table_head, table_iHead, initHead, disposeHead);
 
 table_head *otfcc_readHead(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('head', table) {
@@ -86,7 +86,7 @@ void otfcc_dumpHead(const table_head *table, json_value *root, const otfcc_Optio
 }
 
 table_head *otfcc_parseHead(const json_value *root, const otfcc_Options *options) {
-	table_head *head = iTable_head.create();
+	table_head *head = table_iHead.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "head", json_object))) {
 		loggedStep("head") {

@@ -1,5 +1,6 @@
+#include "consolidate.h"
+
 #include "support/util.h"
-#include "otfcc/font.h"
 #include "table/all.h"
 
 #include "otl/gsub-single.h"

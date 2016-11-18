@@ -76,12 +76,13 @@ struct _caryll_font {
 	otfcc_GlyphOrder *glyph_order;
 };
 
-otfcc_Font *otfcc_newFont();
-void otfcc_deleteFont(otfcc_Font *font);
-void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
-
-void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag);
-void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
+extern caryll_ElementInterfaceOf(otfcc_Font) {
+	caryll_RT(otfcc_Font);
+	void (*consolidate)(otfcc_Font * font, const otfcc_Options *options);
+	void *(*createTable)(otfcc_Font * font, const uint32_t tag);
+	void (*deleteTable)(otfcc_Font * font, const uint32_t tag);
+}
+otfcc_iFont;
 
 // Font builder interfaces
 typedef struct otfcc_IFontBuilder {

@@ -22,6 +22,6 @@ typedef struct {
 	uint16_t maxComponentDepth;
 } table_maxp;
 
-extern caryll_RefElementInterface(table_maxp) iTable_maxp;
+extern caryll_RefElementInterface(table_maxp) table_iMaxp;
 
 #endif

@@ -9,7 +9,7 @@ static INLINE void initHhea(table_hhea *hhea) {
 static INLINE void disposeHhea(MOVE table_hhea *hhea) {
 	// trivial
 }
-caryll_standardRefType(table_hhea, iTable_hhea, initHhea, disposeHhea);
+caryll_standardRefType(table_hhea, table_iHhea, initHhea, disposeHhea);
 
 table_hhea *otfcc_readHhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('hhea', table) {
@@ -66,7 +66,7 @@ void otfcc_dumpHhea(const table_hhea *table, json_value *root, const otfcc_Optio
 }
 
 table_hhea *otfcc_parseHhea(const json_value *root, const otfcc_Options *options) {
-	table_hhea *hhea = iTable_hhea.create();
+	table_hhea *hhea = table_iHhea.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
 		loggedStep("hhea") {

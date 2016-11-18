@@ -115,7 +115,7 @@ static INLINE void disposeGlyfPtr(glyf_GlyphPtr *g) {
 caryll_ElementInterfaceOf(glyf_GlyphPtr) glyf_iGlyphPtr = {
     .init = initGlyfPtr, .copy = copyGlyfPtr, .dispose = disposeGlyfPtr,
 };
-caryll_standardVectorImpl(table_glyf, glyf_GlyphPtr, glyf_iGlyphPtr, iTable_glyf);
+caryll_standardVectorImpl(table_glyf, glyf_GlyphPtr, glyf_iGlyphPtr, table_iGlyf);
 
 static glyf_Point *next_point(glyf_ContourList *contours, shapeid_t *cc, shapeid_t *cp) {
 	if (*cp >= contours->items[*cc].length) {
@@ -368,19 +368,19 @@ table_glyf *otfcc_readGlyf(const otfcc_Packet packet, const otfcc_Options *optio
 		uint32_t length = table.length;
 		if (length < offsets[numGlyphs]) goto GLYF_CORRUPTED;
 
-		glyf = iTable_glyf.create();
+		glyf = table_iGlyf.create();
 
 		for (glyphid_t j = 0; j < numGlyphs; j++) {
 			if (offsets[j] < offsets[j + 1]) { // non-space glyph
-				iTable_glyf.push(glyf, otfcc_read_glyph(data, offsets[j], options));
+				table_iGlyf.push(glyf, otfcc_read_glyph(data, offsets[j], options));
 			} else { // space glyph
-				iTable_glyf.push(glyf, otfcc_newGlyf_glyph());
+				table_iGlyf.push(glyf, otfcc_newGlyf_glyph());
 			}
 		}
 		goto PRESENT;
 	GLYF_CORRUPTED:
 		logWarning("table 'glyf' corrupted.\n");
-		if (glyf) { DELETE(iTable_glyf.free, glyf), glyf = NULL; }
+		if (glyf) { DELETE(table_iGlyf.free, glyf), glyf = NULL; }
 	}
 	goto ABSENT;
 
@@ -672,7 +672,7 @@ table_glyf *otfcc_parseGlyf(const json_value *root, otfcc_GlyphOrder *glyph_orde
 	if ((table = json_obj_get_type(root, "glyf", json_object))) {
 		loggedStep("glyf") {
 			glyphid_t numGlyphs = table->u.object.length;
-			glyf = iTable_glyf.createN(numGlyphs);
+			glyf = table_iGlyf.createN(numGlyphs);
 			for (glyphid_t j = 0; j < numGlyphs; j++) {
 				sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 				json_value *glyphdump = table->u.object.values[j].value;

@@ -120,7 +120,7 @@ static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Opt
 
 static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *options) {
 	const json_value *root = (json_value *)_root;
-	otfcc_Font *font = otfcc_newFont();
+	otfcc_Font *font = otfcc_iFont.create();
 	if (!font) return NULL;
 	font->subtype = otfcc_decideFontSubtypeFromJson(root);
 	font->glyph_order = parseGlyphOrder(root, options);

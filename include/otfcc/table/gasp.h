@@ -19,6 +19,6 @@ typedef struct {
 	OWNING gasp_RecordList records;
 } table_gasp;
 
-extern caryll_RefElementInterface(table_gasp) iTable_gasp;
+extern caryll_RefElementInterface(table_gasp) table_iGasp;
 
 #endif

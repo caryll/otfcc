@@ -289,7 +289,7 @@ int main(int argc, char *argv[]) {
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
-		otfcc_consolidateFont(font, options);
+		otfcc_iFont.consolidate(font, options);
 		logStepTime;
 	}
 	loggedStep("Build") {
@@ -299,7 +299,7 @@ int main(int argc, char *argv[]) {
 		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
 		fclose(outfile);
 		logStepTime;
-		buffree(otf), writer->free(writer), otfcc_deleteFont(font), sdsfree(outputPath);
+		buffree(otf), writer->free(writer), otfcc_iFont.free(font), sdsfree(outputPath);
 	}
 	otfcc_deleteOptions(options);
 

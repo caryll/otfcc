@@ -6,7 +6,7 @@ static INLINE void disposeCvt(MOVE table_cvt *table) {
 	if (table->words) FREE(table->words);
 }
 
-caryll_standardRefType(table_cvt, iTable_cvt, disposeCvt);
+caryll_standardRefType(table_cvt, table_iCvt, disposeCvt);
 
 table_cvt *otfcc_readCvt(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_cvt *t = NULL;

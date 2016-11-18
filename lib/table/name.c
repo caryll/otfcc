@@ -7,7 +7,7 @@ static void nameRecordDtor(otfcc_NameRecord *entry) {
 	DELETE(sdsfree, entry->nameString);
 }
 caryll_standardType(otfcc_NameRecord, otfcc_iNameRecord, nameRecordDtor);
-caryll_standardVectorImpl(table_name, otfcc_NameRecord, otfcc_iNameRecord, iTable_name);
+caryll_standardVectorImpl(table_name, otfcc_NameRecord, otfcc_iNameRecord, table_iName);
 
 static bool shouldDecodeAsUTF16(const otfcc_NameRecord *record) {
 	return (record->platformID == 0)                               // Unicode, all
@@ -30,7 +30,7 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 		uint32_t stringOffset = read_16u(data + 4);
 		if (length < 6 + 12 * count) goto TABLE_NAME_CORRUPTED;
 
-		name = iTable_name.create();
+		name = table_iName.create();
 
 		for (uint16_t j = 0; j < count; j++) {
 			otfcc_NameRecord record;
@@ -55,12 +55,12 @@ table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *optio
 				record.nameString = sdsnewlen(buf, len);
 				FREE(buf);
 			}
-			iTable_name.push(name, record);
+			table_iName.push(name, record);
 		}
 		return name;
 	TABLE_NAME_CORRUPTED:
 		logWarning("table 'name' corrupted.\n");
-		if (name) { DELETE(iTable_name.free, name); }
+		if (name) { DELETE(table_iName.free, name); }
 	}
 	return NULL;
 }
@@ -90,7 +90,7 @@ static int name_record_sort(const otfcc_NameRecord *a, const otfcc_NameRecord *b
 	return a->nameID - b->nameID;
 }
 table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options) {
-	table_name *name = iTable_name.create();
+	table_name *name = table_iName.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "name", json_array))) {
 		loggedStep("name") {
@@ -126,10 +126,10 @@ table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options
 
 				json_value *str = json_obj_get_type(_record, "nameString", json_string);
 				record.nameString = sdsnewlen(str->u.string.ptr, str->u.string.length);
-				iTable_name.push(name, record);
+				table_iName.push(name, record);
 			}
 
-			iTable_name.sort(name, name_record_sort);
+			table_iName.sort(name, name_record_sort);
 		}
 	}
 	return name;
