@@ -95,7 +95,7 @@ void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			if (font->BASE) DELETE(iTable_BASE.free, font->BASE);
 			return;
 		case 'VORG':
-			if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
+			if (font->VORG) DELETE(iTable_VORG.free, font->VORG);
 			return;
 		case 'CPAL':
 			if (font->CPAL) DELETE(iTable_CPAL.free, font->CPAL);
@@ -130,6 +130,7 @@ void otfcc_deleteFont(otfcc_Font *font) {
 	otfcc_deleteFontTable(font, 'BASE');
 	otfcc_deleteFontTable(font, 'VORG');
 	otfcc_deleteFontTable(font, 'CPAL');
+	otfcc_deleteFontTable(font, 'COLR');
 	otfcc_deleteFontTable(font, '$GRD');
 	if (font) FREE(font);
 }
