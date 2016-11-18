@@ -255,7 +255,12 @@ static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 			colr_iLayer.copy(&layer1, layer);
 			colr_iLayerList.push(&m.layers, layer1);
 		}
-		iTable_COLR.push(consolidated, m);
+		if (mapping->layers.length) {
+			iTable_COLR.push(consolidated, m);
+		} else {
+			logWarning("[Consolidate] COLR decomposition for /%s is empth", mapping->glyph.name);
+			colr_iMapping.dispose(&m);
+		}
 	}
 	iTable_COLR.free(font->COLR);
 	font->COLR = consolidated;
