@@ -53,13 +53,13 @@ static INLINE void disposeFD(table_CFF *fd) {
 	otfcc_delete_privatedict(fd->privateDict);
 	if (fd->fdArray) {
 		for (tableid_t j = 0; j < fd->fdArrayCount; j++) {
-			iTable_CFF.free(fd->fdArray[j]);
+			table_iCFF.free(fd->fdArray[j]);
 		}
 		FREE(fd->fdArray);
 	}
 }
 
-caryll_standardRefType(table_CFF, iTable_CFF, initFD, disposeFD);
+caryll_standardRefType(table_CFF, table_iCFF, initFD, disposeFD);
 
 typedef struct {
 	int32_t fdArrayIndex;
@@ -529,7 +529,7 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 		uint32_t length = table.length;
 		cff_File *cffFile = cff_openStream(data, length, options);
 		context.cffFile = cffFile;
-		context.meta = iTable_CFF.create();
+		context.meta = table_iCFF.create();
 
 		// Extract data in TOP DICT
 		cff_iDict.parseToCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
@@ -542,7 +542,7 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 			context.meta->fdArrayCount = cffFile->font_dict.count;
 			NEW(context.meta->fdArray, context.meta->fdArrayCount);
 			for (tableid_t j = 0; j < context.meta->fdArrayCount; j++) {
-				context.meta->fdArray[j] = iTable_CFF.create();
+				context.meta->fdArray[j] = table_iCFF.create();
 				context.fdArrayIndex = j;
 				cff_iDict.parseToCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
 				                          cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
@@ -703,7 +703,7 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 	return pd;
 }
 static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *options, bool topLevel) {
-	table_CFF *table = iTable_CFF.create();
+	table_CFF *table = table_iCFF.create();
 	if (!dump || dump->type != json_object) return table;
 	// Names
 	table->version = json_obj_getsds(dump, "version");
@@ -771,7 +771,7 @@ static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *option
 	if (topLevel && options->force_cid && !table->fdArray) {
 		table->fdArrayCount = 1;
 		NEW(table->fdArray, table->fdArrayCount);
-		table->fdArray[0] = iTable_CFF.create();
+		table->fdArray[0] = table_iCFF.create();
 		table_CFF *fd0 = table->fdArray[0];
 		fd0->privateDict = table->privateDict;
 		table->privateDict = otfcc_newCff_private();

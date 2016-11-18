@@ -30,5 +30,9 @@
 	caryll_ElementInterfaceOf(T) {                                                                                     \
 		caryll_RT(T);                                                                                                  \
 	}
+#define caryll_ValElementInterface(T)                                                                                  \
+	caryll_ElementInterfaceOf(T) {                                                                                     \
+		caryll_VT(T);                                                                                                  \
+	}
 
 #endif

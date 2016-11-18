@@ -57,6 +57,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		// Color font
 		font->CPAL = otfcc_readCPAL(packet, options);
 		font->COLR = otfcc_readCOLR(packet, options);
+		font->SVG_ = otfcc_readSVG(packet, options);
 
 		otfcc_unconsolidateFont(font, options);
 		return font;

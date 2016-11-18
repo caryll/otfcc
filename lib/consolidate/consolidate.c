@@ -238,7 +238,7 @@ void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 
 static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font || !font->COLR || !font->glyph_order) return;
-	table_COLR *consolidated = iTable_COLR.create();
+	table_COLR *consolidated = table_iCOLR.create();
 	foreach (colr_Mapping *mapping, *(font->COLR)) {
 		if (!GlyphOrder.consolidateHandle(font->glyph_order, &mapping->glyph)) {
 			logWarning("[Consolidate] Ignored missing glyph of /%s", mapping->glyph.name);
@@ -257,13 +257,13 @@ static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 			colr_iLayerList.push(&m.layers, layer1);
 		}
 		if (mapping->layers.length) {
-			iTable_COLR.push(consolidated, m);
+			table_iCOLR.push(consolidated, m);
 		} else {
 			logWarning("[Consolidate] COLR decomposition for /%s is empth", mapping->glyph.name);
 			colr_iMapping.dispose(&m);
 		}
 	}
-	iTable_COLR.free(font->COLR);
+	table_iCOLR.free(font->COLR);
 	font->COLR = consolidated;
 }
 

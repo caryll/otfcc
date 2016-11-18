@@ -5,7 +5,7 @@
 static INLINE void disposeVORG(table_VORG *vorg) {
 	FREE(vorg->entries);
 }
-caryll_standardType(table_VORG, iTable_VORG, disposeVORG);
+caryll_standardType(table_VORG, table_iVORG, disposeVORG);
 
 table_VORG *otfcc_readVORG(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('VORG', table) {

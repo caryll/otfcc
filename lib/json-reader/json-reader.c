@@ -111,7 +111,12 @@ static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Opt
 		placeOrderEntriesFromGlyf(table, go);
 		if ((table = json_obj_get_type(root, "cmap", json_object))) { placeOrderEntriesFromCmap(table, go); }
 		if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
-			placeOrderEntriesFromSubtable(table, go, options->ignore_glyph_order);
+			bool ignoreGlyphOrder = options->ignore_glyph_order;
+			if (ignoreGlyphOrder && !!json_obj_get_type(root, "SVG_", json_array)) {
+				logWarning("OpenType SVG table detected. Glyph order is preserved.");
+				ignoreGlyphOrder = false;
+			}
+			placeOrderEntriesFromSubtable(table, go, ignoreGlyphOrder);
 		}
 	}
 	orderGlyphs(go);
@@ -148,6 +153,7 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 	font->BASE = otfcc_parseBASE(root, options);
 	font->CPAL = otfcc_parseCPAL(root, options);
 	font->COLR = otfcc_parseCOLR(root, options);
+	font->SVG_ = otfcc_parseSVG(root, options);
 	return font;
 }
 static INLINE void freeReader(otfcc_IFontBuilder *self) {

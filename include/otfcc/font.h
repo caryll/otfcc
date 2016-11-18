@@ -35,6 +35,7 @@ typedef struct _caryll_font otfcc_Font;
 
 #include "otfcc/table/CPAL.h"
 #include "otfcc/table/COLR.h"
+#include "otfcc/table/SVG.h"
 
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
@@ -72,6 +73,7 @@ struct _caryll_font {
 
 	table_CPAL *CPAL;
 	table_COLR *COLR;
+	table_SVG *SVG_;
 
 	otfcc_GlyphOrder *glyph_order;
 };

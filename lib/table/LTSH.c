@@ -5,7 +5,7 @@
 static INLINE void disposeLTSH(MOVE table_LTSH *ltsh) {
 	if (ltsh) { FREE(ltsh->yPels); }
 }
-caryll_standardRefType(table_LTSH, iTable_LTSH, disposeLTSH);
+caryll_standardRefType(table_LTSH, table_iLTSH, disposeLTSH);
 
 table_LTSH *otfcc_readLTSH(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('LTSH', table) {

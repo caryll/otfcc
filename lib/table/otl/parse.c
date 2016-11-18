@@ -295,7 +295,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 	table_OTL *otl = NULL;
 	json_value *table = json_obj_get_type(root, tag, json_object);
 	if (!table) goto FAIL;
-	otl = iTable_OTL.create();
+	otl = table_iOTL.create();
 	json_value *languages = json_obj_get_type(table, "languages", json_object);
 	json_value *features = json_obj_get_type(table, "features", json_object);
 	json_value *lookups = json_obj_get_type(table, "lookups", json_object);
@@ -359,7 +359,7 @@ table_OTL *otfcc_parseOtl(const json_value *root, const otfcc_Options *options, 
 FAIL:
 	if (otl) {
 		logWarning("[OTFCC-fea] Ignoring invalid or incomplete OTL table %s.\n", tag);
-		iTable_OTL.free(otl);
+		table_iOTL.free(otl);
 	}
 	return NULL;
 }

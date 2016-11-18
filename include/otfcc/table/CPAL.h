@@ -30,6 +30,6 @@ typedef struct {
 	uint16_t version;
 	cpal_PaletteSet palettes;
 } table_CPAL;
-extern caryll_RefElementInterface(table_CPAL) iTable_CPAL;
+extern caryll_RefElementInterface(table_CPAL) table_iCPAL;
 
 #endif

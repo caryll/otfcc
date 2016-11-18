@@ -98,4 +98,4 @@ static INLINE void disposeOTL(table_OTL *table) {
 	otl_iLangSystemList.dispose(&table->languages);
 }
 
-caryll_standardRefType(table_OTL, iTable_OTL, initOTL, disposeOTL);
+caryll_standardRefType(table_OTL, table_iOTL, initOTL, disposeOTL);

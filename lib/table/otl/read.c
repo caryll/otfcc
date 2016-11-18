@@ -54,7 +54,7 @@ FAIL:
 
 static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base,
                                        const otfcc_Options *options) {
-	table_OTL *table = iTable_OTL.create();
+	table_OTL *table = table_iOTL.create();
 	if (!table) goto FAIL;
 	checkLength(10);
 	uint32_t scriptListOffset = read_16u(data + 4);
@@ -176,7 +176,7 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 	}
 	return table;
 FAIL:
-	if (table) iTable_OTL.free(table);
+	if (table) table_iOTL.free(table);
 	return NULL;
 }
 
@@ -242,7 +242,7 @@ table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint
 		}
 		return otl;
 	FAIL:
-		if (otl) iTable_OTL.free(otl);
+		if (otl) table_iOTL.free(otl);
 		otl = NULL;
 	}
 	return NULL;

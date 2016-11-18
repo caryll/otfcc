@@ -63,6 +63,7 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 
 	if (font->CPAL) otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
 	if (font->COLR) otfcc_SFNTBuilder_pushTable(builder, 'COLR', otfcc_buildCOLR(font->COLR, options));
+	if (font->SVG_) otfcc_SFNTBuilder_pushTable(builder, 'SVG ', otfcc_buildSVG(font->SVG_, options));
 
 	caryll_Buffer *otf = otfcc_SFNTBuilder_serialize(builder);
 	otfcc_deleteSFNTBuilder(builder);

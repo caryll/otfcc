@@ -28,5 +28,6 @@
 
 #include "table/CPAL.h"
 #include "table/COLR.h"
+#include "table/SVG.h"
 
 #endif

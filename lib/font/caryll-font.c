@@ -10,7 +10,7 @@ static void *createFontTable(otfcc_Font *font, const uint32_t tag) {
 			return table_iName.create();
 		case 'GSUB':
 		case 'GPOS':
-			return iTable_OTL.create();
+			return table_iOTL.create();
 		default:
 			return NULL;
 	}
@@ -29,7 +29,7 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			return;
 		case 'OS_2':
 		case 'OS/2':
-			if (font->OS_2) DELETE(iTable_OS_2.free, font->OS_2);
+			if (font->OS_2) DELETE(table_iOS_2.free, font->OS_2);
 			return;
 		case 'name':
 			if (font->name) DELETE(table_iName.free, font->name);
@@ -66,7 +66,7 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			return;
 		case 'CFF_':
 		case 'CFF ':
-			if (font->CFF_) DELETE(iTable_CFF.free, font->CFF_);
+			if (font->CFF_) DELETE(table_iCFF.free, font->CFF_);
 			return;
 		case 'glyf':
 			if (font->glyf) DELETE(table_iGlyf.free, font->glyf);
@@ -75,25 +75,25 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 			if (font->cmap) DELETE(table_iCmap.free, font->cmap);
 			return;
 		case 'LTSH':
-			if (font->LTSH) DELETE(iTable_LTSH.free, font->LTSH);
+			if (font->LTSH) DELETE(table_iLTSH.free, font->LTSH);
 			return;
 		case 'GSUB':
-			if (font->GSUB) DELETE(iTable_OTL.free, font->GSUB);
+			if (font->GSUB) DELETE(table_iOTL.free, font->GSUB);
 			return;
 		case 'GPOS':
-			if (font->GPOS) DELETE(iTable_OTL.free, font->GPOS);
+			if (font->GPOS) DELETE(table_iOTL.free, font->GPOS);
 			return;
 		case 'GDEF':
-			if (font->GDEF) DELETE(iTable_GDEF.free, font->GDEF);
+			if (font->GDEF) DELETE(table_iGDEF.free, font->GDEF);
 			return;
 		case 'BASE':
-			if (font->BASE) DELETE(iTable_BASE.free, font->BASE);
+			if (font->BASE) DELETE(table_iBASE.free, font->BASE);
 			return;
 		case 'VORG':
-			if (font->VORG) DELETE(iTable_VORG.free, font->VORG);
+			if (font->VORG) DELETE(table_iVORG.free, font->VORG);
 			return;
 		case 'CPAL':
-			if (font->CPAL) DELETE(iTable_CPAL.free, font->CPAL);
+			if (font->CPAL) DELETE(table_iCPAL.free, font->CPAL);
 			return;
 	}
 }

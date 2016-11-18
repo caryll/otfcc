@@ -86,12 +86,19 @@ bk_Block *bk_push(bk_Block *b, int type0, ...) {
 	return b;
 }
 
-bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_Buffer *buf) {
+bk_Block *bk_newBlockFromBuffer(MOVE caryll_Buffer *buf) {
 	bk_Block *b = bk_new_Block(bkover);
 	for (size_t j = 0; j < buf->size; j++) {
 		bkblock_pushint(b, b8, buf->data[j]);
 	}
 	buffree(buf);
+	return b;
+}
+bk_Block *bk_newBlockFromBufferCopy(OBSERVE caryll_Buffer *buf) {
+	bk_Block *b = bk_new_Block(bkover);
+	for (size_t j = 0; j < buf->size; j++) {
+		bkblock_pushint(b, b8, buf->data[j]);
+	}
 	return b;
 }
 
