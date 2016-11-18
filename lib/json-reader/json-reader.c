@@ -113,7 +113,7 @@ static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Opt
 		if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
 			bool ignoreGlyphOrder = options->ignore_glyph_order;
 			if (ignoreGlyphOrder && !!json_obj_get_type(root, "SVG_", json_array)) {
-				logWarning("OpenType SVG table detected. Glyph order is preserved.");
+				logNotice("OpenType SVG table detected. Glyph order is preserved.");
 				ignoreGlyphOrder = false;
 			}
 			placeOrderEntriesFromSubtable(table, go, ignoreGlyphOrder);
