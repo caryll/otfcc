@@ -6,7 +6,7 @@
 
 static otfcc_font_subtype decideFontSubtypeOTF(otfcc_SplineFontContainer *sfnt, uint32_t index) {
 	otfcc_Packet packet = sfnt->packets[index];
-	FOR_TABLE('CFF ', table) {
+	FOR_TABLE_SILENT('CFF ', table) {
 		return FONTTYPE_CFF;
 	}
 	return FONTTYPE_TTF;
@@ -17,7 +17,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 	if (sfnt->count - 1 < index) {
 		return NULL;
 	} else {
-		otfcc_Font *font = otfcc_newFont();
+		otfcc_Font *font = otfcc_iFont.create();
 		otfcc_Packet packet = sfnt->packets[index];
 		font->subtype = decideFontSubtypeOTF(sfnt, index);
 		font->head = otfcc_readHead(packet, options);
@@ -53,17 +53,23 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 			font->GDEF = otfcc_readGDEF(packet, options);
 		}
 		font->BASE = otfcc_readBASE(packet, options);
+
+		// Color font
+		font->CPAL = otfcc_readCPAL(packet, options);
+		font->COLR = otfcc_readCOLR(packet, options);
+		font->SVG_ = otfcc_readSVG(packet, options);
+
 		otfcc_unconsolidateFont(font, options);
 		return font;
 	}
 }
-static void disposeReader(otfcc_IFontBuilder *self) {
+static INLINE void freeReader(otfcc_IFontBuilder *self) {
 	free(self);
 }
 otfcc_IFontBuilder *otfcc_newOTFReader() {
 	otfcc_IFontBuilder *reader;
 	NEW(reader);
-	reader->create = readOtf;
-	reader->dispose = disposeReader;
+	reader->read = readOtf;
+	reader->free = freeReader;
 	return reader;
 }

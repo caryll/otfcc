@@ -75,7 +75,7 @@ json_value *json_object_push_length(json_value *object, unsigned int name_length
  */
 json_value *json_object_push_nocopy(json_value *object, unsigned int name_length, json_char *name, json_value *);
 
-/* Merges all entries from objectB into objectA and destroys objectB.
+/* Merges all entries from objectB into objectA and frees objectB.
  */
 json_value *json_object_merge(json_value *objectA, json_value *objectB);
 

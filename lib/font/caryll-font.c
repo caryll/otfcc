@@ -2,128 +2,137 @@
 #include "otfcc/font.h"
 #include "table/all.h"
 #include "otfcc/sfnt-builder.h"
+#include "consolidate/consolidate.h"
 
-otfcc_Font *otfcc_newFont() {
-	otfcc_Font *font;
-	NEW(font);
-	return font;
-}
-
-void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag) {
+static void *createFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'name':
-			return otfcc_newName();
+			return table_iName.create();
 		case 'GSUB':
 		case 'GPOS':
-			return otfcc_newOtl();
+			return table_iOTL.create();
 		default:
 			return NULL;
 	}
 }
 
-void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag) {
+static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 	switch (tag) {
 		case 'head':
-			if (font->head) DELETE(free, font->head);
+			if (font->head) DELETE(table_iHead.free, font->head);
 			return;
 		case 'hhea':
-			if (font->hhea) DELETE(free, font->hhea);
+			if (font->hhea) DELETE(table_iHhea.free, font->hhea);
 			return;
 		case 'maxp':
-			if (font->maxp) DELETE(otfcc_deleteMaxp, font->maxp);
+			if (font->maxp) DELETE(table_iMaxp.free, font->maxp);
 			return;
 		case 'OS_2':
 		case 'OS/2':
-			if (font->OS_2) DELETE(free, font->OS_2);
+			if (font->OS_2) DELETE(table_iOS_2.free, font->OS_2);
 			return;
 		case 'name':
-			if (font->name) DELETE(otfcc_deleteName, font->name);
+			if (font->name) DELETE(table_iName.free, font->name);
 			return;
 		case 'hmtx':
-			if (font->hmtx) DELETE(otfcc_deleteHmtx, font->hmtx);
+			if (font->hmtx) DELETE(table_iHmtx.free, font->hmtx);
 			return;
 		case 'vmtx':
-			if (font->vmtx) DELETE(otfcc_deleteVmtx, font->vmtx);
+			if (font->vmtx) DELETE(table_iVmtx.free, font->vmtx);
 			return;
 		case 'post':
-			if (font->post) DELETE(otfcc_deletePost, font->post);
+			if (font->post) DELETE(iTable_post.free, font->post);
 			return;
+#if 0
 		case 'hdmx':
 			if (font->hdmx) DELETE(otfcc_deleteHdmx, font->hdmx);
 			return;
+#endif
 		case 'vhea':
-			if (font->vhea) DELETE(free, font->vhea);
+			if (font->vhea) DELETE(table_iVhea.free, font->vhea);
 			return;
 		case 'fpgm':
-			if (font->fpgm) DELETE(otfcc_deleteFpgm_prep, font->fpgm);
+			if (font->fpgm) DELETE(table_iFpgm_prep.free, font->fpgm);
 			return;
 		case 'prep':
-			if (font->prep) DELETE(otfcc_deleteFpgm_prep, font->prep);
+			if (font->prep) DELETE(table_iFpgm_prep.free, font->prep);
 			return;
 		case 'cvt_':
 		case 'cvt ':
-			if (font->cvt_) DELETE(otfcc_deleteCvt, font->cvt_);
+			if (font->cvt_) DELETE(table_iCvt.free, font->cvt_);
 			return;
 		case 'gasp':
-			if (font->gasp) DELETE(otfcc_deleteGasp, font->gasp);
+			if (font->gasp) DELETE(table_iGasp.free, font->gasp);
 			return;
 		case 'CFF_':
 		case 'CFF ':
-			if (font->CFF_) DELETE(otfcc_deleteCFF, font->CFF_);
+			if (font->CFF_) DELETE(table_iCFF.free, font->CFF_);
 			return;
 		case 'glyf':
-			if (font->glyf) DELETE(otfcc_deleteGlyf, font->glyf);
+			if (font->glyf) DELETE(table_iGlyf.free, font->glyf);
 			return;
 		case 'cmap':
-			if (font->cmap) DELETE(otfcc_deleteCmap, font->cmap);
+			if (font->cmap) DELETE(table_iCmap.free, font->cmap);
 			return;
 		case 'LTSH':
-			if (font->LTSH) DELETE(otfcc_deleteLTSH, font->LTSH);
+			if (font->LTSH) DELETE(table_iLTSH.free, font->LTSH);
 			return;
 		case 'GSUB':
-			if (font->GSUB) DELETE(otfcc_deleteOtl, font->GSUB);
+			if (font->GSUB) DELETE(table_iOTL.free, font->GSUB);
 			return;
 		case 'GPOS':
-			if (font->GPOS) DELETE(otfcc_deleteOtl, font->GPOS);
+			if (font->GPOS) DELETE(table_iOTL.free, font->GPOS);
 			return;
 		case 'GDEF':
-			if (font->GDEF) DELETE(otfcc_deleteGDEF, font->GDEF);
+			if (font->GDEF) DELETE(table_iGDEF.free, font->GDEF);
 			return;
 		case 'BASE':
-			if (font->BASE) DELETE(otfcc_deleteBASE, font->BASE);
+			if (font->BASE) DELETE(table_iBASE.free, font->BASE);
 			return;
 		case 'VORG':
-			if (font->VORG) DELETE(otfcc_deleteVORG, font->VORG);
+			if (font->VORG) DELETE(table_iVORG.free, font->VORG);
 			return;
-		case '$GRD':
-			if (font->glyph_order) DELETE(GlyphOrder.free, font->glyph_order);
+		case 'CPAL':
+			if (font->CPAL) DELETE(table_iCPAL.free, font->CPAL);
 			return;
 	}
 }
-void otfcc_deleteFont(otfcc_Font *font) {
-	otfcc_deleteFontTable(font, 'head');
-	otfcc_deleteFontTable(font, 'hhea');
-	otfcc_deleteFontTable(font, 'maxp');
-	otfcc_deleteFontTable(font, 'OS_2');
-	otfcc_deleteFontTable(font, 'name');
-	otfcc_deleteFontTable(font, 'hmtx');
-	otfcc_deleteFontTable(font, 'vmtx');
-	otfcc_deleteFontTable(font, 'post');
-	otfcc_deleteFontTable(font, 'hdmx');
-	otfcc_deleteFontTable(font, 'vhea');
-	otfcc_deleteFontTable(font, 'fpgm');
-	otfcc_deleteFontTable(font, 'prep');
-	otfcc_deleteFontTable(font, 'cvt_');
-	otfcc_deleteFontTable(font, 'gasp');
-	otfcc_deleteFontTable(font, 'CFF_');
-	otfcc_deleteFontTable(font, 'glyf');
-	otfcc_deleteFontTable(font, 'cmap');
-	otfcc_deleteFontTable(font, 'LTSH');
-	otfcc_deleteFontTable(font, 'GSUB');
-	otfcc_deleteFontTable(font, 'GPOS');
-	otfcc_deleteFontTable(font, 'GDEF');
-	otfcc_deleteFontTable(font, 'BASE');
-	otfcc_deleteFontTable(font, 'VORG');
-	otfcc_deleteFontTable(font, '$GRD');
-	if (font) FREE(font);
+
+static INLINE void initFont(otfcc_Font *font) {
+	memset(font, 0, sizeof(*font));
 }
+static INLINE void disposeFont(otfcc_Font *font) {
+	deleteFontTable(font, 'head');
+	deleteFontTable(font, 'hhea');
+	deleteFontTable(font, 'maxp');
+	deleteFontTable(font, 'OS_2');
+	deleteFontTable(font, 'name');
+	deleteFontTable(font, 'hmtx');
+	deleteFontTable(font, 'vmtx');
+	deleteFontTable(font, 'post');
+	deleteFontTable(font, 'hdmx');
+	deleteFontTable(font, 'vhea');
+	deleteFontTable(font, 'fpgm');
+	deleteFontTable(font, 'prep');
+	deleteFontTable(font, 'cvt_');
+	deleteFontTable(font, 'gasp');
+	deleteFontTable(font, 'CFF_');
+	deleteFontTable(font, 'glyf');
+	deleteFontTable(font, 'cmap');
+	deleteFontTable(font, 'LTSH');
+	deleteFontTable(font, 'GSUB');
+	deleteFontTable(font, 'GPOS');
+	deleteFontTable(font, 'GDEF');
+	deleteFontTable(font, 'BASE');
+	deleteFontTable(font, 'VORG');
+	deleteFontTable(font, 'CPAL');
+	deleteFontTable(font, 'COLR');
+
+	GlyphOrder.free(font->glyph_order);
+}
+caryll_standardRefTypeFn(otfcc_Font, initFont, disposeFont);
+
+caryll_ElementInterfaceOf(otfcc_Font) otfcc_iFont = {
+    caryll_standardRefTypeMethods(otfcc_Font), .createTable = createFontTable, .deleteTable = deleteFontTable,
+    .consolidate = otfcc_consolidateFont,
+};

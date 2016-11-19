@@ -14,4 +14,6 @@ typedef struct {
 	OWNING VORG_entry *entries;
 } table_VORG;
 
+extern caryll_RefElementInterface(table_VORG) table_iVORG;
+
 #endif

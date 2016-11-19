@@ -1,18 +1,18 @@
 #include "gsub-reverse.h"
 
-static void initGsubReverse(subtable_gsub_reverse *subtable) {
+static INLINE void initGsubReverse(subtable_gsub_reverse *subtable) {
 	subtable->match = NULL;
 	subtable->to = NULL;
 }
-static void disposeGsubReverse(subtable_gsub_reverse *subtable) {
+static INLINE void disposeGsubReverse(subtable_gsub_reverse *subtable) {
 	if (subtable->match)
 		for (tableid_t j = 0; j < subtable->matchCount; j++) {
-			Coverage.destroy(subtable->match[j]);
+			Coverage.free(subtable->match[j]);
 		}
-	if (subtable->to) Coverage.destroy(subtable->to);
+	if (subtable->to) Coverage.free(subtable->to);
 }
 
-caryll_CDRefElementImpl(subtable_gsub_reverse, initGsubReverse, disposeGsubReverse, iSubtable_gsub_reverse);
+caryll_standardRefType(subtable_gsub_reverse, iSubtable_gsub_reverse, initGsubReverse, disposeGsubReverse);
 
 static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	if (inputIndex > 0) {
@@ -69,7 +69,7 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 	return (otl_Subtable *)subtable;
 
 FAIL:
-	iSubtable_gsub_reverse.destroy(subtable);
+	iSubtable_gsub_reverse.free(subtable);
 	return NULL;
 }
 

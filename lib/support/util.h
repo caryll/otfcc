@@ -27,6 +27,9 @@
 
 #include "aliases.h"
 #include "otfcc-alloc.h"
+#include "element-impl.h"
+#include "vector-impl.h"
+
 #include "base64/base64.h"
 #include "json/json-ident.h"
 #include "json/json-funcs.h"

@@ -62,7 +62,13 @@ static void escalateGlyphOrderByName(otfcc_GlyphOrder *go, sds name, uint8_t ord
 static void placeOrderEntriesFromGlyf(json_value *table, otfcc_GlyphOrder *go) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
 		sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
-		setOrderByName(go, gname, (strcmp(gname, ".notdef") == 0 ? ORD_NOTDEF : ORD_GLYF), j);
+		if (strcmp(gname, ".notdef") == 0) {
+			setOrderByName(go, gname, ORD_NOTDEF, 0);
+		} else if (strcmp(gname, ".null") == 0) {
+			setOrderByName(go, gname, ORD_NOTDEF, 1);
+		} else {
+			setOrderByName(go, gname, ORD_GLYF, j);
+		}
 	}
 }
 static void placeOrderEntriesFromCmap(json_value *table, otfcc_GlyphOrder *go) {
@@ -105,7 +111,12 @@ static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Opt
 		placeOrderEntriesFromGlyf(table, go);
 		if ((table = json_obj_get_type(root, "cmap", json_object))) { placeOrderEntriesFromCmap(table, go); }
 		if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
-			placeOrderEntriesFromSubtable(table, go, options->ignore_glyph_order);
+			bool ignoreGlyphOrder = options->ignore_glyph_order;
+			if (ignoreGlyphOrder && !!json_obj_get_type(root, "SVG_", json_array)) {
+				logNotice("OpenType SVG table detected. Glyph order is preserved.");
+				ignoreGlyphOrder = false;
+			}
+			placeOrderEntriesFromSubtable(table, go, ignoreGlyphOrder);
 		}
 	}
 	orderGlyphs(go);
@@ -114,7 +125,7 @@ static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Opt
 
 static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *options) {
 	const json_value *root = (json_value *)_root;
-	otfcc_Font *font = otfcc_newFont();
+	otfcc_Font *font = otfcc_iFont.create();
 	if (!font) return NULL;
 	font->subtype = otfcc_decideFontSubtypeFromJson(root);
 	font->glyph_order = parseGlyphOrder(root, options);
@@ -140,15 +151,18 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 		font->GDEF = otfcc_parseGDEF(root, options);
 	}
 	font->BASE = otfcc_parseBASE(root, options);
+	font->CPAL = otfcc_parseCPAL(root, options);
+	font->COLR = otfcc_parseCOLR(root, options);
+	font->SVG_ = otfcc_parseSVG(root, options);
 	return font;
 }
-static void disposeReader(otfcc_IFontBuilder *self) {
+static INLINE void freeReader(otfcc_IFontBuilder *self) {
 	free(self);
 }
 otfcc_IFontBuilder *otfcc_newJsonReader() {
 	otfcc_IFontBuilder *reader;
 	NEW(reader);
-	reader->create = readJson;
-	reader->dispose = disposeReader;
+	reader->read = readJson;
+	reader->free = freeReader;
 	return reader;
 }

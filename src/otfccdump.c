@@ -174,17 +174,17 @@ int main(int argc, char *argv[]) {
 	otfcc_Font *font;
 	loggedStep("Read Font") {
 		otfcc_IFontBuilder *reader = otfcc_newOTFReader();
-		font = reader->create(sfnt, ttcindex, options);
+		font = reader->read(sfnt, ttcindex, options);
 		if (!font) {
 			logError("Font structure broken or corrupted \"%s\". Exit.\n", inPath);
 			exit(EXIT_FAILURE);
 		}
-		reader->dispose(reader);
+		reader->free(reader);
 		if (sfnt) otfcc_deleteSFNT(sfnt);
 		logStepTime;
 	}
 	loggedStep("Consolidate") {
-		otfcc_consolidateFont(font, options);
+		otfcc_iFont.consolidate(font, options);
 		logStepTime;
 	}
 	json_value *root;
@@ -196,10 +196,11 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		logStepTime;
-		dumper->dispose(dumper);
+		dumper->free(dumper);
 	}
 
 	char *buf;
+	size_t buflen;
 	loggedStep("Serialize to JSON") {
 		json_serialize_opts jsonOptions;
 		jsonOptions.mode = json_serialize_mode_packed;
@@ -209,7 +210,8 @@ int main(int argc, char *argv[]) {
 			jsonOptions.mode = json_serialize_mode_multiline;
 		}
 		if (show_ugly) jsonOptions.mode = json_serialize_mode_packed;
-		buf = malloc(json_measure_ex(root, jsonOptions));
+		buflen = json_measure_ex(root, jsonOptions);
+		buf = calloc(1, buflen);
 		json_serialize_ex(buf, root, jsonOptions);
 		logStepTime;
 	}
@@ -226,7 +228,10 @@ int main(int argc, char *argv[]) {
 				fputc(0xBB, outputFile);
 				fputc(0xBF, outputFile);
 			}
-			fputs(buf, outputFile);
+			size_t actualLen = buflen - 1;
+			while (!buf[actualLen])
+				actualLen -= 1;
+			fwrite(buf, sizeof(char), actualLen + 1, outputFile);
 			fclose(outputFile);
 		} else {
 #ifdef WIN32
@@ -265,7 +270,7 @@ int main(int argc, char *argv[]) {
 
 	loggedStep("Finalize") {
 		free(buf);
-		if (font) otfcc_deleteFont(font);
+		if (font) otfcc_iFont.free(font);
 		if (root) json_builder_free(root);
 		if (inPath) sdsfree(inPath);
 		if (outputPath) sdsfree(outputPath);

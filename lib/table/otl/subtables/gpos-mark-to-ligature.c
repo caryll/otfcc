@@ -12,19 +12,19 @@ static void deleteLigArrayItem(otl_LigatureBaseRecord *entry) {
 static caryll_ElementInterface(otl_LigatureBaseRecord) la_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteLigArrayItem};
 
-caryll_DefineVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
+caryll_standardVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
 
-static void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
+static INLINE void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
 	otl_iLigatureArray.init(&subtable->ligArray);
 }
-static void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
+static INLINE void disposeMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iMarkArray.dispose(&subtable->markArray);
 	otl_iLigatureArray.dispose(&subtable->ligArray);
 }
 
-caryll_CDRefElementImpl(subtable_gpos_markToLigature, initMarkToLigature, disposeMarkToLigature,
-                        iSubtable_gpos_markToLigature);
+caryll_standardRefType(subtable_gpos_markToLigature, iSubtable_gpos_markToLigature, initMarkToLigature,
+                       disposeMarkToLigature);
 
 otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                            const otfcc_Options *options) {
@@ -70,13 +70,13 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 		}
 		otl_iLigatureArray.push(&subtable->ligArray, lig);
 	}
-	if (marks) Coverage.destroy(marks);
-	if (bases) Coverage.destroy(bases);
+	if (marks) Coverage.free(marks);
+	if (bases) Coverage.free(bases);
 	return (otl_Subtable *)subtable;
 FAIL:
-	if (marks) Coverage.destroy(marks);
-	if (bases) Coverage.destroy(bases);
-	iSubtable_gpos_markToLigature.destroy(subtable);
+	if (marks) Coverage.free(marks);
+	if (bases) Coverage.free(bases);
+	iSubtable_gpos_markToLigature.free(subtable);
 	return NULL;
 }
 
@@ -224,7 +224,7 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 	}
 
 	bk_push(root, p16, markArray, p16, ligatureArray, bkover);
-	Coverage.destroy(marks);
-	Coverage.destroy(bases);
+	Coverage.free(marks);
+	Coverage.free(bases);
 	return bk_build_Block(root);
 }

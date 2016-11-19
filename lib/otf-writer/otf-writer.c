@@ -61,18 +61,22 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_SFNTBuilder_pushTable(builder, 'DSIG', dsig);
 	}
 
+	if (font->CPAL) otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
+	if (font->COLR) otfcc_SFNTBuilder_pushTable(builder, 'COLR', otfcc_buildCOLR(font->COLR, options));
+	if (font->SVG_) otfcc_SFNTBuilder_pushTable(builder, 'SVG ', otfcc_buildSVG(font->SVG_, options));
+
 	caryll_Buffer *otf = otfcc_SFNTBuilder_serialize(builder);
 	otfcc_deleteSFNTBuilder(builder);
 	otfcc_unstatFont(font, options);
 	return otf;
 }
-static void dispose(otfcc_IFontSerializer *self) {
+static void freeFontWriter(otfcc_IFontSerializer *self) {
 	free(self);
 }
 otfcc_IFontSerializer *otfcc_newOTFWriter() {
 	otfcc_IFontSerializer *writer;
 	NEW(writer);
 	writer->serialize = serializeToOTF;
-	writer->dispose = dispose;
+	writer->free = freeFontWriter;
 	return writer;
 }

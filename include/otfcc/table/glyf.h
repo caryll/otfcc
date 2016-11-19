@@ -106,6 +106,6 @@ typedef struct {
 typedef glyf_Glyph *glyf_GlyphPtr;
 extern caryll_ElementInterface(glyf_GlyphPtr) glyf_iGlyphPtr;
 typedef caryll_Vector(glyf_GlyphPtr) table_glyf;
-extern caryll_VectorInterface(table_glyf, glyf_GlyphPtr) iTable_glyf;
+extern caryll_VectorInterface(table_glyf, glyf_GlyphPtr) table_iGlyf;
 
 #endif

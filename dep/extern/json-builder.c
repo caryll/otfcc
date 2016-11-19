@@ -385,6 +385,9 @@ static size_t measure_string(unsigned int length, const json_char *str) {
 		json_char c = str[i];
 
 		switch (c) {
+			case 0:
+				measured_length += 6;
+				break;
 			case '"':
 			case '\\':
 			case '\b':
@@ -420,6 +423,14 @@ static size_t serialize_string(json_char *buf, unsigned int length, const json_c
 		json_char c = str[i];
 
 		switch (c) {
+			case 0:
+				*buf++ = '\\';
+				*buf++ = 'u';
+				*buf++ = '0';
+				*buf++ = '0';
+				*buf++ = '0';
+				*buf++ = '0';
+				continue;
 			case '"':
 				PRINT_ESCAPED('\"');
 				continue;

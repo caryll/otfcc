@@ -2,6 +2,12 @@
 
 #include "support/util.h"
 
+static INLINE void disposeCvt(MOVE table_cvt *table) {
+	if (table->words) FREE(table->words);
+}
+
+caryll_standardRefType(table_cvt, table_iCvt, disposeCvt);
+
 table_cvt *otfcc_readCvt(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_cvt *t = NULL;
 	FOR_TABLE(tag, table) {
@@ -17,11 +23,7 @@ table_cvt *otfcc_readCvt(const otfcc_Packet packet, const otfcc_Options *options
 	}
 	return NULL;
 }
-void otfcc_deleteCvt(table_cvt *table) {
-	if (!table) return;
-	if (table->words) FREE(table->words);
-	FREE(table);
-}
+
 void otfcc_dumpCvt(const table_cvt *table, json_value *root, const otfcc_Options *options, const char *tag) {
 	if (!table) return;
 	loggedStep("cvt") {

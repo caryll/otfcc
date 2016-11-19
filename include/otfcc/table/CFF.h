@@ -79,6 +79,8 @@ struct _table_CFF {
 	OWNING table_CFF **fdArray;
 };
 
+extern caryll_RefElementInterface(table_CFF) table_iCFF;
+
 // CFF and glyf
 typedef struct {
 	OWNING table_CFF *meta;

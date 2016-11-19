@@ -16,5 +16,6 @@ typedef struct {
 	OWNING horizontal_metric *metrics;
 	OWNING pos_t *leftSideBearing;
 } table_hmtx;
+extern caryll_RefElementInterface(table_hmtx) table_iHmtx;
 
 #endif

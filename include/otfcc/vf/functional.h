@@ -2,6 +2,7 @@
 #define CARYLL_VF_FUNCTIONAL_H
 
 #include "caryll/ownership.h"
+#include "caryll/element.h"
 #include "otfcc/primitives.h"
 
 // vf_Functional type
@@ -12,6 +13,7 @@ typedef enum {
 	vf_minus = 3,    // <minus z1 z2 | x> = <z1 | x> - <z2 | x>
 	vf_multiply = 4, // <multiply z1 z2 | x> = <z1 | s> <z2 | x>
 	vf_gxblend = 5   // <gxblend d1 d2 ... dn | w1 w2 ... wn> = <d1 | w> * w1 + ... + <dn | w> * wn;
+	                 // Leavr arity to 0 for 'gvar' implicit blend.
 } VF_OPERATOR;
 
 typedef struct vf_Functional {
@@ -25,8 +27,8 @@ typedef struct vf_Functional {
 	};
 } vf_Functional;
 
-struct otfcc_VFPackage {
-	void (*dispose)(MOVE vf_Functional *form);
+struct vf_IFunctional {
+	caryll_VT(vf_Functional);
 	vf_Functional (*scalar)(pos_t scalar);
 	vf_Functional (*add)(MOVE vf_Functional a, MOVE vf_Functional b);
 	vf_Functional (*minus)(MOVE vf_Functional a, MOVE vf_Functional b);
@@ -36,6 +38,6 @@ struct otfcc_VFPackage {
 	vf_Functional (*gxCanonical)(OBSERVE vf_Functional a, shapeid_t n);
 };
 
-extern const struct otfcc_VFPackage otfcc_vfPackage;
+extern const struct vf_IFunctional vf_iFunctional;
 
 #endif

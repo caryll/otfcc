@@ -2,6 +2,13 @@
 
 #include "support/util.h"
 
+static INLINE void disposeHmtx(MOVE table_hmtx *table) {
+	if (table->metrics != NULL) FREE(table->metrics);
+	if (table->leftSideBearing != NULL) FREE(table->leftSideBearing);
+}
+
+caryll_standardRefType(table_hmtx, table_iHmtx, disposeHmtx);
+
 table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *options, table_hhea *hhea,
                            table_maxp *maxp) {
 	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
@@ -31,16 +38,9 @@ table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *optio
 		return hmtx;
 	HMTX_CORRUPTED:
 		logWarning("Table 'hmtx' corrupted.\n");
-		if (hmtx) { otfcc_deleteHmtx(hmtx), hmtx = NULL; }
+		if (hmtx) { table_iHmtx.free(hmtx), hmtx = NULL; }
 	}
 	return NULL;
-}
-
-void otfcc_deleteHmtx(table_hmtx *table) {
-	if (!table) return;
-	if (table->metrics != NULL) FREE(table->metrics);
-	if (table->leftSideBearing != NULL) FREE(table->leftSideBearing);
-	FREE(table);
 }
 
 caryll_Buffer *otfcc_buildHmtx(const table_hmtx *hmtx, glyphid_t count_a, glyphid_t count_k,

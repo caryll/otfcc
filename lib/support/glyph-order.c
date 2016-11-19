@@ -1,16 +1,11 @@
 #include "util.h"
 #include "otfcc/glyph-order.h"
 
-static otfcc_GlyphOrder *otfcc_newGlyphOrder() {
-	otfcc_GlyphOrder *go;
-	NEW(go);
+static INLINE void initGlyphOrder(otfcc_GlyphOrder *go) {
 	go->byGID = NULL;
 	go->byName = NULL;
-	return go;
 }
-
-static void otfcc_deleteGlyphOrder(otfcc_GlyphOrder *go) {
-	if (!go) return;
+static INLINE void disposeGlyphOrder(otfcc_GlyphOrder *go) {
 	otfcc_GlyphOrderEntry *current, *temp;
 	HASH_ITER(hhID, go->byGID, current, temp) {
 		if (current->name) sdsfree(current->name);
@@ -18,8 +13,8 @@ static void otfcc_deleteGlyphOrder(otfcc_GlyphOrder *go) {
 		HASH_DELETE(hhName, go->byName, current);
 		FREE(current);
 	}
-	FREE(go);
 }
+caryll_standardRefTypeFn(otfcc_GlyphOrder, initGlyphOrder, disposeGlyphOrder);
 
 // Register a gid->name map
 static sds otfcc_setGlyphOrderByGID(otfcc_GlyphOrder *go, glyphid_t gid, sds name) {
@@ -116,11 +111,7 @@ static bool gordLookupName(otfcc_GlyphOrder *go, sds name) {
 }
 
 const struct otfcc_GlyphOrderPackage otfcc_pkgGlyphOrder = {
-    .create = otfcc_newGlyphOrder,
-    .free = otfcc_deleteGlyphOrder,
-    .setByGID = otfcc_setGlyphOrderByGID,
-    .setByName = otfcc_setGlyphOrderByName,
-    .nameAField_Shared = otfcc_gordNameAFieldShared,
-    .consolidateHandle = otfcc_gordConsolidateHandle,
-    .lookupName = gordLookupName,
+    caryll_standardRefTypeMethods(otfcc_GlyphOrder),  .setByGID = otfcc_setGlyphOrderByGID,
+    .setByName = otfcc_setGlyphOrderByName,           .nameAField_Shared = otfcc_gordNameAFieldShared,
+    .consolidateHandle = otfcc_gordConsolidateHandle, .lookupName = gordLookupName,
 };

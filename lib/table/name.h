@@ -3,9 +3,6 @@
 
 #include "otfcc/table/name.h"
 
-table_name *otfcc_newName();
-void otfcc_deleteName(table_name *table);
-
 table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *options);
 void otfcc_dumpName(const table_name *table, json_value *root, const otfcc_Options *options);
 table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options);

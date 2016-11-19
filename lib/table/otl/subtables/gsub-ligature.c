@@ -2,12 +2,12 @@
 
 static void deleteGsubLigatureEntry(otl_GsubLigatureEntry *entry) {
 	Handle.dispose(&entry->to);
-	DELETE(Coverage.destroy, entry->from);
+	DELETE(Coverage.free, entry->from);
 }
 static caryll_ElementInterface(otl_GsubLigatureEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGsubLigatureEntry};
 
-caryll_DefineVectorImpl(subtable_gsub_ligature, otl_GsubLigatureEntry, gss_typeinfo, iSubtable_gsub_ligature);
+caryll_standardVectorImpl(subtable_gsub_ligature, otl_GsubLigatureEntry, gss_typeinfo, iSubtable_gsub_ligature);
 
 otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                      const otfcc_Options *options) {
@@ -47,10 +47,10 @@ otl_Subtable *otl_read_gsub_ligature(const font_file_pointer data, uint32_t tabl
 			                                       }));
 		}
 	}
-	Coverage.destroy(startCoverage);
+	Coverage.free(startCoverage);
 	return (otl_Subtable *)subtable;
 FAIL:
-	iSubtable_gsub_ligature.destroy(subtable);
+	iSubtable_gsub_ligature.free(subtable);
 	return NULL;
 }
 
@@ -162,7 +162,7 @@ caryll_Buffer *otfcc_build_gsub_ligature_subtable(const otl_Subtable *_subtable)
 		bk_push(root, p16, ligset, bkover);
 	}
 
-	Coverage.destroy(startcov);
+	Coverage.free(startcov);
 	HASH_ITER(hh, h, s, tmp) {
 		HASH_DEL(h, s);
 		FREE(s);

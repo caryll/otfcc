@@ -2,11 +2,14 @@
 
 #include "support/util.h"
 
-table_hhea *otfcc_newHhea() {
-	table_hhea *hhea;
-	NEW(hhea);
-	return hhea;
+static INLINE void initHhea(table_hhea *hhea) {
+	memset(hhea, 0, sizeof(*hhea));
+	hhea->version = 0x10000;
 }
+static INLINE void disposeHhea(MOVE table_hhea *hhea) {
+	// trivial
+}
+caryll_standardRefType(table_hhea, table_iHhea, initHhea, disposeHhea);
 
 table_hhea *otfcc_readHhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('hhea', table) {
@@ -63,7 +66,7 @@ void otfcc_dumpHhea(const table_hhea *table, json_value *root, const otfcc_Optio
 }
 
 table_hhea *otfcc_parseHhea(const json_value *root, const otfcc_Options *options) {
-	table_hhea *hhea = otfcc_newHhea();
+	table_hhea *hhea = table_iHhea.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "hhea", json_object))) {
 		loggedStep("hhea") {

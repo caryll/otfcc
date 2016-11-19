@@ -1,16 +1,14 @@
 #include "OS_2.h"
-
 #include "support/util.h"
 
-table_OS_2 *otfcc_newOS_2() {
-	table_OS_2 *os_2;
-	NEW(os_2);
-	return os_2;
+static INLINE void initOS2(table_OS_2 *table) {
+	memset(table, 0, sizeof(*table));
+	table->version = 4;
 }
-
-void otfcc_deleteOS_2(MOVE table_OS_2 *table) {
-	FREE(table);
+static INLINE void disposeOS2(MOVE table_OS_2 *table) {
+	// trivial
 }
+caryll_standardRefType(table_OS_2, table_iOS_2, initOS2, disposeOS2);
 
 table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_OS_2 *os_2 = NULL;
@@ -18,7 +16,7 @@ table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *optio
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 2) goto OS_2_CORRUPTED;
-		NEW(os_2);
+		os_2 = table_iOS_2.create();
 		os_2->version = read_16u(data);
 		// version 1
 		if (os_2->version == 0 || (os_2->version >= 1 && length < 86)) goto OS_2_CORRUPTED;
@@ -279,7 +277,7 @@ void otfcc_dumpOS_2(const table_OS_2 *table, json_value *root, const otfcc_Optio
 }
 
 table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options) {
-	table_OS_2 *os_2 = otfcc_newOS_2();
+	table_OS_2 *os_2 = table_iOS_2.create();
 	if (!os_2) return NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "OS_2", json_object))) {

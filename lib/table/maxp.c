@@ -2,16 +2,14 @@
 
 #include "support/util.h"
 
-table_maxp *otfcc_newMaxp() {
-	table_maxp *maxp;
-	NEW(maxp);
-	maxp->version = 0x00010000;
-	return maxp;
+static INLINE void initMaxp(table_maxp *maxp) {
+	memset(maxp, 0, sizeof(*maxp));
+	maxp->version = 0x10000;
 }
-
-void otfcc_deleteMaxp(MOVE table_maxp *maxp) {
-	FREE(maxp);
+static INLINE void disposeMaxp(MOVE table_maxp *maxp) {
+	// trivial
 }
+caryll_standardRefType(table_maxp, table_iMaxp, initMaxp, disposeMaxp);
 
 table_maxp *otfcc_readMaxp(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('maxp', table) {
@@ -21,8 +19,7 @@ table_maxp *otfcc_readMaxp(const otfcc_Packet packet, const otfcc_Options *optio
 		if (length != 32 && length != 6) {
 			logWarning("table 'maxp' corrupted.\n");
 		} else {
-			table_maxp *maxp;
-			NEW(maxp);
+			table_maxp *maxp = table_iMaxp.create();
 			maxp->version = read_32s(data);
 			maxp->numGlyphs = read_16u(data + 4);
 			if (maxp->version == 0x00010000) { // TrueType Format 1
@@ -84,7 +81,7 @@ void otfcc_dumpMaxp(const table_maxp *table, json_value *root, const otfcc_Optio
 }
 
 table_maxp *otfcc_parseMaxp(const json_value *root, const otfcc_Options *options) {
-	table_maxp *maxp = otfcc_newMaxp();
+	table_maxp *maxp = table_iMaxp.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "maxp", json_object))) {
 		loggedStep("maxp") {

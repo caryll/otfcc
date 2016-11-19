@@ -8,7 +8,7 @@ static void deleteGposCursiveEntry(otl_GposCursiveEntry *entry) {
 static caryll_ElementInterface(otl_GposCursiveEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGposCursiveEntry};
 
-caryll_DefineVectorImpl(subtable_gpos_cursive, otl_GposCursiveEntry, gss_typeinfo, iSubtable_gpos_cursive);
+caryll_standardVectorImpl(subtable_gpos_cursive, otl_GposCursiveEntry, gss_typeinfo, iSubtable_gpos_cursive);
 
 otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
                                     const otfcc_Options *options) {
@@ -34,11 +34,11 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 		iSubtable_gpos_cursive.push(
 		    subtable, ((otl_GposCursiveEntry){.target = Handle.dup(targets->glyphs[j]), .enter = enter, .exit = exit}));
 	}
-	if (targets) Coverage.destroy(targets);
+	if (targets) Coverage.free(targets);
 	return (otl_Subtable *)subtable;
 FAIL:
-	if (targets) Coverage.destroy(targets);
-	iSubtable_gpos_cursive.destroy(subtable);
+	if (targets) Coverage.free(targets);
+	iSubtable_gpos_cursive.free(subtable);
 	return NULL;
 }
 
@@ -87,7 +87,7 @@ caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
 		        p16, bkFromAnchor(subtable->items[j].exit),  // exit
 		        bkover);
 	}
-	Coverage.destroy(cov);
+	Coverage.free(cov);
 
 	return bk_build_Block(root);
 }

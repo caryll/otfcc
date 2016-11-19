@@ -91,7 +91,7 @@ static void loggerSetVerbosity(otfcc_ILogger *_self, uint8_t verbosity) {
 	self->verbosityLimit = verbosity;
 }
 
-static void loggerDispose(otfcc_ILogger *_self) {
+static INLINE void loggerDispose(otfcc_ILogger *_self) {
 	Logger *self = (Logger *)_self;
 	if (!self) return;
 	otfcc_ILoggerTarget *target = _self->getTarget(_self);

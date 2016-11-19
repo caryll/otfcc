@@ -17,4 +17,6 @@ typedef struct {
 	OWNING otfcc_GlyphOrder *post_name_map;
 } table_post;
 
+extern caryll_RefElementInterface(table_post) iTable_post;
+
 #endif

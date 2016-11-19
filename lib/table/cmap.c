@@ -4,16 +4,10 @@
 
 // PART I, type definition
 
-static void otfcc_initCmap(table_cmap *cmap) {
+static INLINE void initCmap(table_cmap *cmap) {
 	cmap->unicodes = NULL;
 }
-static table_cmap *otfcc_createCmap() {
-	table_cmap *cmap;
-	NEW(cmap);
-	otfcc_initCmap(cmap);
-	return cmap;
-}
-static void otfcc_disposeCmap(table_cmap *cmap) {
+static INLINE void disposeCmap(table_cmap *cmap) {
 	cmap_Entry *s, *tmp;
 	HASH_ITER(hh, cmap->unicodes, s, tmp) {
 		// delete and free all cmap entries
@@ -22,10 +16,7 @@ static void otfcc_disposeCmap(table_cmap *cmap) {
 		FREE(s);
 	}
 }
-void otfcc_deleteCmap(table_cmap *cmap) {
-	otfcc_disposeCmap(cmap);
-	FREE(cmap);
-}
+caryll_standardRefTypeFn(table_cmap, initCmap, disposeCmap);
 
 bool otfcc_encodeCmapByIndex(table_cmap *cmap, int c, uint16_t gid) {
 	cmap_Entry *s;
@@ -76,11 +67,8 @@ otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c) {
 	}
 }
 
-caryll_ElementInterfaceOf(table_cmap) iTable_cmap = {
-    .init = otfcc_initCmap,
-    .create = otfcc_createCmap,
-    .dispose = otfcc_disposeCmap,
-    .destroy = otfcc_deleteCmap,
+caryll_ElementInterfaceOf(table_cmap) table_iCmap = {
+    caryll_standardRefTypeMethods(table_cmap),
     .encodeByIndex = otfcc_encodeCmapByIndex,
     .encodeByName = otfcc_encodeCmapByName,
     .unmap = otfcc_unmapCmap,
@@ -151,7 +139,7 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 		uint32_t length = table.length;
 		if (length < 4) goto CMAP_CORRUPTED;
 
-		cmap = iTable_cmap.create(); // intialize to empty hashtable
+		cmap = table_iCmap.create(); // intialize to empty hashtable
 		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 		for (uint16_t j = 0; j < numTables; j++) {
@@ -194,7 +182,7 @@ void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Optio
 
 table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options) {
 	if (root->type != json_object) return NULL;
-	table_cmap *cmap = iTable_cmap.create();
+	table_cmap *cmap = table_iCmap.create();
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
 		loggedStep("cmap") {

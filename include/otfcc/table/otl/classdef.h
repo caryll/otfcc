@@ -23,6 +23,6 @@ struct __otfcc_IClassDef {
 	void (*shrink)(otl_ClassDef *cd);
 };
 
-extern const struct __otfcc_IClassDef otfcc_iClassDef;
+extern const struct __otfcc_IClassDef otl_iClassDef;
 
 #endif

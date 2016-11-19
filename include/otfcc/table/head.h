@@ -24,4 +24,6 @@ typedef struct {
 	int16_t glyphDataFormat;
 } table_head;
 
+extern caryll_RefElementInterface(table_head) table_iHead;
+
 #endif

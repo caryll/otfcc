@@ -8,18 +8,18 @@ static void deleteBaseArrayItem(otl_BaseRecord *entry) {
 static caryll_ElementInterface(otl_BaseRecord) ba_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteBaseArrayItem};
 
-caryll_DefineVectorImpl(otl_BaseArray, otl_BaseRecord, ba_typeinfo, otl_iBaseArray);
+caryll_standardVectorImpl(otl_BaseArray, otl_BaseRecord, ba_typeinfo, otl_iBaseArray);
 
-static void initMarkToSingle(subtable_gpos_markToSingle *subtable) {
+static INLINE void initMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
 	otl_iBaseArray.init(&subtable->baseArray);
 }
-static void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
+static INLINE void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iMarkArray.dispose(&subtable->markArray);
 	otl_iBaseArray.dispose(&subtable->baseArray);
 }
 
-caryll_CDRefElementImpl(subtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle, iSubtable_gpos_markToSingle);
+caryll_standardRefType(subtable_gpos_markToSingle, iSubtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle);
 
 otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
                                          const otfcc_Options *options) {
@@ -56,11 +56,11 @@ otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t 
 		otl_iBaseArray.push(&subtable->baseArray,
 		                    ((otl_BaseRecord){.glyph = Handle.dup(bases->glyphs[j]), .anchors = baseAnchors}));
 	}
-	if (marks) Coverage.destroy(marks);
-	if (bases) Coverage.destroy(bases);
+	if (marks) Coverage.free(marks);
+	if (bases) Coverage.free(bases);
 	return (otl_Subtable *)subtable;
 FAIL:
-	iSubtable_gpos_markToSingle.destroy(subtable);
+	iSubtable_gpos_markToSingle.free(subtable);
 	return NULL;
 }
 
@@ -185,7 +185,7 @@ caryll_Buffer *otfcc_build_gpos_markToSingle(const otl_Subtable *_subtable) {
 	}
 
 	bk_push(root, p16, markArray, p16, baseArray, bkover);
-	Coverage.destroy(marks);
-	Coverage.destroy(bases);
+	Coverage.free(marks);
+	Coverage.free(bases);
 	return bk_build_Block(root);
 }

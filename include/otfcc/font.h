@@ -33,6 +33,10 @@ typedef struct _caryll_font otfcc_Font;
 #include "otfcc/table/BASE.h"
 #include "otfcc/table/otl.h"
 
+#include "otfcc/table/CPAL.h"
+#include "otfcc/table/COLR.h"
+#include "otfcc/table/SVG.h"
+
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
 struct _caryll_font {
@@ -67,20 +71,25 @@ struct _caryll_font {
 	table_GDEF *GDEF;
 	table_BASE *BASE;
 
+	table_CPAL *CPAL;
+	table_COLR *COLR;
+	table_SVG *SVG_;
+
 	otfcc_GlyphOrder *glyph_order;
 };
 
-otfcc_Font *otfcc_newFont();
-void otfcc_deleteFont(otfcc_Font *font);
-void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
-
-void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag);
-void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
+extern caryll_ElementInterfaceOf(otfcc_Font) {
+	caryll_RT(otfcc_Font);
+	void (*consolidate)(otfcc_Font * font, const otfcc_Options *options);
+	void *(*createTable)(otfcc_Font * font, const uint32_t tag);
+	void (*deleteTable)(otfcc_Font * font, const uint32_t tag);
+}
+otfcc_iFont;
 
 // Font builder interfaces
 typedef struct otfcc_IFontBuilder {
-	otfcc_Font *(*create)(void *source, uint32_t index, const otfcc_Options *options);
-	void (*dispose)(struct otfcc_IFontBuilder *self);
+	otfcc_Font *(*read)(void *source, uint32_t index, const otfcc_Options *options);
+	void (*free)(struct otfcc_IFontBuilder *self);
 } otfcc_IFontBuilder;
 otfcc_IFontBuilder *otfcc_newOTFReader();
 otfcc_IFontBuilder *otfcc_newJsonReader();
@@ -88,7 +97,7 @@ otfcc_IFontBuilder *otfcc_newJsonReader();
 // Font serializer interface
 typedef struct otfcc_IFontSerializer {
 	void *(*serialize)(otfcc_Font *font, const otfcc_Options *options);
-	void (*dispose)(struct otfcc_IFontSerializer *self);
+	void (*free)(struct otfcc_IFontSerializer *self);
 } otfcc_IFontSerializer;
 otfcc_IFontSerializer *otfcc_newJsonWriter();
 otfcc_IFontSerializer *otfcc_newOTFWriter();

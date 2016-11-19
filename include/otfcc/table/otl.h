@@ -206,11 +206,13 @@ struct _otl_lookup {
 	uint16_t flags;
 	OWNING otl_SubtableList subtables;
 };
+
 // owning lookup list
 typedef OWNING otl_Lookup *otl_LookupPtr;
-extern caryll_ElementInterface(otl_LookupPtr) otl_iLookup;
+extern caryll_ElementInterface(otl_LookupPtr) otl_iLookupPtr;
 typedef caryll_Vector(otl_LookupPtr) otl_LookupList;
 extern caryll_VectorInterface(otl_LookupList, otl_LookupPtr) otl_iLookupList;
+
 // observe lookup list
 typedef OBSERVE otl_Lookup *otl_LookupRef;
 extern caryll_ElementInterface(otl_LookupRef) otl_iLookupRef;
@@ -223,7 +225,7 @@ typedef struct {
 } otl_Feature;
 // owning feature list
 typedef OWNING otl_Feature *otl_FeaturePtr;
-extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeature;
+extern caryll_ElementInterface(otl_FeaturePtr) otl_iFeaturePtr;
 typedef caryll_Vector(otl_FeaturePtr) otl_FeatureList;
 extern caryll_VectorInterface(otl_FeatureList, otl_FeaturePtr) otl_iFeatureList;
 // observe feature list
@@ -247,5 +249,6 @@ typedef struct {
 	otl_FeatureList features;
 	otl_LangSystemList languages;
 } table_OTL;
+extern caryll_RefElementInterface(table_OTL) table_iOTL;
 
 #endif

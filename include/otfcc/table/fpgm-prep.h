@@ -9,4 +9,6 @@ typedef struct {
 	OWNING uint8_t *bytes;
 } table_fpgm_prep;
 
+extern caryll_RefElementInterface(table_fpgm_prep) table_iFpgm_prep;
+
 #endif
