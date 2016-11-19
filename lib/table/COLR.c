@@ -29,7 +29,7 @@ static INLINE void disposeMapping(colr_Mapping *mapping) {
 	colr_iLayerList.dispose(&mapping->layers);
 }
 caryll_standardType(colr_Mapping, colr_iMapping, initMapping, copyMapping, disposeMapping);
-caryll_standardVectorImpl(table_COLR, colr_Mapping, colr_iMapping, iTable_COLR);
+caryll_standardVectorImpl(table_COLR, colr_Mapping, colr_iMapping, table_iCOLR);
 
 static const size_t baseGlyphRecLength = 6;
 static const size_t layerRecLength = 4;
@@ -55,7 +55,7 @@ table_COLR *otfcc_readCOLR(const otfcc_Packet packet, const otfcc_Options *optio
 			colors[j] = read_16u(table.data + offsetLayerRecord + layerRecLength * j + 2);
 		}
 		// parse decomposition data
-		colr = iTable_COLR.create();
+		colr = table_iCOLR.create();
 		for (glyphid_t j = 0; j < numBaseGlyphRecords; j++) {
 			colr_Mapping mapping;
 			colr_iMapping.init(&mapping);
@@ -73,12 +73,12 @@ table_COLR *otfcc_readCOLR(const otfcc_Packet packet, const otfcc_Options *optio
 					                                      });
 				}
 			}
-			iTable_COLR.push(colr, mapping);
+			table_iCOLR.push(colr, mapping);
 		}
 		return colr;
 	FAIL:
 		logWarning("Table 'COLR' corrupted.\n");
-		iTable_COLR.free(colr);
+		table_iCOLR.free(colr);
 		colr = NULL;
 	}
 	return colr;
@@ -108,7 +108,7 @@ void otfcc_dumpCOLR(const table_COLR *colr, json_value *root, const otfcc_Option
 table_COLR *otfcc_parseCOLR(const json_value *root, const otfcc_Options *options) {
 	json_value *_colr = NULL;
 	if (!(_colr = json_obj_get_type(root, "COLR", json_array))) return NULL;
-	table_COLR *colr = iTable_COLR.create();
+	table_COLR *colr = table_iCOLR.create();
 	loggedStep("COLR") {
 		for (glyphid_t j = 0; j < _colr->u.array.length; j++) {
 			json_value *_mapping = _colr->u.array.values[j];
@@ -132,7 +132,7 @@ table_COLR *otfcc_parseCOLR(const json_value *root, const otfcc_Options *options
 				        .paletteIndex = json_obj_getint_fallback(_layer, "paletteIndex", 0xFFFF),
 				    });
 			}
-			iTable_COLR.push(colr, m);
+			table_iCOLR.push(colr, m);
 		}
 	}
 	return colr;
@@ -147,8 +147,8 @@ caryll_Buffer *otfcc_buildCOLR(const table_COLR *_colr, const otfcc_Options *opt
 
 	// sort base defs
 	table_COLR colr;
-	iTable_COLR.copy(&colr, _colr);
-	iTable_COLR.sort(&colr, byGID);
+	table_iCOLR.copy(&colr, _colr);
+	table_iCOLR.sort(&colr, byGID);
 
 	glyphid_t currentLayerIndex = 0;
 	bk_Block *layerRecords = bk_new_Block(bkover);
@@ -172,6 +172,6 @@ caryll_Buffer *otfcc_buildCOLR(const table_COLR *_colr, const otfcc_Options *opt
 	                              p32, layerRecords,      // offsetLayerRecord
 	                              b16, currentLayerIndex, // numLayerRecords
 	                              bkover);
-	iTable_COLR.dispose(&colr);
+	table_iCOLR.dispose(&colr);
 	return bk_build_Block(root);
 }

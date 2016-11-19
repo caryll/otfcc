@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <limits.h>
+#include "caryll/ownership.h"
 #include "support/otfcc-alloc.h"
 #include "caryll/buffer.h"
 
@@ -45,7 +46,8 @@ typedef struct __caryll_bkblock {
 bk_Block *_bkblock_init();
 bk_Block *bk_new_Block(int type0, ...);
 bk_Block *bk_push(bk_Block *b, int type0, ...);
-bk_Block *bk_newBlockFromBuffer(/*MOVE*/ caryll_Buffer *buf);
+bk_Block *bk_newBlockFromBuffer(MOVE caryll_Buffer *buf);
+bk_Block *bk_newBlockFromBufferCopy(OBSERVE caryll_Buffer *buf);
 bool bk_cellIsPointer(bk_Cell *cell);
 void bk_printBlock(bk_Block *b);
 

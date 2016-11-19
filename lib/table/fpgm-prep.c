@@ -8,14 +8,14 @@ static INLINE void disposeFpgmPrep(MOVE table_fpgm_prep *table) {
 	if (table->bytes) FREE(table->bytes);
 }
 
-caryll_standardRefType(table_fpgm_prep, iTable_fpgm_prep, disposeFpgmPrep);
+caryll_standardRefType(table_fpgm_prep, table_iFpgm_prep, disposeFpgmPrep);
 
 table_fpgm_prep *otfcc_readFpgmPrep(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
 	table_fpgm_prep *t = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		t = iTable_fpgm_prep.create();
+		t = table_iFpgm_prep.create();
 		t->tag = NULL;
 		t->length = length;
 		NEW(t->bytes, length);
@@ -23,7 +23,7 @@ table_fpgm_prep *otfcc_readFpgmPrep(const otfcc_Packet packet, const otfcc_Optio
 		memcpy(t->bytes, data, length);
 		return t;
 	FAIL:
-		iTable_fpgm_prep.free(t);
+		table_iFpgm_prep.free(t);
 		t = NULL;
 	}
 	return NULL;
@@ -54,7 +54,7 @@ table_fpgm_prep *otfcc_parseFpgmPrep(const json_value *root, const otfcc_Options
 	json_value *table = NULL;
 	if ((table = json_obj_get(root, tag))) {
 		loggedStep("%s", tag) {
-			t = iTable_fpgm_prep.create();
+			t = table_iFpgm_prep.create();
 			t->tag = sdsnew(tag);
 			parse_ttinstr(table, t, makeFpgmPrepInstr, wrongFpgmPrepInstr);
 		}

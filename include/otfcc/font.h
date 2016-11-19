@@ -35,6 +35,7 @@ typedef struct _caryll_font otfcc_Font;
 
 #include "otfcc/table/CPAL.h"
 #include "otfcc/table/COLR.h"
+#include "otfcc/table/SVG.h"
 
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
@@ -72,16 +73,18 @@ struct _caryll_font {
 
 	table_CPAL *CPAL;
 	table_COLR *COLR;
+	table_SVG *SVG_;
 
 	otfcc_GlyphOrder *glyph_order;
 };
 
-otfcc_Font *otfcc_newFont();
-void otfcc_deleteFont(otfcc_Font *font);
-void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options);
-
-void *otfcc_createFontTable(otfcc_Font *font, const uint32_t tag);
-void otfcc_deleteFontTable(otfcc_Font *font, const uint32_t tag);
+extern caryll_ElementInterfaceOf(otfcc_Font) {
+	caryll_RT(otfcc_Font);
+	void (*consolidate)(otfcc_Font * font, const otfcc_Options *options);
+	void *(*createTable)(otfcc_Font * font, const uint32_t tag);
+	void (*deleteTable)(otfcc_Font * font, const uint32_t tag);
+}
+otfcc_iFont;
 
 // Font builder interfaces
 typedef struct otfcc_IFontBuilder {

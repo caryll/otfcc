@@ -20,6 +20,6 @@ typedef struct {
 	int16_t metricDataFormat;
 	uint16_t numberOfMetrics;
 } table_hhea;
-extern caryll_RefElementInterface(table_hhea) iTable_hhea;
+extern caryll_RefElementInterface(table_hhea) table_iHhea;
 
 #endif

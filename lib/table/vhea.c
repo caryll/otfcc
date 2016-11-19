@@ -9,7 +9,7 @@ static INLINE void initVhea(table_vhea *vhea) {
 static INLINE void disposeVhea(MOVE table_vhea *vhea) {
 	// trivial
 }
-caryll_standardRefType(table_vhea, iTable_vhea, initVhea, disposeVhea);
+caryll_standardRefType(table_vhea, table_iVhea, initVhea, disposeVhea);
 
 table_vhea *otfcc_readVhea(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_vhea *vhea = NULL;
@@ -65,7 +65,7 @@ table_vhea *otfcc_parseVhea(const json_value *root, const otfcc_Options *options
 	table_vhea *vhea = NULL;
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "vhea", json_object))) {
-		vhea = iTable_vhea.create();
+		vhea = table_iVhea.create();
 		if (!vhea) return NULL;
 		loggedStep("vhea") {
 			vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);

@@ -18,6 +18,6 @@ extern caryll_ElementInterfaceOf(table_cmap) {
 	bool (*unmap)(table_cmap * cmap, int c);
 	otfcc_GlyphHandle *(*lookup)(table_cmap * cmap, int c);
 }
-iTable_cmap;
+table_iCmap;
 
 #endif

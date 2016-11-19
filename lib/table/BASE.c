@@ -17,7 +17,7 @@ static INLINE void disposeBASE(MOVE table_BASE *base) {
 	deleteBaseAxis(base->vertical);
 }
 
-caryll_standardRefType(table_BASE, iTable_BASE, disposeBASE);
+caryll_standardRefType(table_BASE, table_iBASE, disposeBASE);
 
 static int16_t readBaseValue(font_file_pointer data, uint32_t tableLength, uint16_t offset) {
 	checkLength(offset + 4);
@@ -120,7 +120,7 @@ table_BASE *otfcc_readBASE(const otfcc_Packet packet, const otfcc_Options *optio
 		return base;
 	FAIL:
 		logWarning("Table 'BASE' Corrupted");
-		DELETE(iTable_BASE.free, base);
+		DELETE(table_iBASE.free, base);
 	}
 	return base;
 }

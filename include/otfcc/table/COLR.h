@@ -19,6 +19,6 @@ typedef struct {
 } colr_Mapping;
 extern caryll_ElementInterface(colr_Mapping) colr_iMapping;
 typedef caryll_Vector(colr_Mapping) table_COLR;
-extern caryll_VectorInterface(table_COLR, colr_Mapping) iTable_COLR;
+extern caryll_VectorInterface(table_COLR, colr_Mapping) table_iCOLR;
 
 #endif

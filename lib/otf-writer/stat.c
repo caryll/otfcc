@@ -599,9 +599,9 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 }
 
 void otfcc_unstatFont(otfcc_Font *font, const otfcc_Options *options) {
-	otfcc_deleteFontTable(font, 'hdmx');
-	otfcc_deleteFontTable(font, 'hmtx');
-	otfcc_deleteFontTable(font, 'VORG');
-	otfcc_deleteFontTable(font, 'vmtx');
-	otfcc_deleteFontTable(font, 'LTSH');
+	otfcc_iFont.deleteTable(font, 'hdmx');
+	otfcc_iFont.deleteTable(font, 'hmtx');
+	otfcc_iFont.deleteTable(font, 'VORG');
+	otfcc_iFont.deleteTable(font, 'vmtx');
+	otfcc_iFont.deleteTable(font, 'LTSH');
 }

@@ -17,7 +17,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 	if (sfnt->count - 1 < index) {
 		return NULL;
 	} else {
-		otfcc_Font *font = otfcc_newFont();
+		otfcc_Font *font = otfcc_iFont.create();
 		otfcc_Packet packet = sfnt->packets[index];
 		font->subtype = decideFontSubtypeOTF(sfnt, index);
 		font->head = otfcc_readHead(packet, options);
@@ -57,6 +57,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		// Color font
 		font->CPAL = otfcc_readCPAL(packet, options);
 		font->COLR = otfcc_readCOLR(packet, options);
+		font->SVG_ = otfcc_readSVG(packet, options);
 
 		otfcc_unconsolidateFont(font, options);
 		return font;

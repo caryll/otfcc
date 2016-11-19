@@ -1,5 +1,6 @@
+#include "consolidate.h"
+
 #include "support/util.h"
-#include "otfcc/font.h"
 #include "table/all.h"
 
 #include "otl/gsub-single.h"
@@ -237,7 +238,7 @@ void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 
 static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font || !font->COLR || !font->glyph_order) return;
-	table_COLR *consolidated = iTable_COLR.create();
+	table_COLR *consolidated = table_iCOLR.create();
 	foreach (colr_Mapping *mapping, *(font->COLR)) {
 		if (!GlyphOrder.consolidateHandle(font->glyph_order, &mapping->glyph)) {
 			logWarning("[Consolidate] Ignored missing glyph of /%s", mapping->glyph.name);
@@ -255,9 +256,14 @@ static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 			colr_iLayer.copy(&layer1, layer);
 			colr_iLayerList.push(&m.layers, layer1);
 		}
-		iTable_COLR.push(consolidated, m);
+		if (mapping->layers.length) {
+			table_iCOLR.push(consolidated, m);
+		} else {
+			logWarning("[Consolidate] COLR decomposition for /%s is empth", mapping->glyph.name);
+			colr_iMapping.dispose(&m);
+		}
 	}
-	iTable_COLR.free(font->COLR);
+	table_iCOLR.free(font->COLR);
 	font->COLR = consolidated;
 }
 

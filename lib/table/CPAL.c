@@ -27,7 +27,7 @@ static INLINE void initCPAL(table_CPAL *cpal) {
 static INLINE void disposeCPAL(table_CPAL *cpal) {
 	cpal_iPaletteSet.dispose(&cpal->palettes);
 }
-caryll_standardRefType(table_CPAL, iTable_CPAL, initCPAL, disposeCPAL);
+caryll_standardRefType(table_CPAL, table_iCPAL, initCPAL, disposeCPAL);
 
 const cpal_Color white = {.red = 0xFF, .green = 0xFF, .blue = 0xFF, .alpha = 0xFF, .label = 0xFFFF};
 
@@ -37,7 +37,7 @@ table_CPAL *otfcc_readCPAL(const otfcc_Packet packet, const otfcc_Options *optio
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 2) goto FAIL;
-		t = iTable_CPAL.create();
+		t = table_iCPAL.create();
 		uint16_t version = read_16u(data);
 		uint32_t tableHeaderLength = (version == 0 ? 14 : 26);
 		if (length < tableHeaderLength) goto FAIL;
@@ -109,7 +109,7 @@ table_CPAL *otfcc_readCPAL(const otfcc_Packet packet, const otfcc_Options *optio
 		return t;
 
 	FAIL:
-		iTable_CPAL.free(t);
+		table_iCPAL.free(t);
 		t = NULL;
 	}
 	return NULL;
@@ -169,7 +169,7 @@ table_CPAL *otfcc_parseCPAL(const json_value *root, const otfcc_Options *options
 	loggedStep("CPAL") {
 		json_value *_palettes = json_obj_get_type(table, "palettes", json_array);
 		if (!_palettes || !_palettes->u.array.length) return NULL;
-		cpal = iTable_CPAL.create();
+		cpal = table_iCPAL.create();
 		cpal->version = json_obj_getint(table, "version");
 		for (tableid_t j = 0; j < _palettes->u.array.length; j++) {
 			json_value *_palette = _palettes->u.array.values[j];

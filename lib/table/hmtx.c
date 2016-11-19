@@ -7,7 +7,7 @@ static INLINE void disposeHmtx(MOVE table_hmtx *table) {
 	if (table->leftSideBearing != NULL) FREE(table->leftSideBearing);
 }
 
-caryll_standardRefType(table_hmtx, iTable_hmtx, disposeHmtx);
+caryll_standardRefType(table_hmtx, table_iHmtx, disposeHmtx);
 
 table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *options, table_hhea *hhea,
                            table_maxp *maxp) {
@@ -38,7 +38,7 @@ table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *optio
 		return hmtx;
 	HMTX_CORRUPTED:
 		logWarning("Table 'hmtx' corrupted.\n");
-		if (hmtx) { iTable_hmtx.free(hmtx), hmtx = NULL; }
+		if (hmtx) { table_iHmtx.free(hmtx), hmtx = NULL; }
 	}
 	return NULL;
 }

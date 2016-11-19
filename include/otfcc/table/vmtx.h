@@ -16,6 +16,6 @@ typedef struct {
 	pos_t *topSideBearing;
 } table_vmtx;
 
-extern caryll_RefElementInterface(table_vmtx) iTable_vmtx;
+extern caryll_RefElementInterface(table_vmtx) table_iVmtx;
 
 #endif

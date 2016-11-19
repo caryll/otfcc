@@ -249,6 +249,6 @@ typedef struct {
 	otl_FeatureList features;
 	otl_LangSystemList languages;
 } table_OTL;
-extern caryll_RefElementInterface(table_OTL) iTable_OTL;
+extern caryll_RefElementInterface(table_OTL) table_iOTL;
 
 #endif

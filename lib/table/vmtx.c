@@ -7,7 +7,7 @@ static INLINE void disposeVmtx(MOVE table_vmtx *table) {
 	if (table->topSideBearing != NULL) FREE(table->topSideBearing);
 }
 
-caryll_standardRefType(table_vmtx, iTable_vmtx, disposeVmtx);
+caryll_standardRefType(table_vmtx, table_iVmtx, disposeVmtx);
 
 table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *options, table_vhea *vhea,
                            table_maxp *maxp) {
@@ -38,7 +38,7 @@ table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *optio
 		return vmtx;
 	vmtx_CORRUPTED:
 		logWarning("Table 'vmtx' corrupted.\n");
-		if (vmtx) { iTable_vmtx.free(vmtx), vmtx = NULL; }
+		if (vmtx) { table_iVmtx.free(vmtx), vmtx = NULL; }
 	}
 	return NULL;
 }

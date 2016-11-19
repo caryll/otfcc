@@ -32,7 +32,7 @@ static INLINE void disposeGDEF(table_GDEF *gdef) {
 	otl_iLigCaretTable.dispose(&gdef->ligCarets);
 }
 
-caryll_standardRefType(table_GDEF, iTable_GDEF, initGDEF, disposeGDEF);
+caryll_standardRefType(table_GDEF, table_iGDEF, initGDEF, disposeGDEF);
 
 static otl_CaretValue readCaretValue(const font_file_pointer data, uint32_t tableLength, uint32_t offset) {
 	otl_CaretValue v;
@@ -71,7 +71,7 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 		font_file_pointer data = table.data;
 		uint32_t tableLength = table.length;
 		checkLength(12);
-		gdef = iTable_GDEF.create();
+		gdef = table_iGDEF.create();
 		uint16_t classdefOffset = read_16u(data + 4);
 		if (classdefOffset) { gdef->glyphClassDef = ClassDef.read(data, tableLength, classdefOffset); }
 		uint16_t ligCaretOffset = read_16u(data + 8);
@@ -93,7 +93,7 @@ table_GDEF *otfcc_readGDEF(const otfcc_Packet packet, const otfcc_Options *optio
 		return gdef;
 
 	FAIL:
-		DELETE(iTable_GDEF.free, gdef);
+		DELETE(table_iGDEF.free, gdef);
 	}
 	return gdef;
 }
@@ -166,7 +166,7 @@ table_GDEF *otfcc_parseGDEF(const json_value *root, const otfcc_Options *options
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "GDEF", json_object))) {
 		loggedStep("GDEF") {
-			gdef = iTable_GDEF.create();
+			gdef = table_iGDEF.create();
 			gdef->glyphClassDef = ClassDef.parse(json_obj_get(table, "glyphClassDef"));
 			gdef->markAttachClassDef = ClassDef.parse(json_obj_get(table, "markAttachClassDef"));
 			ligCaretFromJson(json_obj_get(table, "ligCarets"), &gdef->ligCarets);

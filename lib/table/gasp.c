@@ -18,7 +18,7 @@ static INLINE void disposeGasp(MOVE table_gasp *gasp) {
 	gasp_iRecordList.dispose(&gasp->records);
 }
 
-caryll_standardRefType(table_gasp, iTable_gasp, initGasp, disposeGasp);
+caryll_standardRefType(table_gasp, table_iGasp, initGasp, disposeGasp);
 
 table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_gasp *gasp = NULL;
@@ -26,7 +26,7 @@ table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *optio
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
 		if (length < 4) { goto FAIL; }
-		gasp = iTable_gasp.create();
+		gasp = table_iGasp.create();
 		gasp->version = read_16u(data);
 		tableid_t numRanges = read_16u(data + 2);
 		if (length < 4 + numRanges * 4) { goto FAIL; }
@@ -45,7 +45,7 @@ table_gasp *otfcc_readGasp(const otfcc_Packet packet, const otfcc_Options *optio
 
 	FAIL:
 		logWarning("table 'gasp' corrupted.\n");
-		iTable_gasp.free(gasp);
+		table_iGasp.free(gasp);
 		gasp = NULL;
 	}
 	return NULL;
@@ -72,7 +72,7 @@ table_gasp *otfcc_parseGasp(const json_value *root, const otfcc_Options *options
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "gasp", json_array))) {
 		loggedStep("gasp") {
-			gasp = iTable_gasp.create();
+			gasp = table_iGasp.create();
 			for (uint16_t j = 0; j < table->u.array.length; j++) {
 				json_value *r = table->u.array.values[j];
 				if (!r || r->type != json_object) continue;
