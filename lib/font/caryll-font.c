@@ -95,6 +95,9 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 		case 'CPAL':
 			if (font->CPAL) DELETE(table_iCPAL.free, font->CPAL);
 			return;
+		case 'COLR':
+			if (font->COLR) DELETE(table_iCOLR.free, font->COLR);
+			return;
 	}
 }
 

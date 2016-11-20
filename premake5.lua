@@ -3,7 +3,7 @@ require "dep/premake-modules/ninja"
 
 MAIN_VER = '0'
 SECONDARY_VER = '6'
-PATCH_VER = '0'
+PATCH_VER = '1'
 
 function cbuildoptions()
 	-- Windows
