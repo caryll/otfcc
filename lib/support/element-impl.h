@@ -108,7 +108,6 @@
 	caryll_nonTrivialCopy(T, __fn_copy);                                                                               \
 	caryll_nonTrivialDispose(T, __fn_dispose);                                                                         \
 	caryll_trivialMove(T);
-
 #define caryll_standardTypeFn5(T, __fn_init, __fn_copy, __fn_dispose, __fn_move)                                       \
 	caryll_nonTrivialInit(T, __fn_init);                                                                               \
 	caryll_nonTrivialCopy(T, __fn_copy);                                                                               \

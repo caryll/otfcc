@@ -7,6 +7,13 @@ Kieffer-Yang optimization is unnecessary, given that in almost all payloads, the
 subroutines.
 */
 
+#ifdef DEBUG
+static int nodesCreated = 0;
+static int nodesRemoved = 0;
+static int rulesCreated = 0;
+static int rulesRemoved = 0;
+#endif
+
 static cff_SubrNode *cff_new_Node() {
 	cff_SubrNode *n;
 	NEW(n);
@@ -114,13 +121,6 @@ caryll_standardRefType(cff_SubrGraph, cff_iSubrGraph, initSubrGraph, disposeSubr
 // Subroutinizer
 
 static void joinNodes(cff_SubrGraph *g, cff_SubrNode *m, cff_SubrNode *n);
-
-#ifdef DEBUG
-static int nodesCreated = 0;
-static int nodesRemoved = 0;
-static int rulesCreated = 0;
-static int rulesRemoved = 0;
-#endif
 
 static uint8_t *getSingletHashKey(cff_SubrNode *n, size_t *len) {
 	size_t l1;
