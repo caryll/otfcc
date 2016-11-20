@@ -5,7 +5,8 @@
 static INLINE void disposeVORG(table_VORG *vorg) {
 	FREE(vorg->entries);
 }
-caryll_standardType(table_VORG, table_iVORG, disposeVORG);
+
+caryll_standardRefType(table_VORG, table_iVORG, disposeVORG);
 
 table_VORG *otfcc_readVORG(const otfcc_Packet packet, const otfcc_Options *options) {
 	FOR_TABLE('VORG', table) {
@@ -15,8 +16,7 @@ table_VORG *otfcc_readVORG(const otfcc_Packet packet, const otfcc_Options *optio
 		uint16_t numVertOriginYMetrics = read_16u(data + 6);
 		if (length < 8 + 4 * numVertOriginYMetrics) goto VORG_CORRUPTED;
 
-		table_VORG *vorg;
-		NEW(vorg);
+		table_VORG *vorg = table_iVORG.create();
 		vorg->defaultVerticalOrigin = read_16s(data + 4);
 		vorg->numVertOriginYMetrics = numVertOriginYMetrics;
 		NEW(vorg->entries, numVertOriginYMetrics);
