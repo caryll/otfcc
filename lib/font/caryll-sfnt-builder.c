@@ -97,7 +97,7 @@ caryll_Buffer *otfcc_SFNTBuilder_serialize(otfcc_SFNTBuilder *builder) {
 	bufwrite16b(buffer, nTables * 16 - searchRange);
 
 	otfcc_SFNTTableEntry *table;
-	size_t offset = 32 + nTables * 16;
+	size_t offset = 12 + nTables * 16;
 	size_t headOffset = offset;
 	HASH_SORT(builder->tables, byTag);
 	foreach_hash(table, builder->tables) {
@@ -115,12 +115,14 @@ caryll_Buffer *otfcc_SFNTBuilder_serialize(otfcc_SFNTBuilder *builder) {
 		offset += buflen(table->buffer);
 	}
 
-	// we are right after the table directory
-	// add copyright information
-	sds copyright = sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
-	sdsgrowzero(copyright, 20);
-	bufwrite_bytes(buffer, 20, (uint8_t *)copyright);
-	sdsfree(copyright);
+	/*
+	    // we are right after the table directory
+	    // add copyright information
+	    sds copyright = sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
+	    sdsgrowzero(copyright, 20);
+	    bufwrite_bytes(buffer, 20, (uint8_t *)copyright);
+	    sdsfree(copyright);
+	*/
 
 	// write head.checksumAdjust
 	uint32_t wholeChecksum = buf_checksum(buffer);

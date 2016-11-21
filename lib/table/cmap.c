@@ -1,6 +1,7 @@
 #include "cmap.h"
 
 #include "support/util.h"
+#include "bk/bkgraph.h"
 
 // PART I, type definition
 
@@ -366,20 +367,16 @@ caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 	return buf;
 }
 caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *options) {
-	caryll_Buffer *buf = bufnew();
-	if (!cmap || !cmap->unicodes) return buf;
+	if (!cmap || !cmap->unicodes) return bufnew();
+	;
 
 	cmap_Entry *entry;
 	bool hasSMP = false;
 	foreach_hash(entry, cmap->unicodes) {
 		if (entry->unicode > 0xFFFF) { hasSMP = true; }
 	}
-
-	bufwrite16b(buf, 0);
 	uint8_t nTables = hasSMP ? 4 : 2;
-	bufwrite16b(buf, nTables);
-	uint32_t offset = 4 + 8 * nTables;
-	size_t cp = 0;
+
 	caryll_Buffer *format4;
 	if (!hasSMP || !options->stub_cmap4) {
 		format4 = otfcc_buildCmap_format4(cmap);
@@ -403,36 +400,33 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 		bufwrite16b(format4, 0);      // idRangeOffset
 		bufwrite16b(format4, 0);      // idRangeOffset
 	}
-	// Windows format 4;
-	bufwrite16b(buf, 3);
-	bufwrite16b(buf, 1);
-	bufwrite32b(buf, offset);
-	// Unicode format 4:
-	bufwrite16b(buf, 0);
-	bufwrite16b(buf, 3);
-	bufwrite32b(buf, offset);
-	cp = buf->cursor;
-	bufseek(buf, offset);
-	bufwrite_buf(buf, format4);
-	bufseek(buf, cp);
-	offset += buflen(format4);
-	buffree(format4);
+
+	caryll_Buffer *format12 = otfcc_buildCmap_format12(cmap);
+	bk_Block *root = bk_new_Block(b16, 0,       // version
+	                              b16, nTables, // nTables
+	                              bkover);
+	bk_push(root, b16, 0,                            // unicode
+	        b16, 3,                                  // BMP
+	        p32, bk_newBlockFromBufferCopy(format4), // table
+	        bkover);
 	if (hasSMP) {
-		caryll_Buffer *format12 = otfcc_buildCmap_format12(cmap);
-		// Windows format 12;
-		bufwrite16b(buf, 3);
-		bufwrite16b(buf, 10);
-		bufwrite32b(buf, offset);
-		// Unicode format 12:
-		bufwrite16b(buf, 0);
-		bufwrite16b(buf, 4);
-		bufwrite32b(buf, offset);
-		cp = buf->cursor;
-		bufseek(buf, offset);
-		bufwrite_buf(buf, format12);
-		bufseek(buf, cp);
-		offset += buflen(format12);
-		buffree(format12);
+		bk_push(root, b16, 0,                             // unicode
+		        b16, 4,                                   // full
+		        p32, bk_newBlockFromBufferCopy(format12), // table
+		        bkover);
 	}
-	return buf;
+	bk_push(root, b16, 3,                            // Windows
+	        b16, 1,                                  // Unicode BMP
+	        p32, bk_newBlockFromBufferCopy(format4), // table
+	        bkover);
+	if (hasSMP) {
+		bk_push(root, b16, 3,                             // Windows
+		        b16, 10,                                  // Unicode Full
+		        p32, bk_newBlockFromBufferCopy(format12), // table
+		        bkover);
+	}
+
+	buffree(format4);
+	buffree(format12);
+	return bk_build_Block(root);
 }
