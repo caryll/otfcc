@@ -98,6 +98,10 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 		case 'COLR':
 			if (font->COLR) DELETE(table_iCOLR.free, font->COLR);
 			return;
+		case 'SVG ':
+		case 'SVG_':
+			if (font->SVG_) DELETE(table_iSVG.free, font->SVG_);
+			return;
 	}
 }
 
@@ -130,6 +134,7 @@ static INLINE void disposeFont(otfcc_Font *font) {
 	deleteFontTable(font, 'VORG');
 	deleteFontTable(font, 'CPAL');
 	deleteFontTable(font, 'COLR');
+	deleteFontTable(font, 'SVG_');
 
 	GlyphOrder.free(font->glyph_order);
 }
