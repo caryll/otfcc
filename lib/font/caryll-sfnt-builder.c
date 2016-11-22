@@ -1,16 +1,6 @@
 #include "support/util.h"
 #include "otfcc/sfnt-builder.h"
 
-#ifndef MAIN_VER
-#define MAIN_VER 0
-#endif
-#ifndef SECONDARY_VER
-#define SECONDARY_VER 0
-#endif
-#ifndef PATCH_VER
-#define PATCH_VER 0
-#endif
-
 static uint32_t buf_checksum(caryll_Buffer *buffer) {
 	uint32_t actualLength = (uint32_t)buflen(buffer);
 	buflongalign(buffer);
@@ -114,15 +104,6 @@ caryll_Buffer *otfcc_SFNTBuilder_serialize(otfcc_SFNTBuilder *builder) {
 		if (table->tag == 'head') { headOffset = offset; }
 		offset += buflen(table->buffer);
 	}
-
-	/*
-	    // we are right after the table directory
-	    // add copyright information
-	    sds copyright = sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
-	    sdsgrowzero(copyright, 20);
-	    bufwrite_bytes(buffer, 20, (uint8_t *)copyright);
-	    sdsfree(copyright);
-	*/
 
 	// write head.checksumAdjust
 	uint32_t wholeChecksum = buf_checksum(buffer);

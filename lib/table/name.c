@@ -3,6 +3,18 @@
 #include "support/util.h"
 #include "support/unicodeconv/unicodeconv.h"
 
+#ifndef MAIN_VER
+#define MAIN_VER 0
+#endif
+#ifndef SECONDARY_VER
+#define SECONDARY_VER 0
+#endif
+#ifndef PATCH_VER
+#define PATCH_VER 0
+#endif
+
+#define COPYRIGHT_LEN 32
+
 static void nameRecordDtor(otfcc_NameRecord *entry) {
 	DELETE(sdsfree, entry->nameString);
 }
@@ -165,6 +177,13 @@ caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *opti
 		bufwrite16b(buf, cafter - cbefore);
 		bufwrite16b(buf, cbefore);
 	}
+
+	// write copyright info
+	sds copyright = sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
+	sdsgrowzero(copyright, COPYRIGHT_LEN);
+	bufwrite_bytes(strings, COPYRIGHT_LEN, (uint8_t *)copyright);
+	sdsfree(copyright);
+
 	size_t stringsOffset = buf->cursor;
 	bufwrite_buf(buf, strings);
 	bufseek(buf, 4);
