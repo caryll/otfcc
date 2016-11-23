@@ -35,13 +35,13 @@ void printHelp() {
 	                "     -O1                     Default optimization.\n"
 	                "     -O2                     More aggressive optimizations for web font. In this\n"
 	                "                             level, the following options will be set:\n"
-	                "                               --ignore-glyph-order\n"
-	                "                               --short-post\n"
 	                "                               --merge-features\n"
+	                "                               --short-post\n"
+	                "                               --subroutinize\n"
 	                "     -O3                     Most aggressive opptimization strategy will be\n"
 	                "                             used. In this level, these options will be set:\n"
 	                "                               --force-cid\n"
-	                "                               --subroutinize\n"
+	                "                               --ignore-glyph-order\n"
 	                " --verbose                 : Show more information when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccbuild");
+	otfcc_Options_optimizeTo(options, 1);
 
 	struct option longopts[] = {{"version", no_argument, NULL, 'v'},
 	                            {"help", no_argument, NULL, 'h'},

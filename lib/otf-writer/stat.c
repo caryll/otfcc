@@ -426,9 +426,59 @@ static void statOS_2AverageWidth(otfcc_Font *font, const otfcc_Options *options)
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->length;
 }
+static uint16_t statMaxContextOTL(const table_OTL *table) {
+	uint16_t maxc = 1;
+	foreach (otl_Lookup **lookup_, table->lookups) {
+		otl_Lookup *lookup = *lookup_;
+		switch (lookup->type) {
+			case otl_type_gpos_pair:
+			case otl_type_gpos_markToBase:
+			case otl_type_gpos_markToLigature:
+			case otl_type_gpos_markToMark:
+				if (maxc < 2) maxc = 2;
+				break;
+			case otl_type_gsub_ligature:
+				foreach (otl_Subtable **subtable_, lookup->subtables) {
+					subtable_gsub_ligature *subtable = (subtable_gsub_ligature *)*subtable_;
+					foreach (otl_GsubLigatureEntry *entry, *subtable) {
+						if (maxc < entry->from->numGlyphs) { maxc = entry->from->numGlyphs; }
+					};
+				}
+				break;
+			case otl_type_gsub_chaining:
+			case otl_type_gpos_chaining:
+				foreach (otl_Subtable **subtable_, lookup->subtables) {
+					subtable_chaining *subtable = (subtable_chaining *)*subtable_;
+					if (maxc < subtable->rule.matchCount) maxc = subtable->rule.matchCount;
+				}
+				break;
+			case otl_type_gsub_reverse:
+				foreach (otl_Subtable **subtable_, lookup->subtables) {
+					subtable_gsub_reverse *subtable = (subtable_gsub_reverse *)*subtable_;
+					if (maxc < subtable->matchCount) maxc = subtable->matchCount;
+				}
+				break;
+			default:;
+		}
+	}
+	return maxc;
+}
+static void statMaxContext(otfcc_Font *font, const otfcc_Options *options) {
+	uint16_t maxc = 1;
+	if (font->GSUB) {
+		uint16_t maxc_gsub = statMaxContextOTL(font->GSUB);
+		if (maxc_gsub > maxc) maxc = maxc_gsub;
+	}
+	if (font->GPOS) {
+		uint16_t maxc_gpos = statMaxContextOTL(font->GPOS);
+		if (maxc_gpos > maxc) maxc = maxc_gpos;
+	}
+	font->OS_2->usMaxContext = maxc;
+}
 static void statOS_2(otfcc_Font *font, const otfcc_Options *options) {
 	statOS_2UnicodeRanges(font, options);
 	statOS_2AverageWidth(font, options);
+	statMaxContext(font, options);
 }
 
 #define MAX_STAT_METRIC 4096

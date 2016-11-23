@@ -4,7 +4,6 @@
 otfcc_Options *otfcc_newOptions() {
 	otfcc_Options *options;
 	NEW(options);
-	options->cff_rollCharString = true;
 	return options;
 }
 void otfcc_deleteOptions(otfcc_Options *options) {
@@ -15,15 +14,25 @@ void otfcc_deleteOptions(otfcc_Options *options) {
 	FREE(options);
 }
 void otfcc_Options_optimizeTo(otfcc_Options *options, uint8_t level) {
-	if (level >= 1) { options->cff_rollCharString = true; }
+	options->cff_rollCharString = false;
+	options->short_post = false;
+	options->ignore_glyph_order = false;
+	options->cff_short_vmtx = false;
+	options->merge_features = false;
+	options->force_cid = false;
+	options->cff_doSubroutinize = false;
+
+	if (level >= 1) {
+		options->cff_rollCharString = true;
+		options->cff_short_vmtx = true;
+	}
 	if (level >= 2) {
 		options->short_post = true;
-		options->ignore_glyph_order = true;
-		options->cff_short_vmtx = true;
+		options->cff_doSubroutinize = true;
 		options->merge_features = true;
 	}
 	if (level >= 3) {
+		options->ignore_glyph_order = true;
 		options->force_cid = true;
-		options->cff_doSubroutinize = true;
 	}
 }
