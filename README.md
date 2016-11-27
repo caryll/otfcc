@@ -77,13 +77,13 @@ Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]
      -O1                     Default optimization.
      -O2                     More aggressive optimizations for web font. In this
                              level, the following options will be set:
-                               --ignore-glyph-order
-                               --short-post
                                --merge-features
-     -O3                     Most aggressive opptimization strategy will be
+                               --short-post
+                               --subroutinize
+     -O3                     The most aggressive opptimization strategy will be
                              used. In this level, these options will be set:
                                --force-cid
-                               --subroutinize
+                               --ignore-glyph-order
  --verbose                 : Show more information when building.
 
  --ignore-hints            : Ignore the hinting information in the input.
