@@ -368,7 +368,6 @@ caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 }
 caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *options) {
 	if (!cmap || !cmap->unicodes) return bufnew();
-	;
 
 	cmap_Entry *entry;
 	bool hasSMP = false;
