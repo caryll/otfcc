@@ -593,7 +593,7 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 		if (cff->fontBBoxTop < font->head->yMax) cff->fontBBoxTop = font->head->yMax;
 		if (cff->fontBBoxLeft < font->head->xMin) cff->fontBBoxLeft = font->head->xMin;
 		if (cff->fontBBoxRight < font->head->xMax) cff->fontBBoxRight = font->head->xMax;
-		if (font->glyf && cff->isCID) { cff->cidCount = font->glyf->length; }
+		if (font->glyf && cff->isCID) { cff->cidCount = (uint32_t)font->glyf->length; }
 		if (cff->isCID) {
 			if (cff->fontMatrix) { FREE(cff->fontMatrix); }
 			for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
@@ -626,8 +626,8 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 
 		statCFFWidths(font);
 	}
-	if (font->glyf && font->maxp) { font->maxp->numGlyphs = font->glyf->length; }
-	if (font->glyf && font->post) { font->post->maxMemType42 = font->glyf->length; }
+	if (font->glyf && font->maxp) { font->maxp->numGlyphs = (uint16_t)font->glyf->length; }
+	if (font->glyf && font->post) { font->post->maxMemType42 = (uint32_t)font->glyf->length; }
 	if (font->glyf && font->maxp && font->maxp->version == 0x10000) {
 		statMaxp(font);
 		if (font->fpgm && font->fpgm->length > font->maxp->maxSizeOfInstructions) {
