@@ -66,12 +66,13 @@ void otfcc_dumpSVG(const table_SVG *svg, json_value *root, const otfcc_Options *
 			json_object_push(_a, "end", json_integer_new(a->end));
 			if (canUsePlainFormat(a->document)) {
 				json_object_push(_a, "format", json_string_new("plain"));
-				json_object_push(_a, "document", json_string_new_length(a->document->size, (char *)a->document->data));
+				json_object_push(_a, "document",
+				                 json_string_new_length((uint32_t)a->document->size, (char *)a->document->data));
 			} else {
 				size_t len = 0;
 				uint8_t *buf = base64_encode(a->document->data, a->document->size, &len);
 				json_object_push(_a, "format", json_string_new("base64"));
-				json_object_push(_a, "document", json_string_new_length(len, (char *)buf));
+				json_object_push(_a, "document", json_string_new_length((uint32_t)len, (char *)buf));
 				free(buf);
 			}
 			json_array_push(_svg, _a);
