@@ -121,12 +121,12 @@ On Linux, Either Clang/LLVM or GCC can be used to build `otfcc`.
 
 1. Install the latest Clang/LLVM or GCC if you do not have it already.
 2. Install [premake5](http://premake.github.io/) and make it available in your path.
-3. Run the following from the command line:
+3. Run the following from the command line (Change config when necessary):
 
 ```bash
 premake5 gmake
 cd build/gmake
-make
+make config=release_x64
 ```
 
 If you have [Ninja](https://ninja-build.org/) installed on your system, you can use ninja either:
@@ -143,12 +143,12 @@ Change the targets above when necessary.
 
 On Windows, building `otfcc` is tested under the toolchains listed below. The default `premake5 vs2015` will produce a Visual Studio solution using Clang-CL as its compiler.
 
-* GCC 5.1 included in `TDM-GCC`, or GCC 6.1.0 in MinGW-W64. Run the following from the command line:
+* GCC 5.1 included in `TDM-GCC`, or GCC 6.1.0 in MinGW-W64. Run the following from the command line (Change the `config` when necessary):
 
   ```bash
   premake5 gmake
   cd build/gmake
-  make
+  make config=release_x64
   ```
   To use Ninja like that in Linux, you need to specify the `--os=linux` when using `premake5 ninja`.
 
