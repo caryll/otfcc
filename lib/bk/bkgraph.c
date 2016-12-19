@@ -102,7 +102,7 @@ static bool compareblock(bk_Block *a, bk_Block *b) {
 	if (!a && !b) return true;
 	if (!a || !b) return false;
 	if (a->length != b->length) return false;
-	for (uint16_t j = 0; j < a->length; j++) {
+	for (uint32_t j = 0; j < a->length; j++) {
 		if (a->cells[j].t != b->cells[j].t) return false;
 		switch (a->cells[j].t) {
 			case b8:
@@ -356,9 +356,7 @@ caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 		}
 	}
 	for (uint32_t j = 0; j < f->length; j++) {
-		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
-			otfcc_build_bkblock(buf, f->entries[j].block, offsets);
-		}
+		if (f->entries[j].block->_visitstate == VISIT_BLACK) { otfcc_build_bkblock(buf, f->entries[j].block, offsets); }
 	}
 	FREE(offsets);
 	return buf;
