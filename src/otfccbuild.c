@@ -296,9 +296,15 @@ int main(int argc, char *argv[]) {
 	loggedStep("Build") {
 		otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
 		caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
-		FILE *outfile = u8fopen(outputPath, "wb");
-		fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
-		fclose(outfile);
+		loggedStep("Write to file") {
+			FILE *outfile = u8fopen(outputPath, "wb");
+			if (!outfile) {
+				logError("Cannot write to file \"%s\". Exit.\n", outputPath);
+				exit(EXIT_FAILURE);
+			}
+			fwrite(otf->data, sizeof(uint8_t), buflen(otf), outfile);
+			fclose(outfile);
+		}
 		logStepTime;
 		buffree(otf), writer->free(writer), otfcc_iFont.free(font), sdsfree(outputPath);
 	}
