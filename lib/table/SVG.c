@@ -126,19 +126,19 @@ caryll_Buffer *otfcc_buildSVG(const table_SVG *_svg, const otfcc_Options *option
 	table_iSVG.copy(&svg, _svg);
 	table_iSVG.sort(&svg, byStartGID);
 
-	bk_Block *main = bk_new_Block(b16, svg.length, // numEntries
-	                              bkover);
+	bk_Block *major = bk_new_Block(b16, svg.length, // numEntries
+	                               bkover);
 	foreach (svg_Assignment *a, svg) {
-		bk_push(main,                                        // SVG Document Index Entry
+		bk_push(major,                                       // SVG Document Index Entry
 		        b16, a->start,                               // startGlyphID
 		        b16, a->end,                                 // endGlyphID
 		        p32, bk_newBlockFromBufferCopy(a->document), // svgDocOffset
 		        b32, a->document->size,                      // svgDocLength
 		        bkover);
 	}
-	bk_Block *root = bk_new_Block(b16, 0,    // Version
-	                              p32, main, // offsetToSVGDocIndex
-	                              b32, 0,    // Reserved
+	bk_Block *root = bk_new_Block(b16, 0,     // Version
+	                              p32, major, // offsetToSVGDocIndex
+	                              b32, 0,     // Reserved
 	                              bkover);
 	table_iSVG.dispose(&svg);
 	return bk_build_Block(root);
