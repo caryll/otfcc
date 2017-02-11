@@ -37,18 +37,18 @@ linux-release-x86 : mf-ninja-linux
 # Clang-cl does not support debugging well
 # It is used for release versions only
 clang-cl-release-x64 : mf-vs2015
-	@cmd /c _vcbuild64.bat /property:Configuration=release
+	@./_vcbuild64.bat /property:Configuration=release
 clang-cl-release-x86 : mf-vs2015
-	@cmd /c _vcbuild32.bat /property:Configuration=release /property:Platform=win32
+	@./_vcbuild32.bat /property:Configuration=release /property:Platform=win32
 
 ninja-win-x64 : mf-ninja-windows
-	@cmd /c _vcbuildNinja.bat otfccdump_release_x64 otfccbuild_release_x64
+	@./_vcbuildNinja.bat otfccdump_release_x64 otfccbuild_release_x64
 ninja-win-x86 : mf-ninja-windows
-	@cmd /c _vcbuildNinja.bat otfccdump_release_x86 otfccbuild_release_x86
+	@./_vcbuildNinja.bat otfccdump_release_x86 otfccbuild_release_x86
 ninja-win-debug-x64 : mf-ninja-windows
-	@cmd /c _vcbuildNinja.bat otfccdump_debug_x64 otfccbuild_debug_x64
+	@./_vcbuildNinja.bat otfccdump_debug_x64 otfccbuild_debug_x64
 ninja-win-debug-x86 : mf-ninja-windows
-	@cmd /c _vcbuildNinja.bat otfccdump_debug_x86 otfccbuild_debug_x86
+	@./_vcbuildNinja.bat otfccdump_debug_x86 otfccbuild_debug_x86
 
 TEST_OPCODES = abs add div drop dup eq.(mul) exch ifelse index.(roll,drop) mul neg not or.(mul) put.get roll.(drop) sqrt.(mul) sub
 TEST_OPCODES_TARGETS = $(foreach op,$(TEST_OPCODES),cffopcodetest-$(op))
