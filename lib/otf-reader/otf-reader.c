@@ -59,6 +59,10 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		font->COLR = otfcc_readCOLR(packet, options);
 		font->SVG_ = otfcc_readSVG(packet, options);
 
+		// VTT TSI entries
+		font->TSI_01 = otfcc_readTSI(packet, options, 'TSI0', 'TSI1');
+		font->TSI_23 = otfcc_readTSI(packet, options, 'TSI2', 'TSI3');
+
 		otfcc_unconsolidateFont(font, options);
 		return font;
 	}

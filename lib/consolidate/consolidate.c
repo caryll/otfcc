@@ -267,6 +267,29 @@ static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 	font->COLR = consolidated;
 }
 
+static int compareTSIEntry(const tsi_Entry *a, const tsi_Entry *b) {
+	if (a->type != b->type) return a->type - b->type;
+	return a->glyph.index - b->glyph.index;
+}
+
+static void consolidateTSI(otfcc_Font *font, table_TSI **_tsi, const otfcc_Options *options) {
+	table_TSI *tsi = *_tsi;
+	if (!font || !tsi || !font->glyph_order) return;
+	table_TSI *consolidated = table_iTSI.create();
+	foreach (tsi_Entry *entry, *tsi) {
+		if (entry->type == TSI_GLYPH && !GlyphOrder.consolidateHandle(font->glyph_order, &entry->glyph)) {
+			logWarning("[Consolidate] Ignored missing glyph of /%s", entry->glyph.name);
+			continue;
+		}
+		tsi_Entry e;
+		tsi_iEntry.copy(&e, entry);
+		table_iTSI.push(consolidated, e);
+	}
+	table_iTSI.sort(consolidated, compareTSIEntry);
+	table_iTSI.free(tsi);
+	*_tsi = consolidated;
+}
+
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// In case we don’t have a glyph order, make one.
 	if (font->glyf && !font->glyph_order) {
@@ -310,5 +333,11 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyf) consolidateOTL(font, options);
 	loggedStep("COLR") {
 		consolidateCOLR(font, options);
+	}
+	loggedStep("TSI_01") {
+		consolidateTSI(font, &font->TSI_01, options);
+	}
+	loggedStep("TSI_23") {
+		consolidateTSI(font, &font->TSI_23, options);
 	}
 }

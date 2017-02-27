@@ -32,6 +32,8 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpCPAL(font->CPAL, root, options);
 	otfcc_dumpCOLR(font->COLR, root, options);
 	otfcc_dumpSVG(font->SVG_, root, options);
+	otfcc_dumpTSI(font->TSI_01, root, options, "TSI_01");
+	otfcc_dumpTSI(font->TSI_23, root, options, "TSI_23");
 	return root;
 }
 static void freeJsonWriter(otfcc_IFontSerializer *self) {

@@ -137,6 +137,8 @@ static INLINE void disposeFont(otfcc_Font *font) {
 	deleteFontTable(font, 'SVG_');
 
 	GlyphOrder.free(font->glyph_order);
+	table_iTSI.free(font->TSI_01);
+	table_iTSI.free(font->TSI_23);
 }
 caryll_standardRefTypeFn(otfcc_Font, initFont, disposeFont);
 
