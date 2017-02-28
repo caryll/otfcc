@@ -102,6 +102,17 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 		case 'SVG_':
 			if (font->SVG_) DELETE(table_iSVG.free, font->SVG_);
 			return;
+		case 'TSI0':
+		case 'TSI1':
+			if (font->TSI_01) DELETE(table_iTSI.free, font->TSI_01);
+			return;
+		case 'TSI2':
+		case 'TSI3':
+			if (font->TSI_23) DELETE(table_iTSI.free, font->TSI_23);
+			return;
+		case 'TSI5':
+			if (font->TSI5) DELETE(otl_iClassDef.free, font->TSI5);
+			return;
 	}
 }
 
@@ -135,6 +146,9 @@ static INLINE void disposeFont(otfcc_Font *font) {
 	deleteFontTable(font, 'CPAL');
 	deleteFontTable(font, 'COLR');
 	deleteFontTable(font, 'SVG_');
+	deleteFontTable(font, 'TSI0');
+	deleteFontTable(font, 'TSI2');
+	deleteFontTable(font, 'TSI5');
 
 	GlyphOrder.free(font->glyph_order);
 }

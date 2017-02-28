@@ -57,7 +57,7 @@ cffopcodetest : $(TEST_OPCODES_TARGETS)
 $(TEST_OPCODES_TARGETS) : cffopcodetest-% : tests/payload/cffspecial/cff.%.otf
 	@bin/release-x64/otfccdump '$<' | node tests/cffdump-opcode-check
 
-TTF_ROUNDTRIP_PAYLOADS = NotoNastaliqUrdu-Regular iosevka-r BungeeColor-Regular_colr_Windows Reinebow-SVGinOT
+TTF_ROUNDTRIP_PAYLOADS = NotoNastaliqUrdu-Regular iosevka-r BungeeColor-Regular_colr_Windows Reinebow-SVGinOT vtt
 TTF_ROUNDTRIP_TARGETS = $(foreach f,$(TTF_ROUNDTRIP_PAYLOADS),ttfroundtriptest-$(f))
 
 ttfroundtriptest: $(TTF_ROUNDTRIP_TARGETS)

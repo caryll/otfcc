@@ -56,7 +56,6 @@ void otfcc_dumpVhea(const table_vhea *table, json_value *root, const otfcc_Optio
 		json_object_push(vhea, "caretSlopeRise", json_integer_new(table->caretSlopeRise));
 		json_object_push(vhea, "caretSlopeRun", json_integer_new(table->caretSlopeRun));
 		json_object_push(vhea, "caretOffset", json_integer_new(table->caretOffset));
-		json_object_push(vhea, "numOfLongVerMetrics", json_integer_new(table->numOfLongVerMetrics));
 		json_object_push(root, "vhea", vhea);
 	}
 }
@@ -78,7 +77,6 @@ table_vhea *otfcc_parseVhea(const json_value *root, const otfcc_Options *options
 			vhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
 			vhea->caretSlopeRun = json_obj_getnum_fallback(table, "caretSlopeRun", 0);
 			vhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
-			vhea->numOfLongVerMetrics = json_obj_getnum_fallback(table, "numOfLongVerMetrics", 0);
 		}
 	}
 	return vhea;

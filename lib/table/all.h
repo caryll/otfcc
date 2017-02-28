@@ -29,5 +29,7 @@
 #include "table/CPAL.h"
 #include "table/COLR.h"
 #include "table/SVG.h"
+#include "table/_TSI.h"
+#include "table/TSI5.h"
 
 #endif

@@ -59,8 +59,6 @@ void otfcc_dumpHhea(const table_hhea *table, json_value *root, const otfcc_Optio
 		json_object_push(hhea, "caretSlopeRise", json_integer_new(table->caretSlopeRise));
 		json_object_push(hhea, "caretSlopeRun", json_integer_new(table->caretSlopeRun));
 		json_object_push(hhea, "caretOffset", json_integer_new(table->caretOffset));
-		json_object_push(hhea, "lowestmetricDataFormatRecPPEM", json_integer_new(table->metricDataFormat));
-		json_object_push(hhea, "numberOfMetrics", json_integer_new(table->numberOfMetrics));
 		json_object_push(root, "hhea", hhea);
 	}
 }
@@ -81,8 +79,6 @@ table_hhea *otfcc_parseHhea(const json_value *root, const otfcc_Options *options
 			hhea->caretSlopeRise = json_obj_getnum_fallback(table, "caretSlopeRise", 0);
 			hhea->caretSlopeRun = json_obj_getnum_fallback(table, "caretSlopeRun", 0);
 			hhea->caretOffset = json_obj_getnum_fallback(table, "caretOffset", 0);
-			hhea->metricDataFormat = json_obj_getnum_fallback(table, "lowestmetricDataFormatRecPPEM", 0);
-			hhea->numberOfMetrics = json_obj_getnum_fallback(table, "numberOfMetrics", 0);
 		}
 	}
 	return hhea;
@@ -106,7 +102,7 @@ caryll_Buffer *otfcc_buildHhea(const table_hhea *hhea, const otfcc_Options *opti
 	bufwrite16b(buf, hhea->reserved[1]);
 	bufwrite16b(buf, hhea->reserved[2]);
 	bufwrite16b(buf, hhea->reserved[3]);
-	bufwrite16b(buf, hhea->metricDataFormat);
+	bufwrite16b(buf, 0);
 	bufwrite16b(buf, hhea->numberOfMetrics);
 	return buf;
 }
