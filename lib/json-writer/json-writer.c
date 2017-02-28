@@ -34,6 +34,7 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpSVG(font->SVG_, root, options);
 	otfcc_dumpTSI(font->TSI_01, root, options, "TSI_01");
 	otfcc_dumpTSI(font->TSI_23, root, options, "TSI_23");
+	otfcc_dumpTSI5(font->TSI5, root, options);
 	return root;
 }
 static void freeJsonWriter(otfcc_IFontSerializer *self) {

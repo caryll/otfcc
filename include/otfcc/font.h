@@ -38,6 +38,7 @@ typedef struct _caryll_font otfcc_Font;
 #include "otfcc/table/SVG.h"
 
 #include "otfcc/table/_TSI.h"
+#include "otfcc/table/TSI5.h"
 
 typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
@@ -79,6 +80,7 @@ struct _caryll_font {
 
 	table_TSI *TSI_01;
 	table_TSI *TSI_23;
+	table_TSI5 *TSI5;
 
 	otfcc_GlyphOrder *glyph_order;
 };

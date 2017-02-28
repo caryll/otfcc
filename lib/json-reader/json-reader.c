@@ -157,6 +157,7 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 
 	font->TSI_01 = otfcc_parseTSI(root, options, "TSI_01");
 	font->TSI_23 = otfcc_parseTSI(root, options, "TSI_23");
+	font->TSI5 = otfcc_parseTSI5(root, options);
 
 	return font;
 }

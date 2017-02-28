@@ -274,19 +274,37 @@ static int compareTSIEntry(const tsi_Entry *a, const tsi_Entry *b) {
 
 static void consolidateTSI(otfcc_Font *font, table_TSI **_tsi, const otfcc_Options *options) {
 	table_TSI *tsi = *_tsi;
-	if (!font || !tsi || !font->glyph_order) return;
+	if (!font || !font->glyf || !tsi || !font->glyph_order) return;
 	table_TSI *consolidated = table_iTSI.create();
+	sds *gidEntries;
+	NEW_CLEAN_N(gidEntries, font->glyf->length);
+
 	foreach (tsi_Entry *entry, *tsi) {
-		if (entry->type == TSI_GLYPH && !GlyphOrder.consolidateHandle(font->glyph_order, &entry->glyph)) {
-			logWarning("[Consolidate] Ignored missing glyph of /%s", entry->glyph.name);
-			continue;
+		if (entry->type == TSI_GLYPH) {
+			if (GlyphOrder.consolidateHandle(font->glyph_order, &entry->glyph)) {
+				if (gidEntries[entry->glyph.index]) sdsfree(gidEntries[entry->glyph.index]);
+				gidEntries[entry->glyph.index] = entry->content;
+				entry->content = NULL;
+			} else {
+				logWarning("[Consolidate] Ignored missing glyph of /%s", entry->glyph.name);
+			}
+		} else {
+			tsi_Entry e;
+			tsi_iEntry.copy(&e, entry);
+			table_iTSI.push(consolidated, e);
 		}
+	}
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		tsi_Entry e;
-		tsi_iEntry.copy(&e, entry);
+		e.type = TSI_GLYPH;
+		e.glyph = Handle.fromIndex(j);
+		GlyphOrder.consolidateHandle(font->glyph_order, &e.glyph);
+		e.content = gidEntries[j] ? gidEntries[j] : sdsempty();
 		table_iTSI.push(consolidated, e);
 	}
-	table_iTSI.sort(consolidated, compareTSIEntry);
 	table_iTSI.free(tsi);
+	FREE(gidEntries);
+	table_iTSI.sort(consolidated, compareTSIEntry);
 	*_tsi = consolidated;
 }
 
@@ -339,5 +357,8 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	}
 	loggedStep("TSI_23") {
 		consolidateTSI(font, &font->TSI_23, options);
+	}
+	loggedStep("TSI5") {
+		fontop_consolidateClassDef(font, font->TSI5, options);
 	}
 }

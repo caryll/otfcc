@@ -67,6 +67,9 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI2', target.indexPart);
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI3', target.textPart);
 	}
+	if (font->glyf && font->TSI5) {
+		otfcc_SFNTBuilder_pushTable(builder, 'TSI5', otfcc_buildTSI5(font->TSI5, options, font->glyf->length));
+	}
 
 	if (options->dummy_DSIG) {
 		caryll_Buffer *dsig = bufnew();
