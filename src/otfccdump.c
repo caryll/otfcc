@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
 	sds outputPath = NULL;
 	sds inPath = NULL;
 
-	while ((c = getopt_long(argc, argv, "vhpo:n:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhpio:n:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
@@ -115,6 +115,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'v':
 				show_version = true;
+				break;
+			case 'i':
+				options->ignore_glyph_order = true;
 				break;
 			case 'h':
 				show_help = true;

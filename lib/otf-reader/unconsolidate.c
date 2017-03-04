@@ -123,7 +123,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	// pass 1: Map to existing glyph names
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		if (options->name_glyphs_by_hash) {
+		if (options->name_glyphs_by_hash) { // name by hash
 			GlyphHash h = nameGlyphByHash(g, font->glyf);
 			sds gname = sdsempty();
 			for (uint16_t j = 0; j < SHA1_BLOCK_SIZE; j++) {
@@ -153,6 +153,8 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 				if (g->name) sdsfree(g->name);
 				g->name = sdsdup(sharedName);
 			}
+		} else if (options->ignore_glyph_order) { // ignore built-in names
+			                                      // pass
 		} else if (g->name) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, g->name);
 			sds sharedName = GlyphOrder.setByGID(glyph_order, j, gname);
@@ -162,7 +164,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	}
 
 	// pass 2: Map to `post` names
-	if (font->post != NULL && font->post->post_name_map != NULL) {
+	if (font->post != NULL && font->post->post_name_map != NULL && !options->ignore_glyph_order) {
 		otfcc_GlyphOrderEntry *s, *tmp;
 		HASH_ITER(hhID, font->post->post_name_map->byGID, s, tmp) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, s->name);
@@ -188,8 +190,16 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	// pass 4 : Map to GID
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
 		sds name;
-		if (j) {
+		if (j > 1) {
 			name = sdscatfmt(sdsempty(), "%sglyph%u", prefix, j);
+		} else if (j == 1) {
+			// GID 1 may often be ".null"
+			if (font->glyf->items[1] && !font->glyf->items[1]->contours.length &&
+			    !font->glyf->items[1]->references.length) {
+				name = sdsnew(".null");
+			} else {
+				name = sdscatfmt(sdsempty(), "%sglyph%u", prefix, j);
+			}
 		} else {
 			name = sdscatfmt(sdsempty(), "%s.notdef", prefix);
 		}

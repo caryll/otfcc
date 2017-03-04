@@ -53,6 +53,24 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->GDEF) otfcc_SFNTBuilder_pushTable(builder, 'GDEF', otfcc_buildGDEF(font->GDEF, options));
 	if (font->BASE) otfcc_SFNTBuilder_pushTable(builder, 'BASE', otfcc_buildBASE(font->BASE, options));
 
+	if (font->CPAL) otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
+	if (font->COLR) otfcc_SFNTBuilder_pushTable(builder, 'COLR', otfcc_buildCOLR(font->COLR, options));
+	if (font->SVG_) otfcc_SFNTBuilder_pushTable(builder, 'SVG ', otfcc_buildSVG(font->SVG_, options));
+
+	if (font->TSI_01) {
+		tsi_BuildTarget target = otfcc_buildTSI(font->TSI_01, options);
+		otfcc_SFNTBuilder_pushTable(builder, 'TSI0', target.indexPart);
+		otfcc_SFNTBuilder_pushTable(builder, 'TSI1', target.textPart);
+	}
+	if (font->TSI_23) {
+		tsi_BuildTarget target = otfcc_buildTSI(font->TSI_23, options);
+		otfcc_SFNTBuilder_pushTable(builder, 'TSI2', target.indexPart);
+		otfcc_SFNTBuilder_pushTable(builder, 'TSI3', target.textPart);
+	}
+	if (font->glyf && font->TSI5) {
+		otfcc_SFNTBuilder_pushTable(builder, 'TSI5', otfcc_buildTSI5(font->TSI5, options, font->glyf->length));
+	}
+
 	if (options->dummy_DSIG) {
 		caryll_Buffer *dsig = bufnew();
 		bufwrite32b(dsig, 0x00000001);
@@ -60,10 +78,6 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 		bufwrite16b(dsig, 0);
 		otfcc_SFNTBuilder_pushTable(builder, 'DSIG', dsig);
 	}
-
-	if (font->CPAL) otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
-	if (font->COLR) otfcc_SFNTBuilder_pushTable(builder, 'COLR', otfcc_buildCOLR(font->COLR, options));
-	if (font->SVG_) otfcc_SFNTBuilder_pushTable(builder, 'SVG ', otfcc_buildSVG(font->SVG_, options));
 
 	caryll_Buffer *otf = otfcc_SFNTBuilder_serialize(builder);
 	otfcc_deleteSFNTBuilder(builder);

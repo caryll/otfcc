@@ -267,6 +267,47 @@ static void consolidateCOLR(otfcc_Font *font, const otfcc_Options *options) {
 	font->COLR = consolidated;
 }
 
+static int compareTSIEntry(const tsi_Entry *a, const tsi_Entry *b) {
+	if (a->type != b->type) return a->type - b->type;
+	return a->glyph.index - b->glyph.index;
+}
+
+static void consolidateTSI(otfcc_Font *font, table_TSI **_tsi, const otfcc_Options *options) {
+	table_TSI *tsi = *_tsi;
+	if (!font || !font->glyf || !tsi || !font->glyph_order) return;
+	table_TSI *consolidated = table_iTSI.create();
+	sds *gidEntries;
+	NEW_CLEAN_N(gidEntries, font->glyf->length);
+
+	foreach (tsi_Entry *entry, *tsi) {
+		if (entry->type == TSI_GLYPH) {
+			if (GlyphOrder.consolidateHandle(font->glyph_order, &entry->glyph)) {
+				if (gidEntries[entry->glyph.index]) sdsfree(gidEntries[entry->glyph.index]);
+				gidEntries[entry->glyph.index] = entry->content;
+				entry->content = NULL;
+			} else {
+				logWarning("[Consolidate] Ignored missing glyph of /%s", entry->glyph.name);
+			}
+		} else {
+			tsi_Entry e;
+			tsi_iEntry.copy(&e, entry);
+			table_iTSI.push(consolidated, e);
+		}
+	}
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		tsi_Entry e;
+		e.type = TSI_GLYPH;
+		e.glyph = Handle.fromIndex(j);
+		GlyphOrder.consolidateHandle(font->glyph_order, &e.glyph);
+		e.content = gidEntries[j] ? gidEntries[j] : sdsempty();
+		table_iTSI.push(consolidated, e);
+	}
+	table_iTSI.free(tsi);
+	FREE(gidEntries);
+	table_iTSI.sort(consolidated, compareTSIEntry);
+	*_tsi = consolidated;
+}
+
 void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// In case we don’t have a glyph order, make one.
 	if (font->glyf && !font->glyph_order) {
@@ -310,5 +351,14 @@ void otfcc_consolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyf) consolidateOTL(font, options);
 	loggedStep("COLR") {
 		consolidateCOLR(font, options);
+	}
+	loggedStep("TSI_01") {
+		consolidateTSI(font, &font->TSI_01, options);
+	}
+	loggedStep("TSI_23") {
+		consolidateTSI(font, &font->TSI_23, options);
+	}
+	loggedStep("TSI5") {
+		fontop_consolidateClassDef(font, font->TSI5, options);
 	}
 }
