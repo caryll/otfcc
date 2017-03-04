@@ -90,7 +90,7 @@ void otfcc_dumpTSI(const table_TSI *tsi, json_value *root, const otfcc_Options *
 		foreach (tsi_Entry *entry, *tsi) {
 			if (entry->type != TSI_GLYPH) continue;
 			json_object_push(_glyphs, entry->glyph.name,
-			                 json_string_new_length(sdslen(entry->content), entry->content));
+			                 json_string_new_length((uint32_t)sdslen(entry->content), entry->content));
 		}
 
 		json_value *_extra = json_object_new(tsi->length);
@@ -112,7 +112,8 @@ void otfcc_dumpTSI(const table_TSI *tsi, json_value *root, const otfcc_Options *
 					extraKey = "reserved";
 					break;
 			}
-			json_object_push(_extra, extraKey, json_string_new_length(sdslen(entry->content), entry->content));
+			json_object_push(_extra, extraKey,
+			                 json_string_new_length((uint32_t)sdslen(entry->content), entry->content));
 		}
 		json_object_push(_tsi, "glyphs", _glyphs);
 		json_object_push(_tsi, "extra", _extra);
@@ -195,13 +196,13 @@ static void pushTSIEntries(tsi_BuildTarget *target, const table_TSI *tsi, const 
 		} else {
 			bufwrite16b(target->indexPart, 0x8000);
 		}
-		bufwrite32b(target->indexPart, lengthSofar);
+		bufwrite32b(target->indexPart, (uint32_t)lengthSofar);
 		itemsPushed += 1;
 	}
 	while (itemsPushed < minN) {
 		bufwrite16b(target->indexPart, propergid(NULL, type));
 		bufwrite16b(target->indexPart, 0x0000);
-		bufwrite32b(target->indexPart, target->textPart->cursor);
+		bufwrite32b(target->indexPart, (uint32_t)target->textPart->cursor);
 		itemsPushed += 1;
 	}
 }
