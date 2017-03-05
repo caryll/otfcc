@@ -38,7 +38,11 @@ end
 -- Premake 5 configurations
 workspace "otfcc"
 	configurations { "release", "debug" }
+	
 	platforms { "x64", "x86" }
+	filter "action:xcode4"
+		platforms { "x64" }
+	filter {}
 	
 	location "build"
 	includedirs { "include" }
@@ -49,7 +53,6 @@ workspace "otfcc"
 		("SECONDARY_VER=" .. SECONDARY_VER),
 		("PATCH_VER=" .. PATCH_VER)
 	}
-
 	filter "platforms:x86"
 		architecture "x86"
 	filter "platforms:x64"
