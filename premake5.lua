@@ -109,6 +109,7 @@ project "libotfcc"
 	kind "StaticLib"
 	language "C"
 	cbuildoptions()
+	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 
 	links { "deps" }
 	includedirs{ "lib" }
@@ -124,7 +125,7 @@ project "otfccdump"
 	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc", "deps" }
+	links { "libotfcc" }
 	
 	files {
 		"src/**.c",
@@ -140,7 +141,7 @@ project "otfccbuild"
 	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc", "deps" }
+	links { "libotfcc" }
 	
 	files {
 		"src/**.c",

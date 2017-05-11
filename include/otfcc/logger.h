@@ -30,5 +30,6 @@ typedef struct otfcc_ILogger {
 
 otfcc_ILogger *otfcc_newLogger(otfcc_ILoggerTarget *target);
 otfcc_ILoggerTarget *otfcc_newStdErrTarget();
+otfcc_ILoggerTarget *otfcc_newEmptyTarget();
 
 #endif
