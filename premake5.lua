@@ -125,7 +125,7 @@ project "otfccdump"
 	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc" }
+	links { "libotfcc", "deps" }
 	
 	files {
 		"src/**.c",
@@ -141,7 +141,7 @@ project "otfccbuild"
 	cbuildoptions()
 	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 	
-	links { "libotfcc" }
+	links { "libotfcc", "deps" }
 	
 	files {
 		"src/**.c",
