@@ -109,7 +109,6 @@ project "libotfcc"
 	kind "StaticLib"
 	language "C"
 	cbuildoptions()
-	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
 
 	links { "deps" }
 	includedirs{ "lib" }
@@ -132,7 +131,8 @@ project "otfccdump"
 		"src/**.h"
 	}
 	removefiles {
-		"src/otfccbuild.c"
+		"src/otfccbuild.c",
+		"src/otfccdll.c"
 	}
 
 project "otfccbuild"
@@ -148,5 +148,23 @@ project "otfccbuild"
 		"src/**.h"
 	}
 	removefiles {
-		"src/otfccdump.c"
+		"src/otfccdump.c",
+		"src/otfccdll.c"
+	}
+
+project "otfccdll"
+	kind "SharedLib"
+	language "C"
+	cbuildoptions()
+	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
+
+	links { "libotfcc", "deps" }
+
+	files {
+		"src/**.c",
+		"src/**.h"
+	}
+	removefiles {
+		"src/otfccdump.c",
+		"src/otfccbuild.c"
 	}
