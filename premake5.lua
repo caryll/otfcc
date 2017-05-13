@@ -16,9 +16,11 @@ function cbuildoptions()
 	-- Linux / OSX
 	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar', '-fPIC' }
+		linkoptions  { '-fPIC' }
 		links "m"
 	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar', '-fPIC' }
+		linkoptions  { '-fPIC' }
 		links "m"
 	filter {}
 end
@@ -30,8 +32,10 @@ function externcbuildoptions()
 		buildoptions { '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake or action:xcode4"
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32', '-fPIC' }
+		linkoptions  { '-fPIC' }
 	filter {"system:not windows", "action:ninja"}
 		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32', '-fPIC' }
+		linkoptions  { '-fPIC' }
 	filter {}
 end
 
