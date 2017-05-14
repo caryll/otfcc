@@ -8,11 +8,18 @@
 #define OTFCC_DLL_EXPORT
 #endif
 
-OTFCC_DLL_EXPORT uint8_t *otfccbuild_json_otf(uint32_t inlen, const char *injson, size_t *outlen) {
+OTFCC_DLL_EXPORT uint8_t *otfccbuild_json_otf(uint32_t inlen, const char *injson, uint8_t olevel, bool for_webfont,
+                                              size_t *outlen) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newEmptyTarget());
 	options->logger->indent(options->logger, "otfccbuild");
-	otfcc_Options_optimizeTo(options, 3);
+
+	// optimization levels
+	otfcc_Options_optimizeTo(options, olevel);
+	if (for_webfont) {
+		options->ignore_glyph_order = true;
+		options->force_cid = true;
+	}
 
 	// json parsing
 	json_value *jsonRoot = json_parse(injson, inlen);
