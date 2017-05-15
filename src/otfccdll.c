@@ -8,8 +8,8 @@
 #define OTFCC_DLL_EXPORT
 #endif
 
-OTFCC_DLL_EXPORT uint8_t *otfccbuild_json_otf(uint32_t inlen, const char *injson, uint8_t olevel, bool for_webfont,
-                                              size_t *outlen) {
+OTFCC_DLL_EXPORT caryll_Buffer *otfccbuild_json_otf(uint32_t inlen, const char *injson, uint8_t olevel,
+                                                    bool for_webfont) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newEmptyTarget());
 	options->logger->indent(options->logger, "otfccbuild");
@@ -35,13 +35,18 @@ OTFCC_DLL_EXPORT uint8_t *otfccbuild_json_otf(uint32_t inlen, const char *injson
 	otfcc_iFont.consolidate(font, options);
 	otfcc_IFontSerializer *writer = otfcc_newOTFWriter();
 	caryll_Buffer *otf = (caryll_Buffer *)writer->serialize(font, options);
-	*outlen = buflen(otf);
-	uint8_t *outotf = malloc(*outlen);
-	memcpy(outotf, otf->data, *outlen);
-	buffree(otf), writer->free(writer), otfcc_iFont.free(font);
-	return outotf;
+
+	writer->free(writer);
+	otfcc_iFont.free(font);
+	return otf;
 }
 
-OTFCC_DLL_EXPORT void otfccbuild_free_otfbuf(uint8_t *buf) {
-	free(buf);
+OTFCC_DLL_EXPORT size_t otfcc_get_buf_len(caryll_Buffer *buf) {
+	return buf->size;
+}
+OTFCC_DLL_EXPORT uint8_t *otfcc_get_buf_data(caryll_Buffer *buf) {
+	return buf->data;
+}
+OTFCC_DLL_EXPORT void otfccbuild_free_otfbuf(caryll_Buffer *buf) {
+	buffree(buf);
 }
