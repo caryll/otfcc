@@ -422,7 +422,7 @@ static void statOS_2AverageWidth(otfcc_Font *font, const otfcc_Options *options)
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		totalWidth += font->glyf->items[j]->advanceWidth;
+		if (font->glyf->items[j]->advanceWidth > 0) { totalWidth += font->glyf->items[j]->advanceWidth; }
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->length;
 }

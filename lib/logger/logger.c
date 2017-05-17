@@ -147,3 +147,25 @@ otfcc_ILoggerTarget *otfcc_newStdErrTarget() {
 	target->vtable = VTABLE_STDERR_TARGET;
 	return (otfcc_ILoggerTarget *)target;
 }
+
+// Empty logger target
+
+typedef struct EmptyTarget { otfcc_ILoggerTarget vtable; } EmptyTarget;
+void emptyTargetDispose(otfcc_ILoggerTarget *_self) {
+	StderrTarget *self = (StderrTarget *)_self;
+	if (!self) return;
+	FREE(self);
+}
+
+void emptyTargetPush(otfcc_ILoggerTarget *_self, MOVE sds data) {
+	sdsfree(data);
+}
+
+const otfcc_ILoggerTarget VTABLE_EMPTY_TARGET = {.dispose = emptyTargetDispose, .push = emptyTargetPush};
+
+otfcc_ILoggerTarget *otfcc_newEmptyTarget() {
+	StderrTarget *target;
+	NEW(target);
+	target->vtable = VTABLE_EMPTY_TARGET;
+	return (otfcc_ILoggerTarget *)target;
+}

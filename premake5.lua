@@ -3,7 +3,7 @@ require "dep/premake-modules/ninja"
 
 MAIN_VER = '0'
 SECONDARY_VER = '7'
-PATCH_VER = '0'
+PATCH_VER = '1'
 
 function cbuildoptions()
 	-- Windows
@@ -15,10 +15,12 @@ function cbuildoptions()
 		buildoptions { '/Wall', '-Wextra', '-Wno-unused-parameter', '-Qunused-arguments' }
 	-- Linux / OSX
 	filter "action:gmake or action:xcode4"
-		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar', '-fPIC' }
+		linkoptions  { '-fPIC' }
 		links "m"
 	filter {"system:not windows", "action:ninja"}
-		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar' }
+		buildoptions { '-std=gnu11', '-Wall', '-Wno-multichar', '-fPIC' }
+		linkoptions  { '-fPIC' }
 		links "m"
 	filter {}
 end
@@ -29,9 +31,11 @@ function externcbuildoptions()
 	filter {"system:windows", "action:ninja"}
 		buildoptions { '-Wno-unused-parameter', '-Qunused-arguments' }
 	filter "action:gmake or action:xcode4"
-		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
+		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32', '-fPIC' }
+		linkoptions  { '-fPIC' }
 	filter {"system:not windows", "action:ninja"}
-		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32' }
+		buildoptions { '-std=gnu11', '-Wno-unused-const-variable', '-Wno-shorten-64-to-32', '-fPIC' }
+		linkoptions  { '-fPIC' }
 	filter {}
 end
 
@@ -131,7 +135,8 @@ project "otfccdump"
 		"src/**.h"
 	}
 	removefiles {
-		"src/otfccbuild.c"
+		"src/otfccbuild.c",
+		"src/otfccdll.c"
 	}
 
 project "otfccbuild"
@@ -147,5 +152,23 @@ project "otfccbuild"
 		"src/**.h"
 	}
 	removefiles {
-		"src/otfccdump.c"
+		"src/otfccdump.c",
+		"src/otfccdll.c"
+	}
+
+project "otfccdll"
+	kind "SharedLib"
+	language "C"
+	cbuildoptions()
+	targetdir "bin/%{cfg.buildcfg}-%{cfg.platform}"
+
+	links { "libotfcc", "deps" }
+
+	files {
+		"src/**.c",
+		"src/**.h"
+	}
+	removefiles {
+		"src/otfccdump.c",
+		"src/otfccbuild.c"
 	}
