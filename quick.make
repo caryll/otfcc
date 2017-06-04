@@ -37,7 +37,7 @@ linux-release-x86 : mf-ninja-linux
 # VC does not support debugging well
 # It is used for release versions only
 vc-release-x64 : mf-vs2017
-	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release
+	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release /property:Platform=x64
 vc-release-x86 : mf-vs2017
 	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release /property:Platform=win32
 
