@@ -7,8 +7,8 @@ else
 NINJA_EXEC=../../$(BD_NINJA)
 endif
 
-mf-vs2015 :
-	@$(PREMAKE5) vs2015
+mf-vs2017 :
+	@$(PREMAKE5) vs2017
 mf-gmake :
 	@$(PREMAKE5) gmake
 mf-ninja-windows :
@@ -34,12 +34,12 @@ linux-release-x64 : mf-ninja-linux
 linux-release-x86 : mf-ninja-linux
 	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x86 otfccbuild_release_x86 otfccdll_debug_x86
 
-# Clang-cl does not support debugging well
+# VC does not support debugging well
 # It is used for release versions only
-clang-cl-release-x64 : mf-vs2015
-	@./_vcbuild64.bat /property:Configuration=release
-clang-cl-release-x86 : mf-vs2015
-	@./_vcbuild32.bat /property:Configuration=release /property:Platform=win32
+vc-release-x64 : mf-vs2017
+	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release
+vc-release-x86 : mf-vs2017
+	@./_vc2017.bat build/vs/otfcc.sln /property:Configuration=release /property:Platform=win32
 
 ninja-win-x64 : mf-ninja-windows
 	@./_vcbuildNinja.bat otfccdump_release_x64 otfccbuild_release_x64 otfccdll_release_x64
