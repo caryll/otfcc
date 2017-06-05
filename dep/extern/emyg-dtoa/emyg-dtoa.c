@@ -120,11 +120,11 @@ static inline DiyFp DiyFp_multiply(const DiyFp lhs, const DiyFp rhs) {
 }
 
 static inline DiyFp Normalize(const DiyFp lhs) {
-#if defined(_MSC_VER) && defined(_M_AMD64)
+#if defined(_MSC_VER) && defined(_M_AMD64) && !defined(__clang__)
 	unsigned long index;
 	_BitScanReverse64(&index, lhs.f);
 	return DiyFp_from_parts(lhs.f << (63 - index), lhs.e - (63 - index));
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && !defined(_MSC_VER)
 	int s = __builtin_clzll(lhs.f);
 	return DiyFp_from_parts(lhs.f << s, lhs.e - s);
 #else
@@ -140,7 +140,7 @@ static inline DiyFp Normalize(const DiyFp lhs) {
 }
 
 static inline DiyFp NormalizeBoundary(const DiyFp lhs) {
-#if defined(_MSC_VER) && defined(_M_AMD64)
+#if defined(_MSC_VER) && defined(_M_AMD64) && !defined(__clang__)
 	unsigned long index;
 	_BitScanReverse64(&index, lhs.f);
 	return DiyFp_from_parts(lhs.f << (63 - index), lhs.e - (63 - index));
