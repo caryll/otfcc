@@ -1,6 +1,10 @@
 #include "json-ident.h"
 #include "support/otfcc-alloc.h"
 
+#ifdef _MSC_VER
+#include "winfns.h"
+#endif
+
 static bool compare_json_arrays(const json_value *a, const json_value *b) {
 	for (uint16_t j = 0; j < a->u.array.length; j++) {
 		if (!json_ident(a->u.array.values[j], b->u.array.values[j])) { return false; }

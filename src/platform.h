@@ -9,6 +9,10 @@
 #include <Windows.h>
 #include "getopt.h"
 
+#ifdef _MSC_VER
+#include "winfns.h"
+#endif
+
 int get_argv_utf8(int *argc_ptr, char ***argv_ptr) {
 	int argc;
 	char **argv;

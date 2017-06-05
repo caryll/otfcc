@@ -59,8 +59,10 @@ static const char *headFlagsLabels[] = {"baselineAtY_0",
                                         "fontIsLossless",
                                         "fontIsConverted",
                                         "optimizedForCleartype",
-                                        "lastResortFont"};
-static const char *macStyleLabels[] = {"bold", "italic", "underline", "outline", "shadow", "condensed", "extended"};
+                                        "lastResortFont",
+                                        NULL};
+static const char *macStyleLabels[] = {"bold",   "italic",    "underline", "outline",
+                                       "shadow", "condensed", "extended",  NULL};
 
 void otfcc_dumpHead(const table_head *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
