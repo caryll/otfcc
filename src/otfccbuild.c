@@ -42,7 +42,8 @@ void printHelp() {
 	                "                             used. In this level, these options will be set:\n"
 	                "                               --force-cid\n"
 	                "                               --ignore-glyph-order\n"
-	                " --verbose                 : Show more information when building.\n\n"
+	                " --verbose                 : Show more information when building.\n"
+	                " -q, --quiet               : Be silent when building.\n\n"
 	                " --ignore-hints            : Ignore the hinting information in the input.\n"
 	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
 	                "                             instead of stating the average width of glyphs.\n"
@@ -155,11 +156,12 @@ int main(int argc, char *argv[]) {
 	                            {"dummy-dsig", no_argument, NULL, 's'},
 	                            {"ship", no_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
+	                            {"quiet", no_argument, NULL, 0},
 	                            {"optimize", required_argument, NULL, 'O'},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {0, 0, 0, 0}};
 
-	while ((c = getopt_long(argc, argv, "vhskiO:o:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhqskiO:o:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
@@ -202,6 +204,8 @@ int main(int argc, char *argv[]) {
 					options->dummy_DSIG = true;
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
+				} else if (strcmp(longopts[option_index].name, "quiet") == 0) {
+					options->verbose = true;
 				}
 				break;
 			case 'v':
@@ -222,12 +226,15 @@ int main(int argc, char *argv[]) {
 			case 's':
 				options->dummy_DSIG = true;
 				break;
+			case 'q':
+				options->quiet = true;
+				break;
 			case 'O':
 				otfcc_Options_optimizeTo(options, atoi(optarg));
 				break;
 		}
 	}
-	options->logger->setVerbosity(options->logger, options->verbose ? 0xFF : 1);
+	options->logger->setVerbosity(options->logger, options->quiet ? 0 : options->verbose ? 0xFF : 1);
 	if (show_help) {
 		printInfo();
 		printHelp();
