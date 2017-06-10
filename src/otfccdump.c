@@ -30,7 +30,7 @@ void printHelp() {
 	                " --pretty                : Prettify the output JSON.\n"
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --verbose               : Show more information when building.\n"
-	                " -q, --quiet               : Be silent when building.\n\n"
+	                " -q, --quiet             : Be silent when building.\n\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
