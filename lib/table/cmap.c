@@ -174,7 +174,8 @@ void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Optio
 			} else {
 				key = sdscatprintf(sdsempty(), "U+%04X", item->unicode);
 			}
-			json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
+			json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name),
+			                                                   item->glyph.name));
 			sdsfree(key);
 		}
 		json_object_push(root, "cmap", cmap);
@@ -188,7 +189,8 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
 		loggedStep("cmap") {
 			for (uint32_t j = 0; j < table->u.object.length; j++) {
-				sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+				sds unicodeStr = sdsnewlen(table->u.object.values[j].name,
+				                           table->u.object.values[j].name_length);
 				json_value *item = table->u.object.values[j].value;
 				int32_t unicode;
 				if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
@@ -201,8 +203,8 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 					sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 					if (!otfcc_encodeCmapByName(cmap, unicode, gname)) {
 						glyph_handle *currentMap = otfcc_cmapLookup(cmap, unicode);
-						logWarning("U+%04X is already mapped to %s. Assignment to %s is ignored.", unicode,
-						           currentMap->name, gname);
+						logWarning("U+%04X is already mapped to %s. Assignment to %s is ignored.",
+						           unicode, currentMap->name, gname);
 					}
 				}
 			}
@@ -212,16 +214,16 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 	return cmap;
 }
 // writing tables
-#define FLUSH_SEQUENCE_FORMAT_4                                                                                        \
-	bufwrite16b(endCount, lastUnicodeEnd);                                                                             \
-	bufwrite16b(startCount, lastUnicodeStart);                                                                         \
-	if (isSequencial) {                                                                                                \
-		bufwrite16b(idDelta, lastGIDStart - lastUnicodeStart);                                                         \
-		bufwrite16b(idRangeOffset, 0);                                                                                 \
-	} else {                                                                                                           \
-		bufwrite16b(idDelta, 0);                                                                                       \
-		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                                        \
-	}                                                                                                                  \
+#define FLUSH_SEQUENCE_FORMAT_4                                                                    \
+	bufwrite16b(endCount, lastUnicodeEnd);                                                         \
+	bufwrite16b(startCount, lastUnicodeStart);                                                     \
+	if (isSequencial) {                                                                            \
+		bufwrite16b(idDelta, lastGIDStart - lastUnicodeStart);                                     \
+		bufwrite16b(idRangeOffset, 0);                                                             \
+	} else {                                                                                       \
+		bufwrite16b(idDelta, 0);                                                                   \
+		bufwrite16b(idRangeOffset, lastGlyphIdArrayOffset + 1);                                    \
+	}                                                                                              \
 	segmentsCount += 1;
 
 caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
@@ -250,7 +252,8 @@ caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 			isSequencial = true;
 		} else {
 			if (item->unicode == lastUnicodeEnd + 1 &&
-			    !(item->glyph.index != lastGIDEnd + 1 && isSequencial && lastGIDEnd - lastGIDStart >= 4)) {
+			    !(item->glyph.index != lastGIDEnd + 1 && isSequencial &&
+			      lastGIDEnd - lastGIDStart >= 4)) {
 				if (isSequencial && !(item->glyph.index == lastGIDEnd + 1)) {
 					lastGlyphIdArrayOffset = glyphIdArray->cursor;
 					// oops, sequencial glyphid broken
