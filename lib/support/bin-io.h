@@ -110,6 +110,12 @@ static INLINE uint16_t read_16u(const uint8_t *src) {
 	uint16_t b1 = ((uint16_t)src[1]);
 	return (b0 | b1);
 }
+static INLINE uint32_t read_24u(const uint8_t *src) {
+	uint32_t b0 = ((uint32_t)src[0]) << 16;
+	uint32_t b1 = ((uint32_t)src[1]) << 8;
+	uint32_t b2 = ((uint32_t)src[2]);
+	return (b0 | b1 | b2);
+}
 static INLINE uint32_t read_32u(const uint8_t *src) {
 	uint32_t b0 = ((uint32_t)src[0]) << 24;
 	uint32_t b1 = ((uint32_t)src[1]) << 16;

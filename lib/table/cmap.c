@@ -7,14 +7,26 @@
 
 static INLINE void initCmap(table_cmap *cmap) {
 	cmap->unicodes = NULL;
+	cmap->uvs = NULL;
 }
 static INLINE void disposeCmap(table_cmap *cmap) {
-	cmap_Entry *s, *tmp;
-	HASH_ITER(hh, cmap->unicodes, s, tmp) {
-		// delete and free all cmap entries
-		Handle.dispose(&s->glyph);
-		HASH_DEL(cmap->unicodes, s);
-		FREE(s);
+	{ // Unicode
+		cmap_Entry *s, *tmp;
+		HASH_ITER(hh, cmap->unicodes, s, tmp) {
+			// delete and free all cmap entries
+			Handle.dispose(&s->glyph);
+			HASH_DEL(cmap->unicodes, s);
+			FREE(s);
+		}
+	}
+	{ // UVS
+		cmap_UVS_Entry *s, *tmp;
+		HASH_ITER(hh, cmap->uvs, s, tmp) {
+			// delete and free all cmap entries
+			Handle.dispose(&s->glyph);
+			HASH_DEL(cmap->uvs, s);
+			FREE(s);
+		}
 	}
 }
 caryll_standardRefTypeFn(table_cmap, initCmap, disposeCmap);
@@ -68,13 +80,64 @@ otfcc_GlyphHandle *otfcc_cmapLookup(table_cmap *cmap, int c) {
 	}
 }
 
-caryll_ElementInterfaceOf(table_cmap) table_iCmap = {
-    caryll_standardRefTypeMethods(table_cmap),
-    .encodeByIndex = otfcc_encodeCmapByIndex,
-    .encodeByName = otfcc_encodeCmapByName,
-    .unmap = otfcc_unmapCmap,
-    .lookup = otfcc_cmapLookup,
-};
+bool otfcc_encodeCmapUVSByIndex(table_cmap *cmap, cmap_UVS_key c, uint16_t gid) {
+	cmap_UVS_Entry *s;
+	HASH_FIND(hh, cmap->uvs, &c, sizeof(cmap_UVS_key), s);
+	if (s == NULL) {
+		NEW(s);
+		s->glyph = Handle.fromIndex(gid);
+		s->key = c;
+		HASH_ADD(hh, cmap->uvs, key, sizeof(cmap_UVS_key), s);
+		return true;
+	} else {
+		return false;
+	}
+}
+bool otfcc_encodeCmapUVSByName(table_cmap *cmap, cmap_UVS_key c, sds name) {
+	cmap_UVS_Entry *s;
+	HASH_FIND(hh, cmap->uvs, &c, sizeof(cmap_UVS_key), s);
+	if (s == NULL) {
+		NEW(s);
+		s->glyph = Handle.fromName(name);
+		s->key = c;
+		HASH_ADD(hh, cmap->uvs, key, sizeof(cmap_UVS_key), s);
+		return true;
+	} else {
+		return false;
+	}
+}
+bool otfcc_unmapCmapUVS(table_cmap *cmap, cmap_UVS_key c) {
+	cmap_Entry *s;
+	HASH_FIND(hh, cmap->uvs, &c, sizeof(cmap_UVS_key), s);
+	if (s) {
+		Handle.dispose(&s->glyph);
+		HASH_DEL(cmap->uvs, s);
+		FREE(s);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+otfcc_GlyphHandle *otfcc_cmapLookupUVS(table_cmap *cmap, cmap_UVS_key c) {
+	cmap_Entry *s;
+	HASH_FIND(hh, cmap->uvs, &c, sizeof(cmap_UVS_key), s);
+	if (s) {
+		return &(s->glyph);
+	} else {
+		return NULL;
+	}
+}
+
+caryll_ElementInterfaceOf(table_cmap) table_iCmap = {caryll_standardRefTypeMethods(table_cmap),
+                                                     .encodeByIndex = otfcc_encodeCmapByIndex,
+                                                     .encodeByName = otfcc_encodeCmapByName,
+                                                     .unmap = otfcc_unmapCmap,
+                                                     .lookup = otfcc_cmapLookup,
+                                                     .encodeUVSByIndex = otfcc_encodeCmapUVSByIndex,
+                                                     .encodeUVSByName = otfcc_encodeCmapUVSByName,
+                                                     .unmapUVS = otfcc_unmapCmapUVS,
+                                                     .lookupUVS = otfcc_cmapLookupUVS};
 
 // PART II, reading and writing
 
@@ -117,6 +180,59 @@ static void readFormat4(font_file_pointer start, uint32_t lengthLimit, table_cma
 		}
 	}
 }
+static void readUVSDefault(font_file_pointer start, uint32_t lengthLimit, unicode_t selector,
+                           table_cmap *cmap) {
+	if (lengthLimit < 4) return;
+	uint32_t numUnicodeValueRanges = read_32u(start);
+	if (lengthLimit < 4 + 4 * numUnicodeValueRanges) return;
+	for (uint32_t j = 0; j < numUnicodeValueRanges; j++) {
+		font_file_pointer vsr = start + 4 + 4 * j;
+		unicode_t startUnicodeValue = read_24u(vsr);
+		uint8_t additionalCount = read_8u(vsr + 3);
+		for (unicode_t u = startUnicodeValue; u <= startUnicodeValue + additionalCount; u++) {
+			otfcc_GlyphHandle *g = table_iCmap.lookup(cmap, (int)u);
+			if (!g) continue;
+			table_iCmap.encodeUVSByIndex(cmap, (cmap_UVS_key){.unicode = u, .selector = selector},
+			                             g->index);
+		}
+	}
+}
+static void readUVSNonDefault(font_file_pointer start, uint32_t lengthLimit, unicode_t selector,
+                              table_cmap *cmap) {
+	if (lengthLimit < 4) return;
+	uint32_t numUVSMappings = read_32u(start);
+	if (lengthLimit < 4 + 5 * numUVSMappings) return;
+	for (uint32_t j = 0; j < numUVSMappings; j++) {
+		font_file_pointer vsr = start + 4 + 5 * j;
+		unicode_t unicodeValue = read_24u(vsr);
+		glyphid_t glyphID = read_16u(vsr + 3);
+		table_iCmap.encodeUVSByIndex(
+		    cmap, (cmap_UVS_key){.unicode = unicodeValue, .selector = selector}, glyphID);
+	}
+}
+static void readFormat14(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
+	if (lengthLimit < 10) return;
+	uint32_t nGroups = read_32u(start + 6);
+	if (lengthLimit < 11 + 11 * nGroups) return;
+	fprintf(stderr, "UVS: %d selectors\n", nGroups);
+	for (uint32_t j = 0; j < nGroups; j++) {
+		font_file_pointer vsr = start + 10 + 11 * j;
+		unicode_t selector = read_24u(vsr);
+		uint32_t defaultUVSOffset = read_32u(vsr + 3);
+		uint32_t nonDefaultUVSOffset = read_32u(vsr + 7);
+		fprintf(stderr, "Selector = %08x, DOFS = %08x, NDOFS = %08x\n", selector, defaultUVSOffset,
+		        nonDefaultUVSOffset);
+
+		if (defaultUVSOffset) {
+			readUVSDefault(start + defaultUVSOffset, lengthLimit - defaultUVSOffset, selector,
+			               cmap);
+		}
+		if (nonDefaultUVSOffset) {
+			readUVSNonDefault(start + nonDefaultUVSOffset, lengthLimit - nonDefaultUVSOffset,
+			                  selector, cmap);
+		}
+	}
+}
 
 static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
 	uint16_t format = read_16u(start);
@@ -127,8 +243,20 @@ static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, 
 	}
 }
 
+static void readCmapMappingTableUVS(font_file_pointer start, uint32_t lengthLimit,
+                                    table_cmap *cmap) {
+	uint16_t format = read_16u(start);
+	if (format == 14) { readFormat14(start, lengthLimit, cmap); }
+}
+
 static int by_unicode(cmap_Entry *a, cmap_Entry *b) {
 	return (a->unicode - b->unicode);
+}
+
+static INLINE bool isValidCmapEncoding(uint16_t platform, uint16_t encoding) {
+	return (platform == 0 && encoding == 3) || (platform == 0 && encoding == 4) ||
+	       (platform == 0 && encoding == 5) || (platform == 3 && encoding == 1) ||
+	       (platform == 3 && encoding == 10);
 }
 
 // OTFCC will not support all `cmap` mappings.
@@ -143,16 +271,27 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 		cmap = table_iCmap.create(); // intialize to empty hashtable
 		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
+
+		// step 1 : read format 4 and 12
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = read_16u(data + 4 + 8 * j);
 			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
-			if ((platform == 0 && encoding == 3) || (platform == 0 && encoding == 4) ||
-			    (platform == 3 && encoding == 1) || (platform == 3 && encoding == 10)) {
-				uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
-				readCmapMappingTable(data + tableOffset, length - tableOffset, cmap);
-			}
+			if (!isValidCmapEncoding(platform, encoding)) continue;
+
+			uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
+			readCmapMappingTable(data + tableOffset, length - tableOffset, cmap);
 		};
 		HASH_SORT(cmap->unicodes, by_unicode);
+
+		// step2 : read format 14
+		for (uint16_t j = 0; j < numTables; j++) {
+			uint16_t platform = read_16u(data + 4 + 8 * j);
+			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
+			if (!isValidCmapEncoding(platform, encoding)) continue;
+
+			uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
+			readCmapMappingTableUVS(data + tableOffset, length - tableOffset, cmap);
+		};
 		return cmap;
 
 	CMAP_CORRUPTED:
@@ -165,20 +304,65 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 void otfcc_dumpCmap(const table_cmap *table, json_value *root, const otfcc_Options *options) {
 	if (!table) return;
 	loggedStep("cmap") {
-		json_value *cmap = json_object_new(HASH_COUNT(table->unicodes));
-		cmap_Entry *item;
-		foreach_hash(item, table->unicodes) if (item->glyph.name) {
-			sds key;
-			if (options->decimal_cmap) {
-				key = sdsfromlonglong(item->unicode);
-			} else {
-				key = sdscatprintf(sdsempty(), "U+%04X", item->unicode);
+		if (table->unicodes) {
+			json_value *cmap = json_object_new(HASH_COUNT(table->unicodes));
+			cmap_Entry *item;
+			foreach_hash(item, table->unicodes) if (item->glyph.name) {
+				sds key;
+				if (options->decimal_cmap) {
+					key = sdsfromlonglong(item->unicode);
+				} else {
+					key = sdscatprintf(sdsempty(), "U+%04X", item->unicode);
+				}
+				json_object_push(
+				    cmap, key,
+				    json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
+				sdsfree(key);
 			}
-			json_object_push(cmap, key, json_string_new_length((uint32_t)sdslen(item->glyph.name),
-			                                                   item->glyph.name));
-			sdsfree(key);
+			json_object_push(root, "cmap", cmap);
 		}
-		json_object_push(root, "cmap", cmap);
+		if (table->uvs) {
+			json_value *uvs = json_object_new(HASH_COUNT(table->uvs));
+			cmap_UVS_Entry *item;
+			foreach_hash(item, table->uvs) if (item->glyph.name) {
+				sds key;
+				if (options->decimal_cmap) {
+					key = sdscatprintf(sdsempty(), "%d %d", item->key.unicode, item->key.selector);
+				} else {
+					key = sdscatprintf(sdsempty(), "U+%04X U+%04X", item->key.unicode,
+					                   item->key.selector);
+				}
+				json_object_push(
+				    uvs, key,
+				    json_string_new_length((uint32_t)sdslen(item->glyph.name), item->glyph.name));
+				sdsfree(key);
+			}
+			json_object_push(root, "cmap_uvs", uvs);
+		}
+	}
+}
+
+static void parseCmapUnicodes(table_cmap *cmap, const json_value *table,
+                              const otfcc_Options *options) {
+	for (uint32_t j = 0; j < table->u.object.length; j++) {
+		sds unicodeStr =
+		    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		json_value *item = table->u.object.values[j].value;
+		int32_t unicode;
+		if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
+			unicode = strtol(unicodeStr + 2, NULL, 16);
+		} else {
+			unicode = atoi(unicodeStr);
+		}
+		sdsfree(unicodeStr);
+		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
+			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
+			if (!otfcc_encodeCmapByName(cmap, unicode, gname)) {
+				glyph_handle *currentMap = otfcc_cmapLookup(cmap, unicode);
+				logWarning("U+%04X is already mapped to %s. Assignment to %s is ignored.", unicode,
+				           currentMap->name, gname);
+			}
+		}
 	}
 }
 
@@ -188,26 +372,7 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 	json_value *table = NULL;
 	if ((table = json_obj_get_type(root, "cmap", json_object))) {
 		loggedStep("cmap") {
-			for (uint32_t j = 0; j < table->u.object.length; j++) {
-				sds unicodeStr = sdsnewlen(table->u.object.values[j].name,
-				                           table->u.object.values[j].name_length);
-				json_value *item = table->u.object.values[j].value;
-				int32_t unicode;
-				if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
-					unicode = strtol(unicodeStr + 2, NULL, 16);
-				} else {
-					unicode = atoi(unicodeStr);
-				}
-				sdsfree(unicodeStr);
-				if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) {
-					sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
-					if (!otfcc_encodeCmapByName(cmap, unicode, gname)) {
-						glyph_handle *currentMap = otfcc_cmapLookup(cmap, unicode);
-						logWarning("U+%04X is already mapped to %s. Assignment to %s is ignored.",
-						           unicode, currentMap->name, gname);
-					}
-				}
-			}
+			parseCmapUnicodes(cmap, table, options);
 		}
 	}
 	HASH_SORT(cmap->unicodes, by_unicode);
