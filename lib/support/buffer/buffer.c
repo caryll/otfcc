@@ -60,6 +60,18 @@ void bufwrite16b(caryll_Buffer *buf, uint16_t x) {
 	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
 	buf->data[buf->cursor++] = x & 0xFF;
 }
+void bufwrite24l(caryll_Buffer *buf, uint32_t x) {
+	bufbeforewrite(buf, 3);
+	buf->data[buf->cursor++] = x & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 16) & 0xFF;
+}
+void bufwrite24b(caryll_Buffer *buf, uint32_t x) {
+	bufbeforewrite(buf, 3);
+	buf->data[buf->cursor++] = (x >> 16) & 0xFF;
+	buf->data[buf->cursor++] = (x >> 8) & 0xFF;
+	buf->data[buf->cursor++] = x & 0xFF;
+}
 void bufwrite32l(caryll_Buffer *buf, uint32_t x) {
 	bufbeforewrite(buf, 4);
 	buf->data[buf->cursor++] = x & 0xFF;

@@ -172,9 +172,9 @@ void consolidateCmap(otfcc_Font *font, const otfcc_Options *options) {
 		cmap_UVS_Entry *item;
 		foreach_hash(item, font->cmap->uvs) {
 			if (!GlyphOrder.consolidateHandle(font->glyph_order, &item->glyph)) {
-				logWarning(
-				    "[Consolidate] Ignored mapping U+%04X/U+%04X to non-existent glyph /%s.\n",
-				    item->key.unicode, item->key.selector, item->glyph.name);
+				logWarning("[Consolidate] Ignored UVS mapping [U+%04X U+%04X] to non-existent "
+				           "glyph /%s.\n",
+				           item->key.unicode, item->key.selector, item->glyph.name);
 				Handle.dispose(&item->glyph);
 			}
 		}

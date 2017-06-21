@@ -25,6 +25,8 @@ void bufclear(caryll_Buffer *buf);
 void bufwrite8(caryll_Buffer *buf, uint8_t byte);
 void bufwrite16l(caryll_Buffer *buf, uint16_t x);
 void bufwrite16b(caryll_Buffer *buf, uint16_t x);
+void bufwrite24l(caryll_Buffer *buf, uint32_t x);
+void bufwrite24b(caryll_Buffer *buf, uint32_t x);
 void bufwrite32l(caryll_Buffer *buf, uint32_t x);
 void bufwrite32b(caryll_Buffer *buf, uint32_t x);
 void bufwrite64l(caryll_Buffer *buf, uint64_t x);

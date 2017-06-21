@@ -32,12 +32,12 @@ extern caryll_ElementInterfaceOf(table_cmap) {
 	bool (*encodeByIndex)(table_cmap * cmap, int c, uint16_t gid);
 	bool (*encodeByName)(table_cmap * cmap, int c, MOVE sds name);
 	bool (*unmap)(table_cmap * cmap, int c);
-	otfcc_GlyphHandle *(*lookup)(table_cmap * cmap, int c);
+	otfcc_GlyphHandle *(*lookup)(const table_cmap *cmap, int c);
 	// uvs
 	bool (*encodeUVSByIndex)(table_cmap * cmap, cmap_UVS_key c, uint16_t gid);
 	bool (*encodeUVSByName)(table_cmap * cmap, cmap_UVS_key c, MOVE sds name);
 	bool (*unmapUVS)(table_cmap * cmap, cmap_UVS_key c);
-	otfcc_GlyphHandle *(*lookupUVS)(table_cmap * cmap, cmap_UVS_key c);
+	otfcc_GlyphHandle *(*lookupUVS)(const table_cmap *cmap, cmap_UVS_key c);
 }
 table_iCmap;
 
