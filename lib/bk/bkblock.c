@@ -87,6 +87,7 @@ bk_Block *bk_push(bk_Block *b, int type0, ...) {
 }
 
 bk_Block *bk_newBlockFromBuffer(MOVE caryll_Buffer *buf) {
+	if (!buf) return NULL;
 	bk_Block *b = bk_new_Block(bkover);
 	for (size_t j = 0; j < buf->size; j++) {
 		bkblock_pushint(b, b8, buf->data[j]);
@@ -95,6 +96,7 @@ bk_Block *bk_newBlockFromBuffer(MOVE caryll_Buffer *buf) {
 	return b;
 }
 bk_Block *bk_newBlockFromBufferCopy(OBSERVE caryll_Buffer *buf) {
+	if (!buf) return NULL;
 	bk_Block *b = bk_new_Block(bkover);
 	for (size_t j = 0; j < buf->size; j++) {
 		bkblock_pushint(b, b8, buf->data[j]);
@@ -108,7 +110,8 @@ void bk_printBlock(bk_Block *b) {
 	for (uint32_t j = 0; j < b->length; j++) {
 		if (bk_cellIsPointer(b->cells + j)) {
 			if (b->cells[j].p) {
-				fprintf(stderr, "  %3d %p[%d]\n", b->cells[j].t, b->cells[j].p, b->cells[j].p->_index);
+				fprintf(stderr, "  %3d %p[%d]\n", b->cells[j].t, b->cells[j].p,
+				        b->cells[j].p->_index);
 			} else {
 				fprintf(stderr, "  %3d [NULL]\n", b->cells[j].t);
 			}

@@ -45,7 +45,8 @@ static void consolidateGlyphContours(glyf_Glyph *g, const otfcc_Options *options
 	}
 	g->contours.length = nContoursConsolidated;
 }
-static void consolidateGlyphReferences(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *options) {
+static void consolidateGlyphReferences(glyf_Glyph *g, otfcc_Font *font,
+                                       const otfcc_Options *options) {
 	shapeid_t nReferencesConsolidated = 0;
 	shapeid_t skip = 0;
 	for (shapeid_t j = 0; j < g->references.length; j++) {
@@ -113,7 +114,8 @@ static void consolidateGlyphHints(glyf_Glyph *g, const otfcc_Options *options) {
 	FREE(hmap);
 	FREE(vmap);
 }
-static void consolidateFDSelect(fd_handle *h, table_CFF *cff, const otfcc_Options *options, const sds gname) {
+static void consolidateFDSelect(fd_handle *h, table_CFF *cff, const otfcc_Options *options,
+                                const sds gname) {
 	if (!cff || !cff->fdArray || !cff->fdArrayCount) return;
 	// Consolidate fdSelect
 	if (h->state == HANDLE_STATE_INDEX) {
@@ -129,7 +131,8 @@ static void consolidateFDSelect(fd_handle *h, table_CFF *cff, const otfcc_Option
 			}
 		}
 		if (!found) {
-			logWarning("[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", h->name, gname);
+			logWarning("[Consolidate] CID Subfont %s is not defined. (in glyph /%s).\n", h->name,
+			           gname);
 			Handle.dispose(h);
 		}
 	} else if (h->name) {
@@ -159,27 +162,40 @@ void consolidateCmap(otfcc_Font *font, const otfcc_Options *options) {
 		cmap_Entry *item;
 		foreach_hash(item, font->cmap->unicodes) {
 			if (!GlyphOrder.consolidateHandle(font->glyph_order, &item->glyph)) {
-				logWarning("[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n", item->unicode,
-				           item->glyph.name);
+				logWarning("[Consolidate] Ignored mapping U+%04X to non-existent glyph /%s.\n",
+				           item->unicode, item->glyph.name);
+				Handle.dispose(&item->glyph);
+			}
+		}
+	}
+	if (font->glyph_order && font->cmap) {
+		cmap_UVS_Entry *item;
+		foreach_hash(item, font->cmap->uvs) {
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &item->glyph)) {
+				logWarning("[Consolidate] Ignored UVS mapping [U+%04X U+%04X] to non-existent "
+				           "glyph /%s.\n",
+				           item->key.unicode, item->key.selector, item->glyph.name);
 				Handle.dispose(&item->glyph);
 			}
 		}
 	}
 }
 
-typedef bool (*otl_consolidation_function)(otfcc_Font *, table_OTL *, otl_Subtable *, const otfcc_Options *);
+typedef bool (*otl_consolidation_function)(otfcc_Font *, table_OTL *, otl_Subtable *,
+                                           const otfcc_Options *);
 typedef void (*subtable_remover)(otl_Subtable *);
-#define LOOKUP_CONSOLIDATOR(llt, fn, fndel)                                                                            \
+#define LOOKUP_CONSOLIDATOR(llt, fn, fndel)                                                        \
 	__declare_otl_consolidation(llt, fn, (subtable_remover)fndel, font, table, lookup, options);
 
-static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn, subtable_remover fndel,
-                                        otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
-                                        const otfcc_Options *options) {
+static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_function fn,
+                                        subtable_remover fndel, otfcc_Font *font, table_OTL *table,
+                                        otl_Lookup *lookup, const otfcc_Options *options) {
 	if (!lookup || !lookup->subtables.length || lookup->type != type) return;
 	loggedStep("%s", lookup->name) {
 		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
 			if (!lookup->subtables.items[j]) {
-				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j,
+				           lookup->name);
 				continue;
 			}
 			bool subtableRemoved;
@@ -189,31 +205,41 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 			if (subtableRemoved) {
 				fndel(lookup->subtables.items[j]);
 				lookup->subtables.items[j] = NULL;
-				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j, lookup->name);
+				logWarning("[Consolidate] Ignored empty subtable %d of lookup %s.\n", j,
+				           lookup->name);
 			}
 		}
 		tableid_t k = 0;
 		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
-			if (lookup->subtables.items[j]) { lookup->subtables.items[k++] = lookup->subtables.items[j]; }
+			if (lookup->subtables.items[j]) {
+				lookup->subtables.items[k++] = lookup->subtables.items[j];
+			}
 		}
 		lookup->subtables.length = k;
 	}
 }
 
-void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lookup, const otfcc_Options *options) {
+void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lookup,
+                              const otfcc_Options *options) {
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature, iSubtable_gsub_ligature.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature,
+	                    iSubtable_gsub_ligature.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse, iSubtable_gsub_reverse.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_reverse, consolidate_gsub_reverse,
+	                    iSubtable_gsub_reverse.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_single, consolidate_gpos_single, iSubtable_gpos_single.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_pair, consolidate_gpos_pair, iSubtable_gpos_pair.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive, iSubtable_gpos_cursive.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_cursive, consolidate_gpos_cursive,
+	                    iSubtable_gpos_cursive.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gpos_chaining, consolidate_chaining, iSubtable_chaining.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single, iSubtable_gpos_markToSingle.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature, iSubtable_gpos_markToLigature.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToBase, consolidate_mark_to_single,
+	                    iSubtable_gpos_markToSingle.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToMark, consolidate_mark_to_single,
+	                    iSubtable_gpos_markToSingle.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gpos_markToLigature, consolidate_mark_to_ligature,
+	                    iSubtable_gpos_markToLigature.free);
 }
 
 void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
