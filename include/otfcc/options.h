@@ -18,6 +18,7 @@ typedef struct {
 	bool keep_modified_time;
 	bool instr_as_bytes;
 	bool verbose;
+	bool quiet;
 	bool cff_short_vmtx;
 	bool merge_lookups;
 	bool merge_features;

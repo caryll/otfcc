@@ -30,6 +30,7 @@ void printHelp() {
 	                " --pretty                : Prettify the output JSON.\n"
 	                " --ugly                  : Force uglify the output JSON.\n"
 	                " --verbose               : Show more information when building.\n"
+	                " -q, --quiet             : Be silent when building.\n\n"
 	                " --ignore-glyph-order    : Do not export glyph order information.\n"
 	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
 	                " --ignore-hints          : Do not export hinting information.\n"
@@ -68,6 +69,7 @@ int main(int argc, char *argv[]) {
 	                            {"name-by-hash", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
+	                            {"quiet", no_argument, NULL, 0},
 	                            {"add-bom", no_argument, NULL, 0},
 	                            {"no-bom", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
@@ -84,7 +86,7 @@ int main(int argc, char *argv[]) {
 	sds outputPath = NULL;
 	sds inPath = NULL;
 
-	while ((c = getopt_long(argc, argv, "vhpio:n:", longopts, &option_index)) != (-1)) {
+	while ((c = getopt_long(argc, argv, "vhqpio:n:", longopts, &option_index)) != (-1)) {
 		switch (c) {
 			case 0:
 				/* If this option set a flag, do nothing else now. */
@@ -101,6 +103,8 @@ int main(int argc, char *argv[]) {
 					options->ignore_glyph_order = true;
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
+				} else if (strcmp(longopts[option_index].name, "quiet") == 0) {
+					options->quiet = true;
 				} else if (strcmp(longopts[option_index].name, "ignore-hints") == 0) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "decimal-cmap") == 0) {
@@ -133,7 +137,7 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
-	options->logger->setVerbosity(options->logger, options->verbose ? 0xFF : 1);
+	options->logger->setVerbosity(options->logger, options->quiet ? 0 : options->verbose ? 0xFF : 1);
 
 	if (show_help) {
 		printInfo();

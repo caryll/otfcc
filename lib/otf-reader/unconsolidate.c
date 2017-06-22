@@ -177,7 +177,9 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 		cmap_Entry *s;
 		foreach_hash(s, font->cmap->unicodes) if (s->glyph.index > 0) {
 			sds name = NULL;
-			GlyphOrder.nameAField_Shared(aglfn, s->unicode, &name);
+			if (s->unicode > 0 && s->unicode < 0xFFFF) {
+				GlyphOrder.nameAField_Shared(aglfn, s->unicode, &name);
+			}
 			if (name == NULL) {
 				name = sdscatprintf(sdsempty(), "%suni%04X", prefix, s->unicode);
 			} else {
@@ -292,7 +294,8 @@ static void mergeHmtx(otfcc_Font *font) {
 	if (font->hhea && font->hmtx && font->glyf) {
 		uint32_t count_a = font->hhea->numberOfMetrics;
 		for (glyphid_t j = 0; j < font->glyf->length; j++) {
-			font->glyf->items[j]->advanceWidth = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+			font->glyf->items[j]->advanceWidth =
+			    font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
 		}
 	}
 }
@@ -302,9 +305,11 @@ static void mergeVmtx(otfcc_Font *font) {
 	if (font->vhea && font->vmtx && font->glyf) {
 		uint32_t count_a = font->vhea->numOfLongVerMetrics;
 		for (glyphid_t j = 0; j < font->glyf->length; j++) {
-			font->glyf->items[j]->advanceHeight = font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
+			font->glyf->items[j]->advanceHeight =
+			    font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
 			if (j < count_a) {
-				font->glyf->items[j]->verticalOrigin = font->vmtx->metrics[j].tsb + font->glyf->items[j]->stat.yMax;
+				font->glyf->items[j]->verticalOrigin =
+				    font->vmtx->metrics[j].tsb + font->glyf->items[j]->stat.yMax;
 			} else {
 				font->glyf->items[j]->verticalOrigin =
 				    font->vmtx->topSideBearing[j - count_a] + font->glyf->items[j]->stat.yMax;

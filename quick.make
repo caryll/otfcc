@@ -15,6 +15,8 @@ mf-ninja-windows :
 	@$(PREMAKE5) ninja --os=windows
 mf-ninja-linux :
 	@$(PREMAKE5) ninja --os=linux --cc=$(CC)
+mf-ninja-macosx :
+	@$(PREMAKE5) ninja --os=macosx
 
 mingw-debug-x64 : mf-gmake
 	@cd build/gmake && make config=debug_x64
@@ -26,13 +28,22 @@ mingw-release-x86 : mf-gmake
 	@cd build/gmake && make config=release_x86
 
 linux-debug-x64 : mf-ninja-linux
-	@cd build/ninja && $(NINJA_EXEC) otfccdump_debug_x64 otfccbuild_debug_x64 otfccdll_release_x64
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_debug_x64 otfccbuild_debug_x64 otfccdll_debug_x64
 linux-debug-x86 : mf-ninja-linux
-	@cd build/ninja && $(NINJA_EXEC) otfccdump_debug_x86 otfccbuild_debug_x86 otfccdll_release_x86
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_debug_x86 otfccbuild_debug_x86 otfccdll_debug_x86
 linux-release-x64 : mf-ninja-linux
-	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x64 otfccbuild_release_x64 otfccdll_debug_x64
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x64 otfccbuild_release_x64 otfccdll_release_x64
 linux-release-x86 : mf-ninja-linux
-	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x86 otfccbuild_release_x86 otfccdll_debug_x86
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x86 otfccbuild_release_x86 otfccdll_release_x86
+
+macosx-debug-x64 : mf-ninja-macosx
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_debug_x64 otfccbuild_debug_x64 otfccdll_debug_x64
+macosx-debug-x86 : mf-ninja-macosx
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_debug_x86 otfccbuild_debug_x86 otfccdll_debug_x86
+macosx-release-x64 : mf-ninja-macosx
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x64 otfccbuild_release_x64 otfccdll_release_x64
+macosx-release-x86 : mf-ninja-macosx
+	@cd build/ninja && $(NINJA_EXEC) otfccdump_release_x86 otfccbuild_release_x86 otfccdll_release_x86
 
 # VC does not support debugging well
 # It is used for release versions only
@@ -77,7 +88,7 @@ $(TTF_ROUNDTRIP_TARGETS) : ttfroundtriptest-% : tests/payload/%.ttf
 	-@rm build/$(basename $(notdir $<)).1.json build/$(basename $(notdir $<)).2o3.ttf build/$(basename $(notdir $<)).3o3.json build/$(basename $(notdir $<)).4o3.ttf build/$(basename $(notdir $<)).5o3.json
 
 
-CFF_ROUNDTRIP_PAYLOADS = Cormorant-Medium WorkSans-Regular
+CFF_ROUNDTRIP_PAYLOADS = Cormorant-Medium WorkSans-Regular KRName-Regular
 CFF_ROUNDTRIP_PAYLOADS_FJ = WorkSans-Regular kltf-bugfont1
 CFF_ROUNDTRIP_TARGETS = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS),cffroundtriptest-$(f))
 CFF_ROUNDTRIP_TARGETS_FJ = $(foreach f,$(CFF_ROUNDTRIP_PAYLOADS_FJ),cffroundtriptest-fj-$(f))

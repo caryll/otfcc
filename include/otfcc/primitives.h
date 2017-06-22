@@ -15,6 +15,7 @@ typedef uint16_t colorid_t;    // Color index
 typedef uint16_t shapeid_t;    // Shape index
 typedef uint16_t cffsid_t;     // CFF/CFF2 String index
 typedef uint32_t arity_t;      // CFF Arity/Stack depth
+typedef uint32_t unicode_t;    // Unicode
 
 typedef double pos_t;    // Position
 typedef double length_t; // Length

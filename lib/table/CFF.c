@@ -283,7 +283,8 @@ static void callback_draw_lineto(void *_context, double x1, double y1) {
 		context->jPoint += 1;
 	}
 }
-static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2, double x3, double y3) {
+static void callback_draw_curveto(void *_context, double x1, double y1, double x2, double y2,
+                                  double x3, double y3) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
@@ -324,11 +325,22 @@ static void callback_draw_setmask(void *_context, bool isContourMask, bool *mask
 	}
 
 	FREE(maskArray);
-	glyf_iMaskList.push(maskList, mask);
-	if (isContourMask) {
-		context->definedContourMasks += 1;
+	if (maskList->length > 0 &&
+	    maskList->items[maskList->length - 1].contoursBefore == mask.contoursBefore &&
+	    maskList->items[maskList->length - 1].pointsBefore == mask.pointsBefore) {
+		// two masks are stacking together
+		// simply replace maskH and maskV
+		for (shapeid_t j = 0; j < 0x100; j++) {
+			maskList->items[maskList->length - 1].maskH[j] = mask.maskH[j];
+			maskList->items[maskList->length - 1].maskV[j] = mask.maskV[j];
+		}
 	} else {
-		context->definedHintMasks += 1;
+		glyf_iMaskList.push(maskList, mask);
+		if (isContourMask) {
+			context->definedContourMasks += 1;
+		} else {
+			context->definedHintMasks += 1;
+		}
 	}
 }
 
@@ -385,7 +397,8 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	g->fdSelect = Handle.fromIndex(fd);
 
 	// Decide default and nominal width
-	if (context->meta->fdArray && fd < context->meta->fdArrayCount && context->meta->fdArray[fd]->privateDict) {
+	if (context->meta->fdArray && fd < context->meta->fdArrayCount &&
+	    context->meta->fdArray[fd]->privateDict) {
 		bc.defaultWidthX = context->meta->fdArray[fd]->privateDict->defaultWidthX;
 		bc.nominalWidthX = context->meta->fdArray[fd]->privateDict->nominalWidthX;
 	} else if (context->meta->privateDict) {
@@ -404,7 +417,8 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
-	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc, drawPass, options);
+	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
+	                 drawPass, options);
 
 	// Turn deltas into absolute coordinates
 	double cx = 0;
@@ -492,7 +506,9 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 	for (glyphid_t jj = 0; jj < glyf->length; jj++) {
 		glyf_Glyph *g = glyf->items[jj];
 		table_CFF *fd = CFF_;
-		if (fd->fdArray && g->fdSelect.index < fd->fdArrayCount) { fd = fd->fdArray[g->fdSelect.index]; }
+		if (fd->fdArray && g->fdSelect.index < fd->fdArrayCount) {
+			fd = fd->fdArray[g->fdSelect.index];
+		}
 		if (fd->fontMatrix) {
 			pos_t a = qround(head->unitsPerEm * fd->fontMatrix->a);
 			pos_t b = qround(head->unitsPerEm * fd->fontMatrix->b);
@@ -532,10 +548,13 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 		context.meta = table_iCFF.create();
 
 		// Extract data in TOP DICT
-		cff_iDict.parseToCallback(cffFile->top_dict.data, cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
+		cff_iDict.parseToCallback(cffFile->top_dict.data,
+		                          cffFile->top_dict.offset[1] - cffFile->top_dict.offset[0],
 		                          &context, callback_extract_fd);
 
-		if (!context.meta->fontName) { context.meta->fontName = sdsget_cff_sid(391, cffFile->name); }
+		if (!context.meta->fontName) {
+			context.meta->fontName = sdsget_cff_sid(391, cffFile->name);
+		}
 
 		// We have FDArray
 		if (cffFile->font_dict.count) {
@@ -544,9 +563,10 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 			for (tableid_t j = 0; j < context.meta->fdArrayCount; j++) {
 				context.meta->fdArray[j] = table_iCFF.create();
 				context.fdArrayIndex = j;
-				cff_iDict.parseToCallback(cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
-				                          cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
-				                          callback_extract_fd);
+				cff_iDict.parseToCallback(
+				    cffFile->font_dict.data + cffFile->font_dict.offset[j] - 1,
+				    cffFile->font_dict.offset[j + 1] - cffFile->font_dict.offset[j], &context,
+				    callback_extract_fd);
 				if (!context.meta->fdArray[j]->fontName) {
 					context.meta->fdArray[j]->fontName = sdscatprintf(sdsempty(), "_Subfont%d", j);
 				}
@@ -557,7 +577,8 @@ table_CFFAndGlyf otfcc_readCFFAndGlyfTables(const otfcc_Packet packet, const otf
 		// Extract data of outlines
 		context.seed = 0x1234567887654321;
 		if (context.meta->privateDict) {
-			context.seed = (uint64_t)context.meta->privateDict->initialRandomSeed ^ 0x1234567887654321;
+			context.seed =
+			    (uint64_t)context.meta->privateDict->initialRandomSeed ^ 0x1234567887654321;
 		}
 		table_glyf *glyphs = table_iGlyf.createN(cffFile->char_strings.count);
 		context.glyphs = glyphs;
@@ -593,18 +614,25 @@ static json_value *pdToJson(const cff_PrivateDict *pd) {
 	pdDeltaToJson(_pd, "familyOtherBlues", pd->familyOtherBluesCount, pd->familyOtherBlues);
 	pdDeltaToJson(_pd, "stemSnapH", pd->stemSnapHCount, pd->stemSnapH);
 	pdDeltaToJson(_pd, "stemSnapV", pd->stemSnapVCount, pd->stemSnapV);
-	if (pd->blueScale != DEFAULT_BLUE_SCALE) json_object_push(_pd, "blueScale", json_double_new(pd->blueScale));
-	if (pd->blueShift != DEFAULT_BLUE_SHIFT) json_object_push(_pd, "blueShift", json_double_new(pd->blueShift));
-	if (pd->blueFuzz != DEFAULT_BLUE_FUZZ) json_object_push(_pd, "blueFuzz", json_double_new(pd->blueFuzz));
+	if (pd->blueScale != DEFAULT_BLUE_SCALE)
+		json_object_push(_pd, "blueScale", json_double_new(pd->blueScale));
+	if (pd->blueShift != DEFAULT_BLUE_SHIFT)
+		json_object_push(_pd, "blueShift", json_double_new(pd->blueShift));
+	if (pd->blueFuzz != DEFAULT_BLUE_FUZZ)
+		json_object_push(_pd, "blueFuzz", json_double_new(pd->blueFuzz));
 	if (pd->stdHW) json_object_push(_pd, "stdHW", json_double_new(pd->stdHW));
 	if (pd->stdVW) json_object_push(_pd, "stdVW", json_double_new(pd->stdVW));
 	if (pd->forceBold) json_object_push(_pd, "forceBold", json_boolean_new(pd->forceBold));
-	if (pd->languageGroup) json_object_push(_pd, "languageGroup", json_double_new(pd->languageGroup));
+	if (pd->languageGroup)
+		json_object_push(_pd, "languageGroup", json_double_new(pd->languageGroup));
 	if (pd->expansionFactor != DEFAULT_EXPANSION_FACTOR)
 		json_object_push(_pd, "expansionFactor", json_double_new(pd->expansionFactor));
-	if (pd->initialRandomSeed) json_object_push(_pd, "initialRandomSeed", json_double_new(pd->initialRandomSeed));
-	if (pd->defaultWidthX) json_object_push(_pd, "defaultWidthX", json_double_new(pd->defaultWidthX));
-	if (pd->nominalWidthX) json_object_push(_pd, "nominalWidthX", json_double_new(pd->nominalWidthX));
+	if (pd->initialRandomSeed)
+		json_object_push(_pd, "initialRandomSeed", json_double_new(pd->initialRandomSeed));
+	if (pd->defaultWidthX)
+		json_object_push(_pd, "defaultWidthX", json_double_new(pd->defaultWidthX));
+	if (pd->nominalWidthX)
+		json_object_push(_pd, "nominalWidthX", json_double_new(pd->nominalWidthX));
 	return _pd;
 }
 static json_value *fdToJson(const table_CFF *table) {
@@ -620,17 +648,24 @@ static json_value *fdToJson(const table_CFF *table) {
 	if (table->familyName) json_object_push(_CFF_, "familyName", json_from_sds(table->familyName));
 	if (table->weight) json_object_push(_CFF_, "weight", json_from_sds(table->weight));
 
-	if (table->isFixedPitch) json_object_push(_CFF_, "isFixedPitch", json_boolean_new(table->isFixedPitch));
-	if (table->italicAngle) json_object_push(_CFF_, "italicAngle", json_double_new(table->italicAngle));
+	if (table->isFixedPitch)
+		json_object_push(_CFF_, "isFixedPitch", json_boolean_new(table->isFixedPitch));
+	if (table->italicAngle)
+		json_object_push(_CFF_, "italicAngle", json_double_new(table->italicAngle));
 	if (table->underlinePosition != -100)
 		json_object_push(_CFF_, "underlinePosition", json_double_new(table->underlinePosition));
 	if (table->underlineThickness != 50)
 		json_object_push(_CFF_, "underlineThickness", json_double_new(table->underlineThickness));
-	if (table->strokeWidth) json_object_push(_CFF_, "strokeWidth", json_double_new(table->strokeWidth));
-	if (table->fontBBoxLeft) json_object_push(_CFF_, "fontBBoxLeft", json_double_new(table->fontBBoxLeft));
-	if (table->fontBBoxBottom) json_object_push(_CFF_, "fontBBoxBottom", json_double_new(table->fontBBoxBottom));
-	if (table->fontBBoxRight) json_object_push(_CFF_, "fontBBoxRight", json_double_new(table->fontBBoxRight));
-	if (table->fontBBoxTop) json_object_push(_CFF_, "fontBBoxTop", json_double_new(table->fontBBoxTop));
+	if (table->strokeWidth)
+		json_object_push(_CFF_, "strokeWidth", json_double_new(table->strokeWidth));
+	if (table->fontBBoxLeft)
+		json_object_push(_CFF_, "fontBBoxLeft", json_double_new(table->fontBBoxLeft));
+	if (table->fontBBoxBottom)
+		json_object_push(_CFF_, "fontBBoxBottom", json_double_new(table->fontBBoxBottom));
+	if (table->fontBBoxRight)
+		json_object_push(_CFF_, "fontBBoxRight", json_double_new(table->fontBBoxRight));
+	if (table->fontBBoxTop)
+		json_object_push(_CFF_, "fontBBoxTop", json_double_new(table->fontBBoxTop));
 
 	if (table->fontMatrix) {
 		json_value *_fontMatrix = json_object_new(6);
@@ -683,7 +718,8 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 	pdDeltaFromJson(json_obj_get(dump, "blueValues"), &(pd->blueValuesCount), &(pd->blueValues));
 	pdDeltaFromJson(json_obj_get(dump, "otherBlues"), &(pd->otherBluesCount), &(pd->otherBlues));
 	pdDeltaFromJson(json_obj_get(dump, "familyBlues"), &(pd->familyBluesCount), &(pd->familyBlues));
-	pdDeltaFromJson(json_obj_get(dump, "familyOtherBlues"), &(pd->familyOtherBluesCount), &(pd->familyOtherBlues));
+	pdDeltaFromJson(json_obj_get(dump, "familyOtherBlues"), &(pd->familyOtherBluesCount),
+	                &(pd->familyOtherBlues));
 	pdDeltaFromJson(json_obj_get(dump, "stemSnapH"), &(pd->stemSnapHCount), &(pd->stemSnapH));
 	pdDeltaFromJson(json_obj_get(dump, "stemSnapV"), &(pd->stemSnapVCount), &(pd->stemSnapV));
 
@@ -694,7 +730,8 @@ static cff_PrivateDict *pdFromJson(json_value *dump) {
 	pd->stdVW = json_obj_getnum(dump, "stdVW");
 	pd->forceBold = json_obj_getbool(dump, "forceBold");
 	pd->languageGroup = json_obj_getnum(dump, "languageGroup");
-	pd->expansionFactor = json_obj_getnum_fallback(dump, "expansionFactor", DEFAULT_EXPANSION_FACTOR);
+	pd->expansionFactor =
+	    json_obj_getnum_fallback(dump, "expansionFactor", DEFAULT_EXPANSION_FACTOR);
 	pd->initialRandomSeed = json_obj_getnum(dump, "initialRandomSeed");
 	// Not used -- they will be automatically calculated
 	// pd->defaultWidthX = json_obj_getnum(dump, "defaultWidthX");
@@ -761,8 +798,8 @@ static table_CFF *fdFromJson(const json_value *dump, const otfcc_Options *option
 		for (tableid_t j = 0; j < table->fdArrayCount; j++) {
 			table->fdArray[j] = fdFromJson(fdarraydump->u.object.values[j].value, options, false);
 			if (table->fdArray[j]->fontName) { sdsfree(table->fdArray[j]->fontName); }
-			table->fdArray[j]->fontName =
-			    sdsnewlen(fdarraydump->u.object.values[j].name, fdarraydump->u.object.values[j].name_length);
+			table->fdArray[j]->fontName = sdsnewlen(fdarraydump->u.object.values[j].name,
+			                                        fdarraydump->u.object.values[j].name_length);
 		}
 	}
 	if (!table->fontName) table->fontName = sdsnew("CARYLL_CFFFONT");
@@ -807,12 +844,12 @@ typedef struct {
 	caryll_Buffer *subroutines;
 } cff_charStringAndSubrs;
 
-static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_Buffer **s, caryll_Buffer **gs,
-                                 caryll_Buffer **ls) {
+static void cff_make_charstrings(cff_charstring_builder_context *context, caryll_Buffer **s,
+                                 caryll_Buffer **gs, caryll_Buffer **ls) {
 	if (context->glyf->length == 0) { return; }
 	for (glyphid_t j = 0; j < context->glyf->length; j++) {
-		cff_CharstringIL *il =
-		    cff_compileGlyphToIL(context->glyf->items[j], context->defaultWidth, context->nominalWidthX);
+		cff_CharstringIL *il = cff_compileGlyphToIL(context->glyf->items[j], context->defaultWidth,
+		                                            context->nominalWidthX);
 		cff_optimizeIL(il, context->options);
 		cff_insertILToGraph(&context->graph, il);
 		FREE(il->instr);
@@ -873,7 +910,8 @@ static void cffdict_input(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t
 	}
 	va_end(ap);
 }
-static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t arity, double *arr) {
+static void cffdict_input_array(cff_Dict *dict, uint32_t op, cff_Value_Type t, arity_t arity,
+                                double *arr) {
 	if (!arity || !arr) return;
 	cff_DictEntry *last = cffdict_givemeablank(dict);
 	last->op = op;
@@ -900,8 +938,8 @@ static cff_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	cff_Dict *dict = cff_iDict.create();
 	// ROS
 	if (fd->cidRegistry && fd->cidOrdering) {
-		cffdict_input(dict, op_ROS, cff_INTEGER, 3, sidof(h, fd->cidRegistry), sidof(h, fd->cidOrdering),
-		              fd->cidSupplement);
+		cffdict_input(dict, op_ROS, cff_INTEGER, 3, sidof(h, fd->cidRegistry),
+		              sidof(h, fd->cidOrdering), fd->cidSupplement);
 	}
 
 	// CFF Names
@@ -909,26 +947,29 @@ static cff_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	if (fd->notice) cffdict_input(dict, op_Notice, cff_INTEGER, 1, sidof(h, fd->notice));
 	if (fd->copyright) cffdict_input(dict, op_Copyright, cff_INTEGER, 1, sidof(h, fd->copyright));
 	if (fd->fullName) cffdict_input(dict, op_FullName, cff_INTEGER, 1, sidof(h, fd->fullName));
-	if (fd->familyName) cffdict_input(dict, op_FamilyName, cff_INTEGER, 1, sidof(h, fd->familyName));
+	if (fd->familyName)
+		cffdict_input(dict, op_FamilyName, cff_INTEGER, 1, sidof(h, fd->familyName));
 	if (fd->weight) cffdict_input(dict, op_Weight, cff_INTEGER, 1, sidof(h, fd->weight));
 
 	// CFF Metrics
-	cffdict_input(dict, op_FontBBox, cff_DOUBLE, 4, fd->fontBBoxLeft, fd->fontBBoxBottom, fd->fontBBoxRight,
-	              fd->fontBBoxTop);
+	cffdict_input(dict, op_FontBBox, cff_DOUBLE, 4, fd->fontBBoxLeft, fd->fontBBoxBottom,
+	              fd->fontBBoxRight, fd->fontBBoxTop);
 	cffdict_input(dict, op_isFixedPitch, cff_INTEGER, 1, (int)fd->isFixedPitch);
 	cffdict_input(dict, op_ItalicAngle, cff_DOUBLE, 1, fd->italicAngle);
 	cffdict_input(dict, op_UnderlinePosition, cff_DOUBLE, 1, fd->underlinePosition);
 	cffdict_input(dict, op_UnderlineThickness, cff_DOUBLE, 1, fd->underlineThickness);
 	cffdict_input(dict, op_StrokeWidth, cff_DOUBLE, 1, fd->strokeWidth);
 	if (fd->fontMatrix) {
-		cffdict_input(dict, op_FontMatrix, cff_DOUBLE, 6, fd->fontMatrix->a, fd->fontMatrix->b, fd->fontMatrix->c,
-		              fd->fontMatrix->d, fd->fontMatrix->x, fd->fontMatrix->y);
+		cffdict_input(dict, op_FontMatrix, cff_DOUBLE, 6, fd->fontMatrix->a, fd->fontMatrix->b,
+		              fd->fontMatrix->c, fd->fontMatrix->d, fd->fontMatrix->x, fd->fontMatrix->y);
 	}
 
 	// CID specific
 	if (fd->fontName) cffdict_input(dict, op_FontName, cff_INTEGER, 1, sidof(h, fd->fontName));
-	if (fd->cidFontVersion) cffdict_input(dict, op_CIDFontVersion, cff_DOUBLE, 1, fd->cidFontVersion);
-	if (fd->cidFontRevision) cffdict_input(dict, op_CIDFontRevision, cff_DOUBLE, 1, fd->cidFontRevision);
+	if (fd->cidFontVersion)
+		cffdict_input(dict, op_CIDFontVersion, cff_DOUBLE, 1, fd->cidFontVersion);
+	if (fd->cidFontRevision)
+		cffdict_input(dict, op_CIDFontRevision, cff_DOUBLE, 1, fd->cidFontRevision);
 	if (fd->cidCount) cffdict_input(dict, op_CIDCount, cff_INTEGER, 1, fd->cidCount);
 	if (fd->UIDBase) cffdict_input(dict, op_UIDBase, cff_INTEGER, 1, fd->UIDBase);
 	return dict;
@@ -942,7 +983,8 @@ static cff_Dict *cff_make_private_dict(cff_PrivateDict *pd) {
 	cffdict_input_array(dict, op_BlueValues, cff_DOUBLE, pd->blueValuesCount, pd->blueValues);
 	cffdict_input_array(dict, op_OtherBlues, cff_DOUBLE, pd->otherBluesCount, pd->otherBlues);
 	cffdict_input_array(dict, op_FamilyBlues, cff_DOUBLE, pd->familyBluesCount, pd->familyBlues);
-	cffdict_input_array(dict, op_FamilyOtherBlues, cff_DOUBLE, pd->familyOtherBluesCount, pd->familyOtherBlues);
+	cffdict_input_array(dict, op_FamilyOtherBlues, cff_DOUBLE, pd->familyOtherBluesCount,
+	                    pd->familyOtherBlues);
 	cffdict_input_array(dict, op_StemSnapH, cff_DOUBLE, pd->stemSnapHCount, pd->stemSnapH);
 	cffdict_input_array(dict, op_StemSnapV, cff_DOUBLE, pd->stemSnapVCount, pd->stemSnapV);
 
@@ -1015,7 +1057,8 @@ static caryll_Buffer *cff_compile_nameindex(table_CFF *cff) {
 	return buf;
 }
 
-static caryll_Buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf, cff_sid_entry **stringHash) {
+static caryll_Buffer *cff_make_charset(table_CFF *cff, table_glyf *glyf,
+                                       cff_sid_entry **stringHash) {
 	cff_Charset *charset;
 	NEW(charset);
 	if (glyf->length > 1) { // At least two glyphs
@@ -1101,7 +1144,8 @@ static caryll_Buffer *callback_makefd(void *_context, uint32_t i) {
 	cff_iDict.build(fd);
 	return blob;
 }
-static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray, cff_sid_entry **stringHash) {
+static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray,
+                                   cff_sid_entry **stringHash) {
 	fdarray_compile_context context;
 	context.fdArray = fdArray;
 	context.stringHash = stringHash;
@@ -1109,7 +1153,8 @@ static cff_Index *cff_make_fdarray(tableid_t fdArrayCount, table_CFF **fdArray, 
 	return cff_iIndex.fromCallback(&context, fdArrayCount, callback_makefd);
 }
 
-static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const otfcc_Options *options) {
+static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf,
+                                        const otfcc_Options *options) {
 	caryll_Buffer *blob = bufnew();
 	// The Strings hashtable
 	cff_sid_entry *stringHash = NULL;
@@ -1183,7 +1228,8 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf, const 
 	bufwrite_bufdel(blob, bufninit(11, 0, 1,   // top dict index headerone item
 	                               4,          // four bytes per offset
 	                               0, 0, 0, 1, // offset 1
-	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff, (delta_size >> 8) & 0xff,
+	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff,
+	                               (delta_size >> 8) & 0xff,
 	                               delta_size & 0xff) // offset 2
 	                );
 
