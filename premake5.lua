@@ -2,8 +2,8 @@ require "dep/premake-modules/xcode-alt"
 require "dep/premake-modules/ninja"
 
 MAIN_VER = '0'
-SECONDARY_VER = '7'
-PATCH_VER = '2'
+SECONDARY_VER = '8'
+PATCH_VER = '0'
 
 function cbuildoptions()
 	-- Windows
