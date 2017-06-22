@@ -437,7 +437,7 @@ table_cmap *otfcc_parseCmap(const json_value *root, const otfcc_Options *options
 	}                                                                                              \
 	segmentsCount += 1;
 
-caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
+static caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 	caryll_Buffer *buf = bufnew();
 	caryll_Buffer *endCount = bufnew();
 	caryll_Buffer *startCount = bufnew();
@@ -537,7 +537,8 @@ caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 	buffree(glyphIdArray);
 	return buf;
 }
-caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
+
+static caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 12);
 	bufwrite16b(buf, 0);
@@ -668,45 +669,36 @@ static caryll_Buffer *otfcc_buildCmap_format14(const table_cmap *cmap) {
 		nSelectors++;
 	}
 
-	caryll_Buffer *stb = bufnew();
-	bufwrite16b(stb, 14);         // format
-	bufwrite32b(stb, 0);          // length -- fill later
-	bufwrite32b(stb, nSelectors); // length -- fill later
-
-	caryll_Buffer *bbody = bufnew();
-	uint32_t lastOffset = 0;
-	uint32_t offsetShift = 10 + 11 * nSelectors;
+	bk_Block *st = bk_new_Block(b16, 14,         // format
+	                            b32, 0,          // length -- fill later
+	                            b32, nSelectors, // selector quantity
+	                            bkover);
 
 	for (unicode_t selector = 0; selector < MAX_UNICODE; selector++) {
 		if (!validSelectors[selector]) continue;
 		caryll_Buffer *dflt = bufnew();
 		caryll_Buffer *nondflt = bufnew();
 		uint8_t results = buildFormat14ForSelector(cmap, selector, dflt, nondflt);
-		bufwrite24b(stb, selector);
-		if (results & HAS_DEFAULT) {
-			bufwrite32b(stb, lastOffset + offsetShift);
-			lastOffset += buflen(dflt);
-			bufwrite_bufdel(bbody, dflt);
-		} else {
+		if (!(results & HAS_DEFAULT)) {
 			buffree(dflt);
-			bufwrite32b(stb, 0);
+			dflt = NULL;
 		}
-		if (results & HAS_NON_DEFAULT) {
-			bufwrite32b(stb, lastOffset + offsetShift);
-			lastOffset += buflen(nondflt);
-			bufwrite_bufdel(bbody, nondflt);
-		} else {
+		if (!(results & HAS_NON_DEFAULT)) {
 			buffree(nondflt);
-			bufwrite32b(stb, 0);
+			nondflt = NULL;
 		}
+		bk_push(st, b8, (selector >> 16) & 0xFF,     // selector, first byte
+		        b8, (selector >> 8) & 0xFF,          // selector, first byte
+		        b8, (selector >> 0) & 0xFF,          // selector, first byte
+		        p32, bk_newBlockFromBuffer(dflt),    // default offset
+		        p32, bk_newBlockFromBuffer(nondflt), // non-default offset
+		        bkover);
 	}
-	bufwrite_bufdel(stb, bbody);
 
-	// write back length
-	bufseek(stb, 2);
-	bufwrite32b(stb, (uint32_t)buflen(stb));
-	FREE(validSelectors);
-	return stb;
+	caryll_Buffer *buf = bk_build_Block(st);
+	bufseek(buf, 2);
+	bufwrite32b(buf, (uint32_t)buflen(buf));
+	return buf;
 }
 
 caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *options) {
@@ -714,11 +706,12 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 
 	cmap_Entry *entry;
 	bool hasSMP = false;
+	bool hasUVS = cmap->uvs && (HASH_COUNT(cmap->uvs) > 0);
 	foreach_hash(entry, cmap->unicodes) {
 		if (entry->unicode > 0xFFFF) { hasSMP = true; }
 	}
 	uint8_t nTables = hasSMP ? 4 : 2;
-	if (cmap->uvs) nTables += 1;
+	if (hasUVS) nTables += 1;
 
 	caryll_Buffer *format4;
 	if (!hasSMP || !options->stub_cmap4) {
@@ -759,13 +752,12 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 		        p32, bk_newBlockFromBufferCopy(format12), // table
 		        bkover);
 	}
-	if (cmap->uvs) {
+	if (hasUVS) {
 		caryll_Buffer *format14 = otfcc_buildCmap_format14(cmap);
-		bk_push(root, b16, 0,                             // Unicode
-		        b16, 5,                                   // Variation
-		        p32, bk_newBlockFromBufferCopy(format14), // table
+		bk_push(root, b16, 0,                         // Unicode
+		        b16, 5,                               // Variation
+		        p32, bk_newBlockFromBuffer(format14), // table
 		        bkover);
-		buffree(format14);
 	}
 	bk_push(root, b16, 3,                            // Windows
 	        b16, 1,                                  // Unicode BMP
