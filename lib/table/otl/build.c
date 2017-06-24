@@ -1,7 +1,9 @@
 #include "private.h"
 
-static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
-                                        const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
+static tableid_t _declare_lookup_writer(otl_LookupType type,
+                                        caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
+                                        const otl_Lookup *lookup, caryll_Buffer ***subtables,
+                                        size_t *lastOffset) {
 	if (lookup->type == type) {
 		NEW(*subtables, lookup->subtables.length);
 		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
@@ -14,10 +16,11 @@ static tableid_t _declare_lookup_writer(otl_LookupType type, caryll_Buffer *(*fn
 	return 0;
 }
 
-#define LOOKUP_WRITER(type, fn)                                                                                        \
+#define LOOKUP_WRITER(type, fn)                                                                    \
 	if (!written) written = _declare_lookup_writer(type, fn, lookup, subtables, lastOffset);
 
-static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables, size_t *lastOffset) {
+static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables,
+                               size_t *lastOffset) {
 	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
 		return otfcc_classifiedBuildChaining(lookup, subtables, lastOffset);
 	}
@@ -40,7 +43,8 @@ static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtab
 // When writing lookups, otfcc will try to maintain everything correctly.
 // That is, we will use extended layout lookups automatically when the
 // offsets are too large.
-static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *options, const char *tag) {
+static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *options,
+                                 const char *tag) {
 	caryll_Buffer ***subtables;
 	NEW(subtables, table->lookups.length);
 	tableid_t *subtableQuantity;
@@ -49,7 +53,8 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
 		otl_Lookup *lookup = table->lookups.items[j];
-		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j, (uint32_t)table->lookups.length);
+		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j,
+		            (uint32_t)table->lookups.length);
 		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
 	}
 
@@ -68,18 +73,20 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	                              bkover);
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
 		if (!subtableQuantity[j]) {
-			logNotice("Lookup %s not written.\n", table->lookups.items[j]->name);
-			continue;
+			logNotice("Lookup %s is empty.\n", table->lookups.items[j]->name);
 		}
 		otl_Lookup *lookup = table->lookups.items[j];
 		uint16_t lookupType =
 		    useExtended
 		        ? (lookup->type > otl_type_gpos_unknown
 		               ? otl_type_gpos_extend - otl_type_gpos_unknown
-		               : lookup->type > otl_type_gsub_unknown ? otl_type_gsub_extend - otl_type_gsub_unknown : 0)
+		               : lookup->type > otl_type_gsub_unknown
+		                     ? otl_type_gsub_extend - otl_type_gsub_unknown
+		                     : 0)
 		        : (lookup->type > otl_type_gpos_unknown
 		               ? lookup->type - otl_type_gpos_unknown
-		               : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0);
+		               : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown
+		                                                      : 0);
 
 		bk_Block *blk = bk_new_Block(b16, lookupType,          // LookupType
 		                             b16, lookup->flags,       // LookupFlag
@@ -87,15 +94,17 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		                             bkover);
 		for (tableid_t k = 0; k < subtableQuantity[j]; k++) {
 			if (useExtended) {
-				uint16_t extensionLookupType =
-				    lookup->type > otl_type_gpos_unknown
-				        ? lookup->type - otl_type_gpos_unknown
-				        : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown : 0;
+				uint16_t extensionLookupType = lookup->type > otl_type_gpos_unknown
+				                                   ? lookup->type - otl_type_gpos_unknown
+				                                   : lookup->type > otl_type_gsub_unknown
+				                                         ? lookup->type - otl_type_gsub_unknown
+				                                         : 0;
 
-				bk_Block *stub = bk_new_Block(b16, 1,                                      // format
-				                              b16, extensionLookupType,                    // ExtensionLookupType
-				                              p32, bk_newBlockFromBuffer(subtables[j][k]), // ExtensionOffset
-				                              bkover);
+				bk_Block *stub =
+				    bk_new_Block(b16, 1,                                      // format
+				                 b16, extensionLookupType,                    // ExtensionLookupType
+				                 p32, bk_newBlockFromBuffer(subtables[j][k]), // ExtensionOffset
+				                 bkover);
 				bk_push(blk, p16, stub, bkover);
 			} else {
 				bk_push(blk, p16, bk_newBlockFromBuffer(subtables[j][k]), bkover);
@@ -173,10 +182,11 @@ static tableid_t featureIndex(const otl_Feature *feature, const table_OTL *table
 }
 static bk_Block *writeLanguage(otl_LanguageSystem *lang, const table_OTL *table) {
 	if (!lang) return NULL;
-	bk_Block *root = bk_new_Block(p16, NULL,                                       // LookupOrder
-	                              b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
-	                              b16, lang->features.length,                      // FeatureCount
-	                              bkover);
+	bk_Block *root =
+	    bk_new_Block(p16, NULL,                                       // LookupOrder
+	                 b16, featureIndex(lang->requiredFeature, table), // ReqFeatureIndex
+	                 b16, lang->features.length,                      // FeatureCount
+	                 bkover);
 	for (tableid_t k = 0; k < lang->features.length; k++) {
 		bk_push(root, b16, featureIndex(lang->features.items[k], table), bkover);
 	}
@@ -203,7 +213,8 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 	for (tableid_t j = 0; j < table->languages.length; j++) {
 		otl_LanguageSystem *language = table->languages.items[j];
 		sds scriptTag = sdsnewlen(language->name, 4);
-		bool isDefault = strncmp(language->name + 5, "DFLT", 4) == 0 || strncmp(language->name + 5, "dflt", 4) == 0;
+		bool isDefault = strncmp(language->name + 5, "DFLT", 4) == 0 ||
+		                 strncmp(language->name + 5, "dflt", 4) == 0;
 
 		script_stat_hash *s = NULL;
 		HASH_FIND_STR(h, scriptTag, s);
@@ -246,7 +257,8 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 	return root;
 }
 
-caryll_Buffer *otfcc_buildOtl(const table_OTL *table, const otfcc_Options *options, const char *tag) {
+caryll_Buffer *otfcc_buildOtl(const table_OTL *table, const otfcc_Options *options,
+                              const char *tag) {
 	caryll_Buffer *buf;
 	loggedStep("%s", tag) {
 		bk_Block *lookups = writeOTLLookups(table, options, tag);
