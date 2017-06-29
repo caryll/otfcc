@@ -71,6 +71,11 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		nCompositePoints += thatstat.nCompositePoints;
 		nCompositeContours += thatstat.nCompositeContours;
 	}
+	// deal with space glyphs
+	if (xmin > xmax) xmin = xmax = 0;
+	if (ymin > ymax) ymin = ymax = 0;
+
+	// write back
 	stat.xMin = xmin;
 	stat.xMax = xmax;
 	stat.yMin = ymin;
