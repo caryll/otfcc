@@ -46,6 +46,7 @@ void otfcc_dumpVhea(const table_vhea *table, json_value *root, const otfcc_Optio
 	if (!table) return;
 	json_value *vhea = json_object_new(11);
 	loggedStep("vhea") {
+		json_object_push(vhea, "version", json_double_new(otfcc_from_fixed(table->version)));
 		json_object_push(vhea, "ascent", json_integer_new(table->ascent));
 		json_object_push(vhea, "descent", json_integer_new(table->descent));
 		json_object_push(vhea, "lineGap", json_integer_new(table->lineGap));
@@ -67,6 +68,7 @@ table_vhea *otfcc_parseVhea(const json_value *root, const otfcc_Options *options
 		vhea = table_iVhea.create();
 		if (!vhea) return NULL;
 		loggedStep("vhea") {
+			vhea->version = otfcc_to_fixed(json_obj_getnum(table, "version"));
 			vhea->ascent = json_obj_getnum_fallback(table, "ascent", 0);
 			vhea->descent = json_obj_getnum_fallback(table, "descent", 0);
 			vhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);
