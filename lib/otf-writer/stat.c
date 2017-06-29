@@ -1,6 +1,7 @@
 #include "stat.h"
 
 #include <time.h>
+#include <float.h>
 #include "support/util.h"
 
 // Stating
@@ -8,25 +9,27 @@
 
 typedef enum { stat_not_started = 0, stat_doing = 1, stat_completed = 2 } stat_status;
 
-glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr, stat_status *stated, uint8_t depth,
-                                 glyphid_t topj, const otfcc_Options *options) {
+glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
+                                 stat_status *stated, uint8_t depth, glyphid_t topj,
+                                 const otfcc_Options *options) {
 	glyf_GlyphStat stat = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 	glyphid_t j = gr->glyph.index;
 	if (depth >= 0xFF) return stat;
 	if (stated[j] == stat_doing) {
 		// We have a circular reference
-		logWarning("[Stat] Circular glyph reference found in gid %d to gid %d. The reference will be dropped.\n", topj,
-		           j);
+		logWarning("[Stat] Circular glyph reference found in gid %d to gid %d. The reference will "
+		           "be dropped.\n",
+		           topj, j);
 		stated[j] = stat_completed;
 		return stat;
 	}
 
 	glyf_Glyph *g = table->items[gr->glyph.index];
 	stated[j] = stat_doing;
-	pos_t xmin = 0xFFFFFFFF;
-	pos_t xmax = -0xFFFFFFFF;
-	pos_t ymin = 0xFFFFFFFF;
-	pos_t ymax = -0xFFFFFFFF;
+	pos_t xmin = POS_MAX;
+	pos_t xmax = -POS_MAX;
+	pos_t ymin = POS_MAX;
+	pos_t ymax = -POS_MAX;
 	uint16_t nestDepth = 0;
 	uint16_t nPoints = 0;
 	uint16_t nCompositePoints = 0;
@@ -125,8 +128,10 @@ void statMaxp(otfcc_Font *font) {
 			if (g->stat.nPoints > nPoints) nPoints = g->stat.nPoints;
 			if (g->stat.nContours > nContours) nContours = g->stat.nContours;
 		} else if (g->references.length > 0) {
-			if (g->stat.nCompositePoints > nCompositePoints) nCompositePoints = g->stat.nCompositePoints;
-			if (g->stat.nCompositeContours > nCompositeContours) nCompositeContours = g->stat.nCompositeContours;
+			if (g->stat.nCompositePoints > nCompositePoints)
+				nCompositePoints = g->stat.nCompositePoints;
+			if (g->stat.nCompositeContours > nCompositeContours)
+				nCompositeContours = g->stat.nCompositeContours;
 			if (g->stat.nestDepth > nestDepth) nestDepth = g->stat.nestDepth;
 			if (g->references.length > nComponents) nComponents = g->references.length;
 		}
@@ -151,7 +156,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 		// pass
 	} else {
 		while (count_a > 2 &&
-		       font->glyf->items[count_a - 1]->advanceWidth == font->glyf->items[count_a - 2]->advanceWidth) {
+		       font->glyf->items[count_a - 1]->advanceWidth ==
+		           font->glyf->items[count_a - 2]->advanceWidth) {
 			count_a--;
 		}
 		count_k = font->glyf->length - count_a;
@@ -178,7 +184,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 		if (advanceWidth > maxWidth) maxWidth = advanceWidth;
 		if (lsb < minLSB) minLSB = lsb;
 		if (rsb < minRSB) minRSB = rsb;
-		if (font->glyf->items[j]->stat.xMax > maxExtent) maxExtent = font->glyf->items[j]->stat.xMax;
+		if (font->glyf->items[j]->stat.xMax > maxExtent)
+			maxExtent = font->glyf->items[j]->stat.xMax;
 	}
 	font->hhea->numberOfMetrics = count_a;
 	font->hhea->minLeftSideBearing = minLSB;
@@ -197,7 +204,8 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 		// pass
 	} else {
 		while (count_a > 2 &&
-		       font->glyf->items[count_a - 1]->advanceHeight == font->glyf->items[count_a - 2]->advanceHeight) {
+		       font->glyf->items[count_a - 1]->advanceHeight ==
+		           font->glyf->items[count_a - 2]->advanceHeight) {
 			count_a--;
 		}
 		count_k = font->glyf->length - count_a;
@@ -223,7 +231,9 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 		if (advanceHeight > maxHeight) maxHeight = advanceHeight;
 		if (tsb < minTSB) minTSB = tsb;
 		if (bsb < minBSB) minBSB = bsb;
-		if (g->verticalOrigin - g->stat.yMin > maxExtent) { maxExtent = g->verticalOrigin - g->stat.yMin; }
+		if (g->verticalOrigin - g->stat.yMin > maxExtent) {
+			maxExtent = g->verticalOrigin - g->stat.yMin;
+		}
 	}
 	font->vhea->numOfLongVerMetrics = count_a;
 	font->vhea->minTop = minTSB;
@@ -251,15 +261,16 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0x0080 && u <= 0x00FF)) { u1 |= (1 << 1); }
 		if ((u >= 0x0100 && u <= 0x017F)) { u1 |= (1 << 2); }
 		if ((u >= 0x0180 && u <= 0x024F)) { u1 |= (1 << 3); }
-		if ((u >= 0x0250 && u <= 0x02AF) || (u >= 0x1D00 && u <= 0x1D7F) || (u >= 0x1D80 && u <= 0x1DBF)) {
+		if ((u >= 0x0250 && u <= 0x02AF) || (u >= 0x1D00 && u <= 0x1D7F) ||
+		    (u >= 0x1D80 && u <= 0x1DBF)) {
 			u1 |= (1 << 4);
 		}
 		if ((u >= 0x02B0 && u <= 0x02FF) || (u >= 0xA700 && u <= 0xA71F)) { u1 |= (1 << 5); }
 		if ((u >= 0x0300 && u <= 0x036F) || (u >= 0x1DC0 && u <= 0x1DFF)) { u1 |= (1 << 6); }
 		if ((u >= 0x0370 && u <= 0x03FF)) { u1 |= (1 << 7); }
 		if ((u >= 0x2C80 && u <= 0x2CFF)) { u1 |= (1 << 8); }
-		if ((u >= 0x0400 && u <= 0x04FF) || (u >= 0x0500 && u <= 0x052F) || (u >= 0x2DE0 && u <= 0x2DFF) ||
-		    (u >= 0xA640 && u <= 0xA69F)) {
+		if ((u >= 0x0400 && u <= 0x04FF) || (u >= 0x0500 && u <= 0x052F) ||
+		    (u >= 0x2DE0 && u <= 0x2DFF) || (u >= 0xA640 && u <= 0xA69F)) {
 			u1 |= (1 << 9);
 		}
 		if ((u >= 0x0530 && u <= 0x058F)) { u1 |= (1 << 10); }
@@ -281,7 +292,8 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0x10A0 && u <= 0x10FF) || (u >= 0x2D00 && u <= 0x2D2F)) { u1 |= (1 << 26); }
 		if ((u >= 0x1B00 && u <= 0x1B7F)) { u1 |= (1 << 27); }
 		if ((u >= 0x1100 && u <= 0x11FF)) { u1 |= (1 << 28); }
-		if ((u >= 0x1E00 && u <= 0x1EFF) || (u >= 0x2C60 && u <= 0x2C7F) || (u >= 0xA720 && u <= 0xA7FF)) {
+		if ((u >= 0x1E00 && u <= 0x1EFF) || (u >= 0x2C60 && u <= 0x2C7F) ||
+		    (u >= 0xA720 && u <= 0xA7FF)) {
 			u1 |= (1 << 29);
 		}
 		if ((u >= 0x1F00 && u <= 0x1FFF)) { u1 |= (1 << 30); }
@@ -291,12 +303,12 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0x20D0 && u <= 0x20FF)) { u2 |= (1 << 2); }
 		if ((u >= 0x2100 && u <= 0x214F)) { u2 |= (1 << 3); }
 		if ((u >= 0x2150 && u <= 0x218F)) { u2 |= (1 << 4); }
-		if ((u >= 0x2190 && u <= 0x21FF) || (u >= 0x27F0 && u <= 0x27FF) || (u >= 0x2900 && u <= 0x297F) ||
-		    (u >= 0x2B00 && u <= 0x2BFF)) {
+		if ((u >= 0x2190 && u <= 0x21FF) || (u >= 0x27F0 && u <= 0x27FF) ||
+		    (u >= 0x2900 && u <= 0x297F) || (u >= 0x2B00 && u <= 0x2BFF)) {
 			u2 |= (1 << 5);
 		}
-		if ((u >= 0x2200 && u <= 0x22FF) || (u >= 0x2A00 && u <= 0x2AFF) || (u >= 0x27C0 && u <= 0x27EF) ||
-		    (u >= 0x2980 && u <= 0x29FF)) {
+		if ((u >= 0x2200 && u <= 0x22FF) || (u >= 0x2A00 && u <= 0x2AFF) ||
+		    (u >= 0x27C0 && u <= 0x27EF) || (u >= 0x2980 && u <= 0x29FF)) {
 			u2 |= (1 << 6);
 		}
 		if ((u >= 0x2300 && u <= 0x23FF)) { u2 |= (1 << 7); }
@@ -319,13 +331,15 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0xAC00 && u <= 0xD7AF)) { u2 |= (1 << 24); }
 		if ((u >= 0xD800 && u <= 0xDFFF) || u > 0xFFFF) { u2 |= (1 << 25); }
 		if ((u >= 0x10900 && u <= 0x1091F)) { u2 |= (1 << 26); }
-		if ((u >= 0x4E00 && u <= 0x9FFF) || (u >= 0x2E80 && u <= 0x2EFF) || (u >= 0x2F00 && u <= 0x2FDF) ||
-		    (u >= 0x2FF0 && u <= 0x2FFF) || (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x20000 && u <= 0x2F7FF) ||
+		if ((u >= 0x4E00 && u <= 0x9FFF) || (u >= 0x2E80 && u <= 0x2EFF) ||
+		    (u >= 0x2F00 && u <= 0x2FDF) || (u >= 0x2FF0 && u <= 0x2FFF) ||
+		    (u >= 0x3400 && u <= 0x4DBF) || (u >= 0x20000 && u <= 0x2F7FF) ||
 		    (u >= 0x3190 && u <= 0x319F)) {
 			u2 |= (1 << 27);
 		}
 		if ((u >= 0xE000 && u <= 0xF8FF)) { u2 |= (1 << 28); }
-		if ((u >= 0x31C0 && u <= 0x31EF) || (u >= 0xF900 && u <= 0xFAFF) || (u >= 0x2F800 && u <= 0x2FA1F)) {
+		if ((u >= 0x31C0 && u <= 0x31EF) || (u >= 0xF900 && u <= 0xFAFF) ||
+		    (u >= 0x2F800 && u <= 0x2FA1F)) {
 			u2 |= (1 << 29);
 		}
 		if ((u >= 0xFB00 && u <= 0xFB4F)) { u2 |= (1 << 30); }
@@ -341,7 +355,8 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0x0780 && u <= 0x07BF)) { u3 |= (1 << 8); }
 		if ((u >= 0x0D80 && u <= 0x0DFF)) { u3 |= (1 << 9); }
 		if ((u >= 0x1000 && u <= 0x109F)) { u3 |= (1 << 10); }
-		if ((u >= 0x1200 && u <= 0x137F) || (u >= 0x1380 && u <= 0x139F) || (u >= 0x2D80 && u <= 0x2DDF)) {
+		if ((u >= 0x1200 && u <= 0x137F) || (u >= 0x1380 && u <= 0x139F) ||
+		    (u >= 0x2D80 && u <= 0x2DDF)) {
 			u3 |= (1 << 11);
 		}
 		if ((u >= 0x13A0 && u <= 0x13FF)) { u3 |= (1 << 12); }
@@ -352,14 +367,15 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0x1800 && u <= 0x18AF)) { u3 |= (1 << 17); }
 		if ((u >= 0x2800 && u <= 0x28FF)) { u3 |= (1 << 18); }
 		if ((u >= 0xA000 && u <= 0xA48F) || (u >= 0xA490 && u <= 0xA4CF)) { u3 |= (1 << 19); }
-		if ((u >= 0x1700 && u <= 0x171F) || (u >= 0x1720 && u <= 0x173F) || (u >= 0x1740 && u <= 0x175F) ||
-		    (u >= 0x1760 && u <= 0x177F)) {
+		if ((u >= 0x1700 && u <= 0x171F) || (u >= 0x1720 && u <= 0x173F) ||
+		    (u >= 0x1740 && u <= 0x175F) || (u >= 0x1760 && u <= 0x177F)) {
 			u3 |= (1 << 20);
 		}
 		if ((u >= 0x10300 && u <= 0x1032F)) { u3 |= (1 << 21); }
 		if ((u >= 0x10330 && u <= 0x1034F)) { u3 |= (1 << 22); }
 		if ((u >= 0x10400 && u <= 0x1044F)) { u3 |= (1 << 23); }
-		if ((u >= 0x1D000 && u <= 0x1D0FF) || (u >= 0x1D100 && u <= 0x1D1FF) || (u >= 0x1D200 && u <= 0x1D24F)) {
+		if ((u >= 0x1D000 && u <= 0x1D0FF) || (u >= 0x1D100 && u <= 0x1D1FF) ||
+		    (u >= 0x1D200 && u <= 0x1D24F)) {
 			u3 |= (1 << 24);
 		}
 		if ((u >= 0x1D400 && u <= 0x1D7FF)) { u3 |= (1 << 25); }
@@ -374,7 +390,8 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0x2D30 && u <= 0x2D7F)) { u4 |= (1 << 2); }
 		if ((u >= 0x4DC0 && u <= 0x4DFF)) { u4 |= (1 << 3); }
 		if ((u >= 0xA800 && u <= 0xA82F)) { u4 |= (1 << 4); }
-		if ((u >= 0x10000 && u <= 0x1007F) || (u >= 0x10080 && u <= 0x100FF) || (u >= 0x10100 && u <= 0x1013F)) {
+		if ((u >= 0x10000 && u <= 0x1007F) || (u >= 0x10080 && u <= 0x100FF) ||
+		    (u >= 0x10100 && u <= 0x1013F)) {
 			u4 |= (1 << 5);
 		}
 		if ((u >= 0x10140 && u <= 0x1018F)) { u4 |= (1 << 6); }
@@ -396,7 +413,8 @@ static void statOS_2UnicodeRanges(otfcc_Font *font, const otfcc_Options *options
 		if ((u >= 0xAA00 && u <= 0xAA5F)) { u4 |= (1 << 22); }
 		if ((u >= 0x10190 && u <= 0x101CF)) { u4 |= (1 << 23); }
 		if ((u >= 0x101D0 && u <= 0x101FF)) { u4 |= (1 << 24); }
-		if ((u >= 0x102A0 && u <= 0x102DF) || (u >= 0x10280 && u <= 0x1029F) || (u >= 0x10920 && u <= 0x1093F)) {
+		if ((u >= 0x102A0 && u <= 0x102DF) || (u >= 0x10280 && u <= 0x1029F) ||
+		    (u >= 0x10920 && u <= 0x1093F)) {
 			u4 |= (1 << 25);
 		}
 		if ((u >= 0x1F030 && u <= 0x1F09F) || (u >= 0x1F000 && u <= 0x1F02F)) { u4 |= (1 << 26); }
@@ -422,7 +440,9 @@ static void statOS_2AverageWidth(otfcc_Font *font, const otfcc_Options *options)
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->advanceWidth > 0) { totalWidth += font->glyf->items[j]->advanceWidth; }
+		if (font->glyf->items[j]->advanceWidth > 0) {
+			totalWidth += font->glyf->items[j]->advanceWidth;
+		}
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->length;
 }
@@ -528,7 +548,8 @@ static void statVORG(otfcc_Font *font) {
 	uint32_t *frequency;
 	NEW(frequency, MAX_STAT_METRIC);
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->verticalOrigin >= 0 && font->glyf->items[j]->verticalOrigin < MAX_STAT_METRIC) {
+		if (font->glyf->items[j]->verticalOrigin >= 0 &&
+		    font->glyf->items[j]->verticalOrigin < MAX_STAT_METRIC) {
 			frequency[(uint16_t)(font->glyf->items[j]->verticalOrigin)] += 1;
 		}
 	}
@@ -585,7 +606,9 @@ static void statLTSH(otfcc_Font *font) {
 void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->glyf && font->head) {
 		statGlyf(font, options);
-		if (!options->keep_modified_time) { font->head->modified = 2082844800 + (int64_t)time(NULL); }
+		if (!options->keep_modified_time) {
+			font->head->modified = 2082844800 + (int64_t)time(NULL);
+		}
 	}
 	if (font->head && font->CFF_) {
 		table_CFF *cff = font->CFF_;
