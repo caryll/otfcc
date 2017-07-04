@@ -61,7 +61,7 @@ otl_Coverage *classCoverage(font_file_pointer data, uint32_t tableLength, uint16
 		}
 	} else {
 		for (glyphid_t j = 0; j < cd->numGlyphs; j++) {
-			if (cd->classes[j] == cls) { cov->glyphs[jj++] = cd->glyphs[j]; }
+			if (cd->classes[j] == cls) { cov->glyphs[jj++] = Handle.dup(cd->glyphs[j]); }
 		}
 	}
 	return cov;
