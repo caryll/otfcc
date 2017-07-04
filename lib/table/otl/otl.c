@@ -1,11 +1,12 @@
 #include "private.h"
 
-#define DELETE_TYPE(type, fn)                                                                                          \
-	case type:                                                                                                         \
-		((void (*)(otl_Subtable *))fn)(*subtableRef);                                                                  \
+#define DELETE_TYPE(type, fn)                                                                      \
+	case type:                                                                                     \
+		((void (*)(otl_Subtable *))fn)(*subtableRef);                                              \
 		break;
 
-static INLINE void disposeSubtableDependent(MODIFY otl_SubtablePtr *subtableRef, const otl_Lookup *lookup) {
+static INLINE void disposeSubtableDependent(MODIFY otl_SubtablePtr *subtableRef,
+                                            const otl_Lookup *lookup) {
 	switch (lookup->type) {
 		DELETE_TYPE(otl_type_gsub_single, iSubtable_gsub_single.free);
 		DELETE_TYPE(otl_type_gsub_multiple, iSubtable_gsub_multi.free);
@@ -26,7 +27,8 @@ static INLINE void disposeSubtableDependent(MODIFY otl_SubtablePtr *subtableRef,
 static caryll_ElementInterface(otl_SubtablePtr) otl_iSubtablePtr = {
     .init = NULL, .copy = NULL, .dispose = NULL,
 };
-caryll_VectorImplFreeDependent(otl_SubtableList, otl_SubtablePtr, otl_Lookup, disposeSubtableDependent);
+caryll_VectorImplFreeDependent(otl_SubtableList, otl_SubtablePtr, otl_Lookup,
+                               disposeSubtableDependent);
 caryll_VectorImplFunctions(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr);
 caryll_VectorInterfaceTypeName(otl_SubtableList) otl_iSubtableList = {
     caryll_VectorImplAssignments(otl_SubtableList, otl_SubtablePtr, otl_iSubtablePtr),
@@ -59,7 +61,7 @@ static INLINE void initFeaturePtr(otl_FeaturePtr *feature) {
 	NEW(*feature);
 	otl_iLookupRefList.init(&(*feature)->lookups);
 }
-static INLINE void disposeFeaturePtr(otl_Feature **feature) {
+static INLINE void disposeFeaturePtr(otl_FeaturePtr *feature) {
 	if (!*feature) return;
 	if ((*feature)->name) sdsfree((*feature)->name);
 	otl_iLookupRefList.dispose(&(*feature)->lookups);
@@ -84,7 +86,8 @@ static INLINE void disposeLanguagePtr(otl_LanguageSystemPtr *language) {
 caryll_ElementInterfaceOf(otl_LanguageSystemPtr) otl_iLanguageSystem = {
     .init = initLanguagePtr, .dispose = disposeLanguagePtr,
 };
-caryll_standardVectorImpl(otl_LangSystemList, otl_LanguageSystemPtr, otl_iLanguageSystem, otl_iLangSystemList);
+caryll_standardVectorImpl(otl_LangSystemList, otl_LanguageSystemPtr, otl_iLanguageSystem,
+                          otl_iLangSystemList);
 
 // COMMON PART
 static INLINE void initOTL(table_OTL *table) {

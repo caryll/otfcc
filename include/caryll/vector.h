@@ -26,6 +26,7 @@
 	__T (*pop)(MODIFY __TV * arr);                                                                 \
 	void (*fill)(MODIFY __TV * arr, size_t n);                                                     \
 	void (*disposeItem)(MODIFY __TV * arr, size_t n);                                              \
+	void (*filterEnv)(MODIFY __TV * arr, bool (*fn)(const __T *x, void *env), void *env);          \
 	void (*sort)(MODIFY __TV * arr, int (*fn)(const __T *a, const __T *b));
 
 #define caryll_VectorInterface(__TV, __T)                                                          \
