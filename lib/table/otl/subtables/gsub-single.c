@@ -4,7 +4,8 @@ static void gss_entry_ctor(MODIFY otl_GsubSingleEntry *entry) {
 	entry->from = Handle.empty();
 	entry->to = Handle.empty();
 }
-static void gss_entry_copyctor(MODIFY otl_GsubSingleEntry *dst, COPY const otl_GsubSingleEntry *src) {
+static void gss_entry_copyctor(MODIFY otl_GsubSingleEntry *dst,
+                               COPY const otl_GsubSingleEntry *src) {
 	dst->from = Handle.dup(src->from);
 	dst->to = Handle.dup(src->to);
 }
@@ -16,9 +17,11 @@ static void gss_entry_dtor(MODIFY otl_GsubSingleEntry *entry) {
 static caryll_ElementInterface(otl_GsubSingleEntry) gss_typeinfo = {
     .init = gss_entry_ctor, .copy = gss_entry_copyctor, .dispose = gss_entry_dtor};
 
-caryll_standardVectorImpl(subtable_gsub_single, otl_GsubSingleEntry, gss_typeinfo, iSubtable_gsub_single);
+caryll_standardVectorImpl(subtable_gsub_single, otl_GsubSingleEntry, gss_typeinfo,
+                          iSubtable_gsub_single);
 
-otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableLength,
+                                   uint32_t subtableOffset, const glyphid_t maxGlyphs,
                                    const otfcc_Options *options) {
 	subtable_gsub_single *subtable = iSubtable_gsub_single.create();
 	otl_Coverage *from = NULL;
@@ -40,7 +43,8 @@ otl_Subtable *otl_read_gsub_single(const font_file_pointer data, uint32_t tableL
 		}
 	} else {
 		glyphid_t toglyphs = read_16u(data + subtableOffset + 4);
-		if (tableLength < subtableOffset + 6 + toglyphs * 2 || toglyphs != from->numGlyphs) goto FAIL;
+		if (tableLength < subtableOffset + 6 + toglyphs * 2 || toglyphs != from->numGlyphs)
+			goto FAIL;
 		NEW(to);
 		to->numGlyphs = toglyphs;
 		NEW(to->glyphs, to->numGlyphs);
@@ -71,7 +75,8 @@ json_value *otl_gsub_dump_single(const otl_Subtable *_subtable) {
 	const subtable_gsub_single *subtable = &(_subtable->gsub_single);
 	json_value *st = json_object_new(subtable->length);
 	for (size_t j = 0; j < subtable->length; j++) {
-		json_object_push(st, subtable->items[j].from.name, json_string_new(subtable->items[j].to.name));
+		json_object_push(st, subtable->items[j].from.name,
+		                 json_string_new(subtable->items[j].to.name));
 	}
 	return st;
 }
@@ -79,11 +84,13 @@ json_value *otl_gsub_dump_single(const otl_Subtable *_subtable) {
 otl_Subtable *otl_gsub_parse_single(const json_value *_subtable, const otfcc_Options *options) {
 	subtable_gsub_single *subtable = iSubtable_gsub_single.create();
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
-		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_string) {
-			glyph_handle from = Handle.fromName(
-			    sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length));
-			glyph_handle to = Handle.fromName(sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
-			                                            _subtable->u.object.values[j].value->u.string.length));
+		if (_subtable->u.object.values[j].value &&
+		    _subtable->u.object.values[j].value->type == json_string) {
+			glyph_handle from = Handle.fromName(sdsnewlen(
+			    _subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length));
+			glyph_handle to =
+			    Handle.fromName(sdsnewlen(_subtable->u.object.values[j].value->u.string.ptr,
+			                              _subtable->u.object.values[j].value->u.string.length));
 			iSubtable_gsub_single.push(subtable, ((otl_GsubSingleEntry){.from = from, .to = to}));
 		}
 	}
@@ -97,7 +104,8 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		int32_t difference = subtable->items[0].to.index - subtable->items[0].from.index;
 		for (glyphid_t j = 1; j < subtable->length; j++) {
 			isConstantDifference =
-			    isConstantDifference && ((subtable->items[j].to.index - subtable->items[j].from.index) == difference);
+			    isConstantDifference &&
+			    ((subtable->items[j].to.index - subtable->items[j].from.index) == difference);
 		}
 	}
 	otl_Coverage *cov = Coverage.create();
@@ -105,11 +113,12 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		Coverage.push(cov, Handle.dup(subtable->items[j].from));
 	}
 	if (isConstantDifference && subtable->length > 0) {
-		bk_Block *b = bk_new_Block(b16, 1,                                          // Format
-		                           p16, bk_newBlockFromBuffer(Coverage.build(cov)), // coverage
-		                           b16,
-		                           subtable->items[0].to.index - subtable->items[0].from.index, // delta
-		                           bkover);
+		bk_Block *b =
+		    bk_new_Block(b16, 1,                                          // Format
+		                 p16, bk_newBlockFromBuffer(Coverage.build(cov)), // coverage
+		                 b16,
+		                 subtable->items[0].to.index - subtable->items[0].from.index, // delta
+		                 bkover);
 		Coverage.free(cov);
 		return bk_build_Block(b);
 	} else {

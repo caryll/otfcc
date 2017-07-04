@@ -32,7 +32,8 @@ typedef struct {
 	UT_hash_handle hh;
 } pair_classifier_hash;
 
-otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLength,
+                                 uint32_t offset, const glyphid_t maxGlyphs,
                                  const otfcc_Options *options) {
 	subtable_gpos_pair *subtable = iSubtable_gpos_pair.create();
 
@@ -110,10 +111,11 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 				pair_classifier_hash *s;
 				HASH_FIND_INT(h, &second, s);
 				if (s) {
-					subtable->firstValues[j][s->cid] =
-					    read_gpos_value(data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2, format1);
+					subtable->firstValues[j][s->cid] = read_gpos_value(
+					    data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2, format1);
 					subtable->secondValues[j][s->cid] = read_gpos_value(
-					    data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2 + len1, format2);
+					    data, tableLength, pairSetOffset + 2 + (2 + len1 + len2) * k + 2 + len1,
+					    format2);
 				}
 			}
 		}
@@ -156,9 +158,11 @@ otl_Subtable *otl_read_gpos_pair(const font_file_pointer data, uint32_t tableLen
 			NEW(subtable->secondValues[j], class2Count);
 			for (glyphclass_t k = 0; k < class2Count; k++) {
 				subtable->firstValues[j][k] =
-				    read_gpos_value(data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2), format1);
+				    read_gpos_value(data, tableLength,
+				                    offset + 16 + (j * class2Count + k) * (len1 + len2), format1);
 				subtable->secondValues[j][k] = read_gpos_value(
-				    data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2) + len1, format2);
+				    data, tableLength, offset + 16 + (j * class2Count + k) * (len1 + len2) + len1,
+				    format2);
 			}
 		}
 
@@ -187,8 +191,14 @@ json_value *otl_gpos_dump_pair(const otl_Subtable *_subtable) {
 					json_array_push(row, json_new_position(subtable->firstValues[j][k].dWidth));
 				} else {
 					json_value *pair = json_object_new(2);
-					if (f1) { json_object_push(pair, "first", gpos_dump_value(subtable->firstValues[j][k])); }
-					if (f2) { json_object_push(pair, "second", gpos_dump_value(subtable->secondValues[j][k])); }
+					if (f1) {
+						json_object_push(pair, "first",
+						                 gpos_dump_value(subtable->firstValues[j][k]));
+					}
+					if (f2) {
+						json_object_push(pair, "second",
+						                 gpos_dump_value(subtable->secondValues[j][k]));
+					}
 					json_array_push(row, pair);
 				}
 			} else {
@@ -304,7 +314,7 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 			glyphclass_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
-				bk_push(pairSet, b16, subtable->second->glyphs[k].index,                 // SecondGlyph
+				bk_push(pairSet, b16, subtable->second->glyphs[k].index, // SecondGlyph
 				        bkembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
 				        bkembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
 				        bkover);
@@ -330,15 +340,16 @@ bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 		}
 	}
 	otl_Coverage *cov = covFromCD(subtable->first);
-	bk_Block *root = bk_new_Block(b16, 2,                                                       // PosFormat
-	                              p16, bk_newBlockFromBuffer(Coverage.build(cov)),              // Coverage
-	                              b16, format1,                                                 // ValueFormat1
-	                              b16, format2,                                                 // ValueFormat2
-	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->first)),  // ClassDef1
-	                              p16, bk_newBlockFromBuffer(ClassDef.build(subtable->second)), // ClassDef2
-	                              b16, class1Count,                                             // Class1Count
-	                              b16, class2Count,                                             // Class2Count
-	                              bkover);
+	bk_Block *root =
+	    bk_new_Block(b16, 2,                                                       // PosFormat
+	                 p16, bk_newBlockFromBuffer(Coverage.build(cov)),              // Coverage
+	                 b16, format1,                                                 // ValueFormat1
+	                 b16, format2,                                                 // ValueFormat2
+	                 p16, bk_newBlockFromBuffer(ClassDef.build(subtable->first)),  // ClassDef1
+	                 p16, bk_newBlockFromBuffer(ClassDef.build(subtable->second)), // ClassDef2
+	                 b16, class1Count,                                             // Class1Count
+	                 b16, class2Count,                                             // Class2Count
+	                 bkover);
 	for (glyphclass_t j = 0; j < class1Count; j++) {
 		for (glyphclass_t k = 0; k < class2Count; k++) {
 			bk_push(root, bkembed, bk_gpos_value(subtable->firstValues[j][k], format1), // Value1

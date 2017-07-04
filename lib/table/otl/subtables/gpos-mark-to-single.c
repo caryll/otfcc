@@ -19,9 +19,11 @@ static INLINE void disposeMarkToSingle(subtable_gpos_markToSingle *subtable) {
 	otl_iBaseArray.dispose(&subtable->baseArray);
 }
 
-caryll_standardRefType(subtable_gpos_markToSingle, iSubtable_gpos_markToSingle, initMarkToSingle, disposeMarkToSingle);
+caryll_standardRefType(subtable_gpos_markToSingle, iSubtable_gpos_markToSingle, initMarkToSingle,
+                       disposeMarkToSingle);
 
-otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
+otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t tableLength,
+                                         uint32_t subtableOffset, const glyphid_t maxGlyphs,
                                          const otfcc_Options *options) {
 
 	subtable_gpos_markToSingle *subtable = iSubtable_gpos_markToSingle.create();
@@ -47,14 +49,16 @@ otl_Subtable *otl_read_gpos_markToSingle(const font_file_pointer data, uint32_t 
 		NEW(baseAnchors, subtable->classCount);
 		for (glyphclass_t k = 0; k < subtable->classCount; k++) {
 			if (read_16u(data + _offset)) {
-				baseAnchors[k] = otl_read_anchor(data, tableLength, baseArrayOffset + read_16u(data + _offset));
+				baseAnchors[k] =
+				    otl_read_anchor(data, tableLength, baseArrayOffset + read_16u(data + _offset));
 			} else {
 				baseAnchors[k] = otl_anchor_absent();
 			}
 			_offset += 2;
 		}
-		otl_iBaseArray.push(&subtable->baseArray,
-		                    ((otl_BaseRecord){.glyph = Handle.dup(bases->glyphs[j]), .anchors = baseAnchors}));
+		otl_iBaseArray.push(
+		    &subtable->baseArray,
+		    ((otl_BaseRecord){.glyph = Handle.dup(bases->glyphs[j]), .anchors = baseAnchors}));
 	}
 	if (marks) Coverage.free(marks);
 	if (bases) Coverage.free(bases);
@@ -71,8 +75,10 @@ json_value *otl_gpos_dump_markToSingle(const otl_Subtable *st) {
 	json_value *_bases = json_object_new(subtable->baseArray.length);
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
 		json_value *_mark = json_object_new(3);
-		sds markClassName = sdscatfmt(sdsempty(), "anchor%i", subtable->markArray.items[j].markClass);
-		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
+		sds markClassName =
+		    sdscatfmt(sdsempty(), "anchor%i", subtable->markArray.items[j].markClass);
+		json_object_push(_mark, "class",
+		                 json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
 		json_object_push(_mark, "x", json_integer_new(subtable->markArray.items[j].anchor.x));
 		json_object_push(_mark, "y", json_integer_new(subtable->markArray.items[j].anchor.y));
@@ -83,10 +89,13 @@ json_value *otl_gpos_dump_markToSingle(const otl_Subtable *st) {
 		for (glyphclass_t k = 0; k < subtable->classCount; k++) {
 			if (subtable->baseArray.items[j].anchors[k].present) {
 				json_value *_anchor = json_object_new(2);
-				json_object_push(_anchor, "x", json_integer_new(subtable->baseArray.items[j].anchors[k].x));
-				json_object_push(_anchor, "y", json_integer_new(subtable->baseArray.items[j].anchors[k].y));
+				json_object_push(_anchor, "x",
+				                 json_integer_new(subtable->baseArray.items[j].anchors[k].x));
+				json_object_push(_anchor, "y",
+				                 json_integer_new(subtable->baseArray.items[j].anchors[k].y));
 				sds markClassName = sdscatfmt(sdsempty(), "anchor%i", k);
-				json_object_push_length(_base, (uint32_t)sdslen(markClassName), markClassName, _anchor);
+				json_object_push_length(_base, (uint32_t)sdslen(markClassName), markClassName,
+				                        _anchor);
 				sdsfree(markClassName);
 			}
 		}
@@ -97,8 +106,8 @@ json_value *otl_gpos_dump_markToSingle(const otl_Subtable *st) {
 	return _subtable;
 }
 
-static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable, otl_ClassnameHash **h,
-                       const otfcc_Options *options) {
+static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
+                       otl_ClassnameHash **h, const otfcc_Options *options) {
 	glyphclass_t classCount = HASH_COUNT(*h);
 	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
 		char *gname = _bases->u.object.values[j].name;
@@ -115,11 +124,13 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 		}
 
 		for (glyphclass_t k = 0; k < baseRecord->u.object.length; k++) {
-			sds className = sdsnewlen(baseRecord->u.object.values[k].name, baseRecord->u.object.values[k].name_length);
+			sds className = sdsnewlen(baseRecord->u.object.values[k].name,
+			                          baseRecord->u.object.values[k].name_length);
 			otl_ClassnameHash *s;
 			HASH_FIND_STR(*h, className, s);
 			if (!s) {
-				logWarning("[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n",
+				logWarning("[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor "
+				           "is ignored.\n",
 				           className, gname);
 				goto NEXT;
 			}
@@ -130,7 +141,8 @@ static void parseBases(json_value *_bases, subtable_gpos_markToSingle *subtable,
 		otl_iBaseArray.push(&subtable->baseArray, base);
 	}
 }
-otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable, const otfcc_Options *options) {
+otl_Subtable *otl_gpos_parse_markToSingle(const json_value *_subtable,
+                                          const otfcc_Options *options) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;

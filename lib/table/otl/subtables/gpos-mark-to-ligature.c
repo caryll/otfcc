@@ -12,7 +12,8 @@ static void deleteLigArrayItem(otl_LigatureBaseRecord *entry) {
 static caryll_ElementInterface(otl_LigatureBaseRecord) la_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteLigArrayItem};
 
-caryll_standardVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo, otl_iLigatureArray);
+caryll_standardVectorImpl(otl_LigatureArray, otl_LigatureBaseRecord, la_typeinfo,
+                          otl_iLigatureArray);
 
 static INLINE void initMarkToLigature(subtable_gpos_markToLigature *subtable) {
 	otl_iMarkArray.init(&subtable->markArray);
@@ -23,10 +24,11 @@ static INLINE void disposeMarkToLigature(subtable_gpos_markToLigature *subtable)
 	otl_iLigatureArray.dispose(&subtable->ligArray);
 }
 
-caryll_standardRefType(subtable_gpos_markToLigature, iSubtable_gpos_markToLigature, initMarkToLigature,
-                       disposeMarkToLigature);
+caryll_standardRefType(subtable_gpos_markToLigature, iSubtable_gpos_markToLigature,
+                       initMarkToLigature, disposeMarkToLigature);
 
-otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_t tableLength,
+                                           uint32_t offset, const glyphid_t maxGlyphs,
                                            const otfcc_Options *options) {
 	subtable_gpos_markToLigature *subtable = iSubtable_gpos_markToLigature.create();
 	otl_Coverage *marks = NULL;
@@ -61,7 +63,8 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
 				uint32_t anchorOffset = read_16u(data + _offset);
 				if (anchorOffset) {
-					lig.anchors[k][m] = otl_read_anchor(data, tableLength, ligAttachOffset + anchorOffset);
+					lig.anchors[k][m] =
+					    otl_read_anchor(data, tableLength, ligAttachOffset + anchorOffset);
 				} else {
 					lig.anchors[k][m] = otl_anchor_absent();
 				}
@@ -88,7 +91,8 @@ json_value *otl_gpos_dump_markToLigature(const otl_Subtable *st) {
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {
 		json_value *_mark = json_object_new(3);
 		sds markClassName = sdscatfmt(sdsempty(), "ac_%i", subtable->markArray.items[j].markClass);
-		json_object_push(_mark, "class", json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
+		json_object_push(_mark, "class",
+		                 json_string_new_length((uint32_t)sdslen(markClassName), markClassName));
 		sdsfree(markClassName);
 		json_object_push(_mark, "x", json_integer_new(subtable->markArray.items[j].anchor.x));
 		json_object_push(_mark, "y", json_integer_new(subtable->markArray.items[j].anchor.y));
@@ -105,7 +109,8 @@ json_value *otl_gpos_dump_markToLigature(const otl_Subtable *st) {
 					json_object_push(_anchor, "x", json_integer_new(base->anchors[k][m].x));
 					json_object_push(_anchor, "y", json_integer_new(base->anchors[k][m].y));
 					sds markClassName = sdscatfmt(sdsempty(), "ac_%i", m);
-					json_object_push_length(_bk, (uint32_t)sdslen(markClassName), markClassName, _anchor);
+					json_object_push_length(_bk, (uint32_t)sdslen(markClassName), markClassName,
+					                        _anchor);
 					sdsfree(markClassName);
 				}
 			}
@@ -119,8 +124,8 @@ json_value *otl_gpos_dump_markToLigature(const otl_Subtable *st) {
 	return _subtable;
 }
 
-static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtable, otl_ClassnameHash **h,
-                       const otfcc_Options *options) {
+static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtable,
+                       otl_ClassnameHash **h, const otfcc_Options *options) {
 	glyphclass_t classCount = HASH_COUNT(*h);
 
 	for (glyphid_t j = 0; j < _bases->u.object.length; j++) {
@@ -128,7 +133,8 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 		otl_LigatureBaseRecord lig;
 		lig.componentCount = 0;
 		lig.anchors = NULL;
-		lig.glyph = Handle.fromName(sdsnewlen(_bases->u.object.values[j].name, _bases->u.object.values[j].name_length));
+		lig.glyph = Handle.fromName(
+		    sdsnewlen(_bases->u.object.values[j].name, _bases->u.object.values[j].name_length));
 
 		json_value *baseRecord = _bases->u.object.values[j].value;
 		if (!baseRecord || baseRecord->type != json_array) {
@@ -152,11 +158,13 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 				otl_ClassnameHash *s;
 				HASH_FIND_STR(*h, className, s);
 				if (!s) {
-					logWarning("[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base anchor is ignored.\n",
+					logWarning("[OTFCC-fea] Invalid anchor class name <%s> for /%s. This base "
+					           "anchor is ignored.\n",
 					           className, gname);
 					goto NEXT;
 				}
-				lig.anchors[k][s->classID] = otl_parse_anchor(_componentRecord->u.object.values[m].value);
+				lig.anchors[k][s->classID] =
+				    otl_parse_anchor(_componentRecord->u.object.values[m].value);
 
 			NEXT:
 				sdsfree(className);
@@ -165,7 +173,8 @@ static void parseBases(json_value *_bases, subtable_gpos_markToLigature *subtabl
 		otl_iLigatureArray.push(&subtable->ligArray, lig);
 	}
 }
-otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable, const otfcc_Options *options) {
+otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable,
+                                            const otfcc_Options *options) {
 	json_value *_marks = json_obj_get_type(_subtable, "marks", json_object);
 	json_value *_bases = json_obj_get_type(_subtable, "bases", json_object);
 	if (!_marks || !_bases) return NULL;
@@ -213,11 +222,13 @@ caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
 
 	bk_Block *ligatureArray = bk_new_Block(b16, subtable->ligArray.length, bkover);
 	for (glyphid_t j = 0; j < subtable->ligArray.length; j++) {
-		bk_Block *attach = bk_new_Block(b16, subtable->ligArray.items[j].componentCount, // componentCount
-		                                bkover);
+		bk_Block *attach =
+		    bk_new_Block(b16, subtable->ligArray.items[j].componentCount, // componentCount
+		                 bkover);
 		for (glyphid_t k = 0; k < subtable->ligArray.items[j].componentCount; k++) {
 			for (glyphclass_t m = 0; m < subtable->classCount; m++) {
-				bk_push(attach, p16, bkFromAnchor(subtable->ligArray.items[j].anchors[k][m]), bkover);
+				bk_push(attach, p16, bkFromAnchor(subtable->ligArray.items[j].anchors[k][m]),
+				        bkover);
 			}
 		}
 		bk_push(ligatureArray, p16, attach, bkover);
