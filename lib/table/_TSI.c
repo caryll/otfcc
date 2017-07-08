@@ -26,7 +26,8 @@ static INLINE bool isValidGID(uint16_t gid, uint32_t tagIndex) {
 	}
 }
 
-table_TSI *otfcc_readTSI(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tagIndex, uint32_t tagText) {
+table_TSI *otfcc_readTSI(const otfcc_Packet packet, const otfcc_Options *options, uint32_t tagIndex,
+                         uint32_t tagText) {
 	otfcc_PacketPiece textPart;
 	textPart.tag = 0;
 	otfcc_PacketPiece indexPart;
@@ -82,15 +83,17 @@ table_TSI *otfcc_readTSI(const otfcc_Packet packet, const otfcc_Options *options
 	return tsi;
 }
 
-void otfcc_dumpTSI(const table_TSI *tsi, json_value *root, const otfcc_Options *options, const char *tag) {
+void otfcc_dumpTSI(const table_TSI *tsi, json_value *root, const otfcc_Options *options,
+                   const char *tag) {
 	if (!tsi) return;
-	loggedStep(tag) {
+	loggedStep("%s", tag) {
 		json_value *_tsi = json_object_new(2);
 		json_value *_glyphs = json_object_new(tsi->length);
 		foreach (tsi_Entry *entry, *tsi) {
 			if (entry->type != TSI_GLYPH) continue;
-			json_object_push(_glyphs, entry->glyph.name,
-			                 json_string_new_length((uint32_t)sdslen(entry->content), entry->content));
+			json_object_push(
+			    _glyphs, entry->glyph.name,
+			    json_string_new_length((uint32_t)sdslen(entry->content), entry->content));
 		}
 
 		json_value *_extra = json_object_new(tsi->length);
@@ -112,8 +115,9 @@ void otfcc_dumpTSI(const table_TSI *tsi, json_value *root, const otfcc_Options *
 					extraKey = "reserved";
 					break;
 			}
-			json_object_push(_extra, extraKey,
-			                 json_string_new_length((uint32_t)sdslen(entry->content), entry->content));
+			json_object_push(
+			    _extra, extraKey,
+			    json_string_new_length((uint32_t)sdslen(entry->content), entry->content));
 		}
 		json_object_push(_tsi, "glyphs", _glyphs);
 		json_object_push(_tsi, "extra", _extra);
@@ -125,7 +129,7 @@ table_TSI *otfcc_parseTSI(const json_value *root, const otfcc_Options *options, 
 	json_value *_tsi = NULL;
 	if (!(_tsi = json_obj_get_type(root, tag, json_object))) return NULL;
 	table_TSI *tsi = table_iTSI.create();
-	loggedStep(tag) {
+	loggedStep("%s", tag) {
 		json_value *_glyphs = json_obj_get_type(_tsi, "glyphs", json_object);
 		if (_glyphs) {
 			for (uint32_t j = 0; j < _glyphs->u.object.length; j++) {
@@ -133,10 +137,10 @@ table_TSI *otfcc_parseTSI(const json_value *root, const otfcc_Options *options, 
 				size_t _gidlen = _glyphs->u.object.values[j].name_length;
 				json_value *_content = _glyphs->u.object.values[j].value;
 				if (!_content || _content->type != json_string) continue;
-				table_iTSI.push(tsi,
-				                (tsi_Entry){.type = TSI_GLYPH,
-				                            .glyph = Handle.fromName(sdsnewlen(_gid, _gidlen)),
-				                            .content = sdsnewlen(_content->u.string.ptr, _content->u.string.length)});
+				table_iTSI.push(tsi, (tsi_Entry){.type = TSI_GLYPH,
+				                                 .glyph = Handle.fromName(sdsnewlen(_gid, _gidlen)),
+				                                 .content = sdsnewlen(_content->u.string.ptr,
+				                                                      _content->u.string.length)});
 			}
 		}
 		json_value *_extra = json_obj_get_type(_tsi, "extra", json_object);
@@ -146,20 +150,23 @@ table_TSI *otfcc_parseTSI(const json_value *root, const otfcc_Options *options, 
 				json_value *_content = _extra->u.object.values[j].value;
 				if (!_content || _content->type != json_string) continue;
 				if (strcmp(_key, "cvt") == 0) {
-					table_iTSI.push(
-					    tsi, (tsi_Entry){.type = TSI_CVT,
-					                     .glyph = Handle.empty(),
-					                     .content = sdsnewlen(_content->u.string.ptr, _content->u.string.length)});
+					table_iTSI.push(tsi,
+					                (tsi_Entry){.type = TSI_CVT,
+					                            .glyph = Handle.empty(),
+					                            .content = sdsnewlen(_content->u.string.ptr,
+					                                                 _content->u.string.length)});
 				} else if (strcmp(_key, "fpgm") == 0) {
-					table_iTSI.push(
-					    tsi, (tsi_Entry){.type = TSI_FPGM,
-					                     .glyph = Handle.empty(),
-					                     .content = sdsnewlen(_content->u.string.ptr, _content->u.string.length)});
+					table_iTSI.push(tsi,
+					                (tsi_Entry){.type = TSI_FPGM,
+					                            .glyph = Handle.empty(),
+					                            .content = sdsnewlen(_content->u.string.ptr,
+					                                                 _content->u.string.length)});
 				} else if (strcmp(_key, "prep") == 0) {
-					table_iTSI.push(
-					    tsi, (tsi_Entry){.type = TSI_PREP,
-					                     .glyph = Handle.empty(),
-					                     .content = sdsnewlen(_content->u.string.ptr, _content->u.string.length)});
+					table_iTSI.push(tsi,
+					                (tsi_Entry){.type = TSI_PREP,
+					                            .glyph = Handle.empty(),
+					                            .content = sdsnewlen(_content->u.string.ptr,
+					                                                 _content->u.string.length)});
 				}
 			}
 		}
