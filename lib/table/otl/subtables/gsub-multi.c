@@ -8,10 +8,11 @@ static void deleteGsubMultiEntry(otl_GsubMultiEntry *entry) {
 static caryll_ElementInterface(otl_GsubMultiEntry) gsm_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGsubMultiEntry};
 
-caryll_standardVectorImpl(subtable_gsub_multi, otl_GsubMultiEntry, gsm_typeinfo, iSubtable_gsub_multi);
+caryll_standardVectorImpl(subtable_gsub_multi, otl_GsubMultiEntry, gsm_typeinfo,
+                          iSubtable_gsub_multi);
 
 otl_Subtable *otl_read_gsub_multi(font_file_pointer data, uint32_t tableLength, uint32_t offset,
-                                  const otfcc_Options *options) {
+                                  const glyphid_t maxGlyphs, const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = iSubtable_gsub_multi.create();
 	otl_Coverage *from = NULL;
 	checkLength(offset + 6);
@@ -56,11 +57,12 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 	for (glyphid_t k = 0; k < _subtable->u.object.length; k++) {
 		json_value *_to = _subtable->u.object.values[k].value;
 		if (!_to || _to->type != json_array) continue;
-		iSubtable_gsub_multi.push(st, ((otl_GsubMultiEntry){
-		                                  .from = Handle.fromName(sdsnewlen(_subtable->u.object.values[k].name,
-		                                                                    _subtable->u.object.values[k].name_length)),
-		                                  .to = Coverage.parse(_to),
-		                              }));
+		iSubtable_gsub_multi.push(
+		    st, ((otl_GsubMultiEntry){
+		            .from = Handle.fromName(sdsnewlen(_subtable->u.object.values[k].name,
+		                                              _subtable->u.object.values[k].name_length)),
+		            .to = Coverage.parse(_to),
+		        }));
 	}
 
 	return (otl_Subtable *)st;

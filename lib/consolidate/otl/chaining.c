@@ -1,15 +1,18 @@
 #include "chaining.h"
 
-bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
+bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                          const otfcc_Options *options) {
 	subtable_chaining *subtable = &(_subtable->chaining);
 	if (subtable->type) {
 		logWarning("[Consolidate] Ignoring non-canonical chaining subtable.");
 		return false;
 	}
 	otl_ChainingRule *rule = &(subtable->rule);
+	bool possible = true;
 	for (tableid_t j = 0; j < rule->matchCount; j++) {
 		fontop_consolidateCoverage(font, rule->match[j], options);
 		Coverage.shrink(rule->match[j], true);
+		possible = possible && (rule->match[j]->numGlyphs > 0);
 	}
 	if (rule->inputBegins > rule->matchCount) rule->inputBegins = rule->matchCount;
 	if (rule->inputEnds > rule->matchCount) rule->inputEnds = rule->matchCount;
@@ -23,7 +26,8 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 				Handle.consolidateTo(h, k, table->lookups.items[k]->name);
 			}
 			if (!foundLookup && rule->apply[j].lookup.name) {
-				logWarning("[Consolidate] Quoting an invalid lookup %s. This lookup application is ignored.",
+				logWarning("[Consolidate] Quoting an invalid lookup %s. This lookup application is "
+				           "ignored.",
 				           rule->apply[j].lookup.name);
 				Handle.dispose(&rule->apply[j].lookup);
 			}
@@ -42,5 +46,5 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 		rule->applyCount = k;
 		if (!rule->applyCount) { return true; }
 	}
-	return false;
+	return !possible;
 }

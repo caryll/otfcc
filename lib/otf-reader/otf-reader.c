@@ -48,8 +48,8 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 			}
 		}
 		if (font->glyf) {
-			font->GSUB = otfcc_readOtl(packet, options, 'GSUB');
-			font->GPOS = otfcc_readOtl(packet, options, 'GPOS');
+			font->GSUB = otfcc_readOtl(packet, options, 'GSUB', font->glyf->length);
+			font->GPOS = otfcc_readOtl(packet, options, 'GPOS', font->glyf->length);
 			font->GDEF = otfcc_readGDEF(packet, options);
 		}
 		font->BASE = otfcc_readBASE(packet, options);

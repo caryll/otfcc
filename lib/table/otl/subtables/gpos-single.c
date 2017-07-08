@@ -8,9 +8,11 @@ static void deleteGposSingleEntry(otl_GposSingleEntry *entry) {
 static caryll_ElementInterface(otl_GposSingleEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGposSingleEntry};
 
-caryll_standardVectorImpl(subtable_gpos_single, otl_GposSingleEntry, gss_typeinfo, iSubtable_gpos_single);
+caryll_standardVectorImpl(subtable_gpos_single, otl_GposSingleEntry, gss_typeinfo,
+                          iSubtable_gpos_single);
 
-otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableLength,
+                                   uint32_t offset, const glyphid_t maxGlyphs,
                                    const otfcc_Options *options) {
 	subtable_gpos_single *subtable = iSubtable_gpos_single.create();
 	otl_Coverage *targets = NULL;
@@ -22,11 +24,13 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 	if (!targets || targets->numGlyphs == 0) goto FAIL;
 
 	if (subtableFormat == 1) {
-		otl_PositionValue v = read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
+		otl_PositionValue v =
+		    read_gpos_value(data, tableLength, offset + 6, read_16u(data + offset + 4));
 		for (glyphid_t j = 0; j < targets->numGlyphs; j++) {
-			iSubtable_gpos_single.push(subtable, ((otl_GposSingleEntry){
-			                                         .target = Handle.dup(targets->glyphs[j]), .value = v,
-			                                     }));
+			iSubtable_gpos_single.push(subtable,
+			                           ((otl_GposSingleEntry){
+			                               .target = Handle.dup(targets->glyphs[j]), .value = v,
+			                           }));
 		}
 	} else {
 		uint16_t valueFormat = read_16u(data + offset + 4);
@@ -36,11 +40,13 @@ otl_Subtable *otl_read_gpos_single(const font_file_pointer data, uint32_t tableL
 
 		for (glyphid_t j = 0; j < targets->numGlyphs; j++) {
 			iSubtable_gpos_single.push(
-			    subtable, ((otl_GposSingleEntry){
-			                  .target = Handle.dup(targets->glyphs[j]),
-			                  .value = read_gpos_value(
-			                      data, tableLength, offset + 8 + j * position_format_length(valueFormat), valueFormat),
-			              }));
+			    subtable,
+			    ((otl_GposSingleEntry){
+			        .target = Handle.dup(targets->glyphs[j]),
+			        .value = read_gpos_value(data, tableLength,
+			                                 offset + 8 + j * position_format_length(valueFormat),
+			                                 valueFormat),
+			    }));
 		}
 	}
 	if (targets) Coverage.free(targets);
@@ -56,19 +62,23 @@ json_value *otl_gpos_dump_single(const otl_Subtable *_subtable) {
 	const subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	json_value *st = json_object_new(subtable->length);
 	for (glyphid_t j = 0; j < subtable->length; j++) {
-		json_object_push(st, subtable->items[j].target.name, gpos_dump_value(subtable->items[j].value));
+		json_object_push(st, subtable->items[j].target.name,
+		                 gpos_dump_value(subtable->items[j].value));
 	}
 	return st;
 }
 otl_Subtable *otl_gpos_parse_single(const json_value *_subtable, const otfcc_Options *options) {
 	subtable_gpos_single *subtable = iSubtable_gpos_single.create();
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
-		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
-			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
-			iSubtable_gpos_single.push(subtable, ((otl_GposSingleEntry){
-			                                         .target = Handle.fromName(gname),
-			                                         .value = gpos_parse_value(_subtable->u.object.values[j].value),
-			                                     }));
+		if (_subtable->u.object.values[j].value &&
+		    _subtable->u.object.values[j].value->type == json_object) {
+			sds gname = sdsnewlen(_subtable->u.object.values[j].name,
+			                      _subtable->u.object.values[j].name_length);
+			iSubtable_gpos_single.push(
+			    subtable, ((otl_GposSingleEntry){
+			                  .target = Handle.fromName(gname),
+			                  .value = gpos_parse_value(_subtable->u.object.values[j].value),
+			              }));
 		}
 	}
 	return (otl_Subtable *)subtable;
@@ -93,12 +103,13 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 	}
 
 	if (isConst) {
-		bk_Block *b = (bk_new_Block(b16, 1, // Format
-		                            p16,
-		                            bk_newBlockFromBuffer(Coverage.build(cov)),               // coverage
-		                            b16, format,                                              // format
-		                            bkembed, bk_gpos_value(subtable->items[0].value, format), // value
-		                            bkover));
+		bk_Block *b =
+		    (bk_new_Block(b16, 1, // Format
+		                  p16,
+		                  bk_newBlockFromBuffer(Coverage.build(cov)),               // coverage
+		                  b16, format,                                              // format
+		                  bkembed, bk_gpos_value(subtable->items[0].value, format), // value
+		                  bkover));
 		Coverage.free(cov);
 		return bk_build_Block(b);
 	} else {

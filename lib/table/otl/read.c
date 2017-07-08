@@ -1,11 +1,12 @@
 #include "private.h"
 
-#define LOOKUP_READER(llt, fn)                                                                                         \
-	case llt:                                                                                                          \
-		return fn(data, tableLength, subtableOffset, options);
+#define LOOKUP_READER(llt, fn)                                                                     \
+	case llt:                                                                                      \
+		return fn(data, tableLength, subtableOffset, maxGlyphs, options);
 
-otl_Subtable *otfcc_readOtl_subtable(font_file_pointer data, uint32_t tableLength, uint32_t subtableOffset,
-                                     otl_LookupType lookupType, const otfcc_Options *options) {
+otl_Subtable *otfcc_readOtl_subtable(font_file_pointer data, uint32_t tableLength,
+                                     uint32_t subtableOffset, otl_LookupType lookupType,
+                                     const glyphid_t maxGlyphs, const otfcc_Options *options) {
 	switch (lookupType) {
 		LOOKUP_READER(otl_type_gsub_single, otl_read_gsub_single);
 		LOOKUP_READER(otl_type_gsub_multiple, otl_read_gsub_multi);
@@ -29,8 +30,8 @@ otl_Subtable *otfcc_readOtl_subtable(font_file_pointer data, uint32_t tableLengt
 	}
 }
 
-static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base, otl_LanguageSystem *lang,
-                          otl_FeatureList *features) {
+static void parseLanguage(font_file_pointer data, uint32_t tableLength, uint32_t base,
+                          otl_LanguageSystem *lang, otl_FeatureList *features) {
 	checkLength(base + 6);
 	tableid_t rid = read_16u(data + base + 2);
 	if (rid < features->length) {
@@ -52,7 +53,8 @@ FAIL:
 	return;
 }
 
-static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLength, otl_LookupType lookup_type_base,
+static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLength,
+                                       otl_LookupType lookup_type_base,
                                        const otfcc_Options *options) {
 	table_OTL *table = table_iOTL.create();
 	if (!table) goto FAIL;
@@ -88,13 +90,15 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 			otl_iFeaturePtr.init(&feature);
 			uint32_t tag = read_32u(data + featureListOffset + 2 + j * 6);
 			if (options->glyph_name_prefix) {
-				feature->name = sdscatprintf(sdsempty(), "%c%c%c%c_%s_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-				                             (tag >> 8) & 0xff, tag & 0xff, options->glyph_name_prefix, j);
+				feature->name = sdscatprintf(sdsempty(), "%c%c%c%c_%s_%05d", (tag >> 24) & 0xFF,
+				                             (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff,
+				                             options->glyph_name_prefix, j);
 			} else {
-				feature->name = sdscatprintf(sdsempty(), "%c%c%c%c_%05d", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-				                             (tag >> 8) & 0xff, tag & 0xff, j);
+				feature->name = sdscatprintf(sdsempty(), "%c%c%c%c_%05d", (tag >> 24) & 0xFF,
+				                             (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, j);
 			}
-			uint32_t featureOffset = featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
+			uint32_t featureOffset =
+			    featureListOffset + read_16u(data + featureListOffset + 2 + j * 6 + 4);
 
 			checkLength(featureOffset + 4);
 			tableid_t lookupCount = read_16u(data + featureOffset + 2);
@@ -105,12 +109,14 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 					otl_Lookup *lookup = table->lookups.items[lookupid];
 					if (!lookup->name) {
 						if (options->glyph_name_prefix) {
-							lookup->name = sdscatprintf(sdsempty(), "lookup_%s_%c%c%c%c_%d", options->glyph_name_prefix,
-							                            (tag >> 24) & 0xFF, (tag >> 16) & 0xFF, (tag >> 8) & 0xff,
-							                            tag & 0xff, lnk++);
+							lookup->name = sdscatprintf(sdsempty(), "lookup_%s_%c%c%c%c_%d",
+							                            options->glyph_name_prefix,
+							                            (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+							                            (tag >> 8) & 0xff, tag & 0xff, lnk++);
 						} else {
-							lookup->name = sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d", (tag >> 24) & 0xFF,
-							                            (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff, lnk++);
+							lookup->name = sdscatprintf(sdsempty(), "lookup_%c%c%c%c_%d",
+							                            (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
+							                            (tag >> 8) & 0xff, tag & 0xff, lnk++);
 						}
 					}
 					otl_iLookupRefList.push(&feature->lookups, lookup);
@@ -127,23 +133,28 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 
 		uint32_t nLanguageCombinations = 0;
 		for (tableid_t j = 0; j < scriptCount; j++) {
-			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
+			uint32_t scriptOffset =
+			    scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
 			checkLength(scriptOffset + 4);
 
 			tableid_t defaultLangSystem = read_16u(data + scriptOffset);
-			nLanguageCombinations += (defaultLangSystem ? 1 : 0) + read_16u(data + scriptOffset + 2);
+			nLanguageCombinations +=
+			    (defaultLangSystem ? 1 : 0) + read_16u(data + scriptOffset + 2);
 		}
 
 		for (tableid_t j = 0; j < scriptCount; j++) {
 			uint32_t tag = read_32u(data + scriptListOffset + 2 + 6 * j);
-			uint32_t scriptOffset = scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
+			uint32_t scriptOffset =
+			    scriptListOffset + read_16u(data + scriptListOffset + 2 + 6 * j + 4);
 			tableid_t defaultLangSystem = read_16u(data + scriptOffset);
 			if (defaultLangSystem) {
 				otl_LanguageSystem *lang;
 				otl_iLanguageSystem.init(&lang);
-				lang->name = sdscatprintf(sdsempty(), "%c%c%c%c%cDFLT", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-				                          (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR);
-				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, lang, &table->features);
+				lang->name = sdscatprintf(sdsempty(), "%c%c%c%c%cDFLT", (tag >> 24) & 0xFF,
+				                          (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff,
+				                          SCRIPT_LANGUAGE_SEPARATOR);
+				parseLanguage(data, tableLength, scriptOffset + defaultLangSystem, lang,
+				              &table->features);
 				otl_iLangSystemList.push(&table->languages, lang);
 			}
 			tableid_t langSysCount = read_16u(data + scriptOffset + 2);
@@ -153,8 +164,9 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 				otl_LanguageSystem *lang;
 				otl_iLanguageSystem.init(&lang);
 				lang->name =
-				    sdscatprintf(sdsempty(), "%c%c%c%c%c%c%c%c%c", (tag >> 24) & 0xFF, (tag >> 16) & 0xFF,
-				                 (tag >> 8) & 0xff, tag & 0xff, SCRIPT_LANGUAGE_SEPARATOR, (langTag >> 24) & 0xFF,
+				    sdscatprintf(sdsempty(), "%c%c%c%c%c%c%c%c%c", (tag >> 24) & 0xFF,
+				                 (tag >> 16) & 0xFF, (tag >> 8) & 0xff, tag & 0xff,
+				                 SCRIPT_LANGUAGE_SEPARATOR, (langTag >> 24) & 0xFF,
 				                 (langTag >> 16) & 0xFF, (langTag >> 8) & 0xff, langTag & 0xff);
 				parseLanguage(data, tableLength, scriptOffset + langSys, lang, &table->features);
 				otl_iLangSystemList.push(&table->languages, lang);
@@ -166,8 +178,9 @@ static table_OTL *otfcc_readOtl_common(font_file_pointer data, uint32_t tableLen
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
 		if (!table->lookups.items[j]->name) {
 			if (options->glyph_name_prefix) {
-				table->lookups.items[j]->name = sdscatprintf(
-				    sdsempty(), "lookup_%s_%02x_%d", options->glyph_name_prefix, table->lookups.items[j]->type, j);
+				table->lookups.items[j]->name =
+				    sdscatprintf(sdsempty(), "lookup_%s_%02x_%d", options->glyph_name_prefix,
+				                 table->lookups.items[j]->type, j);
 			} else {
 				table->lookups.items[j]->name =
 				    sdscatprintf(sdsempty(), "lookup_%02x_%d", table->lookups.items[j]->type, j);
@@ -181,7 +194,7 @@ FAIL:
 }
 
 static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, otl_Lookup *lookup,
-                                 const otfcc_Options *options) {
+                                 glyphid_t maxGlyphs, const otfcc_Options *options) {
 	lookup->flags = read_16u(data + lookup->_offset + 2);
 	tableid_t subtableCount = read_16u(data + lookup->_offset + 4);
 	if (!subtableCount || tableLength < lookup->_offset + 6 + 2 * subtableCount) {
@@ -190,7 +203,8 @@ static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, o
 	}
 	for (tableid_t j = 0; j < subtableCount; j++) {
 		uint32_t subtableOffset = lookup->_offset + read_16u(data + lookup->_offset + 6 + j * 2);
-		otl_Subtable *subtable = otfcc_readOtl_subtable(data, tableLength, subtableOffset, lookup->type, options);
+		otl_Subtable *subtable = otfcc_readOtl_subtable(data, tableLength, subtableOffset,
+		                                                lookup->type, maxGlyphs, options);
 		otl_iSubtableList.push(&lookup->subtables, subtable);
 	}
 	if (lookup->type == otl_type_gsub_extend || lookup->type == otl_type_gpos_extend) {
@@ -203,7 +217,8 @@ static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, o
 		}
 		if (lookup->type) {
 			for (tableid_t j = 0; j < lookup->subtables.length; j++) {
-				if (lookup->subtables.items[j] && lookup->subtables.items[j]->extend.type == lookup->type) {
+				if (lookup->subtables.items[j] &&
+				    lookup->subtables.items[j]->extend.type == lookup->type) {
 					// this subtable is valid
 					otl_Subtable *st = lookup->subtables.items[j]->extend.subtable;
 					FREE(lookup->subtables.items[j]);
@@ -213,7 +228,8 @@ static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, o
 					otl_Lookup *temp;
 					otl_iLookupPtr.init(&temp);
 					temp->type = lookup->subtables.items[j]->extend.type;
-					otl_iSubtableList.push(&temp->subtables, lookup->subtables.items[j]->extend.subtable);
+					otl_iSubtableList.push(&temp->subtables,
+					                       lookup->subtables.items[j]->extend.subtable);
 					DELETE(otfcc_delete_lookup, temp);
 					FREE(lookup->subtables.items[j]);
 				}
@@ -227,18 +243,20 @@ static void otfcc_readOtl_lookup(font_file_pointer data, uint32_t tableLength, o
 	if (lookup->type == otl_type_gpos_context) lookup->type = otl_type_gpos_chaining;
 }
 
-table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint32_t tag) {
+table_OTL *otfcc_readOtl(otfcc_Packet packet, const otfcc_Options *options, uint32_t tag,
+                         glyphid_t maxGlyphs) {
 	table_OTL *otl = NULL;
 	FOR_TABLE(tag, table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
-		otl = otfcc_readOtl_common(
-		    data, length,
-		    (tag == 'GSUB' ? otl_type_gsub_unknown : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown),
-		    options);
+		otl = otfcc_readOtl_common(data, length,
+		                           (tag == 'GSUB'
+		                                ? otl_type_gsub_unknown
+		                                : tag == 'GPOS' ? otl_type_gpos_unknown : otl_type_unknown),
+		                           options);
 		if (!otl) goto FAIL;
 		for (tableid_t j = 0; j < otl->lookups.length; j++) {
-			otfcc_readOtl_lookup(data, length, otl->lookups.items[j], options);
+			otfcc_readOtl_lookup(data, length, otl->lookups.items[j], maxGlyphs, options);
 		}
 		return otl;
 	FAIL:

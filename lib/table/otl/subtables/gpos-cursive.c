@@ -8,9 +8,11 @@ static void deleteGposCursiveEntry(otl_GposCursiveEntry *entry) {
 static caryll_ElementInterface(otl_GposCursiveEntry) gss_typeinfo = {
     .init = NULL, .copy = NULL, .dispose = deleteGposCursiveEntry};
 
-caryll_standardVectorImpl(subtable_gpos_cursive, otl_GposCursiveEntry, gss_typeinfo, iSubtable_gpos_cursive);
+caryll_standardVectorImpl(subtable_gpos_cursive, otl_GposCursiveEntry, gss_typeinfo,
+                          iSubtable_gpos_cursive);
 
-otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t tableLength,
+                                    uint32_t offset, const glyphid_t maxGlyphs,
                                     const otfcc_Options *options) {
 	subtable_gpos_cursive *subtable = iSubtable_gpos_cursive.create();
 	otl_Coverage *targets = NULL;
@@ -32,7 +34,8 @@ otl_Subtable *otl_read_gpos_cursive(const font_file_pointer data, uint32_t table
 		if (enterOffset) { enter = otl_read_anchor(data, tableLength, offset + enterOffset); }
 		if (exitOffset) { exit = otl_read_anchor(data, tableLength, offset + exitOffset); }
 		iSubtable_gpos_cursive.push(
-		    subtable, ((otl_GposCursiveEntry){.target = Handle.dup(targets->glyphs[j]), .enter = enter, .exit = exit}));
+		    subtable, ((otl_GposCursiveEntry){
+		                  .target = Handle.dup(targets->glyphs[j]), .enter = enter, .exit = exit}));
 	}
 	if (targets) Coverage.free(targets);
 	return (otl_Subtable *)subtable;
@@ -57,13 +60,17 @@ json_value *otl_gpos_dump_cursive(const otl_Subtable *_subtable) {
 otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Options *options) {
 	subtable_gpos_cursive *subtable = iSubtable_gpos_cursive.create();
 	for (glyphid_t j = 0; j < _subtable->u.object.length; j++) {
-		if (_subtable->u.object.values[j].value && _subtable->u.object.values[j].value->type == json_object) {
-			sds gname = sdsnewlen(_subtable->u.object.values[j].name, _subtable->u.object.values[j].name_length);
+		if (_subtable->u.object.values[j].value &&
+		    _subtable->u.object.values[j].value->type == json_object) {
+			sds gname = sdsnewlen(_subtable->u.object.values[j].name,
+			                      _subtable->u.object.values[j].name_length);
 			iSubtable_gpos_cursive.push(
 			    subtable, ((otl_GposCursiveEntry){
 			                  .target = Handle.fromName(gname),
-			                  .enter = otl_parse_anchor(json_obj_get(_subtable->u.object.values[j].value, "enter")),
-			                  .exit = otl_parse_anchor(json_obj_get(_subtable->u.object.values[j].value, "exit")),
+			                  .enter = otl_parse_anchor(
+			                      json_obj_get(_subtable->u.object.values[j].value, "enter")),
+			                  .exit = otl_parse_anchor(
+			                      json_obj_get(_subtable->u.object.values[j].value, "exit")),
 			              }));
 		}
 	}

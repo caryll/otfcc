@@ -216,6 +216,9 @@ static void __declare_otl_consolidation(otl_LookupType type, otl_consolidation_f
 			}
 		}
 		lookup->subtables.length = k;
+		if (!k) {
+			logWarning("[Consolidate] Lookup %s is empty and will be removed.\n", lookup->name);
+		}
 	}
 }
 
@@ -242,20 +245,45 @@ void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lo
 	                    iSubtable_gpos_markToLigature.free);
 }
 
-void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
+static bool lookupRefIsNotEmpty(const otl_LookupRef *rLut, void *env) {
+	return (*rLut)->subtables.length > 0;
+}
+static bool featureRefIsNotEmpty(const otl_FeatureRef *rFeat, void *env) {
+	return (*rFeat)->lookups.length > 0;
+}
+static bool lookupIsNotEmpty(const otl_LookupPtr *rLut, void *env) {
+	return (*rLut)->subtables.length > 0;
+}
+static bool featureIsNotEmpty(const otl_FeaturePtr *rFeat, void *env) {
+	return (*rFeat)->lookups.length > 0;
+}
+
+static void consolidateOTLTable(otfcc_Font *font, table_OTL *table, const otfcc_Options *options) {
+	if (!font->glyph_order || !table) return;
+	// remove empty subtables
+	for (tableid_t j = 0; j < table->lookups.length; j++) {
+		otfcc_consolidate_lookup(font, table, table->lookups.items[j], options);
+	}
+	// remove empty features
+	for (tableid_t j = 0; j < table->features.length; j++) {
+		otl_Feature *feature = table->features.items[j];
+		otl_iLookupRefList.filterEnv(&feature->lookups, lookupRefIsNotEmpty, NULL);
+	}
+	// remove empty lookups
+	for (tableid_t j = 0; j < table->languages.length; j++) {
+		otl_LanguageSystem *lang = table->languages.items[j];
+		otl_iFeatureRefList.filterEnv(&lang->features, featureRefIsNotEmpty, NULL);
+	}
+	otl_iLookupList.filterEnv(&table->lookups, lookupIsNotEmpty, NULL);
+	otl_iFeatureList.filterEnv(&table->features, featureIsNotEmpty, NULL);
+}
+
+static void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
 	loggedStep("GSUB") {
-		if (font->glyph_order && font->GSUB) {
-			for (tableid_t j = 0; j < font->GSUB->lookups.length; j++) {
-				otfcc_consolidate_lookup(font, font->GSUB, font->GSUB->lookups.items[j], options);
-			}
-		}
+		consolidateOTLTable(font, font->GSUB, options);
 	}
 	loggedStep("GPOS") {
-		if (font->glyph_order && font->GPOS) {
-			for (tableid_t j = 0; j < font->GPOS->lookups.length; j++) {
-				otfcc_consolidate_lookup(font, font->GPOS, font->GPOS->lookups.items[j], options);
-			}
-		}
+		consolidateOTLTable(font, font->GPOS, options);
 	}
 	loggedStep("GDEF") {
 		consolidate_GDEF(font, font->GDEF, options);

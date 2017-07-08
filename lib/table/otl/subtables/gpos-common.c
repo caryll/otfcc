@@ -8,18 +8,19 @@ static caryll_ElementInterface(otl_MarkRecord) gss_typeinfo = {
 
 caryll_standardVectorImpl(otl_MarkArray, otl_MarkRecord, gss_typeinfo, otl_iMarkArray);
 
-void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data, uint32_t tableLength,
-                       uint32_t offset) {
+void otl_readMarkArray(otl_MarkArray *array, otl_Coverage *cov, font_file_pointer data,
+                       uint32_t tableLength, uint32_t offset) {
 	checkLength(offset + 2);
 	glyphid_t markCount = read_16u(data + offset);
 	for (glyphid_t j = 0; j < markCount; j++) {
 		glyphclass_t markClass = read_16u(data + offset + 2 + j * 4);
 		uint16_t delta = read_16u(data + offset + 2 + j * 4 + 2);
 		if (delta) {
-			otl_iMarkArray.push(array,
-			                    ((otl_MarkRecord){.glyph = Handle.dup(cov->glyphs[j]),
-			                                      .markClass = markClass,
-			                                      .anchor = otl_read_anchor(data, tableLength, offset + delta)}));
+			otl_iMarkArray.push(
+			    array,
+			    ((otl_MarkRecord){.glyph = Handle.dup(cov->glyphs[j]),
+			                      .markClass = markClass,
+			                      .anchor = otl_read_anchor(data, tableLength, offset + delta)}));
 		} else {
 			otl_iMarkArray.push(array, ((otl_MarkRecord){.glyph = Handle.dup(cov->glyphs[j]),
 			                                             .markClass = markClass,
@@ -33,7 +34,8 @@ FAIL:
 static int compare_classHash(otl_ClassnameHash *a, otl_ClassnameHash *b) {
 	return strcmp(a->className, b->className);
 }
-void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameHash **h, const otfcc_Options *options) {
+void otl_parseMarkArray(json_value *_marks, otl_MarkArray *array, otl_ClassnameHash **h,
+                        const otfcc_Options *options) {
 	for (glyphid_t j = 0; j < _marks->u.object.length; j++) {
 		otl_MarkRecord mark;
 		char *gname = _marks->u.object.values[j].name;
@@ -162,7 +164,8 @@ otl_PositionValue position_zero() {
 	return v;
 }
 // Read a position value from SFNT
-otl_PositionValue read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset, uint16_t format) {
+otl_PositionValue read_gpos_value(font_file_pointer data, uint32_t tableLength, uint32_t offset,
+                                  uint16_t format) {
 	otl_PositionValue v = {0.0, 0.0, 0.0, 0.0};
 	if (tableLength < offset + position_format_length(format)) return v;
 	if (format & FORMAT_DX) { v.dx = read_16s(data + offset), offset += 2; };

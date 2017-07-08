@@ -12,7 +12,8 @@ static INLINE void disposeGsubReverse(subtable_gsub_reverse *subtable) {
 	if (subtable->to) Coverage.free(subtable->to);
 }
 
-caryll_standardRefType(subtable_gsub_reverse, iSubtable_gsub_reverse, initGsubReverse, disposeGsubReverse);
+caryll_standardRefType(subtable_gsub_reverse, iSubtable_gsub_reverse, initGsubReverse,
+                       disposeGsubReverse);
 
 static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	if (inputIndex > 0) {
@@ -27,7 +28,8 @@ static void reverseBacktracks(otl_Coverage **match, tableid_t inputIndex) {
 	}
 }
 
-otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength, uint32_t offset,
+otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t tableLength,
+                                    uint32_t offset, const glyphid_t maxGlyphs,
                                     const otfcc_Options *options) {
 	subtable_gsub_reverse *subtable = iSubtable_gsub_reverse.create();
 	checkLength(offset + 6);
@@ -63,7 +65,8 @@ otl_Subtable *otl_read_gsub_reverse(const font_file_pointer data, uint32_t table
 	subtable->to->numGlyphs = nReplacement;
 	NEW(subtable->to->glyphs, nReplacement);
 	for (tableid_t j = 0; j < nReplacement; j++) {
-		subtable->to->glyphs[j] = Handle.fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
+		subtable->to->glyphs[j] =
+		    Handle.fromIndex(read_16u(data + offset + 10 + (nBacktrack + nForward + j) * 2));
 	}
 	reverseBacktracks(subtable->match, subtable->inputIndex);
 	return (otl_Subtable *)subtable;
@@ -109,10 +112,10 @@ caryll_Buffer *otfcc_build_gsub_reverse(const otl_Subtable *_subtable) {
 	const subtable_gsub_reverse *subtable = &(_subtable->gsub_reverse);
 	reverseBacktracks(subtable->match, subtable->inputIndex);
 
-	bk_Block *root =
-	    bk_new_Block(b16, 1,                                                                            // format
-	                 p16, bk_newBlockFromBuffer(Coverage.build(subtable->match[subtable->inputIndex])), // coverage
-	                 bkover);
+	bk_Block *root = bk_new_Block(b16, 1, // format
+	                              p16, bk_newBlockFromBuffer(Coverage.build(
+	                                       subtable->match[subtable->inputIndex])), // coverage
+	                              bkover);
 	bk_push(root, b16, subtable->inputIndex, bkover);
 	for (tableid_t j = 0; j < subtable->inputIndex; j++) {
 		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(subtable->match[j])), bkover);

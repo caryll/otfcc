@@ -61,13 +61,16 @@ typedef struct {
 	OWNING otfcc_GlyphHandle to;
 } otl_GsubLigatureEntry;
 typedef caryll_Vector(otl_GsubLigatureEntry) subtable_gsub_ligature;
-extern caryll_VectorInterface(subtable_gsub_ligature, otl_GsubLigatureEntry) iSubtable_gsub_ligature;
+extern caryll_VectorInterface(subtable_gsub_ligature,
+                              otl_GsubLigatureEntry) iSubtable_gsub_ligature;
 
 typedef enum {
-	otl_chaining_canonical = 0, // The canonical form of chaining contextual substitution, one rule per subtable.
-	otl_chaining_poly = 1,      // The multi-rule form, right after reading OTF. N rule per subtable.
-	otl_chaining_classified = 2 // The classified intermediate form, for building TTF with compression.
-	                            // N rules, has classdefs, and coverage GID interpreted as class number.
+	otl_chaining_canonical =
+	    0, // The canonical form of chaining contextual substitution, one rule per subtable.
+	otl_chaining_poly = 1, // The multi-rule form, right after reading OTF. N rule per subtable.
+	otl_chaining_classified =
+	    2 // The classified intermediate form, for building TTF with compression.
+	      // N rules, has classdefs, and coverage GID interpreted as class number.
 } otl_chaining_type;
 
 typedef struct {
@@ -236,7 +239,7 @@ extern caryll_VectorInterface(otl_FeatureRefList, otl_FeatureRef) otl_iFeatureRe
 
 typedef struct {
 	sds name;
-	OWNING otl_Feature *requiredFeature;
+	OWNING otl_FeatureRef requiredFeature;
 	OWNING otl_FeatureRefList features;
 } otl_LanguageSystem;
 typedef otl_LanguageSystem *otl_LanguageSystemPtr;
