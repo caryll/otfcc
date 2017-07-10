@@ -22,6 +22,7 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 		if (h->name) {
 			for (tableid_t k = 0; k < table->lookups.length; k++) {
 				if (strcmp(table->lookups.items[k]->name, h->name) != 0) continue;
+				if (table->lookups.items[k]->subtables.length == 0) continue;
 				foundLookup = true;
 				Handle.consolidateTo(h, k, table->lookups.items[k]->name);
 			}
