@@ -120,8 +120,9 @@ static otl_Coverage *parseCoverage(const json_value *cov) {
 
 	for (glyphid_t j = 0; j < cov->u.array.length; j++) {
 		if (cov->u.array.values[j]->type == json_string) {
-			pushToCoverage(c, Handle.fromName(sdsnewlen(cov->u.array.values[j]->u.string.ptr,
-			                                            cov->u.array.values[j]->u.string.length)));
+			pushToCoverage(c,
+			               Handle.fromName(sdsnewlen(cov->u.array.values[j]->u.string.ptr,
+			                                         cov->u.array.values[j]->u.string.length)));
 		}
 	}
 	return c;
@@ -213,7 +214,7 @@ static void shrinkCoverage(otl_Coverage *coverage, bool dosort) {
 	if (dosort) {
 		qsort(coverage->glyphs, k, sizeof(glyph_handle), byHandleGID);
 		glyphid_t skip = 0;
-		for (glyphid_t rear = 1; rear < coverage->numGlyphs; rear++) {
+		for (glyphid_t rear = 1; rear < k; rear++) {
 			if (coverage->glyphs[rear].index == coverage->glyphs[rear - skip - 1].index) {
 				Handle.dispose(&coverage->glyphs[rear]);
 				skip += 1;

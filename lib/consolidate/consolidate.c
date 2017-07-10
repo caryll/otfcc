@@ -260,10 +260,22 @@ static bool featureIsNotEmpty(const otl_FeaturePtr *rFeat, void *env) {
 
 static void consolidateOTLTable(otfcc_Font *font, table_OTL *table, const otfcc_Options *options) {
 	if (!font->glyph_order || !table) return;
-	// remove empty subtables
-	for (tableid_t j = 0; j < table->lookups.length; j++) {
-		otfcc_consolidate_lookup(font, table, table->lookups.items[j], options);
-	}
+	do {
+		tableid_t lutN = 0;
+		for (tableid_t j = 0; j < table->lookups.length; j++) {
+			if (table->lookups.items[j]->subtables.length > 0) lutN += 1;
+		}
+
+		// remove empty subtables
+		for (tableid_t j = 0; j < table->lookups.length; j++) {
+			otfcc_consolidate_lookup(font, table, table->lookups.items[j], options);
+		}
+		tableid_t lutN1 = 0;
+		for (tableid_t j = 0; j < table->lookups.length; j++) {
+			if (table->lookups.items[j]->subtables.length > 0) lutN1 += 1;
+		}
+		if (lutN1 >= lutN) break;
+	} while (true);
 	// remove empty features
 	for (tableid_t j = 0; j < table->features.length; j++) {
 		otl_Feature *feature = table->features.items[j];
