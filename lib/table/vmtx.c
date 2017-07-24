@@ -9,9 +9,11 @@ static INLINE void disposeVmtx(MOVE table_vmtx *table) {
 
 caryll_standardRefType(table_vmtx, table_iVmtx, disposeVmtx);
 
-table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *options, table_vhea *vhea,
-                           table_maxp *maxp) {
-	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 || maxp->numGlyphs < vhea->numOfLongVerMetrics) return NULL;
+table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *options,
+                           table_vhea *vhea, table_maxp *maxp) {
+	if (!vhea || !maxp || vhea->numOfLongVerMetrics == 0 ||
+	    maxp->numGlyphs < vhea->numOfLongVerMetrics)
+		return NULL;
 	FOR_TABLE('vmtx', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -28,11 +30,11 @@ table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *optio
 
 		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			vmtx->metrics[ia].advanceHeight = read_16u(data + ia * 4);
-			vmtx->metrics[ia].tsb = read_16u(data + ia * 4 + 2);
+			vmtx->metrics[ia].tsb = read_16s(data + ia * 4 + 2);
 		}
 
 		for (glyphid_t ik = 0; ik < count_k; ik++) {
-			vmtx->topSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
+			vmtx->topSideBearing[ik] = read_16s(data + count_a * 4 + ik * 2);
 		}
 
 		return vmtx;

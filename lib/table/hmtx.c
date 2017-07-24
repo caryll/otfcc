@@ -9,9 +9,11 @@ static INLINE void disposeHmtx(MOVE table_hmtx *table) {
 
 caryll_standardRefType(table_hmtx, table_iHmtx, disposeHmtx);
 
-table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *options, table_hhea *hhea,
-                           table_maxp *maxp) {
-	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) { return NULL; }
+table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *options,
+                           table_hhea *hhea, table_maxp *maxp) {
+	if (!hhea || !maxp || !hhea->numberOfMetrics || maxp->numGlyphs < hhea->numberOfMetrics) {
+		return NULL;
+	}
 	FOR_TABLE('hmtx', table) {
 		font_file_pointer data = table.data;
 		uint32_t length = table.length;
@@ -28,11 +30,11 @@ table_hmtx *otfcc_readHmtx(const otfcc_Packet packet, const otfcc_Options *optio
 
 		for (glyphid_t ia = 0; ia < count_a; ia++) {
 			hmtx->metrics[ia].advanceWidth = read_16u(data + ia * 4);
-			hmtx->metrics[ia].lsb = read_16u(data + ia * 4 + 2);
+			hmtx->metrics[ia].lsb = read_16s(data + ia * 4 + 2);
 		}
 
 		for (glyphid_t ik = 0; ik < count_k; ik++) {
-			hmtx->leftSideBearing[ik] = read_16u(data + count_a * 4 + ik * 2);
+			hmtx->leftSideBearing[ik] = read_16s(data + count_a * 4 + ik * 2);
 		}
 
 		return hmtx;

@@ -296,6 +296,13 @@ static void mergeHmtx(otfcc_Font *font) {
 		for (glyphid_t j = 0; j < font->glyf->length; j++) {
 			font->glyf->items[j]->advanceWidth =
 			    font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+			if (j < count_a) {
+				font->glyf->items[j]->horizontalOrigin =
+				    -font->hmtx->metrics[j].lsb + font->glyf->items[j]->stat.xMin;
+			} else {
+				font->glyf->items[j]->horizontalOrigin =
+				    -font->hmtx->leftSideBearing[j - count_a] + font->glyf->items[j]->stat.xMin;
+			}
 		}
 	}
 }

@@ -157,6 +157,7 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	NEW(hmtx);
 	glyphid_t count_a = font->glyf->length;
 	glyphid_t count_k = 0;
+	bool lsbAtX_0 = true;
 	if (font->subtype == FONTTYPE_CFF) {
 		// pass
 	} else {
@@ -175,22 +176,28 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	pos_t maxExtent = -0x8000;
 	length_t maxWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		length_t advanceWidth = font->glyf->items[j]->advanceWidth;
-		pos_t lsb = font->glyf->items[j]->stat.xMin;
-		pos_t rsb = advanceWidth - font->glyf->items[j]->stat.xMax;
+		glyf_Glyph *g = font->glyf->items[j];
+		if (fabs(g->horizontalOrigin) < 1.0 / 1000.0) {
+			g->horizontalOrigin = 0;
+		} else {
+			lsbAtX_0 = false;
+		}
+		pos_t lsb = g->stat.xMin - g->horizontalOrigin;
+		pos_t rsb = g->advanceWidth + g->horizontalOrigin - g->stat.xMax;
 
 		if (j < count_a) {
-			hmtx->metrics[j].advanceWidth = font->glyf->items[j]->advanceWidth;
-			hmtx->metrics[j].lsb = font->glyf->items[j]->stat.xMin;
+			hmtx->metrics[j].advanceWidth = g->advanceWidth;
+			hmtx->metrics[j].lsb = lsb;
 		} else {
 			hmtx->leftSideBearing[j - count_a] = lsb;
 		}
 
-		if (advanceWidth > maxWidth) maxWidth = advanceWidth;
+		if (g->advanceWidth > maxWidth) maxWidth = g->advanceWidth;
 		if (lsb < minLSB) minLSB = lsb;
 		if (rsb < minRSB) minRSB = rsb;
-		if (font->glyf->items[j]->stat.xMax > maxExtent)
-			maxExtent = font->glyf->items[j]->stat.xMax;
+		if (g->stat.xMax - g->horizontalOrigin > maxExtent) {
+			maxExtent = g->stat.xMax - g->horizontalOrigin;
+		}
 	}
 	font->hhea->numberOfMetrics = count_a;
 	font->hhea->minLeftSideBearing = minLSB;
@@ -198,6 +205,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	font->hhea->xMaxExtent = maxExtent;
 	font->hhea->advanceWithMax = maxWidth;
 	font->hmtx = hmtx;
+	// set bit 1 in head.flags
+	font->head->flags = (font->head->flags & (~0x2)) | (lsbAtX_0 ? 0x2 : 0);
 }
 static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyf) return;
@@ -224,16 +233,15 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	length_t maxHeight = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		length_t advanceHeight = g->advanceHeight;
 		pos_t tsb = g->verticalOrigin - g->stat.yMax;
 		pos_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
 		if (j < count_a) {
-			vmtx->metrics[j].advanceHeight = advanceHeight;
+			vmtx->metrics[j].advanceHeight = g->advanceHeight;
 			vmtx->metrics[j].tsb = tsb;
 		} else {
 			vmtx->topSideBearing[j - count_a] = tsb;
 		}
-		if (advanceHeight > maxHeight) maxHeight = advanceHeight;
+		if (g->advanceHeight > maxHeight) maxHeight = g->advanceHeight;
 		if (tsb < minTSB) minTSB = tsb;
 		if (bsb < minBSB) minBSB = bsb;
 		if (g->verticalOrigin - g->stat.yMin > maxExtent) {
