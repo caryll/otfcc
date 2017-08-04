@@ -20,26 +20,28 @@ void printInfo() {
 	fprintf(stdout, "This is otfccdump, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
 }
 void printHelp() {
-	fprintf(stdout, "\n"
-	                "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
-	                " -h, --help              : Display this help message and exit.\n"
-	                " -v, --version           : Display version information and exit.\n"
-	                " -o <file>               : Set output file path to <file>. When absent the dump\n"
-	                "                           will be written to STDOUT.\n"
-	                " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.\n"
-	                " --pretty                : Prettify the output JSON.\n"
-	                " --ugly                  : Force uglify the output JSON.\n"
-	                " --verbose               : Show more information when building.\n"
-	                " -q, --quiet             : Be silent when building.\n\n"
-	                " --ignore-glyph-order    : Do not export glyph order information.\n"
-	                " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
-	                " --ignore-hints          : Do not export hinting information.\n"
-	                " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
-	                " --name-by-hash          : Name glyphs using its hash value.\n"
-	                " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
-	                "                           when redirecting to another program. Use --no-bom to\n"
-	                "                           turn it off.)\n"
-	                "\n");
+	fprintf(stdout,
+	        "\n"
+	        "Usage : otfccdump [OPTIONS] input.[otf|ttf|ttc]\n\n"
+	        " -h, --help              : Display this help message and exit.\n"
+	        " -v, --version           : Display version information and exit.\n"
+	        " -o <file>               : Set output file path to <file>. When absent the dump\n"
+	        "                           will be written to STDOUT.\n"
+	        " -n <n>, --ttc-index <n> : Use the <n>th subfont within the input font.\n"
+	        " --pretty                : Prettify the output JSON.\n"
+	        " --ugly                  : Force uglify the output JSON.\n"
+	        " --verbose               : Show more information when building.\n"
+	        " -q, --quiet             : Be silent when building.\n\n"
+	        " --ignore-glyph-order    : Do not export glyph order information.\n"
+	        " --glyph-name-prefix pfx : Add a prefix to the glyph names.\n"
+	        " --ignore-hints          : Do not export hinting information.\n"
+	        " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
+	        " --hex-cmap              : Export 'cmap' keys as hex number (U+FFFF).\n"
+	        " --name-by-hash          : Name glyphs using its hash value.\n"
+	        " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
+	        "                           when redirecting to another program. Use --no-bom to\n"
+	        "                           turn it off.)\n"
+	        "\n");
 }
 #ifdef _WIN32
 int main() {
@@ -64,6 +66,7 @@ int main(int argc, char *argv[]) {
 	                            {"time", no_argument, NULL, 0},
 	                            {"ignore-glyph-order", no_argument, NULL, 0},
 	                            {"ignore-hints", no_argument, NULL, 0},
+	                            {"hex-cmap", no_argument, NULL, 0},
 	                            {"decimal-cmap", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"name-by-hash", no_argument, NULL, 0},
@@ -79,6 +82,7 @@ int main(int argc, char *argv[]) {
 	otfcc_Options *options = otfcc_newOptions();
 	options->logger = otfcc_newLogger(otfcc_newStdErrTarget());
 	options->logger->indent(options->logger, "otfccdump");
+	options->decimal_cmap = true;
 
 	int option_index = 0;
 	int c;
@@ -109,6 +113,8 @@ int main(int argc, char *argv[]) {
 					options->ignore_hints = true;
 				} else if (strcmp(longopts[option_index].name, "decimal-cmap") == 0) {
 					options->decimal_cmap = true;
+				} else if (strcmp(longopts[option_index].name, "hex-cmap") == 0) {
+					options->decimal_cmap = false;
 				} else if (strcmp(longopts[option_index].name, "name-by-hash") == 0) {
 					options->name_glyphs_by_hash = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
@@ -137,7 +143,8 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
-	options->logger->setVerbosity(options->logger, options->quiet ? 0 : options->verbose ? 0xFF : 1);
+	options->logger->setVerbosity(options->logger,
+	                              options->quiet ? 0 : options->verbose ? 0xFF : 1);
 
 	if (show_help) {
 		printInfo();
@@ -171,8 +178,8 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		if (ttcindex >= sfnt->count) {
-			logError("Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex, inPath,
-			         (sfnt->count - 1));
+			logError("Subfont index %d out of range for \"%s\" (0 -- %d). Exit.\n", ttcindex,
+			         inPath, (sfnt->count - 1));
 			exit(EXIT_FAILURE);
 		}
 		logStepTime;
@@ -251,7 +258,8 @@ int main(int argc, char *argv[]) {
 				while (written < dwNum) {
 					DWORD len = dwNum - written;
 					if (len > chunk) len = chunk;
-					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual, NULL);
+					WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), pwStr + written, len, &actual,
+					              NULL);
 					written += len;
 				}
 				free(pwStr);
