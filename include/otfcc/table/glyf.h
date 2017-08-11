@@ -42,6 +42,15 @@ extern caryll_ElementInterface(glyf_PostscriptHintMask) glyf_iPostscriptHintMask
 typedef caryll_Vector(glyf_PostscriptHintMask) glyf_MaskList;
 extern caryll_VectorInterface(glyf_MaskList, glyf_PostscriptHintMask) glyf_iMaskList;
 
+typedef enum {
+	REF_XY = 0,
+	REF_ANCHOR_ANCHOR = 1,
+	REF_ANCHOR_XY = 2,
+	REF_ANCHOR_CONSOLIDATED = 3,
+	REF_ANCHOR_CONSOLIDATING_ANCHOR = 4,
+	REF_ANCHOR_CONSOLIDATING_XY = 5,
+} RefAnchorStatus;
+
 typedef struct {
 	otfcc_GlyphHandle glyph;
 	// transformation term
@@ -49,13 +58,17 @@ typedef struct {
 	pos_t b;
 	pos_t c;
 	pos_t d;
+	// position term
+	RefAnchorStatus isAnchored;
+	shapeid_t inner;
+	shapeid_t outer;
 	pos_t x;
 	pos_t y;
 	// flags
 	bool roundToGrid;
 	bool useMyMetrics;
 } glyf_ComponentReference;
-extern caryll_ElementInterface(glyf_ComponentReference) glyf_iComponentReference;
+extern caryll_ValElementInterface(glyf_ComponentReference) glyf_iComponentReference;
 typedef caryll_Vector(glyf_ComponentReference) glyf_ReferenceList;
 extern caryll_VectorInterface(glyf_ReferenceList, glyf_ComponentReference) glyf_iReferenceList;
 

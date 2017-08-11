@@ -24,7 +24,7 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		return stat;
 	}
 
-	glyf_Glyph *g = table->items[gr->glyph.index];
+	glyf_Glyph *g = table->items[j];
 	stated[j] = stat_doing;
 	pos_t xmin = POS_MAX;
 	pos_t xmax = -POS_MAX;
