@@ -146,6 +146,92 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 	consolidateFDSelect(&g->fdSelect, font->CFF_, options, g->name);
 }
 
+// Anchored reference consolidation
+bool consolidateAnchorRef(table_glyf *table, glyf_ComponentReference *gr,
+                          glyf_ComponentReference *rr, const otfcc_Options *options);
+bool getPointCoordinates(table_glyf *table, glyf_ComponentReference *gr, shapeid_t n,
+                         shapeid_t *stated, pos_t *x, pos_t *y, const otfcc_Options *options) {
+	glyphid_t j = gr->glyph.index;
+	glyf_Glyph *g = table->items[j];
+	for (shapeid_t c = 0; c < g->contours.length; c++) {
+		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
+			if (*stated == n) {
+				glyf_Point *p = &(g->contours.items[c].items[pj]);
+				*x = gr->x + gr->a * p->x + gr->b * p->y;
+				*y = gr->y + gr->c * p->x + gr->d * p->y;
+				return true;
+			}
+			*stated += 1;
+		}
+	}
+	for (shapeid_t r = 0; r < g->references.length; r++) {
+		glyf_ComponentReference *rr = &(g->references.items[r]);
+
+		consolidateAnchorRef(table, gr, rr, options);
+
+		// composite affine transformations
+		glyf_ComponentReference ref = glyf_iComponentReference.empty();
+		ref.glyph = Handle.fromIndex(g->references.items[r].glyph.index);
+		ref.a = gr->a * rr->a + rr->b * gr->c;
+		ref.b = rr->a * gr->b + rr->b * gr->d;
+		ref.c = gr->a * rr->c + gr->c * rr->d;
+		ref.d = gr->b * rr->c + rr->d * gr->d;
+		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
+		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
+		bool success = getPointCoordinates(table, &ref, n, stated, x, y, options);
+		glyf_iComponentReference.dispose(&ref);
+		if (success) return true;
+	}
+	return false;
+}
+
+bool consolidateAnchorRef(table_glyf *table, glyf_ComponentReference *gr,
+                          glyf_ComponentReference *rr, const otfcc_Options *options) {
+	if (rr->isAnchored == REF_ANCHOR_CONSOLIDATED || rr->isAnchored == REF_XY) return true;
+	if (rr->isAnchored == REF_ANCHOR_CONSOLIDATING_ANCHOR ||
+	    rr->isAnchored == REF_ANCHOR_CONSOLIDATING_XY) {
+		logWarning(
+		    "Found circular reference of out-of-range point reference in anchored reference.");
+		rr->isAnchored = REF_XY;
+		return false;
+	}
+	if (rr->isAnchored == REF_ANCHOR_ANCHOR) {
+		rr->isAnchored = REF_ANCHOR_CONSOLIDATING_ANCHOR;
+	} else {
+		rr->isAnchored = REF_ANCHOR_CONSOLIDATING_XY;
+	}
+	pos_t innerX = 0, outerX = 0, innerY = 0, outerY = 0;
+	shapeid_t innerCounter = 0, outerCounter = 0;
+
+	glyf_ComponentReference rr1 = glyf_iComponentReference.empty();
+	rr1.glyph = Handle.fromIndex(rr->glyph.index);
+
+	bool s1 = getPointCoordinates(table, gr, rr->outer, &outerCounter, &outerX, &outerY, options);
+	bool s2 = getPointCoordinates(table, &rr1, rr->inner, &innerCounter, &innerX, &innerY, options);
+	if (!s1) { logWarning("Failed to access point %d in outer glyph.", rr->outer); }
+	if (!s2) {
+		logWarning("Failed to access point %d in reference to %s.", rr->outer, rr->glyph.name);
+	}
+
+	pos_t rrx = outerX - rr->a * innerX - rr->b * innerY;
+	pos_t rry = outerY - rr->c * innerX - rr->d * innerY;
+
+	if (rr->isAnchored == REF_ANCHOR_CONSOLIDATING_ANCHOR) {
+		rr->x = rrx;
+		rr->y = rry;
+		rr->isAnchored = REF_ANCHOR_CONSOLIDATED;
+	} else {
+		if (fabs(rr->x - rrx) > 0.5 && fabs(rr->y - rry) > 0.5) {
+			logWarning("Anchored reference to %s does not match its X/Y offset data.",
+			           rr->glyph.name);
+		}
+		rr->isAnchored = REF_ANCHOR_CONSOLIDATED;
+	}
+
+	glyf_iComponentReference.dispose(&rr1);
+	return false;
+}
+
 void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	if (!font->glyph_order || !font->glyf) return;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
@@ -153,6 +239,19 @@ void consolidateGlyf(otfcc_Font *font, const otfcc_Options *options) {
 			consolidateGlyph(font->glyf->items[j], font, options);
 		} else {
 			font->glyf->items[j] = otfcc_newGlyf_glyph();
+		}
+	}
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		glyf_Glyph *g = font->glyf->items[j];
+		loggedStep("%s", g->name) {
+			glyf_ComponentReference gr = glyf_iComponentReference.empty();
+			gr.glyph = Handle.fromIndex(j);
+
+			for (shapeid_t r = 0; r < g->references.length; r++) {
+				glyf_ComponentReference *rr = &(g->references.items[r]);
+				consolidateAnchorRef(font->glyf, &gr, rr, options);
+			}
+			glyf_iComponentReference.dispose(&gr);
 		}
 	}
 }

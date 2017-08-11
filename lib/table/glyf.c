@@ -20,7 +20,21 @@ caryll_standardVectorImpl(glyf_ContourList, glyf_Contour, glyf_iContour, glyf_iC
 static INLINE void disposeGlyfReference(glyf_ComponentReference *ref) {
 	Handle.dispose(&ref->glyph);
 }
-caryll_standardType(glyf_ComponentReference, glyf_iComponentReference, disposeGlyfReference);
+static INLINE void initGlyfReference(glyf_ComponentReference *ref) {
+	ref->glyph = Handle.empty();
+	ref->x = 0;
+	ref->y = 0;
+	ref->a = 1;
+	ref->b = 0;
+	ref->c = 0;
+	ref->d = 1;
+	ref->isAnchored = REF_XY;
+	ref->inner = ref->outer = 0;
+	ref->roundToGrid = false;
+	ref->useMyMetrics = false;
+}
+caryll_standardValType(glyf_ComponentReference, glyf_iComponentReference, initGlyfReference,
+                       disposeGlyfReference);
 caryll_standardVectorImpl(glyf_ReferenceList, glyf_ComponentReference, glyf_iComponentReference,
                           glyf_iReferenceList);
 
@@ -259,49 +273,49 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 	do {
 		flags = read_16u(start + offset);
 		glyphid_t index = read_16u(start + offset + 2);
-		int16_t x = 0;
-		int16_t y = 0;
+
+		glyf_ComponentReference ref = glyf_iComponentReference.empty();
+		ref.glyph = Handle.fromIndex(index);
 
 		offset += 4; // flags & index
-		if (flags & ARG_1_AND_2_ARE_WORDS) {
-			x = read_16s(start + offset);
-			y = read_16s(start + offset + 2);
-			offset += 4;
+		if (flags & ARGS_ARE_XY_VALUES) {
+			ref.isAnchored = REF_XY;
+			if (flags & ARG_1_AND_2_ARE_WORDS) {
+				ref.x = read_16s(start + offset);
+				ref.y = read_16s(start + offset + 2);
+				offset += 4;
+			} else {
+				ref.x = read_8s(start + offset);
+				ref.y = read_8s(start + offset + 1);
+				offset += 2;
+			}
 		} else {
-			x = read_8s(start + offset);
-			y = read_8s(start + offset + 1);
-			offset += 2;
+			ref.isAnchored = REF_ANCHOR_ANCHOR;
+			if (flags & ARG_1_AND_2_ARE_WORDS) {
+				ref.outer = read_16u(start + offset);
+				ref.inner = read_16u(start + offset + 2);
+				offset += 4;
+			} else {
+				ref.outer = read_8u(start + offset);
+				ref.inner = read_8u(start + offset + 1);
+				offset += 2;
+			}
 		}
-		double a = 1.0;
-		double b = 0.0;
-		double c = 0.0;
-		double d = 1.0;
 		if (flags & WE_HAVE_A_SCALE) {
-			a = d = otfcc_from_f2dot14(read_16s(start + offset));
+			ref.a = ref.d = otfcc_from_f2dot14(read_16s(start + offset));
 			offset += 2;
 		} else if (flags & WE_HAVE_AN_X_AND_Y_SCALE) {
-			a = otfcc_from_f2dot14(read_16s(start + offset));
-			d = otfcc_from_f2dot14(read_16s(start + offset + 2));
+			ref.a = otfcc_from_f2dot14(read_16s(start + offset));
+			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			offset += 4;
 		} else if (flags & WE_HAVE_A_TWO_BY_TWO) {
-			a = otfcc_from_f2dot14(read_16s(start + offset));
-			b = otfcc_from_f2dot14(read_16s(start + offset + 2));
-			c = otfcc_from_f2dot14(read_16s(start + offset + 4));
-			d = otfcc_from_f2dot14(read_16s(start + offset + 2));
+			ref.a = otfcc_from_f2dot14(read_16s(start + offset));
+			ref.b = otfcc_from_f2dot14(read_16s(start + offset + 2));
+			ref.c = otfcc_from_f2dot14(read_16s(start + offset + 4));
+			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
 		if (flags & WE_HAVE_INSTRUCTIONS) { glyphHasInstruction = true; }
-		glyf_ComponentReference ref = {
-		    .glyph = Handle.fromIndex(index),
-		    .a = a,
-		    .b = b,
-		    .c = c,
-		    .d = d,
-		    .x = (double)x,
-		    .y = (double)y,
-		    .roundToGrid = !!(flags & ROUND_XY_TO_GRID),
-		    .useMyMetrics = !!(flags & USE_MY_METRICS),
-		};
 		glyf_iReferenceList.push(&g->references, ref);
 	} while (flags & MORE_COMPONENTS);
 
@@ -437,6 +451,11 @@ static void glyf_glyph_dump_references(glyf_Glyph *g, json_value *target) {
 		json_object_push(ref, "b", json_new_position(r->b));
 		json_object_push(ref, "c", json_new_position(r->c));
 		json_object_push(ref, "d", json_new_position(r->d));
+		if (r->isAnchored != REF_XY) {
+			json_object_push(ref, "isAnchored", json_boolean_new(true));
+			json_object_push(ref, "inner", json_integer_new(r->inner));
+			json_object_push(ref, "outer", json_integer_new(r->outer));
+		}
 		if (r->roundToGrid) { json_object_push(ref, "roundToGrid", json_boolean_new(true)); }
 		if (r->useMyMetrics) { json_object_push(ref, "useMyMetrics", json_boolean_new(true)); }
 		json_array_push(references, ref);
@@ -556,6 +575,7 @@ static glyf_Point glyf_parse_point(json_value *pointdump) {
 	}
 	return point;
 }
+
 static void glyf_parse_contours(json_value *col, glyf_Glyph *g) {
 	if (!col) { return; }
 	shapeid_t nContours = col->u.array.length;
@@ -574,7 +594,7 @@ static void glyf_parse_contours(json_value *col, glyf_Glyph *g) {
 
 static glyf_ComponentReference glyf_parse_reference(json_value *refdump) {
 	json_value *_gname = json_obj_get_type(refdump, "glyph", json_string);
-	glyf_ComponentReference ref;
+	glyf_ComponentReference ref = glyf_iComponentReference.empty();
 	if (_gname) {
 		ref.glyph = Handle.fromName(sdsnewlen(_gname->u.string.ptr, _gname->u.string.length));
 		ref.x = json_obj_getnum_fallback(refdump, "x", 0.0);
@@ -585,6 +605,11 @@ static glyf_ComponentReference glyf_parse_reference(json_value *refdump) {
 		ref.d = json_obj_getnum_fallback(refdump, "d", 1.0);
 		ref.roundToGrid = json_obj_getbool(refdump, "roundToGrid");
 		ref.useMyMetrics = json_obj_getbool(refdump, "useMyMetrics");
+		if (json_obj_getbool(refdump, "isAnchored")) {
+			ref.isAnchored = REF_ANCHOR_XY;
+			ref.inner = json_obj_getint(refdump, "inner");
+			ref.outer = json_obj_getint(refdump, "outer");
+		}
 	} else {
 		// Invalid glyph references
 		ref.glyph.name = NULL;
@@ -840,13 +865,29 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 	for (shapeid_t rj = 0; rj < g->references.length; rj++) {
 		glyf_ComponentReference *r = &(g->references.items[rj]);
 		uint16_t flags =
-		    ARGS_ARE_XY_VALUES |
 		    (rj < g->references.length - 1 ? MORE_COMPONENTS
 		                                   : g->instructionsLength > 0 ? WE_HAVE_INSTRUCTIONS : 0);
-		int16_t arg1 = r->x;
-		int16_t arg2 = r->y;
-		if (!(arg1 < 128 && arg1 >= -128 && arg2 < 128 && arg2 >= -128))
-			flags |= ARG_1_AND_2_ARE_WORDS;
+		bool outputAnchor = r->isAnchored == REF_ANCHOR_CONSOLIDATED;
+
+		union {
+			uint16_t pointid;
+			int16_t coord;
+		} arg1, arg2;
+
+		// flags
+		if (outputAnchor) {
+			arg1.pointid = r->outer;
+			arg2.pointid = r->inner;
+			if (!(arg1.pointid < 0x100 && arg2.pointid < 0x100)) { flags |= ARG_1_AND_2_ARE_WORDS; }
+		} else {
+			flags |= ARGS_ARE_XY_VALUES;
+			arg1.coord = r->x;
+			arg2.coord = r->y;
+			if (!(arg1.coord < 128 && arg1.coord >= -128 && arg2.coord < 128 &&
+			      arg2.coord >= -128)) {
+				flags |= ARG_1_AND_2_ARE_WORDS;
+			}
+		}
 		if (fabs(r->b) > EPSILON || fabs(r->c) > EPSILON) {
 			flags |= WE_HAVE_A_TWO_BY_TWO;
 		} else if (fabs(r->a - 1) > EPSILON || fabs(r->d - 1) > EPSILON) {
@@ -861,11 +902,11 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 		bufwrite16b(gbuf, flags);
 		bufwrite16b(gbuf, r->glyph.index);
 		if (flags & ARG_1_AND_2_ARE_WORDS) {
-			bufwrite16b(gbuf, arg1);
-			bufwrite16b(gbuf, arg2);
+			bufwrite16b(gbuf, arg1.pointid);
+			bufwrite16b(gbuf, arg2.pointid);
 		} else {
-			bufwrite8(gbuf, arg1);
-			bufwrite8(gbuf, arg2);
+			bufwrite8(gbuf, arg1.pointid);
+			bufwrite8(gbuf, arg2.pointid);
 		}
 		if (flags & WE_HAVE_A_SCALE) {
 			bufwrite16b(gbuf, otfcc_to_f2dot14(r->a));
