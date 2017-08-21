@@ -16,14 +16,16 @@ bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 	gpos_single_hash *h = NULL;
 	for (glyphid_t k = 0; k < subtable->length; k++) {
 		if (!GlyphOrder.consolidateHandle(font->glyph_order, &subtable->items[k].target)) {
-			logWarning("[Consolidate] Ignored missing glyph /%s.\n", subtable->items[k].target.name);
+			logWarning("[Consolidate] Ignored missing glyph /%s.\n",
+			           subtable->items[k].target.name);
 			continue;
 		}
 		gpos_single_hash *s;
 		int fromid = subtable->items[k].target.index;
 		HASH_FIND_INT(h, &fromid, s);
 		if (s) {
-			logWarning("[Consolidate] Detected glyph double-mapping about /%s.\n", subtable->items[k].target.name);
+			logWarning("[Consolidate] Detected glyph double-mapping about /%s.\n",
+			           subtable->items[k].target.name);
 		} else {
 			NEW(s);
 			s->fromid = subtable->items[k].target.index;
@@ -38,10 +40,10 @@ bool consolidate_gpos_single(otfcc_Font *font, table_OTL *table, otl_Subtable *_
 
 	gpos_single_hash *s, *tmp;
 	HASH_ITER(hh, h, s, tmp) {
-		iSubtable_gpos_single.push(subtable,
-		                           ((otl_GposSingleEntry){
-		                               .target = Handle.fromConsolidated(s->fromid, s->fromname), .value = s->v,
-		                           }));
+		iSubtable_gpos_single.push(
+		    subtable, ((otl_GposSingleEntry){
+		                  .target = Handle.fromConsolidated(s->fromid, s->fromname), .value = s->v,
+		              }));
 		sdsfree(s->fromname);
 		HASH_DEL(h, s);
 		FREE(s);

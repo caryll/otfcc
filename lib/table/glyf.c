@@ -315,6 +315,8 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			offset += 8;
 		}
+		ref.roundToGrid = flags & ROUND_XY_TO_GRID;
+		ref.useMyMetrics = flags & USE_MY_METRICS;
 		if (flags & WE_HAVE_INSTRUCTIONS) { glyphHasInstruction = true; }
 		glyf_iReferenceList.push(&g->references, ref);
 	} while (flags & MORE_COMPONENTS);
