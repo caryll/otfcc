@@ -1,15 +1,27 @@
 #include "private.h"
 
+#define LARGE_SUBTABLE_LIMIT 1024
+
 static tableid_t _declare_lookup_writer(otl_LookupType type,
                                         caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
                                         const otl_Lookup *lookup, caryll_Buffer ***subtables,
-                                        size_t *lastOffset) {
+                                        size_t *lastOffset, bool *preferExtensionForThisLUT) {
 	if (lookup->type == type) {
 		NEW(*subtables, lookup->subtables.length);
+		size_t totalBufSizeShort = 0;
+		size_t totalBufSizeExt = 0;
 		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
 			caryll_Buffer *buf = fn(lookup->subtables.items[j]);
 			(*subtables)[j] = buf;
-			*lastOffset += buf->size;
+			totalBufSizeShort += buf->size;
+			totalBufSizeExt += 8;
+		}
+		if (totalBufSizeShort > LARGE_SUBTABLE_LIMIT) {
+			*lastOffset += totalBufSizeExt;
+			*preferExtensionForThisLUT = true;
+		} else {
+			*lastOffset += totalBufSizeShort;
+			*preferExtensionForThisLUT = false;
 		}
 		return lookup->subtables.length;
 	}
@@ -17,10 +29,12 @@ static tableid_t _declare_lookup_writer(otl_LookupType type,
 }
 
 #define LOOKUP_WRITER(type, fn)                                                                    \
-	if (!written) written = _declare_lookup_writer(type, fn, lookup, subtables, lastOffset);
+	if (!written)                                                                                  \
+		written = _declare_lookup_writer(type, fn, lookup, subtables, lastOffset,                  \
+		                                 preferExtensionForThisLUT);
 
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables,
-                               size_t *lastOffset) {
+                               size_t *lastOffset, bool *preferExtensionForThisLUT) {
 	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
 		return otfcc_classifiedBuildChaining(lookup, subtables, lastOffset);
 	}
@@ -47,15 +61,19 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
                                  const char *tag) {
 	caryll_Buffer ***subtables;
 	NEW(subtables, table->lookups.length);
+	bool *preferExtForThisLut;
 	tableid_t *subtableQuantity;
 	NEW(subtableQuantity, table->lookups.length);
+	NEW(preferExtForThisLut, table->lookups.length);
 
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
+
 		otl_Lookup *lookup = table->lookups.items[j];
 		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j,
 		            (uint32_t)table->lookups.length);
-		subtableQuantity[j] = _build_lookup(lookup, &(subtables[j]), &lastOffset);
+		subtableQuantity[j] =
+		    _build_lookup(lookup, &(subtables[j]), &lastOffset, &(preferExtForThisLut[j]));
 	}
 
 	size_t headerSize = 2 + 2 * table->lookups.length;
@@ -63,12 +81,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		if (subtableQuantity[j]) { headerSize += 6 + 2 * subtableQuantity[j]; }
 	}
 	bool useExtended = lastOffset >= 0xFF00 - headerSize;
-	if (useExtended) {
-		logNotice("[OTFCC-fea] Using extended OpenType table layout for %s.\n", tag);
-		for (tableid_t j = 0; j < table->lookups.length; j++) {
-			if (subtableQuantity[j]) { headerSize += 8 * subtableQuantity[j]; }
-		}
-	}
+
 	bk_Block *root = bk_new_Block(b16, table->lookups.length, // LookupCount
 	                              bkover);
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
@@ -76,8 +89,13 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 			logNotice("Lookup %s is empty.\n", table->lookups.items[j]->name);
 		}
 		otl_Lookup *lookup = table->lookups.items[j];
+		bool useExtendedForIt = useExtended || preferExtForThisLut[j];
+		if (useExtendedForIt) {
+			logNotice("[OTFCC-fea] Using extended OpenType table layout for %s/%s.\n", tag,
+			          lookup->name);
+		}
 		uint16_t lookupType =
-		    useExtended
+		    useExtendedForIt
 		        ? (lookup->type > otl_type_gpos_unknown
 		               ? otl_type_gpos_extend - otl_type_gpos_unknown
 		               : lookup->type > otl_type_gsub_unknown
@@ -93,7 +111,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		                             b16, subtableQuantity[j], // SubTableCount
 		                             bkover);
 		for (tableid_t k = 0; k < subtableQuantity[j]; k++) {
-			if (useExtended) {
+			if (useExtendedForIt) {
 				uint16_t extensionLookupType = lookup->type > otl_type_gpos_unknown
 				                                   ? lookup->type - otl_type_gpos_unknown
 				                                   : lookup->type > otl_type_gsub_unknown
@@ -117,6 +135,7 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	}
 	FREE(subtables);
 	FREE(subtableQuantity);
+	FREE(preferExtForThisLut);
 	return root;
 }
 
