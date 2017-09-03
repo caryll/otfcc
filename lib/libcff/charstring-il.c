@@ -151,8 +151,6 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 			if (newcontour->length > 2) {
 				pos_t x0 = newcontour->items[0].x;
 				pos_t y0 = newcontour->items[0].y;
-				pos_t xlast = newcontour->items[newcontour->length - 1].x;
-				pos_t ylast = newcontour->items[newcontour->length - 1].y;
 				if (!newcontour->items[newcontour->length - 1].onCurve) {
 					// Duplicate first point for proper CurveTo generation
 					glyf_iContour.push(newcontour,
