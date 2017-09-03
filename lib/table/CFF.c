@@ -433,7 +433,10 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 			contour->items[k].y = cy;
 		}
 		if (contour->items[0].x == contour->items[contour->length - 1].x &&
-		    contour->items[0].y == contour->items[contour->length - 1].y) {
+		    contour->items[0].y == contour->items[contour->length - 1].y &&
+		    (contour->items[0].onCurve && contour->items[contour->length - 1].onCurve)) {
+			// We found a duplicate knot at the beginning and end of a curve
+			// mainly due to curveto. We can remove that. This is unnecessary.
 			glyf_iContour.pop(contour);
 		}
 	}

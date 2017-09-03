@@ -158,18 +158,13 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 		pointsInGlyph = lastPointInCurrentContour + 1;
 	}
 	uint16_t instructionLength = read_16u(start + 2 * numberOfContours);
-	if (!options->ignore_hints) {
-		uint8_t *instructions = NULL;
-		if (instructionLength > 0) {
-			NEW(instructions, instructionLength);
-			memcpy(instructions, start + 2 * numberOfContours + 2,
-			       sizeof(uint8_t) * instructionLength);
-		}
-		g->instructionsLength = instructionLength;
-		g->instructions = instructions;
-	} else {
-		g->instructions = NULL, g->instructionsLength = 0;
+	uint8_t *instructions = NULL;
+	if (instructionLength > 0) {
+		NEW(instructions, instructionLength);
+		memcpy(instructions, start + 2 * numberOfContours + 2, sizeof(uint8_t) * instructionLength);
 	}
+	g->instructionsLength = instructionLength;
+	g->instructions = instructions;
 
 	// read flags
 	// There are repeating entries in the flags list, we will fill out the
@@ -321,7 +316,7 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 		glyf_iReferenceList.push(&g->references, ref);
 	} while (flags & MORE_COMPONENTS);
 
-	if (glyphHasInstruction && !options->ignore_hints) {
+	if (glyphHasInstruction) {
 		uint16_t instructionLength = read_16u(start + offset);
 		font_file_pointer instructions = NULL;
 		if (instructionLength > 0) {
@@ -509,28 +504,30 @@ static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options,
 	}
 	glyf_glyph_dump_contours(g, glyph);
 	glyf_glyph_dump_references(g, glyph);
-	if (g->instructions && g->instructionsLength) {
-		json_object_push(glyph, "instructions",
-		                 dump_ttinstr(g->instructions, g->instructionsLength, options));
+	if (exportFDSelect) json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name));
+
+	// hinting data
+	if (!options->ignore_hints) {
+		if (g->instructions && g->instructionsLength) {
+			json_object_push(glyph, "instructions",
+			                 dump_ttinstr(g->instructions, g->instructionsLength, options));
+		}
+		if (g->stemH.length) {
+			json_object_push(glyph, "stemH", preserialize(glyf_glyph_dump_stemdefs(&g->stemH)));
+		}
+		if (g->stemV.length) {
+			json_object_push(glyph, "stemV", preserialize(glyf_glyph_dump_stemdefs(&g->stemV)));
+		}
+		if (g->hintMasks.length) {
+			json_object_push(glyph, "hintMasks", preserialize(glyf_glyph_dump_maskdefs(
+			                                         &g->hintMasks, &g->stemH, &g->stemV)));
+		}
+		if (g->contourMasks.length) {
+			json_object_push(glyph, "contourMasks", preserialize(glyf_glyph_dump_maskdefs(
+			                                            &g->contourMasks, &g->stemH, &g->stemV)));
+		}
+		if (g->yPel) { json_object_push(glyph, "LTSH_yPel", json_integer_new(g->yPel)); }
 	}
-	if (g->stemH.length) {
-		json_object_push(glyph, "stemH", preserialize(glyf_glyph_dump_stemdefs(&g->stemH)));
-	}
-	if (g->stemV.length) {
-		json_object_push(glyph, "stemV", preserialize(glyf_glyph_dump_stemdefs(&g->stemV)));
-	}
-	if (g->hintMasks.length) {
-		json_object_push(glyph, "hintMasks", preserialize(glyf_glyph_dump_maskdefs(
-		                                         &g->hintMasks, &g->stemH, &g->stemV)));
-	}
-	if (g->contourMasks.length) {
-		json_object_push(glyph, "contourMasks", preserialize(glyf_glyph_dump_maskdefs(
-		                                            &g->contourMasks, &g->stemH, &g->stemV)));
-	}
-	if (exportFDSelect) {
-		json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name));
-	}
-	if (g->yPel) { json_object_push(glyph, "LTSH_yPel", json_integer_new(g->yPel)); }
 	return glyph;
 }
 void otfcc_dump_glyphorder(const table_glyf *table, json_value *root) {
@@ -712,10 +709,10 @@ static glyf_Glyph *otfcc_glyf_parse_glyph(json_value *glyphdump, otfcc_GlyphOrde
 		parse_stems(json_obj_get_type(glyphdump, "stemV", json_array), &g->stemV);
 		parse_masks(json_obj_get_type(glyphdump, "hintMasks", json_array), &g->hintMasks);
 		parse_masks(json_obj_get_type(glyphdump, "contourMasks", json_array), &g->contourMasks);
+		g->yPel = json_obj_getint(glyphdump, "LTSH_yPel");
 	}
 	// Glyph data of other tables
 	g->fdSelect = Handle.fromName(json_obj_getsds(glyphdump, "CFF_fdSelect"));
-	g->yPel = json_obj_getint(glyphdump, "LTSH_yPel");
 	if (!g->yPel) { g->yPel = json_obj_getint(glyphdump, "yPel"); }
 	return g;
 }
