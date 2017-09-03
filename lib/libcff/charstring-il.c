@@ -37,7 +37,8 @@ static void il_lineto(cff_CharstringIL *il, double dx, double dy) {
 	il_push_operand(il, dy);
 	il_push_op(il, op_rlineto);
 }
-static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2, double dy2, double dx3, double dy3) {
+static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2, double dy2,
+                       double dx3, double dy3) {
 	il_push_operand(il, dx1);
 	il_push_operand(il, dy1);
 	il_push_operand(il, dx2);
@@ -56,7 +57,8 @@ static void _il_push_maskgroup(cff_CharstringIL *il,     // il seq
                                int32_t op) {             // mask operator
 	shapeid_t n = masks->length;
 	while (*jm < n && (masks->items[*jm].contoursBefore < contours ||
-	                   (masks->items[*jm].contoursBefore == contours && masks->items[*jm].pointsBefore <= points))) {
+	                   (masks->items[*jm].contoursBefore == contours &&
+	                    masks->items[*jm].pointsBefore <= points))) {
 		il_push_op(il, op);
 		uint8_t maskByte = 0;
 		uint8_t bits = 0;
@@ -128,7 +130,8 @@ static void il_push_stems(cff_CharstringIL *il, glyf_Glyph *g, bool hasmask, boo
 	_il_push_stemgroup(il, &g->stemH, hasmask, haswidth, op_hstemhm, op_hstem);
 	_il_push_stemgroup(il, &g->stemV, hasmask, haswidth, op_vstemhm, op_vstem);
 }
-cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uint16_t nominalWidth) {
+cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
+                                       uint16_t nominalWidth) {
 	cff_CharstringIL *il;
 	NEW(il);
 	// Convert absolute positions to deltas
@@ -150,9 +153,10 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 				pos_t y0 = newcontour->items[0].y;
 				pos_t xlast = newcontour->items[newcontour->length - 1].x;
 				pos_t ylast = newcontour->items[newcontour->length - 1].y;
-				if ((xlast != x0 || ylast != y0) && (!newcontour->items[newcontour->length - 1].onCurve)) {
-					// Duplicate first point.
-					glyf_iContour.push(newcontour, ((glyf_Point){.x = x0, .y = y0, .onCurve = true}));
+				if (!newcontour->items[newcontour->length - 1].onCurve) {
+					// Duplicate first point for proper CurveTo generation
+					glyf_iContour.push(newcontour,
+					                   ((glyf_Point){.x = x0, .y = y0, .onCurve = true}));
 				}
 			}
 			for (shapeid_t j = 0; j < newcontour->length; j++) {
@@ -165,8 +169,9 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 		}
 	}
 
-	bool hasmask = g->hintMasks.length || g->contourMasks.length; // we have hint masks or contour masks
-	bool haswidth = g->advanceWidth != defaultWidth;              // we have width operand here
+	bool hasmask =
+	    g->hintMasks.length || g->contourMasks.length; // we have hint masks or contour masks
+	bool haswidth = g->advanceWidth != defaultWidth;   // we have width operand here
 	// Write IL
 	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
@@ -190,10 +195,10 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth, uin
 			if (contour->items[j].onCurve) { // A line-to
 				il_lineto(il, contour->items[j].x, contour->items[j].y);
 				pointsSofar += 1;
-			} else if (j < n - 2                                              // have enough points
-			           && !contour->items[j + 1].onCurve                      // next is offcurve
-			           && contour->items[j + 2].onCurve                       // and next is oncurve
-			           ) {                                                    // means this is an bezier curve strand
+			} else if (j < n - 2                         // have enough points
+			           && !contour->items[j + 1].onCurve // next is offcurve
+			           && contour->items[j + 2].onCurve  // and next is oncurve
+			           ) {                               // means this is an bezier curve strand
 				il_curveto(il, contour->items[j].x, contour->items[j].y,      // dz1
 				           contour->items[j + 1].x, contour->items[j + 1].y,  // dz2
 				           contour->items[j + 2].x, contour->items[j + 2].y); // dz3
@@ -235,8 +240,8 @@ static uint8_t zroll(cff_CharstringIL *il, uint32_t j, int32_t op, int32_t op2, 
 	if (arity > 16 || j + arity >= il->length) return 0;
 	if ((j == 0 || // We are at the beginning of charstring
 	     !il_matchtype(il, j - 1, j,
-	                   IL_ITEM_PHANTOM_OPERATOR))          // .. or we are right after a solid operator
-	    && il_matchop(il, j + arity, op)                   // The next operator is <op>
+	                   IL_ITEM_PHANTOM_OPERATOR)) // .. or we are right after a solid operator
+	    && il_matchop(il, j + arity, op)          // The next operator is <op>
 	    && il_matchtype(il, j, j + arity, IL_ITEM_OPERAND) // And we have correct number of operands
 	    ) {
 		va_list ap;
@@ -267,7 +272,8 @@ static uint8_t zroll(cff_CharstringIL *il, uint32_t j, int32_t op, int32_t op2, 
 		return 0;
 	}
 }
-static uint8_t opop_roll(cff_CharstringIL *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2, int32_t resultop) {
+static uint8_t opop_roll(cff_CharstringIL *il, uint32_t j, int32_t op1, int32_t arity, int32_t op2,
+                         int32_t resultop) {
 	if (j + 1 + arity >= il->length) return 0;
 	cff_CharstringInstruction *current = &(il->instr[j]);
 	cff_CharstringInstruction *nextop = &(il->instr[j + 1 + arity]);
@@ -296,7 +302,7 @@ static uint8_t hvlineto_roll(cff_CharstringIL *il, uint32_t j) {
 	    && il_matchop(il, j + 3, op_rlineto)                             // followed by a lineto
 	    && il_matchtype(il, j + 1, j + 3, IL_ITEM_OPERAND)               // have enough operands
 	    && il->instr[j + checkdelta].d == 0                              // and it is a h/v
-	    && current->arity + 1 <= type2_argument_stack                    // we have enough stack space
+	    && current->arity + 1 <= type2_argument_stack // we have enough stack space
 	    ) {
 		il->instr[j + checkdelta].type = IL_ITEM_PHANTOM_OPERAND;
 		il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
@@ -380,18 +386,18 @@ static uint32_t nextstop(cff_CharstringIL *il, uint32_t j) {
 		;
 	return delta;
 }
-#define ROLL_FALL(x)                                                                                                   \
+#define ROLL_FALL(x)                                                                               \
 	if ((r = (x))) return r;
 static uint8_t decideAdvance(cff_CharstringIL *il, uint32_t j, uint8_t optimizeLevel) {
 	uint8_t r = 0;
-	ROLL_FALL(zroll(il, j, op_rlineto, op_hlineto, 0, 1));                    // rlineto -> hlineto
-	ROLL_FALL(zroll(il, j, op_rlineto, op_vlineto, 1, 0));                    // rlineto -> vlineto
-	ROLL_FALL(zroll(il, j, op_rmoveto, op_hmoveto, 0, 1));                    // rmoveto -> hmoveto
-	ROLL_FALL(zroll(il, j, op_rmoveto, op_vmoveto, 1, 0));                    // rmoveto -> vmoveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0));    // rrcurveto->hvcurveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1));    // rrcurveto->vhcurveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1));    // rrcurveto->hhcurveto
-	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0));    // rrcurveto->vvcurveto
+	ROLL_FALL(zroll(il, j, op_rlineto, op_hlineto, 0, 1));                 // rlineto -> hlineto
+	ROLL_FALL(zroll(il, j, op_rlineto, op_vlineto, 1, 0));                 // rlineto -> vlineto
+	ROLL_FALL(zroll(il, j, op_rmoveto, op_hmoveto, 0, 1));                 // rmoveto -> hmoveto
+	ROLL_FALL(zroll(il, j, op_rmoveto, op_vmoveto, 1, 0));                 // rmoveto -> vmoveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hvcurveto, 0, 1, 0, 0, 1, 0)); // rrcurveto->hvcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vhcurveto, 1, 0, 0, 0, 0, 1)); // rrcurveto->vhcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_hhcurveto, 0, 1, 0, 0, 0, 1)); // rrcurveto->hhcurveto
+	ROLL_FALL(zroll(il, j, op_rrcurveto, op_vvcurveto, 1, 0, 0, 0, 1, 0)); // rrcurveto->vvcurveto
 	ROLL_FALL(opop_roll(il, j, op_rrcurveto, 6, op_rrcurveto, op_rrcurveto)); // rrcurveto roll
 	ROLL_FALL(opop_roll(il, j, op_rrcurveto, 2, op_rlineto, op_rcurveline));  // rcurveline roll
 	ROLL_FALL(opop_roll(il, j, op_rlineto, 6, op_rrcurveto, op_rlinecurve));  // rlinecurve roll
@@ -400,11 +406,11 @@ static uint8_t decideAdvance(cff_CharstringIL *il, uint32_t j, uint8_t optimizeL
 	ROLL_FALL(opop_roll(il, j, op_vstemhm, 0, op_hintmask, op_hintmask));     // hintmask roll
 	ROLL_FALL(opop_roll(il, j, op_hstemhm, 0, op_cntrmask, op_cntrmask));     // cntrmask roll
 	ROLL_FALL(opop_roll(il, j, op_vstemhm, 0, op_cntrmask, op_cntrmask));     // cntrmask roll
-	ROLL_FALL(hvlineto_roll(il, j));                                          // hlineto-vlineto roll
-	ROLL_FALL(hhvvcurve_roll(il, j));                                         // hhcurveto-vvcurveto roll
-	ROLL_FALL(hvvhcurve_roll(il, j));                                         // hvcurveto-vhcurveto roll
-	ROLL_FALL(nextstop(il, j));                                               // move to next stop for operand match
-	return 1;                                                                 // nothing match
+	ROLL_FALL(hvlineto_roll(il, j));  // hlineto-vlineto roll
+	ROLL_FALL(hhvvcurve_roll(il, j)); // hhcurveto-vvcurveto roll
+	ROLL_FALL(hvvhcurve_roll(il, j)); // hvcurveto-vhcurveto roll
+	ROLL_FALL(nextstop(il, j));       // move to next stop for operand match
+	return 1;                         // nothing match
 }
 
 void cff_optimizeIL(cff_CharstringIL *il, const otfcc_Options *options) {
