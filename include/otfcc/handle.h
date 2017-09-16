@@ -9,7 +9,12 @@
 #include "caryll/element.h"
 #include "primitives.h"
 
-typedef enum { HANDLE_STATE_EMPTY, HANDLE_STATE_INDEX, HANDLE_STATE_NAME, HANDLE_STATE_CONSOLIDATED } handle_state;
+typedef enum {
+	HANDLE_STATE_EMPTY = 0,
+	HANDLE_STATE_INDEX = 1,
+	HANDLE_STATE_NAME = 2,
+	HANDLE_STATE_CONSOLIDATED = 3
+} handle_state;
 struct otfcc_Handle {
 	handle_state state;
 	glyphid_t index;
@@ -20,6 +25,7 @@ typedef struct otfcc_Handle otfcc_Handle;
 typedef struct otfcc_Handle otfcc_GlyphHandle;
 typedef struct otfcc_Handle otfcc_FDHandle;
 typedef struct otfcc_Handle otfcc_LookupHandle;
+typedef struct otfcc_Handle otfcc_AxisHandle;
 
 struct otfcc_HandlePackage {
 	caryll_VT(otfcc_Handle);
