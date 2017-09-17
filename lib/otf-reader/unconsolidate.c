@@ -4,6 +4,30 @@
 #include "support/sha1/sha1.h"
 
 typedef struct { uint8_t hash[SHA1_BLOCK_SIZE]; } GlyphHash;
+static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
+	bufwrite8(buf, s.type);
+	switch (s.type) {
+		case VQ_STILL:
+			bufwrite32b(buf, otfcc_to_fixed(s.val.still));
+			break;
+		case VQ_DELTA:
+			bufwrite32b(buf, otfcc_to_fixed(s.val.delta.quantity));
+			bufwrite32b(buf, s.val.delta.region.length);
+			for (size_t j = 0; j < s.val.delta.region.length; j++) {
+				vq_AxisSpan *span = &s.val.delta.region.items[j];
+				bufwrite32b(buf, otfcc_to_f2dot14(span->start));
+				bufwrite32b(buf, otfcc_to_f2dot14(span->peak));
+				bufwrite32b(buf, otfcc_to_f2dot14(span->end));
+			}
+	}
+}
+static void hashVQ(caryll_Buffer *buf, VQ x) {
+	bufwrite32b(buf, otfcc_to_fixed(x.kernel));
+	bufwrite32b(buf, x.shift.length);
+	for (size_t j = 0; j < x.shift.length; j++) {
+		hashVQS(buf, x.shift.items[j]);
+	}
+}
 
 GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 	caryll_Buffer *buf = bufnew();
@@ -20,8 +44,8 @@ GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 		bufwrite8(buf, '(');
 		glyf_Contour *c = &g->contours.items[j];
 		for (shapeid_t k = 0; k < c->length; k++) {
-			bufwrite32b(buf, otfcc_to_fixed(c->items[k].x));
-			bufwrite32b(buf, otfcc_to_fixed(c->items[k].y));
+			hashVQ(buf, c->items[k].x);
+			hashVQ(buf, c->items[k].y);
 			bufwrite8(buf, c->items[k].onCurve ? 1 : 0);
 		}
 		bufwrite8(buf, ')');
@@ -34,8 +58,8 @@ GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 		glyf_ComponentReference *r = &g->references.items[j];
 		GlyphHash h = nameGlyphByHash(glyf->items[r->glyph.index], glyf);
 		bufwrite_bytes(buf, SHA1_BLOCK_SIZE, h.hash);
-		bufwrite32b(buf, otfcc_to_fixed(r->x));
-		bufwrite32b(buf, otfcc_to_fixed(r->y));
+		hashVQ(buf, r->x);
+		hashVQ(buf, r->y);
 		bufwrite32b(buf, otfcc_to_f2dot14(r->a));
 		bufwrite32b(buf, otfcc_to_f2dot14(r->b));
 		bufwrite32b(buf, otfcc_to_f2dot14(r->c));

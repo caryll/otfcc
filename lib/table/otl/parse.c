@@ -23,13 +23,19 @@ typedef struct {
 	UT_hash_handle hh;
 } language_hash;
 static bool _declareLookupParser(const char *lt, otl_LookupType llt,
-                                 otl_Subtable *(*parser)(const json_value *, const otfcc_Options *options),
-                                 json_value *_lookup, char *lookupName, const otfcc_Options *options, lookup_hash **lh);
+                                 otl_Subtable *(*parser)(const json_value *,
+                                                         const otfcc_Options *options),
+                                 json_value *_lookup, char *lookupName,
+                                 const otfcc_Options *options, lookup_hash **lh);
 
-#define LOOKUP_PARSER(llt, parser)                                                                                     \
-	if (!parsed) { parsed = _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, options, lh); }
+#define LOOKUP_PARSER(llt, parser)                                                                 \
+	if (!parsed) {                                                                                 \
+		parsed =                                                                                   \
+		    _declareLookupParser(tableNames[llt], llt, parser, lookup, lookupName, options, lh);   \
+	}
 
-static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Options *options, lookup_hash **lh) {
+static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Options *options,
+                          lookup_hash **lh) {
 	bool parsed = false;
 	LOOKUP_PARSER(otl_type_gsub_single, otl_gsub_parse_single);
 	LOOKUP_PARSER(otl_type_gsub_multiple, otl_gsub_parse_multi);
@@ -48,9 +54,10 @@ static bool _parse_lookup(json_value *lookup, char *lookupName, const otfcc_Opti
 }
 
 static bool _declareLookupParser(const char *lt, otl_LookupType llt,
-                                 otl_Subtable *(*parser)(const json_value *, const otfcc_Options *options),
-                                 json_value *_lookup, char *lookupName, const otfcc_Options *options,
-                                 lookup_hash **lh) {
+                                 otl_Subtable *(*parser)(const json_value *,
+                                                         const otfcc_Options *options),
+                                 json_value *_lookup, char *lookupName,
+                                 const otfcc_Options *options, lookup_hash **lh) {
 
 	// detect a valid type field exists
 	json_value *type = json_obj_get_type(_lookup, "type", json_string);
@@ -111,8 +118,11 @@ static lookup_hash *figureOutLookupsFromJSON(json_value *lookups, const otfcc_Op
 	for (uint32_t j = 0; j < lookups->u.object.length; j++) {
 		char *lookupName = lookups->u.object.values[j].name;
 		if (lookups->u.object.values[j].value->type == json_object) {
-			bool parsed = _parse_lookup(lookups->u.object.values[j].value, lookupName, options, &lh);
-			if (!parsed) { logWarning("[OTFCC-fea] Ignoring invalid or unsupported lookup %s.\n", lookupName); }
+			bool parsed =
+			    _parse_lookup(lookups->u.object.values[j].value, lookupName, options, &lh);
+			if (!parsed) {
+				logWarning("[OTFCC-fea] Ignoring invalid or unsupported lookup %s.\n", lookupName);
+			}
 		} else if (lookups->u.object.values[j].value->type == json_string) {
 			char *thatname = lookups->u.object.values[j].value->u.string.ptr;
 			lookup_hash *s = NULL;
@@ -146,14 +156,15 @@ static void feature_merger_activate(json_value *d, const bool sametag, const cha
 				json_value *v = json_string_new_length(nkthis, kthis);
 				v->parent = d;
 				d->u.object.values[k].value = v;
-				logNotice("[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat, kthis);
+				logNotice("[OTFCC-fea] Merged duplicate %s '%s' into '%s'.\n", objtype, kthat,
+				          kthis);
 			}
 		}
 	}
 }
 
-static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh, const char *tag,
-                                               const otfcc_Options *options) {
+static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash *lh,
+                                               const char *tag, const otfcc_Options *options) {
 	feature_hash *fh = NULL;
 	// Remove duplicates
 	if (options->merge_features) { feature_merger_activate(features, true, "feature", options); }
@@ -172,8 +183,8 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 				if (item) {
 					otl_iLookupRefList.push(&al, item->lookup);
 				} else {
-					logWarning("Lookup assignment %s for feature [%s/%s] is missing or invalid.", term->u.string.ptr,
-					           tag, featureName)
+					logWarning("Lookup assignment %s for feature [%s/%s] is missing or invalid.",
+					           term->u.string.ptr, tag, featureName)
 				}
 			}
 			if (al.length > 0) {
@@ -185,7 +196,7 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 					s->alias = false;
 					otl_iFeaturePtr.init(&s->feature);
 					s->feature->name = sdsdup(s->name);
-					otl_iLookupRefList.replace(&s->feature->lookups, &al);
+					otl_iLookupRefList.replace(&s->feature->lookups, al);
 					HASH_ADD_STR(fh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate feature for [%s/%s]. This feature will "
@@ -219,8 +230,8 @@ static feature_hash *figureOutFeaturesFromJSON(json_value *features, lookup_hash
 bool isValidLanguageName(const char *name, const size_t length) {
 	return length == 9 && name[4] == SCRIPT_LANGUAGE_SEPARATOR;
 }
-static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh, const char *tag,
-                                                 const otfcc_Options *options) {
+static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_hash *fh,
+                                                 const char *tag, const otfcc_Options *options) {
 	language_hash *sh = NULL;
 	// languages
 	for (uint32_t j = 0; j < languages->u.object.length; j++) {
@@ -258,7 +269,7 @@ static language_hash *figureOutLanguagesFromJson(json_value *languages, feature_
 					otl_iLanguageSystem.init(&s->language);
 					s->language->name = sdsdup(s->name);
 					s->language->requiredFeature = requiredFeature;
-					otl_iFeatureRefList.replace(&s->language->features, &af);
+					otl_iFeatureRefList.replace(&s->language->features, af);
 					HASH_ADD_STR(sh, name, s);
 				} else {
 					logWarning("[OTFCC-fea] Duplicate language item [%s/%s]. This language "

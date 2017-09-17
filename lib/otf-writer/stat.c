@@ -39,8 +39,8 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
 			// Stat point coordinates USING the matrix transformation
 			glyf_Point *p = &(g->contours.items[c].items[pj]);
-			pos_t x = gr->x + gr->a * p->x + gr->b * p->y;
-			pos_t y = gr->y + gr->c * p->x + gr->d * p->y;
+			pos_t x = iVQ.getStill(gr->x) + gr->a * iVQ.getStill(p->x) + gr->b * iVQ.getStill(p->y);
+			pos_t y = iVQ.getStill(gr->y) + gr->c * iVQ.getStill(p->x) + gr->d * iVQ.getStill(p->y);
 			if (x < xmin) xmin = x;
 			if (x > xmax) xmax = x;
 			if (y < ymin) ymin = y;
@@ -52,15 +52,20 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	nCompositeContours = g->contours.length;
 	for (shapeid_t r = 0; r < g->references.length; r++) {
 		glyf_ComponentReference ref;
+		glyf_iComponentReference.init(&ref);
 		glyf_ComponentReference *rr = &(g->references.items[r]);
-		ref.glyph = Handle.fromIndex(g->references.items[r].glyph.index);
 		// composite affine transformations
+		Handle.replace(&ref.glyph, Handle.fromIndex(g->references.items[r].glyph.index));
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
 		ref.c = gr->a * rr->c + gr->c * rr->d;
 		ref.d = gr->b * rr->c + rr->d * gr->d;
-		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
-		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
+		iVQ.replace(&ref.x,
+		            iVQ.createStill(iVQ.getStill(rr->x) + rr->a * iVQ.getStill(gr->x) +
+		                            rr->b * iVQ.getStill(gr->y)));
+		iVQ.replace(&ref.y,
+		            iVQ.createStill(iVQ.getStill(rr->y) + rr->c * iVQ.getStill(gr->x) +
+		                            rr->d * iVQ.getStill(gr->y)));
 
 		glyf_GlyphStat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj, options);
 		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
@@ -99,8 +104,8 @@ void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_ComponentReference gr;
 		gr.glyph = Handle.fromIndex(j);
-		gr.x = 0;
-		gr.y = 0;
+		gr.x = iVQ.createStill(0);
+		gr.y = iVQ.createStill(0);
 		gr.a = 1;
 		gr.b = 0;
 		gr.c = 0;

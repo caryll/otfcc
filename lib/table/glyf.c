@@ -4,26 +4,32 @@
 #include "support/ttinstr/ttinstr.h"
 
 // point
-static void point_ctor(glyf_Point *p) {
-	p->x = 0, p->y = 0, p->onCurve = true;
+static void createPoint(glyf_Point *p) {
+	p->x = iVQ.createStill(0);
+	p->y = iVQ.createStill(0);
+	p->onCurve = true;
+}
+static void copyPoint(glyf_Point *dst, const glyf_Point *src) {
+	iVQ.copy(&dst->x, &src->x);
+	iVQ.copy(&dst->y, &src->y);
+	dst->onCurve = src->onCurve;
+}
+static void disposePoint(glyf_Point *p) {
+	iVQ.dispose(&p->x);
+	iVQ.dispose(&p->y);
 }
 
-caryll_ElementInterfaceOf(glyf_Point) glyf_iPoint = {
-    .init = point_ctor, .copy = NULL, .dispose = NULL,
-};
+caryll_standardValType(glyf_Point, glyf_iPoint, createPoint, copyPoint, disposePoint);
 
 // contour
 caryll_standardVectorImpl(glyf_Contour, glyf_Point, glyf_iPoint, glyf_iContour);
 caryll_standardVectorImpl(glyf_ContourList, glyf_Contour, glyf_iContour, glyf_iContourList);
 
 // ref
-static INLINE void disposeGlyfReference(glyf_ComponentReference *ref) {
-	Handle.dispose(&ref->glyph);
-}
 static INLINE void initGlyfReference(glyf_ComponentReference *ref) {
 	ref->glyph = Handle.empty();
-	ref->x = 0;
-	ref->y = 0;
+	ref->x = iVQ.createStill(0);
+	ref->y = iVQ.createStill(0);
 	ref->a = 1;
 	ref->b = 0;
 	ref->c = 0;
@@ -33,8 +39,27 @@ static INLINE void initGlyfReference(glyf_ComponentReference *ref) {
 	ref->roundToGrid = false;
 	ref->useMyMetrics = false;
 }
+static void copyGlyfReference(glyf_ComponentReference *dst, const glyf_ComponentReference *src) {
+	iVQ.copy(&dst->x, &src->x);
+	iVQ.copy(&dst->y, &src->y);
+	Handle.copy(&dst->glyph, &src->glyph);
+	dst->a = src->a;
+	dst->b = src->b;
+	dst->c = src->c;
+	dst->d = src->d;
+	dst->isAnchored = src->isAnchored;
+	dst->inner = src->inner;
+	dst->outer = src->outer;
+	dst->roundToGrid = src->roundToGrid;
+	dst->useMyMetrics = src->useMyMetrics;
+}
+static INLINE void disposeGlyfReference(glyf_ComponentReference *ref) {
+	iVQ.dispose(&ref->x);
+	iVQ.dispose(&ref->y);
+	Handle.dispose(&ref->glyph);
+}
 caryll_standardValType(glyf_ComponentReference, glyf_iComponentReference, initGlyfReference,
-                       disposeGlyfReference);
+                       copyGlyfReference, disposeGlyfReference);
 caryll_standardVectorImpl(glyf_ReferenceList, glyf_ComponentReference, glyf_iComponentReference,
                           glyf_iReferenceList);
 
@@ -217,7 +242,7 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 				coordinatesOffset += 2;
 			}
 		}
-		next_point(contours, &currentContour, &currentContourPointIndex)->x = x;
+		next_point(contours, &currentContour, &currentContourPointIndex)->x = iVQ.createStill(x);
 		coordinatesRead += 1;
 	}
 	// read Y, identical to X
@@ -239,7 +264,7 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 				coordinatesOffset += 2;
 			}
 		}
-		next_point(contours, &currentContour, &currentContourPointIndex)->y = y;
+		next_point(contours, &currentContour, &currentContourPointIndex)->y = iVQ.createStill(y);
 		coordinatesRead += 1;
 	}
 	FREE(flags);
@@ -248,10 +273,14 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 	double cy = 0;
 	for (shapeid_t j = 0; j < numberOfContours; j++) {
 		for (shapeid_t k = 0; k < contours->items[j].length; k++) {
-			cx += contours->items[j].items[k].x;
-			contours->items[j].items[k].x = cx;
-			cy += contours->items[j].items[k].y;
-			contours->items[j].items[k].y = cy;
+			glyf_Point *z = &contours->items[j].items[k];
+			cx += iVQ.getStill(z->x);
+			iVQ.dispose(&z->x);
+			z->x = iVQ.createStill(cx);
+
+			cy += iVQ.getStill(z->y);
+			iVQ.dispose(&z->y);
+			z->y = iVQ.createStill(cy);
 		}
 	}
 	return g;
@@ -276,12 +305,12 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 		if (flags & ARGS_ARE_XY_VALUES) {
 			ref.isAnchored = REF_XY;
 			if (flags & ARG_1_AND_2_ARE_WORDS) {
-				ref.x = read_16s(start + offset);
-				ref.y = read_16s(start + offset + 2);
+				ref.x = iVQ.createStill(read_16s(start + offset));
+				ref.y = iVQ.createStill(read_16s(start + offset + 2));
 				offset += 4;
 			} else {
-				ref.x = read_8s(start + offset);
-				ref.y = read_8s(start + offset + 1);
+				ref.x = iVQ.createStill(read_8s(start + offset));
+				ref.y = iVQ.createStill(read_8s(start + offset + 1));
 				offset += 2;
 			}
 		} else {
@@ -425,8 +454,8 @@ static void glyf_glyph_dump_contours(glyf_Glyph *g, json_value *target) {
 		json_value *contour = json_array_new(c->length);
 		for (shapeid_t m = 0; m < c->length; m++) {
 			json_value *point = json_object_new(4);
-			json_object_push(point, "x", json_new_position(c->items[m].x));
-			json_object_push(point, "y", json_new_position(c->items[m].y));
+			json_object_push(point, "x", json_new_VQ(c->items[m].x));
+			json_object_push(point, "y", json_new_VQ(c->items[m].y));
 			json_object_push(point, "on", json_boolean_new(c->items[m].onCurve & MASK_ON_CURVE));
 			json_array_push(contour, point);
 		}
@@ -442,8 +471,8 @@ static void glyf_glyph_dump_references(glyf_Glyph *g, json_value *target) {
 		json_value *ref = json_object_new(9);
 		json_object_push(ref, "glyph",
 		                 json_string_new_length((uint32_t)sdslen(r->glyph.name), r->glyph.name));
-		json_object_push(ref, "x", json_new_position(r->x));
-		json_object_push(ref, "y", json_new_position(r->y));
+		json_object_push(ref, "x", json_new_VQ(r->x));
+		json_object_push(ref, "y", json_new_VQ(r->y));
 		json_object_push(ref, "a", json_new_position(r->a));
 		json_object_push(ref, "b", json_new_position(r->b));
 		json_object_push(ref, "c", json_new_position(r->c));
@@ -557,17 +586,15 @@ void otfcc_dumpGlyf(const table_glyf *table, json_value *root, const otfcc_Optio
 // from json
 static glyf_Point glyf_parse_point(json_value *pointdump) {
 	glyf_Point point;
-	point.x = 0;
-	point.y = 0;
-	point.onCurve = 0;
+	glyf_iPoint.init(&point);
 	if (!pointdump || pointdump->type != json_object) return point;
 	for (uint32_t _k = 0; _k < pointdump->u.object.length; _k++) {
 		char *ck = pointdump->u.object.values[_k].name;
 		json_value *cv = pointdump->u.object.values[_k].value;
 		if (strcmp(ck, "x") == 0) {
-			point.x = json_numof(cv);
+			iVQ.replace(&point.x, json_vqOf(cv));
 		} else if (strcmp(ck, "y") == 0) {
-			point.y = json_numof(cv);
+			iVQ.replace(&point.y, json_vqOf(cv));
 		} else if (strcmp(ck, "on") == 0) {
 			point.onCurve = json_boolof(cv);
 		}
@@ -596,8 +623,8 @@ static glyf_ComponentReference glyf_parse_reference(json_value *refdump) {
 	glyf_ComponentReference ref = glyf_iComponentReference.empty();
 	if (_gname) {
 		ref.glyph = Handle.fromName(sdsnewlen(_gname->u.string.ptr, _gname->u.string.length));
-		ref.x = json_obj_getnum_fallback(refdump, "x", 0.0);
-		ref.y = json_obj_getnum_fallback(refdump, "y", 0.0);
+		iVQ.replace(&ref.x, json_vqOf(json_obj_get(refdump, "x")));
+		iVQ.replace(&ref.y, json_vqOf(json_obj_get(refdump, "y")));
 		ref.a = json_obj_getnum_fallback(refdump, "a", 1.0);
 		ref.b = json_obj_getnum_fallback(refdump, "b", 0.0);
 		ref.c = json_obj_getnum_fallback(refdump, "c", 0.0);
@@ -612,8 +639,8 @@ static glyf_ComponentReference glyf_parse_reference(json_value *refdump) {
 	} else {
 		// Invalid glyph references
 		ref.glyph.name = NULL;
-		ref.x = 0.0;
-		ref.y = 0.0;
+		iVQ.replace(&ref.x, iVQ.createStill(0));
+		iVQ.replace(&ref.y, iVQ.createStill(0));
 		ref.a = 1.0;
 		ref.b = 0.0;
 		ref.c = 0.0;
@@ -810,8 +837,8 @@ static void glyf_build_simple(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 		for (shapeid_t k = 0; k < g->contours.items[cj].length; k++) {
 			glyf_Point *p = &(g->contours.items[cj].items[k]);
 			uint8_t flag = (p->onCurve & MASK_ON_CURVE) ? GLYF_FLAG_ON_CURVE : 0;
-			int32_t px = round(p->x);
-			int32_t py = round(p->y);
+			int32_t px = round(iVQ.getStill(p->x));
+			int32_t py = round(iVQ.getStill(p->y));
 			int16_t dx = (int16_t)(px - cx);
 			int16_t dy = (int16_t)(py - cy);
 			if (dx == 0) {
@@ -880,8 +907,8 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 			if (!(arg1.pointid < 0x100 && arg2.pointid < 0x100)) { flags |= ARG_1_AND_2_ARE_WORDS; }
 		} else {
 			flags |= ARGS_ARE_XY_VALUES;
-			arg1.coord = r->x;
-			arg2.coord = r->y;
+			arg1.coord = iVQ.getStill(r->x);
+			arg2.coord = iVQ.getStill(r->y);
 			if (!(arg1.coord < 128 && arg1.coord >= -128 && arg2.coord < 128 &&
 			      arg2.coord >= -128)) {
 				flags |= ARG_1_AND_2_ARE_WORDS;

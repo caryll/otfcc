@@ -16,6 +16,9 @@ void il_push_operand(cff_CharstringIL *il, double x) {
 	il->length++;
 	il->free--;
 }
+void il_push_VQ(cff_CharstringIL *il, VQ x) {
+	il_push_operand(il, iVQ.getStill(x));
+}
 void il_push_special(cff_CharstringIL *il, int32_t s) {
 	ensureThereIsSpace(il);
 	il->instr[il->length].type = IL_ITEM_SPECIAL;
@@ -32,19 +35,23 @@ void il_push_op(cff_CharstringIL *il, int32_t op) {
 	il->length++;
 	il->free--;
 }
-static void il_lineto(cff_CharstringIL *il, double dx, double dy) {
-	il_push_operand(il, dx);
-	il_push_operand(il, dy);
+static void il_moveto(cff_CharstringIL *il, VQ dx, VQ dy) {
+	il_push_VQ(il, dx);
+	il_push_VQ(il, dy);
+	il_push_op(il, op_rmoveto);
+}
+static void il_lineto(cff_CharstringIL *il, VQ dx, VQ dy) {
+	il_push_VQ(il, dx);
+	il_push_VQ(il, dy);
 	il_push_op(il, op_rlineto);
 }
-static void il_curveto(cff_CharstringIL *il, double dx1, double dy1, double dx2, double dy2,
-                       double dx3, double dy3) {
-	il_push_operand(il, dx1);
-	il_push_operand(il, dy1);
-	il_push_operand(il, dx2);
-	il_push_operand(il, dy2);
-	il_push_operand(il, dx3);
-	il_push_operand(il, dy3);
+static void il_curveto(cff_CharstringIL *il, VQ dx1, VQ dy1, VQ dx2, VQ dy2, VQ dx3, VQ dy3) {
+	il_push_VQ(il, dx1);
+	il_push_VQ(il, dy1);
+	il_push_VQ(il, dx2);
+	il_push_VQ(il, dy2);
+	il_push_VQ(il, dx3);
+	il_push_VQ(il, dy3);
 	il_push_op(il, op_rrcurveto);
 }
 
@@ -137,34 +144,33 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 	// Convert absolute positions to deltas
 	glyf_Contour *tempContours = NULL;
 	{
-		pos_t x = 0;
-		pos_t y = 0;
+		VQ x = iVQ.neutral();
+		VQ y = iVQ.neutral();
 		NEW(tempContours, g->contours.length);
 		for (uint16_t c = 0; c < g->contours.length; c++) {
 			glyf_Contour *contour = &(g->contours.items[c]);
 			glyf_Contour *newcontour = &(tempContours[c]);
 			glyf_iContour.init(newcontour);
 			for (shapeid_t j = 0; j < contour->length; j++) {
-				glyf_iContour.push(newcontour, contour->items[j]);
+				glyf_iContour.push(newcontour, glyf_iPoint.dup(contour->items[j]));
 			}
 
-			if (newcontour->length > 2) {
-				pos_t x0 = newcontour->items[0].x;
-				pos_t y0 = newcontour->items[0].y;
-				if (!newcontour->items[newcontour->length - 1].onCurve) {
-					// Duplicate first point for proper CurveTo generation
-					glyf_iContour.push(newcontour,
-					                   ((glyf_Point){.x = x0, .y = y0, .onCurve = true}));
-				}
+			if (newcontour->length > 2 && !newcontour->items[newcontour->length - 1].onCurve) {
+				// Duplicate first point for proper CurveTo generation
+				glyf_iContour.push(newcontour, glyf_iPoint.dup(newcontour->items[0]));
 			}
+
 			for (shapeid_t j = 0; j < newcontour->length; j++) {
-				pos_t dx = newcontour->items[j].x - x;
-				pos_t dy = newcontour->items[j].y - y;
-				x = newcontour->items[j].x, y = newcontour->items[j].y;
-				newcontour->items[j].x = dx;
-				newcontour->items[j].y = dy;
+				VQ dx = iVQ.minus(newcontour->items[j].x, x);
+				VQ dy = iVQ.minus(newcontour->items[j].y, y);
+				iVQ.copyReplace(&x, newcontour->items[j].x);
+				iVQ.copyReplace(&y, newcontour->items[j].y);
+				iVQ.replace(&newcontour->items[j].x, dx);
+				iVQ.replace(&newcontour->items[j].y, dy);
 			}
 		}
+		iVQ.dispose(&x);
+		iVQ.dispose(&y);
 	}
 
 	bool hasmask =
@@ -183,12 +189,10 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 		glyf_Contour *contour = &(tempContours[c]);
 		shapeid_t n = contour->length;
 		if (n == 0) continue;
-		il_push_operand(il, contour->items[0].x);
-		il_push_operand(il, contour->items[0].y);
-		il_push_op(il, op_rmoveto);
+		il_moveto(il, contour->items[0].x, contour->items[0].y);
 		pointsSofar++;
 		if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
-
+		// TODO
 		for (shapeid_t j = 1; j < n; j++) {
 			if (contour->items[j].onCurve) { // A line-to
 				il_lineto(il, contour->items[j].x, contour->items[j].y);
@@ -197,9 +201,12 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 			           && !contour->items[j + 1].onCurve // next is offcurve
 			           && contour->items[j + 2].onCurve  // and next is oncurve
 			           ) {                               // means this is an bezier curve strand
-				il_curveto(il, contour->items[j].x, contour->items[j].y,      // dz1
-				           contour->items[j + 1].x, contour->items[j + 1].y,  // dz2
-				           contour->items[j + 2].x, contour->items[j + 2].y); // dz3
+				il_curveto(il, contour->items[j].x,
+				           contour->items[j].y, // dz1
+				           contour->items[j + 1].x,
+				           contour->items[j + 1].y, // dz2
+				           contour->items[j + 2].x,
+				           contour->items[j + 2].y); // dz3
 				pointsSofar += 3;
 				j += 2;
 			} else { // invalid offcurve, treat as oncurve

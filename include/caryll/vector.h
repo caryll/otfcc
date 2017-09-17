@@ -21,7 +21,6 @@
 	void (*initN)(MODIFY __TV * arr, size_t n);                                                    \
 	__TV *(*createN)(size_t n);                                                                    \
 	void (*clear)(MODIFY __TV * arr);                                                              \
-	void (*replace)(MODIFY __TV * dst, MOVE const __TV *src);                                      \
 	void (*push)(MODIFY __TV * arr, MOVE __T obj);                                                 \
 	__T (*pop)(MODIFY __TV * arr);                                                                 \
 	void (*fill)(MODIFY __TV * arr, size_t n);                                                     \

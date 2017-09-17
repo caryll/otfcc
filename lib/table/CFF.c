@@ -277,9 +277,12 @@ static void callback_draw_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = true, .x = x1, .y = y1,
-		                            }));
+		glyf_Point z;
+		glyf_iPoint.init(&z);
+		z.onCurve = true;
+		iVQ.copyReplace(&z.x, iVQ.createStill(x1));
+		iVQ.copyReplace(&z.y, iVQ.createStill(y1));
+		glyf_iContour.push(contour, z);
 		context->jPoint += 1;
 	}
 }
@@ -288,15 +291,30 @@ static void callback_draw_curveto(void *_context, double x1, double y1, double x
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = false, .x = x1, .y = y1,
-		                            }));
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = false, .x = x2, .y = y2,
-		                            }));
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = true, .x = x3, .y = y3,
-		                            }));
+		{
+			glyf_Point z;
+			glyf_iPoint.init(&z);
+			z.onCurve = false;
+			iVQ.copyReplace(&z.x, iVQ.createStill(x1));
+			iVQ.copyReplace(&z.y, iVQ.createStill(y1));
+			glyf_iContour.push(contour, z);
+		}
+		{
+			glyf_Point z;
+			glyf_iPoint.init(&z);
+			z.onCurve = false;
+			iVQ.copyReplace(&z.x, iVQ.createStill(x2));
+			iVQ.copyReplace(&z.y, iVQ.createStill(y2));
+			glyf_iContour.push(contour, z);
+		}
+		{
+			glyf_Point z;
+			glyf_iPoint.init(&z);
+			z.onCurve = true;
+			iVQ.copyReplace(&z.x, iVQ.createStill(x3));
+			iVQ.copyReplace(&z.y, iVQ.createStill(y3));
+			glyf_iContour.push(contour, z);
+		}
 		context->jPoint += 3;
 	}
 }
@@ -417,23 +435,24 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
+
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                 drawPass, options);
 
 	// Turn deltas into absolute coordinates
-	double cx = 0;
-	double cy = 0;
+	VQ cx = iVQ.neutral();
+	VQ cy = iVQ.neutral();
 	for (shapeid_t j = 0; j < g->contours.length; j++) {
 		glyf_Contour *contour = &g->contours.items[j];
 		for (shapeid_t k = 0; k < contour->length; k++) {
-			cx += contour->items[k].x;
-			cy += contour->items[k].y;
-
-			contour->items[k].x = cx;
-			contour->items[k].y = cy;
+			glyf_Point *z = &contour->items[k];
+			iVQ.inplacePlus(&cx, z->x);
+			iVQ.inplacePlus(&cy, z->y);
+			iVQ.copyReplace(&z->x, cx);
+			iVQ.copyReplace(&z->y, cy);
 		}
-		if (contour->items[0].x == contour->items[contour->length - 1].x &&
-		    contour->items[0].y == contour->items[contour->length - 1].y &&
+		if (!iVQ.compare(contour->items[0].x, contour->items[contour->length - 1].x) &&
+		    !iVQ.compare(contour->items[0].y, contour->items[contour->length - 1].y) &&
 		    (contour->items[0].onCurve && contour->items[contour->length - 1].onCurve)) {
 			// We found a duplicate knot at the beginning and end of a curve
 			// mainly due to curveto. We can remove that. This is unnecessary.
@@ -522,10 +541,11 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 			for (shapeid_t j = 0; j < g->contours.length; j++) {
 				glyf_Contour *contour = &g->contours.items[j];
 				for (shapeid_t k = 0; k < contour->length; k++) {
-					pos_t zx = contour->items[k].x;
-					pos_t zy = contour->items[k].y;
-					contour->items[k].x = a * zx + b * zy + x;
-					contour->items[k].y = c * zx + d * zy + y;
+					// TODO: properly unification
+					pos_t zx = iVQ.getStill(contour->items[k].x);
+					pos_t zy = iVQ.getStill(contour->items[k].y);
+					iVQ.replace(&contour->items[k].x, iVQ.createStill(a * zx + b * zy + x));
+					iVQ.replace(&contour->items[k].y, iVQ.createStill(c * zx + d * zy + y));
 				}
 			}
 		}

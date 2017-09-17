@@ -116,10 +116,6 @@
 			}                                                                                      \
 		}                                                                                          \
 	}                                                                                              \
-	static __CARYLL_INLINE__ void __TV##_replace(MODIFY __TV *dst, MOVE const __TV *src) {         \
-		__TV##_dispose(dst);                                                                       \
-		memcpy(dst, src, sizeof(__TV));                                                            \
-	}                                                                                              \
 	static __CARYLL_INLINE__ void __TV##_sort(MODIFY __TV *arr,                                    \
 	                                          int (*fn)(const __T *a, const __T *b)) {             \
 		qsort(arr->items, arr->length, sizeof(arr->items[0]),                                      \
@@ -140,7 +136,8 @@
 	}                                                                                              \
 	static __CARYLL_INLINE__ void __TV##_disposeItem(MODIFY __TV *arr, size_t n) {                 \
 		(__ti).dispose ? (__ti).dispose(&((arr)->items[n])) : (void)0;                             \
-	}
+	}                                                                                              \
+	caryll_trivialReplace(__TV);
 
 #define caryll_VectorImplFunctions(__TV, __T, __ti)                                                \
 	caryll_VectorImplFreeIndependent(__TV, __T, __ti);                                             \
@@ -149,9 +146,9 @@
 #define caryll_VectorImplAssignments(__TV, __T, __ti)                                              \
 	.init = __TV##_init, .copy = __TV##_copy, .dispose = __TV##_dispose, .create = __TV##_create,  \
 	.createN = __TV##_createN, .free = __TV##_free, .initN = __TV##_initN,                         \
-	.clear = __TV##_dispose, .replace = __TV##_replace, .push = __TV##_push, .pop = __TV##_pop,    \
-	.fill = __TV##_fill, .sort = __TV##_sort, .disposeItem = __TV##_disposeItem,                   \
-	.filterEnv = __TV##_filterEnv, .move = __TV##_move
+	.clear = __TV##_dispose, .replace = __TV##_replace, .copyReplace = __TV##_copyReplace,         \
+	.push = __TV##_push, .pop = __TV##_pop, .fill = __TV##_fill, .sort = __TV##_sort,              \
+	.disposeItem = __TV##_disposeItem, .filterEnv = __TV##_filterEnv, .move = __TV##_move
 
 #define caryll_standardVectorImpl(__TV, __T, __ti, __name)                                         \
 	caryll_VectorImplFunctions(__TV, __T, __ti);                                                   \

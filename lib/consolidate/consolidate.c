@@ -157,8 +157,9 @@ bool getPointCoordinates(table_glyf *table, glyf_ComponentReference *gr, shapeid
 		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
 			if (*stated == n) {
 				glyf_Point *p = &(g->contours.items[c].items[pj]);
-				*x = gr->x + gr->a * p->x + gr->b * p->y;
-				*y = gr->y + gr->c * p->x + gr->d * p->y;
+				// TODO: properly calculate matrix transformation
+				*x = iVQ.getStill(gr->x) + gr->a * iVQ.getStill(p->x) + gr->b * iVQ.getStill(p->y);
+				*y = iVQ.getStill(gr->y) + gr->c * iVQ.getStill(p->x) + gr->d * iVQ.getStill(p->y);
 				return true;
 			}
 			*stated += 1;
@@ -176,8 +177,12 @@ bool getPointCoordinates(table_glyf *table, glyf_ComponentReference *gr, shapeid
 		ref.b = rr->a * gr->b + rr->b * gr->d;
 		ref.c = gr->a * rr->c + gr->c * rr->d;
 		ref.d = gr->b * rr->c + rr->d * gr->d;
-		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
-		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
+		iVQ.replace(&ref.x,
+		            iVQ.createStill(iVQ.getStill(rr->x) + rr->a * iVQ.getStill(gr->x) +
+		                            rr->b * iVQ.getStill(gr->y)));
+		iVQ.replace(&ref.y,
+		            iVQ.createStill(iVQ.getStill(rr->y) + rr->c * iVQ.getStill(gr->x) +
+		                            rr->d * iVQ.getStill(gr->y)));
 		bool success = getPointCoordinates(table, &ref, n, stated, x, y, options);
 		glyf_iComponentReference.dispose(&ref);
 		if (success) return true;
@@ -217,11 +222,11 @@ bool consolidateAnchorRef(table_glyf *table, glyf_ComponentReference *gr,
 	pos_t rry = outerY - rr->c * innerX - rr->d * innerY;
 
 	if (rr->isAnchored == REF_ANCHOR_CONSOLIDATING_ANCHOR) {
-		rr->x = rrx;
-		rr->y = rry;
+		iVQ.replace(&rr->x, iVQ.createStill(rrx));
+		iVQ.replace(&rr->y, iVQ.createStill(rry));
 		rr->isAnchored = REF_ANCHOR_CONSOLIDATED;
 	} else {
-		if (fabs(rr->x - rrx) > 0.5 && fabs(rr->y - rry) > 0.5) {
+		if (fabs(iVQ.getStill(rr->x) - (rrx)) > 0.5 && fabs(iVQ.getStill(rr->y) - (rry)) > 0.5) {
 			logWarning("Anchored reference to %s does not match its X/Y offset data.",
 			           rr->glyph.name);
 		}
