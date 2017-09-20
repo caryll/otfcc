@@ -636,32 +636,43 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 		if (cff->fontBBoxRight < font->head->xMax) cff->fontBBoxRight = font->head->xMax;
 		if (font->glyf && cff->isCID) { cff->cidCount = (uint32_t)font->glyf->length; }
 		if (cff->isCID) {
-			if (cff->fontMatrix) { FREE(cff->fontMatrix); }
+			if (cff->fontMatrix) {
+				iVQ.dispose(&cff->fontMatrix->x);
+				iVQ.dispose(&cff->fontMatrix->y);
+				FREE(cff->fontMatrix);
+				cff->fontMatrix = NULL;
+			}
 			for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 				table_CFF *fd = cff->fdArray[j];
-				if (font->head->unitsPerEm == 1000) {
+				if (fd->fontMatrix) {
+					iVQ.dispose(&fd->fontMatrix->x);
+					iVQ.dispose(&fd->fontMatrix->y);
 					FREE(fd->fontMatrix);
+					fd->fontMatrix = NULL;
+				}
+				if (font->head->unitsPerEm == 1000) {
+					fd->fontMatrix = NULL;
 				} else {
-					if (!fd->fontMatrix) { NEW(fd->fontMatrix); }
+					NEW(fd->fontMatrix);
 					fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
 					fd->fontMatrix->b = 0.0;
 					fd->fontMatrix->c = 0.0;
 					fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-					fd->fontMatrix->x = 0.0;
-					fd->fontMatrix->y = 0.0;
+					fd->fontMatrix->x = iVQ.neutral();
+					fd->fontMatrix->y = iVQ.neutral();
 				}
 			}
 		} else {
 			if (font->head->unitsPerEm == 1000) {
-				FREE(cff->fontMatrix);
+				cff->fontMatrix = NULL;
 			} else {
-				if (!cff->fontMatrix) { NEW(cff->fontMatrix); }
+				NEW(cff->fontMatrix);
 				cff->fontMatrix->a = 1.0 / font->head->unitsPerEm;
 				cff->fontMatrix->b = 0.0;
 				cff->fontMatrix->c = 0.0;
 				cff->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-				cff->fontMatrix->x = 0.0;
-				cff->fontMatrix->y = 0.0;
+				cff->fontMatrix->x = iVQ.neutral();
+				cff->fontMatrix->y = iVQ.neutral();
 			}
 		}
 

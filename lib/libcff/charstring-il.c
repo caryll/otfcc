@@ -192,7 +192,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 		il_moveto(il, contour->items[0].x, contour->items[0].y);
 		pointsSofar++;
 		if (hasmask) il_push_masks(il, g, contoursSofar, pointsSofar, &jh, &jm);
-		// TODO
+		// TODO: Generate BLENDs
 		for (shapeid_t j = 1; j < n; j++) {
 			if (contour->items[j].onCurve) { // A line-to
 				il_lineto(il, contour->items[j].x, contour->items[j].y);

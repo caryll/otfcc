@@ -6,12 +6,12 @@
 #include "glyf.h"
 
 typedef struct {
-	double a;
-	double b;
-	double c;
-	double d;
-	double x;
-	double y;
+	scale_t a;
+	scale_t b;
+	scale_t c;
+	scale_t d;
+	VQ x;
+	VQ y;
 } cff_FontMatrix;
 
 typedef struct {

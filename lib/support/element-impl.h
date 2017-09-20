@@ -265,4 +265,23 @@
 	.inplaceNegate = T##_inplaceNegate, .negate = T##_negate, .inplaceMinus = T##_inplaceMinus,    \
 	.minus = T##_minus
 
+// Module
+#define caryll_ModuleFns(T, TS, _fn_inplaceScale)                                                  \
+	static __CARYLL_INLINE__ void T##_inplaceScale(MODIFY T *a, TS b) {                            \
+		(_fn_inplaceScale)(a, b);                                                                  \
+	}                                                                                              \
+	static __CARYLL_INLINE__ T T##_scale(const T a, TS b) {                                        \
+		T result;                                                                                  \
+		T##_copy(&result, &a);                                                                     \
+		T##_inplaceScale(&result, b);                                                              \
+		return a;                                                                                  \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void T##_inplacePlusScale(MODIFY T *a, TS b, const T c) {             \
+		T x = T##_scale(c, b);                                                                     \
+		T##_inplacePlus(a, x);                                                                     \
+		T##_dispose(&x);                                                                           \
+	}
+#define caryll_ModuleAssigns(T)                                                                    \
+	.inplaceScale = T##_inplaceScale, .scale = T##_scale, .inplacePlusScale = T##_inplacePlusScale
+
 #endif

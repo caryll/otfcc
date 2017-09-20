@@ -229,25 +229,31 @@ static void vqInplacePlus(MODIFY VQ *a, const VQ b) {
 
 caryll_MonoidFns(VQ, vqNeutral, vqInplacePlus);
 
-// Group
-static void vqInplaceNegate(MODIFY VQ *a) {
-	a->kernel *= -1;
+// Module
+static void vqInplaceScale(MODIFY VQ *a, pos_t b) {
+	a->kernel *= b;
 	for (size_t j = 0; j < a->shift.length; j++) {
 		vq_Segment *s = &a->shift.items[j];
 		switch (s->type) {
 			case VQ_STILL:
-				s->val.still *= -1;
+				s->val.still *= b;
 				break;
 			case VQ_DELTA:
-				s->val.delta.quantity *= -1;
+				s->val.delta.quantity *= b;
 				break;
 		}
 	}
 }
 
-caryll_GroupFns(VQ, vqInplaceNegate);
+// Group
+static void vqInplaceNegate(MODIFY VQ *a) {
+	vqInplaceScale(a, -1);
+}
 
-// Eq
+caryll_GroupFns(VQ, vqInplaceNegate);
+caryll_ModuleFns(VQ, pos_t, vqInplaceScale);
+
+// Ord
 static int vqCompare(const VQ a, const VQ b) {
 	if (a.shift.length < b.shift.length) return -1;
 	if (a.shift.length > b.shift.length) return 1;
@@ -289,12 +295,22 @@ static VQ vqCreateStill(pos_t x) {
 	return vq;
 }
 
+// pointLinearTfm
+static VQ vqPointLinearTfm(const VQ ax, pos_t a, const VQ x, pos_t b, const VQ y) {
+	VQ targetX = iVQ.dup(ax);
+	iVQ.inplacePlusScale(&targetX, a, x);
+	iVQ.inplacePlusScale(&targetX, b, y);
+	return targetX;
+}
+
 caryll_VectorInterfaceTypeName(VQ) iVQ = {
     caryll_standardValTypeMethods(VQ),
     .getStill = vqGetStill,
     .createStill = vqCreateStill,
-    caryll_MonoidAssigns(VQ), // monoid
-    caryll_GroupAssigns(VQ),  // group
-    caryll_OrdEqAssigns(VQ),  // Ord
-    caryll_ShowAssigns(VQ),   // show
+    caryll_MonoidAssigns(VQ),          // Monoid
+    caryll_GroupAssigns(VQ),           // Group
+    caryll_ModuleAssigns(VQ),          // Module
+    caryll_OrdEqAssigns(VQ),           // Eq-Ord
+    caryll_ShowAssigns(VQ),            // Show
+    .pointLinearTfm = vqPointLinearTfm // pointLinearTfm
 };

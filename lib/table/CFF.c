@@ -25,7 +25,6 @@ static INLINE void initFD(table_CFF *fd) {
 	fd->underlinePosition = -100;
 	fd->underlineThickness = 50;
 }
-
 static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	if (!priv) return;
 	FREE(priv->blueValues);
@@ -36,6 +35,11 @@ static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	FREE(priv->stemSnapH);
 	FREE(priv->stemSnapV);
 	FREE(priv);
+}
+static INLINE void dispoeFontMatrix(cff_FontMatrix *fm) {
+	if (!fm) return;
+	iVQ.dispose(&fm->x);
+	iVQ.dispose(&fm->y);
 }
 static INLINE void disposeFD(table_CFF *fd) {
 	sdsfree(fd->version);
@@ -48,7 +52,7 @@ static INLINE void disposeFD(table_CFF *fd) {
 	sdsfree(fd->fontName);
 	sdsfree(fd->cidRegistry);
 	sdsfree(fd->cidOrdering);
-
+	dispoeFontMatrix(fd->fontMatrix);
 	FREE(fd->fontMatrix);
 	otfcc_delete_privatedict(fd->privateDict);
 	if (fd->fdArray) {
@@ -206,8 +210,8 @@ static void callback_extract_fd(uint32_t op, uint8_t top, cff_Value *stack, void
 				meta->fontMatrix->b = cffnum(stack[top - 5]);
 				meta->fontMatrix->c = cffnum(stack[top - 4]);
 				meta->fontMatrix->d = cffnum(stack[top - 3]);
-				meta->fontMatrix->x = cffnum(stack[top - 2]);
-				meta->fontMatrix->y = cffnum(stack[top - 1]);
+				meta->fontMatrix->x = iVQ.createStill(cffnum(stack[top - 2]));
+				meta->fontMatrix->y = iVQ.createStill(cffnum(stack[top - 1]));
 			}
 			break;
 		case op_isFixedPitch:
@@ -440,8 +444,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	                 drawPass, options);
 
 	// Turn deltas into absolute coordinates
-	VQ cx = iVQ.neutral();
-	VQ cy = iVQ.neutral();
+	VQ cx = iVQ.neutral(), cy = iVQ.neutral();
 	for (shapeid_t j = 0; j < g->contours.length; j++) {
 		glyf_Contour *contour = &g->contours.items[j];
 		for (shapeid_t k = 0; k < contour->length; k++) {
@@ -459,6 +462,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 			glyf_iContour.pop(contour);
 		}
 	}
+	iVQ.dispose(&cx), iVQ.dispose(&cy);
 
 	cff_iIndex.dispose(&localSubrs);
 	FREE(stack.stack);
@@ -532,22 +536,26 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 			fd = fd->fdArray[g->fdSelect.index];
 		}
 		if (fd->fontMatrix) {
-			pos_t a = qround(head->unitsPerEm * fd->fontMatrix->a);
-			pos_t b = qround(head->unitsPerEm * fd->fontMatrix->b);
-			pos_t c = qround(head->unitsPerEm * fd->fontMatrix->c);
-			pos_t d = qround(head->unitsPerEm * fd->fontMatrix->d);
-			pos_t x = qround(head->unitsPerEm * fd->fontMatrix->x);
-			pos_t y = qround(head->unitsPerEm * fd->fontMatrix->y);
+			scale_t a = qround(head->unitsPerEm * fd->fontMatrix->a);
+			scale_t b = qround(head->unitsPerEm * fd->fontMatrix->b);
+			scale_t c = qround(head->unitsPerEm * fd->fontMatrix->c);
+			scale_t d = qround(head->unitsPerEm * fd->fontMatrix->d);
+			VQ x = iVQ.scale(fd->fontMatrix->x, head->unitsPerEm);
+			x.kernel = qround(x.kernel);
+			VQ y = iVQ.scale(fd->fontMatrix->y, head->unitsPerEm);
+			y.kernel = qround(y.kernel);
+
 			for (shapeid_t j = 0; j < g->contours.length; j++) {
 				glyf_Contour *contour = &g->contours.items[j];
 				for (shapeid_t k = 0; k < contour->length; k++) {
-					// TODO: properly unification
-					pos_t zx = iVQ.getStill(contour->items[k].x);
-					pos_t zy = iVQ.getStill(contour->items[k].y);
-					iVQ.replace(&contour->items[k].x, iVQ.createStill(a * zx + b * zy + x));
-					iVQ.replace(&contour->items[k].y, iVQ.createStill(c * zx + d * zy + y));
+					VQ zx = iVQ.dup(contour->items[k].x);
+					VQ zy = iVQ.dup(contour->items[k].y);
+					iVQ.replace(&contour->items[k].x, iVQ.pointLinearTfm(x, a, zx, b, zy));
+					iVQ.replace(&contour->items[k].y, iVQ.pointLinearTfm(y, c, zx, d, zy));
+					iVQ.dispose(&zx), iVQ.dispose(&zy);
 				}
 			}
+			iVQ.dispose(&x), iVQ.dispose(&y);
 		}
 	}
 }
@@ -696,8 +704,8 @@ static json_value *fdToJson(const table_CFF *table) {
 		json_object_push(_fontMatrix, "b", json_double_new(table->fontMatrix->b));
 		json_object_push(_fontMatrix, "c", json_double_new(table->fontMatrix->c));
 		json_object_push(_fontMatrix, "d", json_double_new(table->fontMatrix->d));
-		json_object_push(_fontMatrix, "x", json_double_new(table->fontMatrix->x));
-		json_object_push(_fontMatrix, "y", json_double_new(table->fontMatrix->y));
+		json_object_push(_fontMatrix, "x", json_new_VQ(table->fontMatrix->x));
+		json_object_push(_fontMatrix, "y", json_new_VQ(table->fontMatrix->y));
 		json_object_push(_CFF_, "fontMatrix", _fontMatrix);
 	}
 	if (table->privateDict) { json_object_push(_CFF_, "privates", pdToJson(table->privateDict)); }

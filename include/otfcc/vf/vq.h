@@ -61,13 +61,17 @@ typedef struct {
 } VQ;
 extern caryll_VectorInterfaceTypeName(VQ) {
 	caryll_VT(VQ);
-	caryll_Group(VQ); // VQ forms a group
-	caryll_Ord(VQ);   // VQs are comparable
+	caryll_Module(VQ, scale_t); // VQ forms a module (vector space)
+	caryll_Ord(VQ);             // VQs are comparable
 	caryll_Show(VQ);
 	// Getting still
 	pos_t (*getStill)(const VQ v);
 	// Creating still
 	VQ (*createStill)(pos_t x);
+
+	// util functions
+	// point linear transform
+	VQ (*pointLinearTfm)(const VQ ax, pos_t a, const VQ x, pos_t b, const VQ y);
 }
 iVQ;
 #endif

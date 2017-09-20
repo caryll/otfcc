@@ -12,7 +12,7 @@ static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 			break;
 		case VQ_DELTA:
 			bufwrite32b(buf, otfcc_to_fixed(s.val.delta.quantity));
-			bufwrite32b(buf, s.val.delta.region.length);
+			bufwrite32b(buf, (uint32_t)s.val.delta.region.length);
 			for (size_t j = 0; j < s.val.delta.region.length; j++) {
 				vq_AxisSpan *span = &s.val.delta.region.items[j];
 				bufwrite32b(buf, otfcc_to_f2dot14(span->start));
@@ -23,7 +23,7 @@ static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 }
 static void hashVQ(caryll_Buffer *buf, VQ x) {
 	bufwrite32b(buf, otfcc_to_fixed(x.kernel));
-	bufwrite32b(buf, x.shift.length);
+	bufwrite32b(buf, (uint32_t)x.shift.length);
 	for (size_t j = 0; j < x.shift.length; j++) {
 		hashVQS(buf, x.shift.items[j]);
 	}

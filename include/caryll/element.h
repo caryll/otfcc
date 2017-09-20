@@ -56,5 +56,10 @@
 	T (*negate)(const T);                                                                          \
 	void (*inplaceMinus)(MODIFY T *, const T);                                                     \
 	T (*minus)(const T, const T);
+#define caryll_Module(T, TScale)                                                                   \
+	caryll_Group(T);                                                                               \
+	void (*inplaceScale)(MODIFY T * a, TScale b);                                                  \
+	void (*inplacePlusScale)(MODIFY T * a, TScale b, const T c);                                   \
+	T (*scale)(const T a, TScale b);
 
 #endif

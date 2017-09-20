@@ -18,7 +18,8 @@ typedef uint16_t cffsid_t;     // CFF/CFF2 String index
 typedef uint32_t arity_t;      // CFF Arity/Stack depth
 typedef uint32_t unicode_t;    // Unicode
 
-typedef double pos_t; // Position
+typedef double pos_t;   // Position
+typedef double scale_t; // transform scaling
 #define POS_MAX FLT_MAX
 #define POS_MIN FLT_MIN
 

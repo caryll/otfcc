@@ -54,10 +54,10 @@ typedef enum {
 typedef struct {
 	otfcc_GlyphHandle glyph;
 	// transformation term
-	pos_t a;
-	pos_t b;
-	pos_t c;
-	pos_t d;
+	scale_t a;
+	scale_t b;
+	scale_t c;
+	scale_t d;
 	// position term
 	RefAnchorStatus isAnchored;
 	shapeid_t inner;
