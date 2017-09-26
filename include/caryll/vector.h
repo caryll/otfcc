@@ -19,6 +19,7 @@
 #define caryll_VectorInterfaceTrait(__TV, __T)                                                     \
 	caryll_RT(__TV);                                                                               \
 	void (*initN)(MODIFY __TV * arr, size_t n);                                                    \
+	void (*initCapN)(MODIFY __TV * arr, size_t n);                                                 \
 	__TV *(*createN)(size_t n);                                                                    \
 	void (*clear)(MODIFY __TV * arr);                                                              \
 	void (*push)(MODIFY __TV * arr, MOVE __T obj);                                                 \

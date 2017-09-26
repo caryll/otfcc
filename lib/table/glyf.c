@@ -242,7 +242,8 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 				coordinatesOffset += 2;
 			}
 		}
-		next_point(contours, &currentContour, &currentContourPointIndex)->x = iVQ.createStill(x);
+		iVQ.replace(&(next_point(contours, &currentContour, &currentContourPointIndex)->x),
+		            iVQ.createStill(x));
 		coordinatesRead += 1;
 	}
 	// read Y, identical to X
@@ -264,7 +265,8 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 				coordinatesOffset += 2;
 			}
 		}
-		next_point(contours, &currentContour, &currentContourPointIndex)->y = iVQ.createStill(y);
+		iVQ.replace(&(next_point(contours, &currentContour, &currentContourPointIndex)->y),
+		            iVQ.createStill(y));
 		coordinatesRead += 1;
 	}
 	FREE(flags);
@@ -608,7 +610,9 @@ static void glyf_parse_contours(json_value *col, glyf_Glyph *g) {
 	for (shapeid_t j = 0; j < nContours; j++) {
 		json_value *contourdump = col->u.array.values[j];
 		glyf_Contour contour;
-		glyf_iContour.init(&contour);
+		glyf_iContour.initCapN(
+		    &contour,
+		    contourdump && contourdump->type == json_array ? contourdump->u.array.length : 1);
 		if (contourdump && contourdump->type == json_array) {
 			for (shapeid_t k = 0; k < contourdump->u.array.length; k++) {
 				glyf_iContour.push(&contour, glyf_parse_point(contourdump->u.array.values[k]));

@@ -17,54 +17,56 @@
 #endif
 
 void printInfo() {
-	fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+	fprintf(stdout, "This is Polymorphic otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER,
+	        PATCH_VER);
 }
 void printHelp() {
-	fprintf(stdout, "\n"
-	                "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
-	                " input.json                : Path to input file. When absent the input will be\n"
-	                "                             read from the STDIN.\n\n"
-	                " -h, --help                : Display this help message and exit.\n"
-	                " -v, --version             : Display version information and exit.\n"
-	                " -o <file>                 : Set output file path to <file>.\n"
-	                " -s, --dummy-dsig          : Include an empty DSIG table in the font. For some\n"
-	                "                             Microsoft applications, DSIG is required to enable\n"
-	                "                             OpenType features.\n"
-	                " -O<n>                     : Specify the level for optimization.\n"
-	                "     -O0                     Turn off any optimization.\n"
-	                "     -O1                     Default optimization.\n"
-	                "     -O2                     More aggressive optimizations for web font. In this\n"
-	                "                             level, the following options will be set:\n"
-	                "                               --merge-features\n"
-	                "                               --short-post\n"
-	                "                               --subroutinize\n"
-	                "     -O3                     Most aggressive opptimization strategy will be\n"
-	                "                             used. In this level, these options will be set:\n"
-	                "                               --force-cid\n"
-	                "                               --ignore-glyph-order\n"
-	                " --verbose                 : Show more information when building.\n"
-	                " -q, --quiet               : Be silent when building.\n\n"
-	                " --ignore-hints            : Ignore the hinting information in the input.\n"
-	                " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
-	                "                             instead of stating the average width of glyphs.\n"
-	                "                             Useful when creating a monospaced font.\n"
-	                " --keep-unicode-ranges     : Keep the OS/2.ulUnicodeRange[1-4] as-is.\n"
-	                " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
-	                "                             using current time.\n\n"
-	                " --short-post              : Don't export glyph names in the result font.\n"
-	                " --ignore-glyph-order, -i  : Ignore the glyph order information in the input.\n"
-	                " --keep-glyph-order, -k    : Keep the glyph order information in the input.\n"
-	                "                             Use to preserve glyph order under -O2 and -O3.\n"
-	                " --dont-ignore-glyph-order : Same as --keep-glyph-order.\n"
-	                " --merge-features          : Merge duplicate OpenType feature definitions.\n"
-	                " --dont-merge-features     : Keep duplicate OpenType feature definitions.\n"
-	                " --merge-lookups           : Merge duplicate OpenType lookups.\n"
-	                " --dont-merge-lookups      : Keep duplicate OpenType lookups.\n"
-	                " --force-cid               : Convert name-keyed CFF OTF into CID-keyed.\n"
-	                " --subroutinize            : Subroutinize CFF table.\n"
-	                " --stub-cmap4              : Create a stub `cmap` format 4 subtable if format\n"
-	                "                             12 subtable is present.\n"
-	                "\n");
+	fprintf(stdout,
+	        "\n"
+	        "Usage : otfccbuild [OPTIONS] [input.json] -o output.[ttf|otf]\n\n"
+	        " input.json                : Path to input file. When absent the input will be\n"
+	        "                             read from the STDIN.\n\n"
+	        " -h, --help                : Display this help message and exit.\n"
+	        " -v, --version             : Display version information and exit.\n"
+	        " -o <file>                 : Set output file path to <file>.\n"
+	        " -s, --dummy-dsig          : Include an empty DSIG table in the font. For some\n"
+	        "                             Microsoft applications, DSIG is required to enable\n"
+	        "                             OpenType features.\n"
+	        " -O<n>                     : Specify the level for optimization.\n"
+	        "     -O0                     Turn off any optimization.\n"
+	        "     -O1                     Default optimization.\n"
+	        "     -O2                     More aggressive optimizations for web font. In this\n"
+	        "                             level, the following options will be set:\n"
+	        "                               --merge-features\n"
+	        "                               --short-post\n"
+	        "                               --subroutinize\n"
+	        "     -O3                     Most aggressive opptimization strategy will be\n"
+	        "                             used. In this level, these options will be set:\n"
+	        "                               --force-cid\n"
+	        "                               --ignore-glyph-order\n"
+	        " --verbose                 : Show more information when building.\n"
+	        " -q, --quiet               : Be silent when building.\n\n"
+	        " --ignore-hints            : Ignore the hinting information in the input.\n"
+	        " --keep-average-char-width : Keep the OS/2.xAvgCharWidth value from the input\n"
+	        "                             instead of stating the average width of glyphs.\n"
+	        "                             Useful when creating a monospaced font.\n"
+	        " --keep-unicode-ranges     : Keep the OS/2.ulUnicodeRange[1-4] as-is.\n"
+	        " --keep-modified-time      : Keep the head.modified time in the json, instead of\n"
+	        "                             using current time.\n\n"
+	        " --short-post              : Don't export glyph names in the result font.\n"
+	        " --ignore-glyph-order, -i  : Ignore the glyph order information in the input.\n"
+	        " --keep-glyph-order, -k    : Keep the glyph order information in the input.\n"
+	        "                             Use to preserve glyph order under -O2 and -O3.\n"
+	        " --dont-ignore-glyph-order : Same as --keep-glyph-order.\n"
+	        " --merge-features          : Merge duplicate OpenType feature definitions.\n"
+	        " --dont-merge-features     : Keep duplicate OpenType feature definitions.\n"
+	        " --merge-lookups           : Merge duplicate OpenType lookups.\n"
+	        " --dont-merge-lookups      : Keep duplicate OpenType lookups.\n"
+	        " --force-cid               : Convert name-keyed CFF OTF into CID-keyed.\n"
+	        " --subroutinize            : Subroutinize CFF table.\n"
+	        " --stub-cmap4              : Create a stub `cmap` format 4 subtable if format\n"
+	        "                             12 subtable is present.\n"
+	        "\n");
 }
 void readEntireFile(char *inPath, char **_buffer, long *_length) {
 	char *buffer = NULL;
@@ -234,7 +236,8 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
-	options->logger->setVerbosity(options->logger, options->quiet ? 0 : options->verbose ? 0xFF : 1);
+	options->logger->setVerbosity(options->logger,
+	                              options->quiet ? 0 : options->verbose ? 0xFF : 1);
 	if (show_help) {
 		printInfo();
 		printHelp();

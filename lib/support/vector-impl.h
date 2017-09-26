@@ -66,6 +66,16 @@
 			arr->items = __caryll_calloc(arr->capacity, sizeof(__T));                              \
 		}                                                                                          \
 	}                                                                                              \
+	static __CARYLL_INLINE__ void __TV##_growToN(MODIFY __TV *arr, size_t target) {                \
+		if (target <= arr->capacity) return;                                                       \
+		if (!arr->capacity) arr->capacity = 0x10;                                                  \
+		if (arr->capacity <= target) { arr->capacity = target + 1; }                               \
+		if (arr->items) {                                                                          \
+			arr->items = __caryll_realloc(arr->items, arr->capacity * sizeof(__T));                \
+		} else {                                                                                   \
+			arr->items = __caryll_calloc(arr->capacity, sizeof(__T));                              \
+		}                                                                                          \
+	}                                                                                              \
 	static __CARYLL_INLINE__ void __TV##_grow(MODIFY __TV *arr) {                                  \
 		__TV##_growTo(arr, arr->length + 1);                                                       \
 	}                                                                                              \
@@ -91,7 +101,12 @@
 	}                                                                                              \
 	static __CARYLL_INLINE__ void __TV##_initN(MODIFY __TV *arr, size_t n) {                       \
 		__TV##_init(arr);                                                                          \
+		__TV##_growToN(arr, n);                                                                    \
 		__TV##_fill(arr, n);                                                                       \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void __TV##_initCapN(MODIFY __TV *arr, size_t n) {                    \
+		__TV##_init(arr);                                                                          \
+		__TV##_growToN(arr, n);                                                                    \
 	}                                                                                              \
 	static __CARYLL_INLINE__ __TV *__TV##_createN(size_t n) {                                      \
 		__TV *t = __caryll_malloc(sizeof(__TV));                                                   \
@@ -146,9 +161,10 @@
 #define caryll_VectorImplAssignments(__TV, __T, __ti)                                              \
 	.init = __TV##_init, .copy = __TV##_copy, .dispose = __TV##_dispose, .create = __TV##_create,  \
 	.createN = __TV##_createN, .free = __TV##_free, .initN = __TV##_initN,                         \
-	.clear = __TV##_dispose, .replace = __TV##_replace, .copyReplace = __TV##_copyReplace,         \
-	.push = __TV##_push, .pop = __TV##_pop, .fill = __TV##_fill, .sort = __TV##_sort,              \
-	.disposeItem = __TV##_disposeItem, .filterEnv = __TV##_filterEnv, .move = __TV##_move
+	.initCapN = __TV##_initCapN, .clear = __TV##_dispose, .replace = __TV##_replace,               \
+	.copyReplace = __TV##_copyReplace, .push = __TV##_push, .pop = __TV##_pop,                     \
+	.fill = __TV##_fill, .sort = __TV##_sort, .disposeItem = __TV##_disposeItem,                   \
+	.filterEnv = __TV##_filterEnv, .move = __TV##_move
 
 #define caryll_standardVectorImpl(__TV, __T, __ti, __name)                                         \
 	caryll_VectorImplFunctions(__TV, __T, __ti);                                                   \
