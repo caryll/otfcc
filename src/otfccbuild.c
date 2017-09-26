@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(longopts[option_index].name, "verbose") == 0) {
 					options->verbose = true;
 				} else if (strcmp(longopts[option_index].name, "quiet") == 0) {
-					options->verbose = true;
+					options->quiet = true;
 				}
 				break;
 			case 'v':
