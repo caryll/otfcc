@@ -10,7 +10,8 @@ static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable, const otfcc_Options *options) {
+bool _consolidate_gsub_multi_alt(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                                 bool flag, const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	gsub_multi_hash *h = NULL;
 
@@ -21,6 +22,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 		}
 		fontop_consolidateCoverage(font, subtable->items[k].to, options);
 		Coverage.shrink(subtable->items[k].to, false);
+		if (flag && !subtable->items[k].to->numGlyphs) continue;
 
 		gsub_multi_hash *s;
 		int fromid = subtable->items[k].from.index;
@@ -39,14 +41,23 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 	{
 		gsub_multi_hash *s, *tmp;
 		HASH_ITER(hh, h, s, tmp) {
-			iSubtable_gsub_multi.push(subtable,
-			                          ((otl_GsubMultiEntry){
-			                              .from = Handle.fromConsolidated(s->fromid, s->fromname), .to = s->to,
-			                          }));
+			iSubtable_gsub_multi.push(
+			    subtable, ((otl_GsubMultiEntry){
+			                  .from = Handle.fromConsolidated(s->fromid, s->fromname), .to = s->to,
+			              }));
 			sdsfree(s->fromname);
 			HASH_DEL(h, s);
 			FREE(s);
 		}
 	}
 	return (subtable->length == 0);
+}
+
+bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                            const otfcc_Options *options) {
+	return _consolidate_gsub_multi_alt(font, table, _subtable, false, options);
+}
+bool consolidate_gsub_alternative(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                                  const otfcc_Options *options) {
+	return _consolidate_gsub_multi_alt(font, table, _subtable, true, options);
 }

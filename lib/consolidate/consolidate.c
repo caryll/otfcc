@@ -330,7 +330,8 @@ void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lo
                               const otfcc_Options *options) {
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_alternative,
+	                    iSubtable_gsub_multi.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature,
 	                    iSubtable_gsub_ligature.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.free);
