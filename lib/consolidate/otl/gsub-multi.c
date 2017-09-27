@@ -10,8 +10,8 @@ static int by_from_id_multi(gsub_multi_hash *a, gsub_multi_hash *b) {
 	return a->fromid - b->fromid;
 }
 
-bool _consolidate_gsub_multi_alt(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
-                                 bool flag, const otfcc_Options *options) {
+bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                            const otfcc_Options *options) {
 	subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	gsub_multi_hash *h = NULL;
 
@@ -22,7 +22,12 @@ bool _consolidate_gsub_multi_alt(otfcc_Font *font, table_OTL *table, otl_Subtabl
 		}
 		fontop_consolidateCoverage(font, subtable->items[k].to, options);
 		Coverage.shrink(subtable->items[k].to, false);
-		if (flag && !subtable->items[k].to->numGlyphs) continue;
+		if (!subtable->items[k].to->numGlyphs) {
+			logWarning("[Consolidate] Ignorign empty one-to-many / alternative substitution for "
+			           "glyph /%s.\n",
+			           subtable->items[k].from.name);
+			continue;
+		}
 
 		gsub_multi_hash *s;
 		int fromid = subtable->items[k].from.index;
@@ -53,11 +58,7 @@ bool _consolidate_gsub_multi_alt(otfcc_Font *font, table_OTL *table, otl_Subtabl
 	return (subtable->length == 0);
 }
 
-bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
-                            const otfcc_Options *options) {
-	return _consolidate_gsub_multi_alt(font, table, _subtable, false, options);
-}
 bool consolidate_gsub_alternative(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
                                   const otfcc_Options *options) {
-	return _consolidate_gsub_multi_alt(font, table, _subtable, true, options);
+	return consolidate_gsub_multi(font, table, _subtable, options);
 }
