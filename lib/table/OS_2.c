@@ -77,20 +77,31 @@ table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *optio
 	return NULL;
 }
 
-const char *fsTypeLabels[] = {
-    "_reserved1", "restrictedLicense", "previewPrintLicense", "editableEmbedding",   "_reserved2", "_reserved3",
-    "_reserved4", "_reserved5",        "noSubsetting",        "bitmapEmbeddingOnly", NULL};
-const char *fsSelectionLabels[] = {"italic",  "underscore",     "negative", "outlined", "strikeout", "bold",
-                                   "regular", "useTypoMetrics", "wws",      "oblique",  NULL};
-const char *codePageLabels1[] = {"latin1",        "latin2",     "cyrillic", "greek",  "turkish", "hebrew", "arabic",
-                                 "windowsBaltic", "vietnamese", "ansi1",    "ansi2",  "ansi3",   "ansi4",  "ansi5",
-                                 "ansi6",         "ansi7",      "thai",     "jis",    "gbk",     "korean", "big5",
-                                 "koreanJohab",   "oem1",       "oem2",     "oem3",   "oem4",    "oem5",   "oem6",
-                                 "oem7",          "macRoman",   "oem",      "symbol", NULL};
-const char *codePageLabels2[] = {"oem8",  "oem9",  "oem10", "oem11", "oem12", "oem13", "oem14", "oem15", "oem16",
-                                 "oem17", "oem18", "oem19", "oem20", "oem21", "oem22", "oem23", "cp869", "cp866",
-                                 "cp865", "cp864", "cp863", "cp862", "cp861", "cp860", "cp857", "cp855", "cp852",
-                                 "cp775", "cp737", "cp708", "cp850", "ascii", NULL};
+const char *fsTypeLabels[] = {"_reserved1",
+                              "restrictedLicense",
+                              "previewPrintLicense",
+                              "editableEmbedding",
+                              "_reserved2",
+                              "_reserved3",
+                              "_reserved4",
+                              "_reserved5",
+                              "noSubsetting",
+                              "bitmapEmbeddingOnly",
+                              NULL};
+const char *fsSelectionLabels[] = {"italic",    "underscore", "negative", "outlined",
+                                   "strikeout", "bold",       "regular",  "useTypoMetrics",
+                                   "wws",       "oblique",    NULL};
+const char *codePageLabels1[] = {
+    "latin1",        "latin2",     "cyrillic", "greek",  "turkish", "hebrew", "arabic",
+    "windowsBaltic", "vietnamese", "ansi1",    "ansi2",  "ansi3",   "ansi4",  "ansi5",
+    "ansi6",         "ansi7",      "thai",     "jis",    "gbk",     "korean", "big5",
+    "koreanJohab",   "oem1",       "oem2",     "oem3",   "oem4",    "oem5",   "oem6",
+    "oem7",          "macRoman",   "oem",      "symbol", NULL};
+const char *codePageLabels2[] = {"oem8",  "oem9",  "oem10", "oem11", "oem12", "oem13", "oem14",
+                                 "oem15", "oem16", "oem17", "oem18", "oem19", "oem20", "oem21",
+                                 "oem22", "oem23", "cp869", "cp866", "cp865", "cp864", "cp863",
+                                 "cp862", "cp861", "cp860", "cp857", "cp855", "cp852", "cp775",
+                                 "cp737", "cp708", "cp850", "ascii", NULL};
 const char *unicodeRangeLabels1[] = {"Basic_Latin",
                                      "Latin_1_Supplement",
                                      "Latin_Extended_A",
@@ -246,16 +257,21 @@ void otfcc_dumpOS_2(const table_OS_2 *table, json_value *root, const otfcc_Optio
 		}
 		json_object_push(os_2, "panose", panose);
 
-		json_object_push(os_2, "ulUnicodeRange1", otfcc_dump_flags(table->ulUnicodeRange1, unicodeRangeLabels1));
-		json_object_push(os_2, "ulUnicodeRange2", otfcc_dump_flags(table->ulUnicodeRange2, unicodeRangeLabels2));
-		json_object_push(os_2, "ulUnicodeRange3", otfcc_dump_flags(table->ulUnicodeRange3, unicodeRangeLabels3));
-		json_object_push(os_2, "ulUnicodeRange4", otfcc_dump_flags(table->ulUnicodeRange4, unicodeRangeLabels4));
+		json_object_push(os_2, "ulUnicodeRange1",
+		                 otfcc_dump_flags(table->ulUnicodeRange1, unicodeRangeLabels1));
+		json_object_push(os_2, "ulUnicodeRange2",
+		                 otfcc_dump_flags(table->ulUnicodeRange2, unicodeRangeLabels2));
+		json_object_push(os_2, "ulUnicodeRange3",
+		                 otfcc_dump_flags(table->ulUnicodeRange3, unicodeRangeLabels3));
+		json_object_push(os_2, "ulUnicodeRange4",
+		                 otfcc_dump_flags(table->ulUnicodeRange4, unicodeRangeLabels4));
 
 		sds vendorid = sdsnewlen(table->achVendID, 4);
 		json_object_push(os_2, "achVendID", json_string_new(vendorid));
 		sdsfree(vendorid);
 
-		json_object_push(os_2, "fsSelection", otfcc_dump_flags(table->fsSelection, fsSelectionLabels));
+		json_object_push(os_2, "fsSelection",
+		                 otfcc_dump_flags(table->fsSelection, fsSelectionLabels));
 		json_object_push(os_2, "usFirstCharIndex", json_integer_new(table->usFirstCharIndex));
 		json_object_push(os_2, "usLastCharIndex", json_integer_new(table->usLastCharIndex));
 		json_object_push(os_2, "sTypoAscender", json_integer_new(table->sTypoAscender));
@@ -263,15 +279,19 @@ void otfcc_dumpOS_2(const table_OS_2 *table, json_value *root, const otfcc_Optio
 		json_object_push(os_2, "sTypoLineGap", json_integer_new(table->sTypoLineGap));
 		json_object_push(os_2, "usWinAscent", json_integer_new(table->usWinAscent));
 		json_object_push(os_2, "usWinDescent", json_integer_new(table->usWinDescent));
-		json_object_push(os_2, "ulCodePageRange1", otfcc_dump_flags(table->ulCodePageRange1, codePageLabels1));
-		json_object_push(os_2, "ulCodePageRange2", otfcc_dump_flags(table->ulCodePageRange2, codePageLabels2));
+		json_object_push(os_2, "ulCodePageRange1",
+		                 otfcc_dump_flags(table->ulCodePageRange1, codePageLabels1));
+		json_object_push(os_2, "ulCodePageRange2",
+		                 otfcc_dump_flags(table->ulCodePageRange2, codePageLabels2));
 		json_object_push(os_2, "sxHeight", json_integer_new(table->sxHeight));
 		json_object_push(os_2, "sCapHeight", json_integer_new(table->sCapHeight));
 		json_object_push(os_2, "usDefaultChar", json_integer_new(table->usDefaultChar));
 		json_object_push(os_2, "usBreakChar", json_integer_new(table->usBreakChar));
 		json_object_push(os_2, "usMaxContext", json_integer_new(table->usMaxContext));
-		json_object_push(os_2, "usLowerOpticalPointSize", json_integer_new(table->usLowerOpticalPointSize));
-		json_object_push(os_2, "usUpperOpticalPointSize", json_integer_new(table->usUpperOpticalPointSize));
+		json_object_push(os_2, "usLowerOpticalPointSize",
+		                 json_integer_new(table->usLowerOpticalPointSize));
+		json_object_push(os_2, "usUpperOpticalPointSize",
+		                 json_integer_new(table->usUpperOpticalPointSize));
 		json_object_push(root, "OS_2", os_2);
 	}
 }
@@ -298,7 +318,8 @@ table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options
 			os_2->yStrikeoutSize = json_obj_getnum_fallback(table, "yStrikeoutSize", 0);
 			os_2->yStrikeoutPosition = json_obj_getnum_fallback(table, "yStrikeoutPosition", 0);
 			os_2->sFamilyClass = json_obj_getnum_fallback(table, "sFamilyClass", 0);
-			os_2->fsSelection = otfcc_parse_flags(json_obj_get(table, "fsSelection"), fsSelectionLabels);
+			os_2->fsSelection =
+			    otfcc_parse_flags(json_obj_get(table, "fsSelection"), fsSelectionLabels);
 			os_2->usFirstCharIndex = json_obj_getnum_fallback(table, "usFirstCharIndex", 0);
 			os_2->usLastCharIndex = json_obj_getnum_fallback(table, "usLastCharIndex", 0);
 			os_2->sTypoAscender = json_obj_getnum_fallback(table, "sTypoAscender", 0);
@@ -306,19 +327,27 @@ table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options
 			os_2->sTypoLineGap = json_obj_getnum_fallback(table, "sTypoLineGap", 0);
 			os_2->usWinAscent = json_obj_getnum_fallback(table, "usWinAscent", 0);
 			os_2->usWinDescent = json_obj_getnum_fallback(table, "usWinDescent", 0);
-			os_2->ulCodePageRange1 = otfcc_parse_flags(json_obj_get(table, "ulCodePageRange1"), codePageLabels1);
-			os_2->ulCodePageRange2 = otfcc_parse_flags(json_obj_get(table, "ulCodePageRange2"), codePageLabels2);
-			os_2->ulUnicodeRange1 = otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange1"), unicodeRangeLabels1);
-			os_2->ulUnicodeRange2 = otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange2"), unicodeRangeLabels2);
-			os_2->ulUnicodeRange3 = otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange3"), unicodeRangeLabels3);
-			os_2->ulUnicodeRange4 = otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange4"), unicodeRangeLabels4);
+			os_2->ulCodePageRange1 =
+			    otfcc_parse_flags(json_obj_get(table, "ulCodePageRange1"), codePageLabels1);
+			os_2->ulCodePageRange2 =
+			    otfcc_parse_flags(json_obj_get(table, "ulCodePageRange2"), codePageLabels2);
+			os_2->ulUnicodeRange1 =
+			    otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange1"), unicodeRangeLabels1);
+			os_2->ulUnicodeRange2 =
+			    otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange2"), unicodeRangeLabels2);
+			os_2->ulUnicodeRange3 =
+			    otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange3"), unicodeRangeLabels3);
+			os_2->ulUnicodeRange4 =
+			    otfcc_parse_flags(json_obj_get(table, "ulUnicodeRange4"), unicodeRangeLabels4);
 			os_2->sxHeight = json_obj_getnum_fallback(table, "sxHeight", 0);
 			os_2->sCapHeight = json_obj_getnum_fallback(table, "sCapHeight", 0);
 			os_2->usDefaultChar = json_obj_getnum_fallback(table, "usDefaultChar", 0);
 			os_2->usBreakChar = json_obj_getnum_fallback(table, "usBreakChar", 0);
 			os_2->usMaxContext = json_obj_getnum_fallback(table, "usMaxContext", 0);
-			os_2->usLowerOpticalPointSize = json_obj_getnum_fallback(table, "usLowerOpticalPointSize", 0);
-			os_2->usUpperOpticalPointSize = json_obj_getnum_fallback(table, "usUpperOpticalPointSize", 0);
+			os_2->usLowerOpticalPointSize =
+			    json_obj_getnum_fallback(table, "usLowerOpticalPointSize", 0);
+			os_2->usUpperOpticalPointSize =
+			    json_obj_getnum_fallback(table, "usUpperOpticalPointSize", 0);
 			// panose
 			json_value *panose = NULL;
 			if ((panose = json_obj_get_type(table, "panose", json_array))) {
