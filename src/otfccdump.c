@@ -138,6 +138,9 @@ int main(int argc, char *argv[]) {
 			case 'o':
 				outputPath = sdsnew(optarg);
 				break;
+			case 'q':
+				options->quiet = true;
+				break;
 			case 'n':
 				ttcindex = atoi(optarg);
 				break;
