@@ -12,6 +12,12 @@ bool consolidate_gsub_ligature(otfcc_Font *font, table_OTL *table, otl_Subtable 
 		}
 		fontop_consolidateCoverage(font, subtable->items[k].from, options);
 		Coverage.shrink(subtable->items[k].from, false);
+		if (!subtable->items[k].from->numGlyphs) {
+			logWarning("[Consolidate] Ignoring empty ligature substitution to "
+			           "glyph /%s.\n",
+			           subtable->items[k].to.name);
+			continue;
+		}
 		iSubtable_gsub_ligature.push(
 		    &nt, ((otl_GsubLigatureEntry){
 		             .from = subtable->items[k].from, .to = Handle.dup(subtable->items[k].to),
