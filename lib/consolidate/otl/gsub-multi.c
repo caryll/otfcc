@@ -23,7 +23,7 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 		fontop_consolidateCoverage(font, subtable->items[k].to, options);
 		Coverage.shrink(subtable->items[k].to, false);
 		if (!subtable->items[k].to->numGlyphs) {
-			logWarning("[Consolidate] Ignorign empty one-to-many / alternative substitution for "
+			logWarning("[Consolidate] Ignoring empty one-to-many / alternative substitution for "
 			           "glyph /%s.\n",
 			           subtable->items[k].from.name);
 			continue;
