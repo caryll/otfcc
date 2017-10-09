@@ -36,7 +36,7 @@ static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	FREE(priv->stemSnapV);
 	FREE(priv);
 }
-static INLINE void dispoeFontMatrix(cff_FontMatrix *fm) {
+static INLINE void disposeFontMatrix(cff_FontMatrix *fm) {
 	if (!fm) return;
 	iVQ.dispose(&fm->x);
 	iVQ.dispose(&fm->y);
@@ -52,7 +52,7 @@ static INLINE void disposeFD(table_CFF *fd) {
 	sdsfree(fd->fontName);
 	sdsfree(fd->cidRegistry);
 	sdsfree(fd->cidOrdering);
-	dispoeFontMatrix(fd->fontMatrix);
+	disposeFontMatrix(fd->fontMatrix);
 	FREE(fd->fontMatrix);
 	otfcc_delete_privatedict(fd->privateDict);
 	if (fd->fdArray) {
@@ -544,7 +544,6 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 			x.kernel = qround(x.kernel);
 			VQ y = iVQ.scale(fd->fontMatrix->y, head->unitsPerEm);
 			y.kernel = qround(y.kernel);
-
 			for (shapeid_t j = 0; j < g->contours.length; j++) {
 				glyf_Contour *contour = &g->contours.items[j];
 				for (shapeid_t k = 0; k < contour->length; k++) {

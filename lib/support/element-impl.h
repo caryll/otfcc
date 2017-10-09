@@ -274,7 +274,7 @@
 		T result;                                                                                  \
 		T##_copy(&result, &a);                                                                     \
 		T##_inplaceScale(&result, b);                                                              \
-		return a;                                                                                  \
+		return result;                                                                             \
 	}                                                                                              \
 	static __CARYLL_INLINE__ void T##_inplacePlusScale(MODIFY T *a, TS b, const T c) {             \
 		T x = T##_scale(c, b);                                                                     \
