@@ -11,13 +11,29 @@ static int by_gid(GDEF_ligcaret_hash *a, GDEF_ligcaret_hash *b) {
 }
 void consolidate_GDEF(otfcc_Font *font, table_GDEF *gdef, const otfcc_Options *options) {
 	if (!font || !font->glyph_order || !gdef) return;
-	if (gdef->glyphClassDef) fontop_consolidateClassDef(font, gdef->glyphClassDef, options);
-	if (gdef->markAttachClassDef) fontop_consolidateClassDef(font, gdef->markAttachClassDef, options);
+	if (gdef->glyphClassDef) {
+		fontop_consolidateClassDef(font, gdef->glyphClassDef, options);
+		otl_iClassDef.shrink(gdef->glyphClassDef);
+		if (!gdef->glyphClassDef->numGlyphs) {
+			otl_iClassDef.free(gdef->glyphClassDef);
+			gdef->glyphClassDef = NULL;
+		}
+	}
+	if (gdef->markAttachClassDef) {
+		fontop_consolidateClassDef(font, gdef->markAttachClassDef, options);
+		otl_iClassDef.shrink(gdef->markAttachClassDef);
+		if (!gdef->markAttachClassDef->numGlyphs) {
+			otl_iClassDef.free(gdef->markAttachClassDef);
+			gdef->markAttachClassDef = NULL;
+		}
+	}
 	if (gdef->ligCarets.length) {
 		GDEF_ligcaret_hash *h = NULL;
 		for (glyphid_t j = 0; j < gdef->ligCarets.length; j++) {
 			GDEF_ligcaret_hash *s;
-			if (!GlyphOrder.consolidateHandle(font->glyph_order, &gdef->ligCarets.items[j].glyph)) { continue; }
+			if (!GlyphOrder.consolidateHandle(font->glyph_order, &gdef->ligCarets.items[j].glyph)) {
+				continue;
+			}
 			int gid = gdef->ligCarets.items[j].glyph.index;
 			sds gname = sdsdup(gdef->ligCarets.items[j].glyph.name);
 			if (gname) {
@@ -29,7 +45,8 @@ void consolidate_GDEF(otfcc_Font *font, table_GDEF *gdef, const otfcc_Options *o
 					otl_iCaretValueList.move(&s->carets, &gdef->ligCarets.items[j].carets);
 					HASH_ADD_INT(h, gid, s);
 				} else {
-					logWarning("[Consolidate] Detected caret value double-mapping about glyph %s", gname);
+					logWarning("[Consolidate] Detected caret value double-mapping about glyph %s",
+					           gname);
 				}
 			}
 		}
