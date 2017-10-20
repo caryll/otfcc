@@ -187,8 +187,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 		} else {
 			lsbAtX_0 = false;
 		}
-		pos_t lsb = g->stat.xMin - g->horizontalOrigin;
-		pos_t rsb = g->advanceWidth + g->horizontalOrigin - g->stat.xMax;
+		pos_t lsb = round(g->stat.xMin) - round(g->horizontalOrigin);
+		pos_t rsb = round(g->advanceWidth) + round(g->horizontalOrigin) - round(g->stat.xMax);
 
 		if (j < count_a) {
 			hmtx->metrics[j].advanceWidth = g->advanceWidth;
@@ -238,8 +238,8 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	length_t maxHeight = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		pos_t tsb = g->verticalOrigin - g->stat.yMax;
-		pos_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
+		pos_t tsb = round(g->verticalOrigin) - round(g->stat.yMax);
+		pos_t bsb = round(g->stat.yMin) - round(g->verticalOrigin) + round(g->advanceHeight);
 		if (j < count_a) {
 			vmtx->metrics[j].advanceHeight = g->advanceHeight;
 			vmtx->metrics[j].tsb = tsb;

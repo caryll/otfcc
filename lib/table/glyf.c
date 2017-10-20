@@ -815,10 +815,10 @@ static void glyf_build_simple(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 	caryll_Buffer *ys = bufnew();
 
 	bufwrite16b(gbuf, g->contours.length);
-	bufwrite16b(gbuf, (int16_t)g->stat.xMin);
-	bufwrite16b(gbuf, (int16_t)g->stat.yMin);
-	bufwrite16b(gbuf, (int16_t)g->stat.xMax);
-	bufwrite16b(gbuf, (int16_t)g->stat.yMax);
+	bufwrite16b(gbuf, (int16_t)round(g->stat.xMin));
+	bufwrite16b(gbuf, (int16_t)round(g->stat.yMin));
+	bufwrite16b(gbuf, (int16_t)round(g->stat.xMax));
+	bufwrite16b(gbuf, (int16_t)round(g->stat.yMax));
 
 	// endPtsOfContours[n]
 	shapeid_t ptid = 0;

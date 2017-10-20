@@ -20,6 +20,8 @@
 #define __CARYLL_MAY_UNUSED__
 #endif
 
+#define __CARYLL_VECTOR_INITIAL_SIZE 2
+
 #define caryll_VectorImplFreeIndependent(__TV, __T, __ti)                                          \
 	static __CARYLL_INLINE__ void __TV##_dispose(__TV *arr) {                                      \
 		if (!arr) return;                                                                          \
@@ -56,7 +58,8 @@
 	caryll_trivialFree(__TV);                                                                      \
 	static __CARYLL_INLINE__ void __TV##_growTo(MODIFY __TV *arr, size_t target) {                 \
 		if (target <= arr->capacity) return;                                                       \
-		if (!arr->capacity) arr->capacity = 0x10;                                                  \
+		if (arr->capacity < __CARYLL_VECTOR_INITIAL_SIZE)                                          \
+			arr->capacity = __CARYLL_VECTOR_INITIAL_SIZE;                                          \
 		while (arr->capacity <= target) {                                                          \
 			arr->capacity += arr->capacity / 2;                                                    \
 		}                                                                                          \
@@ -68,7 +71,8 @@
 	}                                                                                              \
 	static __CARYLL_INLINE__ void __TV##_growToN(MODIFY __TV *arr, size_t target) {                \
 		if (target <= arr->capacity) return;                                                       \
-		if (!arr->capacity) arr->capacity = 0x10;                                                  \
+		if (arr->capacity < __CARYLL_VECTOR_INITIAL_SIZE)                                          \
+			arr->capacity = __CARYLL_VECTOR_INITIAL_SIZE;                                          \
 		if (arr->capacity <= target) { arr->capacity = target + 1; }                               \
 		if (arr->items) {                                                                          \
 			arr->items = __caryll_realloc(arr->items, arr->capacity * sizeof(__T));                \
