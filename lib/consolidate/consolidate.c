@@ -150,15 +150,15 @@ void consolidateGlyph(glyf_Glyph *g, otfcc_Font *font, const otfcc_Options *opti
 bool consolidateAnchorRef(table_glyf *table, glyf_ComponentReference *gr,
                           glyf_ComponentReference *rr, const otfcc_Options *options);
 bool getPointCoordinates(table_glyf *table, glyf_ComponentReference *gr, shapeid_t n,
-                         shapeid_t *stated, pos_t *x, pos_t *y, const otfcc_Options *options) {
+                         shapeid_t *stated, VQ *x, VQ *y, const otfcc_Options *options) {
 	glyphid_t j = gr->glyph.index;
 	glyf_Glyph *g = table->items[j];
 	for (shapeid_t c = 0; c < g->contours.length; c++) {
 		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
 			if (*stated == n) {
 				glyf_Point *p = &(g->contours.items[c].items[pj]);
-				*x = gr->x + gr->a * p->x + gr->b * p->y;
-				*y = gr->y + gr->c * p->x + gr->d * p->y;
+				iVQ.replace(x, iVQ.pointLinearTfm(gr->x, gr->a, p->x, gr->b, p->y));
+				iVQ.replace(y, iVQ.pointLinearTfm(gr->y, gr->c, p->x, gr->d, p->y));
 				return true;
 			}
 			*stated += 1;
@@ -176,8 +176,9 @@ bool getPointCoordinates(table_glyf *table, glyf_ComponentReference *gr, shapeid
 		ref.b = rr->a * gr->b + rr->b * gr->d;
 		ref.c = gr->a * rr->c + gr->c * rr->d;
 		ref.d = gr->b * rr->c + rr->d * gr->d;
-		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
-		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
+		iVQ.replace(&ref.x, iVQ.pointLinearTfm(rr->x, rr->a, gr->x, rr->b, gr->y));
+		iVQ.replace(&ref.y, iVQ.pointLinearTfm(rr->y, rr->c, gr->x, rr->d, gr->y));
+
 		bool success = getPointCoordinates(table, &ref, n, stated, x, y, options);
 		glyf_iComponentReference.dispose(&ref);
 		if (success) return true;
@@ -200,7 +201,8 @@ bool consolidateAnchorRef(table_glyf *table, glyf_ComponentReference *gr,
 	} else {
 		rr->isAnchored = REF_ANCHOR_CONSOLIDATING_XY;
 	}
-	pos_t innerX = 0, outerX = 0, innerY = 0, outerY = 0;
+	VQ innerX = iVQ.neutral(), outerX = iVQ.neutral();
+	VQ innerY = iVQ.neutral(), outerY = iVQ.neutral();
 	shapeid_t innerCounter = 0, outerCounter = 0;
 
 	glyf_ComponentReference rr1 = glyf_iComponentReference.empty();
@@ -213,22 +215,25 @@ bool consolidateAnchorRef(table_glyf *table, glyf_ComponentReference *gr,
 		logWarning("Failed to access point %d in reference to %s.", rr->outer, rr->glyph.name);
 	}
 
-	pos_t rrx = outerX - rr->a * innerX - rr->b * innerY;
-	pos_t rry = outerY - rr->c * innerX - rr->d * innerY;
+	VQ rrx = iVQ.pointLinearTfm(outerX, -rr->a, innerX, -rr->b, innerY);
+	VQ rry = iVQ.pointLinearTfm(outerY, -rr->c, innerX, -rr->d, innerY);
 
 	if (rr->isAnchored == REF_ANCHOR_CONSOLIDATING_ANCHOR) {
-		rr->x = rrx;
-		rr->y = rry;
+		iVQ.replace(&rr->x, rrx);
+		iVQ.replace(&rr->y, rry);
 		rr->isAnchored = REF_ANCHOR_CONSOLIDATED;
 	} else {
-		if (fabs(rr->x - rrx) > 0.5 && fabs(rr->y - rry) > 0.5) {
+		if (fabs(iVQ.getStill(rr->x) - iVQ.getStill(rrx)) > 0.5 &&
+		    fabs(iVQ.getStill(rr->y) - iVQ.getStill(rry)) > 0.5) {
 			logWarning("Anchored reference to %s does not match its X/Y offset data.",
 			           rr->glyph.name);
 		}
 		rr->isAnchored = REF_ANCHOR_CONSOLIDATED;
+		iVQ.dispose(&rrx), iVQ.dispose(&rry);
 	}
-
 	glyf_iComponentReference.dispose(&rr1);
+	iVQ.dispose(&innerX), iVQ.dispose(&innerY);
+	iVQ.dispose(&outerX), iVQ.dispose(&outerY);
 	return false;
 }
 
@@ -325,7 +330,8 @@ void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lo
                               const otfcc_Options *options) {
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_single, consolidate_gsub_single, iSubtable_gsub_single.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_multiple, consolidate_gsub_multi, iSubtable_gsub_multi.free);
-	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_multi, iSubtable_gsub_multi.free);
+	LOOKUP_CONSOLIDATOR(otl_type_gsub_alternate, consolidate_gsub_alternative,
+	                    iSubtable_gsub_multi.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_ligature, consolidate_gsub_ligature,
 	                    iSubtable_gsub_ligature.free);
 	LOOKUP_CONSOLIDATOR(otl_type_gsub_chaining, consolidate_chaining, iSubtable_chaining.free);

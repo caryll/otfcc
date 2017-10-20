@@ -57,3 +57,8 @@ bool consolidate_gsub_multi(otfcc_Font *font, table_OTL *table, otl_Subtable *_s
 	}
 	return (subtable->length == 0);
 }
+
+bool consolidate_gsub_alternative(otfcc_Font *font, table_OTL *table, otl_Subtable *_subtable,
+                                  const otfcc_Options *options) {
+	return consolidate_gsub_multi(font, table, _subtable, options);
+}

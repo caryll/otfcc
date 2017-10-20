@@ -87,35 +87,50 @@
 		T##_copy(&dst, &src);                                                                      \
 		return dst;                                                                                \
 	}
+#define caryll_trivialReplace(T)                                                                   \
+	static __CARYLL_INLINE__ void T##_replace(MODIFY T *dst, MOVE const T src) {                   \
+		T##_dispose(dst);                                                                          \
+		memcpy(dst, &src, sizeof(T));                                                              \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void T##_copyReplace(MODIFY T *dst, const T src) {                    \
+		T##_dispose(dst);                                                                          \
+		T##_copy(dst, &src);                                                                       \
+	}
 
 #define caryll_standardTypeFn1(T)                                                                  \
 	caryll_trivialInit(T);                                                                         \
 	caryll_trivialCopy(T);                                                                         \
 	caryll_trivialDispose(T);                                                                      \
-	caryll_trivialMove(T);
+	caryll_trivialMove(T);                                                                         \
+	caryll_trivialReplace(T);
 #define caryll_standardTypeFn2(T, __fn_dispose)                                                    \
 	caryll_trivialInit(T);                                                                         \
 	caryll_trivialCopy(T);                                                                         \
 	caryll_nonTrivialDispose(T, __fn_dispose);                                                     \
-	caryll_trivialMove(T);
+	caryll_trivialMove(T);                                                                         \
+	caryll_trivialReplace(T);
 #define caryll_standardTypeFn3(T, __fn_init, __fn_dispose)                                         \
 	caryll_nonTrivialInit(T, __fn_init);                                                           \
 	caryll_trivialCopy(T);                                                                         \
 	caryll_nonTrivialDispose(T, __fn_dispose);                                                     \
-	caryll_trivialMove(T);
+	caryll_trivialMove(T);                                                                         \
+	caryll_trivialReplace(T);
 #define caryll_standardTypeFn4(T, __fn_init, __fn_copy, __fn_dispose)                              \
 	caryll_nonTrivialInit(T, __fn_init);                                                           \
 	caryll_nonTrivialCopy(T, __fn_copy);                                                           \
 	caryll_nonTrivialDispose(T, __fn_dispose);                                                     \
-	caryll_trivialMove(T);
+	caryll_trivialMove(T);                                                                         \
+	caryll_trivialReplace(T);
 #define caryll_standardTypeFn5(T, __fn_init, __fn_copy, __fn_dispose, __fn_move)                   \
 	caryll_nonTrivialInit(T, __fn_init);                                                           \
 	caryll_nonTrivialCopy(T, __fn_copy);                                                           \
 	caryll_nonTrivialDispose(T, __fn_dispose);                                                     \
-	caryll_nonTrivialMove(T, __fn_move);
+	caryll_nonTrivialMove(T, __fn_move);                                                           \
+	caryll_trivialReplace(T);
 
 #define caryll_standardTypeMethods(T)                                                              \
-	.init = T##_init, .copy = T##_copy, .dispose = T##_dispose, .move = T##_move
+	.init = T##_init, .copy = T##_copy, .dispose = T##_dispose, .move = T##_move,                  \
+	.replace = T##_replace, .copyReplace = T##_copyReplace
 #define caryll_standardRefTypeMethods(T)                                                           \
 	caryll_standardTypeMethods(T), .create = T##_create, .free = T##_free
 #define caryll_standardValTypeMethods(T)                                                           \
@@ -181,5 +196,92 @@
 	};
 
 #endif
+
+//// Traits
+
+// Show
+#define caryll_ShowFns(T, _fn_Show)                                                                \
+	static __CARYLL_INLINE__ void T##_show(const T a) {                                            \
+		return (_fn_Show)(a);                                                                      \
+	}
+#define caryll_ShowAssigns(T) .show = T##_show
+
+// Ord
+#define caryll_OrdFns(T, _fnCompare)                                                               \
+	static __CARYLL_INLINE__ int T##_compare(const T a, const T b) {                               \
+		return (_fnCompare)(a, b);                                                                 \
+	}                                                                                              \
+	static __CARYLL_INLINE__ int T##_compareRef(const T *a, const T *b) {                          \
+		return (_fnCompare)(*a, *b);                                                               \
+	}
+#define caryll_OrdEqFns(T, _fnCompare)                                                             \
+	caryll_OrdFns(T, _fnCompare);                                                                  \
+	static __CARYLL_INLINE__ bool T##_equal(const T a, const T b) {                                \
+		return !(_fnCompare)(a, b);                                                                \
+	}
+#define caryll_OrdEqAssigns(T)                                                                     \
+	.compare = T##_compare, .compareRef = T##_compareRef, .equal = T##_equal
+
+// Monoid
+#define caryll_MonoidFns(T, _fn_neutral, _fn_inplacePlus)                                          \
+	static __CARYLL_INLINE__ T T##_neutral() {                                                     \
+		return (_fn_neutral)();                                                                    \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void T##_inplacePlus(MODIFY T *a, const T b) {                        \
+		(_fn_inplacePlus)(a, b);                                                                   \
+	}                                                                                              \
+	static __CARYLL_INLINE__ T T##_plus(const T a, const T b) {                                    \
+		T result = (_fn_neutral)();                                                                \
+		(_fn_inplacePlus)(&result, a);                                                             \
+		(_fn_inplacePlus)(&result, b);                                                             \
+		return result;                                                                             \
+	}
+#define caryll_MonoidAssigns(T)                                                                    \
+	.neutral = T##_neutral, .inplacePlus = T##_inplacePlus, .plus = T##_plus
+
+// Group
+#define caryll_GroupFns(T, _fn_inplaceNegate)                                                      \
+	static __CARYLL_INLINE__ void T##_inplaceNegate(MODIFY T *a) {                                 \
+		(_fn_inplaceNegate)(a);                                                                    \
+	}                                                                                              \
+	static __CARYLL_INLINE__ T T##_negate(const T a) {                                             \
+		T result;                                                                                  \
+		T##_copy(&result, &a);                                                                     \
+		T##_inplaceNegate(&result);                                                                \
+		return result;                                                                             \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void T##_inplaceMinus(MODIFY T *a, const T b) {                       \
+		T tb = T##_negate(b);                                                                      \
+		(T##_inplacePlus)(a, tb);                                                                  \
+		T##_dispose(&tb);                                                                          \
+	}                                                                                              \
+	static __CARYLL_INLINE__ T T##_minus(const T a, const T b) {                                   \
+		T result = (T##_neutral)();                                                                \
+		(T##_inplacePlus)(&result, a);                                                             \
+		(T##_inplaceMinus)(&result, b);                                                            \
+		return result;                                                                             \
+	}
+#define caryll_GroupAssigns(T)                                                                     \
+	.inplaceNegate = T##_inplaceNegate, .negate = T##_negate, .inplaceMinus = T##_inplaceMinus,    \
+	.minus = T##_minus
+
+// Module
+#define caryll_ModuleFns(T, TS, _fn_inplaceScale)                                                  \
+	static __CARYLL_INLINE__ void T##_inplaceScale(MODIFY T *a, TS b) {                            \
+		(_fn_inplaceScale)(a, b);                                                                  \
+	}                                                                                              \
+	static __CARYLL_INLINE__ T T##_scale(const T a, TS b) {                                        \
+		T result;                                                                                  \
+		T##_copy(&result, &a);                                                                     \
+		T##_inplaceScale(&result, b);                                                              \
+		return result;                                                                             \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void T##_inplacePlusScale(MODIFY T *a, TS b, const T c) {             \
+		T x = T##_scale(c, b);                                                                     \
+		T##_inplacePlus(a, x);                                                                     \
+		T##_dispose(&x);                                                                           \
+	}
+#define caryll_ModuleAssigns(T)                                                                    \
+	.inplaceScale = T##_inplaceScale, .scale = T##_scale, .inplacePlusScale = T##_inplacePlusScale
 
 #endif
