@@ -222,7 +222,7 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 			// GID 1 may often be ".null"
 			if (font->glyf->items[1] && !font->glyf->items[1]->contours.length &&
 			    !font->glyf->items[1]->references.length) {
-				name = sdsnew(".null");
+				name = sdscatfmt(sdsempty(), "%s.null", prefix);
 			} else {
 				name = sdscatfmt(sdsempty(), "%sglyph%u", prefix, j);
 			}
