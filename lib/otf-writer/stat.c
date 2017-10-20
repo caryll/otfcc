@@ -39,8 +39,10 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
 			// Stat point coordinates USING the matrix transformation
 			glyf_Point *p = &(g->contours.items[c].items[pj]);
-			pos_t x = iVQ.getStill(gr->x) + gr->a * iVQ.getStill(p->x) + gr->b * iVQ.getStill(p->y);
-			pos_t y = iVQ.getStill(gr->y) + gr->c * iVQ.getStill(p->x) + gr->d * iVQ.getStill(p->y);
+			pos_t x = round(iVQ.getStill(gr->x) + gr->a * iVQ.getStill(p->x) +
+			                gr->b * iVQ.getStill(p->y));
+			pos_t y = round(iVQ.getStill(gr->y) + gr->c * iVQ.getStill(p->x) +
+			                gr->d * iVQ.getStill(p->y));
 			if (x < xmin) xmin = x;
 			if (x > xmax) xmax = x;
 			if (y < ymin) ymin = y;
@@ -187,8 +189,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 		} else {
 			lsbAtX_0 = false;
 		}
-		pos_t lsb = round(g->stat.xMin) - round(g->horizontalOrigin);
-		pos_t rsb = round(g->advanceWidth) + round(g->horizontalOrigin) - round(g->stat.xMax);
+		pos_t lsb = (g->stat.xMin) - (g->horizontalOrigin);
+		pos_t rsb = (g->advanceWidth) + (g->horizontalOrigin) - (g->stat.xMax);
 
 		if (j < count_a) {
 			hmtx->metrics[j].advanceWidth = g->advanceWidth;
@@ -238,8 +240,8 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	length_t maxHeight = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		pos_t tsb = round(g->verticalOrigin) - round(g->stat.yMax);
-		pos_t bsb = round(g->stat.yMin) - round(g->verticalOrigin) + round(g->advanceHeight);
+		pos_t tsb = (g->verticalOrigin) - (g->stat.yMax);
+		pos_t bsb = (g->stat.yMin) - (g->verticalOrigin) + (g->advanceHeight);
 		if (j < count_a) {
 			vmtx->metrics[j].advanceHeight = g->advanceHeight;
 			vmtx->metrics[j].tsb = tsb;
