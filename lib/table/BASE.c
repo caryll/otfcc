@@ -46,7 +46,8 @@ static void readBaseScript(const font_file_pointer data, uint32_t tableLength, u
 			entry->baseValues[j].tag = baseTagList[j];
 			uint16_t _valOffset = read_16u(data + baseValuesOffset + 4 + 2 * j);
 			if (_valOffset) {
-				entry->baseValues[j].coordinate = readBaseValue(data, tableLength, baseValuesOffset + _valOffset);
+				entry->baseValues[j].coordinate =
+				    readBaseValue(data, tableLength, baseValuesOffset + _valOffset);
 			} else {
 				entry->baseValues[j].coordinate = 0;
 			}
@@ -90,8 +91,8 @@ static otl_BaseAxis *readAxis(font_file_pointer data, uint32_t tableLength, uint
 		axis->entries[j].tag = read_32u(data + baseScriptListOffset + 2 + 6 * j);
 		uint16_t baseScriptOffset = read_16u(data + baseScriptListOffset + 2 + 6 * j + 4);
 		if (baseScriptOffset) {
-			readBaseScript(data, tableLength, baseScriptListOffset + baseScriptOffset, &(axis->entries[j]), baseTagList,
-			               nBaseTags);
+			readBaseScript(data, tableLength, baseScriptListOffset + baseScriptOffset,
+			               &(axis->entries[j]), baseTagList, nBaseTags);
 		} else {
 			axis->entries[j].baseValuesCount = 0;
 			axis->entries[j].baseValues = NULL;
@@ -131,8 +132,9 @@ static json_value *axisToJson(const otl_BaseAxis *axis) {
 		if (!axis->entries[j].tag) continue;
 		json_value *_entry = json_object_new(3);
 		if (axis->entries[j].defaultBaselineTag) {
-			json_object_push(_entry, "defaultBaseline",
-			                 json_string_new_nocopy(4, tag2str(axis->entries[j].defaultBaselineTag)));
+			json_object_push(
+			    _entry, "defaultBaseline",
+			    json_string_new_nocopy(4, tag2str(axis->entries[j].defaultBaselineTag)));
 		}
 		json_value *_values = json_object_new(axis->entries[j].baseValuesCount);
 		for (tableid_t k = 0; k < axis->entries[j].baseValuesCount; k++) {
@@ -172,6 +174,10 @@ static void baseScriptFromJson(const json_value *_sr, otl_BaseScriptEntry *entry
 	}
 }
 
+static int by_script_tag(const void *a, const void *b) {
+	return ((otl_BaseScriptEntry *)a)->tag - ((otl_BaseScriptEntry *)b)->tag;
+}
+
 static otl_BaseAxis *axisFromJson(const json_value *_axis) {
 	if (!_axis) return NULL;
 	otl_BaseAxis *axis;
@@ -180,13 +186,15 @@ static otl_BaseAxis *axisFromJson(const json_value *_axis) {
 	NEW(axis->entries, axis->scriptCount);
 	tableid_t jj = 0;
 	for (tableid_t j = 0; j < axis->scriptCount; j++) {
-		if (_axis->u.object.values[j].value && _axis->u.object.values[j].value->type == json_object) {
+		if (_axis->u.object.values[j].value &&
+		    _axis->u.object.values[j].value->type == json_object) {
 			axis->entries[jj].tag = str2tag(_axis->u.object.values[j].name);
 			baseScriptFromJson(_axis->u.object.values[j].value, &(axis->entries[jj]));
 			jj++;
 		}
 	}
 	axis->scriptCount = jj;
+	qsort(axis->entries, axis->scriptCount, sizeof(otl_BaseScriptEntry), by_script_tag);
 	return axis;
 }
 
@@ -201,6 +209,10 @@ table_BASE *otfcc_parseBASE(const json_value *root, const otfcc_Options *options
 		}
 	}
 	return base;
+}
+
+static int by_tag(const void *a, const void *b) {
+	return *((uint32_t *)a) - *((uint32_t *)b);
 }
 
 bk_Block *axisToBk(const otl_BaseAxis *axis) {
@@ -244,7 +256,7 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 			}
 		}
 	}
-
+	qsort(taglist.items, taglist.size, sizeof(uint32_t), by_tag);
 	bk_Block *baseTagList = bk_new_Block(b16, taglist.size, bkover);
 	for (tableid_t j = 0; j < taglist.size; j++) {
 		bk_push(baseTagList, b32, taglist.items[j], bkover);
@@ -275,10 +287,12 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 				}
 			}
 			if (found) {
-				bk_push(baseValues,                                                               // base value
-				        p16, bk_new_Block(b16, 1,                                                 // format
-				                          b16, (int16_t)entry->baseValues[foundIndex].coordinate, // coordinate
-				                          bkover),
+				bk_push(baseValues, // base value
+				        p16,
+				        bk_new_Block(
+				            b16, 1,                                                 // format
+				            b16, (int16_t)entry->baseValues[foundIndex].coordinate, // coordinate
+				            bkover),
 				        bkover);
 			} else {
 				bk_push(baseValues,               // assign a zero value
