@@ -461,7 +461,9 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 			// mainly due to curveto. We can remove that. This is unnecessary.
 			glyf_iContour.pop(contour);
 		}
+		glyf_iContour.shrinkToFit(contour);
 	}
+	glyf_iContourList.shrinkToFit(&g->contours);
 	iVQ.dispose(&cx), iVQ.dispose(&cy);
 
 	cff_iIndex.dispose(&localSubrs);

@@ -270,21 +270,21 @@ static glyf_Glyph *otfcc_read_simple_glyph(font_file_pointer start, shapeid_t nu
 		coordinatesRead += 1;
 	}
 	FREE(flags);
+
 	// turn deltas to absolute coordiantes
-	double cx = 0;
-	double cy = 0;
+	VQ cx = iVQ.neutral(), cy = iVQ.neutral();
 	for (shapeid_t j = 0; j < numberOfContours; j++) {
 		for (shapeid_t k = 0; k < contours->items[j].length; k++) {
 			glyf_Point *z = &contours->items[j].items[k];
-			cx += iVQ.getStill(z->x);
-			iVQ.dispose(&z->x);
-			z->x = iVQ.createStill(cx);
-
-			cy += iVQ.getStill(z->y);
-			iVQ.dispose(&z->y);
-			z->y = iVQ.createStill(cy);
+			iVQ.inplacePlus(&cx, z->x);
+			iVQ.inplacePlus(&cy, z->y);
+			iVQ.copyReplace(&z->x, cx);
+			iVQ.copyReplace(&z->y, cy);
 		}
+		glyf_iContour.shrinkToFit(&contours->items[j]);
 	}
+	glyf_iContourList.shrinkToFit(contours);
+	iVQ.dispose(&cx), iVQ.dispose(&cy);
 	return g;
 }
 
