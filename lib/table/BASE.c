@@ -132,22 +132,20 @@ static json_value *axisToJson(const otl_BaseAxis *axis) {
 		if (!axis->entries[j].tag) continue;
 		json_value *_entry = json_object_new(3);
 		if (axis->entries[j].defaultBaselineTag) {
-			char *baselineTag = tag2str(axis->entries[j].defaultBaselineTag);
-			json_object_push(_entry, "defaultBaseline", json_string_new_nocopy(4, baselineTag));
+			char tag[4];
+			tag2str(axis->entries[j].defaultBaselineTag, tag);
+			json_object_push(_entry, "defaultBaseline", json_string_new_length(4, tag));
 		}
 		json_value *_values = json_object_new(axis->entries[j].baseValuesCount);
 		for (tableid_t k = 0; k < axis->entries[j].baseValuesCount; k++) {
 			if (axis->entries[j].baseValues[k].tag) {
-				char *tag = tag2str(axis->entries[j].baseValues[k].tag);
-				json_object_push(_values, tag,
-				                 json_new_position(axis->entries[j].baseValues[k].coordinate));
-				tag_free(tag);
+
+				json_object_push_tag(_values, axis->entries[j].baseValues[k].tag,
+				                     json_new_position(axis->entries[j].baseValues[k].coordinate));
 			}
 		}
 		json_object_push(_entry, "baselines", _values);
-		char *tag = tag2str(axis->entries[j].tag);
-		json_object_push(_axis, tag, _entry);
-		tag_free(tag);
+		json_object_push_tag(_axis, axis->entries[j].tag, _entry);
 	}
 	return _axis;
 }

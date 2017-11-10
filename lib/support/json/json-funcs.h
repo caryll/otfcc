@@ -11,6 +11,7 @@
 #include "caryll/ownership.h"
 #include "otfcc/primitives.h"
 #include "otfcc/vf/vq.h"
+#include "otfcc/vf/axis.h"
 
 #ifndef INLINE
 #ifdef _MSC_VER
@@ -51,6 +52,12 @@ static INLINE char *json_obj_getstr_share(const json_value *obj, const char *key
 		return v->u.string.ptr;
 }
 
+static INLINE json_value *json_object_push_tag(json_value *a, uint32_t tag, json_value *b) {
+	char tags[4] = {(tag & 0xff000000) >> 24, (tag & 0xff0000) >> 16, (tag & 0xff00) >> 8,
+	                (tag & 0xff)};
+	return json_object_push_length(a, 4, tags, b);
+}
+
 // Coordinates, VV and VQ
 static INLINE double json_numof(const json_value *cv) {
 	if (cv && cv->type == json_integer) return cv->u.integer;
@@ -64,19 +71,42 @@ static INLINE json_value *json_new_position(pos_t z) {
 		return json_double_new(z);
 	}
 }
-static INLINE json_value *json_new_VV(const VV x) {
-	json_value *_coord = json_array_new(x.length);
-	for (size_t m = 0; m < x.length; m++) {
-		json_array_push(_coord, json_new_position(x.items[m]));
+static INLINE json_value *json_new_VV(const VV x, const vf_Axes *axes) {
+	if (axes && axes->length == x.length) {
+		json_value *_coord = json_object_new(axes->length);
+		for (size_t m = 0; m < x.length; m++) {
+			vf_Axis *axis = &axes->items[m];
+			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
+			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
+			json_object_push_length(_coord, 4, tag, json_new_position(x.items[m]));
+		}
+		return preserialize(_coord);
+	} else {
+		json_value *_coord = json_array_new(x.length);
+		for (size_t m = 0; m < x.length; m++) {
+			json_array_push(_coord, json_new_position(x.items[m]));
+		}
+		return preserialize(_coord);
 	}
-	return preserialize(_coord);
 }
-static INLINE json_value *json_new_VVp(const VV *x) {
-	json_value *_coord = json_array_new(x->length);
-	for (size_t m = 0; m < x->length; m++) {
-		json_array_push(_coord, json_new_position(x->items[m]));
+static INLINE json_value *json_new_VVp(const VV *x, const vf_Axes *axes) {
+	if (axes && axes->length == x->length) {
+		json_value *_coord = json_object_new(axes->length);
+		for (size_t m = 0; m < x->length; m++) {
+			vf_Axis *axis = &axes->items[m];
+			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
+			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
+			json_object_push_length(_coord, 4, tag, json_new_position(x->items[m]));
+		}
+		return preserialize(_coord);
+
+	} else {
+		json_value *_coord = json_array_new(x->length);
+		for (size_t m = 0; m < x->length; m++) {
+			json_array_push(_coord, json_new_position(x->items[m]));
+		}
+		return preserialize(_coord);
 	}
-	return preserialize(_coord);
 }
 static INLINE VQ json_vqOf(const json_value *cv) {
 	return iVQ.createStill(json_numof(cv));
