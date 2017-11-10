@@ -49,7 +49,7 @@ struct VariationAxisRecord {
 struct InstanceRecord {
 	uint16_t subfamilyNameID;
 	uint16_t flags;
-	f16dot16 coordinates[0];
+	f16dot16 coordinates[];
 };
 
 table_fvar *otfcc_readFvar(const otfcc_Packet packet, const otfcc_Options *options) {
