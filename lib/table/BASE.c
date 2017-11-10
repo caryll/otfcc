@@ -134,7 +134,6 @@ static json_value *axisToJson(const otl_BaseAxis *axis) {
 		if (axis->entries[j].defaultBaselineTag) {
 			char *baselineTag = tag2str(axis->entries[j].defaultBaselineTag);
 			json_object_push(_entry, "defaultBaseline", json_string_new_nocopy(4, baselineTag));
-			tag_free(baselineTag);
 		}
 		json_value *_values = json_object_new(axis->entries[j].baseValuesCount);
 		for (tableid_t k = 0; k < axis->entries[j].baseValuesCount; k++) {
