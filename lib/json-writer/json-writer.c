@@ -5,6 +5,7 @@
 static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	json_value *root = json_object_new(48);
 	if (!root) return NULL;
+	otfcc_dumpFvar(font->fvar, root, options);
 	otfcc_dumpHead(font->head, root, options);
 	otfcc_dumpHhea(font->hhea, root, options);
 	otfcc_dumpMaxp(font->maxp, root, options);
@@ -17,7 +18,7 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpGlyf(font->glyf, root, options,        //
 	               !!(font->vhea) && !!(font->vmtx), // whether export vertical metrics
 	               font->CFF_ && font->CFF_->isCID   // whether export FDSelect
-	               );
+	);
 	if (!options->ignore_hints) {
 		table_dumpTableFpgmPrep(font->fpgm, root, options, "fpgm");
 		table_dumpTableFpgmPrep(font->prep, root, options, "prep");

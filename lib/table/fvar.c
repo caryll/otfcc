@@ -85,7 +85,7 @@ table_fvar *otfcc_readFvar(const otfcc_Packet packet, const otfcc_Options *optio
 			                .minValue = otfcc_from_fixed(be32(axisRecord->minValue)),
 			                .defaultValue = otfcc_from_fixed(be32(axisRecord->defaultValue)),
 			                .maxValue = otfcc_from_fixed(be32(axisRecord->maxValue)),
-			                .flags = be16(axisRecord->minValue),
+			                .flags = be16(axisRecord->flags),
 			                .axisNameID = be16(axisRecord->axisNameID)};
 			vf_iAxes.push(&fvar->axes, axis);
 			axisRecord++;
@@ -123,4 +123,41 @@ table_fvar *otfcc_readFvar(const otfcc_Packet packet, const otfcc_Options *optio
 		fvar = NULL;
 	}
 	return NULL;
+}
+
+void otfcc_dumpFvar(const table_fvar *table, json_value *root, const otfcc_Options *options) {
+	if (!table) return;
+	loggedStep("fvar") {
+		json_value *t = json_object_new(2);
+		// dump axes
+		json_value *_axes = json_object_new(table->axes.length);
+		foreach (vf_Axis *axis, table->axes) {
+			char *tag = tag2str(axis->tag);
+			json_value *_axis = json_object_new(5);
+			json_object_push(_axis, "minValue", json_double_new(axis->minValue));
+			json_object_push(_axis, "defaultValue", json_double_new(axis->defaultValue));
+			json_object_push(_axis, "maxValue", json_double_new(axis->maxValue));
+			json_object_push(_axis, "flags", json_integer_new(axis->flags));
+			json_object_push(_axis, "axisNameID", json_integer_new(axis->axisNameID));
+			json_object_push(_axes, tag, _axis);
+			tag_free(tag);
+		}
+		json_object_push(t, "axes", _axes);
+		// dump instances
+		json_value *_instances = json_array_new(table->instances.length);
+		foreach (fvar_Instance *instance, table->instances) {
+			json_value *_instance = json_object_new(4);
+			json_object_push(_instance, "subfamilyNameID",
+			                 json_integer_new(instance->subfamilyNameID));
+			if (instance->postScriptNameID) {
+				json_object_push(_instance, "postScriptNameID",
+				                 json_integer_new(instance->postScriptNameID));
+			}
+			json_object_push(_instance, "flags", json_integer_new(instance->flags));
+			json_object_push(_instance, "coordinates", json_new_VVp(&instance->coordinates));
+			json_array_push(_instances, _instance);
+		}
+		json_object_push(t, "instances", _instances);
+		json_object_push(root, "fvar", t);
+	}
 }

@@ -20,6 +20,8 @@
 #endif
 #endif
 
+static INLINE json_value *preserialize(MOVE json_value *x);
+
 static INLINE json_value *json_obj_get(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return NULL;
 	for (uint32_t _k = 0; _k < obj->u.object.length; _k++) {
@@ -49,7 +51,7 @@ static INLINE char *json_obj_getstr_share(const json_value *obj, const char *key
 		return v->u.string.ptr;
 }
 
-// Coordinates and VQ
+// Coordinates, VV and VQ
 static INLINE double json_numof(const json_value *cv) {
 	if (cv && cv->type == json_integer) return cv->u.integer;
 	if (cv && cv->type == json_double) return cv->u.dbl;
@@ -62,11 +64,25 @@ static INLINE json_value *json_new_position(pos_t z) {
 		return json_double_new(z);
 	}
 }
-static INLINE VQ json_vqOf(json_value *cv) {
+static INLINE json_value *json_new_VV(const VV x) {
+	json_value *_coord = json_array_new(x.length);
+	for (size_t m = 0; m < x.length; m++) {
+		json_array_push(_coord, json_new_position(x.items[m]));
+	}
+	return preserialize(_coord);
+}
+static INLINE json_value *json_new_VVp(const VV *x) {
+	json_value *_coord = json_array_new(x->length);
+	for (size_t m = 0; m < x->length; m++) {
+		json_array_push(_coord, json_new_position(x->items[m]));
+	}
+	return preserialize(_coord);
+}
+static INLINE VQ json_vqOf(const json_value *cv) {
 	return iVQ.createStill(json_numof(cv));
 }
-static INLINE json_value *json_new_VQ(VQ z) {
-	return json_new_position(iVQ.getStill(z));
+static INLINE json_value *json_new_VQ(const VQ z) {
+	return preserialize(json_new_position(iVQ.getStill(z)));
 }
 
 static INLINE double json_obj_getnum(const json_value *obj, const char *key) {

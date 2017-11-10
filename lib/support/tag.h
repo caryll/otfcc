@@ -36,4 +36,8 @@ static INLINE uint32_t str2tag(char *tags) {
 	return tag;
 }
 
+static INLINE void tag_free(char *tags) {
+	free(tags);
+}
+
 #endif
