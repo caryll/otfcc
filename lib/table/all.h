@@ -1,6 +1,8 @@
 #ifndef CARYLL_TABLES_ALL_H
 #define CARYLL_TABLES_ALL_H
 
+#include "table/fvar.h"
+
 #include "table/head.h"
 #include "table/glyf.h"
 #include "table/CFF.h"

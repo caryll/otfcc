@@ -154,19 +154,13 @@
 
 #define caryll_standardType(T, __name, ...)                                                        \
 	caryll_standardTypeFn(T, ##__VA_ARGS__);                                                       \
-	caryll_ElementInterfaceOf(T) __name = {                                                        \
-	    caryll_standardTypeMethods(T),                                                             \
-	};
+	caryll_ElementInterfaceOf(T) __name = {caryll_standardTypeMethods(T)};
 #define caryll_standardRefType(T, __name, ...)                                                     \
 	caryll_standardRefTypeFn(T, ##__VA_ARGS__);                                                    \
-	caryll_ElementInterfaceOf(T) __name = {                                                        \
-	    caryll_standardRefTypeMethods(T),                                                          \
-	};
+	caryll_ElementInterfaceOf(T) __name = {caryll_standardRefTypeMethods(T)};
 #define caryll_standardValType(T, __name, ...)                                                     \
 	caryll_standardValTypeFn(T, ##__VA_ARGS__);                                                    \
-	caryll_ElementInterfaceOf(T) __name = {                                                        \
-	    caryll_standardValTypeMethods(T),                                                          \
-	};
+	caryll_ElementInterfaceOf(T) __name = {caryll_standardValTypeMethods(T)};
 
 #else
 
@@ -181,19 +175,13 @@
 
 #define caryll_standardType(T, __name, ...)                                                        \
 	caryll_standardTypeFn(T, __VA_ARGS__);                                                         \
-	caryll_ElementInterfaceOf(T) __name = {                                                        \
-	    caryll_standardTypeMethods(T),                                                             \
-	};
+	caryll_ElementInterfaceOf(T) __name = {caryll_standardTypeMethods(T)};
 #define caryll_standardRefType(T, __name, ...)                                                     \
 	caryll_standardRefTypeFn(T, __VA_ARGS__);                                                      \
-	caryll_ElementInterfaceOf(T) __name = {                                                        \
-	    caryll_standardRefTypeMethods(T),                                                          \
-	};
+	caryll_ElementInterfaceOf(T) __name = {caryll_standardRefTypeMethods(T)};
 #define caryll_standardValType(T, __name, ...)                                                     \
 	caryll_standardValTypeFn(T, __VA_ARGS__);                                                      \
-	caryll_ElementInterfaceOf(T) __name = {                                                        \
-	    caryll_standardValTypeMethods(T),                                                          \
-	};
+	caryll_ElementInterfaceOf(T) __name = {caryll_standardValTypeMethods(T)};
 
 #endif
 

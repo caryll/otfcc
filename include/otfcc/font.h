@@ -8,6 +8,8 @@ typedef struct _caryll_font otfcc_Font;
 
 #include "otfcc/glyph-order.h"
 
+#include "otfcc/table/fvar.h"
+
 #include "otfcc/table/head.h"
 #include "otfcc/table/glyf.h"
 #include "otfcc/table/CFF.h"
@@ -44,6 +46,8 @@ typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
 struct _caryll_font {
 	otfcc_font_subtype subtype;
+
+	table_fvar *fvar;
 
 	table_head *head;
 	table_hhea *hhea;

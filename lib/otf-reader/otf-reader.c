@@ -20,6 +20,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		otfcc_Font *font = otfcc_iFont.create();
 		otfcc_Packet packet = sfnt->packets[index];
 		font->subtype = decideFontSubtypeOTF(sfnt, index);
+		font->fvar = otfcc_readFvar(packet, options);
 		font->head = otfcc_readHead(packet, options);
 		font->maxp = otfcc_readMaxp(packet, options);
 		font->name = otfcc_readName(packet, options);
