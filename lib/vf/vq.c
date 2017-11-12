@@ -329,6 +329,7 @@ caryll_VectorInterfaceTypeName(VQ) iVQ = {
 // dump
 json_value *json_new_VQAxisSpan(const vq_AxisSpan *s) {
 	if ((s->peak > 0 && s->start == 0 && s->end == 1) ||
+	    (s->peak == 0 && s->start == -1 && s->end == 1) ||
 	    (s->peak < 0 && s->start == -1 && s->end == 0)) {
 		return json_new_position(s->peak);
 	} else {

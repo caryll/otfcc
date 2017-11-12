@@ -502,7 +502,7 @@ static vq_Region createRegionFromTuples(uint16_t dimensions, f2dot14 *peak, f2do
 	vq_iRegion.init(&r);
 	for (uint16_t d = 0; d < dimensions; d++) {
 		pos_t peakVal = otfcc_from_f2dot14(be16(peak[d]));
-		vq_AxisSpan span = {peakVal < 0 ? -1 : 0, peakVal, peakVal > 0 ? 1 : 0};
+		vq_AxisSpan span = {peakVal <= 0 ? -1 : 0, peakVal, peakVal >= 0 ? 1 : 0};
 		if (start && end) {
 			span.start = otfcc_from_f2dot14(be16(start[d]));
 			span.end = otfcc_from_f2dot14(be16(end[d]));
