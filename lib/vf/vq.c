@@ -14,7 +14,8 @@ static VV createNeutralVV(tableid_t dimensions) {
 	return vv;
 };
 caryll_VectorInterfaceTypeName(VV) iVV = {
-    caryll_VectorImplAssignments(VV, pos_t, vq_iPosT), .neutral = createNeutralVV,
+    caryll_VectorImplAssignments(VV, pos_t, vq_iPosT),
+    .neutral = createNeutralVV,
 };
 
 // Axis span and region
@@ -148,6 +149,14 @@ static void showVQS(const vq_Segment x) {
 		case VQ_STILL:
 			fprintf(stderr, "%g", x.val.still);
 			return;
+		case VQ_DELTA:
+			fprintf(stderr, "{%g%s", x.val.delta.quantity, x.val.delta.touched ? " " : "* ");
+			foreach (vq_AxisSpan *s, x.val.delta.region) {
+				fprintf(stderr, "[%g %g %g]", s->start, s->peak, s->end);
+			}
+			fprintf(stderr, "}\n");
+			return;
+
 		default:;
 	}
 }
@@ -157,7 +166,8 @@ caryll_ElementInterfaceOf(vq_Segment) vq_iSegment = {
     caryll_OrdEqAssigns(vq_Segment), // Ord and Eq
     caryll_ShowAssigns(vq_Segment),  // Show
     // creating instances
-    .createStill = vqsCreateStill, .createDelta = vqsCreateDelta,
+    .createStill = vqsCreateStill,
+    .createDelta = vqsCreateDelta,
 };
 
 caryll_standardVectorImpl(vq_SegList, vq_Segment, vq_iSegment, vq_iSegList);
@@ -314,3 +324,103 @@ caryll_VectorInterfaceTypeName(VQ) iVQ = {
     caryll_ShowAssigns(VQ),            // Show
     .pointLinearTfm = vqPointLinearTfm // pointLinearTfm
 };
+
+// JSON conversion functions
+// dump
+json_value *json_new_VQAxisSpan(const vq_AxisSpan *s) {
+	if ((s->peak > 0 && s->start == 0 && s->end == 1) ||
+	    (s->peak < 0 && s->start == -1 && s->end == 0)) {
+		return json_new_position(s->peak);
+	} else {
+		json_value *a = json_object_new(3);
+		json_object_push(a, "start", json_new_position(s->start));
+		json_object_push(a, "peak", json_new_position(s->peak));
+		json_object_push(a, "end", json_new_position(s->end));
+		return a;
+	}
+}
+json_value *json_new_VQRegion(const vq_Region *rs, const vf_Axes *axes) {
+	if (axes && axes->length == rs->length) {
+		json_value *r = json_object_new(rs->length);
+		for (size_t j = 0; j < rs->length; j++) {
+			json_object_push_tag(r, axes->items[j].tag, json_new_VQAxisSpan(&rs->items[j]));
+		}
+		return r;
+	} else {
+		json_value *r = json_array_new(rs->length);
+		for (size_t j = 0; j < rs->length; j++) {
+			json_array_push(r, json_new_VQAxisSpan(&rs->items[j]));
+		}
+		return r;
+	}
+}
+json_value *json_new_VQSegment(const vq_Segment *s, const vf_Axes *axes) {
+	switch (s->type) {
+		case VQ_STILL:;
+			return json_new_position(s->val.still);
+		case VQ_DELTA:;
+			json_value *d = json_object_new(3);
+			json_object_push(d, "delta", json_new_position(s->val.delta.quantity));
+			if (!s->val.delta.touched) {
+				json_object_push(d, "implicit", json_boolean_new(!s->val.delta.touched));
+			}
+			json_object_push(d, "over", json_new_VQRegion(&s->val.delta.region, axes));
+			return d;
+		default:;
+			return json_integer_new(0);
+	}
+}
+json_value *json_new_VQ(const VQ z, const vf_Axes *axes) {
+	if (!z.shift.length) {
+		return preserialize(json_new_position(iVQ.getStill(z)));
+	} else {
+		json_value *a = json_array_new(z.shift.length + 1);
+		json_array_push(a, json_new_position(z.kernel));
+		for (size_t j = 0; j < z.shift.length; j++) {
+			json_array_push(a, json_new_VQSegment(&z.shift.items[j], axes));
+		}
+		return preserialize(a);
+	}
+}
+
+json_value *json_new_VV(const VV x, const vf_Axes *axes) {
+	if (axes && axes->length == x.length) {
+		json_value *_coord = json_object_new(axes->length);
+		for (size_t m = 0; m < x.length; m++) {
+			vf_Axis *axis = &axes->items[m];
+			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
+			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
+			json_object_push_length(_coord, 4, tag, json_new_position(x.items[m]));
+		}
+		return preserialize(_coord);
+	} else {
+		json_value *_coord = json_array_new(x.length);
+		for (size_t m = 0; m < x.length; m++) {
+			json_array_push(_coord, json_new_position(x.items[m]));
+		}
+		return preserialize(_coord);
+	}
+}
+json_value *json_new_VVp(const VV *x, const vf_Axes *axes) {
+	if (axes && axes->length == x->length) {
+		json_value *_coord = json_object_new(axes->length);
+		for (size_t m = 0; m < x->length; m++) {
+			vf_Axis *axis = &axes->items[m];
+			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
+			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
+			json_object_push_length(_coord, 4, tag, json_new_position(x->items[m]));
+		}
+		return preserialize(_coord);
+
+	} else {
+		json_value *_coord = json_array_new(x->length);
+		for (size_t m = 0; m < x->length; m++) {
+			json_array_push(_coord, json_new_position(x->items[m]));
+		}
+		return preserialize(_coord);
+	}
+}
+// parse
+VQ json_vqOf(const json_value *cv, const vf_Axes *axes) {
+	return iVQ.createStill(json_numof(cv));
+}

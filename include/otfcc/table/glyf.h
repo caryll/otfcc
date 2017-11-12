@@ -4,6 +4,7 @@
 #include "table-common.h"
 #include "head.h"
 #include "maxp.h"
+#include "fvar.h"
 
 enum GlyphType { SIMPLE, COMPOSITE };
 
@@ -52,21 +53,23 @@ typedef enum {
 } RefAnchorStatus;
 
 typedef struct {
+	//// NOTE: this part and below looks like a glyf_Point
+	VQ x;
+	VQ y;
+	// flags
+	bool roundToGrid;
+	bool useMyMetrics;
+	// the glyph being referenced
 	otfcc_GlyphHandle glyph;
 	// transformation term
 	scale_t a;
 	scale_t b;
 	scale_t c;
 	scale_t d;
-	// position term
+	// Anchorness term
 	RefAnchorStatus isAnchored;
 	shapeid_t inner;
 	shapeid_t outer;
-	VQ x;
-	VQ y;
-	// flags
-	bool roundToGrid;
-	bool useMyMetrics;
 } glyf_ComponentReference;
 extern caryll_ValElementInterface(glyf_ComponentReference) glyf_iComponentReference;
 typedef caryll_Vector(glyf_ComponentReference) glyf_ReferenceList;

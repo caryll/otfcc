@@ -54,9 +54,14 @@ static INLINE void *__caryll_reallocate(void *ptr, size_t n, unsigned long line)
 	}
 }
 #ifdef __cplusplus
-#define NEW_CLEAN_1(ptr) ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
-#define NEW_CLEAN_N(ptr, n) ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)) * (n), __LINE__)
-#define NEW_DIRTY(ptr) ptr = (decltype(ptr))__caryll_allocate_dirty(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_CLEAN_1(ptr)                                                                           \
+	ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_CLEAN_N(ptr, n)                                                                        \
+	ptr = (decltype(ptr))__caryll_allocate_clean(sizeof(decltype(*ptr)) * (n), __LINE__)
+#define NEW_DIRTY(ptr)                                                                             \
+	ptr = (decltype(ptr))__caryll_allocate_dirty(sizeof(decltype(*ptr)), __LINE__)
+#define NEW_DIRTY_N(ptr, n)                                                                        \
+	ptr = (decltype(ptr))__caryll_allocate_dirty(sizeof(decltype(*ptr)) * (n), __LINE__)
 #define FREE(ptr) (__caryll_free(ptr), ptr = nullptr)
 #define DELETE(fn, ptr) (fn(ptr), ptr = nullptr)
 #define RESIZE(ptr, n) ptr = (decltype(ptr))__caryll_reallocate(ptr, sizeof(*ptr) * (n), __LINE__)
@@ -64,6 +69,7 @@ static INLINE void *__caryll_reallocate(void *ptr, size_t n, unsigned long line)
 #define NEW_CLEAN_1(ptr) ptr = __caryll_allocate_clean(sizeof(*ptr), __LINE__)
 #define NEW_CLEAN_N(ptr, n) ptr = __caryll_allocate_clean(sizeof(*ptr) * (n), __LINE__)
 #define NEW_DIRTY(ptr) ptr = __caryll_allocate_dirty(sizeof(*ptr), __LINE__)
+#define NEW_DIRTY_N(ptr, n) ptr = __caryll_allocate_dirty(sizeof(*ptr) * (n), __LINE__)
 #define FREE(ptr) (__caryll_free(ptr), ptr = NULL)
 #define DELETE(fn, ptr) (fn(ptr), ptr = NULL)
 #define RESIZE(ptr, n) ptr = __caryll_reallocate(ptr, sizeof(*ptr) * (n), __LINE__)

@@ -38,6 +38,7 @@ typedef struct {
 		pos_t still;
 		struct {
 			pos_t quantity;
+			bool touched;
 			vq_Region region;
 		} delta;
 	} val;

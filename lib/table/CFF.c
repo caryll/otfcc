@@ -326,7 +326,8 @@ static void callback_draw_sethint(void *_context, bool isVertical, double positi
 	outline_builder_context *context = (outline_builder_context *)_context;
 	glyf_iStemDefList.push((isVertical ? &context->g->stemV : &context->g->stemH), //
 	                       ((glyf_PostscriptStemDef){
-	                           .position = position, .width = width,
+	                           .position = position,
+	                           .width = width,
 	                       }));
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
@@ -705,8 +706,8 @@ static json_value *fdToJson(const table_CFF *table) {
 		json_object_push(_fontMatrix, "b", json_double_new(table->fontMatrix->b));
 		json_object_push(_fontMatrix, "c", json_double_new(table->fontMatrix->c));
 		json_object_push(_fontMatrix, "d", json_double_new(table->fontMatrix->d));
-		json_object_push(_fontMatrix, "x", json_new_VQ(table->fontMatrix->x));
-		json_object_push(_fontMatrix, "y", json_new_VQ(table->fontMatrix->y));
+		json_object_push(_fontMatrix, "x", json_new_VQ(table->fontMatrix->x, NULL));
+		json_object_push(_fontMatrix, "y", json_new_VQ(table->fontMatrix->y, NULL));
 		json_object_push(_CFF_, "fontMatrix", _fontMatrix);
 	}
 	if (table->privateDict) { json_object_push(_CFF_, "privates", pdToJson(table->privateDict)); }
@@ -1263,7 +1264,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf,
 	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff,
 	                               (delta_size >> 8) & 0xff,
 	                               delta_size & 0xff) // offset 2
-	                );
+	);
 
 	bufwrite_bufdel(blob, t); // top dict body
 

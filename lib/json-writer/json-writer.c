@@ -15,10 +15,14 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpName(font->name, root, options);
 	otfcc_dumpCmap(font->cmap, root, options);
 	otfcc_dumpCFF(font->CFF_, root, options);
-	otfcc_dumpGlyf(font->glyf, root, options,        //
-	               !!(font->vhea) && !!(font->vmtx), // whether export vertical metrics
-	               font->CFF_ && font->CFF_->isCID   // whether export FDSelect
-	);
+
+	GlyfIOContext ctx = {.locaIsLong = font->head->indexToLocFormat,
+	                     .numGlyphs = font->maxp->numGlyphs,
+	                     .nPhantomPoints = 4,
+	                     .hasVerticalMetrics = !!(font->vhea) && !!(font->vmtx),
+	                     .exportFDSelect = font->CFF_ && font->CFF_->isCID,
+	                     .fvar = font->fvar};
+	otfcc_dumpGlyf(font->glyf, root, options, &ctx);
 	if (!options->ignore_hints) {
 		table_dumpTableFpgmPrep(font->fpgm, root, options, "fpgm");
 		table_dumpTableFpgmPrep(font->prep, root, options, "prep");

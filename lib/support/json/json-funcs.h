@@ -71,49 +71,11 @@ static INLINE json_value *json_new_position(pos_t z) {
 		return json_double_new(z);
 	}
 }
-static INLINE json_value *json_new_VV(const VV x, const vf_Axes *axes) {
-	if (axes && axes->length == x.length) {
-		json_value *_coord = json_object_new(axes->length);
-		for (size_t m = 0; m < x.length; m++) {
-			vf_Axis *axis = &axes->items[m];
-			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
-			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
-			json_object_push_length(_coord, 4, tag, json_new_position(x.items[m]));
-		}
-		return preserialize(_coord);
-	} else {
-		json_value *_coord = json_array_new(x.length);
-		for (size_t m = 0; m < x.length; m++) {
-			json_array_push(_coord, json_new_position(x.items[m]));
-		}
-		return preserialize(_coord);
-	}
-}
-static INLINE json_value *json_new_VVp(const VV *x, const vf_Axes *axes) {
-	if (axes && axes->length == x->length) {
-		json_value *_coord = json_object_new(axes->length);
-		for (size_t m = 0; m < x->length; m++) {
-			vf_Axis *axis = &axes->items[m];
-			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
-			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
-			json_object_push_length(_coord, 4, tag, json_new_position(x->items[m]));
-		}
-		return preserialize(_coord);
 
-	} else {
-		json_value *_coord = json_array_new(x->length);
-		for (size_t m = 0; m < x->length; m++) {
-			json_array_push(_coord, json_new_position(x->items[m]));
-		}
-		return preserialize(_coord);
-	}
-}
-static INLINE VQ json_vqOf(const json_value *cv) {
-	return iVQ.createStill(json_numof(cv));
-}
-static INLINE json_value *json_new_VQ(const VQ z) {
-	return preserialize(json_new_position(iVQ.getStill(z)));
-}
+json_value *json_new_VQ(const VQ z, const vf_Axes *axes);
+json_value *json_new_VV(const VV x, const vf_Axes *axes);
+json_value *json_new_VVp(const VV *x, const vf_Axes *axes);
+VQ json_vqOf(const json_value *cv, const vf_Axes *axes);
 
 static INLINE double json_obj_getnum(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;
