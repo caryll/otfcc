@@ -361,7 +361,7 @@ static INLINE font_file_pointer readPackedDelta(font_file_pointer data, shapeid_
 	return data;
 }
 
-typedef VQ *(*coordPartGetter)(glyf_Point *z);
+typedef VQ *(*CoordPartGetter)(glyf_Point *z);
 
 VQ *getX(glyf_Point *z) {
 	return &z->x;
@@ -371,7 +371,7 @@ VQ *getY(glyf_Point *z) {
 }
 
 static INLINE void fillTheGaps(shapeid_t jMin, shapeid_t jMax, vq_Segment *nudges,
-                               glyf_Point **glyphRefs, coordPartGetter getter) {
+                               glyf_Point **glyphRefs, CoordPartGetter getter) {
 	for (shapeid_t j = jMin; j < jMax; j++) {
 		if (nudges[j].val.delta.touched) continue;
 		// get next knot
@@ -423,9 +423,44 @@ static INLINE void fillTheGaps(shapeid_t jMin, shapeid_t jMax, vq_Segment *nudge
 	}
 }
 
-static INLINE void applyPolymorphism(glyf_GlyphPtr glyph, shapeid_t totalPoints,
-                                     shapeid_t nTouchedPoints, shapeid_t *points, pos_t *deltaX,
-                                     pos_t *deltaY, vq_Region r) {
+static void applyCoords(const shapeid_t totalPoints, glyf_Glyph *glyph,
+                        glyf_Point **glyphRefs, // target
+                        const shapeid_t nTouchedPoints, const pos_t *tupleDelta,
+                        const shapeid_t *points,
+                        const vq_Region *r, // data
+                        CoordPartGetter getter) {
+	vq_Segment *nudges;
+	NEW_CLEAN_N(nudges, totalPoints);
+	for (shapeid_t j = 0; j < totalPoints; j++) {
+		nudges[j].type = VQ_DELTA;
+		nudges[j].val.delta.touched = false;
+		nudges[j].val.delta.quantity = 0;
+		vq_iRegion.copy(&nudges[j].val.delta.region, r);
+	}
+	for (shapeid_t j = 0; j < nTouchedPoints; j++) {
+		if (points[j] >= totalPoints) continue;
+		nudges[points[j]].val.delta.touched = true;
+		nudges[points[j]].val.delta.quantity += tupleDelta[j];
+	}
+	// fill the gaps
+	shapeid_t jFirst = 0;
+	foreach (glyf_Contour *c, glyph->contours) {
+		fillTheGaps(jFirst, jFirst + c->length, nudges, glyphRefs, getX);
+		jFirst += c->length;
+	}
+	for (shapeid_t j = 0; j < totalPoints; j++) {
+		if (!nudges[j].val.delta.quantity && nudges[j].val.delta.touched) continue;
+		VQ *coordinatePart = getter(glyphRefs[j]);
+		vq_iSegList.push(&(coordinatePart->shift), nudges[j]);
+	}
+	FREE(nudges);
+}
+
+static INLINE void applyPolymorphism(const shapeid_t totalPoints, glyf_GlyphPtr glyph, // target
+                                     const shapeid_t nTouchedPoints, const shapeid_t *points,
+                                     const pos_t *deltaX, const pos_t *deltaY,
+                                     const vq_Region *r // delta data
+) {
 	glyf_Point **glyphRefs;
 	NEW_CLEAN_N(glyphRefs, totalPoints);
 	{
@@ -439,60 +474,8 @@ static INLINE void applyPolymorphism(glyf_GlyphPtr glyph, shapeid_t totalPoints,
 			glyphRefs[j++] = (glyf_Point *)&(r->x);
 		}
 	}
-	// X
-	{
-		vq_Segment *nudges;
-		NEW_CLEAN_N(nudges, totalPoints);
-		for (shapeid_t j = 0; j < totalPoints; j++) {
-			nudges[j].type = VQ_DELTA;
-			nudges[j].val.delta.touched = false;
-			nudges[j].val.delta.quantity = 0;
-			vq_iRegion.copy(&nudges[j].val.delta.region, &r);
-		}
-		for (shapeid_t j = 0; j < nTouchedPoints; j++) {
-			if (points[j] >= totalPoints) continue;
-			nudges[points[j]].val.delta.touched = true;
-			nudges[points[j]].val.delta.quantity += deltaX[j];
-		}
-		// fill the gaps
-		shapeid_t jFirst = 0;
-		foreach (glyf_Contour *c, glyph->contours) {
-			fillTheGaps(jFirst, jFirst + c->length, nudges, glyphRefs, getX);
-			jFirst += c->length;
-		}
-		for (shapeid_t j = 0; j < totalPoints; j++) {
-			if (!nudges[j].val.delta.quantity && nudges[j].val.delta.touched) continue;
-			vq_iSegList.push(&(glyphRefs[j]->x.shift), nudges[j]);
-		}
-		FREE(nudges);
-	}
-	// Y
-	{
-		vq_Segment *nudges;
-		NEW_CLEAN_N(nudges, totalPoints);
-		for (shapeid_t j = 0; j < totalPoints; j++) {
-			nudges[j].type = VQ_DELTA;
-			nudges[j].val.delta.touched = false;
-			nudges[j].val.delta.quantity = 0;
-			vq_iRegion.copy(&nudges[j].val.delta.region, &r);
-		}
-		for (shapeid_t j = 0; j < nTouchedPoints; j++) {
-			if (points[j] >= totalPoints) continue;
-			nudges[points[j]].val.delta.touched = true;
-			nudges[points[j]].val.delta.quantity = deltaY[j];
-		}
-		// fill the gaps
-		shapeid_t jFirst = 0;
-		foreach (glyf_Contour *c, glyph->contours) {
-			fillTheGaps(jFirst, jFirst + c->length, nudges, glyphRefs, getY);
-			jFirst += c->length;
-		}
-		for (shapeid_t j = 0; j < totalPoints; j++) {
-			if (!nudges[j].val.delta.quantity && nudges[j].val.delta.touched) continue;
-			vq_iSegList.push(&(glyphRefs[j]->y.shift), nudges[j]);
-		}
-		FREE(nudges);
-	}
+	applyCoords(totalPoints, glyph, glyphRefs, nTouchedPoints, deltaX, points, r, getX);
+	applyCoords(totalPoints, glyph, glyphRefs, nTouchedPoints, deltaY, points, r, getY);
 	FREE(glyphRefs);
 }
 
@@ -579,7 +562,7 @@ static INLINE void polymorphizeGlyph(glyphid_t gid, glyf_GlyphPtr glyph,
 			tsd = readPackedDelta(tsd, nPoints, deltaY);
 
 			// Do polymorphize
-			applyPolymorphism(glyph, totalPoints, nPoints, pointIndeces, deltaX, deltaY, r);
+			applyPolymorphism(totalPoints, glyph, nPoints, pointIndeces, deltaX, deltaY, &r);
 			FREE(deltaX);
 			FREE(deltaY);
 		}
