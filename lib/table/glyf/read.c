@@ -354,7 +354,7 @@ static INLINE font_file_pointer readPackedDelta(font_file_pointer data, shapeid_
 				data++;
 			}
 		}
-		deltas[filled] += (pos_t)delta;
+		deltas[filled] = (pos_t)delta;
 		filled++;
 		--run.length;
 	}
@@ -452,7 +452,7 @@ static INLINE void applyPolymorphism(glyf_GlyphPtr glyph, shapeid_t totalPoints,
 		for (shapeid_t j = 0; j < nTouchedPoints; j++) {
 			if (points[j] >= totalPoints) continue;
 			nudges[points[j]].val.delta.touched = true;
-			nudges[points[j]].val.delta.quantity = deltaX[j];
+			nudges[points[j]].val.delta.quantity += deltaX[j];
 		}
 		// fill the gaps
 		shapeid_t jFirst = 0;
