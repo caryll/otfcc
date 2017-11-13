@@ -354,7 +354,7 @@ static INLINE font_file_pointer readPackedDelta(font_file_pointer data, shapeid_
 				data++;
 			}
 		}
-		deltas[filled] = (pos_t)delta;
+		deltas[filled] += (pos_t)delta;
 		filled++;
 		--run.length;
 	}
