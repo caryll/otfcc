@@ -520,19 +520,27 @@ static INLINE void polymorphizeGlyph(glyphid_t gid, glyf_GlyphPtr glyph,
 
 	for (uint16_t j = 0; j < nTuples; j++) {
 
-		// peak tuple
+		// Tuple options
+		shapeid_t tupleIndex = be16(tvh->tupleIndex) & TUPLE_INDEX_MASK;
+		bool hasEmbeddedPeak = be16(tvh->tupleIndex) & EMBEDDED_PEAK_TUPLE;
+		bool hasIntermediate = be16(tvh->tupleIndex) & INTERMEDIATE_REGION;
+
+		// Peak tuple
 		f2dot14 *peak = NULL;
-		if (be16(tvh->tupleIndex) & EMBEDDED_PEAK_TUPLE) {
+		if (hasEmbeddedPeak) {
 			peak = (f2dot14 *)(((font_file_pointer)tvh) + 4);
 		} else {
-			peak = ctx->sharedTuples + ctx->dimensions * (be16(tvh->tupleIndex) & TUPLE_INDEX_MASK);
+			peak = ctx->sharedTuples + ctx->dimensions * tupleIndex;
 		}
-		// intermediate tuple -- if present
+
+		// Intermediate tuple -- if present
 		f2dot14 *start = NULL;
 		f2dot14 *end = NULL;
-		if (be16(tvh->tupleIndex) & INTERMEDIATE_REGION) {
-			start = (f2dot14 *)(((font_file_pointer)tvh) + 4 + 2 * ctx->dimensions);
-			end = (f2dot14 *)(((font_file_pointer)tvh) + 4 + 4 * ctx->dimensions);
+		if (hasIntermediate) {
+			start = (f2dot14 *)(((font_file_pointer)tvh) + 4 +
+			                    2 * (hasEmbeddedPeak ? 1 : 0) * ctx->dimensions);
+			end = (f2dot14 *)(((font_file_pointer)tvh) + 4 +
+			                  2 * (hasEmbeddedPeak ? 2 : 1) * ctx->dimensions);
 		}
 
 		vq_Region r = createRegionFromTuples(ctx->dimensions, peak, start, end);
