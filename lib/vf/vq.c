@@ -18,71 +18,6 @@ caryll_VectorInterfaceTypeName(VV) iVV = {
     .neutral = createNeutralVV,
 };
 
-// Axis span and region
-static INLINE void initAxisSpan(vq_AxisSpan *as) {
-	as->start = 0;
-	as->peak = 0;
-	as->end = 0;
-}
-static INLINE void copyAxisSpan(vq_AxisSpan *dst, const vq_AxisSpan *src) {
-	dst->start = src->start;
-	dst->peak = src->peak;
-	dst->end = src->end;
-}
-static INLINE void disposeAxisSpan(vq_AxisSpan *as) {}
-caryll_standardType(vq_AxisSpan, vq_iAxisSpan, initAxisSpan, copyAxisSpan, disposeAxisSpan);
-
-static pos_t INLINE weightAxisRegion(const vq_AxisSpan *as, const pos_t x) {
-	const pos_t a = as->start;
-	const pos_t p = as->peak;
-	const pos_t z = as->end;
-	if (a > p || p > z) {
-		return 1;
-	} else if (a < 0 && z > 0 && p != 0) {
-		return 1;
-	} else if (p == 0) {
-		return 1;
-	} else if (x < a || x > z) {
-		return 0;
-	} else if (x == p) {
-		return 1;
-	} else if (x < p) {
-		return (x - a) / (p - a);
-	} else {
-		return (z - x) / (z - p);
-	}
-}
-static pos_t vqRegionGetWeight(const vq_Region *r, const VV *v) {
-	pos_t w = 1;
-	for (size_t j = 0; j < r->length && v->length; j++) {
-		w *= weightAxisRegion(&r->items[j], v->items[j]);
-	}
-	return w;
-}
-
-static int vqrCompare(const vq_Region a, const vq_Region b) {
-	if (a.length < b.length) return -1;
-	if (a.length > b.length) return 1;
-	for (size_t j = 0; j < a.length; j++) {
-		if (a.items[j].start < b.items[j].start) return -1;
-		if (a.items[j].start > b.items[j].start) return 1;
-		if (a.items[j].peak < b.items[j].peak) return -1;
-		if (a.items[j].peak > b.items[j].peak) return 1;
-		if (a.items[j].end < b.items[j].end) return -1;
-		if (a.items[j].end > b.items[j].end) return 1;
-	}
-	return 0;
-}
-
-caryll_VectorImplFunctions(vq_Region, vq_AxisSpan, vq_iAxisSpan);
-caryll_OrdEqFns(vq_Region, vqrCompare);
-
-caryll_VectorInterfaceTypeName(vq_Region) vq_iRegion = {
-    caryll_VectorImplAssignments(vq_Region, vq_AxisSpan, vq_iAxisSpan),
-    caryll_OrdEqAssigns(vq_Region), // Ord
-    .getWeight = vqRegionGetWeight,
-};
-
 // VQS
 static INLINE void initVQSegment(vq_Segment *vqs) {
 	vqs->type = VQ_STILL;
@@ -96,13 +31,12 @@ static INLINE void copyVQSegment(vq_Segment *dst, const vq_Segment *src) {
 			break;
 		case VQ_DELTA:
 			dst->val.delta.quantity = src->val.delta.quantity;
-			vq_iRegion.copy(&dst->val.delta.region, &src->val.delta.region);
+			dst->val.delta.region = src->val.delta.region;
 	}
 }
 static INLINE void disposeVQSegment(vq_Segment *vqs) {
 	switch (vqs->type) {
 		case VQ_DELTA:
-			vq_iRegion.dispose(&vqs->val.delta.region);
 			break;
 		default:;
 	}
@@ -116,7 +50,7 @@ static vq_Segment vqsCreateStill(pos_t x) {
 	vqs.val.still = x;
 	return vqs;
 }
-static vq_Segment vqsCreateDelta(pos_t delta, MOVE vq_Region region) {
+static vq_Segment vqsCreateDelta(pos_t delta, vq_Region *region) {
 	vq_Segment vqs;
 	vq_iSegment.init(&vqs);
 	vqs.type = VQ_DELTA;
@@ -135,7 +69,7 @@ static int vqsCompare(const vq_Segment a, const vq_Segment b) {
 			return 0;
 		}
 		case VQ_DELTA: {
-			int vqrc = vqrCompare(a.val.delta.region, b.val.delta.region);
+			int vqrc = vq_compareRegion(a.val.delta.region, b.val.delta.region);
 			if (vqrc) return vqrc;
 			if (a.val.delta.quantity < b.val.delta.quantity) return -1;
 			if (a.val.delta.quantity > b.val.delta.quantity) return 1;
@@ -151,9 +85,7 @@ static void showVQS(const vq_Segment x) {
 			return;
 		case VQ_DELTA:
 			fprintf(stderr, "{%g%s", x.val.delta.quantity, x.val.delta.touched ? " " : "* ");
-			foreach (vq_AxisSpan *s, x.val.delta.region) {
-				fprintf(stderr, "[%g %g %g]", s->start, s->peak, s->end);
-			}
+			vq_showRegion(x.val.delta.region);
 			fprintf(stderr, "}\n");
 			return;
 
@@ -197,7 +129,7 @@ static bool vqsCompatible(const vq_Segment a, const vq_Segment b) {
 		case VQ_STILL:
 			return true;
 		case VQ_DELTA:
-			return vq_iRegion.equal(a.val.delta.region, b.val.delta.region);
+			return 0 == vq_compareRegion(a.val.delta.region, b.val.delta.region);
 	}
 }
 static void simplifyVq(MODIFY VQ *x) {
@@ -324,104 +256,3 @@ caryll_VectorInterfaceTypeName(VQ) iVQ = {
     caryll_ShowAssigns(VQ),            // Show
     .pointLinearTfm = vqPointLinearTfm // pointLinearTfm
 };
-
-// JSON conversion functions
-// dump
-json_value *json_new_VQAxisSpan(const vq_AxisSpan *s) {
-	if ((s->peak > 0 && s->start == 0 && s->end == 1) ||
-	    (s->peak == 0 && s->start == -1 && s->end == 1) ||
-	    (s->peak < 0 && s->start == -1 && s->end == 0)) {
-		return json_new_position(s->peak);
-	} else {
-		json_value *a = json_object_new(3);
-		json_object_push(a, "start", json_new_position(s->start));
-		json_object_push(a, "peak", json_new_position(s->peak));
-		json_object_push(a, "end", json_new_position(s->end));
-		return a;
-	}
-}
-json_value *json_new_VQRegion(const vq_Region *rs, const vf_Axes *axes) {
-	if (axes && axes->length == rs->length) {
-		json_value *r = json_object_new(rs->length);
-		for (size_t j = 0; j < rs->length; j++) {
-			json_object_push_tag(r, axes->items[j].tag, json_new_VQAxisSpan(&rs->items[j]));
-		}
-		return r;
-	} else {
-		json_value *r = json_array_new(rs->length);
-		for (size_t j = 0; j < rs->length; j++) {
-			json_array_push(r, json_new_VQAxisSpan(&rs->items[j]));
-		}
-		return r;
-	}
-}
-json_value *json_new_VQSegment(const vq_Segment *s, const vf_Axes *axes) {
-	switch (s->type) {
-		case VQ_STILL:;
-			return json_new_position(s->val.still);
-		case VQ_DELTA:;
-			json_value *d = json_object_new(3);
-			json_object_push(d, "delta", json_new_position(s->val.delta.quantity));
-			if (!s->val.delta.touched) {
-				json_object_push(d, "implicit", json_boolean_new(!s->val.delta.touched));
-			}
-			json_object_push(d, "over", json_new_VQRegion(&s->val.delta.region, axes));
-			return d;
-		default:;
-			return json_integer_new(0);
-	}
-}
-json_value *json_new_VQ(const VQ z, const vf_Axes *axes) {
-	if (!z.shift.length) {
-		return preserialize(json_new_position(iVQ.getStill(z)));
-	} else {
-		json_value *a = json_array_new(z.shift.length + 1);
-		json_array_push(a, json_new_position(z.kernel));
-		for (size_t j = 0; j < z.shift.length; j++) {
-			json_array_push(a, json_new_VQSegment(&z.shift.items[j], axes));
-		}
-		return preserialize(a);
-	}
-}
-
-json_value *json_new_VV(const VV x, const vf_Axes *axes) {
-	if (axes && axes->length == x.length) {
-		json_value *_coord = json_object_new(axes->length);
-		for (size_t m = 0; m < x.length; m++) {
-			vf_Axis *axis = &axes->items[m];
-			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
-			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
-			json_object_push_length(_coord, 4, tag, json_new_position(x.items[m]));
-		}
-		return preserialize(_coord);
-	} else {
-		json_value *_coord = json_array_new(x.length);
-		for (size_t m = 0; m < x.length; m++) {
-			json_array_push(_coord, json_new_position(x.items[m]));
-		}
-		return preserialize(_coord);
-	}
-}
-json_value *json_new_VVp(const VV *x, const vf_Axes *axes) {
-	if (axes && axes->length == x->length) {
-		json_value *_coord = json_object_new(axes->length);
-		for (size_t m = 0; m < x->length; m++) {
-			vf_Axis *axis = &axes->items[m];
-			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
-			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
-			json_object_push_length(_coord, 4, tag, json_new_position(x->items[m]));
-		}
-		return preserialize(_coord);
-
-	} else {
-		json_value *_coord = json_array_new(x->length);
-		for (size_t m = 0; m < x->length; m++) {
-			json_array_push(_coord, json_new_position(x->items[m]));
-		}
-		return preserialize(_coord);
-	}
-}
-// parse
-VQ json_vqOf(const json_value *cv, const vf_Axes *axes) {
-	return iVQ.createStill(json_numof(cv));
-}

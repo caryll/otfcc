@@ -3,7 +3,9 @@
 #include "support/aglfn/aglfn.h"
 #include "support/sha1/sha1.h"
 
-typedef struct { uint8_t hash[SHA1_BLOCK_SIZE]; } GlyphHash;
+typedef struct {
+	uint8_t hash[SHA1_BLOCK_SIZE];
+} GlyphHash;
 static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 	bufwrite8(buf, s.type);
 	switch (s.type) {
@@ -12,9 +14,9 @@ static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 			break;
 		case VQ_DELTA:
 			bufwrite32b(buf, otfcc_to_fixed(s.val.delta.quantity));
-			bufwrite32b(buf, (uint32_t)s.val.delta.region.length);
-			for (size_t j = 0; j < s.val.delta.region.length; j++) {
-				vq_AxisSpan *span = &s.val.delta.region.items[j];
+			bufwrite32b(buf, (uint32_t)s.val.delta.region->dimensions);
+			for (size_t j = 0; j < s.val.delta.region->dimensions; j++) {
+				const vq_AxisSpan *span = &s.val.delta.region->spans[j];
 				bufwrite32b(buf, otfcc_to_f2dot14(span->start));
 				bufwrite32b(buf, otfcc_to_f2dot14(span->peak));
 				bufwrite32b(buf, otfcc_to_f2dot14(span->end));

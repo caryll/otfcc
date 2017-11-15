@@ -11,7 +11,7 @@
 #include "caryll/ownership.h"
 #include "otfcc/primitives.h"
 #include "otfcc/vf/vq.h"
-#include "otfcc/vf/axis.h"
+#include "otfcc/table/fvar.h"
 
 #ifndef INLINE
 #ifdef _MSC_VER
@@ -71,11 +71,12 @@ static INLINE json_value *json_new_position(pos_t z) {
 		return json_double_new(z);
 	}
 }
-
-json_value *json_new_VQ(const VQ z, const vf_Axes *axes);
-json_value *json_new_VV(const VV x, const vf_Axes *axes);
-json_value *json_new_VVp(const VV *x, const vf_Axes *axes);
-VQ json_vqOf(const json_value *cv, const vf_Axes *axes);
+json_value *json_new_VQRegion_Explicit(const vq_Region *rs, const table_fvar *fvar);
+json_value *json_new_VQRegion(const vq_Region *rs, const table_fvar *fvar);
+json_value *json_new_VQ(const VQ z, const table_fvar *fvar);
+json_value *json_new_VV(const VV x, const table_fvar *fvar);
+json_value *json_new_VVp(const VV *x, const table_fvar *fvar);
+VQ json_vqOf(const json_value *cv, const table_fvar *fvar);
 
 static INLINE double json_obj_getnum(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;

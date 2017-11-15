@@ -14,6 +14,12 @@ static INLINE void disposeFvarInstance(fvar_Instance *inst) {
 caryll_standardType(fvar_Instance, fvar_iInstance, initFvarInstance, disposeFvarInstance);
 caryll_standardVectorImpl(fvar_InstanceList, fvar_Instance, fvar_iInstance, fvar_iInstanceList);
 // table fvar
+
+static INLINE void disposeFvarMaster(fvar_Master *m) {
+	sdsfree(m->name);
+	vq_deleteRegion(m->region);
+}
+
 static INLINE void initFvar(table_fvar *fvar) {
 	memset(fvar, 0, sizeof(*fvar));
 	vf_iAxes.init(&fvar->axes);
@@ -22,10 +28,45 @@ static INLINE void initFvar(table_fvar *fvar) {
 static INLINE void disposeFvar(table_fvar *fvar) {
 	vf_iAxes.dispose(&fvar->axes);
 	fvar_iInstanceList.dispose(&fvar->instances);
+
+	fvar_Master *current, *tmp;
+	HASH_ITER(hh, fvar->masters, current, tmp) {
+		HASH_DEL(fvar->masters, current);
+		disposeFvarMaster(current);
+		FREE(current);
+	}
 }
-caryll_standardRefType(table_fvar, table_iFvar, initFvar, disposeFvar);
+
+static const vq_Region *fvar_registerRegion(table_fvar *fvar, MOVE vq_Region *region) {
+	fvar_Master *m = NULL;
+	HASH_FIND(hh, fvar->masters, region, VQ_REGION_SIZE(region->dimensions), m);
+	if (m) {
+		vq_deleteRegion(region);
+		return m->region;
+	} else {
+		NEW_CLEAN_1(m);
+		sds sMasterID = sdsfromlonglong(1 + HASH_CNT(hh, fvar->masters));
+		m->name = sdscatsds(sdsnew("m"), sMasterID);
+		sdsfree(sMasterID);
+		m->region = region;
+		HASH_ADD_KEYPTR(hh, fvar->masters, m->region, VQ_REGION_SIZE(region->dimensions), m);
+		return m->region;
+	}
+}
+
+static const fvar_Master *fvar_findMasterByRegion(const table_fvar *fvar, const vq_Region *region) {
+	fvar_Master *m = NULL;
+	HASH_FIND(hh, fvar->masters, region, VQ_REGION_SIZE(region->dimensions), m);
+	return m;
+}
+
+caryll_standardRefTypeFn(table_fvar, initFvar, disposeFvar);
+caryll_ElementInterfaceOf(table_fvar) table_iFvar = {caryll_standardRefTypeMethods(table_fvar),
+                                                     .registerRegion = fvar_registerRegion,
+                                                     .findMasterByRegion = fvar_findMasterByRegion};
 
 // Local typedefs for parsing axis record
+#pragma pack(1)
 struct FVARHeader {
 	uint16_t majorVersion;
 	uint16_t minorVersion;
@@ -51,6 +92,7 @@ struct InstanceRecord {
 	uint16_t flags;
 	f16dot16 coordinates[];
 };
+#pragma pack()
 
 table_fvar *otfcc_readFvar(const otfcc_Packet packet, const otfcc_Options *options) {
 	table_fvar *fvar = NULL;
@@ -152,11 +194,136 @@ void otfcc_dumpFvar(const table_fvar *table, json_value *root, const otfcc_Optio
 				                 json_integer_new(instance->postScriptNameID));
 			}
 			json_object_push(_instance, "flags", json_integer_new(instance->flags));
-			json_object_push(_instance, "coordinates",
-			                 json_new_VVp(&instance->coordinates, &table->axes));
+			json_object_push(_instance, "coordinates", json_new_VVp(&instance->coordinates, table));
 			json_array_push(_instances, _instance);
 		}
 		json_object_push(t, "instances", _instances);
+		// dump masters
+		json_value *_masters = json_object_new(HASH_COUNT(table->masters));
+		fvar_Master *current, *tmp;
+		HASH_ITER(hh, table->masters, current, tmp) {
+			json_object_push(_masters, current->name,
+			                 preserialize(json_new_VQRegion_Explicit(current->region, table)));
+		}
+		json_object_push(t, "masters", _masters);
 		json_object_push(root, "fvar", t);
+	}
+}
+
+// JSON conversion functions
+// dump
+
+json_value *json_new_VQSegment(const vq_Segment *s, const table_fvar *fvar) {
+	switch (s->type) {
+		case VQ_STILL:;
+			return json_new_position(s->val.still);
+		case VQ_DELTA:;
+			json_value *d = json_object_new(3);
+			json_object_push(d, "delta", json_new_position(s->val.delta.quantity));
+			if (!s->val.delta.touched) {
+				json_object_push(d, "implicit", json_boolean_new(!s->val.delta.touched));
+			}
+			json_object_push(d, "on", json_new_VQRegion(s->val.delta.region, fvar));
+			return d;
+		default:;
+			return json_integer_new(0);
+	}
+}
+json_value *json_new_VQ(const VQ z, const table_fvar *fvar) {
+
+	if (!z.shift.length) {
+		return preserialize(json_new_position(iVQ.getStill(z)));
+	} else {
+		json_value *a = json_array_new(z.shift.length + 1);
+		json_array_push(a, json_new_position(z.kernel));
+		for (size_t j = 0; j < z.shift.length; j++) {
+			json_array_push(a, json_new_VQSegment(&z.shift.items[j], fvar));
+		}
+		return preserialize(a);
+	}
+}
+
+json_value *json_new_VV(const VV x, const table_fvar *fvar) {
+	const vf_Axes *axes = &fvar->axes;
+	if (axes && axes->length == x.length) {
+		json_value *_coord = json_object_new(axes->length);
+		for (size_t m = 0; m < x.length; m++) {
+			vf_Axis *axis = &axes->items[m];
+			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
+			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
+			json_object_push_length(_coord, 4, tag, json_new_position(x.items[m]));
+		}
+		return preserialize(_coord);
+	} else {
+		json_value *_coord = json_array_new(x.length);
+		for (size_t m = 0; m < x.length; m++) {
+			json_array_push(_coord, json_new_position(x.items[m]));
+		}
+		return preserialize(_coord);
+	}
+}
+json_value *json_new_VVp(const VV *x, const table_fvar *fvar) {
+	const vf_Axes *axes = &fvar->axes;
+
+	if (axes && axes->length == x->length) {
+		json_value *_coord = json_object_new(axes->length);
+		for (size_t m = 0; m < x->length; m++) {
+			vf_Axis *axis = &axes->items[m];
+			char tag[4] = {(axis->tag & 0xff000000) >> 24, (axis->tag & 0xff0000) >> 16,
+			               (axis->tag & 0xff00) >> 8, (axis->tag & 0xff)};
+			json_object_push_length(_coord, 4, tag, json_new_position(x->items[m]));
+		}
+		return preserialize(_coord);
+
+	} else {
+		json_value *_coord = json_array_new(x->length);
+		for (size_t m = 0; m < x->length; m++) {
+			json_array_push(_coord, json_new_position(x->items[m]));
+		}
+		return preserialize(_coord);
+	}
+}
+// parse
+VQ json_vqOf(const json_value *cv, const table_fvar *fvar) {
+	return iVQ.createStill(json_numof(cv));
+}
+
+json_value *json_new_VQAxisSpan(const vq_AxisSpan *s) {
+	if (vq_AxisSpanIsOne(s)) {
+		return json_string_new("*");
+	} else if ((s->peak > 0 && s->start == 0 && s->end == 1) ||
+	           (s->peak == 0 && s->start == -1 && s->end == 1) ||
+	           (s->peak < 0 && s->start == -1 && s->end == 0)) {
+		return json_new_position(s->peak);
+	} else {
+		json_value *a = json_object_new(3);
+		json_object_push(a, "start", json_new_position(s->start));
+		json_object_push(a, "peak", json_new_position(s->peak));
+		json_object_push(a, "end", json_new_position(s->end));
+		return a;
+	}
+}
+json_value *json_new_VQRegion_Explicit(const vq_Region *rs, const table_fvar *fvar) {
+	const vf_Axes *axes = &fvar->axes;
+	if (axes && axes->length == rs->dimensions) {
+		json_value *r = json_object_new(rs->dimensions);
+		for (size_t j = 0; j < rs->dimensions; j++) {
+			json_object_push_tag(r, axes->items[j].tag, json_new_VQAxisSpan(&rs->spans[j]));
+		}
+		return r;
+	} else {
+		json_value *r = json_array_new(rs->dimensions);
+		for (size_t j = 0; j < rs->dimensions; j++) {
+			json_array_push(r, json_new_VQAxisSpan(&rs->spans[j]));
+		}
+		return r;
+	}
+}
+json_value *json_new_VQRegion(const vq_Region *rs, const table_fvar *fvar) {
+	const fvar_Master *m = table_iFvar.findMasterByRegion(fvar, rs);
+	if (m && m->name) {
+		return json_string_new_length((unsigned int)sdslen(m->name), m->name);
+	} else {
+		return json_new_VQRegion_Explicit(rs, fvar);
 	}
 }

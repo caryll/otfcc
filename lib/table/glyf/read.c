@@ -225,7 +225,9 @@ static glyf_Glyph *otfcc_read_glyph(font_file_pointer data, uint32_t offset,
 }
 
 // common states of tuple polymorphizer
+
 typedef struct {
+	table_fvar *fvar;
 	uint16_t dimensions;
 	uint16_t sharedTupleCount;
 	f2dot14 *sharedTuples;
@@ -235,6 +237,7 @@ typedef struct {
 } TuplePolymorphizerCtx;
 
 // GVAR header
+#pragma pack(1)
 struct GVARHeader {
 	uint16_t majorVersion;
 	uint16_t minorVersion;
@@ -255,6 +258,7 @@ struct GlyphVariationData {
 	uint16_t dataOffset;
 	struct TupleVariationHeader tvhs[];
 };
+#pragma pack()
 
 #define GVAR_OFFSETS_ARE_LONG 1
 #define EMBEDDED_PEAK_TUPLE 0x8000
@@ -435,7 +439,7 @@ static void applyCoords(const shapeid_t totalPoints, glyf_Glyph *glyph,
 		nudges[j].type = VQ_DELTA;
 		nudges[j].val.delta.touched = false;
 		nudges[j].val.delta.quantity = 0;
-		vq_iRegion.copy(&nudges[j].val.delta.region, r);
+		nudges[j].val.delta.region = r;
 	}
 	for (shapeid_t j = 0; j < nTouchedPoints; j++) {
 		if (points[j] >= totalPoints) continue;
@@ -479,10 +483,9 @@ static INLINE void applyPolymorphism(const shapeid_t totalPoints, glyf_GlyphPtr 
 	FREE(glyphRefs);
 }
 
-static vq_Region createRegionFromTuples(uint16_t dimensions, f2dot14 *peak, f2dot14 *start,
-                                        f2dot14 *end) {
-	vq_Region r;
-	vq_iRegion.init(&r);
+static vq_Region *createRegionFromTuples(uint16_t dimensions, f2dot14 *peak, f2dot14 *start,
+                                         f2dot14 *end) {
+	vq_Region *r = vq_createRegion(dimensions);
 	for (uint16_t d = 0; d < dimensions; d++) {
 		pos_t peakVal = otfcc_from_f2dot14(be16(peak[d]));
 		vq_AxisSpan span = {peakVal <= 0 ? -1 : 0, peakVal, peakVal >= 0 ? 1 : 0};
@@ -490,9 +493,8 @@ static vq_Region createRegionFromTuples(uint16_t dimensions, f2dot14 *peak, f2do
 			span.start = otfcc_from_f2dot14(be16(start[d]));
 			span.end = otfcc_from_f2dot14(be16(end[d]));
 		}
-		vq_iRegion.push(&r, span);
+		r->spans[d] = span;
 	}
-	vq_iRegion.shrinkToFit(&r);
 	return r;
 }
 
@@ -543,7 +545,8 @@ static INLINE void polymorphizeGlyph(glyphid_t gid, glyf_GlyphPtr glyph,
 			                  2 * (hasEmbeddedPeak ? 2 : 1) * ctx->dimensions);
 		}
 
-		vq_Region r = createRegionFromTuples(ctx->dimensions, peak, start, end);
+		const vq_Region *r = table_iFvar.registerRegion(
+		    ctx->fvar, createRegionFromTuples(ctx->dimensions, peak, start, end));
 
 		// Pointer of tuple serialized data
 		font_file_pointer tsd = data + tsdStart;
@@ -570,14 +573,13 @@ static INLINE void polymorphizeGlyph(glyphid_t gid, glyf_GlyphPtr glyph,
 			tsd = readPackedDelta(tsd, nPoints, deltaY);
 
 			// Do polymorphize
-			applyPolymorphism(totalPoints, glyph, nPoints, pointIndeces, deltaX, deltaY, &r);
+			applyPolymorphism(totalPoints, glyph, nPoints, pointIndeces, deltaX, deltaY, r);
 			FREE(deltaX);
 			FREE(deltaY);
 		}
 		// Cleanup
 		if (be16(tvh->tupleIndex) & PRIVATE_POINT_NUMBERS) { FREE(pointIndeces); }
 		tsdStart += be16(tvh->variationDataSize);
-		vq_iRegion.dispose(&r);
 
 		tvh = nextTVH(tvh, ctx);
 	}
@@ -598,7 +600,8 @@ static INLINE void polymorphize(const otfcc_Packet packet, const otfcc_Options *
 			return;
 		};
 		for (glyphid_t j = 0; j < glyf->length; j++) {
-			TuplePolymorphizerCtx tpctx = {.dimensions = ctx->fvar->axes.length,
+			TuplePolymorphizerCtx tpctx = {.fvar = ctx->fvar,
+			                               .dimensions = ctx->fvar->axes.length,
 			                               .nPhantomPoints = ctx->nPhantomPoints,
 			                               .sharedTupleCount = be16(header->sharedTupleCount),
 			                               .sharedTuples =
