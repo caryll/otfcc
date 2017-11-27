@@ -148,9 +148,9 @@ static void glyf_glyph_dump_contours(glyf_Glyph *g, json_value *target, const Gl
 			json_object_push(point, "x", json_new_VQ(c->items[m].x, ctx->fvar));
 			json_object_push(point, "y", json_new_VQ(c->items[m].y, ctx->fvar));
 			json_object_push(point, "on", json_boolean_new(c->items[m].onCurve & MASK_ON_CURVE));
-			json_array_push(contour, preserialize(point));
+			json_array_push(contour, point);
 		}
-		json_array_push(contours, contour);
+		json_array_push(contours, preserialize(contour));
 	}
 	json_object_push(target, "contours", contours);
 }
