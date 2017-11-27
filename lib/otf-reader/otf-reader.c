@@ -36,6 +36,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 			font->prep = otfcc_readFpgmPrep(packet, options, 'prep');
 			font->cvt_ = otfcc_readCvt(packet, options, 'cvt ');
 			font->gasp = otfcc_readGasp(packet, options);
+			font->VDMX = otfcc_readVDMX(packet, options);
 			font->LTSH = otfcc_readLTSH(packet, options);
 
 			GlyfIOContext ctx = {.locaIsLong = font->head->indexToLocFormat,

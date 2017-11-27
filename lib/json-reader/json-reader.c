@@ -50,7 +50,8 @@ static void orderGlyphs(otfcc_GlyphOrder *go) {
 	}
 }
 
-static void escalateGlyphOrderByName(otfcc_GlyphOrder *go, sds name, uint8_t orderType, uint32_t orderEntry) {
+static void escalateGlyphOrderByName(otfcc_GlyphOrder *go, sds name, uint8_t orderType,
+                                     uint32_t orderEntry) {
 	otfcc_GlyphOrderEntry *s = NULL;
 	HASH_FIND(hhName, go->byName, name, sdslen(name), s);
 	if (s && s->orderType > orderType) {
@@ -61,7 +62,8 @@ static void escalateGlyphOrderByName(otfcc_GlyphOrder *go, sds name, uint8_t ord
 
 static void placeOrderEntriesFromGlyf(json_value *table, otfcc_GlyphOrder *go) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
-		sds gname = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		sds gname =
+		    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		if (strcmp(gname, ".notdef") == 0) {
 			setOrderByName(go, gname, ORD_NOTDEF, 0);
 		} else if (strcmp(gname, ".null") == 0) {
@@ -73,7 +75,8 @@ static void placeOrderEntriesFromGlyf(json_value *table, otfcc_GlyphOrder *go) {
 }
 static void placeOrderEntriesFromCmap(json_value *table, otfcc_GlyphOrder *go) {
 	for (uint32_t j = 0; j < table->u.object.length; j++) {
-		sds unicodeStr = sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
+		sds unicodeStr =
+		    sdsnewlen(table->u.object.values[j].name, table->u.object.values[j].name_length);
 		json_value *item = table->u.object.values[j].value;
 		int32_t unicode;
 		if (sdslen(unicodeStr) > 2 && unicodeStr[0] == 'U' && unicodeStr[1] == '+') {
@@ -82,7 +85,8 @@ static void placeOrderEntriesFromCmap(json_value *table, otfcc_GlyphOrder *go) {
 			unicode = atoi(unicodeStr);
 		}
 		sdsfree(unicodeStr);
-		if (item->type == json_string && unicode > 0 && unicode <= 0x10FFFF) { // a valid unicode codepoint
+		if (item->type == json_string && unicode > 0 &&
+		    unicode <= 0x10FFFF) { // a valid unicode codepoint
 			sds gname = sdsnewlen(item->u.string.ptr, item->u.string.length);
 			escalateGlyphOrderByName(go, gname, ORD_CMAP, unicode);
 			sdsfree(gname);
@@ -109,7 +113,9 @@ static otfcc_GlyphOrder *parseGlyphOrder(const json_value *root, const otfcc_Opt
 
 	if ((table = json_obj_get_type(root, "glyf", json_object))) {
 		placeOrderEntriesFromGlyf(table, go);
-		if ((table = json_obj_get_type(root, "cmap", json_object))) { placeOrderEntriesFromCmap(table, go); }
+		if ((table = json_obj_get_type(root, "cmap", json_object))) {
+			placeOrderEntriesFromCmap(table, go);
+		}
 		if ((table = json_obj_get_type(root, "glyph_order", json_array))) {
 			bool ignoreGlyphOrder = options->ignore_glyph_order;
 			if (ignoreGlyphOrder && !!json_obj_get_type(root, "SVG_", json_array)) {
@@ -144,6 +150,7 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 		font->cvt_ = otfcc_parseCvt(root, options, "cvt_");
 		font->gasp = otfcc_parseGasp(root, options);
 	}
+	font->VDMX = otfcc_parseVDMX(root, options);
 	font->vhea = otfcc_parseVhea(root, options);
 	if (font->glyf) {
 		font->GSUB = otfcc_parseOtl(root, options, "GSUB");

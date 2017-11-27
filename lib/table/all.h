@@ -20,6 +20,7 @@
 #include "table/cvt.h"
 #include "table/fpgm-prep.h"
 #include "table/gasp.h"
+#include "table/VDMX.h"
 
 #include "table/LTSH.h"
 #include "table/VORG.h"

@@ -29,6 +29,7 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_dumpCvt(font->cvt_, root, options, "cvt_");
 		otfcc_dumpGasp(font->gasp, root, options);
 	}
+	otfcc_dumpVDMX(font->VDMX, root, options);
 	otfcc_dumpOtl(font->GSUB, root, options, "GSUB");
 	otfcc_dumpOtl(font->GPOS, root, options, "GPOS");
 	otfcc_dumpGDEF(font->GDEF, root, options);

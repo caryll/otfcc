@@ -29,6 +29,7 @@ void bk_minimizeGraph(/*BORROW*/ bk_Graph *f);
 void bk_untangleGraph(/*BORROW*/ bk_Graph *f);
 caryll_Buffer *bk_build_Graph(/*BORROW*/ bk_Graph *f);
 caryll_Buffer *bk_build_Block(/*MOVE*/ bk_Block *root);
+caryll_Buffer *bk_build_Block_noMinimize(/*MOVE*/ bk_Block *root);
 size_t bk_estimateSizeOfGraph(bk_Graph *f);
 
 #endif
