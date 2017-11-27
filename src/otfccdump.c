@@ -39,6 +39,7 @@ void printHelp() {
 	        " --decimal-cmap          : Export 'cmap' keys as decimal number.\n"
 	        " --hex-cmap              : Export 'cmap' keys as hex number (U+FFFF).\n"
 	        " --name-by-hash          : Name glyphs using its hash value.\n"
+	        " --name-by-gid           : Name glyphs using its glyph id.\n"
 	        " --add-bom               : Add BOM mark in the output. (It is default on Windows\n"
 	        "                           when redirecting to another program. Use --no-bom to\n"
 	        "                           turn it off.)\n"
@@ -71,6 +72,7 @@ int main(int argc, char *argv[]) {
 	                            {"decimal-cmap", no_argument, NULL, 0},
 	                            {"instr-as-bytes", no_argument, NULL, 0},
 	                            {"name-by-hash", no_argument, NULL, 0},
+	                            {"name-by-gid", no_argument, NULL, 0},
 	                            {"glyph-name-prefix", required_argument, NULL, 0},
 	                            {"verbose", no_argument, NULL, 0},
 	                            {"quiet", no_argument, NULL, 0},
@@ -118,6 +120,8 @@ int main(int argc, char *argv[]) {
 					options->decimal_cmap = false;
 				} else if (strcmp(longopts[option_index].name, "name-by-hash") == 0) {
 					options->name_glyphs_by_hash = true;
+				} else if (strcmp(longopts[option_index].name, "name-by-gid") == 0) {
+					options->name_glyphs_by_gid = true;
 				} else if (strcmp(longopts[option_index].name, "instr-as-bytes") == 0) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {

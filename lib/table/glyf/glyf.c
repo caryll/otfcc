@@ -226,8 +226,10 @@ static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options,
 	}
 	glyf_glyph_dump_contours(g, glyph, ctx);
 	glyf_glyph_dump_references(g, glyph, ctx);
-	if (ctx->exportFDSelect)
+	if (ctx->exportFDSelect) {
 		json_object_push(glyph, "CFF_fdSelect", json_string_new(g->fdSelect.name));
+		json_object_push(glyph, "CFF_CID", json_integer_new(g->cid));
+	}
 
 	// hinting data
 	if (!options->ignore_hints) {

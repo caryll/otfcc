@@ -115,6 +115,7 @@ typedef struct {
 
 	// CID FDSelect
 	otfcc_FDHandle fdSelect;
+	glyphid_t cid; // Subset CID fonts may need this to represent the original CID entry
 
 	// Stats
 	glyf_GlyphStat stat;
