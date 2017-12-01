@@ -7,29 +7,7 @@
 #include "otfcc/primitives.h"
 #include "otfcc/handle.h"
 
-extern caryll_ValElementInterface(pos_t) vq_iPosT;
-typedef caryll_Vector(pos_t) VV;
-extern caryll_VectorInterfaceTypeName(VV) {
-	caryll_VectorInterfaceTrait(VV, pos_t);
-	// Monoid instances
-	VV (*neutral)(tableid_t dimensions);
-}
-iVV;
-// extern caryll_VectorInterface(VV, pos_t) iVV;
-
-typedef struct {
-	pos_t start;
-	pos_t peak;
-	pos_t end;
-} vq_AxisSpan;
-extern caryll_ElementInterface(vq_AxisSpan) vq_iAxisSpan;
-typedef caryll_Vector(vq_AxisSpan) vq_Region;
-extern caryll_VectorInterfaceTypeName(vq_Region) {
-	caryll_VectorInterfaceTrait(vq_Region, vq_AxisSpan);
-	caryll_Ord(vq_Region);
-	pos_t (*getWeight)(const vq_Region *r, const VV *vv);
-}
-vq_iRegion;
+#include "region.h"
 
 typedef enum { VQ_STILL = 0, VQ_DELTA = 1 } VQSegType;
 typedef struct {
@@ -38,7 +16,8 @@ typedef struct {
 		pos_t still;
 		struct {
 			pos_t quantity;
-			vq_Region region;
+			bool touched;
+			const vq_Region *region; // non-owning : they are in FVAR
 		} delta;
 	} val;
 } vq_Segment;
@@ -48,7 +27,7 @@ extern caryll_ElementInterfaceOf(vq_Segment) {
 	caryll_Show(vq_Segment);
 	caryll_Ord(vq_Segment);
 	vq_Segment (*createStill)(pos_t x);
-	vq_Segment (*createDelta)(pos_t delta, MOVE vq_Region region);
+	vq_Segment (*createDelta)(pos_t delta, vq_Region * region);
 }
 vq_iSegment;
 typedef caryll_Vector(vq_Segment) vq_SegList;

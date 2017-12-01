@@ -9,7 +9,7 @@ typedef struct {
 	int16_t ascender;
 	int16_t descender;
 	int16_t lineGap;
-	uint16_t advanceWithMax;
+	uint16_t advanceWidthMax;
 	int16_t minLeftSideBearing;
 	int16_t minRightSideBearing;
 	int16_t xMaxExtent;

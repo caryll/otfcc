@@ -132,18 +132,20 @@ static json_value *axisToJson(const otl_BaseAxis *axis) {
 		if (!axis->entries[j].tag) continue;
 		json_value *_entry = json_object_new(3);
 		if (axis->entries[j].defaultBaselineTag) {
-			json_object_push(
-			    _entry, "defaultBaseline",
-			    json_string_new_nocopy(4, tag2str(axis->entries[j].defaultBaselineTag)));
+			char tag[4];
+			tag2str(axis->entries[j].defaultBaselineTag, tag);
+			json_object_push(_entry, "defaultBaseline", json_string_new_length(4, tag));
 		}
 		json_value *_values = json_object_new(axis->entries[j].baseValuesCount);
 		for (tableid_t k = 0; k < axis->entries[j].baseValuesCount; k++) {
-			if (axis->entries[j].baseValues[k].tag)
-				json_object_push(_values, tag2str(axis->entries[j].baseValues[k].tag),
-				                 json_new_position(axis->entries[j].baseValues[k].coordinate));
+			if (axis->entries[j].baseValues[k].tag) {
+
+				json_object_push_tag(_values, axis->entries[j].baseValues[k].tag,
+				                     json_new_position(axis->entries[j].baseValues[k].coordinate));
+			}
 		}
 		json_object_push(_entry, "baselines", _values);
-		json_object_push(_axis, tag2str(axis->entries[j].tag), _entry);
+		json_object_push_tag(_axis, axis->entries[j].tag, _entry);
 	}
 	return _axis;
 }
@@ -295,10 +297,11 @@ bk_Block *axisToBk(const otl_BaseAxis *axis) {
 				            bkover),
 				        bkover);
 			} else {
-				bk_push(baseValues,               // assign a zero value
-				        p16, bk_new_Block(b16, 1, // format
-				                          b16, 0, // coordinate
-				                          bkover),
+				bk_push(baseValues, // assign a zero value
+				        p16,
+				        bk_new_Block(b16, 1, // format
+				                     b16, 0, // coordinate
+				                     bkover),
 				        bkover);
 			}
 		}

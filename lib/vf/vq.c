@@ -14,72 +14,8 @@ static VV createNeutralVV(tableid_t dimensions) {
 	return vv;
 };
 caryll_VectorInterfaceTypeName(VV) iVV = {
-    caryll_VectorImplAssignments(VV, pos_t, vq_iPosT), .neutral = createNeutralVV,
-};
-
-// Axis span and region
-static INLINE void initAxisSpan(vq_AxisSpan *as) {
-	as->start = 0;
-	as->peak = 0;
-	as->end = 0;
-}
-static INLINE void copyAxisSpan(vq_AxisSpan *dst, const vq_AxisSpan *src) {
-	dst->start = src->start;
-	dst->peak = src->peak;
-	dst->end = src->end;
-}
-static INLINE void disposeAxisSpan(vq_AxisSpan *as) {}
-caryll_standardType(vq_AxisSpan, vq_iAxisSpan, initAxisSpan, copyAxisSpan, disposeAxisSpan);
-
-static pos_t INLINE weightAxisRegion(const vq_AxisSpan *as, const pos_t x) {
-	const pos_t a = as->start;
-	const pos_t p = as->peak;
-	const pos_t z = as->end;
-	if (a > p || p > z) {
-		return 1;
-	} else if (a < 0 && z > 0 && p != 0) {
-		return 1;
-	} else if (p == 0) {
-		return 1;
-	} else if (x < a || x > z) {
-		return 0;
-	} else if (x == p) {
-		return 1;
-	} else if (x < p) {
-		return (x - a) / (p - a);
-	} else {
-		return (z - x) / (z - p);
-	}
-}
-static pos_t vqRegionGetWeight(const vq_Region *r, const VV *v) {
-	pos_t w = 1;
-	for (size_t j = 0; j < r->length && v->length; j++) {
-		w *= weightAxisRegion(&r->items[j], v->items[j]);
-	}
-	return w;
-}
-
-static int vqrCompare(const vq_Region a, const vq_Region b) {
-	if (a.length < b.length) return -1;
-	if (a.length > b.length) return 1;
-	for (size_t j = 0; j < a.length; j++) {
-		if (a.items[j].start < b.items[j].start) return -1;
-		if (a.items[j].start > b.items[j].start) return 1;
-		if (a.items[j].peak < b.items[j].peak) return -1;
-		if (a.items[j].peak > b.items[j].peak) return 1;
-		if (a.items[j].end < b.items[j].end) return -1;
-		if (a.items[j].end > b.items[j].end) return 1;
-	}
-	return 0;
-}
-
-caryll_VectorImplFunctions(vq_Region, vq_AxisSpan, vq_iAxisSpan);
-caryll_OrdEqFns(vq_Region, vqrCompare);
-
-caryll_VectorInterfaceTypeName(vq_Region) vq_iRegion = {
-    caryll_VectorImplAssignments(vq_Region, vq_AxisSpan, vq_iAxisSpan),
-    caryll_OrdEqAssigns(vq_Region), // Ord
-    .getWeight = vqRegionGetWeight,
+    caryll_VectorImplAssignments(VV, pos_t, vq_iPosT),
+    .neutral = createNeutralVV,
 };
 
 // VQS
@@ -95,13 +31,12 @@ static INLINE void copyVQSegment(vq_Segment *dst, const vq_Segment *src) {
 			break;
 		case VQ_DELTA:
 			dst->val.delta.quantity = src->val.delta.quantity;
-			vq_iRegion.copy(&dst->val.delta.region, &src->val.delta.region);
+			dst->val.delta.region = src->val.delta.region;
 	}
 }
 static INLINE void disposeVQSegment(vq_Segment *vqs) {
 	switch (vqs->type) {
 		case VQ_DELTA:
-			vq_iRegion.dispose(&vqs->val.delta.region);
 			break;
 		default:;
 	}
@@ -115,7 +50,7 @@ static vq_Segment vqsCreateStill(pos_t x) {
 	vqs.val.still = x;
 	return vqs;
 }
-static vq_Segment vqsCreateDelta(pos_t delta, MOVE vq_Region region) {
+static vq_Segment vqsCreateDelta(pos_t delta, vq_Region *region) {
 	vq_Segment vqs;
 	vq_iSegment.init(&vqs);
 	vqs.type = VQ_DELTA;
@@ -134,7 +69,7 @@ static int vqsCompare(const vq_Segment a, const vq_Segment b) {
 			return 0;
 		}
 		case VQ_DELTA: {
-			int vqrc = vqrCompare(a.val.delta.region, b.val.delta.region);
+			int vqrc = vq_compareRegion(a.val.delta.region, b.val.delta.region);
 			if (vqrc) return vqrc;
 			if (a.val.delta.quantity < b.val.delta.quantity) return -1;
 			if (a.val.delta.quantity > b.val.delta.quantity) return 1;
@@ -148,6 +83,12 @@ static void showVQS(const vq_Segment x) {
 		case VQ_STILL:
 			fprintf(stderr, "%g", x.val.still);
 			return;
+		case VQ_DELTA:
+			fprintf(stderr, "{%g%s", x.val.delta.quantity, x.val.delta.touched ? " " : "* ");
+			vq_showRegion(x.val.delta.region);
+			fprintf(stderr, "}\n");
+			return;
+
 		default:;
 	}
 }
@@ -157,7 +98,8 @@ caryll_ElementInterfaceOf(vq_Segment) vq_iSegment = {
     caryll_OrdEqAssigns(vq_Segment), // Ord and Eq
     caryll_ShowAssigns(vq_Segment),  // Show
     // creating instances
-    .createStill = vqsCreateStill, .createDelta = vqsCreateDelta,
+    .createStill = vqsCreateStill,
+    .createDelta = vqsCreateDelta,
 };
 
 caryll_standardVectorImpl(vq_SegList, vq_Segment, vq_iSegment, vq_iSegList);
@@ -187,7 +129,7 @@ static bool vqsCompatible(const vq_Segment a, const vq_Segment b) {
 		case VQ_STILL:
 			return true;
 		case VQ_DELTA:
-			return vq_iRegion.equal(a.val.delta.region, b.val.delta.region);
+			return 0 == vq_compareRegion(a.val.delta.region, b.val.delta.region);
 	}
 }
 static void simplifyVq(MODIFY VQ *x) {

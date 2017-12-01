@@ -60,7 +60,7 @@
 		if (target <= arr->capacity) return;                                                       \
 		if (arr->capacity < __CARYLL_VECTOR_INITIAL_SIZE)                                          \
 			arr->capacity = __CARYLL_VECTOR_INITIAL_SIZE;                                          \
-		while (arr->capacity <= target) {                                                          \
+		while (arr->capacity < target) {                                                           \
 			arr->capacity += arr->capacity / 2;                                                    \
 		}                                                                                          \
 		if (arr->items) {                                                                          \
@@ -73,12 +73,23 @@
 		if (target <= arr->capacity) return;                                                       \
 		if (arr->capacity < __CARYLL_VECTOR_INITIAL_SIZE)                                          \
 			arr->capacity = __CARYLL_VECTOR_INITIAL_SIZE;                                          \
-		if (arr->capacity <= target) { arr->capacity = target + 1; }                               \
+		if (arr->capacity < target) { arr->capacity = target + 1; }                                \
 		if (arr->items) {                                                                          \
 			arr->items = __caryll_realloc(arr->items, arr->capacity * sizeof(__T));                \
 		} else {                                                                                   \
 			arr->items = __caryll_calloc(arr->capacity, sizeof(__T));                              \
 		}                                                                                          \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void __TV##_resizeTo(MODIFY __TV *arr, size_t target) {               \
+		arr->capacity = target;                                                                    \
+		if (arr->items) {                                                                          \
+			arr->items = __caryll_realloc(arr->items, arr->capacity * sizeof(__T));                \
+		} else {                                                                                   \
+			arr->items = __caryll_calloc(arr->capacity, sizeof(__T));                              \
+		}                                                                                          \
+	}                                                                                              \
+	static __CARYLL_INLINE__ void __TV##_shrinkToFit(MODIFY __TV *arr) {                           \
+		__TV##_resizeTo(arr, arr->length);                                                         \
 	}                                                                                              \
 	static __CARYLL_INLINE__ void __TV##_grow(MODIFY __TV *arr) {                                  \
 		__TV##_growTo(arr, arr->length + 1);                                                       \
@@ -168,7 +179,7 @@
 	.initCapN = __TV##_initCapN, .clear = __TV##_dispose, .replace = __TV##_replace,               \
 	.copyReplace = __TV##_copyReplace, .push = __TV##_push, .pop = __TV##_pop,                     \
 	.fill = __TV##_fill, .sort = __TV##_sort, .disposeItem = __TV##_disposeItem,                   \
-	.filterEnv = __TV##_filterEnv, .move = __TV##_move
+	.filterEnv = __TV##_filterEnv, .move = __TV##_move, .shrinkToFit = __TV##_shrinkToFit
 
 #define caryll_standardVectorImpl(__TV, __T, __ti, __name)                                         \
 	caryll_VectorImplFunctions(__TV, __T, __ti);                                                   \

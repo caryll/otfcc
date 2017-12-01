@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "ownership.h"
+
 // We assume all T have trivial move constructors.
 #define caryll_T(T)                                                                                \
 	void (*init)(MODIFY T *);                                                                      \

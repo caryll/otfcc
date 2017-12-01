@@ -326,7 +326,8 @@ static void callback_draw_sethint(void *_context, bool isVertical, double positi
 	outline_builder_context *context = (outline_builder_context *)_context;
 	glyf_iStemDefList.push((isVertical ? &context->g->stemV : &context->g->stemH), //
 	                       ((glyf_PostscriptStemDef){
-	                           .position = position, .width = width,
+	                           .position = position,
+	                           .width = width,
 	                       }));
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
@@ -461,7 +462,9 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 			// mainly due to curveto. We can remove that. This is unnecessary.
 			glyf_iContour.pop(contour);
 		}
+		glyf_iContour.shrinkToFit(contour);
 	}
+	glyf_iContourList.shrinkToFit(&g->contours);
 	iVQ.dispose(&cx), iVQ.dispose(&cy);
 
 	cff_iIndex.dispose(&localSubrs);
@@ -469,58 +472,100 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	context->seed = bc.randx;
 }
 
+static sds formCIDString(cffsid_t cid) {
+	return sdscatprintf(sdsnew("CID"), "%d", cid);
+}
+
 static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
-	if (context->meta->isCID) return;
 	cff_File *cffFile = context->cffFile;
 	table_glyf *glyphs = context->glyphs;
-	switch (cffFile->charsets.t) {
-		case cff_CHARSET_FORMAT0: {
-			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
-				cffsid_t sid = cffFile->charsets.f0.glyph[j];
-				sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-				if (glyphname) { glyphs->items[j + 1]->name = glyphname; }
-			}
-			break;
-		}
-		case cff_CHARSET_FORMAT1: {
-			uint32_t glyphsNamedSofar = 1;
-			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
-				glyphid_t first = cffFile->charsets.f1.range1[j].first;
-				sds glyphname = sdsget_cff_sid(first, cffFile->string);
-				if (glyphsNamedSofar < glyphs->length && glyphname) {
-					glyphs->items[glyphsNamedSofar]->name = glyphname;
-				}
-				glyphsNamedSofar++;
-				for (glyphid_t k = 0; k < cffFile->charsets.f1.range1[j].nleft; k++) {
-					cffsid_t sid = first + k + 1;
+	cff_Charset *charset = &cffFile->charsets;
+	if (context->meta->isCID) {
+		switch (charset->t) {
+			case cff_CHARSET_FORMAT0: {
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t sid = charset->f0.glyph[j];
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-					if (glyphsNamedSofar < glyphs->length && glyphname) {
-						glyphs->items[glyphsNamedSofar]->name = glyphname;
+					if (glyphname) {
+						glyphs->items[j + 1]->name = glyphname;
+						glyphs->items[j + 1]->cid = sid;
 					}
-					glyphsNamedSofar++;
 				}
+				break;
 			}
-			break;
+			case cff_CHARSET_FORMAT1: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t first = charset->f1.range1[j].first;
+					for (glyphid_t k = 0; k <= charset->f1.range1[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = formCIDString(sid);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+							glyphs->items[glyphsNamedSofar]->cid = sid;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
+			case cff_CHARSET_FORMAT2: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t first = charset->f2.range2[j].first;
+					for (glyphid_t k = 0; k <= charset->f2.range2[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = formCIDString(sid);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+							glyphs->items[glyphsNamedSofar]->cid = sid;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
 		}
-		case cff_CHARSET_FORMAT2: {
-			uint32_t glyphsNamedSofar = 1;
-			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
-				glyphid_t first = cffFile->charsets.f2.range2[j].first;
-				sds glyphname = sdsget_cff_sid(first, cffFile->string);
-				if (glyphsNamedSofar < glyphs->length && glyphname) {
-					glyphs->items[glyphsNamedSofar]->name = glyphname;
-				}
-				glyphsNamedSofar++;
-				for (glyphid_t k = 0; k < cffFile->charsets.f2.range2[j].nleft; k++) {
-					cffsid_t sid = first + k + 1;
+	} else {
+		switch (charset->t) {
+			case cff_CHARSET_FORMAT0: {
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t sid = charset->f0.glyph[j];
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-					if (glyphsNamedSofar < glyphs->length && glyphname) {
-						glyphs->items[glyphsNamedSofar]->name = glyphname;
-					}
-					glyphsNamedSofar++;
+					if (glyphname) { glyphs->items[j + 1]->name = glyphname; }
 				}
+				break;
 			}
-			break;
+			case cff_CHARSET_FORMAT1: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					glyphid_t first = charset->f1.range1[j].first;
+					for (glyphid_t k = 0; k <= charset->f1.range1[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
+			case cff_CHARSET_FORMAT2: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					glyphid_t first = charset->f2.range2[j].first;
+					for (glyphid_t k = 0; k <= charset->f2.range2[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
 		}
 	}
 }
@@ -703,8 +748,8 @@ static json_value *fdToJson(const table_CFF *table) {
 		json_object_push(_fontMatrix, "b", json_double_new(table->fontMatrix->b));
 		json_object_push(_fontMatrix, "c", json_double_new(table->fontMatrix->c));
 		json_object_push(_fontMatrix, "d", json_double_new(table->fontMatrix->d));
-		json_object_push(_fontMatrix, "x", json_new_VQ(table->fontMatrix->x));
-		json_object_push(_fontMatrix, "y", json_new_VQ(table->fontMatrix->y));
+		json_object_push(_fontMatrix, "x", json_new_VQ(table->fontMatrix->x, NULL));
+		json_object_push(_fontMatrix, "y", json_new_VQ(table->fontMatrix->y, NULL));
 		json_object_push(_CFF_, "fontMatrix", _fontMatrix);
 	}
 	if (table->privateDict) { json_object_push(_CFF_, "privates", pdToJson(table->privateDict)); }
@@ -1261,7 +1306,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf,
 	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff,
 	                               (delta_size >> 8) & 0xff,
 	                               delta_size & 0xff) // offset 2
-	                );
+	);
 
 	bufwrite_bufdel(blob, t); // top dict body
 

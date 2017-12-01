@@ -11,6 +11,7 @@
 #include "caryll/ownership.h"
 #include "otfcc/primitives.h"
 #include "otfcc/vf/vq.h"
+#include "otfcc/table/fvar.h"
 
 #ifndef INLINE
 #ifdef _MSC_VER
@@ -19,6 +20,8 @@
 #define INLINE inline /* use standard inline */
 #endif
 #endif
+
+static INLINE json_value *preserialize(MOVE json_value *x);
 
 static INLINE json_value *json_obj_get(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return NULL;
@@ -49,7 +52,13 @@ static INLINE char *json_obj_getstr_share(const json_value *obj, const char *key
 		return v->u.string.ptr;
 }
 
-// Coordinates and VQ
+static INLINE json_value *json_object_push_tag(json_value *a, uint32_t tag, json_value *b) {
+	char tags[4] = {(tag & 0xff000000) >> 24, (tag & 0xff0000) >> 16, (tag & 0xff00) >> 8,
+	                (tag & 0xff)};
+	return json_object_push_length(a, 4, tags, b);
+}
+
+// Coordinates, VV and VQ
 static INLINE double json_numof(const json_value *cv) {
 	if (cv && cv->type == json_integer) return cv->u.integer;
 	if (cv && cv->type == json_double) return cv->u.dbl;
@@ -62,12 +71,12 @@ static INLINE json_value *json_new_position(pos_t z) {
 		return json_double_new(z);
 	}
 }
-static INLINE VQ json_vqOf(json_value *cv) {
-	return iVQ.createStill(json_numof(cv));
-}
-static INLINE json_value *json_new_VQ(VQ z) {
-	return json_new_position(iVQ.getStill(z));
-}
+json_value *json_new_VQRegion_Explicit(const vq_Region *rs, const table_fvar *fvar);
+json_value *json_new_VQRegion(const vq_Region *rs, const table_fvar *fvar);
+json_value *json_new_VQ(const VQ z, const table_fvar *fvar);
+json_value *json_new_VV(const VV x, const table_fvar *fvar);
+json_value *json_new_VVp(const VV *x, const table_fvar *fvar);
+VQ json_vqOf(const json_value *cv, const table_fvar *fvar);
 
 static INLINE double json_obj_getnum(const json_value *obj, const char *key) {
 	if (!obj || obj->type != json_object) return 0.0;

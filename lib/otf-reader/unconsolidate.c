@@ -3,7 +3,9 @@
 #include "support/aglfn/aglfn.h"
 #include "support/sha1/sha1.h"
 
-typedef struct { uint8_t hash[SHA1_BLOCK_SIZE]; } GlyphHash;
+typedef struct {
+	uint8_t hash[SHA1_BLOCK_SIZE];
+} GlyphHash;
 static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 	bufwrite8(buf, s.type);
 	switch (s.type) {
@@ -12,9 +14,9 @@ static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 			break;
 		case VQ_DELTA:
 			bufwrite32b(buf, otfcc_to_fixed(s.val.delta.quantity));
-			bufwrite32b(buf, (uint32_t)s.val.delta.region.length);
-			for (size_t j = 0; j < s.val.delta.region.length; j++) {
-				vq_AxisSpan *span = &s.val.delta.region.items[j];
+			bufwrite32b(buf, (uint32_t)s.val.delta.region->dimensions);
+			for (size_t j = 0; j < s.val.delta.region->dimensions; j++) {
+				const vq_AxisSpan *span = &s.val.delta.region->spans[j];
 				bufwrite32b(buf, otfcc_to_f2dot14(span->start));
 				bufwrite32b(buf, otfcc_to_f2dot14(span->peak));
 				bufwrite32b(buf, otfcc_to_f2dot14(span->end));
@@ -134,8 +136,7 @@ GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 //      (Separate?)
 static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_GlyphOrder *glyph_order = GlyphOrder.create();
-	otfcc_GlyphOrder *aglfn = GlyphOrder.create();
-	aglfn_setupNames(aglfn);
+
 	glyphid_t numGlyphs = font->glyf->length;
 	sds prefix;
 	if (options->glyph_name_prefix) {
@@ -177,8 +178,9 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 				if (g->name) sdsfree(g->name);
 				g->name = sdsdup(sharedName);
 			}
-		} else if (options->ignore_glyph_order) { // ignore built-in names
-			                                      // pass
+		} else if (options->ignore_glyph_order || options->name_glyphs_by_gid) {
+			// ignore built-in names
+			// pass
 		} else if (g->name) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, g->name);
 			sds sharedName = GlyphOrder.setByGID(glyph_order, j, gname);
@@ -188,7 +190,8 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	}
 
 	// pass 2: Map to `post` names
-	if (font->post != NULL && font->post->post_name_map != NULL && !options->ignore_glyph_order) {
+	if (font->post != NULL && font->post->post_name_map != NULL && !options->ignore_glyph_order &&
+	    !options->name_glyphs_by_gid) {
 		otfcc_GlyphOrderEntry *s, *tmp;
 		HASH_ITER(hhID, font->post->post_name_map->byGID, s, tmp) {
 			sds gname = sdscatprintf(sdsempty(), "%s%s", prefix, s->name);
@@ -197,7 +200,10 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 	}
 
 	// pass 3: Map to AGLFN & Unicode
-	if (font->cmap != NULL) {
+	if (font->cmap && !options->name_glyphs_by_gid) {
+		otfcc_GlyphOrder *aglfn = GlyphOrder.create();
+		aglfn_setupNames(aglfn);
+
 		cmap_Entry *s;
 		foreach_hash(s, font->cmap->unicodes) if (s->glyph.index > 0) {
 			sds name = NULL;
@@ -211,6 +217,8 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 			}
 			GlyphOrder.setByGID(glyph_order, s->glyph.index, name);
 		}
+
+		GlyphOrder.free(aglfn);
 	}
 
 	// pass 4 : Map to GID
@@ -232,7 +240,6 @@ static otfcc_GlyphOrder *createGlyphOrder(otfcc_Font *font, const otfcc_Options 
 		GlyphOrder.setByGID(glyph_order, j, name);
 	}
 
-	GlyphOrder.free(aglfn);
 	sdsfree(prefix);
 	return glyph_order;
 }

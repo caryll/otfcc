@@ -25,7 +25,7 @@ table_hhea *otfcc_readHhea(const otfcc_Packet packet, const otfcc_Options *optio
 			hhea->ascender = read_16u(data + 4);
 			hhea->descender = read_16u(data + 6);
 			hhea->lineGap = read_16u(data + 8);
-			hhea->advanceWithMax = read_16u(data + 10);
+			hhea->advanceWidthMax = read_16u(data + 10);
 			hhea->minLeftSideBearing = read_16u(data + 12);
 			hhea->minRightSideBearing = read_16u(data + 14);
 			hhea->xMaxExtent = read_16u(data + 16);
@@ -52,7 +52,7 @@ void otfcc_dumpHhea(const table_hhea *table, json_value *root, const otfcc_Optio
 		json_object_push(hhea, "ascender", json_integer_new(table->ascender));
 		json_object_push(hhea, "descender", json_integer_new(table->descender));
 		json_object_push(hhea, "lineGap", json_integer_new(table->lineGap));
-		json_object_push(hhea, "advanceWithMax", json_integer_new(table->advanceWithMax));
+		json_object_push(hhea, "advanceWidthMax", json_integer_new(table->advanceWidthMax));
 		json_object_push(hhea, "minLeftSideBearing", json_integer_new(table->minLeftSideBearing));
 		json_object_push(hhea, "minRightSideBearing", json_integer_new(table->minRightSideBearing));
 		json_object_push(hhea, "xMaxExtent", json_integer_new(table->xMaxExtent));
@@ -72,7 +72,7 @@ table_hhea *otfcc_parseHhea(const json_value *root, const otfcc_Options *options
 			hhea->ascender = json_obj_getnum_fallback(table, "ascender", 0);
 			hhea->descender = json_obj_getnum_fallback(table, "descender", 0);
 			hhea->lineGap = json_obj_getnum_fallback(table, "lineGap", 0);
-			hhea->advanceWithMax = json_obj_getnum_fallback(table, "advanceWithMax", 0);
+			hhea->advanceWidthMax = json_obj_getnum_fallback(table, "advanceWidthMax", 0);
 			hhea->minLeftSideBearing = json_obj_getnum_fallback(table, "minLeftSideBearing", 0);
 			hhea->minRightSideBearing = json_obj_getnum_fallback(table, "minRightSideBearing", 0);
 			hhea->xMaxExtent = json_obj_getnum_fallback(table, "xMaxExtent", 0);
@@ -91,7 +91,7 @@ caryll_Buffer *otfcc_buildHhea(const table_hhea *hhea, const otfcc_Options *opti
 	bufwrite16b(buf, hhea->ascender);
 	bufwrite16b(buf, hhea->descender);
 	bufwrite16b(buf, hhea->lineGap);
-	bufwrite16b(buf, hhea->advanceWithMax);
+	bufwrite16b(buf, hhea->advanceWidthMax);
 	bufwrite16b(buf, hhea->minLeftSideBearing);
 	bufwrite16b(buf, hhea->minRightSideBearing);
 	bufwrite16b(buf, hhea->xMaxExtent);
