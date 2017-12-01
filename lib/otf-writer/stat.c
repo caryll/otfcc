@@ -210,7 +210,7 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	font->hhea->minLeftSideBearing = minLSB;
 	font->hhea->minRightSideBearing = minRSB;
 	font->hhea->xMaxExtent = maxExtent;
-	font->hhea->advanceWithMax = maxWidth;
+	font->hhea->advanceWidthMax = maxWidth;
 	font->hmtx = hmtx;
 	// set bit 1 in head.flags
 	font->head->flags = (font->head->flags & (~0x2)) | (lsbAtX_0 ? 0x2 : 0);

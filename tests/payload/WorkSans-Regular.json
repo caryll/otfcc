@@ -24,7 +24,7 @@
         "ascender": 930,
         "descender": -243,
         "lineGap": 0,
-        "advanceWithMax": 1258,
+        "advanceWidthMax": 1258,
         "minLeftSideBearing": -199,
         "minRightSideBearing": -207,
         "xMaxExtent": 1204,
@@ -134,7 +134,7 @@
             "encodingID": 0,
             "languageID": 0,
             "nameID": 0,
-            "nameString": "Copyright © 2015 by Wei Huang. All rights reserved."
+            "nameString": "Copyright ï¿½ 2015 by Wei Huang. All rights reserved."
         },
         {
             "platformID": 1,
