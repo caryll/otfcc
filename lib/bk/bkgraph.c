@@ -204,8 +204,8 @@ static uint32_t getoffset(size_t *offsets, bk_Block *ref, bk_Block *target, uint
 	size_t offtgt = offsets[target->_index];
 	/*
 	if (offtgt < offref || (offtgt - offref) >> bits) {
-	    fprintf(stderr, "[otfcc-fea] Warning : Unable to fit offset %d into %d bits.\n", (int32_t)(offtgt - offref),
-	            bits);
+	    fprintf(stderr, "[otfcc-fea] Warning : Unable to fit offset %d into %d bits.\n",
+	(int32_t)(offtgt - offref), bits);
 	}
 	*/
 	return (uint32_t)(offtgt - offref);
@@ -219,7 +219,9 @@ static void escalate_sppointers(bk_Block *b, bk_Graph *f, uint32_t *order, uint3
 	if (!b) return;
 	for (uint32_t j = 0; j < b->length; j++) {
 		bk_Cell *cell = &(b->cells[j]);
-		if (bk_cellIsPointer(cell) && cell->p && cell->t >= sp16) { escalate_sppointers(cell->p, f, order, depth); }
+		if (bk_cellIsPointer(cell) && cell->p && cell->t >= sp16) {
+			escalate_sppointers(cell->p, f, order, depth);
+		}
 	}
 	b->_depth = depth;
 	*order += 1;
@@ -356,7 +358,9 @@ caryll_Buffer *bk_build_Graph(bk_Graph *f) {
 		}
 	}
 	for (uint32_t j = 0; j < f->length; j++) {
-		if (f->entries[j].block->_visitstate == VISIT_BLACK) { otfcc_build_bkblock(buf, f->entries[j].block, offsets); }
+		if (f->entries[j].block->_visitstate == VISIT_BLACK) {
+			otfcc_build_bkblock(buf, f->entries[j].block, offsets);
+		}
 	}
 	FREE(offsets);
 	return buf;
@@ -393,6 +397,13 @@ void bk_untangleGraph(/*BORROW*/ bk_Graph *f) {
 caryll_Buffer *bk_build_Block(/*MOVE*/ bk_Block *root) {
 	bk_Graph *f = bk_newGraphFromRootBlock(root);
 	bk_minimizeGraph(f);
+	bk_untangleGraph(f);
+	caryll_Buffer *buf = bk_build_Graph(f);
+	bk_delete_Graph(f);
+	return buf;
+}
+caryll_Buffer *bk_build_Block_noMinimize(/*MOVE*/ bk_Block *root) {
+	bk_Graph *f = bk_newGraphFromRootBlock(root);
 	bk_untangleGraph(f);
 	caryll_Buffer *buf = bk_build_Graph(f);
 	bk_delete_Graph(f);

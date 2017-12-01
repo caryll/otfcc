@@ -13,14 +13,11 @@
 #endif
 
 // Tag handler
-static INLINE char *tag2str(uint32_t tag) {
-	char *tags = (char *)malloc(sizeof(char) * 5);
+static INLINE void tag2str(uint32_t tag, char tags[4]) {
 	tags[0] = (tag >> 24) & 0xFF;
 	tags[1] = (tag >> 16) & 0xFF;
 	tags[2] = (tag >> 8) & 0xFF;
 	tags[3] = tag & 0xFF;
-	tags[4] = 0;
-	return tags;
 }
 
 static INLINE uint32_t str2tag(char *tags) {

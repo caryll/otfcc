@@ -13,4 +13,6 @@
 #include "otfcc/sfnt.h"
 #include "otfcc/options.h"
 
+#include "otfcc/vf/vq.h"
+
 #endif

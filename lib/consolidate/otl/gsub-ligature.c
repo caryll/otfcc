@@ -24,6 +24,6 @@ bool consolidate_gsub_ligature(otfcc_Font *font, table_OTL *table, otl_Subtable 
 		         }));
 		subtable->items[k].from = NULL;
 	}
-	iSubtable_gsub_ligature.replace(subtable, &nt);
+	iSubtable_gsub_ligature.replace(subtable, nt);
 	return (subtable->length == 0);
 }

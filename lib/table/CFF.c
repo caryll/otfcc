@@ -25,7 +25,6 @@ static INLINE void initFD(table_CFF *fd) {
 	fd->underlinePosition = -100;
 	fd->underlineThickness = 50;
 }
-
 static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	if (!priv) return;
 	FREE(priv->blueValues);
@@ -36,6 +35,11 @@ static void otfcc_delete_privatedict(cff_PrivateDict *priv) {
 	FREE(priv->stemSnapH);
 	FREE(priv->stemSnapV);
 	FREE(priv);
+}
+static INLINE void disposeFontMatrix(cff_FontMatrix *fm) {
+	if (!fm) return;
+	iVQ.dispose(&fm->x);
+	iVQ.dispose(&fm->y);
 }
 static INLINE void disposeFD(table_CFF *fd) {
 	sdsfree(fd->version);
@@ -48,7 +52,7 @@ static INLINE void disposeFD(table_CFF *fd) {
 	sdsfree(fd->fontName);
 	sdsfree(fd->cidRegistry);
 	sdsfree(fd->cidOrdering);
-
+	disposeFontMatrix(fd->fontMatrix);
 	FREE(fd->fontMatrix);
 	otfcc_delete_privatedict(fd->privateDict);
 	if (fd->fdArray) {
@@ -206,8 +210,8 @@ static void callback_extract_fd(uint32_t op, uint8_t top, cff_Value *stack, void
 				meta->fontMatrix->b = cffnum(stack[top - 5]);
 				meta->fontMatrix->c = cffnum(stack[top - 4]);
 				meta->fontMatrix->d = cffnum(stack[top - 3]);
-				meta->fontMatrix->x = cffnum(stack[top - 2]);
-				meta->fontMatrix->y = cffnum(stack[top - 1]);
+				meta->fontMatrix->x = iVQ.createStill(cffnum(stack[top - 2]));
+				meta->fontMatrix->y = iVQ.createStill(cffnum(stack[top - 1]));
 			}
 			break;
 		case op_isFixedPitch:
@@ -277,9 +281,12 @@ static void callback_draw_lineto(void *_context, double x1, double y1) {
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = true, .x = x1, .y = y1,
-		                            }));
+		glyf_Point z;
+		glyf_iPoint.init(&z);
+		z.onCurve = true;
+		iVQ.copyReplace(&z.x, iVQ.createStill(x1));
+		iVQ.copyReplace(&z.y, iVQ.createStill(y1));
+		glyf_iContour.push(contour, z);
 		context->jPoint += 1;
 	}
 }
@@ -288,15 +295,30 @@ static void callback_draw_curveto(void *_context, double x1, double y1, double x
 	outline_builder_context *context = (outline_builder_context *)_context;
 	if (context->jContour) {
 		glyf_Contour *contour = &context->g->contours.items[context->jContour - 1];
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = false, .x = x1, .y = y1,
-		                            }));
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = false, .x = x2, .y = y2,
-		                            }));
-		glyf_iContour.push(contour, ((glyf_Point){
-		                                .onCurve = true, .x = x3, .y = y3,
-		                            }));
+		{
+			glyf_Point z;
+			glyf_iPoint.init(&z);
+			z.onCurve = false;
+			iVQ.copyReplace(&z.x, iVQ.createStill(x1));
+			iVQ.copyReplace(&z.y, iVQ.createStill(y1));
+			glyf_iContour.push(contour, z);
+		}
+		{
+			glyf_Point z;
+			glyf_iPoint.init(&z);
+			z.onCurve = false;
+			iVQ.copyReplace(&z.x, iVQ.createStill(x2));
+			iVQ.copyReplace(&z.y, iVQ.createStill(y2));
+			glyf_iContour.push(contour, z);
+		}
+		{
+			glyf_Point z;
+			glyf_iPoint.init(&z);
+			z.onCurve = true;
+			iVQ.copyReplace(&z.x, iVQ.createStill(x3));
+			iVQ.copyReplace(&z.y, iVQ.createStill(y3));
+			glyf_iContour.push(contour, z);
+		}
 		context->jPoint += 3;
 	}
 }
@@ -304,7 +326,8 @@ static void callback_draw_sethint(void *_context, bool isVertical, double positi
 	outline_builder_context *context = (outline_builder_context *)_context;
 	glyf_iStemDefList.push((isVertical ? &context->g->stemV : &context->g->stemH), //
 	                       ((glyf_PostscriptStemDef){
-	                           .position = position, .width = width,
+	                           .position = position,
+	                           .width = width,
 	                       }));
 }
 static void callback_draw_setmask(void *_context, bool isContourMask, bool *maskArray) {
@@ -417,87 +440,132 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 	bc.jContour = 0;
 	bc.jPoint = 0;
 	bc.randx = seed;
+
 	cff_parseOutline(charStringPtr, charStringLength, f->global_subr, localSubrs, &stack, &bc,
 	                 drawPass, options);
 
 	// Turn deltas into absolute coordinates
-	double cx = 0;
-	double cy = 0;
+	VQ cx = iVQ.neutral(), cy = iVQ.neutral();
 	for (shapeid_t j = 0; j < g->contours.length; j++) {
 		glyf_Contour *contour = &g->contours.items[j];
 		for (shapeid_t k = 0; k < contour->length; k++) {
-			cx += contour->items[k].x;
-			cy += contour->items[k].y;
-
-			contour->items[k].x = cx;
-			contour->items[k].y = cy;
+			glyf_Point *z = &contour->items[k];
+			iVQ.inplacePlus(&cx, z->x);
+			iVQ.inplacePlus(&cy, z->y);
+			iVQ.copyReplace(&z->x, cx);
+			iVQ.copyReplace(&z->y, cy);
 		}
-		if (contour->items[0].x == contour->items[contour->length - 1].x &&
-		    contour->items[0].y == contour->items[contour->length - 1].y &&
+		if (!iVQ.compare(contour->items[0].x, contour->items[contour->length - 1].x) &&
+		    !iVQ.compare(contour->items[0].y, contour->items[contour->length - 1].y) &&
 		    (contour->items[0].onCurve && contour->items[contour->length - 1].onCurve)) {
 			// We found a duplicate knot at the beginning and end of a curve
 			// mainly due to curveto. We can remove that. This is unnecessary.
 			glyf_iContour.pop(contour);
 		}
+		glyf_iContour.shrinkToFit(contour);
 	}
+	glyf_iContourList.shrinkToFit(&g->contours);
+	iVQ.dispose(&cx), iVQ.dispose(&cy);
 
 	cff_iIndex.dispose(&localSubrs);
 	FREE(stack.stack);
 	context->seed = bc.randx;
 }
 
+static sds formCIDString(cffsid_t cid) {
+	return sdscatprintf(sdsnew("CID"), "%d", cid);
+}
+
 static void nameGlyphsAccordingToCFF(cff_extract_context *context) {
-	if (context->meta->isCID) return;
 	cff_File *cffFile = context->cffFile;
 	table_glyf *glyphs = context->glyphs;
-	switch (cffFile->charsets.t) {
-		case cff_CHARSET_FORMAT0: {
-			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
-				cffsid_t sid = cffFile->charsets.f0.glyph[j];
-				sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-				if (glyphname) { glyphs->items[j + 1]->name = glyphname; }
-			}
-			break;
-		}
-		case cff_CHARSET_FORMAT1: {
-			uint32_t glyphsNamedSofar = 1;
-			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
-				glyphid_t first = cffFile->charsets.f1.range1[j].first;
-				sds glyphname = sdsget_cff_sid(first, cffFile->string);
-				if (glyphsNamedSofar < glyphs->length && glyphname) {
-					glyphs->items[glyphsNamedSofar]->name = glyphname;
-				}
-				glyphsNamedSofar++;
-				for (glyphid_t k = 0; k < cffFile->charsets.f1.range1[j].nleft; k++) {
-					cffsid_t sid = first + k + 1;
+	cff_Charset *charset = &cffFile->charsets;
+	if (context->meta->isCID) {
+		switch (charset->t) {
+			case cff_CHARSET_FORMAT0: {
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t sid = charset->f0.glyph[j];
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-					if (glyphsNamedSofar < glyphs->length && glyphname) {
-						glyphs->items[glyphsNamedSofar]->name = glyphname;
+					if (glyphname) {
+						glyphs->items[j + 1]->name = glyphname;
+						glyphs->items[j + 1]->cid = sid;
 					}
-					glyphsNamedSofar++;
 				}
+				break;
 			}
-			break;
+			case cff_CHARSET_FORMAT1: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t first = charset->f1.range1[j].first;
+					for (glyphid_t k = 0; k <= charset->f1.range1[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = formCIDString(sid);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+							glyphs->items[glyphsNamedSofar]->cid = sid;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
+			case cff_CHARSET_FORMAT2: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t first = charset->f2.range2[j].first;
+					for (glyphid_t k = 0; k <= charset->f2.range2[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = formCIDString(sid);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+							glyphs->items[glyphsNamedSofar]->cid = sid;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
 		}
-		case cff_CHARSET_FORMAT2: {
-			uint32_t glyphsNamedSofar = 1;
-			for (glyphid_t j = 0; j < cffFile->charsets.s; j++) {
-				glyphid_t first = cffFile->charsets.f2.range2[j].first;
-				sds glyphname = sdsget_cff_sid(first, cffFile->string);
-				if (glyphsNamedSofar < glyphs->length && glyphname) {
-					glyphs->items[glyphsNamedSofar]->name = glyphname;
-				}
-				glyphsNamedSofar++;
-				for (glyphid_t k = 0; k < cffFile->charsets.f2.range2[j].nleft; k++) {
-					cffsid_t sid = first + k + 1;
+	} else {
+		switch (charset->t) {
+			case cff_CHARSET_FORMAT0: {
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					cffsid_t sid = charset->f0.glyph[j];
 					sds glyphname = sdsget_cff_sid(sid, cffFile->string);
-					if (glyphsNamedSofar < glyphs->length && glyphname) {
-						glyphs->items[glyphsNamedSofar]->name = glyphname;
-					}
-					glyphsNamedSofar++;
+					if (glyphname) { glyphs->items[j + 1]->name = glyphname; }
 				}
+				break;
 			}
-			break;
+			case cff_CHARSET_FORMAT1: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					glyphid_t first = charset->f1.range1[j].first;
+					for (glyphid_t k = 0; k <= charset->f1.range1[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
+			case cff_CHARSET_FORMAT2: {
+				uint32_t glyphsNamedSofar = 1;
+				for (glyphid_t j = 0; j < charset->s; j++) {
+					glyphid_t first = charset->f2.range2[j].first;
+					for (glyphid_t k = 0; k <= charset->f2.range2[j].nleft; k++) {
+						cffsid_t sid = first + k;
+						sds glyphname = sdsget_cff_sid(sid, cffFile->string);
+						if (glyphsNamedSofar < glyphs->length && glyphname) {
+							glyphs->items[glyphsNamedSofar]->name = glyphname;
+						}
+						glyphsNamedSofar++;
+					}
+				}
+				break;
+			}
 		}
 	}
 }
@@ -513,21 +581,25 @@ static void applyCffMatrix(table_CFF *CFF_, table_glyf *glyf, const table_head *
 			fd = fd->fdArray[g->fdSelect.index];
 		}
 		if (fd->fontMatrix) {
-			pos_t a = qround(head->unitsPerEm * fd->fontMatrix->a);
-			pos_t b = qround(head->unitsPerEm * fd->fontMatrix->b);
-			pos_t c = qround(head->unitsPerEm * fd->fontMatrix->c);
-			pos_t d = qround(head->unitsPerEm * fd->fontMatrix->d);
-			pos_t x = qround(head->unitsPerEm * fd->fontMatrix->x);
-			pos_t y = qround(head->unitsPerEm * fd->fontMatrix->y);
+			scale_t a = qround(head->unitsPerEm * fd->fontMatrix->a);
+			scale_t b = qround(head->unitsPerEm * fd->fontMatrix->b);
+			scale_t c = qround(head->unitsPerEm * fd->fontMatrix->c);
+			scale_t d = qround(head->unitsPerEm * fd->fontMatrix->d);
+			VQ x = iVQ.scale(fd->fontMatrix->x, head->unitsPerEm);
+			x.kernel = qround(x.kernel);
+			VQ y = iVQ.scale(fd->fontMatrix->y, head->unitsPerEm);
+			y.kernel = qround(y.kernel);
 			for (shapeid_t j = 0; j < g->contours.length; j++) {
 				glyf_Contour *contour = &g->contours.items[j];
 				for (shapeid_t k = 0; k < contour->length; k++) {
-					pos_t zx = contour->items[k].x;
-					pos_t zy = contour->items[k].y;
-					contour->items[k].x = a * zx + b * zy + x;
-					contour->items[k].y = c * zx + d * zy + y;
+					VQ zx = iVQ.dup(contour->items[k].x);
+					VQ zy = iVQ.dup(contour->items[k].y);
+					iVQ.replace(&contour->items[k].x, iVQ.pointLinearTfm(x, a, zx, b, zy));
+					iVQ.replace(&contour->items[k].y, iVQ.pointLinearTfm(y, c, zx, d, zy));
+					iVQ.dispose(&zx), iVQ.dispose(&zy);
 				}
 			}
+			iVQ.dispose(&x), iVQ.dispose(&y);
 		}
 	}
 }
@@ -676,8 +748,8 @@ static json_value *fdToJson(const table_CFF *table) {
 		json_object_push(_fontMatrix, "b", json_double_new(table->fontMatrix->b));
 		json_object_push(_fontMatrix, "c", json_double_new(table->fontMatrix->c));
 		json_object_push(_fontMatrix, "d", json_double_new(table->fontMatrix->d));
-		json_object_push(_fontMatrix, "x", json_double_new(table->fontMatrix->x));
-		json_object_push(_fontMatrix, "y", json_double_new(table->fontMatrix->y));
+		json_object_push(_fontMatrix, "x", json_new_VQ(table->fontMatrix->x, NULL));
+		json_object_push(_fontMatrix, "y", json_new_VQ(table->fontMatrix->y, NULL));
 		json_object_push(_CFF_, "fontMatrix", _fontMatrix);
 	}
 	if (table->privateDict) { json_object_push(_CFF_, "privates", pdToJson(table->privateDict)); }
@@ -1234,7 +1306,7 @@ static caryll_Buffer *writecff_CIDKeyed(table_CFF *cff, table_glyf *glyf,
 	                               (delta_size >> 24) & 0xff, (delta_size >> 16) & 0xff,
 	                               (delta_size >> 8) & 0xff,
 	                               delta_size & 0xff) // offset 2
-	                );
+	);
 
 	bufwrite_bufdel(blob, t); // top dict body
 

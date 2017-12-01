@@ -1,6 +1,8 @@
 #ifndef CARYLL_TABLES_ALL_H
 #define CARYLL_TABLES_ALL_H
 
+#include "table/fvar.h"
+
 #include "table/head.h"
 #include "table/glyf.h"
 #include "table/CFF.h"
@@ -18,6 +20,7 @@
 #include "table/cvt.h"
 #include "table/fpgm-prep.h"
 #include "table/gasp.h"
+#include "table/VDMX.h"
 
 #include "table/LTSH.h"
 #include "table/VORG.h"

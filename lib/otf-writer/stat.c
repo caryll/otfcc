@@ -39,8 +39,10 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		for (shapeid_t pj = 0; pj < g->contours.items[c].length; pj++) {
 			// Stat point coordinates USING the matrix transformation
 			glyf_Point *p = &(g->contours.items[c].items[pj]);
-			pos_t x = gr->x + gr->a * p->x + gr->b * p->y;
-			pos_t y = gr->y + gr->c * p->x + gr->d * p->y;
+			pos_t x = round(iVQ.getStill(gr->x) + gr->a * iVQ.getStill(p->x) +
+			                gr->b * iVQ.getStill(p->y));
+			pos_t y = round(iVQ.getStill(gr->y) + gr->c * iVQ.getStill(p->x) +
+			                gr->d * iVQ.getStill(p->y));
 			if (x < xmin) xmin = x;
 			if (x > xmax) xmax = x;
 			if (y < ymin) ymin = y;
@@ -52,15 +54,20 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 	nCompositeContours = g->contours.length;
 	for (shapeid_t r = 0; r < g->references.length; r++) {
 		glyf_ComponentReference ref;
+		glyf_iComponentReference.init(&ref);
 		glyf_ComponentReference *rr = &(g->references.items[r]);
-		ref.glyph = Handle.fromIndex(g->references.items[r].glyph.index);
 		// composite affine transformations
+		Handle.replace(&ref.glyph, Handle.fromIndex(g->references.items[r].glyph.index));
 		ref.a = gr->a * rr->a + rr->b * gr->c;
 		ref.b = rr->a * gr->b + rr->b * gr->d;
 		ref.c = gr->a * rr->c + gr->c * rr->d;
 		ref.d = gr->b * rr->c + rr->d * gr->d;
-		ref.x = rr->x + rr->a * gr->x + rr->b * gr->y;
-		ref.y = rr->y + rr->c * gr->x + rr->d * gr->y;
+		iVQ.replace(&ref.x,
+		            iVQ.createStill(iVQ.getStill(rr->x) + rr->a * iVQ.getStill(gr->x) +
+		                            rr->b * iVQ.getStill(gr->y)));
+		iVQ.replace(&ref.y,
+		            iVQ.createStill(iVQ.getStill(rr->y) + rr->c * iVQ.getStill(gr->x) +
+		                            rr->d * iVQ.getStill(gr->y)));
 
 		glyf_GlyphStat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj, options);
 		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
@@ -99,8 +106,8 @@ void statGlyf(otfcc_Font *font, const otfcc_Options *options) {
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_ComponentReference gr;
 		gr.glyph = Handle.fromIndex(j);
-		gr.x = 0;
-		gr.y = 0;
+		gr.x = iVQ.createStill(0);
+		gr.y = iVQ.createStill(0);
 		gr.a = 1;
 		gr.b = 0;
 		gr.c = 0;
@@ -182,8 +189,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 		} else {
 			lsbAtX_0 = false;
 		}
-		pos_t lsb = g->stat.xMin - g->horizontalOrigin;
-		pos_t rsb = g->advanceWidth + g->horizontalOrigin - g->stat.xMax;
+		pos_t lsb = (g->stat.xMin) - (g->horizontalOrigin);
+		pos_t rsb = (g->advanceWidth) + (g->horizontalOrigin) - (g->stat.xMax);
 
 		if (j < count_a) {
 			hmtx->metrics[j].advanceWidth = g->advanceWidth;
@@ -203,7 +210,7 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	font->hhea->minLeftSideBearing = minLSB;
 	font->hhea->minRightSideBearing = minRSB;
 	font->hhea->xMaxExtent = maxExtent;
-	font->hhea->advanceWithMax = maxWidth;
+	font->hhea->advanceWidthMax = maxWidth;
 	font->hmtx = hmtx;
 	// set bit 1 in head.flags
 	font->head->flags = (font->head->flags & (~0x2)) | (lsbAtX_0 ? 0x2 : 0);
@@ -233,8 +240,8 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	length_t maxHeight = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		pos_t tsb = g->verticalOrigin - g->stat.yMax;
-		pos_t bsb = g->stat.yMin - g->verticalOrigin + g->advanceHeight;
+		pos_t tsb = (g->verticalOrigin) - (g->stat.yMax);
+		pos_t bsb = (g->stat.yMin) - (g->verticalOrigin) + (g->advanceHeight);
 		if (j < count_a) {
 			vmtx->metrics[j].advanceHeight = g->advanceHeight;
 			vmtx->metrics[j].tsb = tsb;
@@ -631,32 +638,43 @@ void otfcc_statFont(otfcc_Font *font, const otfcc_Options *options) {
 		if (cff->fontBBoxRight < font->head->xMax) cff->fontBBoxRight = font->head->xMax;
 		if (font->glyf && cff->isCID) { cff->cidCount = (uint32_t)font->glyf->length; }
 		if (cff->isCID) {
-			if (cff->fontMatrix) { FREE(cff->fontMatrix); }
+			if (cff->fontMatrix) {
+				iVQ.dispose(&cff->fontMatrix->x);
+				iVQ.dispose(&cff->fontMatrix->y);
+				FREE(cff->fontMatrix);
+				cff->fontMatrix = NULL;
+			}
 			for (tableid_t j = 0; j < cff->fdArrayCount; j++) {
 				table_CFF *fd = cff->fdArray[j];
-				if (font->head->unitsPerEm == 1000) {
+				if (fd->fontMatrix) {
+					iVQ.dispose(&fd->fontMatrix->x);
+					iVQ.dispose(&fd->fontMatrix->y);
 					FREE(fd->fontMatrix);
+					fd->fontMatrix = NULL;
+				}
+				if (font->head->unitsPerEm == 1000) {
+					fd->fontMatrix = NULL;
 				} else {
-					if (!fd->fontMatrix) { NEW(fd->fontMatrix); }
+					NEW(fd->fontMatrix);
 					fd->fontMatrix->a = 1.0 / font->head->unitsPerEm;
 					fd->fontMatrix->b = 0.0;
 					fd->fontMatrix->c = 0.0;
 					fd->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-					fd->fontMatrix->x = 0.0;
-					fd->fontMatrix->y = 0.0;
+					fd->fontMatrix->x = iVQ.neutral();
+					fd->fontMatrix->y = iVQ.neutral();
 				}
 			}
 		} else {
 			if (font->head->unitsPerEm == 1000) {
-				FREE(cff->fontMatrix);
+				cff->fontMatrix = NULL;
 			} else {
-				if (!cff->fontMatrix) { NEW(cff->fontMatrix); }
+				NEW(cff->fontMatrix);
 				cff->fontMatrix->a = 1.0 / font->head->unitsPerEm;
 				cff->fontMatrix->b = 0.0;
 				cff->fontMatrix->c = 0.0;
 				cff->fontMatrix->d = 1.0 / font->head->unitsPerEm;
-				cff->fontMatrix->x = 0.0;
-				cff->fontMatrix->y = 0.0;
+				cff->fontMatrix->x = iVQ.neutral();
+				cff->fontMatrix->y = iVQ.neutral();
 			}
 		}
 

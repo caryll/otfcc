@@ -17,7 +17,8 @@
 #endif
 
 void printInfo() {
-	fprintf(stdout, "This is otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER, PATCH_VER);
+	fprintf(stdout, "This is Polymorphic otfccbuild, version %d.%d.%d.\n", MAIN_VER, SECONDARY_VER,
+	        PATCH_VER);
 }
 void printHelp() {
 	fprintf(stdout,

@@ -28,6 +28,7 @@ typedef struct {
 	bool stub_cmap4;
 	bool decimal_cmap;
 	bool name_glyphs_by_hash;
+	bool name_glyphs_by_gid;
 	char *glyph_name_prefix;
 	otfcc_ILogger *logger;
 } otfcc_Options;

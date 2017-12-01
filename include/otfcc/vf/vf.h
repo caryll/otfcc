@@ -9,5 +9,6 @@
 // part as a Ket.
 
 #include "otfcc/vf/vq.h"
+#include "otfcc/vf/axis.h"
 
 #endif

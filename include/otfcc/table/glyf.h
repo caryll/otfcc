@@ -4,18 +4,19 @@
 #include "table-common.h"
 #include "head.h"
 #include "maxp.h"
+#include "fvar.h"
 
 enum GlyphType { SIMPLE, COMPOSITE };
 
 typedef struct {
-	pos_t x;
-	pos_t y;
+	VQ x;
+	VQ y;
 	int8_t onCurve; // a mask indicates whether a point is on-curve or off-curve
 	                // bit 0     : 1 for on-curve, 0 for off-curve. JSON field: "on"
 	                // bit 1 - 7 : unused, set to 0
 	                // in JSON, they are separated into several boolean fields.
 } glyf_Point;
-extern caryll_ElementInterface(glyf_Point) glyf_iPoint;
+extern caryll_ValElementInterface(glyf_Point) glyf_iPoint;
 typedef caryll_Vector(glyf_Point) glyf_Contour;
 extern caryll_VectorInterface(glyf_Contour, glyf_Point) glyf_iContour;
 
@@ -52,21 +53,23 @@ typedef enum {
 } RefAnchorStatus;
 
 typedef struct {
-	otfcc_GlyphHandle glyph;
-	// transformation term
-	pos_t a;
-	pos_t b;
-	pos_t c;
-	pos_t d;
-	// position term
-	RefAnchorStatus isAnchored;
-	shapeid_t inner;
-	shapeid_t outer;
-	pos_t x;
-	pos_t y;
+	//// NOTE: this part and below looks like a glyf_Point
+	VQ x;
+	VQ y;
 	// flags
 	bool roundToGrid;
 	bool useMyMetrics;
+	// the glyph being referenced
+	otfcc_GlyphHandle glyph;
+	// transformation term
+	scale_t a;
+	scale_t b;
+	scale_t c;
+	scale_t d;
+	// Anchorness term
+	RefAnchorStatus isAnchored;
+	shapeid_t inner;
+	shapeid_t outer;
 } glyf_ComponentReference;
 extern caryll_ValElementInterface(glyf_ComponentReference) glyf_iComponentReference;
 typedef caryll_Vector(glyf_ComponentReference) glyf_ReferenceList;
@@ -112,6 +115,7 @@ typedef struct {
 
 	// CID FDSelect
 	otfcc_FDHandle fdSelect;
+	glyphid_t cid; // Subset CID fonts may need this to represent the original CID entry
 
 	// Stats
 	glyf_GlyphStat stat;

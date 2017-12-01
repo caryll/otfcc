@@ -263,6 +263,16 @@ static otl_Coverage *covFromCD(otl_ClassDef *cd) {
 	return cov;
 }
 
+typedef struct {
+	glyphid_t gid;
+	otl_PositionValue *fv;
+	otl_PositionValue *sv;
+} IndividualGposPair;
+
+static int by_pairSecondGlyph(const void *a, const void *b) {
+	return ((IndividualGposPair *)a)->gid - ((IndividualGposPair *)b)->gid;
+}
+
 bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 	const subtable_gpos_pair *subtable = &(_subtable->gpos_pair);
 	uint16_t format1 = 0;
@@ -310,16 +320,27 @@ bk_Block *otfcc_build_gpos_pair_individual(const otl_Subtable *_subtable) {
 		}
 		bk_Block *pairSet = bk_new_Block(b16, currentPairCount, // PairValueCount
 		                                 bkover);
+		IndividualGposPair *pairs;
+		NEW_CLEAN_N(pairs, currentPairCount);
+		size_t n = 0;
 		for (glyphid_t k = 0; k < subtable->second->numGlyphs; k++) {
 			glyphclass_t c2 = subtable->second->classes[k];
 			if (required_position_format(subtable->firstValues[c1][c2]) |
 			    required_position_format(subtable->secondValues[c1][c2])) {
-				bk_push(pairSet, b16, subtable->second->glyphs[k].index, // SecondGlyph
-				        bkembed, bk_gpos_value(subtable->firstValues[c1][c2], format1),  // Value1
-				        bkembed, bk_gpos_value(subtable->secondValues[c1][c2], format2), // Value2
-				        bkover);
+				pairs[n].gid = subtable->second->glyphs[k].index;
+				pairs[n].fv = &subtable->firstValues[c1][c2];
+				pairs[n].sv = &subtable->secondValues[c1][c2];
+				n++;
 			}
 		}
+		qsort(pairs, currentPairCount, sizeof(IndividualGposPair), by_pairSecondGlyph);
+		for (size_t n = 0; n < currentPairCount; n++) {
+			bk_push(pairSet, b16, pairs[n].gid,                      // SecondGlyph
+			        bkembed, bk_gpos_value(*(pairs[n].fv), format1), // Value1
+			        bkembed, bk_gpos_value(*(pairs[n].sv), format2), // Value2
+			        bkover);
+		}
+		FREE(pairs);
 		bk_push(root, p16, pairSet, bkover);
 	}
 	DELETE(Coverage.free, cov);

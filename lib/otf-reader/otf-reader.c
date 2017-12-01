@@ -20,6 +20,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		otfcc_Font *font = otfcc_iFont.create();
 		otfcc_Packet packet = sfnt->packets[index];
 		font->subtype = decideFontSubtypeOTF(sfnt, index);
+		font->fvar = otfcc_readFvar(packet, options);
 		font->head = otfcc_readHead(packet, options);
 		font->maxp = otfcc_readMaxp(packet, options);
 		font->name = otfcc_readName(packet, options);
@@ -35,8 +36,15 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 			font->prep = otfcc_readFpgmPrep(packet, options, 'prep');
 			font->cvt_ = otfcc_readCvt(packet, options, 'cvt ');
 			font->gasp = otfcc_readGasp(packet, options);
+			font->VDMX = otfcc_readVDMX(packet, options);
 			font->LTSH = otfcc_readLTSH(packet, options);
-			font->glyf = otfcc_readGlyf(packet, options, font->head, font->maxp);
+
+			GlyfIOContext ctx = {.locaIsLong = font->head->indexToLocFormat,
+			                     .numGlyphs = font->maxp->numGlyphs,
+			                     .nPhantomPoints = 4, // Since MS rasterizer v1.7,
+			                                          // it would always add 4 phantom points
+			                     .fvar = font->fvar};
+			font->glyf = otfcc_readGlyf(packet, options, &ctx);
 		} else {
 			table_CFFAndGlyf cffpr = otfcc_readCFFAndGlyfTables(packet, options, font->head);
 			font->CFF_ = cffpr.meta;

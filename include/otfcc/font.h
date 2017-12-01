@@ -8,6 +8,8 @@ typedef struct _caryll_font otfcc_Font;
 
 #include "otfcc/glyph-order.h"
 
+#include "otfcc/table/fvar.h"
+
 #include "otfcc/table/head.h"
 #include "otfcc/table/glyf.h"
 #include "otfcc/table/CFF.h"
@@ -25,6 +27,7 @@ typedef struct _caryll_font otfcc_Font;
 #include "otfcc/table/cvt.h"
 #include "otfcc/table/fpgm-prep.h"
 #include "otfcc/table/gasp.h"
+#include "otfcc/table/VDMX.h"
 
 #include "otfcc/table/LTSH.h"
 #include "otfcc/table/VORG.h"
@@ -44,6 +47,8 @@ typedef enum { FONTTYPE_TTF, FONTTYPE_CFF } otfcc_font_subtype;
 
 struct _caryll_font {
 	otfcc_font_subtype subtype;
+
+	table_fvar *fvar;
 
 	table_head *head;
 	table_hhea *hhea;
@@ -66,6 +71,7 @@ struct _caryll_font {
 	table_fpgm_prep *prep;
 	table_cvt *cvt_;
 	table_gasp *gasp;
+	table_VDMX *VDMX;
 
 	table_LTSH *LTSH;
 

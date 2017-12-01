@@ -24,7 +24,7 @@
         "ascender": 850,
         "descender": -350,
         "lineGap": 0,
-        "advanceWithMax": 713,
+        "advanceWidthMax": 713,
         "minLeftSideBearing": 25,
         "minRightSideBearing": 25,
         "xMaxExtent": 643,
