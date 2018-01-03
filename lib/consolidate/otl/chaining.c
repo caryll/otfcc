@@ -21,8 +21,8 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 		lookup_handle *h = &(rule->apply[j].lookup);
 		if (h->name) {
 			for (tableid_t k = 0; k < table->lookups.length; k++) {
+				if (!table->lookups.items[k]->subtables.length) continue;
 				if (strcmp(table->lookups.items[k]->name, h->name) != 0) continue;
-				if (table->lookups.items[k]->subtables.length == 0) continue;
 				foundLookup = true;
 				Handle.consolidateTo(h, k, table->lookups.items[k]->name);
 			}
@@ -33,7 +33,10 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 				Handle.dispose(&rule->apply[j].lookup);
 			}
 		} else if (h->state == HANDLE_STATE_INDEX) {
-			if (h->index >= table->lookups.length) h->index = 0;
+			if (h->index >= table->lookups.length) {
+				logWarning("[Consolidate] Quoting an invalid lookup #%d.", h->index);
+				h->index = 0;
+			}
 			Handle.consolidateTo(h, h->index, table->lookups.items[h->index]->name);
 		}
 	}
