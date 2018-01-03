@@ -1,6 +1,6 @@
 #include "private.h"
 
-#define LARGE_SUBTABLE_LIMIT 1024
+#define LARGE_SUBTABLE_LIMIT 4096
 
 static tableid_t _declare_lookup_writer(otl_LookupType type,
                                         caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
