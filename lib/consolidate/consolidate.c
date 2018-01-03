@@ -366,33 +366,30 @@ static bool featureIsNotEmpty(const otl_FeaturePtr *rFeat, void *env) {
 static void consolidateOTLTable(otfcc_Font *font, table_OTL *table, const otfcc_Options *options) {
 	if (!font->glyph_order || !table) return;
 	do {
-		tableid_t lutN = 0;
-		for (tableid_t j = 0; j < table->lookups.length; j++) {
-			if (table->lookups.items[j]->subtables.length > 0) lutN += 1;
-		}
+		tableid_t featN = table->features.length;
+		tableid_t lutN = table->lookups.length;
 
-		// remove empty subtables
+		// Perform consolidation
 		for (tableid_t j = 0; j < table->lookups.length; j++) {
 			otfcc_consolidate_lookup(font, table, table->lookups.items[j], options);
 		}
-		tableid_t lutN1 = 0;
-		for (tableid_t j = 0; j < table->lookups.length; j++) {
-			if (table->lookups.items[j]->subtables.length > 0) lutN1 += 1;
+		// remove empty features
+		for (tableid_t j = 0; j < table->features.length; j++) {
+			otl_Feature *feature = table->features.items[j];
+			otl_iLookupRefList.filterEnv(&feature->lookups, lookupRefIsNotEmpty, NULL);
 		}
-		if (lutN1 >= lutN) break;
-	} while (true);
-	// remove empty features
-	for (tableid_t j = 0; j < table->features.length; j++) {
-		otl_Feature *feature = table->features.items[j];
-		otl_iLookupRefList.filterEnv(&feature->lookups, lookupRefIsNotEmpty, NULL);
-	}
-	// remove empty lookups
-	for (tableid_t j = 0; j < table->languages.length; j++) {
-		otl_LanguageSystem *lang = table->languages.items[j];
-		otl_iFeatureRefList.filterEnv(&lang->features, featureRefIsNotEmpty, NULL);
-	}
-	otl_iLookupList.filterEnv(&table->lookups, lookupIsNotEmpty, NULL);
-	otl_iFeatureList.filterEnv(&table->features, featureIsNotEmpty, NULL);
+		// remove empty lookups
+		for (tableid_t j = 0; j < table->languages.length; j++) {
+			otl_LanguageSystem *lang = table->languages.items[j];
+			otl_iFeatureRefList.filterEnv(&lang->features, featureRefIsNotEmpty, NULL);
+		}
+		otl_iLookupList.filterEnv(&table->lookups, lookupIsNotEmpty, NULL);
+		otl_iFeatureList.filterEnv(&table->features, featureIsNotEmpty, NULL);
+
+		tableid_t featN1 = table->features.length;
+		tableid_t lutN1 = table->lookups.length;
+		if(featN1 >= featN && lutN1 >= lutN) break;
+	} while(true);
 }
 
 static void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
