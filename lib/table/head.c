@@ -23,7 +23,7 @@ table_head *otfcc_readHead(const otfcc_Packet packet, const otfcc_Options *optio
 			table_head *head;
 			NEW(head);
 			head->version = read_32s(data);
-			head->fontRevison = read_32u(data + 4);
+			head->fontRevision = read_32u(data + 4);
 			head->checkSumAdjustment = read_32u(data + 8);
 			head->magicNumber = read_32u(data + 12);
 			head->flags = read_16u(data + 16);
@@ -69,7 +69,7 @@ void otfcc_dumpHead(const table_head *table, json_value *root, const otfcc_Optio
 	loggedStep("head") {
 		json_value *head = json_object_new(15);
 		json_object_push(head, "version", json_double_new(otfcc_from_fixed(table->version)));
-		json_object_push(head, "fontRevison", json_double_new(otfcc_from_fixed(table->fontRevison)));
+		json_object_push(head, "fontRevision", json_double_new(otfcc_from_fixed(table->fontRevision)));
 		json_object_push(head, "flags", otfcc_dump_flags(table->flags, headFlagsLabels));
 		json_object_push(head, "unitsPerEm", json_integer_new(table->unitsPerEm));
 		json_object_push(head, "created", json_integer_new(table->created));
@@ -93,7 +93,7 @@ table_head *otfcc_parseHead(const json_value *root, const otfcc_Options *options
 	if ((table = json_obj_get_type(root, "head", json_object))) {
 		loggedStep("head") {
 			head->version = otfcc_to_fixed(json_obj_getnum_fallback(table, "version", 0));
-			head->fontRevison = otfcc_to_fixed(json_obj_getnum_fallback(table, "fontRevison", 0));
+			head->fontRevision = otfcc_to_fixed(json_obj_getnum_fallback(table, "fontRevision", 0));
 			head->flags = otfcc_parse_flags(json_obj_get(table, "flags"), headFlagsLabels);
 			head->unitsPerEm = json_obj_getnum_fallback(table, "unitsPerEm", 0);
 			head->created = json_obj_getnum_fallback(table, "created", 0);
@@ -116,7 +116,7 @@ caryll_Buffer *otfcc_buildHead(const table_head *head, const otfcc_Options *opti
 	caryll_Buffer *buf = bufnew();
 	if (!head) return buf;
 	bufwrite32b(buf, head->version);
-	bufwrite32b(buf, head->fontRevison);
+	bufwrite32b(buf, head->fontRevision);
 	bufwrite32b(buf, head->checkSumAdjustment);
 	bufwrite32b(buf, head->magicNumber);
 	bufwrite16b(buf, head->flags);

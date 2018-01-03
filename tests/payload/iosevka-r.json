@@ -1,7 +1,7 @@
 {
     "head": {
         "version": 1.0,
-        "fontRevison": 1.0,
+        "fontRevision": 1.0,
         "flags": {
             "baselineAtY_0": true,
             "lsbAtX_0": true,

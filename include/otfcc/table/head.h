@@ -6,7 +6,7 @@
 typedef struct {
 	// Font header
 	f16dot16 version;
-	uint32_t fontRevison;
+	uint32_t fontRevision;
 	uint32_t checkSumAdjustment;
 	uint32_t magicNumber;
 	uint16_t flags;
