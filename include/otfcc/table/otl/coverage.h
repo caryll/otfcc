@@ -15,6 +15,7 @@ struct __otfcc_ICoverage {
 	json_value *(*dump)(const otl_Coverage *coverage);
 	otl_Coverage *(*parse)(const json_value *cov);
 	caryll_Buffer *(*build)(const otl_Coverage *coverage);
+	caryll_Buffer *(*buildFormat)(const otl_Coverage *coverage, uint16_t format);
 	void (*shrink)(otl_Coverage *coverage, bool dosort);
 	void (*push)(otl_Coverage *coverage, MOVE otfcc_GlyphHandle h);
 };

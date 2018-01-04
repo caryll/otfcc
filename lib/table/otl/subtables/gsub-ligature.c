@@ -120,7 +120,7 @@ static int by_gid(ligature_aggerator *a, ligature_aggerator *b) {
 	return a->gid - b->gid;
 }
 
-caryll_Buffer *otfcc_build_gsub_ligature_subtable(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gsub_ligature_subtable(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
 	const subtable_gsub_ligature *subtable = &(_subtable->gsub_ligature);
 
 	ligature_aggerator *h = NULL, *s, *tmp;

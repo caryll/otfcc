@@ -2,16 +2,43 @@
 
 #define LARGE_SUBTABLE_LIMIT 4096
 
-static tableid_t _declare_lookup_writer(otl_LookupType type,
-                                        caryll_Buffer *(*fn)(const otl_Subtable *_subtable),
+static uint32_t featureNameToTag(const sds name) {
+	uint32_t tag = 0;
+	if (sdslen(name) > 0) {
+		tag |= ((uint8_t)name[0]) << 24;
+	} else {
+		tag |= ((uint8_t)' ') << 24;
+	}
+	if (sdslen(name) > 1) {
+		tag |= ((uint8_t)name[1]) << 16;
+	} else {
+		tag |= ((uint8_t)' ') << 16;
+	}
+	if (sdslen(name) > 2) {
+		tag |= ((uint8_t)name[2]) << 8;
+	} else {
+		tag |= ((uint8_t)' ') << 8;
+	}
+	if (sdslen(name) > 3) {
+		tag |= ((uint8_t)name[3]) << 0;
+	} else {
+		tag |= ((uint8_t)' ') << 0;
+	}
+	return tag;
+}
+
+typedef caryll_Buffer *(*_otl_Builder)(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics);
+
+static tableid_t _declare_lookup_writer(otl_LookupType type, _otl_Builder fn,
                                         const otl_Lookup *lookup, caryll_Buffer ***subtables,
-                                        size_t *lastOffset, bool *preferExtensionForThisLUT) {
+                                        size_t *lastOffset, bool *preferExtensionForThisLUT,
+										otl_BuildHeuristics heuristics) {
 	if (lookup->type == type) {
 		NEW(*subtables, lookup->subtables.length);
 		size_t totalBufSizeShort = 0;
 		size_t totalBufSizeExt = 0;
 		for (tableid_t j = 0; j < lookup->subtables.length; j++) {
-			caryll_Buffer *buf = fn(lookup->subtables.items[j]);
+			caryll_Buffer *buf = fn(lookup->subtables.items[j], heuristics);
 			(*subtables)[j] = buf;
 			totalBufSizeShort += buf->size;
 			totalBufSizeExt += 8;
@@ -31,10 +58,10 @@ static tableid_t _declare_lookup_writer(otl_LookupType type,
 #define LOOKUP_WRITER(type, fn)                                                                    \
 	if (!written)                                                                                  \
 		written = _declare_lookup_writer(type, fn, lookup, subtables, lastOffset,                  \
-		                                 preferExtensionForThisLUT);
+		                                 preferExtensionForThisLUT, heuristics);
 
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables,
-                               size_t *lastOffset, bool *preferExtensionForThisLUT) {
+                               size_t *lastOffset, bool *preferExtensionForThisLUT, otl_BuildHeuristics heuristics) {
 	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
 		return otfcc_classifiedBuildChaining(lookup, subtables, lastOffset);
 	}
@@ -54,6 +81,22 @@ static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtab
 	return written;
 }
 
+static otl_BuildHeuristics getLookupHeuristics(const table_OTL *table, const otl_Lookup *lut){
+	otl_BuildHeuristics heu = OTL_BH_NORMAL;
+	// GSUB VERT heuristics
+	// GDI have some restrictions on the internal format of the lookup inisde a VERT feature
+	if (lut->type == otl_type_gsub_single) {
+		for (tableid_t j = 0; j < table->features.length; j++) {
+			const otl_Feature *fea = table->features.items[j];
+			if (featureNameToTag(fea->name) != 'vert') continue;
+			for (tableid_t k = 0; k < fea->lookups.length; k++) {
+				if (fea->lookups.items[k] == lut) heu |= OTL_BH_GSUB_VERT;
+			}
+		}
+	}
+	return heu;
+}
+
 // When writing lookups, otfcc will try to maintain everything correctly.
 // That is, we will use extended layout lookups automatically when the
 // offsets are too large.
@@ -68,12 +111,12 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 
 	size_t lastOffset = 0;
 	for (tableid_t j = 0; j < table->lookups.length; j++) {
-
 		otl_Lookup *lookup = table->lookups.items[j];
+		otl_BuildHeuristics heu = getLookupHeuristics(table, lookup);
 		logProgress("Building lookup %s (%u/%u)\n", lookup->name, j,
 		            (uint32_t)table->lookups.length);
 		subtableQuantity[j] =
-		    _build_lookup(lookup, &(subtables[j]), &lastOffset, &(preferExtForThisLut[j]));
+		    _build_lookup(lookup, &(subtables[j]), &lastOffset, &(preferExtForThisLut[j]), heu);
 	}
 
 	size_t headerSize = 2 + 2 * table->lookups.length;
@@ -139,30 +182,6 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 	return root;
 }
 
-static uint32_t featureNameToTag(const sds name) {
-	uint32_t tag = 0;
-	if (sdslen(name) > 0) {
-		tag |= ((uint8_t)name[0]) << 24;
-	} else {
-		tag |= ((uint8_t)' ') << 24;
-	}
-	if (sdslen(name) > 1) {
-		tag |= ((uint8_t)name[1]) << 16;
-	} else {
-		tag |= ((uint8_t)' ') << 16;
-	}
-	if (sdslen(name) > 2) {
-		tag |= ((uint8_t)name[2]) << 8;
-	} else {
-		tag |= ((uint8_t)' ') << 8;
-	}
-	if (sdslen(name) > 3) {
-		tag |= ((uint8_t)name[3]) << 0;
-	} else {
-		tag |= ((uint8_t)' ') << 0;
-	}
-	return tag;
-}
 static bk_Block *writeOTLFeatures(const table_OTL *table, const otfcc_Options *options) {
 	bk_Block *root = bk_new_Block(b16, table->features.length, bkover);
 	for (tableid_t j = 0; j < table->features.length; j++) {

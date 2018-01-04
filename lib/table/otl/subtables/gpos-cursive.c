@@ -77,7 +77,8 @@ otl_Subtable *otl_gpos_parse_cursive(const json_value *_subtable, const otfcc_Op
 	return (otl_Subtable *)subtable;
 }
 
-caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_cursive(const otl_Subtable *_subtable,
+                                        otl_BuildHeuristics heuristics) {
 	const subtable_gpos_cursive *subtable = &(_subtable->gpos_cursive);
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {
