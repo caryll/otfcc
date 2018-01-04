@@ -381,7 +381,7 @@ bk_Block *otfcc_build_gpos_pair_classes(const otl_Subtable *_subtable) {
 	DELETE(Coverage.free, cov);
 	return root;
 }
-caryll_Buffer *otfcc_build_gpos_pair(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_pair(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
 	bk_Block *format1 = otfcc_build_gpos_pair_individual(_subtable);
 	bk_Block *format2 = otfcc_build_gpos_pair_classes(_subtable);
 	bk_Graph *g1 = bk_newGraphFromRootBlock(format1);

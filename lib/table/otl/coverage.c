@@ -131,7 +131,8 @@ static otl_Coverage *parseCoverage(const json_value *cov) {
 static int by_gid(const void *a, const void *b) {
 	return *((glyphid_t *)a) - *((glyphid_t *)b);
 }
-static caryll_Buffer *buildCoverage(const otl_Coverage *coverage) {
+
+static caryll_Buffer *buildCoverageFormat(const otl_Coverage *coverage, uint16_t format) {
 	// sort the gids in coverage
 	if (!coverage->numGlyphs) {
 		caryll_Buffer *buf = bufnew();
@@ -186,15 +187,30 @@ static caryll_Buffer *buildCoverage(const otl_Coverage *coverage) {
 	nRanges += 1;
 	bufwrite16b(format2, nRanges);
 	bufwrite_bufdel(format2, ranges);
-	if (buflen(format1) < buflen(format2)) {
+
+	if (format == 1) {
 		buffree(format2);
 		FREE(r);
 		return format1;
-	} else {
+	} else if (format == 2) {
 		buffree(format1);
 		FREE(r);
 		return format2;
+	} else {
+		if (buflen(format1) < buflen(format2)) {
+			buffree(format2);
+			FREE(r);
+			return format1;
+		} else {
+			buffree(format1);
+			FREE(r);
+			return format2;
+		}
 	}
+}
+
+static caryll_Buffer *buildCoverage(const otl_Coverage *coverage) {
+	return buildCoverageFormat(coverage, 0);
 }
 
 static int byHandleGID(const void *a, const void *b) {
@@ -234,6 +250,7 @@ const struct __otfcc_ICoverage otl_iCoverage = {
     .dump = dumpCoverage,
     .parse = parseCoverage,
     .build = buildCoverage,
+	.buildFormat = buildCoverageFormat,
     .shrink = shrinkCoverage,
     .push = pushToCoverage,
 };

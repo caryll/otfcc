@@ -194,7 +194,7 @@ otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable,
 	return (otl_Subtable *)st;
 }
 
-caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
 	const subtable_gpos_markToLigature *subtable = &(_subtable->gpos_markToLigature);
 	otl_Coverage *marks = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->markArray.length; j++) {

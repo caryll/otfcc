@@ -68,7 +68,7 @@ otl_Subtable *otl_gsub_parse_multi(const json_value *_subtable, const otfcc_Opti
 	return (otl_Subtable *)st;
 }
 
-caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gsub_multi_subtable(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
 	const subtable_gsub_multi *subtable = &(_subtable->gsub_multi);
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {

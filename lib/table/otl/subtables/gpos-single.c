@@ -84,7 +84,7 @@ otl_Subtable *otl_gpos_parse_single(const json_value *_subtable, const otfcc_Opt
 	return (otl_Subtable *)subtable;
 }
 
-caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
 	const subtable_gpos_single *subtable = &(_subtable->gpos_single);
 	bool isConst = subtable->length > 0;
 	uint16_t format = 0;
@@ -102,11 +102,12 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 		Coverage.push(cov, Handle.dup(subtable->items[j].target));
 	}
 
+	caryll_Buffer *coverageBuf = Coverage.build(cov);
+	
 	if (isConst) {
 		bk_Block *b =
 		    (bk_new_Block(b16, 1, // Format
-		                  p16,
-		                  bk_newBlockFromBuffer(Coverage.build(cov)),               // coverage
+		                  p16, bk_newBlockFromBuffer(coverageBuf),                  // coverage
 		                  b16, format,                                              // format
 		                  bkembed, bk_gpos_value(subtable->items[0].value, format), // value
 		                  bkover));
@@ -114,7 +115,7 @@ caryll_Buffer *otfcc_build_gpos_single(const otl_Subtable *_subtable) {
 		return bk_build_Block(b);
 	} else {
 		bk_Block *b = bk_new_Block(b16, 2,                                          // Format
-		                           p16, bk_newBlockFromBuffer(Coverage.build(cov)), // coverage
+		                           p16, bk_newBlockFromBuffer(coverageBuf),         // coverage
 		                           b16, format,                                     // format
 		                           b16, subtable->length,                           // quantity
 		                           bkover);
