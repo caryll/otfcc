@@ -97,25 +97,29 @@ otl_Subtable *otl_gsub_parse_single(const json_value *_subtable, const otfcc_Opt
 	return (otl_Subtable *)subtable;
 };
 
-caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
+caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics) {
 	const subtable_gsub_single *subtable = &(_subtable->gsub_single);
-	bool isConstantDifference = true;
-	if (subtable->length > 1) {
+	bool isConstantDifference = subtable->length > 0;
+	if (isConstantDifference) {
 		int32_t difference = subtable->items[0].to.index - subtable->items[0].from.index;
+		isConstantDifference = isConstantDifference && difference < 0x8000 && difference > -0x8000;
 		for (glyphid_t j = 1; j < subtable->length; j++) {
-			isConstantDifference =
-			    isConstantDifference &&
-			    ((subtable->items[j].to.index - subtable->items[j].from.index) == difference);
+			int32_t diffJ = subtable->items[j].to.index - subtable->items[j].from.index;
+			isConstantDifference = isConstantDifference && diffJ == difference
+				&& diffJ < 0x8000 && diffJ > -0x8000;
 		}
 	}
 	otl_Coverage *cov = Coverage.create();
 	for (glyphid_t j = 0; j < subtable->length; j++) {
 		Coverage.push(cov, Handle.dup(subtable->items[j].from));
 	}
-	if (isConstantDifference && subtable->length > 0) {
+
+	caryll_Buffer *coverageBuf = Coverage.buildFormat(cov, heuristics & OTL_BH_GSUB_VERT ? 1 : 0);
+
+	if (isConstantDifference && !(heuristics & OTL_BH_GSUB_VERT)) {
 		bk_Block *b =
 		    bk_new_Block(b16, 1,                                          // Format
-		                 p16, bk_newBlockFromBuffer(Coverage.build(cov)), // coverage
+		                 p16, bk_newBlockFromBuffer(coverageBuf),         // coverage
 		                 b16,
 		                 subtable->items[0].to.index - subtable->items[0].from.index, // delta
 		                 bkover);
@@ -123,7 +127,7 @@ caryll_Buffer *otfcc_build_gsub_single_subtable(const otl_Subtable *_subtable) {
 		return bk_build_Block(b);
 	} else {
 		bk_Block *b = bk_new_Block(b16, 2,                                          // Format
-		                           p16, bk_newBlockFromBuffer(Coverage.build(cov)), // coverage
+		                           p16, bk_newBlockFromBuffer(coverageBuf),         // coverage
 		                           b16, subtable->length,                           // quantity
 		                           bkover);
 		for (glyphid_t k = 0; k < subtable->length; k++) {

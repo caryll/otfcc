@@ -5,7 +5,11 @@
 #include "bk/bkgraph.h"
 #include "../../otl.h"
 
-#define checkLength(offset)                                                                                            \
-	if (tableLength < offset) { goto FAIL; }
+typedef enum {
+	OTL_BH_NORMAL = 0,
+	OTL_BH_GSUB_VERT = 1
+} otl_BuildHeuristics;
+
+#define checkLength(offset) if (tableLength < offset) { goto FAIL; }
 
 #endif

@@ -9,6 +9,6 @@ otl_Subtable *otl_read_gpos_markToLigature(const font_file_pointer data, uint32_
 json_value *otl_gpos_dump_markToLigature(const otl_Subtable *st);
 otl_Subtable *otl_gpos_parse_markToLigature(const json_value *_subtable,
                                             const otfcc_Options *options);
-caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable);
+caryll_Buffer *otfcc_build_gpos_markToLigature(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics);
 
 #endif
