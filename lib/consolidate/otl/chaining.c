@@ -21,6 +21,7 @@ bool consolidate_chaining(otfcc_Font *font, table_OTL *table, otl_Subtable *_sub
 		lookup_handle *h = &(rule->apply[j].lookup);
 		if (h->name) {
 			for (tableid_t k = 0; k < table->lookups.length; k++) {
+				if (!table->lookups.items[k]) continue;
 				if (!table->lookups.items[k]->subtables.length) continue;
 				if (strcmp(table->lookups.items[k]->name, h->name) != 0) continue;
 				foundLookup = true;
