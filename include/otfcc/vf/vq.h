@@ -47,10 +47,15 @@ extern caryll_VectorInterfaceTypeName(VQ) {
 	pos_t (*getStill)(const VQ v);
 	// Creating still
 	VQ (*createStill)(pos_t x);
-
+	// Being still
+	bool (*isStill)(const VQ v);
+	// Being zero
+	bool (*isZero)(const VQ v, const pos_t err);
 	// util functions
 	// point linear transform
 	VQ (*pointLinearTfm)(const VQ ax, pos_t a, const VQ x, pos_t b, const VQ y);
+	void (*addDelta)(MODIFY VQ * v, const bool touched, const vq_Region *const r,
+	                 const pos_t quantity);
 }
 iVQ;
 #endif

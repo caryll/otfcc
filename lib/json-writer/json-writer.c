@@ -19,7 +19,7 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	GlyfIOContext ctx = {.locaIsLong = font->head->indexToLocFormat,
 	                     .numGlyphs = font->maxp->numGlyphs,
 	                     .nPhantomPoints = 4,
-	                     .hasVerticalMetrics = !!(font->vhea) && !!(font->vmtx),
+	                     .hasVerticalMetrics = !!(font->vhea),
 	                     .exportFDSelect = font->CFF_ && font->CFF_->isCID,
 	                     .fvar = font->fvar};
 	otfcc_dumpGlyf(font->glyf, root, options, &ctx);

@@ -62,12 +62,10 @@ glyf_GlyphStat stat_single_glyph(table_glyf *table, glyf_ComponentReference *gr,
 		ref.b = rr->a * gr->b + rr->b * gr->d;
 		ref.c = gr->a * rr->c + gr->c * rr->d;
 		ref.d = gr->b * rr->c + rr->d * gr->d;
-		iVQ.replace(&ref.x,
-		            iVQ.createStill(iVQ.getStill(rr->x) + rr->a * iVQ.getStill(gr->x) +
-		                            rr->b * iVQ.getStill(gr->y)));
-		iVQ.replace(&ref.y,
-		            iVQ.createStill(iVQ.getStill(rr->y) + rr->c * iVQ.getStill(gr->x) +
-		                            rr->d * iVQ.getStill(gr->y)));
+		iVQ.replace(&ref.x, iVQ.createStill(iVQ.getStill(rr->x) + rr->a * iVQ.getStill(gr->x) +
+		                                    rr->b * iVQ.getStill(gr->y)));
+		iVQ.replace(&ref.y, iVQ.createStill(iVQ.getStill(rr->y) + rr->c * iVQ.getStill(gr->x) +
+		                                    rr->d * iVQ.getStill(gr->y)));
 
 		glyf_GlyphStat thatstat = stat_single_glyph(table, &ref, stated, depth + 1, topj, options);
 		if (thatstat.xMin < xmin) xmin = thatstat.xMin;
@@ -168,9 +166,8 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->subtype == FONTTYPE_CFF) {
 		// pass
 	} else {
-		while (count_a > 2 &&
-		       font->glyf->items[count_a - 1]->advanceWidth ==
-		           font->glyf->items[count_a - 2]->advanceWidth) {
+		while (count_a > 2 && iVQ.getStill(font->glyf->items[count_a - 1]->advanceWidth) ==
+		                          iVQ.getStill(font->glyf->items[count_a - 2]->advanceWidth)) {
 			count_a--;
 		}
 		count_k = font->glyf->length - count_a;
@@ -184,27 +181,27 @@ static void statHmtx(otfcc_Font *font, const otfcc_Options *options) {
 	length_t maxWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		if (fabs(g->horizontalOrigin) < 1.0 / 1000.0) {
-			g->horizontalOrigin = 0;
+		if (iVQ.isZero(g->horizontalOrigin, 1.0 / 1000.0)) {
+			iVQ.replace(&g->horizontalOrigin, iVQ.neutral());
 		} else {
 			lsbAtX_0 = false;
 		}
-		pos_t lsb = (g->stat.xMin) - (g->horizontalOrigin);
-		pos_t rsb = (g->advanceWidth) + (g->horizontalOrigin) - (g->stat.xMax);
+		const pos_t hori = iVQ.getStill(g->horizontalOrigin);
+		const pos_t advw = iVQ.getStill(g->advanceWidth);
+		const pos_t lsb = (g->stat.xMin) - hori;
+		const pos_t rsb = advw + hori - (g->stat.xMax);
 
 		if (j < count_a) {
-			hmtx->metrics[j].advanceWidth = g->advanceWidth;
+			hmtx->metrics[j].advanceWidth = advw;
 			hmtx->metrics[j].lsb = lsb;
 		} else {
 			hmtx->leftSideBearing[j - count_a] = lsb;
 		}
 
-		if (g->advanceWidth > maxWidth) maxWidth = g->advanceWidth;
+		if (advw > maxWidth) maxWidth = advw;
 		if (lsb < minLSB) minLSB = lsb;
 		if (rsb < minRSB) minRSB = rsb;
-		if (g->stat.xMax - g->horizontalOrigin > maxExtent) {
-			maxExtent = g->stat.xMax - g->horizontalOrigin;
-		}
+		if (g->stat.xMax - hori > maxExtent) { maxExtent = g->stat.xMax - hori; }
 	}
 	font->hhea->numberOfMetrics = count_a;
 	font->hhea->minLeftSideBearing = minLSB;
@@ -224,9 +221,8 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	if (font->subtype == FONTTYPE_CFF && !options->cff_short_vmtx) {
 		// pass
 	} else {
-		while (count_a > 2 &&
-		       font->glyf->items[count_a - 1]->advanceHeight ==
-		           font->glyf->items[count_a - 2]->advanceHeight) {
+		while (count_a > 2 && iVQ.getStill(font->glyf->items[count_a - 1]->advanceHeight) ==
+		                          iVQ.getStill(font->glyf->items[count_a - 2]->advanceHeight)) {
 			count_a--;
 		}
 		count_k = font->glyf->length - count_a;
@@ -240,20 +236,20 @@ static void statVmtx(otfcc_Font *font, const otfcc_Options *options) {
 	length_t maxHeight = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
 		glyf_Glyph *g = font->glyf->items[j];
-		pos_t tsb = (g->verticalOrigin) - (g->stat.yMax);
-		pos_t bsb = (g->stat.yMin) - (g->verticalOrigin) + (g->advanceHeight);
+		const pos_t vori = iVQ.getStill(g->verticalOrigin);
+		const pos_t advh = iVQ.getStill(g->advanceHeight);
+		const pos_t tsb = (vori) - (g->stat.yMax);
+		const pos_t bsb = (g->stat.yMin) - (vori) + (advh);
 		if (j < count_a) {
-			vmtx->metrics[j].advanceHeight = g->advanceHeight;
+			vmtx->metrics[j].advanceHeight = advh;
 			vmtx->metrics[j].tsb = tsb;
 		} else {
 			vmtx->topSideBearing[j - count_a] = tsb;
 		}
-		if (g->advanceHeight > maxHeight) maxHeight = g->advanceHeight;
+		if (advh > maxHeight) maxHeight = advh;
 		if (tsb < minTSB) minTSB = tsb;
 		if (bsb < minBSB) minBSB = bsb;
-		if (g->verticalOrigin - g->stat.yMin > maxExtent) {
-			maxExtent = g->verticalOrigin - g->stat.yMin;
-		}
+		if (vori - g->stat.yMin > maxExtent) { maxExtent = vori - g->stat.yMin; }
 	}
 	font->vhea->numOfLongVerMetrics = count_a;
 	font->vhea->minTop = minTSB;
@@ -460,9 +456,8 @@ static void statOS_2AverageWidth(otfcc_Font *font, const otfcc_Options *options)
 	if (options->keep_average_char_width) return;
 	uint32_t totalWidth = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->advanceWidth > 0) {
-			totalWidth += font->glyf->items[j]->advanceWidth;
-		}
+		const pos_t adw = iVQ.getStill(font->glyf->items[j]->advanceWidth);
+		if (adw > 0) { totalWidth += adw; }
 	}
 	font->OS_2->xAvgCharWidth = totalWidth / font->glyf->length;
 }
@@ -528,7 +523,7 @@ static void statCFFWidths(otfcc_Font *font) {
 	uint32_t *frequency;
 	NEW(frequency, MAX_STAT_METRIC);
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		uint16_t intWidth = (uint16_t)font->glyf->items[j]->advanceWidth;
+		uint16_t intWidth = (uint16_t)iVQ.getStill(font->glyf->items[j]->advanceWidth);
 		if (intWidth < MAX_STAT_METRIC) { frequency[intWidth] += 1; }
 	}
 	uint16_t maxfreq = 0;
@@ -543,10 +538,8 @@ static void statCFFWidths(otfcc_Font *font) {
 	uint16_t nn = 0;
 	uint32_t nnsum = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->advanceWidth != maxj) {
-			nn += 1;
-			nnsum += font->glyf->items[j]->advanceWidth;
-		}
+		const pos_t adw = iVQ.getStill(font->glyf->items[j]->advanceWidth);
+		if (adw != maxj) { nn += 1, nnsum += adw; }
 	}
 	int16_t nominalWidthX = 0;
 	if (nn > 0) nominalWidthX = nnsum / nn;
@@ -568,10 +561,8 @@ static void statVORG(otfcc_Font *font) {
 	uint32_t *frequency;
 	NEW(frequency, MAX_STAT_METRIC);
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->verticalOrigin >= 0 &&
-		    font->glyf->items[j]->verticalOrigin < MAX_STAT_METRIC) {
-			frequency[(uint16_t)(font->glyf->items[j]->verticalOrigin)] += 1;
-		}
+		const pos_t vori = iVQ.getStill(font->glyf->items[j]->verticalOrigin);
+		if (vori >= 0 && vori < MAX_STAT_METRIC) { frequency[(uint16_t)(vori)] += 1; }
 	}
 	// stat VORG.defaultVerticalOrigin
 	uint32_t maxfreq = 0;
@@ -589,16 +580,18 @@ static void statVORG(otfcc_Font *font) {
 
 	glyphid_t nVertOrigs = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->verticalOrigin != maxj) { nVertOrigs += 1; }
+		const pos_t vori = iVQ.getStill(font->glyf->items[j]->verticalOrigin);
+		if (vori != maxj) { nVertOrigs += 1; }
 	}
 	vorg->numVertOriginYMetrics = nVertOrigs;
 	NEW(vorg->entries, nVertOrigs);
 
 	glyphid_t jj = 0;
 	for (glyphid_t j = 0; j < font->glyf->length; j++) {
-		if (font->glyf->items[j]->verticalOrigin != maxj) {
+		const pos_t vori = iVQ.getStill(font->glyf->items[j]->verticalOrigin);
+		if (vori != maxj) {
 			vorg->entries[jj].gid = j;
-			vorg->entries[jj].verticalOrigin = font->glyf->items[j]->verticalOrigin;
+			vorg->entries[jj].verticalOrigin = vori;
 			jj += 1;
 		}
 	}

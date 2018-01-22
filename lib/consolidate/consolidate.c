@@ -388,8 +388,8 @@ static void consolidateOTLTable(otfcc_Font *font, table_OTL *table, const otfcc_
 
 		tableid_t featN1 = table->features.length;
 		tableid_t lutN1 = table->lookups.length;
-		if(featN1 >= featN && lutN1 >= lutN) break;
-	} while(true);
+		if (featN1 >= featN && lutN1 >= lutN) break;
+	} while (true);
 }
 
 static void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {
