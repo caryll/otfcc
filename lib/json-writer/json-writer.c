@@ -13,6 +13,7 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpPost(font->post, root, options);
 	otfcc_dumpOS_2(font->OS_2, root, options);
 	otfcc_dumpName(font->name, root, options);
+	otfcc_dumpMeta(font->meta, root, options);
 	otfcc_dumpCmap(font->cmap, root, options);
 	otfcc_dumpCFF(font->CFF_, root, options);
 

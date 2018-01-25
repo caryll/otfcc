@@ -24,6 +24,7 @@ static otfcc_Font *readOtf(void *_sfnt, uint32_t index, const otfcc_Options *opt
 		font->head = otfcc_readHead(packet, options);
 		font->maxp = otfcc_readMaxp(packet, options);
 		font->name = otfcc_readName(packet, options);
+		font->meta = otfcc_readMeta(packet, options);
 		font->OS_2 = otfcc_readOS_2(packet, options);
 		font->post = otfcc_readPost(packet, options);
 		font->hhea = otfcc_readHhea(packet, options);

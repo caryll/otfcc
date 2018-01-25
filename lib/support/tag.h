@@ -20,7 +20,7 @@ static INLINE void tag2str(uint32_t tag, char tags[4]) {
 	tags[3] = tag & 0xFF;
 }
 
-static INLINE uint32_t str2tag(char *tags) {
+static INLINE uint32_t str2tag(const char *tags) {
 	if (!tags) return 0;
 	uint32_t tag = 0;
 	uint8_t len = 0;

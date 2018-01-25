@@ -25,6 +25,7 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_SFNTBuilder_pushTable(builder, 'OS/2', otfcc_buildOS_2(font->OS_2, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'maxp', otfcc_buildMaxp(font->maxp, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'name', otfcc_buildName(font->name, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'meta', otfcc_buildMeta(font->meta, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'post',
 	                            otfcc_buildPost(font->post, font->glyph_order, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'cmap', otfcc_buildCmap(font->cmap, options));

@@ -14,7 +14,8 @@ static INLINE void copySVGAssigment(svg_Assignment *dst, const svg_Assignment *s
 static INLINE void disposeSVGAssignment(svg_Assignment *a) {
 	buffree(a->document);
 }
-caryll_standardValType(svg_Assignment, svg_iAssignment, initSVGAssigment, copySVGAssigment, disposeSVGAssignment);
+caryll_standardValType(svg_Assignment, svg_iAssignment, initSVGAssigment, copySVGAssigment,
+                       disposeSVGAssignment);
 caryll_standardVectorImpl(table_SVG, svg_Assignment, svg_iAssignment, table_iSVG);
 
 table_SVG *otfcc_readSVG(const otfcc_Packet packet, const otfcc_Options *options) {
@@ -66,14 +67,16 @@ void otfcc_dumpSVG(const table_SVG *svg, json_value *root, const otfcc_Options *
 			json_object_push(_a, "end", json_integer_new(a->end));
 			if (canUsePlainFormat(a->document)) {
 				json_object_push(_a, "format", json_string_new("plain"));
-				json_object_push(_a, "document",
-				                 json_string_new_length((uint32_t)a->document->size, (char *)a->document->data));
+				json_object_push(
+				    _a, "document",
+				    json_string_new_length((uint32_t)a->document->size, (char *)a->document->data));
 			} else {
 				size_t len = 0;
 				uint8_t *buf = base64_encode(a->document->data, a->document->size, &len);
 				json_object_push(_a, "format", json_string_new("base64"));
-				json_object_push(_a, "document", json_string_new_length((uint32_t)len, (char *)buf));
-				free(buf);
+				json_object_push(_a, "document",
+				                 json_string_new_length((uint32_t)len, (char *)buf));
+				FREE(buf);
 			}
 			json_array_push(_svg, _a);
 		}
@@ -105,7 +108,7 @@ table_SVG *otfcc_parseSVG(const json_value *root, const otfcc_Options *options) 
 				size_t len = 0;
 				uint8_t *buf = base64_encode((uint8_t *)doc, sdslen(doc), &len);
 				bufwrite_bytes(asg.document, len, buf);
-				free(buf);
+				FREE(buf);
 				sdsfree(doc);
 			}
 			table_iSVG.push(svg, asg);
