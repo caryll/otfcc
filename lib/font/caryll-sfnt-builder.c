@@ -57,15 +57,15 @@ void otfcc_deleteSFNTBuilder(otfcc_SFNTBuilder *builder) {
 }
 
 void otfcc_SFNTBuilder_pushTable(otfcc_SFNTBuilder *builder, uint32_t tag, caryll_Buffer *buffer) {
-	if (!builder) return;
+	if (!builder || !buffer) return;
 	otfcc_SFNTTableEntry *item;
 	const otfcc_Options *options = builder->options;
 	HASH_FIND_INT(builder->tables, &tag, item);
 	if (!item) {
 		item = createSegment(tag, buffer);
 		HASH_ADD_INT(builder->tables, tag, item);
-		logProgress("OpenType table %c%c%c%c successfully built.\n", (tag >> 24) & 0xff, (tag >> 16) & 0xff,
-		            (tag >> 8) & 0xff, tag & 0xff);
+		logProgress("OpenType table %c%c%c%c successfully built.\n", (tag >> 24) & 0xff,
+		            (tag >> 16) & 0xff, (tag >> 8) & 0xff, tag & 0xff);
 	} else {
 		buffree(buffer);
 	}

@@ -27,12 +27,13 @@ static uint32_t featureNameToTag(const sds name) {
 	return tag;
 }
 
-typedef caryll_Buffer *(*_otl_Builder)(const otl_Subtable *_subtable, otl_BuildHeuristics heuristics);
+typedef caryll_Buffer *(*_otl_Builder)(const otl_Subtable *_subtable,
+                                       otl_BuildHeuristics heuristics);
 
 static tableid_t _declare_lookup_writer(otl_LookupType type, _otl_Builder fn,
                                         const otl_Lookup *lookup, caryll_Buffer ***subtables,
                                         size_t *lastOffset, bool *preferExtensionForThisLUT,
-										otl_BuildHeuristics heuristics) {
+                                        otl_BuildHeuristics heuristics) {
 	if (lookup->type == type) {
 		NEW(*subtables, lookup->subtables.length);
 		size_t totalBufSizeShort = 0;
@@ -61,7 +62,8 @@ static tableid_t _declare_lookup_writer(otl_LookupType type, _otl_Builder fn,
 		                                 preferExtensionForThisLUT, heuristics);
 
 static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtables,
-                               size_t *lastOffset, bool *preferExtensionForThisLUT, otl_BuildHeuristics heuristics) {
+                               size_t *lastOffset, bool *preferExtensionForThisLUT,
+                               otl_BuildHeuristics heuristics) {
 	if (lookup->type == otl_type_gpos_chaining || lookup->type == otl_type_gsub_chaining) {
 		return otfcc_classifiedBuildChaining(lookup, subtables, lastOffset);
 	}
@@ -81,7 +83,7 @@ static tableid_t _build_lookup(const otl_Lookup *lookup, caryll_Buffer ***subtab
 	return written;
 }
 
-static otl_BuildHeuristics getLookupHeuristics(const table_OTL *table, const otl_Lookup *lut){
+static otl_BuildHeuristics getLookupHeuristics(const table_OTL *table, const otl_Lookup *lut) {
 	otl_BuildHeuristics heu = OTL_BH_NORMAL;
 	// GSUB VERT heuristics
 	// GDI have some restrictions on the internal format of the lookup inisde a VERT feature
@@ -297,6 +299,7 @@ static bk_Block *writeOTLScriptAndLanguages(const table_OTL *table, const otfcc_
 
 caryll_Buffer *otfcc_buildOtl(const table_OTL *table, const otfcc_Options *options,
                               const char *tag) {
+	if (!table) return NULL;
 	caryll_Buffer *buf;
 	loggedStep("%s", tag) {
 		bk_Block *lookups = writeOTLLookups(table, options, tag);

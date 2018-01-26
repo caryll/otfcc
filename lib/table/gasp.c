@@ -56,11 +56,14 @@ void otfcc_dumpGasp(const table_gasp *table, json_value *root, const otfcc_Optio
 		json_value *t = json_array_new(table->records.length);
 		for (uint16_t j = 0; j < table->records.length; j++) {
 			json_value *rec = json_object_new(5);
-			json_object_push(rec, "rangeMaxPPEM", json_integer_new(table->records.items[j].rangeMaxPPEM));
+			json_object_push(rec, "rangeMaxPPEM",
+			                 json_integer_new(table->records.items[j].rangeMaxPPEM));
 			json_object_push(rec, "dogray", json_boolean_new(table->records.items[j].dogray));
 			json_object_push(rec, "gridfit", json_boolean_new(table->records.items[j].gridfit));
-			json_object_push(rec, "symmetric_smoothing", json_boolean_new(table->records.items[j].symmetric_smoothing));
-			json_object_push(rec, "symmetric_gridfit", json_boolean_new(table->records.items[j].symmetric_gridfit));
+			json_object_push(rec, "symmetric_smoothing",
+			                 json_boolean_new(table->records.items[j].symmetric_smoothing));
+			json_object_push(rec, "symmetric_gridfit",
+			                 json_boolean_new(table->records.items[j].symmetric_gridfit));
 			json_array_push(t, rec);
 		}
 		json_object_push(root, "gasp", t);
@@ -90,8 +93,8 @@ table_gasp *otfcc_parseGasp(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildGasp(const table_gasp *gasp, const otfcc_Options *options) {
+	if (!gasp) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!gasp) return buf;
 	bufwrite16b(buf, 1);
 	bufwrite16b(buf, gasp->records.length);
 	for (uint16_t j = 0; j < gasp->records.length; j++) {

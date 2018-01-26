@@ -69,7 +69,8 @@ void otfcc_dumpHead(const table_head *table, json_value *root, const otfcc_Optio
 	loggedStep("head") {
 		json_value *head = json_object_new(15);
 		json_object_push(head, "version", json_double_new(otfcc_from_fixed(table->version)));
-		json_object_push(head, "fontRevision", json_double_new(otfcc_from_fixed(table->fontRevision)));
+		json_object_push(head, "fontRevision",
+		                 json_double_new(otfcc_from_fixed(table->fontRevision)));
 		json_object_push(head, "flags", otfcc_dump_flags(table->flags, headFlagsLabels));
 		json_object_push(head, "unitsPerEm", json_integer_new(table->unitsPerEm));
 		json_object_push(head, "created", json_integer_new(table->created));
@@ -113,8 +114,8 @@ table_head *otfcc_parseHead(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildHead(const table_head *head, const otfcc_Options *options) {
+	if (!head) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!head) return buf;
 	bufwrite32b(buf, head->version);
 	bufwrite32b(buf, head->fontRevision);
 	bufwrite32b(buf, head->checkSumAdjustment);

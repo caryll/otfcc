@@ -4,8 +4,7 @@
 #include "bk/bkgraph.h"
 
 caryll_Buffer *otfcc_buildMeta(const table_meta *meta, const otfcc_Options *options) {
-	if (!meta || !meta->entries.length) return bufnew();
-
+	if (!meta || !meta->entries.length) return NULL;
 	bk_Block *root = bk_new_Block(b32, meta->version,                  // Version
 	                              b32, meta->flags,                    // Flags
 	                              b32, 0,                              // RESERVED

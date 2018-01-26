@@ -76,7 +76,8 @@ void otfcc_dumpPost(const table_post *table, json_value *root, const otfcc_Optio
 	loggedStep("post") {
 		json_value *post = json_object_new(10);
 		json_object_push(post, "version", json_double_new(otfcc_from_fixed(table->version)));
-		json_object_push(post, "italicAngle", json_integer_new(otfcc_from_fixed(table->italicAngle)));
+		json_object_push(post, "italicAngle",
+		                 json_integer_new(otfcc_from_fixed(table->italicAngle)));
 		json_object_push(post, "underlinePosition", json_integer_new(table->underlinePosition));
 		json_object_push(post, "underlineThickness", json_integer_new(table->underlineThickness));
 		json_object_push(post, "isFixedPitch", json_boolean_new(table->isFixedPitch));
@@ -109,9 +110,10 @@ table_post *otfcc_parsePost(const json_value *root, const otfcc_Options *options
 	}
 	return post;
 }
-caryll_Buffer *otfcc_buildPost(const table_post *post, otfcc_GlyphOrder *glyphorder, const otfcc_Options *options) {
+caryll_Buffer *otfcc_buildPost(const table_post *post, otfcc_GlyphOrder *glyphorder,
+                               const otfcc_Options *options) {
+	if (!post) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!post) return buf;
 	bufwrite32b(buf, post->version);
 	bufwrite32b(buf, post->italicAngle);
 	bufwrite16b(buf, post->underlinePosition);

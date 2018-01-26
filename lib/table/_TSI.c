@@ -215,19 +215,24 @@ static void pushTSIEntries(tsi_BuildTarget *target, const table_TSI *tsi, const 
 }
 
 tsi_BuildTarget otfcc_buildTSI(const table_TSI *tsi, const otfcc_Options *options) {
+
 	tsi_BuildTarget target;
-	target.textPart = bufnew();
-	target.indexPart = bufnew();
+	if (!tsi) {
+		target.textPart = NULL;
+		target.indexPart = NULL;
+	} else {
+		target.textPart = bufnew();
+		target.indexPart = bufnew();
 
-	pushTSIEntries(&target, tsi, TSI_GLYPH, 0);
-	// magic
-	bufwrite16b(target.indexPart, 0xFFFE);
-	bufwrite16b(target.indexPart, 0x0000);
-	bufwrite32b(target.indexPart, 0xABFC1F34);
-	pushTSIEntries(&target, tsi, TSI_PREP, 1);
-	pushTSIEntries(&target, tsi, TSI_CVT, 1);
-	pushTSIEntries(&target, tsi, TSI_RESERVED_FFFC, 1);
-	pushTSIEntries(&target, tsi, TSI_FPGM, 1);
-
+		pushTSIEntries(&target, tsi, TSI_GLYPH, 0);
+		// magic
+		bufwrite16b(target.indexPart, 0xFFFE);
+		bufwrite16b(target.indexPart, 0x0000);
+		bufwrite32b(target.indexPart, 0xABFC1F34);
+		pushTSIEntries(&target, tsi, TSI_PREP, 1);
+		pushTSIEntries(&target, tsi, TSI_CVT, 1);
+		pushTSIEntries(&target, tsi, TSI_RESERVED_FFFC, 1);
+		pushTSIEntries(&target, tsi, TSI_FPGM, 1);
+	}
 	return target;
 }

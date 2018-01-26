@@ -122,7 +122,7 @@ static int byStartGID(const svg_Assignment *a, const svg_Assignment *b) {
 }
 
 caryll_Buffer *otfcc_buildSVG(const table_SVG *_svg, const otfcc_Options *options) {
-	if (!_svg || !_svg->length) return bufnew();
+	if (!_svg || !_svg->length) return NULL;
 
 	// sort assignments
 	table_SVG svg;

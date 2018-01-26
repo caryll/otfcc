@@ -20,11 +20,15 @@ table_TSI5 *otfcc_parseTSI5(const json_value *root, const otfcc_Options *options
 	if (!(_tsi = json_obj_get_type(root, "TSI5", json_object))) return NULL;
 	return otl_iClassDef.parse(_tsi);
 }
-caryll_Buffer *otfcc_buildTSI5(const table_TSI5 *tsi5, const otfcc_Options *options, glyphid_t numGlyphs) {
+caryll_Buffer *otfcc_buildTSI5(const table_TSI5 *tsi5, const otfcc_Options *options,
+                               glyphid_t numGlyphs) {
+	if (!tsi5) return NULL;
 	uint16_t *tsi5cls;
 	NEW_CLEAN_N(tsi5cls, numGlyphs);
 	for (glyphid_t j = 0; j < tsi5->numGlyphs; j++) {
-		if (tsi5->glyphs[j].index < numGlyphs) { tsi5cls[tsi5->glyphs[j].index] = tsi5->classes[j]; }
+		if (tsi5->glyphs[j].index < numGlyphs) {
+			tsi5cls[tsi5->glyphs[j].index] = tsi5->classes[j];
+		}
 	}
 	caryll_Buffer *buf = bufnew();
 	for (glyphid_t j = 0; j < numGlyphs; j++) {
