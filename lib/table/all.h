@@ -15,6 +15,7 @@
 #include "table/OS_2.h"
 #include "table/post.h"
 #include "table/name.h"
+#include "table/meta.h"
 
 #include "table/cmap.h"
 #include "table/cvt.h"

@@ -86,6 +86,15 @@ bk_Block *bk_push(bk_Block *b, int type0, ...) {
 	return b;
 }
 
+bk_Block *bk_newBlockFromStringLen(size_t len, const char *str) {
+	if (!str) return NULL;
+	bk_Block *b = bk_new_Block(bkover);
+	for (size_t j = 0; j < len; j++) {
+		bkblock_pushint(b, b8, str[j]);
+	}
+	return b;
+}
+
 bk_Block *bk_newBlockFromBuffer(MOVE caryll_Buffer *buf) {
 	if (!buf) return NULL;
 	bk_Block *b = bk_new_Block(bkover);

@@ -85,8 +85,8 @@ table_vhea *otfcc_parseVhea(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildVhea(const table_vhea *vhea, const otfcc_Options *options) {
+	if (!vhea) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!vhea) return buf;
 	bufwrite32b(buf, vhea->version);
 	bufwrite16b(buf, vhea->ascent);
 	bufwrite16b(buf, vhea->descent);

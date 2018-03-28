@@ -24,7 +24,8 @@ table_cvt *otfcc_readCvt(const otfcc_Packet packet, const otfcc_Options *options
 	return NULL;
 }
 
-void otfcc_dumpCvt(const table_cvt *table, json_value *root, const otfcc_Options *options, const char *tag) {
+void otfcc_dumpCvt(const table_cvt *table, json_value *root, const otfcc_Options *options,
+                   const char *tag) {
 	if (!table) return;
 	loggedStep("cvt") {
 		json_value *arr = json_array_new(table->length);
@@ -59,7 +60,8 @@ table_cvt *otfcc_parseCvt(const json_value *root, const otfcc_Options *options, 
 			// Bytes CVT dump
 			NEW(t);
 			size_t len;
-			uint8_t *raw = base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
+			uint8_t *raw =
+			    base64_decode((uint8_t *)table->u.string.ptr, table->u.string.length, &len);
 			t->length = (uint32_t)(len >> 1);
 			NEW(t->words, (t->length + 1));
 			for (uint16_t j = 0; j < t->length; j++) {
@@ -72,8 +74,8 @@ table_cvt *otfcc_parseCvt(const json_value *root, const otfcc_Options *options, 
 }
 
 caryll_Buffer *otfcc_buildCvt(const table_cvt *table, const otfcc_Options *options) {
+	if (!table) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!table) return buf;
 	for (uint16_t j = 0; j < table->length; j++) {
 		bufwrite16b(buf, table->words[j]);
 	}

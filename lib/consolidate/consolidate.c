@@ -351,16 +351,16 @@ void otfcc_consolidate_lookup(otfcc_Font *font, table_OTL *table, otl_Lookup *lo
 }
 
 static bool lookupRefIsNotEmpty(const otl_LookupRef *rLut, void *env) {
-	return (*rLut)->subtables.length > 0;
+	return rLut && *rLut && (*rLut)->subtables.length > 0;
 }
 static bool featureRefIsNotEmpty(const otl_FeatureRef *rFeat, void *env) {
-	return (*rFeat)->lookups.length > 0;
+	return rFeat && *rFeat && (*rFeat)->lookups.length > 0;
 }
 static bool lookupIsNotEmpty(const otl_LookupPtr *rLut, void *env) {
-	return (*rLut)->subtables.length > 0;
+	return rLut && *rLut && (*rLut)->subtables.length > 0;
 }
 static bool featureIsNotEmpty(const otl_FeaturePtr *rFeat, void *env) {
-	return (*rFeat)->lookups.length > 0;
+	return rFeat && *rFeat && (*rFeat)->lookups.length > 0;
 }
 
 static void consolidateOTLTable(otfcc_Font *font, table_OTL *table, const otfcc_Options *options) {
@@ -388,8 +388,8 @@ static void consolidateOTLTable(otfcc_Font *font, table_OTL *table, const otfcc_
 
 		tableid_t featN1 = table->features.length;
 		tableid_t lutN1 = table->lookups.length;
-		if(featN1 >= featN && lutN1 >= lutN) break;
-	} while(true);
+		if (featN1 >= featN && lutN1 >= lutN) break;
+	} while (true);
 }
 
 static void consolidateOTL(otfcc_Font *font, const otfcc_Options *options) {

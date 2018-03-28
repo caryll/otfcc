@@ -66,15 +66,18 @@ void otfcc_dumpMaxp(const table_maxp *table, json_value *root, const otfcc_Optio
 		json_object_push(maxp, "maxPoints", json_integer_new(table->maxPoints));
 		json_object_push(maxp, "maxContours", json_integer_new(table->maxContours));
 		json_object_push(maxp, "maxCompositePoints", json_integer_new(table->maxCompositePoints));
-		json_object_push(maxp, "maxCompositeContours", json_integer_new(table->maxCompositeContours));
+		json_object_push(maxp, "maxCompositeContours",
+		                 json_integer_new(table->maxCompositeContours));
 		json_object_push(maxp, "maxZones", json_integer_new(table->maxZones));
 		json_object_push(maxp, "maxTwilightPoints", json_integer_new(table->maxTwilightPoints));
 		json_object_push(maxp, "maxStorage", json_integer_new(table->maxStorage));
 		json_object_push(maxp, "maxFunctionDefs", json_integer_new(table->maxFunctionDefs));
 		json_object_push(maxp, "maxInstructionDefs", json_integer_new(table->maxInstructionDefs));
 		json_object_push(maxp, "maxStackElements", json_integer_new(table->maxStackElements));
-		json_object_push(maxp, "maxSizeOfInstructions", json_integer_new(table->maxSizeOfInstructions));
-		json_object_push(maxp, "maxComponentElements", json_integer_new(table->maxComponentElements));
+		json_object_push(maxp, "maxSizeOfInstructions",
+		                 json_integer_new(table->maxSizeOfInstructions));
+		json_object_push(maxp, "maxComponentElements",
+		                 json_integer_new(table->maxComponentElements));
 		json_object_push(maxp, "maxComponentDepth", json_integer_new(table->maxComponentDepth));
 		json_object_push(root, "maxp", maxp);
 	}
@@ -99,8 +102,8 @@ table_maxp *otfcc_parseMaxp(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildMaxp(const table_maxp *maxp, const otfcc_Options *options) {
+	if (!maxp) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!maxp) return buf;
 	bufwrite32b(buf, maxp->version);
 	bufwrite16b(buf, maxp->numGlyphs);
 	if (maxp->version > 0x00005000) {

@@ -23,6 +23,7 @@ static void hashVQS(caryll_Buffer *buf, vq_Segment s) {
 			}
 	}
 }
+
 static void hashVQ(caryll_Buffer *buf, VQ x) {
 	bufwrite32b(buf, otfcc_to_fixed(x.kernel));
 	bufwrite32b(buf, (uint32_t)x.shift.length);
@@ -34,11 +35,13 @@ static void hashVQ(caryll_Buffer *buf, VQ x) {
 GlyphHash nameGlyphByHash(glyf_Glyph *g, table_glyf *glyf) {
 	caryll_Buffer *buf = bufnew();
 	bufwrite8(buf, 'H');
-	bufwrite32b(buf, g->advanceWidth);
+	hashVQ(buf, g->advanceWidth);
+	bufwrite8(buf, 'h');
+	hashVQ(buf, g->horizontalOrigin);
 	bufwrite8(buf, 'V');
-	bufwrite32b(buf, g->advanceHeight);
+	hashVQ(buf, g->advanceHeight);
 	bufwrite8(buf, 'v');
-	bufwrite32b(buf, g->verticalOrigin);
+	hashVQ(buf, g->verticalOrigin);
 	// contours
 	bufwrite8(buf, 'C');
 	bufwrite8(buf, '(');
@@ -322,50 +325,56 @@ static void expandChainingLookups(otfcc_Font *font) {
 
 static void mergeHmtx(otfcc_Font *font) {
 	// Merge hmtx table into glyf.
-	if (font->hhea && font->hmtx && font->glyf) {
-		uint32_t count_a = font->hhea->numberOfMetrics;
-		for (glyphid_t j = 0; j < font->glyf->length; j++) {
-			font->glyf->items[j]->advanceWidth =
-			    font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
-			if (j < count_a) {
-				font->glyf->items[j]->horizontalOrigin =
-				    -font->hmtx->metrics[j].lsb + font->glyf->items[j]->stat.xMin;
-			} else {
-				font->glyf->items[j]->horizontalOrigin =
-				    -font->hmtx->leftSideBearing[j - count_a] + font->glyf->items[j]->stat.xMin;
-			}
-		}
+	if (!(font->hhea && font->hmtx && font->glyf)) return;
+	uint32_t count_a = font->hhea->numberOfMetrics;
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		glyf_Glyph *g = font->glyf->items[j];
+		const pos_t adw = font->hmtx->metrics[(j < count_a ? j : count_a - 1)].advanceWidth;
+		const pos_t lsb =
+		    j < count_a ? font->hmtx->metrics[j].lsb : font->hmtx->leftSideBearing[j - count_a];
+
+		iVQ.inplacePlus(&g->advanceWidth, iVQ.createStill(adw));
+		iVQ.inplacePlus(&g->horizontalOrigin, iVQ.createStill(-lsb + g->stat.xMin));
 	}
+	table_iHmtx.free(font->hmtx);
+	font->hmtx = NULL;
 }
 
 static void mergeVmtx(otfcc_Font *font) {
 	// Merge vmtx table into glyf.
-	if (font->vhea && font->vmtx && font->glyf) {
-		uint32_t count_a = font->vhea->numOfLongVerMetrics;
+	if (!(font->vhea && font->vmtx && font->glyf)) return;
+	uint32_t count_a = font->vhea->numOfLongVerMetrics;
+
+	pos_t *vorgs = NULL;
+
+	if (font->VORG) {
+		NEW_CLEAN_N(vorgs, font->glyf->length);
 		for (glyphid_t j = 0; j < font->glyf->length; j++) {
-			font->glyf->items[j]->advanceHeight =
-			    font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
-			if (j < count_a) {
-				font->glyf->items[j]->verticalOrigin =
-				    font->vmtx->metrics[j].tsb + font->glyf->items[j]->stat.yMax;
-			} else {
-				font->glyf->items[j]->verticalOrigin =
-				    font->vmtx->topSideBearing[j - count_a] + font->glyf->items[j]->stat.yMax;
-			}
+			vorgs[j] = font->VORG->defaultVerticalOrigin;
 		}
-		if (font->VORG) {
-			for (glyphid_t j = 0; j < font->glyf->length; j++) {
-				font->glyf->items[j]->verticalOrigin = font->VORG->defaultVerticalOrigin;
-			}
-			for (glyphid_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
-				if (font->VORG->entries[j].gid < font->glyf->length) {
-					font->glyf->items[font->VORG->entries[j].gid]->verticalOrigin =
-					    font->VORG->entries[j].verticalOrigin;
-				}
-			}
+		for (glyphid_t j = 0; j < font->VORG->numVertOriginYMetrics; j++) {
+			if (!(font->VORG->entries[j].gid < font->glyf->length)) continue;
+			vorgs[font->VORG->entries[j].gid] = font->VORG->entries[j].verticalOrigin;
 		}
+		table_iVORG.free(font->VORG);
+		font->VORG = NULL;
 	}
+
+	for (glyphid_t j = 0; j < font->glyf->length; j++) {
+		glyf_Glyph *g = font->glyf->items[j];
+		const pos_t adh = font->vmtx->metrics[(j < count_a ? j : count_a - 1)].advanceHeight;
+		const pos_t tsb =
+		    j < count_a ? font->vmtx->metrics[j].tsb : font->vmtx->topSideBearing[j - count_a];
+
+		iVQ.inplacePlus(&g->advanceHeight, iVQ.createStill(adh));
+		iVQ.inplacePlus(&g->verticalOrigin, iVQ.createStill(vorgs ? vorgs[j] : tsb + g->stat.yMax));
+	}
+
+	if (vorgs) FREE(vorgs);
+	table_iVmtx.free(font->vmtx);
+	font->vmtx = NULL;
 }
+
 static void mergeLTSH(otfcc_Font *font) {
 	if (font->glyf && font->LTSH) {
 		for (glyphid_t j = 0; j < font->glyf->length && j < font->LTSH->numGlyphs; j++) {
@@ -373,6 +382,7 @@ static void mergeLTSH(otfcc_Font *font) {
 		}
 	}
 }
+
 void otfcc_unconsolidateFont(otfcc_Font *font, const otfcc_Options *options) {
 	// Merge metrics
 	mergeHmtx(font);

@@ -32,8 +32,8 @@ table_VORG *otfcc_readVORG(const otfcc_Packet packet, const otfcc_Options *optio
 }
 
 caryll_Buffer *otfcc_buildVORG(const table_VORG *table, const otfcc_Options *options) {
+	if (!table) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!table) return buf;
 	bufwrite16b(buf, 1);
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, table->defaultVerticalOrigin);

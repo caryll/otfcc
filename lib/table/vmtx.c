@@ -47,8 +47,8 @@ table_vmtx *otfcc_readVmtx(const otfcc_Packet packet, const otfcc_Options *optio
 
 caryll_Buffer *otfcc_buildVmtx(const table_vmtx *vmtx, glyphid_t count_a, glyphid_t count_k,
                                const otfcc_Options *options) {
+	if (!vmtx) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!vmtx) return buf;
 	if (vmtx->metrics) {
 		for (glyphid_t j = 0; j < count_a; j++) {
 			bufwrite16b(buf, vmtx->metrics[j].advanceHeight);

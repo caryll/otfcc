@@ -91,10 +91,10 @@ typedef struct {
 	sds name;
 
 	// Metrics
-	pos_t horizontalOrigin;
-	length_t advanceWidth;
-	pos_t verticalOrigin;
-	length_t advanceHeight;
+	VQ horizontalOrigin;
+	VQ advanceWidth;
+	VQ verticalOrigin;
+	VQ advanceHeight;
 
 	// Outline
 	// NOTE: SFNT does not support mixed glyphs, but we do.

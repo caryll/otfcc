@@ -267,7 +267,7 @@ typedef struct {
 
 static void callback_draw_setwidth(void *_context, double width) {
 	outline_builder_context *context = (outline_builder_context *)_context;
-	context->g->advanceWidth = width + context->nominalWidthX;
+	iVQ.replace(&context->g->advanceWidth, iVQ.createStill(width + context->nominalWidthX));
 }
 static void callback_draw_next_contour(void *_context) {
 	outline_builder_context *context = (outline_builder_context *)_context;
@@ -428,7 +428,7 @@ static void buildOutline(glyphid_t i, cff_extract_context *context, const otfcc_
 		bc.defaultWidthX = context->meta->privateDict->defaultWidthX;
 		bc.nominalWidthX = context->meta->privateDict->nominalWidthX;
 	}
-	g->advanceWidth = bc.defaultWidthX;
+	iVQ.replace(&g->advanceWidth, iVQ.createStill(bc.defaultWidthX));
 
 	// Get charstring
 	uint8_t *charStringPtr = f->char_strings.data + f->char_strings.offset[i] - 1;

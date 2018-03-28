@@ -291,10 +291,6 @@ VQ json_vqOf(const json_value *cv, const table_fvar *fvar) {
 json_value *json_new_VQAxisSpan(const vq_AxisSpan *s) {
 	if (vq_AxisSpanIsOne(s)) {
 		return json_string_new("*");
-	} else if ((s->peak > 0 && s->start == 0 && s->end == 1) ||
-	           (s->peak == 0 && s->start == -1 && s->end == 1) ||
-	           (s->peak < 0 && s->start == -1 && s->end == 0)) {
-		return json_new_position(s->peak);
 	} else {
 		json_value *a = json_object_new(3);
 		json_object_push(a, "start", json_new_position(s->start));

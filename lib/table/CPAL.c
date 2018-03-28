@@ -94,7 +94,8 @@ table_CPAL *otfcc_readCPAL(const otfcc_Packet packet, const otfcc_Options *optio
 
 			if (version > 0) {
 				uint32_t offsetPaletteEntryLabelArray = read_32u(data + 24 + 2 * numPalettes);
-				if (offsetPaletteEntryLabelArray && length >= offsetPaletteEntryLabelArray + 4 * numPalettesEntries) {
+				if (offsetPaletteEntryLabelArray &&
+				    length >= offsetPaletteEntryLabelArray + 4 * numPalettesEntries) {
 					for (colorid_t j = 0; j < numPalettesEntries; j++) {
 						uint16_t label = read_16u(data + j * 2 + offsetPaletteEntryLabelArray);
 						for (tableid_t k = 0; k < numPalettes; k++) {
@@ -128,7 +129,9 @@ static INLINE json_value *dumpColor(cpal_Color *color) {
 static INLINE json_value *dumpPalette(cpal_Palette *palette) {
 	json_value *_palette = json_object_new(3);
 	if (palette->type) { json_object_push(_palette, "type", json_integer_new(palette->type)); }
-	if (palette->label != 0xFFFF) { json_object_push(_palette, "label", json_integer_new(palette->label)); }
+	if (palette->label != 0xFFFF) {
+		json_object_push(_palette, "label", json_integer_new(palette->label));
+	}
 	json_value *a = json_array_new(palette->colorset.length);
 	for (colorid_t j = 0; j < palette->colorset.length; j++) {
 		json_array_push(a, dumpColor(&palette->colorset.items[j]));
@@ -233,7 +236,7 @@ static INLINE bk_Block *buildPaletteEntryLabel(const table_CPAL *cpal) {
 	return block;
 }
 caryll_Buffer *otfcc_buildCPAL(const table_CPAL *cpal, const otfcc_Options *options) {
-	if (!cpal || !cpal->palettes.length) return bufnew();
+	if (!cpal || !cpal->palettes.length) return NULL;
 	uint16_t numPalettes = cpal->palettes.length;
 	uint16_t numPalettesEntries = cpal->palettes.items[0].colorset.length;
 	uint16_t numColorRecords = numPalettes * numPalettesEntries;

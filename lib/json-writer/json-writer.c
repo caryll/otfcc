@@ -13,13 +13,14 @@ static void *serializeToJson(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_dumpPost(font->post, root, options);
 	otfcc_dumpOS_2(font->OS_2, root, options);
 	otfcc_dumpName(font->name, root, options);
+	otfcc_dumpMeta(font->meta, root, options);
 	otfcc_dumpCmap(font->cmap, root, options);
 	otfcc_dumpCFF(font->CFF_, root, options);
 
 	GlyfIOContext ctx = {.locaIsLong = font->head->indexToLocFormat,
 	                     .numGlyphs = font->maxp->numGlyphs,
 	                     .nPhantomPoints = 4,
-	                     .hasVerticalMetrics = !!(font->vhea) && !!(font->vmtx),
+	                     .hasVerticalMetrics = !!(font->vhea),
 	                     .exportFDSelect = font->CFF_ && font->CFF_->isCID,
 	                     .fvar = font->fvar};
 	otfcc_dumpGlyf(font->glyf, root, options, &ctx);

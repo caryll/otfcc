@@ -23,8 +23,8 @@ table_LTSH *otfcc_readLTSH(const otfcc_Packet packet, const otfcc_Options *optio
 	return NULL;
 }
 caryll_Buffer *otfcc_buildLTSH(const table_LTSH *ltsh, const otfcc_Options *options) {
+	if (!ltsh) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!ltsh) return buf;
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, ltsh->numGlyphs);
 	for (uint16_t j = 0; j < ltsh->numGlyphs; j++) {
