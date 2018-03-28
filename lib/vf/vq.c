@@ -236,6 +236,30 @@ static VQ vqCreateStill(pos_t x) {
 	vq.kernel = x;
 	return vq;
 }
+static bool vqIsStill(const VQ v) {
+	for (size_t j = 0; j < v.shift.length; j++) {
+		switch (v.shift.items[j].type) {
+			case VQ_STILL:
+				break;
+			default:
+				return false;
+		}
+	}
+	return true;
+}
+static bool vqIsZero(const VQ v, const pos_t err) {
+	return vqIsStill(v) && fabs(vqGetStill(v)) < err;
+}
+static void vqAddDelta(MODIFY VQ *v, const bool touched, const vq_Region *const r,
+                       const pos_t quantity) {
+	if (!quantity) return;
+	vq_Segment nudge;
+	nudge.type = VQ_DELTA;
+	nudge.val.delta.region = r;
+	nudge.val.delta.touched = touched;
+	nudge.val.delta.quantity = quantity;
+	vq_iSegList.push(&v->shift, nudge);
+}
 
 // pointLinearTfm
 static VQ vqPointLinearTfm(const VQ ax, pos_t a, const VQ x, pos_t b, const VQ y) {
@@ -249,10 +273,13 @@ caryll_VectorInterfaceTypeName(VQ) iVQ = {
     caryll_standardValTypeMethods(VQ),
     .getStill = vqGetStill,
     .createStill = vqCreateStill,
-    caryll_MonoidAssigns(VQ),          // Monoid
-    caryll_GroupAssigns(VQ),           // Group
-    caryll_ModuleAssigns(VQ),          // Module
-    caryll_OrdEqAssigns(VQ),           // Eq-Ord
-    caryll_ShowAssigns(VQ),            // Show
-    .pointLinearTfm = vqPointLinearTfm // pointLinearTfm
+    .isStill = vqIsStill,
+    .isZero = vqIsZero,
+    caryll_MonoidAssigns(VQ),           // Monoid
+    caryll_GroupAssigns(VQ),            // Group
+    caryll_ModuleAssigns(VQ),           // Module
+    caryll_OrdEqAssigns(VQ),            // Eq-Ord
+    caryll_ShowAssigns(VQ),             // Show
+    .pointLinearTfm = vqPointLinearTfm, // pointLinearTfm
+    .addDelta = vqAddDelta              // addDelta
 };

@@ -28,7 +28,8 @@ static bool shouldDecodeAsUTF16(const otfcc_NameRecord *record) {
 	           (record->encodingID == 0 || record->encodingID == 1 || record->encodingID == 10));
 }
 static bool shouldDecodeAsBytes(const otfcc_NameRecord *record) {
-	return record->platformID == 1 && record->encodingID == 0 && record->languageID == 0; // Mac Roman English - I hope
+	return record->platformID == 1 && record->encodingID == 0 &&
+	       record->languageID == 0; // Mac Roman English - I hope
 }
 
 table_name *otfcc_readName(const otfcc_Packet packet, const otfcc_Options *options) {
@@ -88,8 +89,9 @@ void otfcc_dumpName(const table_name *name, json_value *root, const otfcc_Option
 			json_object_push(record, "encodingID", json_integer_new(r->encodingID));
 			json_object_push(record, "languageID", json_integer_new(r->languageID));
 			json_object_push(record, "nameID", json_integer_new(r->nameID));
-			json_object_push(record, "nameString",
-			                 json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
+			json_object_push(
+			    record, "nameString",
+			    json_string_new_length((uint32_t)sdslen(r->nameString), r->nameString));
 			json_array_push(_name, record);
 		}
 		json_object_push(root, "name", _name);
@@ -108,7 +110,8 @@ table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options
 		loggedStep("name") {
 
 			for (uint32_t j = 0; j < table->u.array.length; j++) {
-				if (!(table->u.array.values[j] && table->u.array.values[j]->type == json_object)) continue;
+				if (!(table->u.array.values[j] && table->u.array.values[j]->type == json_object))
+					continue;
 				json_value *_record = table->u.array.values[j];
 				if (!json_obj_get_type(_record, "platformID", json_integer)) {
 					logWarning("Missing or invalid platformID for name entry %d\n", j);
@@ -147,8 +150,8 @@ table_name *otfcc_parseName(const json_value *root, const otfcc_Options *options
 	return name;
 }
 caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *options) {
+	if (!name) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!name) return buf;
 	bufwrite16b(buf, 0);
 	bufwrite16b(buf, name->length);
 	bufwrite16b(buf, 0); // fill later
@@ -169,7 +172,8 @@ caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *opti
 			bufwrite_bytes(strings, sdslen(record->nameString), (uint8_t *)record->nameString);
 		} else {
 			size_t length;
-			uint8_t *decoded = base64_decode((uint8_t *)record->nameString, sdslen(record->nameString), &length);
+			uint8_t *decoded =
+			    base64_decode((uint8_t *)record->nameString, sdslen(record->nameString), &length);
 			bufwrite_bytes(strings, length, decoded);
 			FREE(decoded);
 		}
@@ -179,7 +183,8 @@ caryll_Buffer *otfcc_buildName(const table_name *name, const otfcc_Options *opti
 	}
 
 	// write copyright info
-	sds copyright = sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
+	sds copyright =
+	    sdscatprintf(sdsempty(), "-- By OTFCC %d.%d.%d --", MAIN_VER, SECONDARY_VER, PATCH_VER);
 	sdsgrowzero(copyright, COPYRIGHT_LEN);
 	bufwrite_bytes(strings, COPYRIGHT_LEN, (uint8_t *)copyright);
 	sdsfree(copyright);

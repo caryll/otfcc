@@ -143,6 +143,7 @@ static otfcc_Font *readJson(void *_root, uint32_t index, const otfcc_Options *op
 	font->maxp = otfcc_parseMaxp(root, options);
 	font->post = otfcc_parsePost(root, options);
 	font->name = otfcc_parseName(root, options);
+	font->meta = otfcc_parseMeta(root, options);
 	font->cmap = otfcc_parseCmap(root, options);
 	if (!options->ignore_hints) {
 		font->fpgm = otfcc_parseFpgmPrep(root, options, "fpgm");

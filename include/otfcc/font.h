@@ -22,6 +22,7 @@ typedef struct _caryll_font otfcc_Font;
 #include "otfcc/table/OS_2.h"
 #include "otfcc/table/post.h"
 #include "otfcc/table/name.h"
+#include "otfcc/table/meta.h"
 
 #include "otfcc/table/cmap.h"
 #include "otfcc/table/cvt.h"
@@ -66,6 +67,7 @@ struct _caryll_font {
 	table_glyf *glyf;
 	table_cmap *cmap;
 	table_name *name;
+	table_meta *meta;
 
 	table_fpgm_prep *fpgm;
 	table_fpgm_prep *prep;

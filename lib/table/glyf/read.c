@@ -480,6 +480,19 @@ static INLINE void applyPolymorphism(const shapeid_t totalPoints, glyf_GlyphPtr 
 	}
 	applyCoords(totalPoints, glyph, glyphRefs, nTouchedPoints, deltaX, points, r, getX);
 	applyCoords(totalPoints, glyph, glyphRefs, nTouchedPoints, deltaY, points, r, getY);
+	// Horizontal phantom point
+	if (totalPoints + 1 < nTouchedPoints) {
+		iVQ.addDelta(&(glyph->horizontalOrigin), true, r, deltaX[totalPoints]);
+		iVQ.addDelta(&(glyph->advanceWidth), true, r,
+		             deltaX[totalPoints + 1] - deltaX[totalPoints]);
+	}
+	// Vertical phantom point
+	if (totalPoints + 3 < nTouchedPoints) {
+		iVQ.addDelta(&(glyph->verticalOrigin), true, r, deltaY[totalPoints + 2]);
+		iVQ.addDelta(&(glyph->advanceHeight), true, r,
+		             deltaY[totalPoints + 2] - deltaY[totalPoints + 3]);
+	}
+
 	FREE(glyphRefs);
 }
 

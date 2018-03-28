@@ -77,10 +77,10 @@ glyf_Glyph *otfcc_newGlyf_glyph() {
 	glyf_Glyph *g;
 	NEW(g);
 	g->name = NULL;
-	g->horizontalOrigin = 0;
-	g->advanceWidth = 0;
-	g->verticalOrigin = 0;
-	g->advanceHeight = 0;
+	iVQ.init(&g->horizontalOrigin);
+	iVQ.init(&g->advanceWidth);
+	iVQ.init(&g->verticalOrigin);
+	iVQ.init(&g->advanceHeight);
 
 	glyf_iContourList.init(&g->contours);
 	glyf_iReferenceList.init(&g->references);
@@ -107,6 +107,10 @@ glyf_Glyph *otfcc_newGlyf_glyph() {
 }
 static void otfcc_deleteGlyf_glyph(glyf_Glyph *g) {
 	if (!g) return;
+	iVQ.dispose(&g->horizontalOrigin);
+	iVQ.dispose(&g->advanceWidth);
+	iVQ.dispose(&g->verticalOrigin);
+	iVQ.dispose(&g->advanceHeight);
 	sdsfree(g->name);
 	glyf_iContourList.dispose(&g->contours);
 	glyf_iReferenceList.dispose(&g->references);
@@ -216,13 +220,14 @@ static json_value *glyf_glyph_dump_maskdefs(glyf_MaskList *masks, glyf_StemDefLi
 static json_value *glyf_dump_glyph(glyf_Glyph *g, const otfcc_Options *options,
                                    const GlyfIOContext *ctx) {
 	json_value *glyph = json_object_new(12);
-	json_object_push(glyph, "advanceWidth", json_new_position(g->advanceWidth));
-	if (fabs(g->horizontalOrigin) > 1.0 / 1000.0) {
-		json_object_push(glyph, "horizontalOrigin", json_new_position(g->horizontalOrigin));
+	json_object_push(glyph, "advanceWidth", json_new_VQ(g->advanceWidth, ctx->fvar));
+	if (iVQ.isStill(g->horizontalOrigin) &&
+	    fabs(iVQ.getStill(g->horizontalOrigin)) > 1.0 / 1000.0) {
+		json_object_push(glyph, "horizontalOrigin", json_new_VQ(g->horizontalOrigin, ctx->fvar));
 	}
 	if (ctx->hasVerticalMetrics) {
-		json_object_push(glyph, "advanceHeight", json_new_position(g->advanceHeight));
-		json_object_push(glyph, "verticalOrigin", json_new_position(g->verticalOrigin));
+		json_object_push(glyph, "advanceHeight", json_new_VQ(g->advanceHeight, ctx->fvar));
+		json_object_push(glyph, "verticalOrigin", json_new_VQ(g->verticalOrigin, ctx->fvar));
 	}
 	glyf_glyph_dump_contours(g, glyph, ctx);
 	glyf_glyph_dump_references(g, glyph, ctx);
@@ -422,10 +427,10 @@ static glyf_Glyph *otfcc_glyf_parse_glyph(json_value *glyphdump, otfcc_GlyphOrde
                                           const otfcc_Options *options) {
 	glyf_Glyph *g = otfcc_newGlyf_glyph();
 	g->name = sdsdup(order_entry->name);
-	g->advanceWidth = json_obj_getnum(glyphdump, "advanceWidth");
-	g->horizontalOrigin = json_obj_getnum(glyphdump, "horizontalOrigin");
-	g->advanceHeight = json_obj_getnum(glyphdump, "advanceHeight");
-	g->verticalOrigin = json_obj_getnum(glyphdump, "verticalOrigin");
+	iVQ.replace(&g->advanceWidth, json_vqOf(json_obj_get(glyphdump, "advanceWidth"), NULL));
+	iVQ.replace(&g->horizontalOrigin, json_vqOf(json_obj_get(glyphdump, "horizontalOrigin"), NULL));
+	iVQ.replace(&g->advanceHeight, json_vqOf(json_obj_get(glyphdump, "advanceHeight"), NULL));
+	iVQ.replace(&g->verticalOrigin, json_vqOf(json_obj_get(glyphdump, "verticalOrigin"), NULL));
 	glyf_parse_contours(json_obj_get_type(glyphdump, "contours", json_array), g);
 	glyf_parse_references(json_obj_get_type(glyphdump, "references", json_array), g);
 	if (!options->ignore_hints) {

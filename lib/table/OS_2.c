@@ -380,8 +380,8 @@ table_OS_2 *otfcc_parseOS_2(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildOS_2(const table_OS_2 *os_2, const otfcc_Options *options) {
+	if (!os_2) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!os_2) return buf;
 	bufwrite16b(buf, os_2->version);
 	bufwrite16b(buf, os_2->xAvgCharWidth);
 	bufwrite16b(buf, os_2->usWeightClass);

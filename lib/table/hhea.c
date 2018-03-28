@@ -85,8 +85,8 @@ table_hhea *otfcc_parseHhea(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildHhea(const table_hhea *hhea, const otfcc_Options *options) {
+	if (!hhea) return NULL;
 	caryll_Buffer *buf = bufnew();
-	if (!hhea) return buf;
 	bufwrite32b(buf, hhea->version);
 	bufwrite16b(buf, hhea->ascender);
 	bufwrite16b(buf, hhea->descender);

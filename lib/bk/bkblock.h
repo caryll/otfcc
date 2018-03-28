@@ -46,6 +46,7 @@ typedef struct __caryll_bkblock {
 bk_Block *_bkblock_init();
 bk_Block *bk_new_Block(int type0, ...);
 bk_Block *bk_push(bk_Block *b, int type0, ...);
+bk_Block *bk_newBlockFromStringLen(size_t len, const char *str);
 bk_Block *bk_newBlockFromBuffer(MOVE caryll_Buffer *buf);
 bk_Block *bk_newBlockFromBufferCopy(OBSERVE caryll_Buffer *buf);
 bool bk_cellIsPointer(bk_Cell *cell);

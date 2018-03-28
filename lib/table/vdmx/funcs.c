@@ -113,7 +113,7 @@ table_VDMX *otfcc_parseVDMX(const json_value *root, const otfcc_Options *options
 }
 
 caryll_Buffer *otfcc_buildVDMX(const table_VDMX *vdmx, const otfcc_Options *options) {
-	if (!vdmx || !vdmx->ratios.length) return bufnew();
+	if (!vdmx || !vdmx->ratios.length) return NULL;
 	bk_Block *root = bk_new_Block(b16, vdmx->version,       // Version
 	                              b16, vdmx->ratios.length, // numRecs
 	                              b16, vdmx->ratios.length, // numRatios

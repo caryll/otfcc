@@ -34,6 +34,9 @@ static void deleteFontTable(otfcc_Font *font, const uint32_t tag) {
 		case 'name':
 			if (font->name) DELETE(table_iName.free, font->name);
 			return;
+		case 'meta':
+			if (font->meta) DELETE(table_iMeta.free, font->meta);
+			return;
 		case 'hmtx':
 			if (font->hmtx) DELETE(table_iHmtx.free, font->hmtx);
 			return;
@@ -125,6 +128,7 @@ static INLINE void disposeFont(otfcc_Font *font) {
 	deleteFontTable(font, 'maxp');
 	deleteFontTable(font, 'OS_2');
 	deleteFontTable(font, 'name');
+	deleteFontTable(font, 'meta');
 	deleteFontTable(font, 'hmtx');
 	deleteFontTable(font, 'vmtx');
 	deleteFontTable(font, 'post');
@@ -155,6 +159,8 @@ static INLINE void disposeFont(otfcc_Font *font) {
 caryll_standardRefTypeFn(otfcc_Font, initFont, disposeFont);
 
 caryll_ElementInterfaceOf(otfcc_Font) otfcc_iFont = {
-    caryll_standardRefTypeMethods(otfcc_Font), .createTable = createFontTable, .deleteTable = deleteFontTable,
+    caryll_standardRefTypeMethods(otfcc_Font),
+    .createTable = createFontTable,
+    .deleteTable = deleteFontTable,
     .consolidate = otfcc_consolidateFont,
 };

@@ -97,7 +97,7 @@ static void il_push_masks(cff_CharstringIL *il, glyf_Glyph *g, // meta
                           uint16_t points,                     // points sofar
                           uint16_t *jh,                        // index of pushed cmasks
                           uint16_t *jm                         // index of pushed hmasks
-                          ) {
+) {
 	if (!g->stemH.length && !g->stemV.length) return;
 	_il_push_maskgroup(il, &g->contourMasks, contours, points, //
 	                   g->stemH.length, g->stemV.length, jh, op_cntrmask);
@@ -175,9 +175,10 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 
 	bool hasmask =
 	    g->hintMasks.length || g->contourMasks.length; // we have hint masks or contour masks
-	bool haswidth = g->advanceWidth != defaultWidth;   // we have width operand here
+	const pos_t glyphADWConst = iVQ.getStill(g->advanceWidth);
+	bool haswidth = glyphADWConst != defaultWidth; // we have width operand here
 	// Write IL
-	if (haswidth) { il_push_operand(il, (int)(g->advanceWidth) - (int)(nominalWidth)); }
+	if (haswidth) { il_push_operand(il, (int)(glyphADWConst) - (int)(nominalWidth)); }
 	il_push_stems(il, g, hasmask, haswidth);
 	// Write contour
 	shapeid_t contoursSofar = 0;
@@ -200,7 +201,7 @@ cff_CharstringIL *cff_compileGlyphToIL(glyf_Glyph *g, uint16_t defaultWidth,
 			} else if (j < n - 2                         // have enough points
 			           && !contour->items[j + 1].onCurve // next is offcurve
 			           && contour->items[j + 2].onCurve  // and next is oncurve
-			           ) {                               // means this is an bezier curve strand
+			) {                                          // means this is an bezier curve strand
 				il_curveto(il, contour->items[j].x,
 				           contour->items[j].y, // dz1
 				           contour->items[j + 1].x,
@@ -248,7 +249,7 @@ static uint8_t zroll(cff_CharstringIL *il, uint32_t j, int32_t op, int32_t op2, 
 	                   IL_ITEM_PHANTOM_OPERATOR)) // .. or we are right after a solid operator
 	    && il_matchop(il, j + arity, op)          // The next operator is <op>
 	    && il_matchtype(il, j, j + arity, IL_ITEM_OPERAND) // And we have correct number of operands
-	    ) {
+	) {
 		va_list ap;
 		uint8_t check = true;
 		uint8_t resultArity = arity;
@@ -286,7 +287,7 @@ static uint8_t opop_roll(cff_CharstringIL *il, uint32_t j, int32_t op1, int32_t 
 	    && il_matchtype(il, j + 1, j + 1 + arity, IL_ITEM_OPERAND) // match operands
 	    && il_matchop(il, j + 1 + arity, op2)                      // match next operator
 	    && current->arity + nextop->arity <= type2_argument_stack  // stack is not full
-	    ) {
+	) {
 		current->type = IL_ITEM_PHANTOM_OPERATOR;
 		nextop->i = resultop;
 		nextop->arity += current->arity;
@@ -308,7 +309,7 @@ static uint8_t hvlineto_roll(cff_CharstringIL *il, uint32_t j) {
 	    && il_matchtype(il, j + 1, j + 3, IL_ITEM_OPERAND)               // have enough operands
 	    && il->instr[j + checkdelta].d == 0                              // and it is a h/v
 	    && current->arity + 1 <= type2_argument_stack // we have enough stack space
-	    ) {
+	) {
 		il->instr[j + checkdelta].type = IL_ITEM_PHANTOM_OPERAND;
 		il->instr[j].type = IL_ITEM_PHANTOM_OPERATOR;
 		il->instr[j + 3].i = current->i;
@@ -333,7 +334,7 @@ static uint8_t hvvhcurve_roll(cff_CharstringIL *il, uint32_t j) {
 	if (il_matchop(il, j + 7, op_rrcurveto)                // followed by a curveto
 	    && il_matchtype(il, j + 1, j + 7, IL_ITEM_OPERAND) // have enough operands
 	    && il->instr[j + checkdelta1].d == 0               // and it is a h/v
-	    ) {
+	) {
 		if (il->instr[j + checkdelta2].d == 0 && current->arity + 4 <= type2_argument_stack) {
 			// The Standard case
 			il->instr[j + checkdelta1].type = IL_ITEM_PHANTOM_OPERAND;

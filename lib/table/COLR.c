@@ -42,7 +42,8 @@ table_COLR *otfcc_readCOLR(const otfcc_Packet packet, const otfcc_Options *optio
 		uint16_t numLayerRecords = read_16u(table.data + 12);
 		uint32_t offsetBaseGlyphRecord = read_32u(table.data + 4);
 		uint32_t offsetLayerRecord = read_32u(table.data + 8);
-		if (table.length < offsetBaseGlyphRecord + baseGlyphRecLength * numBaseGlyphRecords) goto FAIL;
+		if (table.length < offsetBaseGlyphRecord + baseGlyphRecLength * numBaseGlyphRecords)
+			goto FAIL;
 		if (table.length < offsetLayerRecord + layerRecLength * numLayerRecords) goto FAIL;
 
 		// parse layer data
@@ -60,17 +61,20 @@ table_COLR *otfcc_readCOLR(const otfcc_Packet packet, const otfcc_Options *optio
 			colr_Mapping mapping;
 			colr_iMapping.init(&mapping);
 			uint16_t gid = read_16u(table.data + offsetBaseGlyphRecord + baseGlyphRecLength * j);
-			uint16_t firstLayerIndex = read_16u(table.data + offsetBaseGlyphRecord + baseGlyphRecLength * j + 2);
-			uint16_t numLayers = read_16u(table.data + offsetBaseGlyphRecord + baseGlyphRecLength * j + 4);
+			uint16_t firstLayerIndex =
+			    read_16u(table.data + offsetBaseGlyphRecord + baseGlyphRecLength * j + 2);
+			uint16_t numLayers =
+			    read_16u(table.data + offsetBaseGlyphRecord + baseGlyphRecLength * j + 4);
 
 			glyph_handle baseGlyph = Handle.fromIndex(gid);
 			Handle.move(&mapping.glyph, &baseGlyph);
 			for (glyphid_t k = 0; k < numLayers; k++) {
 				if (k + firstLayerIndex < numLayerRecords) {
-					colr_iLayerList.push(&mapping.layers, (colr_Layer){
-					                                          .glyph = Handle.fromIndex(gids[k + firstLayerIndex]),
-					                                          .paletteIndex = colors[k + firstLayerIndex],
-					                                      });
+					colr_iLayerList.push(&mapping.layers,
+					                     (colr_Layer){
+					                         .glyph = Handle.fromIndex(gids[k + firstLayerIndex]),
+					                         .paletteIndex = colors[k + firstLayerIndex],
+					                     });
 				}
 			}
 			table_iCOLR.push(colr, mapping);
@@ -119,7 +123,8 @@ table_COLR *otfcc_parseCOLR(const json_value *root, const otfcc_Options *options
 
 			colr_Mapping m;
 			colr_iMapping.init(&m);
-			m.glyph = Handle.fromName(sdsnewlen(_baseglyph->u.string.ptr, _baseglyph->u.string.length));
+			m.glyph =
+			    Handle.fromName(sdsnewlen(_baseglyph->u.string.ptr, _baseglyph->u.string.length));
 			for (glyphid_t k = 0; k < _layers->u.array.length; k++) {
 				json_value *_layer = _layers->u.array.values[k];
 				if (!_layer || _layer->type != json_object) continue;
@@ -128,7 +133,8 @@ table_COLR *otfcc_parseCOLR(const json_value *root, const otfcc_Options *options
 				colr_iLayerList.push(
 				    &m.layers,
 				    (colr_Layer){
-				        .glyph = Handle.fromName(sdsnewlen(_layerglyph->u.string.ptr, _layerglyph->u.string.length)),
+				        .glyph = Handle.fromName(
+				            sdsnewlen(_layerglyph->u.string.ptr, _layerglyph->u.string.length)),
 				        .paletteIndex = json_obj_getint_fallback(_layer, "paletteIndex", 0xFFFF),
 				    });
 			}
@@ -143,7 +149,7 @@ static int byGID(const colr_Mapping *a, const colr_Mapping *b) {
 }
 
 caryll_Buffer *otfcc_buildCOLR(const table_COLR *_colr, const otfcc_Options *options) {
-	if (!_colr || !_colr->length) return bufnew();
+	if (!_colr || !_colr->length) return NULL;
 
 	// sort base defs
 	table_COLR colr;

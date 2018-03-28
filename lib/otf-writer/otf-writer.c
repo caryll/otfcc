@@ -25,23 +25,18 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 	otfcc_SFNTBuilder_pushTable(builder, 'OS/2', otfcc_buildOS_2(font->OS_2, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'maxp', otfcc_buildMaxp(font->maxp, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'name', otfcc_buildName(font->name, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'meta', otfcc_buildMeta(font->meta, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'post',
 	                            otfcc_buildPost(font->post, font->glyph_order, options));
 	otfcc_SFNTBuilder_pushTable(builder, 'cmap', otfcc_buildCmap(font->cmap, options));
-	if (font->gasp)
-		otfcc_SFNTBuilder_pushTable(builder, 'gasp', otfcc_buildGasp(font->gasp, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'gasp', otfcc_buildGasp(font->gasp, options));
 
 	if (font->subtype == FONTTYPE_TTF) {
-		if (font->fpgm)
-			otfcc_SFNTBuilder_pushTable(builder, 'fpgm', otfcc_buildFpgmPrep(font->fpgm, options));
-		if (font->prep)
-			otfcc_SFNTBuilder_pushTable(builder, 'prep', otfcc_buildFpgmPrep(font->prep, options));
-		if (font->cvt_)
-			otfcc_SFNTBuilder_pushTable(builder, 'cvt ', otfcc_buildCvt(font->cvt_, options));
-		if (font->LTSH)
-			otfcc_SFNTBuilder_pushTable(builder, 'LTSH', otfcc_buildLTSH(font->LTSH, options));
-		if (font->VDMX)
-			otfcc_SFNTBuilder_pushTable(builder, 'VDMX', otfcc_buildVDMX(font->VDMX, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'fpgm', otfcc_buildFpgmPrep(font->fpgm, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'prep', otfcc_buildFpgmPrep(font->prep, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'cvt ', otfcc_buildCvt(font->cvt_, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'LTSH', otfcc_buildLTSH(font->LTSH, options));
+		otfcc_SFNTBuilder_pushTable(builder, 'VDMX', otfcc_buildVDMX(font->VDMX, options));
 	}
 
 	if (font->hhea && font->maxp && font->hmtx) {
@@ -50,45 +45,36 @@ static void *serializeToOTF(otfcc_Font *font, const otfcc_Options *options) {
 		otfcc_SFNTBuilder_pushTable(builder, 'hmtx',
 		                            otfcc_buildHmtx(font->hmtx, hmtx_counta, hmtx_countk, options));
 	}
-	if (font->vhea)
-		otfcc_SFNTBuilder_pushTable(builder, 'vhea', otfcc_buildVhea(font->vhea, options));
+
+	otfcc_SFNTBuilder_pushTable(builder, 'vhea', otfcc_buildVhea(font->vhea, options));
 	if (font->vhea && font->maxp && font->vmtx) {
 		uint16_t vmtx_counta = font->vhea->numOfLongVerMetrics;
 		uint16_t vmtx_countk = font->maxp->numGlyphs - font->vhea->numOfLongVerMetrics;
 		otfcc_SFNTBuilder_pushTable(builder, 'vmtx',
 		                            otfcc_buildVmtx(font->vmtx, vmtx_counta, vmtx_countk, options));
 	}
-	if (font->VORG) {
-		otfcc_SFNTBuilder_pushTable(builder, 'VORG', otfcc_buildVORG(font->VORG, options));
-	}
+	otfcc_SFNTBuilder_pushTable(builder, 'VORG', otfcc_buildVORG(font->VORG, options));
 
-	if (font->GSUB)
-		otfcc_SFNTBuilder_pushTable(builder, 'GSUB', otfcc_buildOtl(font->GSUB, options, "GSUB"));
-	if (font->GPOS)
-		otfcc_SFNTBuilder_pushTable(builder, 'GPOS', otfcc_buildOtl(font->GPOS, options, "GPOS"));
-	if (font->GDEF)
-		otfcc_SFNTBuilder_pushTable(builder, 'GDEF', otfcc_buildGDEF(font->GDEF, options));
-	if (font->BASE)
-		otfcc_SFNTBuilder_pushTable(builder, 'BASE', otfcc_buildBASE(font->BASE, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'GSUB', otfcc_buildOtl(font->GSUB, options, "GSUB"));
+	otfcc_SFNTBuilder_pushTable(builder, 'GPOS', otfcc_buildOtl(font->GPOS, options, "GPOS"));
+	otfcc_SFNTBuilder_pushTable(builder, 'GDEF', otfcc_buildGDEF(font->GDEF, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'BASE', otfcc_buildBASE(font->BASE, options));
 
-	if (font->CPAL)
-		otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
-	if (font->COLR)
-		otfcc_SFNTBuilder_pushTable(builder, 'COLR', otfcc_buildCOLR(font->COLR, options));
-	if (font->SVG_)
-		otfcc_SFNTBuilder_pushTable(builder, 'SVG ', otfcc_buildSVG(font->SVG_, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'CPAL', otfcc_buildCPAL(font->CPAL, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'COLR', otfcc_buildCOLR(font->COLR, options));
+	otfcc_SFNTBuilder_pushTable(builder, 'SVG ', otfcc_buildSVG(font->SVG_, options));
 
-	if (font->TSI_01) {
+	{
 		tsi_BuildTarget target = otfcc_buildTSI(font->TSI_01, options);
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI0', target.indexPart);
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI1', target.textPart);
 	}
-	if (font->TSI_23) {
+	{
 		tsi_BuildTarget target = otfcc_buildTSI(font->TSI_23, options);
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI2', target.indexPart);
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI3', target.textPart);
 	}
-	if (font->glyf && font->TSI5) {
+	if (font->glyf) {
 		otfcc_SFNTBuilder_pushTable(builder, 'TSI5',
 		                            otfcc_buildTSI5(font->TSI5, options, font->glyf->length));
 	}
