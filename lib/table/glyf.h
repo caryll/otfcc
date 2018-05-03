@@ -51,7 +51,9 @@ typedef enum {
 	WE_HAVE_A_TWO_BY_TWO = (1 << 7),
 	WE_HAVE_INSTRUCTIONS = (1 << 8),
 	USE_MY_METRICS = (1 << 9),
-	OVERLAP_COMPOUND = (1 << 10)
+	OVERLAP_COMPOUND = (1 << 10),
+	SCALED_COMPONENT_OFFSET = (1 << 11),
+	UNSCALED_COMPONENT_OFFSET = (1 << 12)
 } glyf_reference_flag;
 
 typedef enum { MASK_ON_CURVE = 1 } glyf_oncurve_mask;

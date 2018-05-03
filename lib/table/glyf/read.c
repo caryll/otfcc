@@ -186,6 +186,10 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 		}
 		ref.roundToGrid = flags & ROUND_XY_TO_GRID;
 		ref.useMyMetrics = flags & USE_MY_METRICS;
+		if (flags & SCALED_COMPONENT_OFFSET &&
+		    (flags & WE_HAVE_AN_X_AND_Y_SCALE || flags & WE_HAVE_A_TWO_BY_TWO)) {
+			logWarning("glyf: SCALED_COMPONENT_OFFSET is not supported.")
+		}
 		if (flags & WE_HAVE_INSTRUCTIONS) { glyphHasInstruction = true; }
 		glyf_iReferenceList.push(&g->references, ref);
 	} while (flags & MORE_COMPONENTS);
