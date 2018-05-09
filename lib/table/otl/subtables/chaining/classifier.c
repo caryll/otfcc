@@ -121,7 +121,8 @@ static otl_ClassDef *toClass(classifier_hash **h) {
 	}
 	return cd;
 }
-tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j, OUT subtable_chaining **classifiedST) {
+tableid_t tryClassifyAround(const otl_Lookup *lookup, tableid_t j,
+                            OUT subtable_chaining **classifiedST) {
 	tableid_t compatibleCount = 0;
 	classifier_hash *hb = NULL;
 	classifier_hash *hi = NULL;
@@ -214,8 +215,10 @@ FAIL:;
 		return 0;
 	}
 }
-tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buffer ***subtableBuffers,
+tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup,
+                                        OUT caryll_Buffer ***subtableBuffers,
                                         MODIFY size_t *lastOffset) {
+	bool isContextual = otfcc_chainingLookupIsContextualLookup(lookup);
 	tableid_t subtablesWritten = 0;
 	NEW(*subtableBuffers, lookup->subtables.length);
 	for (tableid_t j = 0; j < lookup->subtables.length; j++) {
@@ -224,7 +227,8 @@ tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup, OUT caryll_Buf
 		subtable_chaining *st = st0;
 		// Try to classify subtables after j into j
 		j += tryClassifyAround(lookup, j, &st);
-		caryll_Buffer *buf = otfcc_build_chaining((otl_Subtable *)st);
+		caryll_Buffer *buf = isContextual ? otfcc_build_contextual((otl_Subtable *)st)
+		                                  : otfcc_build_chaining((otl_Subtable *)st);
 		if (st != st0) { iSubtable_chaining.free(st); }
 		(*subtableBuffers)[subtablesWritten] = buf;
 		*lastOffset += buf->size;
