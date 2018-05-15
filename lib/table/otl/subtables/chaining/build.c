@@ -146,9 +146,7 @@ caryll_Buffer *otfcc_build_chaining(const otl_Subtable *_subtable) {
 caryll_Buffer *otfcc_build_contextual_coverage(const otl_Subtable *_subtable) {
 	const subtable_chaining *subtable = &(_subtable->chaining);
 	otl_ChainingRule *rule = (otl_ChainingRule *)&(subtable->rule);
-	tableid_t nBacktrack = rule->inputBegins;
 	tableid_t nInput = rule->inputEnds - rule->inputBegins;
-	tableid_t nLookahead = rule->matchCount - rule->inputEnds;
 	tableid_t nSubst = rule->applyCount;
 	reverseBacktracks(rule);
 
@@ -161,8 +159,8 @@ caryll_Buffer *otfcc_build_contextual_coverage(const otl_Subtable *_subtable) {
 		bk_push(root, p16, bk_newBlockFromBuffer(Coverage.build(rule->match[j])), bkover);
 	}
 	for (tableid_t j = 0; j < nSubst; j++) {
-		bk_push(root, b16, rule->apply[j].index - nBacktrack, // position
-		        b16, rule->apply[j].lookup.index,             // lookup
+		bk_push(root, b16, rule->apply[j].index,  // position
+		        b16, rule->apply[j].lookup.index, // lookup
 		        bkover);
 	}
 

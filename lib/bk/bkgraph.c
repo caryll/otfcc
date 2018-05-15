@@ -234,9 +234,8 @@ static void dfs_attract_cells(bk_Block *b, bk_Graph *f, uint32_t *order, uint32_
 		return;
 	}
 	b->_visitstate = VISIT_GRAY;
-	for (uint32_t j = 0; j < b->length; j++) {
+	for (uint32_t j = b->length; j-- > 0;) {
 		bk_Cell *cell = &(b->cells[j]);
-		if (bk_cellIsPointer(cell) && cell->p) { dfs_attract_cells(cell->p, f, order, depth + 1); }
 		if (bk_cellIsPointer(cell) && cell->p) { dfs_attract_cells(cell->p, f, order, depth + 1); }
 	}
 	*order += 1;
