@@ -4,6 +4,8 @@ environment:
 platform:
   - x64
 
+image: Previous Visual Studio 2017
+
 configuration:
   - Release
 
