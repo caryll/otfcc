@@ -152,6 +152,7 @@ static void glyf_build_composite(const glyf_Glyph *g, caryll_Buffer *gbuf) {
 		}
 		if (r->roundToGrid) flags |= ROUND_XY_TO_GRID;
 		if (r->useMyMetrics) flags |= USE_MY_METRICS;
+		flags |= UNSCALED_COMPONENT_OFFSET;
 		bufwrite16b(gbuf, flags);
 		bufwrite16b(gbuf, r->glyph.index);
 		if (flags & ARG_1_AND_2_ARE_WORDS) {

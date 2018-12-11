@@ -231,12 +231,15 @@ static void readFormat14(font_file_pointer start, uint32_t lengthLimit, table_cm
 	}
 }
 
-static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
+static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap,
+                                 tableid_t requiredFormat) {
 	uint16_t format = read_16u(start);
-	if (format == 4) {
-		readFormat4(start, lengthLimit, cmap);
-	} else if (format == 12) {
-		readFormat12(start, lengthLimit, cmap);
+	if (format == requiredFormat) {
+		if (format == 4) {
+			readFormat4(start, lengthLimit, cmap);
+		} else if (format == 12) {
+			readFormat12(start, lengthLimit, cmap);
+		}
 	}
 }
 
@@ -264,6 +267,10 @@ static INLINE bool isValidCmapEncoding(uint16_t platform, uint16_t encoding) {
 	       (platform == 3 && encoding == 10);
 }
 
+// Note: we do not support Apple's format 0 subtable
+//       since we not never support legacy fonts.
+const tableid_t formatPriorities[] = {12, 4, 0};
+
 // OTFCC will not support all `cmap` mappings.
 table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *options) {
 	// the map is a reference to a hash table
@@ -277,18 +284,21 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 
-		// step 1 : read format 4 and 12
-		for (uint16_t j = 0; j < numTables; j++) {
-			uint16_t platform = read_16u(data + 4 + 8 * j);
-			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
-			if (!isValidCmapEncoding(platform, encoding)) continue;
+		// step 1 : read format 12. The results are prioritized
+		for (size_t kSubtableType = 0; formatPriorities[kSubtableType]; kSubtableType++) {
+			for (uint16_t j = 0; j < numTables; j++) {
+				uint16_t platform = read_16u(data + 4 + 8 * j);
+				uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
+				if (!isValidCmapEncoding(platform, encoding)) continue;
 
-			uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
-			readCmapMappingTable(data + tableOffset, length - tableOffset, cmap);
-		};
+				uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
+				readCmapMappingTable(data + tableOffset, length - tableOffset, cmap,
+				                     formatPriorities[kSubtableType]);
+			};
+		}
 		HASH_SORT(cmap->unicodes, by_unicode);
 
-		// step2 : read format 14
+		// step 3 : read format 14
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = read_16u(data + 4 + 8 * j);
 			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);

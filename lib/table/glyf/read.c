@@ -181,11 +181,15 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 			ref.a = otfcc_from_f2dot14(read_16s(start + offset));
 			ref.b = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			ref.c = otfcc_from_f2dot14(read_16s(start + offset + 4));
-			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 2));
+			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 6));
 			offset += 8;
 		}
 		ref.roundToGrid = flags & ROUND_XY_TO_GRID;
 		ref.useMyMetrics = flags & USE_MY_METRICS;
+		if (flags & SCALED_COMPONENT_OFFSET &&
+		    (flags & WE_HAVE_AN_X_AND_Y_SCALE || flags & WE_HAVE_A_TWO_BY_TWO)) {
+			logWarning("glyf: SCALED_COMPONENT_OFFSET is not supported.")
+		}
 		if (flags & WE_HAVE_INSTRUCTIONS) { glyphHasInstruction = true; }
 		glyf_iReferenceList.push(&g->references, ref);
 	} while (flags & MORE_COMPONENTS);
