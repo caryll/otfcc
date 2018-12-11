@@ -181,7 +181,7 @@ static glyf_Glyph *otfcc_read_composite_glyph(font_file_pointer start,
 			ref.a = otfcc_from_f2dot14(read_16s(start + offset));
 			ref.b = otfcc_from_f2dot14(read_16s(start + offset + 2));
 			ref.c = otfcc_from_f2dot14(read_16s(start + offset + 4));
-			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 2));
+			ref.d = otfcc_from_f2dot14(read_16s(start + offset + 6));
 			offset += 8;
 		}
 		ref.roundToGrid = flags & ROUND_XY_TO_GRID;
