@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef INLINE
 #ifdef _MSC_VER
@@ -85,19 +86,31 @@ static INLINE uint64_t otfcc_endian_convert64(uint64_t i) {
 
 static INLINE uint16_t otfcc_get16u(FILE *file) {
 	uint16_t tmp;
-	fread(&tmp, 2, 1, file);
+	size_t sizeRead = fread(&tmp, 2, 1, file);
+	if (!sizeRead) {
+		fprintf(stderr, "File corruption of terminated unexpectedly.\n");
+		exit(EXIT_FAILURE);
+	}
 	return otfcc_endian_convert16(tmp);
 }
 
 static INLINE uint32_t otfcc_get32u(FILE *file) {
 	uint32_t tmp;
-	fread(&tmp, 4, 1, file);
+	size_t sizeRead = fread(&tmp, 4, 1, file);
+	if (!sizeRead) {
+		fprintf(stderr, "File corruption of terminated unexpectedly.\n");
+		exit(EXIT_FAILURE);
+	}
 	return otfcc_endian_convert32(tmp);
 }
 
 static INLINE uint64_t otfcc_get64u(FILE *file) {
 	uint64_t tmp;
-	fread(&tmp, 8, 1, file);
+	size_t sizeRead = fread(&tmp, 8, 1, file);
+	if (!sizeRead) {
+		fprintf(stderr, "File corruption of terminated unexpectedly.\n");
+		exit(EXIT_FAILURE);
+	}
 	return otfcc_endian_convert64(tmp);
 }
 
