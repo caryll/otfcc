@@ -18,8 +18,8 @@ table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *optio
 		if (length < 2) goto OS_2_CORRUPTED;
 		os_2 = table_iOS_2.create();
 		os_2->version = read_16u(data);
-		// version 0
-		if (length < 78) goto OS_2_CORRUPTED;
+		// version 0 (Apple's TrueType)
+		if (length < 68) goto OS_2_CORRUPTED;
 		{
 			os_2->xAvgCharWidth = read_16u(data + 2);
 			os_2->usWeightClass = read_16u(data + 4);
@@ -45,6 +45,9 @@ table_OS_2 *otfcc_readOS_2(const otfcc_Packet packet, const otfcc_Options *optio
 			os_2->fsSelection = read_16u(data + 62);
 			os_2->usFirstCharIndex = read_16u(data + 64);
 			os_2->usLastCharIndex = read_16u(data + 66);
+		}
+		// version 0 (OpenType)
+		if (length >= 78) {
 			os_2->sTypoAscender = read_16s(data + 68);
 			os_2->sTypoDescender = read_16s(data + 70);
 			os_2->sTypoLineGap = read_16s(data + 72);
