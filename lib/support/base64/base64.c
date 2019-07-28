@@ -9,8 +9,8 @@ uint8_t *base64_encode(const uint8_t *src, size_t len, size_t *out_len) {
 	const uint8_t *end, *in;
 	size_t olen;
 
-	olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
-	olen++;                 /* nul termination */
+	olen = (len + 3 - 1) / 3 * 4; /* 3-byte blocks to 4-byte */
+	olen++;                       /* nul termination */
 	out = __caryll_malloc(sizeof(uint8_t) * olen);
 	if (out == NULL) return NULL;
 
