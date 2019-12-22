@@ -134,7 +134,7 @@ If you have [Ninja](https://ninja-build.org/) installed on your system, you can 
 ```bash
 premake5 ninja
 cd build/ninja
-ninja otfccdump_Release_x64 otfccbuild_Release_x64
+ninja otfccdump_release_x64 otfccbuild_release_x64
 ```
 
 Change the targets above when necessary.
