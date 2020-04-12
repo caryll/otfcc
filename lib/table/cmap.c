@@ -231,12 +231,15 @@ static void readFormat14(font_file_pointer start, uint32_t lengthLimit, table_cm
 	}
 }
 
-static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap) {
+static void readCmapMappingTable(font_file_pointer start, uint32_t lengthLimit, table_cmap *cmap,
+                                 tableid_t requiredFormat) {
 	uint16_t format = read_16u(start);
-	if (format == 4) {
-		readFormat4(start, lengthLimit, cmap);
-	} else if (format == 12) {
-		readFormat12(start, lengthLimit, cmap);
+	if (format == requiredFormat) {
+		if (format == 4) {
+			readFormat4(start, lengthLimit, cmap);
+		} else if (format == 12) {
+			readFormat12(start, lengthLimit, cmap);
+		}
 	}
 }
 
@@ -264,6 +267,10 @@ static INLINE bool isValidCmapEncoding(uint16_t platform, uint16_t encoding) {
 	       (platform == 3 && encoding == 10);
 }
 
+// Note: we do not support Apple's format 0 subtable
+//       since we not never support legacy fonts.
+const tableid_t formatPriorities[] = {12, 4, 0};
+
 // OTFCC will not support all `cmap` mappings.
 table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *options) {
 	// the map is a reference to a hash table
@@ -277,18 +284,21 @@ table_cmap *otfcc_readCmap(const otfcc_Packet packet, const otfcc_Options *optio
 		uint16_t numTables = read_16u(data + 2);
 		if (length < 4 + 8 * numTables) goto CMAP_CORRUPTED;
 
-		// step 1 : read format 4 and 12
-		for (uint16_t j = 0; j < numTables; j++) {
-			uint16_t platform = read_16u(data + 4 + 8 * j);
-			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
-			if (!isValidCmapEncoding(platform, encoding)) continue;
+		// step 1 : read format 12. The results are prioritized
+		for (size_t kSubtableType = 0; formatPriorities[kSubtableType]; kSubtableType++) {
+			for (uint16_t j = 0; j < numTables; j++) {
+				uint16_t platform = read_16u(data + 4 + 8 * j);
+				uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
+				if (!isValidCmapEncoding(platform, encoding)) continue;
 
-			uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
-			readCmapMappingTable(data + tableOffset, length - tableOffset, cmap);
-		};
+				uint32_t tableOffset = read_32u(data + 4 + 8 * j + 4);
+				readCmapMappingTable(data + tableOffset, length - tableOffset, cmap,
+				                     formatPriorities[kSubtableType]);
+			};
+		}
 		HASH_SORT(cmap->unicodes, by_unicode);
 
-		// step2 : read format 14
+		// step 3 : read format 14
 		for (uint16_t j = 0; j < numTables; j++) {
 			uint16_t platform = read_16u(data + 4 + 8 * j);
 			uint16_t encoding = read_16u(data + 4 + 8 * j + 2);
@@ -538,6 +548,16 @@ static caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 	return buf;
 }
 
+static caryll_Buffer *otfcc_tryBuildCmap_format4(const table_cmap *cmap) {
+	caryll_Buffer *buf = otfcc_buildCmap_format4(cmap);
+	if (buflen(buf) > UINT16_MAX) {
+		// this cmap subtable is broken
+		buffree(buf);
+		return NULL;
+	} else
+		return buf;
+}
+
 static caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 12);
@@ -705,18 +725,23 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 	if (!cmap || !cmap->unicodes) return NULL;
 
 	cmap_Entry *entry;
-	bool hasSMP = false;
+	bool requiresFormat12 = false;
 	bool hasUVS = cmap->uvs && (HASH_COUNT(cmap->uvs) > 0);
 	foreach_hash(entry, cmap->unicodes) {
-		if (entry->unicode > 0xFFFF) { hasSMP = true; }
+		if (entry->unicode > 0xFFFF) { requiresFormat12 = true; }
 	}
-	uint8_t nTables = hasSMP ? 4 : 2;
+
+	caryll_Buffer *format4 = NULL;
+	if (!requiresFormat12 || !options->stub_cmap4) {
+		format4 = otfcc_tryBuildCmap_format4(cmap);
+		if (!format4)
+			requiresFormat12 = true;
+	}
+
+	uint8_t nTables = requiresFormat12 ? 4 : 2;
 	if (hasUVS) nTables += 1;
 
-	caryll_Buffer *format4;
-	if (!hasSMP || !options->stub_cmap4) {
-		format4 = otfcc_buildCmap_format4(cmap);
-	} else {
+	if (!format4) {
 		// Write a dummy
 		format4 = bufnew();
 		bufwrite16b(format4, 4);      // format
@@ -746,7 +771,7 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 	        b16, 3,                                  // BMP
 	        p32, bk_newBlockFromBufferCopy(format4), // table
 	        bkover);
-	if (hasSMP) {
+	if (requiresFormat12) {
 		bk_push(root, b16, 0,                             // unicode
 		        b16, 4,                                   // full
 		        p32, bk_newBlockFromBufferCopy(format12), // table
@@ -763,7 +788,7 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 	        b16, 1,                                  // Unicode BMP
 	        p32, bk_newBlockFromBufferCopy(format4), // table
 	        bkover);
-	if (hasSMP) {
+	if (requiresFormat12) {
 		bk_push(root, b16, 3,                             // Windows
 		        b16, 10,                                  // Unicode Full
 		        p32, bk_newBlockFromBufferCopy(format12), // table

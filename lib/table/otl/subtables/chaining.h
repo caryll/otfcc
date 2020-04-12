@@ -17,9 +17,12 @@ otl_Subtable *otl_read_contextual(const font_file_pointer data, uint32_t tableLe
 json_value *otl_dump_chaining(const otl_Subtable *_subtable);
 otl_Subtable *otl_parse_chaining(const json_value *_subtable, const otfcc_Options *options);
 caryll_Buffer *otfcc_build_chaining(const otl_Subtable *_subtable);
+caryll_Buffer *otfcc_build_contextual(const otl_Subtable *_subtable);
 
 tableid_t otfcc_classifiedBuildChaining(const otl_Lookup *lookup,
                                         OUT caryll_Buffer ***subtableBuffers,
                                         MODIFY size_t *lastOffset);
+
+bool otfcc_chainingLookupIsContextualLookup(const otl_Lookup *lookup);
 
 #endif

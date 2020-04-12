@@ -134,7 +134,8 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 			logNotice("Lookup %s is empty.\n", table->lookups.items[j]->name);
 		}
 		otl_Lookup *lookup = table->lookups.items[j];
-		bool useExtendedForIt = useExtended || preferExtForThisLut[j];
+		const bool canBeContextual = otfcc_chainingLookupIsContextualLookup(lookup);
+		const bool useExtendedForIt = useExtended || preferExtForThisLut[j];
 		if (useExtendedForIt) {
 			logNotice("[OTFCC-fea] Using extended OpenType table layout for %s/%s.\n", tag,
 			          lookup->name);
@@ -149,19 +150,22 @@ static bk_Block *writeOTLLookups(const table_OTL *table, const otfcc_Options *op
 		        : (lookup->type > otl_type_gpos_unknown
 		               ? lookup->type - otl_type_gpos_unknown
 		               : lookup->type > otl_type_gsub_unknown ? lookup->type - otl_type_gsub_unknown
-		                                                      : 0);
+		                                                      : 0) -
+		              (canBeContextual ? 1 : 0);
 
 		bk_Block *blk = bk_new_Block(b16, lookupType,          // LookupType
 		                             b16, lookup->flags,       // LookupFlag
 		                             b16, subtableQuantity[j], // SubTableCount
 		                             bkover);
+
 		for (tableid_t k = 0; k < subtableQuantity[j]; k++) {
 			if (useExtendedForIt) {
-				uint16_t extensionLookupType = lookup->type > otl_type_gpos_unknown
-				                                   ? lookup->type - otl_type_gpos_unknown
-				                                   : lookup->type > otl_type_gsub_unknown
-				                                         ? lookup->type - otl_type_gsub_unknown
-				                                         : 0;
+				uint16_t extensionLookupType = (lookup->type > otl_type_gpos_unknown
+				                                    ? lookup->type - otl_type_gpos_unknown
+				                                    : lookup->type > otl_type_gsub_unknown
+				                                          ? lookup->type - otl_type_gsub_unknown
+				                                          : 0) -
+				                               (canBeContextual ? 1 : 0);
 
 				bk_Block *stub =
 				    bk_new_Block(b16, 1,                                      // format

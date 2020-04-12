@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
 	                            {"no-bom", no_argument, NULL, 0},
 	                            {"output", required_argument, NULL, 'o'},
 	                            {"ttc-index", required_argument, NULL, 'n'},
+	                            {"debug-wait-on-start", no_argument, NULL, 0},
 	                            {0, 0, 0, 0}};
 
 	otfcc_Options *options = otfcc_newOptions();
@@ -125,6 +126,8 @@ int main(int argc, char *argv[]) {
 					options->instr_as_bytes = true;
 				} else if (strcmp(longopts[option_index].name, "glyph-name-prefix") == 0) {
 					options->glyph_name_prefix = strdup(optarg);
+				} else if (strcmp(longopts[option_index].name, "debug-wait-on-start") == 0) {
+					options->debug_wait_on_start = true;
 				}
 				break;
 			case 'v':
@@ -150,6 +153,9 @@ int main(int argc, char *argv[]) {
 				break;
 		}
 	}
+
+	if (options->debug_wait_on_start) { getchar(); }
+
 	options->logger->setVerbosity(options->logger,
 	                              options->quiet ? 0 : options->verbose ? 0xFF : 1);
 

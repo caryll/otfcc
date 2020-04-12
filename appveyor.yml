@@ -1,8 +1,10 @@
 environment:
-  VS_VERSION: vs2015
+  VS_VERSION: vs2017
 
 platform:
   - x64
+
+image: Visual Studio 2017
 
 configuration:
   - Release
@@ -10,10 +12,7 @@ configuration:
 install:
   - set PATH=C:\msys64\usr\bin;%PATH%
 
-before_build:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-
 build_script:
-  - dep\bin-win\premake5.exe vs2015
-  - cmd /c _vcbuild64.bat /property:Configuration=Release
+  - dep\bin-win\premake5.exe vs2017
+  - msbuild build\vs\otfcc.sln /m:%NUMBER_OF_PROCESSORS% /nr:false /nologo /verbosity:minimal /property:Configuration=Release
   - make -f quick.make test

@@ -7,6 +7,7 @@
 #include "logger.h"
 
 typedef struct {
+	bool debug_wait_on_start;
 	bool ignore_glyph_order;
 	bool ignore_hints;
 	bool has_vertical_metrics;

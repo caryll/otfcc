@@ -828,6 +828,12 @@ void cff_parseOutline(uint8_t *data, uint32_t len, cff_Index gsubr, cff_Index ls
 						                 gsubr, lsubr, stack, outline, methods, options);
 						break;
 					}
+					default: {
+						logWarning("Warning: unknown operator %d occurs in Type 2 CharString. It "
+						           "may caused by file corruption.",
+						           val.i);
+						return;
+					}
 				}
 				break;
 			case CS2_OPERAND:

@@ -1035,8 +1035,10 @@ static cff_Dict *cff_make_fd_dict(table_CFF *fd, cff_sid_entry **h) {
 	cffdict_input(dict, op_UnderlineThickness, cff_DOUBLE, 1, fd->underlineThickness);
 	cffdict_input(dict, op_StrokeWidth, cff_DOUBLE, 1, fd->strokeWidth);
 	if (fd->fontMatrix) {
-		cffdict_input(dict, op_FontMatrix, cff_DOUBLE, 6, fd->fontMatrix->a, fd->fontMatrix->b,
-		              fd->fontMatrix->c, fd->fontMatrix->d, fd->fontMatrix->x, fd->fontMatrix->y);
+		cffdict_input(dict, op_FontMatrix, cff_DOUBLE, 6,
+					  fd->fontMatrix->a, fd->fontMatrix->b,
+		              fd->fontMatrix->c, fd->fontMatrix->d,
+					  iVQ.getStill(fd->fontMatrix->x), iVQ.getStill(fd->fontMatrix->y));
 	}
 
 	// CID specific

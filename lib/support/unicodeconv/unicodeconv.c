@@ -37,7 +37,7 @@ sds utf16le_to_utf8(const uint8_t *inb, int inlenb) {
 		}
 	}
 	in = (uint16_t *)inb;
-	sds out = sdsnewlen("", bytesNeeded);
+	sds out = sdsnewlen(NULL, bytesNeeded);
 	sds out0 = out;
 
 	while (in < inend) {
@@ -120,7 +120,7 @@ sds utf16be_to_utf8(const uint8_t *inb, int inlenb) {
 		}
 	}
 	in = (uint16_t *)inb;
-	sds out = sdsnewlen("", bytesNeeded);
+	sds out = sdsnewlen(NULL, bytesNeeded);
 	sds out0 = out;
 
 	while (in < inend) {
