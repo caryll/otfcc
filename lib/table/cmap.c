@@ -548,6 +548,16 @@ static caryll_Buffer *otfcc_buildCmap_format4(const table_cmap *cmap) {
 	return buf;
 }
 
+static caryll_Buffer *otfcc_tryBuildCmap_format4(const table_cmap *cmap) {
+	caryll_Buffer *buf = otfcc_buildCmap_format4(cmap);
+	if (buflen(buf) > UINT16_MAX) {
+		// this cmap subtable is broken
+		buffree(buf);
+		return NULL;
+	} else
+		return buf;
+}
+
 static caryll_Buffer *otfcc_buildCmap_format12(const table_cmap *cmap) {
 	caryll_Buffer *buf = bufnew();
 	bufwrite16b(buf, 12);
@@ -715,18 +725,23 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 	if (!cmap || !cmap->unicodes) return NULL;
 
 	cmap_Entry *entry;
-	bool hasSMP = false;
+	bool requiresFormat12 = false;
 	bool hasUVS = cmap->uvs && (HASH_COUNT(cmap->uvs) > 0);
 	foreach_hash(entry, cmap->unicodes) {
-		if (entry->unicode > 0xFFFF) { hasSMP = true; }
+		if (entry->unicode > 0xFFFF) { requiresFormat12 = true; }
 	}
-	uint8_t nTables = hasSMP ? 4 : 2;
+
+	caryll_Buffer *format4 = NULL;
+	if (!requiresFormat12 || !options->stub_cmap4) {
+		format4 = otfcc_tryBuildCmap_format4(cmap);
+		if (!format4)
+			requiresFormat12 = true;
+	}
+
+	uint8_t nTables = requiresFormat12 ? 4 : 2;
 	if (hasUVS) nTables += 1;
 
-	caryll_Buffer *format4;
-	if (!hasSMP || !options->stub_cmap4) {
-		format4 = otfcc_buildCmap_format4(cmap);
-	} else {
+	if (!format4) {
 		// Write a dummy
 		format4 = bufnew();
 		bufwrite16b(format4, 4);      // format
@@ -756,7 +771,7 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 	        b16, 3,                                  // BMP
 	        p32, bk_newBlockFromBufferCopy(format4), // table
 	        bkover);
-	if (hasSMP) {
+	if (requiresFormat12) {
 		bk_push(root, b16, 0,                             // unicode
 		        b16, 4,                                   // full
 		        p32, bk_newBlockFromBufferCopy(format12), // table
@@ -773,7 +788,7 @@ caryll_Buffer *otfcc_buildCmap(const table_cmap *cmap, const otfcc_Options *opti
 	        b16, 1,                                  // Unicode BMP
 	        p32, bk_newBlockFromBufferCopy(format4), // table
 	        bkover);
-	if (hasSMP) {
+	if (requiresFormat12) {
 		bk_push(root, b16, 3,                             // Windows
 		        b16, 10,                                  // Unicode Full
 		        p32, bk_newBlockFromBufferCopy(format12), // table
