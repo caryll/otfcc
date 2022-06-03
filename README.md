@@ -25,6 +25,8 @@ brew tap caryll/tap
 brew install otfcc-mac64
 ```
 
+Note: a full Xcode installation is required. Please refer to the instructions [here](https://stackoverflow.com/a/17980786/923437) if you see an error related to `xcode-select`.
+
 Otherwise, you may need to click the “Releases” above, and download the archives in it.
 
 ### Arch Linux
